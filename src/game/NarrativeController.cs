@@ -4728,6 +4728,9 @@ public class NarrativeController
             if (region == null) return $"no clickable keyword '{keyword}' on screen";
         }
 
+        // The word itself: `@name` and an index name the keyword without saying what it reads, and a
+        // narration over the footage has to say the word the viewer sees clicked.
+        Console.WriteLine($"[cli]   keyword word: {region.Keyword}");
         OnMouseMove(region.StartX, region.Y);
         OnMouseClick(region.StartX, region.Y);
         return null;

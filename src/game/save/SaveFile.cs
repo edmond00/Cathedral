@@ -125,6 +125,7 @@ public static class SaveFile
             string tmp = path + ".tmp";
             File.WriteAllText(tmp, JsonSerializer.Serialize(save, Options));
             File.Move(tmp, path, overwrite: true);
+            Written?.Invoke(path);
             return true;
         }
         catch (Exception ex)
@@ -133,6 +134,12 @@ public static class SaveFile
             return false;
         }
     }
+
+    /// <summary>
+    /// Raised with the save's path each time one has been written. <c>--record</c> keeps a copy of every
+    /// save in the take's folder (see <c>RecordGate</c>), so a later fix can start from a checkpoint.
+    /// </summary>
+    public static event Action<string>? Written;
 
     /// <summary>
     /// Removes the save — permadeath, and starting a new run. Also clears any temporary file left by a

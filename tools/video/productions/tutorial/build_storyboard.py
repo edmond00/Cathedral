@@ -21,7 +21,7 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 P = [p for p in json.loads((HERE / "passages_take_b.json").read_text())
-     if "CHOOSER" not in p["voice"] and "MATCHER" not in p["voice"]]
+     if "CHOOSER" not in p["voice"] and "MATCHER" not in p["voice"]]   # take B: its indices are used below
 EVENTS = [json.loads(l) for l in (HERE / "build/rec_tutorial_b/timeline.jsonl").read_text().splitlines() if l.strip()]
 CLICKS = sorted(e["t"] for e in EVENTS if e["type"] == "click")
 
@@ -37,6 +37,17 @@ def R(i, anchored=True):
     if anchored:
         part["at"] = round(P[i]["ts"] + SHOWS, 2)
     return part
+
+
+def is_dialogue(p):
+    """A line said in a conversation (the speaker's or a reply), not a narration passage."""
+    return "I say to" in p.get("prompt", "") or p["voice"].startswith("You are ")
+
+
+def is_passage(p):
+    """What the model wrote for the screen: not a judge's letter, and not a background job's notes."""
+    return ("CHOOSER" not in p["voice"] and "MATCHER" not in p["voice"] and "JUDGE" not in p["voice"]
+            and "CHRONICLE" not in p["voice"].upper())
 
 
 def W(text):
@@ -75,49 +86,122 @@ def reply(t0, i, mind, *before):
 
 FIGHT = 2.0    # a fight's own moves play at twice their speed; the model's waits at eight
 
-# ── 1-3. the menu, the world, the body: from the creation take ─────────────────
-# rec_creation plays tutorial.cli's opening alone (creation.cli). Nothing in it is written by the model, so
-# it was re-shot when the CLI's element locator was fixed (it had put the cerebellum's clicks on empty
-# screen), and its moments are looked up by what happened rather than typed in.
-C_EVENTS = [json.loads(l) for l in (HERE / "build/rec_creation/timeline.jsonl").read_text().splitlines() if l.strip()]
+# ── the opening take: menu, world, body, childhood, getting up ────────────────
+# rec_opening plays opening.cli: tutorial.cli from the main menu to the start of the run. It was re-shot
+# apart from take B (the CLI's element locator fixed; the merged prompts) and every moment of it is looked
+# up from what happened (its timeline, its passages, the words the CLI clicked), not typed in, so a
+# retake only needs the few remarks about what the model wrote (OPENING_NOTES) read again.
 
 
-def c_at(kind, label, nth=0):
-    """When the creation take's nth event of this kind and label happened."""
-    return [e["t"] for e in C_EVENTS if e["type"] == kind and (e.get("label") or e.get("name")) == label][nth]
+class Take:
+    """One recording and its passages: when things happened, and when each passage could be read."""
+
+    def __init__(self, name, folder, passages):
+        self.name = name
+        self.dir = HERE / folder
+        self.events = [json.loads(l) for l in (self.dir / "timeline.jsonl").read_text().splitlines() if l.strip()]
+        self.clicks = [e for e in self.events if e["type"] == "click"]
+        self.P = [p for p in json.loads((HERE / passages).read_text()) if is_passage(p)]
+        words = [l.split("keyword word:", 1)[1].strip()
+                 for l in (self.dir / "game.log").read_text(errors="replace").splitlines()
+                 if l.startswith("[cli]   keyword word:")]
+        kw = [c for c in self.clicks if c.get("cmd", "").startswith("click keyword")]
+        self.words = {c["t"]: w for c, w in zip(kw, words)}
+        self.log = (self.dir / "game.log").read_text(errors="replace").splitlines()
+
+    def at(self, kind, label, nth=0):
+        return [e["t"] for e in self.events if e["type"] == kind and (e.get("label") or e.get("name")) == label][nth]
+
+    def clip(self, name):
+        return self.at("clip-begin", name), self.at("clip-end", name)
+
+    def click(self, t0, t1, label=None, cmd=None, last=False):
+        hits = [c["t"] for c in self.clicks if t0 <= c["t"] <= t1
+                and (label is None or c.get("label") == label)
+                and (cmd is None or c.get("cmd", "").startswith(cmd))]
+        return (hits[-1] if last else hits[0]) if hits else None
+
+    def word(self, t):
+        return self.words[t]
+
+    def between(self, t0, t1):
+        return [i for i, p in enumerate(self.P) if t0 < p["t1"] <= t1]
+
+    def end(self, i):
+        """When passage i sits whole on screen (see `end` above)."""
+        t1 = self.P[i]["t1"]
+        nxt = next((c["t"] for c in self.clicks if t1 - 0.2 <= c["t"] <= t1 + 4.0), None)
+        if nxt is not None:
+            return nxt + 0.8
+        following = [p["t0"] for p in self.P if p["t0"] >= t1 - 0.05 and p is not self.P[i]]
+        return min([t1 + 2.5] + following)
+
+    def shows(self, i):
+        """When passage i starts appearing on screen. Its first word comes SHOWS after the model's; but
+        a part chained straight after another (the acting mind's line after the thinking mind's) is
+        written while the box still shows the one before, and appears only when that one is pressed on."""
+        t = self.P[i]["ts"] + SHOWS
+        if i and not is_dialogue(self.P[i]) and self.P[i]["t0"] - self.P[i - 1]["t1"] < 1.0:
+            press = self.click(self.P[i - 1]["t1"] - 0.2, 1e9, cmd="click continue") or \
+                    self.click(self.P[i - 1]["t1"] - 0.2, 1e9)
+            if press is not None:
+                t = max(t, press + 0.4)
+        return round(t, 2)
+
+    def R(self, i):
+        return {"text": self.P[i]["text"], "style": "reading", "at": self.shows(i)}
+
+    def game(self, t0, t1, *vo, **kw):
+        game(t0, t1, *vo, rec=self.name, **kw)
 
 
-def c_game(t0, t1, *vo, fade=False):
-    game(t0, t1, *vo, fade=fade, rec="creation")
+O = Take("opening", "build/rec_opening", "passages_opening.json")
+
+# what the model happened to write, said where it is read; the rest of the opening is generic
+OPENING_NOTES = json.loads((HERE / "opening_notes.json").read_text()) if (HERE / "opening_notes.json").exists() else {}
 
 
-c_game(c_at("clip-begin", "new_run"), c_at("click", "New") - 0.2,
+def note(key):
+    return [W(OPENING_NOTES[key])] if key in OPENING_NOTES else []
+
+
+# 1. the hook, the world
+O.game(O.at("clip-begin", "new_run"), O.at("click", "New") - 0.2,
        "Your character in this game is not a sheet of numbers. It is a body, built organ by organ, and a crowd of "
        "minds living in it: some notice, some think, some act, and some only feel. Each one speaks in its own "
        "voice, and nothing they say is written in advance.",
        "This is Proscribed Palimpsest. In the next hour of play, from the main menu to a pair of new boots, we'll "
        "see how all of it works. And along the way, I'll tell you what I would do as a player.", fade=True)
-c_game(c_at("click", "New") - 0.2, c_at("move", "Fenumoth") - 0.2,
+O.game(O.at("click", "New") - 0.2, O.at("move", "Fenumoth") - 0.2,
        "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, "
        "each with a name. The sky is fixed, the same on every machine, so a moon always stands for the same world. "
        "Two players who pick the same moon walk the same land and meet the same people, so they can compare notes.")
-c_game(c_at("move", "Fenumoth") - 0.2, c_at("click", "world-confirm") - 0.4,
+O.game(O.at("move", "Fenumoth") - 0.2, O.at("click", "world-confirm") - 0.4,
        "Choosing a moon generates its world, and its history comes first. Realms rise and fall; castles, temples "
        "and cities are founded; then farmland, villages and pastures spread out from them. The card says what kind "
        "of world it is. We take Fenumoth, a wooded world. For a first run, any moon will do: every one of them is "
        "built to be livable.")
-c_game(c_at("click", "world-confirm") - 0.4, c_at("clip-begin", "creation_overview"))
-c_game(c_at("clip-begin", "creation_overview"), c_at("clip-end", "creation_overview"),
+O.game(O.at("click", "world-confirm") - 0.4, O.at("clip-begin", "creation_overview"))
+
+# 2. the body: the system first, then the organs one by one
+O.game(*O.clip("creation_overview"),
        "Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five "
        "regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight "
        "organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than "
        "half of what the body could reach, so creating a character is really choosing what to give up.", fade=True)
-manim("Organs",
-      "Every number the game uses comes from one organ or one region. This map groups them by the system they "
-      "feed: thinking and memory, the senses, speech, the humors, life, and the body in a fight. In the game, "
-      "hovering an organ shows the same information on the right of the screen.",
-      "We'll go through them in that order. Watch where the points go: this character is built to think, to "
-      "talk, and to bend the dice.")
+manim("System",
+      "Before we spend them, here is how a character fits together. Three layers. The body: regions and organs, "
+      "each with a score. The ways of thinking you learn as you play, called modi mentis, each with a level. And "
+      "the measures: health, memory, noetic points, movement and the rest.",
+      "The body feeds the other two. Every measure is computed from one organ or one region. And every way of "
+      "thinking draws on two organs, or on one region, which set its ceiling: one, plus up to three for each "
+      "organ, or up to six for a region, the stronger they are. A level is what you roll: one die per level. "
+      "Around all this, what you carry lends dice, what you wear protects and charms, and four organs make the "
+      "humors, which can bend a die.",
+      "Here is this very character, once we have spent the points. Swordsmanship draws on the arms and the hands. "
+      "The arms score two out of four: plus two. The hands, four out of six: plus two. So Swordsmanship can rise "
+      "to level five; today it is level two, so it rolls two dice. And two measures: a backbone of four gives "
+      "eight movement points in a fight, and a head of ten gives six noetic points in a scene.")
 ORGAN_WALK = [  # (the organ hovered first, what is said while it is shown)
     ("anamnesis", ["First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can "
      "look and think in one scene: its score halved, plus one.",
@@ -165,95 +249,102 @@ ORGAN_WALK = [  # (the organ hovered first, what is said while it is shown)
      "it heals. Twenty-five points spent. That is the body."]),
 ]
 for k, (organ, vo) in enumerate(ORGAN_WALK):
-    t0 = c_at("move", "organ:" + organ)
-    t1 = (c_at("move", "organ:" + ORGAN_WALK[k + 1][0]) if k + 1 < len(ORGAN_WALK)
-          else c_at("clip-end", "organs_fighting"))
-    c_game(t0, t1, *vo, fade=(k == 0))
+    t0 = O.at("move", "organ:" + organ)
+    t1 = (O.at("move", "organ:" + ORGAN_WALK[k + 1][0]) if k + 1 < len(ORGAN_WALK)
+          else O.at("clip-end", "organs_fighting"))
+    O.game(t0, t1, *vo, fade=(k == 0))
 
-# ── 4. childhood ──────────────────────────────────────────────────────────────
-game(202.6, end(0),
-     "The body has no past yet. The game gives it one through five childhood memories, and they are played "
-     "exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.",
-     R(0), fade=True)
-game(end(0), 312.2,
-     "That text was not written in advance. It was written a moment ago, by a language model running on this "
-     "computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and it works on "
-     "the processor alone.",
-     "But the model does not run the game. The rules, the dice, wounds, coin and time are ordinary code. The "
-     "model is asked narrow questions inside that code: what does this mind notice, what does it want, how does "
-     "it tell what happened.",
-     "Each question is put to a modus mentis, a way of thinking, and the model plays that way of thinking as a "
-     "character, in its own voice. That is why every passage is headed by a name. This one is Childhood "
-     "Reminiscence.")
-manim("NarrationTurn",
-      "Here is a turn: the loop you repeat all game. A mind observes, and writes what it notices. Some words in "
-      "what it wrote light up: keywords. You click one. A thinking mind reasons about it and settles on a goal, "
-      "chosen from the actions the code says that thing allows. Then an acting mind says how willing it is, and "
-      "its willingness makes the roll easier or harder. The dice decide, and the acting mind tells how it went.",
-      "Thinking costs a noetic point, and so does every extra look. The points come back when the scene moves "
-      "on, but not after a failed roll: a miss costs something.")
-game(312.2, end(1),
-     "We click sobs, choose Think, and pick the mind that will think. For now, there is only one.", R(1))
-game(end(1), end(2), "The thinking mind has its goal. Now the acting mind puts it into words.", R(2))
-game(end(2), 533.0, "The act is offered as a line. We click it, then Execute.")
-game(533.0, end(3),
-     "In childhood nothing is rolled: remembering always succeeds.", R(3),
-     W("Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and "
-       "Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code "
-       "decided what that means for your character. Every passage works like this: the words are the model's; "
-       "what they give you is the game's."))
-game(end(3), 657.3)
+# 3. childhood: five memories, the first one slowly
+MEMORY = {
+    1: ("The body has no past yet. The game gives it one through five childhood memories, and they are played "
+        "exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.",
+        "Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and "
+        "Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code "
+        "decided what that means for your character. Every passage works like this: the words are the model's; "
+        "what they give you is the game's."),
+    2: ("The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A "
+        "new mind notices different things.",
+        "This one gives Hard Labor. The docks taught us to work."),
+    3: ("The third memory: something sharp.", "A short sword, and Bargaining."),
+    4: ("The fourth: a dream of a golden arch.",
+        "A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind."),
+    5: ("The last memory: shelter.",
+        "This one gives no item, only two ways of thinking: Exploration and Endurance. My advice for your own "
+        "childhood: read the fragments, and pick what you want your character to be. The memories you choose are "
+        "your starting kit."),
+}
+cut = O.click(O.at("clip-end", "organs_fighting"), 1e9, label="Continue") + 0.3
+prev_end = O.at("clip-end", "organs_fighting")
+for m in range(1, 6):
+    cb, ce = O.clip(f"childhood_{m}")
+    ps = O.between(prev_end, ce)
+    assert len(ps) == 4, f"memory {m}: expected 4 passages, found {[O.P[i]['text'][:40] for i in ps]}"
+    obs, reason, intent, outcome = ps
+    kw = O.click(cb, ce, cmd="click keyword")
+    footer = O.click(cb, ce, label="footer button", last=True)
+    intro, gave = MEMORY[m]
+    O.game(cut, O.end(obs), intro, O.R(obs), *note(f"m{m}_obs"), fade=True)
+    if m == 1:
+        O.game(O.end(obs), kw - 0.3,
+               "That text was not written in advance. It was written a moment ago, by a language model running on "
+               "this computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and "
+               "it works on the processor alone.",
+               "But the model does not run the game. The rules, the dice, wounds, coin and time are ordinary code. "
+               "The model is asked narrow questions inside that code: what does this mind notice, what does it "
+               "want, how does it tell what happened.",
+               "Each question is put to a modus mentis, a way of thinking, and the model plays that way of thinking "
+               "as a character, in its own voice. That is why every passage is headed by a name. Read these texts "
+               "as the character's own thoughts. When one sounds a little strange, take it as this character's "
+               "strange way of seeing things.")
+        manim("NarrationTurn",
+              "Here is a turn: the loop you repeat all game. A mind observes, and writes what it notices. Some words "
+              "in what it wrote light up: keywords. You click one. A thinking mind reasons about it and settles on a "
+              "goal, chosen from the actions the code says that thing allows. Then an acting mind says how willing "
+              "it is, and its willingness makes the roll easier or harder. The dice decide, and the acting mind "
+              "tells how it went.",
+              "Thinking costs a noetic point, and so does every extra look. The points come back when the scene "
+              "moves on, but not after a failed roll: a miss costs something.")
+        first = (f"We click {O.word(kw)}, choose Think, and pick the mind that will think. For now, there is "
+                 "only one.")
+        O.game(kw - 0.3, O.end(reason), first, O.R(reason), *note(f"m{m}_reason"))
+        O.game(O.end(reason), O.end(intent), "Now the acting mind puts the goal into words.", O.R(intent),
+               *note(f"m{m}_intent"))
+        execute = O.click(cb, ce, label="Execute")
+        O.game(O.end(intent), execute + 0.3, "The act is offered as a line. We click it, then Execute.")
+        O.game(execute + 0.3, O.end(outcome), "In childhood nothing is rolled: remembering always succeeds.",
+               O.R(outcome), W(gave), *note(f"m{m}_outcome"))
+    else:
+        O.game(O.end(obs), O.end(reason), f"We click {O.word(kw)}.", O.R(reason), *note(f"m{m}_reason"))
+        O.game(O.end(reason), O.end(intent), O.R(intent), *note(f"m{m}_intent"))
+        O.game(O.end(intent), O.end(outcome), O.R(outcome), W(gave), *note(f"m{m}_outcome"))
+    O.game(O.end(outcome), footer - 0.3)
+    cut, prev_end = footer - 0.3, ce
 
-# memory two
-game(657.3, end(4),
-     "The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A "
-     "new mind notices different things.", R(4), fade=True)
-game(end(4), end(5), "We click waves, and think with Childhood Reminiscence again.", R(5))
-game(end(5), end(6), R(6))
-game(end(6), end(7), R(7), W("This one gives Hard Labor. The docks taught us to work."))
-game(end(7), 1242.9)
-
-# memory three
-game(1242.9, end(8), "The third memory: something sharp.", R(8), fade=True)
-game(end(8), end(9), R(9))
-game(end(9), end(10), R(10),
-     W("Look at what the acting mind wrote: a sharp taste, like a sour apple. The model drifted from a blade to "
-       "an apple. It does not matter: the act is still remembering something sharp, and the code knows what that "
-       "memory holds. I find these little slips part of the charm."))
-game(end(10), end(11), R(11), W("And there it is: a short sword, and Bargaining."))
-game(end(11), 1657.4)
-
-# memory four
-game(1657.4, end(12), "The fourth: a dream of a golden arch.", R(12), fade=True)
-game(end(12), end(13), R(13))
-game(end(13), end(14), R(14))
-game(end(14), end(15), R(15),
-     W("A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind."))
-game(end(15), 2186.7)
-
-# memory five
-game(2186.7, end(16), "The last memory: shelter.", R(16), fade=True)
-game(end(16), end(17), R(17))
-game(end(17), end(18), R(18))
-game(end(18), end(19), R(19),
-     W("This one gives no item, only two ways of thinking: Exploration and Endurance. My advice for your own "
-       "childhood: read the fragments, and pick what you want your character to be. The memories you choose are "
-       "your starting kit."))
-game(end(19), 2673.0)
-
-# ── 5. getting up ─────────────────────────────────────────────────────────────
-game(2673.0, end(20),
-     "Childhood is over. The body wakes on open ground, spent, and a new mind takes our bearings: Childhood "
-     "Memory.", R(20), fade=True)
-game(end(20), end(21), R(21), W("Getting up is the first real roll of the game."))
-game(end(21), end(22),
-     "We think about the legs, this time with Nautical Jargon, one of the minds from the docks. Listen to how "
-     "differently it reasons.", R(22),
-     W("Everything is rope, knots and tides. That is what a persona does: the same question, put to a different "
-       "mind, comes back in a different voice."))
-game(end(22), end(23), "Knotwork, another lesson of the docks, will act.", R(23))
-game(end(23), 3121.0,                                                    # TAKE: four dice, two sixes
-     "We click the act, and Execute. The dice: four of them, and two sixes.")
+# 4. getting up: the first real roll
+gb, ge = O.clip("get_up")
+ps = O.between(prev_end, ge)
+assert len(ps) == 5, f"getting up: expected 5 passages, found {[O.P[i]['text'][:40] for i in ps]}"
+bearings, look, reason, intent, outcome = ps
+kw = O.click(gb, ge, cmd="click keyword")
+mind = next(c.get("label") for c in O.clicks if c["t"] > kw and c.get("cmd", "").startswith("choose")
+            and c.get("label") not in ("Think",))
+O.game(cut, O.end(bearings),
+       "Childhood is over. The body wakes on open ground, spent, and a mind takes our bearings.", O.R(bearings),
+       fade=True)
+O.game(O.end(bearings), O.end(look), O.R(look), W("Getting up is the first real roll of the game."))
+O.game(O.end(look), O.end(reason),
+       f"We think about the {O.word(kw)}, this time with {mind}, one of the minds from the docks. Listen to how "
+       "differently it reasons.", O.R(reason), *note("up_reason"))
+O.game(O.end(reason), O.end(intent), O.R(intent), *note("up_intent"))
+roll = next(l for l in O.log if l.startswith("[cli] dice ["))
+faces = roll.split("[", 2)[2].split("]")[0].split()
+sixes = faces.count("6")
+spent = len([c for c in O.clicks if gb <= c["t"] <= ge and c.get("cmd", "").startswith("click humor")])
+dice_end = O.click(O.end(intent), ge, label="Continue") - 0.3
+roll_line = (f"We click the act, and Execute. The dice: {len(faces)} of them"
+             + (f", and {sixes} six{'es' if sixes != 1 else ''}." if sixes else ", and not a single six.")
+             + (f" Not enough: we spend {spent} humor{'s' if spent != 1 else ''}, and the roll succeeds." if spent else ""))
+O.game(O.end(intent), dice_end, roll_line)
 manim("DiceHumors",
       "Every roll works the same way. You roll one die for each level of every mind in the chain: the one that "
       "observed, the one that thought, and the one that acts. The difficulty is the number of sixes you need. So "
@@ -262,14 +353,13 @@ manim("DiceHumors",
       "one per die, and only as many in one roll as the viscera allow. Blood adds one to a die. Yellow bile takes "
       "one away. Phlegm does nothing, but spending it clears the way to the humor behind it. Black bile does "
       "nothing, and never leaves. A queue full of black bile is spent, and when all four are, the body dies. So "
-      "humors are your luck, and also your life.",
-      "Here, two sixes were enough to stand up without help.")
-game(3121.0, end(24), R(24),
-     W("Success. Look at the lines below: every mind in the chain gained a point of experience, and the act "
-       "taught a new one, Vigor. Doing things is how you learn."))
-game(end(24), 3223.0,
-     "The run has truly begun, and we are on the world map. Before travelling, let's look at what we have. "
-     "Escape opens the menu, and Protagonist opens the character screen.")
+      "humors are your luck, and also your life.")
+O.game(dice_end, O.end(outcome), O.R(outcome),
+       W("Success. Look at the lines below: every mind in the chain gained a point of experience, and the act "
+         "taught a new one, Vigor. Doing things is how you learn."), *note("up_outcome"))
+O.game(O.end(outcome), O.at("clip-end", "run_start"),
+       "The run has truly begun, and we are on the world map. Before travelling, let's look at what we have. "
+       "Escape opens the menu, and Protagonist opens the character screen.")
 
 # ── 6. the protagonist screen ─────────────────────────────────────────────────
 game(3223.0, 3236.0, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.",
@@ -466,17 +556,18 @@ storyboard = {
     "size": [1920, 1080], "fps": 30,
     "dither": {"animation": {"levels": 4, "scale": 2}, "game": {"levels": 6, "scale": 1}},
     "fast_forward": {"speed": 8, "min": 1.5, "label": False},
+    "fit": "slow",
     "voice": {"name": "en_GB-alan-medium", "speed": 1.0, "grit": 0.15},
     "voice_styles": {"reading": {"speed": 0.88, "grit": 0, "noise_scale": 0.9, "noise_w": 1.1,
                                  "pitch": 0.97, "room": 0.16}},
     "music": {"take_audio": "tutorial", "level_db": -34, "duck": 0.65},
     "clicks": {"gain": 0.5},
-    "recordings": {"creation": {
-        "script": "creation.cli", "dir": "build/rec_creation", "timeout": 1800,
+    "recordings": {"opening": {
+        "script": "opening.cli", "dir": "build/rec_opening", "timeout": 7200,
         "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "
                  "--no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only "
                  "farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 "
-                 "--job-only farmhand --humors all=voluptas"},
+                 "--job-only farmhand --humors all=voluptas --save-path build/rec_opening/save.json"},
                    "tutorial": {
         "script": "tutorial.cli", "dir": "build/rec_tutorial_b", "timeout": 14400,
         "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "

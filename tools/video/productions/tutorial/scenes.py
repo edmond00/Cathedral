@@ -1,6 +1,10 @@
 """Animations for the tutorial ("the first hour").
 
 Every rule drawn here is the manual's, which is derived from the code (docs/manual, synced at HEAD):
+  System        - how a character fits together: body -> derived measures, body -> a modus mentis's ceiling,
+                  levels -> dice (01-anatomy.md §6, 02-memory.md §3, 06-narration.md §5); its example is the
+                  tutorial's own character: Swordsmanship on arms and hands (SwordsmanshipModusMentis.Organs),
+                  the contributions by MaxLevelCurve.Linear (round(3 x score / max), away from zero)
   Organs        - the derived measures, by source (docs/manual/01-anatomy.md §6; src/game/narrative/body/stats/)
   NarrationTurn - the three steps of an act and the noetic budget (06-narration.md §3, §5)
   DiceHumors    - the pool, the difficulty, the transmuting virtues and the viscera limit
@@ -83,6 +87,98 @@ class Organs(BrandScene):
         for p in panels:
             self.play(Create(p[0][0]), FadeIn(p[0][1:]), FadeIn(p[1], shift=UP * 0.1, lag_ratio=0.1), run_time=0.8)
             self.beat(0.1, 0.5)
+        self.fill_to_target()
+
+
+# ── 1b. how a character fits together ────────────────────────────────────────
+
+class System(BrandScene):
+    """Three layers (body, ways of thinking, measures) and what feeds what, then the tutorial character's
+    Swordsmanship worked through: its two organs, their contributions, its ceiling, and two measures."""
+
+    def layer(self, title, lines, color):
+        body = VGroup(*[self.text(l, 24, GRAY85) for l in lines]).arrange(DOWN, aligned_edge=LEFT, buff=0.12)
+        box = self.frame_box(body, color, buff=0.3, label=title)
+        return VGroup(box, body)
+
+    def construct(self):
+        head = self.header("how a character works")
+        body = self.layer("BODY", ["5 regions", "22 organs", "a score each"], GOLD)
+        minds = self.layer("WAYS OF THINKING", ["learned in play", "a level each", "one die per level"], LIGHT_PURPLE)
+        meas = self.layer("MEASURES", ["health, memory,", "noetic points,", "movement..."], GRAY75)
+        body.move_to(LEFT * 4.6 + UP * 0.2)
+        minds.move_to(RIGHT * 3.0 + UP * 1.45)
+        meas.move_to(RIGHT * 3.0 + DOWN * 1.35)
+        a1 = Arrow(body.get_right(), minds.get_left(), buff=0.15, color=GOLD, stroke_width=3)
+        a2 = Arrow(body.get_right(), meas.get_left(), buff=0.15, color=GOLD, stroke_width=3)
+        l1 = self.text("sets the ceiling", 22, GOLD).next_to(a1.get_center(), UP, buff=0.35).shift(LEFT * 0.4)
+        l2 = self.text("computes", 22, GOLD).next_to(a2.get_center(), DOWN, buff=0.35).shift(LEFT * 0.4)
+        side = self.text("around them: items lend dice, worn clothes protect and charm,\n"
+                         "and four organs make the humors that bend a die", 20, GRAY60, line_spacing=0.85)
+        side.to_edge(DOWN, buff=0.35)
+        self.play(FadeIn(body, shift=RIGHT * 0.2), run_time=0.7)
+        self.beat(0.04)
+        self.play(FadeIn(minds, shift=LEFT * 0.2), run_time=0.7)
+        self.play(FadeIn(meas, shift=LEFT * 0.2), run_time=0.7)
+        self.beat(0.06)
+        self.play(GrowArrow(a2), FadeIn(l2), run_time=0.7)
+        self.beat(0.08)
+        self.play(GrowArrow(a1), FadeIn(l1), run_time=0.7)
+        rule = self.text("ceiling = 1 + up to 3 per organ,\n          or up to 6 for a region", 21, LIGHT_PURPLE,
+                         line_spacing=0.85)
+        rule.move_to(RIGHT * 3.0 + UP * 0.05)
+        self.play(FadeIn(rule), run_time=0.6)
+        self.beat(0.06)
+        self.play(FadeIn(side), run_time=0.6)
+        self.beat(0.08)
+        if self.params.get("stop") == "abstract":          # for checking the first half's layout
+            return
+
+        # the example: this character's Swordsmanship
+        everything = VGroup(body, minds, meas, a1, a2, l1, l2, side, rule)
+        self.play(FadeOut(everything), run_time=0.6)
+        title = self.text("THIS CHARACTER: SWORDSMANSHIP", 30, LIGHT_PURPLE).next_to(head, DOWN, buff=0.35)
+        self.play(FadeIn(title), run_time=0.5)
+
+        def organ_row(name, score, top, plus):
+            n = self.text(name, 28, GOLD)
+            bar = VGroup(*[Square(0.34, stroke_color=GRAY50, stroke_width=1.5,
+                                  fill_color=GOLD if i < score else BLACK_, fill_opacity=1 if i < score else 0)
+                           for i in range(top)]).arrange(RIGHT, buff=0.06)
+            frac = self.text(f"{score} of {top}", 24, GRAY85)
+            pl = self.text(f"+{plus}", 30, LIGHT_PURPLE)
+            return VGroup(n, bar, frac, pl)
+
+        arms = organ_row("arms", 2, 4, 2)
+        hands = organ_row("hands", 4, 6, 2)
+        for r in (arms, hands):
+            r[1].next_to(r[0], RIGHT, buff=0.5)
+        x_bar = max(arms[0].get_right()[0], hands[0].get_right()[0]) + 0.5
+        for i, r in enumerate((arms, hands)):
+            r.move_to(UP * (1.0 - i * 0.9))
+            r[0].set_x(-5.0, direction=LEFT)
+            r[1].set_x(x_bar - 5.0 + 0.6, direction=LEFT)
+            r[2].next_to(r[1], RIGHT, buff=0.4)
+            r[3].next_to(r[2], RIGHT, buff=0.6)
+        self.play(FadeIn(arms[0]), LaggedStart(*[FadeIn(q) for q in arms[1]], lag_ratio=0.1), FadeIn(arms[2]), run_time=0.9)
+        self.play(FadeIn(arms[3], scale=1.4), run_time=0.4)
+        self.beat(0.04)
+        self.play(FadeIn(hands[0]), LaggedStart(*[FadeIn(q) for q in hands[1]], lag_ratio=0.08), FadeIn(hands[2]), run_time=0.9)
+        self.play(FadeIn(hands[3], scale=1.4), run_time=0.4)
+        self.beat(0.04)
+        ceiling = self.text("ceiling: 1 + 2 + 2 = 5", 32, LIGHT_PURPLE).move_to(DOWN * 0.75 + LEFT * 2.2)
+        self.play(TransformFromCopy(VGroup(arms[3], hands[3]), ceiling), run_time=0.9)
+        levels = VGroup(*[Square(0.42, stroke_color=LIGHT_PURPLE, stroke_width=2,
+                                 fill_color=LIGHT_PURPLE if i < 2 else BLACK_, fill_opacity=0.8 if i < 2 else 0)
+                          for i in range(5)]).arrange(RIGHT, buff=0.1).next_to(ceiling, RIGHT, buff=0.6)
+        now = self.text("level 2 today: 2 of its dice", 24, GRAY85).next_to(levels, DOWN, buff=0.2)
+        self.play(FadeIn(levels, lag_ratio=0.15), FadeIn(now), run_time=0.9)
+        self.beat(0.06)
+        m1 = self.text("backbone 4  ->  8 movement points in a fight", 26, GRAY85)
+        m2 = self.text("head 10  ->  6 noetic points per scene", 26, GRAY85)
+        ms = VGroup(m1, m2).arrange(DOWN, aligned_edge=LEFT, buff=0.18).move_to(DOWN * 2.35)
+        self.play(FadeIn(m1, shift=UP * 0.1), run_time=0.6)
+        self.play(FadeIn(m2, shift=UP * 0.1), run_time=0.6)
         self.fill_to_target()
 
 

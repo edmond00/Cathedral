@@ -54,6 +54,31 @@ public sealed class RecordGate
         _driver = driver;
         _pointer = pointer;
         Cathedral.Audio.AmbianceEngine.GameEventFired += evt => RecordMode.Log("sfx", new() { ["event"] = evt.ToString() });
+        Cathedral.Game.Save.SaveFile.Written += KeepCheckpoint;
+    }
+
+    private string _lastMark = "start";
+    private int _checkpoints;
+
+    /// <summary>
+    /// A copy of every save the take writes (with <c>--save-path</c>; one on each arrival at the world map),
+    /// named after the mark it was written in: <c>saves/03_travel_city.json</c>. A take can then be
+    /// resumed from any of them, Continue against a copy, rather than replayed from the start.
+    /// </summary>
+    private void KeepCheckpoint(string path)
+    {
+        try
+        {
+            string dir = System.IO.Path.Combine(RecordMode.OutputDir, "saves");
+            System.IO.Directory.CreateDirectory(dir);
+            string name = $"{++_checkpoints:00}_{_lastMark}.json";
+            System.IO.File.Copy(path, System.IO.Path.Combine(dir, name), overwrite: true);
+            RecordMode.Log("save", new() { ["file"] = "saves/" + name });
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[record] could not keep a checkpoint of the save: {ex.Message}");
+        }
     }
 
     /// <summary>True while a gesture or a <c>hold</c> is playing out: the driver runs nothing else meanwhile.</summary>
@@ -141,6 +166,7 @@ public sealed class RecordGate
         switch (cmd.ToLowerInvariant())
         {
             case "mark":
+                _lastMark = string.Join('_', rest);
                 RecordMode.Log("mark", new() { ["label"] = string.Join(' ', rest) });
                 CliMode.Emit($"ok: mark \"{string.Join(' ', rest)}\" at {Secs(RecordMode.Now)}");
                 return true;

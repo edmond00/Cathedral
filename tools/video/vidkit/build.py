@@ -64,6 +64,7 @@ class Segment:
     hover_wav: Path | None = None
     src_t0: float | None = None          # a game segment: where in its recording it starts
     pieces: list = field(default_factory=list)   # and how its footage is retimed: (start, end, speed)
+    slowed: list | None = None           # speeds the fit chose instead, when the narration needs longer
     # The narration in groups, each starting where its first part is anchored: (wav, seconds, anchor),
     # the anchor None (straight after the group before), "end" (once the picture has played) or a moment
     # of the recording (a game segment). `starts` is where each group starts in the segment.
@@ -179,13 +180,12 @@ class Build:
         tts.write_wav(out, joined)
         return out, len(joined) / audio.RATE
 
-    def target_seconds(self, seg: Segment) -> float:
+    def place_groups(self, seg: Segment, g: dict | None) -> float:
+        """Where each group of the narration starts, given the picture's timing; returns when it ends."""
         lead, tail = self.voice["lead_in"], self.voice["tail"]
         gap = float(self.voice.get("part_gap", 0.35))
         seg.starts = []
-        need = 0.0
-        g = self.game_timing(seg) if any(a is not None for _, _, a in seg.groups) else None
-        t = lead
+        need, t = 0.0, lead
         for i, (_, secs, anchor) in enumerate(seg.groups):
             start = t + (gap if i else 0.0)
             if anchor == "end":
@@ -195,6 +195,41 @@ class Build:
             seg.starts.append(start)
             t = start + secs
             need = t + tail
+        return need
+
+    def target_seconds(self, seg: Segment) -> float:
+        """How long the segment lasts: its narration, placed. A game segment whose narration outlasts its
+        footage is not frozen on its last frame (unless the storyboard says "fit": "hold"): its footage is
+        slowed to fit, the model's waits first (down to their real pace, text streaming as it did), then
+        what the player does (down to half speed); only what still does not fit is held."""
+        g = self.game_timing(seg) if seg.spec["type"] == "game" else None
+        need = self.place_groups(seg, g)
+        mode = seg.spec.get("fit", self.sb.get("fit", "hold"))
+        if g is not None and mode == "slow" and need > g["natural"] + 0.05:
+            for _ in range(12):
+                pieces = g["pieces"]
+                durs = [(b_ - a_) / sp if sp > 0 else 0.0 for a_, b_, sp in pieces]
+                extra = need - sum(durs)
+                if extra <= 0.05:
+                    break
+                fast = [i for i, (a_, b_, sp) in enumerate(pieces) if sp > 1.0]
+                cap_fast = sum((pieces[i][1] - pieces[i][0]) - durs[i] for i in fast)
+                take = min(extra, cap_fast)
+                if cap_fast > 0:
+                    for i in fast:
+                        durs[i] += take * ((pieces[i][1] - pieces[i][0]) - durs[i]) / cap_fast
+                extra -= take
+                if extra > 0.05:
+                    slow = [i for i, (a_, b_, sp) in enumerate(pieces) if 0 < sp <= 1.0 and durs[i] < 2 * (b_ - a_) - 1e-6]
+                    cap_slow = sum(2 * (pieces[i][1] - pieces[i][0]) - durs[i] for i in slow)
+                    if cap_slow <= 0:
+                        break
+                    take = min(extra, cap_slow)
+                    for i in slow:
+                        durs[i] += take * (2 * (pieces[i][1] - pieces[i][0]) - durs[i]) / cap_slow
+                seg.slowed = [((b_ - a_) / d if d > 0 else sp) for (a_, b_, sp), d in zip(pieces, durs)]
+                g = self.game_timing(seg)
+                need = self.place_groups(seg, g)
         return max(need, float(seg.spec.get("min", 0)))
 
     # ── 3. pictures ───────────────────────────────────────────────────────────
@@ -285,6 +320,8 @@ class Build:
             cursor = b_
         if cursor < t1:
             pieces.append((cursor, t1, speed))
+        if seg.slowed is not None and len(seg.slowed) == len(pieces):
+            pieces = [(a_, b_, sp) for (a_, b_, _), sp in zip(pieces, seg.slowed)]
 
         def remap(t: float) -> float:
             out = 0.0
