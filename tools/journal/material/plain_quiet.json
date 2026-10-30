@@ -14,7 +14,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 2,
@@ -30,7 +34,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:butchery"
+      "Key": "mm:Protagonist:butchery",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 3,
@@ -46,7 +54,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:peasantry"
+      "Key": "mm:Protagonist:peasantry",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 4,
@@ -62,7 +74,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:ripelore"
+      "Key": "mm:Protagonist:ripelore",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 5,
@@ -78,7 +94,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:gluttony"
+      "Key": "mm:Protagonist:gluttony",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 6,
@@ -94,7 +114,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:friendship"
+      "Key": "mm:Protagonist:friendship",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 7,
@@ -110,7 +134,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:masquerade"
+      "Key": "mm:Protagonist:masquerade",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 8,
@@ -126,7 +154,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:mycology"
+      "Key": "mm:Protagonist:mycology",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 9,
@@ -142,7 +174,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:survivalism"
+      "Key": "mm:Protagonist:survivalism",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 10,
@@ -158,7 +194,11 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "visit:8068"
+      "Key": "visit:8068",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 11,
@@ -169,12 +209,16 @@
       "LocationId": 8068,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I find myself walking along the hedgerow, in the morning, as if I were a child playing in the same place, only now the thorns are a reminder of the long days spent gathering mushrooms. I shift my gaze to the hare, its long ears flat against the sandy ground as it breathes deeply, a parallel to my childhood days spent among the rustling grass, when I too would hold my breath and listen for a sign of danger.",
+      "Source": "I find myself walking along the hedgerow, in the morning, as I did when I was gathering mushrooms. The thorny hedgerow standing between two open stretches reminds me of the looters who raided where I lived, their presence still lingering in my thoughts. I look upon a hare, its ears long and sandy, flattened against its head as it sniffles the air, drawing a parallel to the time I played in the fields, ears flat against my skull to hide from looters.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 12,
@@ -185,12 +229,16 @@
       "LocationId": 8068,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I notice the long-eared sandy hare, its ears flat against its head, nose working the air. I want to breathe in the scent that comes with it, a simple pleasure of the land, and rely on the plain ways of country folk to guide me.",
+      "Source": "I notice the long-eared sandy hare, its ears flat against its head, nose working the air. I want to breathe in the scent that comes with it, a simple pleasure of the land, and rely on the ways of the countryside folk to understand its best hour.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 13,
@@ -201,31 +249,19 @@
       "LocationId": 8068,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I stumbled in the scent of the hare, missed the thread of my thoughts. Soil crunched under my feet, wild thoughts scattered like seeds in a storm.",
+      "Source": "I lost the scent of the fresh earth, a hare\u0027s breath, as I dug in the soil. Thoughts slipped from my mind, like seeds not planted well.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 3,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "breathe in the smell of the hare",
+      "Succeeded": false
     },
     {
       "Seq": 14,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Plain",
-      "Area": "Hedgerow",
-      "LocationId": 8068,
-      "Actor": "Eghbert Moorshield",
-      "ByCompanion": false,
-      "Source": "Focus lost: -1 noetic point",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 15,
       "Kind": 0,
       "Day": 0,
       "Place": "Plain",
@@ -233,15 +269,19 @@
       "LocationId": 8068,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I watch the blades of grass sway in the wind, a scene much like when I played among the fields, the sky above vast and unbroken, as it was when I used to imagine myself among the corpses looters left. I glance at a gate bar, recalling how my friends and I would play near the sagging five-bar gate with its top rail worn smooth by our laughter. I reach out to a berry bush, a familiar thorny shrub from my childhood, heavy with drupelets like the one I once gathered to survive the looters.",
+      "Source": "I remember gathering mushrooms among the trees, and this oak\u0027s deep fissures and heavy boughs echo the patterns I once saw in the earth\u0027s crust, drawing a quiet parallel between then and now. I let my focus go, where once I wandered the fields, ignoring the harvest in favor of play.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
-      "Seq": 16,
+      "Seq": 15,
       "Kind": 3,
       "Day": 5,
       "Place": "Plain",
@@ -254,7 +294,31 @@
       "State": 0,
       "Group": 3,
       "Block": null,
-      "Key": "visit:32010"
+      "Key": "visit:32010",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
+    },
+    {
+      "Seq": 16,
+      "Kind": 0,
+      "Day": 5,
+      "Place": "Plain",
+      "Area": "Hedgerow",
+      "LocationId": 32010,
+      "Actor": "Eghbert Moorshield",
+      "ByCompanion": false,
+      "Source": "I find myself walking along the hedgerow, in the morning, as I did when I was gathering mushrooms. This place is a long thorny hedgerow standing between two open stretches. Around me are a gate bar, a hare, an oak tree, a beetle, and a water meadow. I step closer to the bush, my hand instinctively reaching out to pluck a drupelet. The memory of gathering mushrooms in the dense thicket, its thorns a sharp reminder of survival, echoes softly in my thoughts.",
+      "Written": "",
+      "State": 1,
+      "Group": 3,
+      "Block": 0,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 17,
@@ -265,12 +329,16 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I find myself walking along the hedgerow, in the morning, as I did when I used to play among the thorny bushes, gathering mushrooms to survive. The scene is reminiscent of those days, with a hare, a patch of flowers, a gate bar, a water meadow, and an oak tree standing between two open stretches. I am reminded of playing among the trees, the soft weeping willows always whispering secrets to the earth. Their long fronds trailing gently, much like how I used to sway in the breeze, my imagination lost in tales of the dead.",
+      "Source": "I notice a sagging five-bar gate, its top rail rubbed smooth by leaning. Its colour and scent, as they swell to their point, draw me to examine the gate bar closely. I will rely on the plain ways of country folk, knowing that waiting has its price, but this hour is right for such scrutiny.",
       "Written": "",
       "State": 1,
       "Group": 3,
-      "Block": 0,
-      "Key": ""
+      "Block": 1,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 18,
@@ -281,12 +349,16 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I perceive a thorny bush, its drupelets heavy and dark, swelled to their prime. I wish to examine it closely, relying on the simple methods of country folk.",
+      "Source": "I want to pass through, not stand and stare at the gate bar. Hens cackle as I haul the pail, the soil soft under my boots, the season\u0027s task waiting to be done.",
       "Written": "",
       "State": 1,
       "Group": 3,
-      "Block": 1,
-      "Key": ""
+      "Block": 3,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 19,
@@ -297,12 +369,16 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I want not to stand and look, but to work, to handle the soil and the beasts, to plow and plant. The berry bush stands still, its berries tempting, but I know my hands and the task calls me forth.",
+      "Source": "I pass by the gate bar, its edge too sharp, not yet polished. Waiting past this moment will only darken its edge, and I think again, ready to move on. I could still examine the gate bar closely, another way. The carcasses\u0027 scent, rich and heady, reminds me to cut them into joints now, before they go past their prime.",
       "Written": "",
       "State": 1,
       "Group": 3,
-      "Block": 3,
-      "Key": ""
+      "Block": 1,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 20,
@@ -313,12 +389,16 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I will not linger, for the berry\u0027s time is ripe, and my hand knows well the hour it should be plucked. I could still examine the berry bush closely, another way. I will rely on the cutting of joints, for it holds the scent and colour of the ripest time, before they spoil on the branch.",
+      "Source": "I failed to examine the gate bar closely. Due to this, my thoughts scattered like meat lost from a cleanly cut joint.",
       "Written": "",
       "State": 1,
       "Group": 3,
-      "Block": 1,
-      "Key": ""
+      "Block": 3,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "examine the gate bar closely",
+      "Succeeded": false
     },
     {
       "Seq": 21,
@@ -329,44 +409,16 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I failed to examine the berry bush closely, a mistake that severed the thread of my thoughts, leaving clean cuts of regret in my mind\u0027s blade.",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 22,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Hedgerow",
-      "LocationId": 32010,
-      "Actor": "Eghbert Moorshield",
-      "ByCompanion": false,
-      "Source": "Focus lost: -1 noetic point",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 23,
-      "Kind": 0,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Hedgerow",
-      "LocationId": 32010,
-      "Actor": "Eghbert Moorshield",
-      "ByCompanion": false,
-      "Source": "I remember playing among the grass, pretending to be dead. This water meadow echoes the soft, verdant fields of my childhood, where I gathered mushrooms. I glance at a flower patch, recalling how I once played among such wildflowers, bees always buzzing between them. I let my focus go, where once I wandered through fields, ignoring the harvest now ripe, just as I did then, when the looters passed and my attention wandered.",
+      "Source": "My attention is drawn to a grassland. This is an open wind-swept grassland, the sky vast and unbroken above. I look upon a flower patch, recalling how I once gathered mushrooms here, the bright colours of wildflowers drawing me with the same instinctive pull. I turn to a dandelion, its seed globe ready to scatter, a childhood memory of gathering mushrooms to survive echoes in my mind.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     }
   ],
   "NextGroup": 4,

@@ -3846,6 +3846,7 @@ public class LocationTravelGameController : IDisposable
             foreach (var e in j.Entries)
                 lines.Add($"journal-entry seq={e.Seq} group={e.Group} kind={e.Kind} state={e.State} day={e.Day} "
                         + $"place={e.Place} actor={e.Actor} companion={(e.ByCompanion ? "yes" : "no")} "
+                        + (e.Attempt.Length > 0 ? $"attempt={(e.Succeeded ? "done" : "failed")}:{e.Attempt} " : "")
                         + $"text={(e.Written.Length > 0 ? e.Written : e.Source).Replace('\n', ' ')}");
             return lines;
         }

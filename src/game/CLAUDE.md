@@ -2133,6 +2133,17 @@ A block no modus mentis narrated (`ModusMentis` null: a trade note, a fight's lo
 talking and is not recorded. A lesson milestone is shown but marked `Lesson` and kept from the
 chronicler, which turned modus mentis names into "learning social interaction".
 
+**Everything is recorded; the chronicler is told the events.** `ChroniclerPrompt.Item` gives lines
+and facts whole; an act as what was tried and whether it worked (`NarrationBlock.Attempt`, the plain
+phrase the thinking chose, kept on the entry as `Attempt`/`Succeeded`) with the first sentence of its
+telling; an observation as a setting (`SCENE`, its first sentence); no thought at all, and a feeling
+only to the tinted diary. An outcome with no attempt is a mind turning a goal
+down before any button existed, and is left out as a thought; a refusal by a rule or as impossible
+carries its attempt and reads "FAILED TO". Lines go unquoted, first sentence only. The token cap
+shrinks with the notes (`ChroniclerPrompt.TokensFor`): a thin visit given 140 tokens was filled with
+people and conversations that never happened. Given the narration whole, the observations (a third of
+the notes, the longest) became the paragraph and the visit's events came second.
+
 Narration is credited to whoever is acting when the block commits — the Speak About hand-off commits
 the speech before switching member, so the speech stays the speaker's and what follows is the
 companion's. **A visit is the chronicler's unit**: entering the world map closes the group and its

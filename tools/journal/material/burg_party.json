@@ -14,7 +14,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 2,
@@ -30,7 +34,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:sense_of_humor"
+      "Key": "mm:Protagonist:sense_of_humor",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 3,
@@ -46,7 +54,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:beast_sense"
+      "Key": "mm:Protagonist:beast_sense",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 4,
@@ -62,7 +74,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:hospitality"
+      "Key": "mm:Protagonist:hospitality",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 5,
@@ -78,7 +94,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:foul_play"
+      "Key": "mm:Protagonist:foul_play",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 6,
@@ -94,7 +114,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:petty_thief"
+      "Key": "mm:Protagonist:petty_thief",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 7,
@@ -110,7 +134,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:treasure_hunting"
+      "Key": "mm:Protagonist:treasure_hunting",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 8,
@@ -126,7 +154,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:brute_force"
+      "Key": "mm:Protagonist:brute_force",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 9,
@@ -142,7 +174,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:endurance"
+      "Key": "mm:Protagonist:endurance",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 10,
@@ -158,7 +194,11 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "visit:26965"
+      "Key": "visit:26965",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 11,
@@ -169,12 +209,16 @@
       "LocationId": 26965,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I find myself in the village square, afternoon\u0027s warm light casting shadows. A well, a goose, a mounting block, stocks and a wayside cross loom as they once did in my childhood at the stable. I was drawn to the ways leading on from the stable. A church walk, a cattle pen, and a threshing floor all felt familiar, like a childhood memory of pushing through a storm. I let my focus go, where the stable animals once tormented me, and the storm pushed through with no legs.",
+      "Source": "I find myself in the village square, afternoon\u0027s heat warming my skin, and a well, goose, mounting block, stocks, and cross stand as silent sentinels from my childhood at the stable. I find myself at the edge of the stable, where the ways lead on from here. Like then, the church walk, the cattle pen, and the threshing floor are all part of this expansive space. I let my focus go, where the stable animals once tormented me, and I let the storm rage on without turning back.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 12,
@@ -185,28 +229,36 @@
       "LocationId": 26965,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I spy a white goose, his neck stretched wide in a hiss. The smell alone is worth the strain to keep walking, for a laugh in the day is better than weeping.",
+      "Source": "I spy a well at the heart of the square, its wooden bucket dangling, but the scene\u0027s dull as a dead fish. Time to find some levity, perhaps a jest at the expense of my own boredom.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 13,
-      "Kind": 3,
+      "Kind": 0,
       "Day": 0,
       "Place": "Coast",
       "Area": "Square",
       "LocationId": 26965,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "Learned musk reading",
+      "Source": "I spy a well at the heart of the square, its wooden bucket dangling on a rope, but it\u0027s clear no treasure lies here. Might as well cast my gaze upon a jesting sea creature instead.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
-      "Block": null,
-      "Key": "mm:Protagonist:musk_reading"
+      "Block": 1,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 14,
@@ -217,95 +269,19 @@
       "LocationId": 26965,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I have breathed in the scent of the goose, a musk that lingered in my breath. This success teaches me to be patient, for even the musk fades, leaving only the steady oak of my spirit.",
+      "Source": "I spy a well at the heart of the square, its wooden bucket hanging on a rope, but there\u0027s no work to be done. I\u0027ll take this chance to fish for mussels instead.",
       "Written": "",
       "State": 1,
       "Group": 2,
-      "Block": 3,
-      "Key": ""
+      "Block": 1,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 15,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 26965,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis learned: Musk Reading",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 16,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 26965,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Childhood Reminescence (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 17,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 26965,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Sense of Humor (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 18,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 26965,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Endurance (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 19,
-      "Kind": 0,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 26965,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "I catch the scent of alertness from the goose, a white head stretched wide as a warning. He stinks of fear, his neck twitching with the threat of flight. I turn to the mounting block, scenting the earth\u0027s dampness and the tension in the air, posture of the stone steps warning of a horse\u0027s ready charge. I let my focus go, scenting the coast for signs of threat, my mind drifting as the breeze caressed my senses, warning in the very air.",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": 0,
-      "Key": ""
-    },
-    {
-      "Seq": 20,
       "Kind": 3,
       "Day": 5,
       "Place": "Village",
@@ -318,10 +294,14 @@
       "State": 0,
       "Group": 3,
       "Block": null,
-      "Key": "visit:6800"
+      "Key": "visit:6800",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
-      "Seq": 21,
+      "Seq": 16,
       "Kind": 0,
       "Day": 5,
       "Place": "Village",
@@ -329,15 +309,19 @@
       "LocationId": 6800,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I wander the village square, afternoon\u0027s warmth settling. Here, a dirt path weaves through, scent of earth and fresh hay. My gaze catches the market stall, the goose\u0027s wary eye. The stocks stand silent, the mounting block ready. Every step echoes, a village heartbeat. I catch the scent of caution, the posture of a beast wary. A church walk, a cattle pen, a threshing floor - each way leads on, each hinting at unseen danger.",
+      "Source": "I walk through the heart of the village, the afternoon sun warming my back. A goose steps with purpose, its head held high. The forge\u0027s scent rises, a familiar call to iron and fire. My eyes scan the paths, each one a story of the day. A wayside cross stands firm, a silent witness to the village\u0027s heartbeat. The market stall beckons, a balm for weary travelers. I scent the earthy air, the horse\u0027s breath quickens as it steps onto the squat stone steps, its posture tense, warning me of a hidden danger in the forest.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
-      "Seq": 22,
+      "Seq": 17,
       "Kind": 0,
       "Day": 5,
       "Place": "Village",
@@ -345,15 +329,19 @@
       "LocationId": 6800,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I spy a gleaming market stall, its goods arrayed for sale. I seek the laughter in this market, relying on the warmth of strangers and travelers to lift my spirits.",
+      "Source": "I spy a white goose, hissing with neck stretched. Curious, I want to hear its squawk. Perhaps I\u0027ll steal an apple instead, for pocket picking\u0027s a lighter jest.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
-      "Seq": 23,
+      "Seq": 18,
       "Kind": 3,
       "Day": 5,
       "Place": "Village",
@@ -361,15 +349,19 @@
       "LocationId": 6800,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "Learned crowd murmur",
+      "Source": "Learned birdsong",
       "Written": "",
       "State": 0,
       "Group": 3,
       "Block": null,
-      "Key": "mm:Protagonist:crowd_murmur"
+      "Key": "mm:Protagonist:birdsong",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
-      "Seq": 24,
+      "Seq": 19,
       "Kind": 0,
       "Day": 5,
       "Place": "Village",
@@ -377,79 +369,19 @@
       "LocationId": 6800,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I hear the market murmur, sit at ease, and learn much from the gathered tales. Thank you for choosing our humble stall.",
+      "Source": "I listened to the goose\u0027s call, my fingers quick as shadows, and it did me proud. A small success that taught me much of birdsong\u0027s soft, hidden language.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 3,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "listen to the goose",
+      "Succeeded": true
     },
     {
-      "Seq": 25,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Village",
-      "Area": "Square",
-      "LocationId": 6800,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis learned: Crowd Murmur",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 26,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Village",
-      "Area": "Square",
-      "LocationId": 6800,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Beast Sense (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 27,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Village",
-      "Area": "Square",
-      "LocationId": 6800,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Sense of Humor (2/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 28,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Village",
-      "Area": "Square",
-      "LocationId": 6800,
-      "Actor": "Ghiulhiano Windhill",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Hospitality (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 29,
+      "Seq": 20,
       "Kind": 0,
       "Day": 5,
       "Place": "Village",
@@ -457,12 +389,16 @@
       "LocationId": 6800,
       "Actor": "Ghiulhiano Windhill",
       "ByCompanion": false,
-      "Source": "I scent movement and hear a flick of an ear. These three stone steps warn of a horse\u0027s approach, a creature familiar from my own stallion\u0027s rhythmic breath. I catch the scent of alertness from the white goose, his neck stretched wide. It warns with every flick of his head, a kinship to beasts old and wild. I shift my scent, leading on. Here, a church walk, a cattle pen, and a threshing floor lead on, each with its own warning in the air and posture of the beasts.",
+      "Source": "I sense a creature, a large white goose hissing. His neck stretched, alert, warning with each breath. A kinship to beasts, I read the readiness in his stance. I scent the tension in the air, the horse\u0027s tail flicking a warning, and I see three stone steps ready to mount, a beast\u0027s readiness palpable in the soft earth. I notice the village stocks, their grim set oak, the leg-holes polished sharp by use. It smells of restraint and fear, a warning in the way they stand, the coldness of iron against skin.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     }
   ],
   "NextGroup": 4,

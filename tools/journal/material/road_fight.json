@@ -14,7 +14,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 2,
@@ -30,7 +34,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:sense_of_humor"
+      "Key": "mm:Protagonist:sense_of_humor",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 3,
@@ -46,7 +54,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:beast_sense"
+      "Key": "mm:Protagonist:beast_sense",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 4,
@@ -62,7 +74,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:hospitality"
+      "Key": "mm:Protagonist:hospitality",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 5,
@@ -78,7 +94,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:hard_labor"
+      "Key": "mm:Protagonist:hard_labor",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 6,
@@ -94,7 +114,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:avarice"
+      "Key": "mm:Protagonist:avarice",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 7,
@@ -110,7 +134,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:high_society_manners"
+      "Key": "mm:Protagonist:high_society_manners",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 8,
@@ -126,7 +154,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:brute_force"
+      "Key": "mm:Protagonist:brute_force",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 9,
@@ -142,7 +174,11 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:endurance"
+      "Key": "mm:Protagonist:endurance",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 10,
@@ -158,7 +194,11 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 11,
@@ -174,7 +214,11 @@
       "State": 0,
       "Group": 3,
       "Block": null,
-      "Key": "visit:28437"
+      "Key": "visit:28437",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 12,
@@ -185,12 +229,16 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I find myself at noon in the village square, where my days at the stable once echoed. The wayside cross and the mounting block remind me of the times I pushed through a violent storm until my legs gave out. I was once at the stable, and I remember the ways leading on, just as now. A green edge, a waterside, a village orchard, and a threshing floor - all familiar, yet distant memories of my childhood.",
+      "Source": "I find myself at noon in the village square, where my days at the stable once echoed. The well\u0027s water calls back to the days I fetched for my siblings, and the open dirt square feels like a stage, just as my world was once a daily rehearsal. I look upon the paths that lead on. Childhood memories of the stable surface, reminding me of days spent caring for animals and dreaming of fortune. I push through a storm, and the chaff blows off the threshing floor in every wind. It echoes the calm after the violent storm at the stable, where I once saved every coin.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 13,
@@ -201,12 +249,16 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy an ancient, weathered stone cross, its carvings worn smooth like the hands of a wise old man. But there\u0027s naught here to mend, so I\u0027ll jest and turn my gaze to the sky.",
+      "Source": "I spy the well at the heart of the square, its wooden bucket dangling like a grim jest. But truly, there\u0027s naught to do here. I\u0027ll seek mirth elsewhere, in a jest where laughter finds the well.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 14,
@@ -217,12 +269,16 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy an ancient, weathered stone cross on a stepped base, its carving worn to a whisper. Yet, \u0027tis nothing worth doing, so I\u0027ll jest and shift my gaze to something lighter.",
+      "Source": "I spy the well, stone-rimmed and solemn, but its depths hold no gold. Let\u0027s turn our gaze to the sky, where a crow perches and laughs at the world\u0027s folly.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 15,
@@ -233,12 +289,16 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy an ancient, weathered stone cross atop a stepped base, its carvings worn smooth like the hands of the aged. But there\u0027s naught here to do but sigh, so I\u0027ll skip this drear spot and seek a jest instead.",
+      "Source": "I spy the well, stone-rimmed and central, but a bucket\u0027s empty and there\u0027s nothing to do. Might as well chuckle at the sky before I turn to something else.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 16,
@@ -254,7 +314,11 @@
       "State": 0,
       "Group": 4,
       "Block": null,
-      "Key": "visit:1824"
+      "Key": "visit:1824",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 17,
@@ -265,12 +329,16 @@
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I find myself at noon in the village square, where my days spent at the stable now echo the foot-traffic crossing every direction. The well, the ways, the peat cut, and the mounting block still stand, their presence a silent reminder of lessons learned. I watch a well, a central stone-rimmed well at the square\u0027s heart, a wooden bucket on its rope. Childhood memories of saving coins and dreams of fortune echo here, as I once pushed through a storm with worn legs.",
+      "Source": "I find myself at noon in the village square, where my days spent at the stable now echo, each footstep crossing as I once pushed through a storm, my legs aching yet determined. I remember the stable, and these steps felt both familiar and strange, like a return to a childhood where I too would climb them to mount a horse.",
       "Written": "",
       "State": 1,
       "Group": 4,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 18,
@@ -281,140 +349,96 @@
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy a green edge, waterside, and threshing floor. To the orchard, I march, relying on sturdy arms and a hearty laugh to lighten the load.",
+      "Source": "I spy no more than three steps of stone to mount a steed or sit when off duty. I seek the mounting block and let the days slip by. My care will come from the guests and travelers, for here in this plain, jests are born to lighten the load.",
       "Written": "",
       "State": 1,
       "Group": 4,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 19,
       "Kind": 3,
       "Day": 5,
       "Place": "Plain",
-      "Area": "Village Orchard",
+      "Area": "Square",
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "Learned wayfaring",
+      "Source": "Learned streetwise",
       "Written": "",
       "State": 0,
       "Group": 4,
       "Block": null,
-      "Key": "mm:Protagonist:wayfaring"
+      "Key": "mm:Protagonist:streetwise",
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 20,
       "Kind": 0,
-      "Day": 5,
+      "Day": 6,
       "Place": "Plain",
-      "Area": "Village Orchard",
+      "Area": "Square",
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I made it to the orchard, the task done. Patience bore me through the weight, the journey clear as a steady toil.",
+      "Source": "I sit on the mounting block, feeling the earth beneath my feet. As dawn approaches, I watch the sky, my thoughts quiet and welcoming. Thank you for this moment, and for the time to pass in peace.",
       "Written": "",
       "State": 1,
       "Group": 4,
       "Block": 3,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "sit on the mounting block and let the time pass",
+      "Succeeded": true
     },
     {
       "Seq": 21,
       "Kind": 2,
-      "Day": 5,
+      "Day": 6,
       "Place": "Plain",
-      "Area": "Village Orchard",
+      "Area": "Square",
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "Moved to: Village Orchard",
+      "Source": "Time passes: Dawn",
       "Written": "",
       "State": 1,
       "Group": 4,
       "Block": null,
-      "Key": ""
+      "Key": "",
+      "Phrase": "waited until dawn",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 22,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis learned: Wayfaring",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 23,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Childhood Reminescence (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 24,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Sense of Humor (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 25,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Hard Labor (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 26,
       "Kind": 0,
-      "Day": 5,
+      "Day": 6,
       "Place": "Plain",
-      "Area": "Village Orchard",
+      "Area": "Square",
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I walk through the grass, the scent of the goat\u0027s breath heavy in my nose. My body tenses at the warning in its posture, a kinship to all creatures. The waterside whispers, the old man\u0027s hands warm and familiar, the forge\u0027s fire crackling, but my focus remains on the goat\u0027s flicked ear, a silent command. I catch the scent of ripe apples, the posture of an old tree wary, as branches hold heavy with fruit. It warns, a beast\u0027s kin, ready to move if danger nears.",
+      "Source": "I find myself at dawn in the heart of the village, scenting the earth beneath my hooves and the tension in the air. My posture is wary, as if sensing an unseen threat, but I know this place from the warning in a peat cut\u0027s cracked surface. I catch the scent of earth and the posture of a well-drawn breath. Here, the stone rim warns with a silent kinship, as if the square holds a deep breath, and this well is its watchful eye.",
       "Written": "",
       "State": 1,
       "Group": 4,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     }
   ],
   "NextGroup": 5,

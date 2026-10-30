@@ -308,7 +308,7 @@ public class OutcomeNarrator
     /// so the "I tried to …" framing embeds the plain phrasing rather than the already-styled label;
     /// falls back to DisplayText, then to ActionText with any leading "try to " stripped.
     /// </summary>
-    private static string ActionDisplay(ParsedNarrativeAction action)
+    internal static string ActionDisplay(ParsedNarrativeAction action)
     {
         if (!string.IsNullOrWhiteSpace(action.NeutralActionText)) return action.NeutralActionText;
         if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;

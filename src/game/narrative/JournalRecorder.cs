@@ -61,14 +61,18 @@ public static class JournalRecorder
         {
             string text = block.Text;
             // The outcome block opens on its verdict for the screen; the chips say what came of it.
-            foreach (var prefix in new[] { "[SUCCESS] ", "[FAILURE] " })
+            foreach (var prefix in new[] { "[SUCCESS] ", "[FAILURE] ", "[IMPOSSIBLE] " })
                 if (text.StartsWith(prefix, StringComparison.Ordinal)) text = text[prefix.Length..];
             // A bracketed line is a hand-written system note ("[The conversation has ended.]").
             bool systemNote = text.Length >= 2 && text[0] == '[' && text[^1] == ']';
             if (!systemNote)
             {
                 var e = Add(JournalEntryKind.Narration, text, actor);
-                if (e != null) e.Block = block.Type;
+                if (e != null)
+                {
+                    e.Block = block.Type;
+                    if (block.Attempt != null) { e.Attempt = block.Attempt.Act; e.Succeeded = block.Attempt.Succeeded; }
+                }
             }
         }
 
