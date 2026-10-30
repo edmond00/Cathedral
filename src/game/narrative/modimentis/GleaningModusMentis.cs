@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class GleaningModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "gleaning";
     public override string DisplayName      => "Gleaning";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Walks a harvested field bent double for what the reapers left: fallen ears, missed roots, the last fruit on a high branch. Knows the old right to it and the fields where it is still honoured.";
     public override string SkillMeans       => "the gathering of what the harvest left behind";

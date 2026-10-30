@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class SwineLoreModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "swine_lore";
     public override string DisplayName      => "Swine Lore";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Understands pigs: their cleverness, their tempers, what they will eat and what will kill them. Knows the season for fattening on mast and the signs a sow will turn on her own litter.";
     public override string SkillMeans       => "the knowledge of pigs and their keeping";

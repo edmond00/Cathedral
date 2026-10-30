@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class LiturgyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "liturgy";
     public override string DisplayName      => "Liturgy";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Knows the order of worship by heart: which prayer follows which, the responses, the feasts and their colours, what is said at a birth and what at a burial. Notices at once when a rite is done wrong.";
     public override string SkillMeans       => "the knowledge of the order of worship";

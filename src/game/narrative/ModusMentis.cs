@@ -148,6 +148,14 @@ public abstract class ModusMentis
     public virtual bool ActsDiscretely => false;
 
     /// <summary>
+    /// The ways of speaking this mind's narration is rewritten into after the forbidden words are gone
+    /// ("aye", "naught", "bairn"), first listed winning where two replace the same word. Empty for
+    /// most: a register is a flavour for a mind whose voice is unmistakable, not a default. See
+    /// <see cref="Sanitizer.PersonaFlavour"/>.
+    /// </summary>
+    public virtual IReadOnlyList<Sanitizer.Register> Registers => Array.Empty<Sanitizer.Register>();
+
+    /// <summary>
     /// Persona prompt for LLM (only for Observation and Thinking modiMentis).
     /// This is cached in the LLM slot and defines the modusMentis's narrative voice.
     /// </summary>

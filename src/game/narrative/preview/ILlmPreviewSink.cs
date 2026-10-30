@@ -23,6 +23,14 @@ public interface ILlmPreviewSink
     void OnSourceVocabulary(System.Collections.Generic.IReadOnlySet<string>? vocabulary) { }
 
     /// <summary>
+    /// Declares the voice the final text will be rewritten into (see
+    /// <see cref="Cathedral.Game.Narrative.Sanitizer.PersonaFlavour"/>), so the streamed words are the
+    /// ones the finished text holds rather than changing under the player's eyes when it lands.
+    /// <para>Optional, like <see cref="OnSourceVocabulary"/>.</para>
+    /// </summary>
+    void OnFlavour(Cathedral.Game.Narrative.Sanitizer.PersonaFlavour? flavour) { }
+
+    /// <summary>
     /// Called once with the final, fully-sanitized text after generation and the post-hoc sanitizer
     /// rewrite complete. This is the authoritative text; it supersedes anything shown incrementally.
     /// </summary>

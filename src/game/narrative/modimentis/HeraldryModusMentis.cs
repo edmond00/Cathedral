@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -11,6 +12,7 @@ public class HeraldryModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "heraldry";
     public override string DisplayName      => "Heraldry";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Names a rider by the device on their shield, the colours of a surcoat or the banner over a column. Reads the marks that distinguish one branch from another, and catches arms that are borne wrongly, borrowed or freshly repainted.";
     public override string SkillMeans       => "the recognition of coats of arms and family emblems";

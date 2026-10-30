@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class DrovingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "droving";
     public override string DisplayName      => "Droving";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Moves a herd over long country: sets the pace to the slowest beast, reads the leaders, knows the watering places and the drove roads and the nights the cattle will run.";
     public override string SkillMeans       => "the moving of herds over long distances";

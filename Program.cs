@@ -283,6 +283,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --demo-reset                       With --demo-state-dir: start from a fresh installation (for CLI scripts)");
     Console.WriteLine("  --forbidden-words-audit            Check the Layer 1 word list (placeholder names, re-replaced forms, known rewrites) and exit");
     Console.WriteLine("  --forbidden-words-dump <file.tsv>  Write the Layer 1 word list (category, form, replacement) as TSV and exit");
+    Console.WriteLine("  --persona-flavour-scan <file>      Apply Layer 1 then each line's modus mentis flavour (lines: Class<TAB>text), print the changes and exit");
     Console.WriteLine("  --forbidden-words-scan <file>      Apply the Layer 1 word list to each line of a text file, print every change and exit");
     Console.WriteLine("  --demo-audit                       Check the demo run limit (tampering, missing/corrupt/inconsistent copies, the limit) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
@@ -533,6 +534,13 @@ if (args.Length >= 1 && args[0] == "--forbidden-words-audit")
 if (args.Length >= 2 && args[0] == "--forbidden-words-dump")
 {
     Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Dump(args[1]);
+    return;
+}
+
+// --persona-flavour-scan <file>: lines of "ModusMentisClass<TAB>text", rewritten as the rewriter does.
+if (args.Length >= 2 && args[0] == "--persona-flavour-scan")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.ScanFlavour(args[1]);
     return;
 }
 

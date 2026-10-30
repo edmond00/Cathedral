@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class HardLaborModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "hard_labor";
     public override string DisplayName      => "Hard Labor";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Sets the body to long, heavy toil, digging, hauling, and grinding through exhausting tasks. Draws on raw endurance and holds effort steady where lighter work would flag.";
     public override string SkillMeans       => "long heavy bodily work";

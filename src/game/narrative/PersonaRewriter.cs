@@ -58,6 +58,11 @@ public class PersonaRewriter
     /// prompt can name the speaker ("You are Bob, the speaker"). Pass the placeholder, not the
     /// real name — the caller restores real names afterwards, like everywhere else in dialogue.
     /// </param>
+    /// <param name="flavour">
+    /// The voice of the modus mentis writing (<see cref="Sanitizer.PersonaFlavour.For"/>), applied after
+    /// the sanitizer and before the real names come back, so it can neither bring back a forbidden word
+    /// nor touch a character's name. Null for a mind that declares no register.
+    /// </param>
     public async Task<string> RewriteAsync(
         int slotId,
         string neutralText,
@@ -71,7 +76,8 @@ public class PersonaRewriter
         string? speakerName = null,
         Preview.ILlmPreviewSink? preview = null,
         CancellationToken ct = default,
-        string? observedOther = null)
+        string? observedOther = null,
+        Sanitizer.PersonaFlavour? flavour = null)
     {
         string? observedOtherReal = string.IsNullOrWhiteSpace(observedOther) ? null : observedOther.Trim();
         // Single name boundary: everything that goes INTO the prompt is switched to the scene's simple,
@@ -131,6 +137,7 @@ public class PersonaRewriter
         // when it does, the sanitizer must not treat it as the model's invention. See SourceVocabulary.
         var sourceVocabulary = SourceVocabulary.From(neutralText, addressee, dialogueContext, speakerName);
         preview?.OnSourceVocabulary(sourceVocabulary);
+        preview?.OnFlavour(flavour);
 
         // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
         // path so the Critic / non-preview callers are byte-for-byte unchanged. The grammar produces the
@@ -170,6 +177,8 @@ public class PersonaRewriter
         string sanitized = IsSpokenKind(kind)
             ? await SanitizeSpokenAsync(trimmed, sourceVocabulary)
             : await TextSanitizationPipeline.SanitizeAsync(trimmed, sourceVocabulary);
+        if (flavour != null)
+            sanitized = flavour.Apply(sanitized, sourceVocabulary);
         string restored  = NameFaking.Real(sanitized);
 
         // A dialogue turn keeps the quoted shape — DialogueReplicaWriter.NormalizeReply is the one place

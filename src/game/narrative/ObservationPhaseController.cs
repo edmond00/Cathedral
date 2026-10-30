@@ -530,7 +530,7 @@ public class ObservationPhaseController
             string? observedOther = outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject npcObs
                 ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npcObs.SceneNpc.Entity)
                 : null;
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, observedOther: observedOther);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, observedOther: observedOther, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
 
             // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
             // to the object. A long observation gets two distinct keywords, both linked to this same
@@ -544,7 +544,8 @@ public class ObservationPhaseController
             List<string> kws;
             if (turnedAwayFrom == null)
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
-                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome));
+                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome),
+                                                       flavourLemmas: Sanitizer.PersonaFlavour.For(modusMentis)?.KeywordLemmas);
             else
             {
                 // The text also names the object turned away from, and a keyword is wired to this
@@ -554,7 +555,8 @@ public class ObservationPhaseController
                         .Split(new[] { ' ', '-', '(', ')', ',' }, StringSplitOptions.RemoveEmptyEntries),
                     StringComparer.OrdinalIgnoreCase);
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted + 3,
-                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome))
+                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome),
+                                                       flavourLemmas: Sanitizer.PersonaFlavour.For(modusMentis)?.KeywordLemmas)
                     .Where(k => !k.Split(' ').Any(w => shunned.Contains(w) || shunned.Contains(w.TrimEnd('s'))))
                     .Take(wanted)
                     .ToList();
@@ -671,7 +673,7 @@ public class ObservationPhaseController
                              .ToList();
 
             var neutral = NeutralNarration.AreaIntroduction(introArea.ContextDescription, period.Phrase(), description, sights);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
 
             var links = LinkIntroductionKeywords(text, introArea.ContextDescription, pool);
             var kws = links.Select(l => l.Keyword).ToList();
@@ -873,7 +875,7 @@ public class ObservationPhaseController
         {
             text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation,
                 modusMentis.PersonaReminder2, keepHistory: true,
-                styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+                styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
             if (string.IsNullOrWhiteSpace(text)) text = neutral;
         }
         catch (Exception ex)
@@ -1349,7 +1351,7 @@ public class ObservationPhaseController
         string text;
         try
         {
-            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
         }
         catch (Exception ex)
         {
@@ -1429,7 +1431,7 @@ public class ObservationPhaseController
             string? style = extraStyle == null
                 ? modusMentis.StyleInstruction
                 : $"{(string.IsNullOrWhiteSpace(modusMentis.StyleInstruction) ? Config.Narrative.DefaultStyleInstruction : modusMentis.StyleInstruction.Trim())} {extraStyle}";
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: style, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: style, preview: sink, ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
             sentences.Add(new NarrationSentence(text, new List<string>()));
             return true;
         }
@@ -1563,7 +1565,8 @@ public class ObservationPhaseController
                     : NeutralNarration.SpokenReport(companionName, descr),
                 NarrationKind.Speaking,
                 r2, companionName, keepHistory: true, styleInstruction: style,
-                preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
+                preview: part?.NextSegment(), ct: ct,
+                flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(speakingModusMentis))).Trim().Trim('"');
 
             if (string.IsNullOrWhiteSpace(spoken))
             {
@@ -1590,7 +1593,8 @@ public class ObservationPhaseController
 
             var allExtractedKeywords = new List<string>();
             string? kw = KeywordExtractor
-                .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking)
+                .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking,
+                                 flavourLemmas: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(speakingModusMentis)?.KeywordLemmas)
                 .FirstOrDefault(k => !partyWords.Contains(k));
             if (kw != null)
                 allExtractedKeywords.Add(kw);

@@ -372,7 +372,7 @@ public class ThinkingExecutor
             // guarantees the prefix can be stripped cleanly to form the button label (DisplayText);
             // ActionText keeps the canonical "try to …" form the item critic expects.
             string styledAction = await _rewriter.RewriteAsync(
-                actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
+                actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(skill));
             if (string.IsNullOrWhiteSpace(styledAction))
                 styledAction = ActionPrefix + (skill.ActsDiscretely ? "discreetly " : "") + goalPhrase;
             string bareAction = StripPrefix(styledAction, ActionPrefix);
@@ -587,7 +587,7 @@ public class ThinkingExecutor
 
         string styledAction = await _rewriter.RewriteAsync(
             actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2,
-            forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
+            forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(skill));
         if (string.IsNullOrWhiteSpace(styledAction))
             styledAction = ActionPrefix + (skill.ActsDiscretely ? "discreetly " : "") + goalPhrase;
         string bareAction = StripPrefix(styledAction, ActionPrefix);
@@ -610,7 +610,7 @@ public class ThinkingExecutor
     private async Task<string> VoiceAsync(int slot, ModusMentis mm, string neutral, NarrationKind kind, PreviewPart? part, CancellationToken ct)
     {
         string text = await _rewriter.RewriteAsync(
-            slot, neutral, kind, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+            slot, neutral, kind, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: part?.NextSegment(), ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
         return string.IsNullOrWhiteSpace(text) ? neutral : text;
     }
 
@@ -1029,7 +1029,7 @@ public class ThinkingExecutor
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
         string neutral = $"I could use {item.WithArticle()} to help me {ActionDisplay(originalAction)}.";
-        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
+        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
     }
 
     /// <summary>
@@ -1059,7 +1059,7 @@ public class ThinkingExecutor
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
         string neutral = NeutralNarration.ActionIntent($"{ActionDisplay(originalAction)} using {item.WithArticle()}");
-        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
+        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
         if (string.IsNullOrWhiteSpace(styled)) return null;
         return StripPrefix(styled, ActionPrefix);
     }

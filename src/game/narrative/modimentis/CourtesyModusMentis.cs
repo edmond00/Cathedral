@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -10,6 +11,7 @@ public class CourtesyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "courtesy";
     public override string DisplayName      => "Courtesy";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Observes the small forms: the greeting, who goes first, what is offered and to whom. Frictionless where it is present and immediately noticed where it is not, which is what makes it worth having.";
     public override string SkillMeans       => "the observing of the small forms between people";

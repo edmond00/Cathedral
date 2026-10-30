@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class DungingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "dunging";
     public override string DisplayName      => "Dunging";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Knows the worth of muck: which dung is hot and which cold, how long a heap must rot, which field it will mend. Reads soil by smell and colour for what it lacks.";
     public override string SkillMeans       => "the knowledge of muck and what it does for the ground";

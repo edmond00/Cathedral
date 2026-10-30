@@ -56,7 +56,7 @@ public class OutcomeNarrator
         // sink is supplied, the outcome streams into the preview box like every other narration.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public class OutcomeNarrator
         {
             return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
                 felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(felt.ModusMentis));
         }
         finally
         {
@@ -192,7 +192,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>The neutral sentence a refusal is re-voiced from — also the fallback shown when it cannot be.</summary>
@@ -246,7 +246,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(modusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
     }
 
     /// <summary>
@@ -287,7 +287,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────

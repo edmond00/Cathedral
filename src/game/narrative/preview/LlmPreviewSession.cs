@@ -216,7 +216,8 @@ public sealed class PreviewPart
     private readonly StringBuilder _rawStream = new();
     private string _lastSeenCandidate = "";
     private bool _frozen;                          // a forbidden term appeared → stop updating until finalize
-    private IReadOnlySet<string>? _sourceVocabulary; // words this request supplied → never a detection hit
+    private IReadOnlySet<string>? _sourceVocabulary;
+    private Sanitizer.PersonaFlavour? _flavour; // words this request supplied → never a detection hit
 
     public PreviewPart(string title, object lockObj, bool accumulate, string linePrefix, Func<string, string>? transform = null)
     {
@@ -319,7 +320,14 @@ public sealed class PreviewPart
             _liveTail = "";
             _frozen = false;
             _sourceVocabulary = null;   // each segment declares its own (see SetSourceVocabulary)
+            _flavour = null;            // and its own voice (see SetFlavour)
         }
+    }
+
+    /// <summary>The voice the segment's final text is rewritten into (see <see cref="ILlmPreviewSink.OnFlavour"/>).</summary>
+    internal void SetFlavour(Sanitizer.PersonaFlavour? flavour)
+    {
+        lock (_lock) _flavour = flavour;
     }
 
     /// <summary>
@@ -352,7 +360,7 @@ public sealed class PreviewPart
             string layered = ForbiddenWordsDictionary.Apply(candidate, _sourceVocabulary);
             var (anach, names) = TextSanitizationPipeline.Detect(layered, _sourceVocabulary);
             if (anach.Count == 0 && names.Count == 0)
-                _liveTail = Display(layered.TrimEnd());
+                _liveTail = Display((_flavour?.Apply(layered, _sourceVocabulary) ?? layered).TrimEnd());
             else
                 _frozen = true; // keep the last clean tail; the flagged word never shows
         }
@@ -405,5 +413,6 @@ internal sealed class PreviewSegmentSink : ILlmPreviewSink
     public void OnToken(string rawToken) => _part.FeedToken(rawToken);
     public void OnComplete(string finalText) => _part.FinalizeSegment(finalText);
     public void OnSourceVocabulary(IReadOnlySet<string>? vocabulary) => _part.SetSourceVocabulary(vocabulary);
+    public void OnFlavour(Sanitizer.PersonaFlavour? flavour) => _part.SetFlavour(flavour);
 }
 

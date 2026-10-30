@@ -28,177 +28,39 @@ namespace Cathedral.Game.Narrative.Sanitizer;
 /// verb's forms side by side; anything irregular is spelled out. A replacement is never itself
 /// re-scanned, and the dictionary test asserts none contains a listed form.</para>
 /// </summary>
-internal static class ForbiddenWords
+internal sealed class ForbiddenWords : LexiconBuilder
 {
-    private static readonly List<ForbiddenWordsDictionary.Entry> _list = new();
-
-    public static IEnumerable<ForbiddenWordsDictionary.Entry> Build()
+    protected override IEnumerable<(string Category, Action Section)> Sections() => new (string, Action)[]
     {
-        _list.Clear();
-        foreach (var (category, section) in new (string, Action)[]
-        {
-            (nameof(Informal), Informal),
-            (nameof(Calendar), Calendar),
-            (nameof(Units), Units),
-            (nameof(Cosmos), Cosmos),
-            (nameof(Technology), Technology),
-            (nameof(Transport), Transport),
-            (nameof(Weapons), Weapons),
-            (nameof(Science), Science),
-            (nameof(PoliticsAndSociety), PoliticsAndSociety),
-            (nameof(Commerce), Commerce),
-            (nameof(PlacesAndBuildings), PlacesAndBuildings),
-            (nameof(FoodAndDrink), FoodAndDrink),
-            (nameof(ClothingAndObjects), ClothingAndObjects),
-            (nameof(Faiths), Faiths),
-            (nameof(Gods), Gods),
-            (nameof(Figures), Figures),
-            (nameof(Geography), Geography),
-            (nameof(Eras), Eras),
-            (nameof(CultureAndArts), CultureAndArts),
-            (nameof(Fauna), Fauna),
-            (nameof(PeoplesAndPlacesMore), PeoplesAndPlacesMore),
-            (nameof(ModernLifeMore), ModernLifeMore),
-            (nameof(IdiomsOfMachines), IdiomsOfMachines),
-            (nameof(EngineeringAndMeta), EngineeringAndMeta),
-        })
-        {
-            int from = _list.Count;
-            section();
-            for (int i = from; i < _list.Count; i++) _list[i] = _list[i] with { Category = category };
-        }
-        return _list;
-    }
-
-    // ── Builders ───────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// A phrase left exactly as it is, though it holds a listed form: the lore's own "Fallen God" is
-    /// not the God that becomes Qoth. Longer than the form inside it, so the match takes it first.
-    /// </summary>
-    private static void Keep(string phrase)
-        => _list.Add(new(phrase, phrase, Proper: true, MidSentenceOnly: false));
-
-    /// <summary>A single form, any case.</summary>
-    private static void W(string form, string replacement)
-        => _list.Add(new(form, replacement, Proper: false, MidSentenceOnly: false));
-
-    /// <summary>
-    /// A unit of count: the noun and its plural as <see cref="N"/>, and after a number or a
-    /// quantifier the whole count is rewritten by <paramref name="counted"/> ("six centuries" →
-    /// "six hundred rounds", "a month" → "thirty days").
-    /// </summary>
-    private static void C(string noun, string replacement, string plural, string replacementPlural,
-                          Func<ForbiddenWordsDictionary.Quantity, string> counted)
-    {
-        _list.Add(new(noun, replacement, Proper: false, MidSentenceOnly: false, counted));
-        _list.Add(new(plural, replacementPlural, Proper: false, MidSentenceOnly: false, counted));
-    }
-
-    /// <summary>A count of <paramref name="per"/> <paramref name="unit"/> per item: two months → sixty days.</summary>
-    private static Func<ForbiddenWordsDictionary.Quantity, string> Times(long per, string unit, string otherwise)
-        => q => q.Per ? $"in {ForbiddenWordsDictionary.NumberWords(per)} {unit}"
-            : q.Value is long n ? $"{ForbiddenWordsDictionary.Number(n * per, q)} {unit}"
-            : $"{q.Text} {otherwise}";
-
-    /// <summary>
-    /// A count kept as written before a larger number: six centuries → six hundred rounds, a few
-    /// centuries → a few hundred rounds. Digits are multiplied out (3 centuries → 300 rounds).
-    /// </summary>
-    private static Func<ForbiddenWordsDictionary.Quantity, string> Before(long scale, string scaleWord, string unit)
-        => q => q.Per ? $"in a {scaleWord} {unit}"
-            : q.Value is long n && char.IsDigit(q.Text[0]) ? $"{n * scale} {unit}"
-            : $"{q.Text} {scaleWord} {unit}";
-
-    /// <summary>Several forms with one replacement.</summary>
-    private static void Ws(string forms, string replacement)
-    {
-        foreach (var f in Split(forms)) W(f, replacement);
-    }
-
-    /// <summary>A noun and its plural. Irregular plurals are given explicitly.</summary>
-    private static void N(string noun, string replacement, string? plural = null, string? replacementPlural = null)
-    {
-        W(noun, replacement);
-        // An invariant plural ("aircraft", "haiku") is the singular's own form, which keeps the
-        // singular replacement: the plural reading cannot be told from it.
-        string p = plural ?? Plural(noun);
-        if (!p.Equals(noun, StringComparison.OrdinalIgnoreCase))
-            W(p, replacementPlural ?? Plural(replacement));
-    }
-
-    /// <summary>Paired forms: "a,b,c" → "x,y,z", one for one (a verb's base, -s, past, -ing).</summary>
-    private static void V(string forms, string replacements)
-    {
-        var f = Split(forms);
-        var r = Split(replacements);
-        if (f.Length != r.Length)
-            throw new InvalidOperationException($"ForbiddenWords: '{forms}' and '{replacements}' differ in length.");
-        for (int i = 0; i < f.Length; i++) W(f[i], r[i]);
-    }
-
-    /// <summary>A proper noun, matched only as capitalised; its replacement keeps its own case.</summary>
-    private static void P(string name, string replacement, bool midSentenceOnly = false)
-        => _list.Add(new(name, replacement, Proper: true, MidSentenceOnly: midSentenceOnly));
-
-    /// <summary>Several proper nouns with one replacement.</summary>
-    private static void Ps(string names, string replacement)
-    {
-        foreach (var n in Split(names)) P(n, replacement);
-    }
-
-    /// <summary>A demonym: "Roman" and "Romans", as adjective and as people.</summary>
-    private static void D(string name, string replacement, string? plural = null, string? replacementPlural = null)
-    {
-        P(name, replacement);
-        P(plural ?? name + "s", replacementPlural ?? Plural(replacement));
-    }
-
-    private static string[] Split(string s)
-        => s.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-    private static readonly Dictionary<string, string> _irregular = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["man"] = "men", ["woman"] = "women", ["foot"] = "feet", ["tooth"] = "teeth", ["child"] = "children",
-        ["knife"] = "knives", ["leaf"] = "leaves", ["life"] = "lives", ["wife"] = "wives", ["mouse"] = "mice",
-        ["person"] = "people", ["fish"] = "fish", ["sheep"] = "sheep", ["deer"] = "deer", ["craft"] = "craft",
-        ["shelf"] = "shelves", ["loaf"] = "loaves", ["thief"] = "thieves", ["staff"] = "staves",
-        ["cloth"] = "cloths", ["ox"] = "oxen", ["goose"] = "geese", ["day"] = "days", ["key"] = "keys",
-        ["lore"] = "lore", ["chapter"] = "chapters", ["armour"] = "armour", ["grain"] = "grains",
-        ["stuff"] = "stuff", ["swine"] = "swine", ["gallows"] = "gallows",
+        (nameof(Informal), Informal),
+        (nameof(Calendar), Calendar),
+        (nameof(Units), Units),
+        (nameof(Cosmos), Cosmos),
+        (nameof(Technology), Technology),
+        (nameof(Transport), Transport),
+        (nameof(Weapons), Weapons),
+        (nameof(Science), Science),
+        (nameof(PoliticsAndSociety), PoliticsAndSociety),
+        (nameof(Commerce), Commerce),
+        (nameof(PlacesAndBuildings), PlacesAndBuildings),
+        (nameof(FoodAndDrink), FoodAndDrink),
+        (nameof(ClothingAndObjects), ClothingAndObjects),
+        (nameof(Faiths), Faiths),
+        (nameof(Gods), Gods),
+        (nameof(Figures), Figures),
+        (nameof(Geography), Geography),
+        (nameof(Eras), Eras),
+        (nameof(CultureAndArts), CultureAndArts),
+        (nameof(Fauna), Fauna),
+        (nameof(PeoplesAndPlacesMore), PeoplesAndPlacesMore),
+        (nameof(ModernLifeMore), ModernLifeMore),
+        (nameof(IdiomsOfMachines), IdiomsOfMachines),
+        (nameof(EngineeringAndMeta), EngineeringAndMeta),
     };
-
-    /// <summary>English plural of a noun or of a noun phrase's head ("span of days" → "spans of days").</summary>
-    internal static string Plural(string phrase)
-    {
-        int of = phrase.IndexOf(" of ", StringComparison.Ordinal);
-        if (of > 0) return Plural(phrase[..of]) + phrase[of..];
-
-        int sp = phrase.LastIndexOf(' ');
-        string head = sp < 0 ? phrase : phrase[(sp + 1)..];
-        string lead = sp < 0 ? "" : phrase[..(sp + 1)];
-
-        int hy = head.LastIndexOf('-');
-        string pre = hy < 0 ? "" : head[..(hy + 1)];
-        string w   = hy < 0 ? head : head[(hy + 1)..];
-
-        string p;
-        if (_irregular.TryGetValue(w, out var irr))
-            p = char.IsUpper(w[0]) ? char.ToUpperInvariant(irr[0]) + irr[1..] : irr;
-        else if (w.EndsWith("man", StringComparison.Ordinal) && w.Length > 3)
-            p = w[..^3] + "men";
-        else if (w.Length > 1 && w.EndsWith('y') && "aeiou".IndexOf(w[^2]) < 0)
-            p = w[..^1] + "ies";
-        else if (w.EndsWith('s') || w.EndsWith('x') || w.EndsWith('z') || w.EndsWith("ch") || w.EndsWith("sh"))
-            p = w + "es";
-        else
-            p = w + "s";
-        return lead + pre + p;
-    }
 
     // ── Informal and modern speech ─────────────────────────────────────────────
 
-    private static void Informal()
+    private void Informal()
     {
         P("OK", "very well");
         P("Ok", "very well");
@@ -289,7 +151,7 @@ internal static class ForbiddenWords
 
     // ── The calendar: rounds, eleven-day weeks, the lore's day names ───────────
 
-    private static void Calendar()
+    private void Calendar()
     {
         N("year", "round");
         Ws("yearly", "each round");
@@ -372,7 +234,7 @@ internal static class ForbiddenWords
 
     // ── Units of measure ───────────────────────────────────────────────────────
 
-    private static void Units()
+    private void Units()
     {
         N("mile", "league");
         Ws("mile-long", "league-long");
@@ -413,7 +275,7 @@ internal static class ForbiddenWords
 
     // ── The cosmos: the egg, the cosmic sea, the Eye of Day ────────────────────
 
-    private static void Cosmos()
+    private void Cosmos()
     {
         N("moon", "eggmoon");
         Ws("moonlight", "eggmoon-light");
@@ -478,7 +340,7 @@ internal static class ForbiddenWords
 
     // ── Technology ─────────────────────────────────────────────────────────────
 
-    private static void Technology()
+    private void Technology()
     {
         N("computer", "reckoning engine");
         N("laptop", "reckoning engine");
@@ -639,7 +501,7 @@ internal static class ForbiddenWords
 
     // ── Transport: everything that flies or leaves the world is a submarine ─────
 
-    private static void Transport()
+    private void Transport()
     {
         N("airplane", "submarine");
         N("aeroplane", "submarine");
@@ -708,7 +570,7 @@ internal static class ForbiddenWords
 
     // ── Weapons ─────────────────────────────────────────────────────────────────
 
-    private static void Weapons()
+    private void Weapons()
     {
         N("gun", "arquebus", replacementPlural: "arquebuses");
         N("handgun", "hand arquebus", replacementPlural: "hand arquebuses");
@@ -777,7 +639,7 @@ internal static class ForbiddenWords
 
     // ── Science and medicine ───────────────────────────────────────────────────
 
-    private static void Science()
+    private void Science()
     {
         W("scientific", "learned");
         W("scientifically", "by learning");
@@ -901,7 +763,7 @@ internal static class ForbiddenWords
 
     // ── Politics, law, society ─────────────────────────────────────────────────
 
-    private static void PoliticsAndSociety()
+    private void PoliticsAndSociety()
     {
         N("capitalism", "merchant rule");
         N("capitalist", "merchant prince");
@@ -1015,7 +877,7 @@ internal static class ForbiddenWords
 
     // ── Money and commerce ─────────────────────────────────────────────────────
 
-    private static void Commerce()
+    private void Commerce()
     {
         N("dollar", "scute");
         N("euro", "scute");
@@ -1087,7 +949,7 @@ internal static class ForbiddenWords
 
     // ── Places and buildings ───────────────────────────────────────────────────
 
-    private static void PlacesAndBuildings()
+    private void PlacesAndBuildings()
     {
         N("apartment", "lodging");
         N("condo", "lodging");
@@ -1182,7 +1044,7 @@ internal static class ForbiddenWords
 
     // ── Food and drink ─────────────────────────────────────────────────────────
 
-    private static void FoodAndDrink()
+    private void FoodAndDrink()
     {
         N("pizza", "flatbread");
         N("hamburger", "meat pie");
@@ -1276,7 +1138,7 @@ internal static class ForbiddenWords
 
     // ── Clothing and everyday objects ──────────────────────────────────────────
 
-    private static void ClothingAndObjects()
+    private void ClothingAndObjects()
     {
         Ws("jeans, denims", "breeches");
         N("T-shirt", "tunic");
@@ -1372,7 +1234,7 @@ internal static class ForbiddenWords
 
     // ── Real-world faiths ──────────────────────────────────────────────────────
 
-    private static void Faiths()
+    private void Faiths()
     {
         P("God", "Qoth");
         Keep("Fallen God");
@@ -1562,7 +1424,7 @@ internal static class ForbiddenWords
 
     // ── Real gods, mapped to the principium of their domain ────────────────────
 
-    private static void Gods()
+    private void Gods()
     {
         // Qoth: the ruler, the creator, the judge on the throne.
         Ps("Zeus, Jupiter, Jove, Odin, Wotan, Woden, Yahweh, Jehovah, Allah, Brahma, Vishnu, Ra, Amun, Amun-Ra, Marduk, Baal, Hera, Juno, Gaia, Isis, Demeter, Ceres, Frigg, Ishtar, Inanna, Ahura Mazda, Elohim", "Qoth");
@@ -1616,7 +1478,7 @@ internal static class ForbiddenWords
 
     // ── Real people, mapped to the figure of the lore that plays their part ────
 
-    private static void Figures()
+    private void Figures()
     {
         // Conquerors and emperors → Aqilon the Lame, the founder.
         Ps("Napoleon, Bonaparte, Caesar, Julius Caesar, Alexander the Great, Genghis Khan, Attila, Charlemagne, Hannibal, Augustus, Cyrus, Xerxes, Ramses, Tamerlane, Saladin, Kublai Khan, Constantine, Justinian", "Aqilon");
@@ -1713,7 +1575,7 @@ internal static class ForbiddenWords
 
     // ── Real places and peoples ────────────────────────────────────────────────
 
-    private static void Geography()
+    private void Geography()
     {
         // Peoples and tongues → the imperial ones where a likeness exists, else "foreign".
         D("Roman", "imperial", replacementPlural: "imperials");
@@ -1907,7 +1769,7 @@ internal static class ForbiddenWords
 
     // ── Eras: the world has its own, and they are not ours ─────────────────────
 
-    private static void Eras()
+    private void Eras()
     {
         W("medieval", "old");
         W("mediaeval", "old");
@@ -1971,7 +1833,7 @@ internal static class ForbiddenWords
 
     // ── Culture, arts and pastimes ─────────────────────────────────────────────
 
-    private static void CultureAndArts()
+    private void CultureAndArts()
     {
         N("haiku", "short verse", "haikus", "short verses");
         N("limerick", "ditty");
@@ -2091,7 +1953,7 @@ internal static class ForbiddenWords
 
     // ── Animals of other continents and of the kennel club ─────────────────────
 
-    private static void Fauna()
+    private void Fauna()
     {
         N("kangaroo", "leaping beast");
         N("koala", "tree-bear");
@@ -2139,7 +2001,7 @@ internal static class ForbiddenWords
 
     // ── More peoples, cities, rivers and seas ──────────────────────────────────
 
-    private static void PeoplesAndPlacesMore()
+    private void PeoplesAndPlacesMore()
     {
         Ps("Prussian, Austrian, Hungarian, Bavarian, Saxon, Flemish, Belgian, Czech, Slovak, Serbian, Croatian, Bulgarian, Romanian, Albanian, Ukrainian, Lithuanian, Latvian, Estonian, Icelandic, Slavic", "northern");
         Ps("Prussians, Austrians, Hungarians, Bavarians, Saxons, Belgians, Czechs, Serbs, Croats, Bulgarians, Romanians, Albanians, Ukrainians, Slavs", "northerners");
@@ -2152,7 +2014,7 @@ internal static class ForbiddenWords
         Ps("Sumerians, Hittites, Etruscans, Macedonians, Thracians, Carthaginians, Minoans", "ancients");
         Ps("Tartar, Tatar, Cossack, Hun, Mongolic, Scythian", "steppe");
         Ps("Tartars, Tatars, Cossacks, Huns, Scythians", "steppe riders");
-        Ps("Goth, Visigoth, Ostrogoth, Lombard, Gaul, Briton, Anglo-Saxon, Pict, Norman", "old-blooded");
+        Ps("Goth, Visigoth, Ostrogoth, Lombard, Briton, Anglo-Saxon, Pict, Norman", "old-blooded");
         Ps("Goths, Visigoths, Ostrogoths, Franks, Lombards, Gauls, Britons, Anglo-Saxons, Picts, Normans", "old peoples");
         P("Gallic", "western");
         Ps("Thai, Vietnamese, Burmese, Malay, Malaysian, Indonesian, Filipino, Cambodian, Laotian, Bengali, Nepalese, Tibetan, Mongolian, Manchu, Cantonese, Mandarin", "far-eastern");
@@ -2211,7 +2073,7 @@ internal static class ForbiddenWords
 
     // ── More of modern life ─────────────────────────────────────────────────────
 
-    private static void ModernLifeMore()
+    private void ModernLifeMore()
     {
         // Mind and feeling, as the twentieth century named them.
         W("subconscious", "deep mind");
@@ -2374,7 +2236,7 @@ internal static class ForbiddenWords
 
     // ── Idioms built on machines and the modern sky ────────────────────────────
 
-    private static void IdiomsOfMachines()
+    private void IdiomsOfMachines()
     {
         Ws("light year, light-year", "world away");
         Ws("light years, light-years", "worlds away");
@@ -2428,7 +2290,7 @@ internal static class ForbiddenWords
 
     // ── Engineering jargon, and the game talking about itself ──────────────────
 
-    private static void EngineeringAndMeta()
+    private void EngineeringAndMeta()
     {
         // Found in the stress runs: a persona that "recognises by load-bearing, span and structure".
         W("load-bearing", "weight-bearing");

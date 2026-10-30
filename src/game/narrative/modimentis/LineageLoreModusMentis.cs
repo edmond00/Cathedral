@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class LineageLoreModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "lineage_lore";
     public override string DisplayName      => "Lineage Lore";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Holds the web of descent in mind: family lines, inherited traits, old marriages, and what a surname owes or is owed. Reads a face for its parentage and a quarrel for the generations behind it.";
     public override string SkillMeans       => "the knowledge of blood, descent and old family lines";

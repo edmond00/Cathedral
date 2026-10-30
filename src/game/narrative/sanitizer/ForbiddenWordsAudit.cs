@@ -72,6 +72,8 @@ public static class ForbiddenWordsAudit
                 foreach (var form in ForbiddenWordsDictionary.FindForms(text ?? "").Distinct())
                     failures.Add($"{mm.ModusMentisId}.{field} holds the listed form '{form}'");
 
+        RegisterChecks(placeholders, failures);
+
         int passed = 0;
         foreach (var (input, expected) in Sentences)
         {
@@ -100,6 +102,146 @@ public static class ForbiddenWordsAudit
         }
         foreach (var f in failures) Console.WriteLine($"  ✗ {f}");
         Console.WriteLine($"\n--- {failures.Count} FAILURE(S) ---");
+    }
+
+    // The persona registers (PersonaLexicons): the same structural rules, a known-rewrite table per
+    // register at a share of 100, the streaming promise, and the keyword a flavoured noun keeps.
+    private static void RegisterChecks(HashSet<string> placeholders, List<string> failures)
+    {
+        foreach (var register in Enum.GetValues<Register>())
+        {
+            var entries = PersonaLexicons.For(register);
+            foreach (var e in entries)
+            {
+                if (placeholders.Contains(e.Form) || placeholders.Contains(e.Replacement))
+                    failures.Add($"{register}: '{e.Form}' → '{e.Replacement}' is a NameFaking placeholder");
+                if (ForbiddenWordsDictionary.FindForms(e.Replacement).FirstOrDefault() is { } bad)
+                    failures.Add($"{register}: '{e.Form}' → '{e.Replacement}' writes the forbidden '{bad}'");
+            }
+
+            var flavour = PersonaFlavour.Of(100, register);
+            int ok = 0, cases = RegisterSentences[register].Length;
+            foreach (var (input, expected) in RegisterSentences[register])
+            {
+                string got = flavour.Apply(input);
+                if (got == expected) ok++;
+                else failures.Add($"{register}: \"{input}\"\n      → \"{got}\"\n      expected \"{expected}\"");
+            }
+            Console.WriteLine($"  {register}: {entries.Count} forms, {ok}/{cases} sentences rewritten as expected");
+        }
+
+        // A word two registers replace differently goes to the first a mind declares; listed, not failed.
+        var clashes = PersonaLexicons.For(Register.Archaic)
+            .Join(PersonaLexicons.For(Register.Rustic), a => a.Form.ToLowerInvariant(), r => r.Form.ToLowerInvariant(), (a, r) => (a, r))
+            .Where(p => p.a.Replacement != p.r.Replacement)
+            .Select(p => $"{p.a.Form} → {p.a.Replacement} / {p.r.Replacement}").ToList();
+        if (clashes.Count > 0) Console.WriteLine($"  registers disagree on: {string.Join(", ", clashes)}");
+
+        // The preview rewrites the growing text on every streamed word, so a prefix must flavour the
+        // way the whole text does: every word but the one still arriving must already be final. And a
+        // line is voiced whole or not at all, never one word in two.
+        var streamed = PersonaFlavour.Of(PersonaFlavour.SharePercent, Register.Rustic, Register.Archaic);
+        int voicedLines = 0;
+        var lines = new[]
+        {
+            "Yes, I think the child has nothing, yes, nothing at all, and the boy has nothing either, yes.",
+            "Open your purse and tell me what you saw, my friend.",
+            "The girls and the children ran until evening, almost to the river.",
+            "Perhaps it is nothing; perhaps you will find something in your pack.",
+        };
+        foreach (var stream in lines)
+        {
+            var swaps = new List<Lexicon.Swap>();
+            string whole = streamed.Apply(stream, swaps: swaps);
+            if (swaps.Count > 0) voicedLines++;
+            if (swaps.Count > 0 && PersonaFlavour.Of(100, Register.Rustic, Register.Archaic).Apply(stream) != whole)
+                failures.Add($"a voiced line was voiced only in part: \"{whole}\"");
+            for (int k = 1; k < stream.Length; k++)
+            {
+                if (stream[k] != ' ') continue;
+                string prefix = streamed.Apply(stream[..k]);
+                if (!whole.StartsWith(prefix[..Math.Max(0, prefix.LastIndexOf(' '))], StringComparison.Ordinal))
+                {
+                    failures.Add($"streamed prefix \"{prefix}\" disagrees with the whole \"{whole}\"");
+                    break;
+                }
+            }
+            Console.WriteLine($"  {(swaps.Count > 0 ? "voiced" : "plain ")}: \"{whole}\"");
+        }
+
+        // A flavoured noun keeps the keyword of the noun it replaced.
+        var archaic = PersonaFlavour.Of(100, Register.Archaic);
+        // "the", not "a": with no tagger loaded (as here) the rule-based noun finder skips a word after "a".
+        // "gatehouse" outranks "steed" on every ground but naming the horse, so only the lemma map picks it.
+        string text = archaic.Apply("I spy the horse tethered by the gatehouse, the rope at its neck.");
+        var keywords = KeywordExtractor.ExtractKeywords(text, "horse", 1, ownName: "Horse",
+                                                        flavourLemmas: archaic.KeywordLemmas);
+        var unmapped = KeywordExtractor.ExtractKeywords(text, "horse", 1, ownName: "Horse");
+        if (unmapped.FirstOrDefault() == "steed")
+            failures.Add($"keyword test no longer discriminates: \"{text}\" picks 'steed' without the lemma map");
+        if (keywords.FirstOrDefault() != "steed")
+            failures.Add($"keyword of \"{text}\" for a horse is '{keywords.FirstOrDefault()}', expected 'steed'");
+        else
+            Console.WriteLine($"  keyword kept: \"{text}\" → 'steed' names the horse");
+        Console.WriteLine();
+    }
+
+    private static readonly Dictionary<Register, (string, string)[]> RegisterSentences = new()
+    {
+        [Register.Archaic] = new[]
+        {
+            ("Yes, there is nothing in the barrel.", "Aye, there is naught in the barrel."),
+            ("It is a fine horse.", "'Tis a fine steed."),
+            ("I fear it is late.", "I fear 'tis late."),
+            ("Perhaps the horses will come soon.", "Mayhap the steeds will come anon."),
+            ("I stand between the stones until morning.", "I stand betwixt the stones till morn."),
+            ("an evening sky", "an eventide firmament"),
+            ("a horse's mane", "a steed's mane"),
+            ("The girl looks over there.", "The maiden looks yonder."),
+            // Left alone: other senses of the period's own words.
+            ("I stand before the gate.", "I stand before the gate."),
+            ("After a while, I go.", "After a while, I go."),
+            ("Father Ansel blesses the bread.", "Father Ansel blesses the bread."),
+        },
+        [Register.Rustic] = new[]
+        {
+            ("Yes, I think the child is hungry.", "Aye, I reckon the bairn is hungry."),
+            ("There is nothing in my pack.", "There is nowt in me pack."),
+            ("The children and the girls laugh.", "The bairns and the lasses laugh."),
+            ("a little boy", "a wee lad"),
+            ("Did you see your money?", "Did ye see yer brass?"),
+            ("It is nearly done, I suppose so.", "It is nigh on done, I s'pose so."),
+            // Left alone: "think of" is not an opinion.
+            ("I think of home.", "I think of home."),
+            ("I thought nothing of it.", "I thought nowt of it."),
+        },
+    };
+
+    /// <summary>
+    /// Reads lines of <c>ModusMentisClassName&lt;TAB&gt;text</c>, runs each text through Layer 1 and then
+    /// the flavour of that modus mentis, as the rewriter does, and prints every line the flavour changed
+    /// with the words it swapped, then the share of lines changed and the words most swapped.
+    /// </summary>
+    public static void ScanFlavour(string path)
+    {
+        var byClass = ModusMentisRegistry.Instance.GetAllModiMentis().ToDictionary(m => m.GetType().Name);
+        int lines = 0, flavoured = 0, swapsTotal = 0;
+        var counts = new Dictionary<string, int>();
+        foreach (var line in File.ReadLines(path))
+        {
+            var tab = line.IndexOf('\t');
+            if (tab < 0 || !byClass.TryGetValue(line[..tab], out var mm) || PersonaFlavour.For(mm) is not { } flavour) continue;
+            lines++;
+            string text = ForbiddenWordsDictionary.Apply(line[(tab + 1)..]);
+            var swaps = new List<Lexicon.Swap>();
+            string voiced = flavour.Apply(text, swaps: swaps);
+            if (swaps.Count == 0) continue;
+            flavoured++; swapsTotal += swaps.Count;
+            foreach (var sw in swaps) { string k = $"{sw.Original.ToLowerInvariant()} → {sw.Replacement}"; counts[k] = counts.GetValueOrDefault(k) + 1; }
+            Console.WriteLine($"[{mm.ModusMentisId}: {string.Join(", ", flavour.Registers)}]\n- {text}\n+ {voiced}\n");
+        }
+        Console.WriteLine($"{flavoured} of {lines} lines took the flavour, {swapsTotal} words in all");
+        foreach (var (k, n) in counts.OrderByDescending(kv => kv.Value)) Console.WriteLine($"  {n,4}  {k}");
     }
 
     /// <summary>Writes the whole list as tab-separated rows: category, form, replacement, proper.</summary>
