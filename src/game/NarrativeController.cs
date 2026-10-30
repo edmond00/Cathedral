@@ -2811,7 +2811,7 @@ public class NarrativeController
             Keywords: null,
             Actions: null,
             OutcomeReports: uiReports.Count > 0 ? uiReports : null
-        );
+        ) { Attempt = result.Action == null ? null : new ActionAttempt(OutcomeNarrator.ActionDisplay(result.Action), result.Succeeded) };
         _scrollBuffer.AddBlock(outcomeBlock);
         _narrationState.AddBlock(outcomeBlock);
         _ambianceEngine?.TriggerGameEvent(result.Succeeded ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);

@@ -68,7 +68,11 @@ public static class JournalRecorder
             if (!systemNote)
             {
                 var e = Add(JournalEntryKind.Narration, text, actor);
-                if (e != null) e.Block = block.Type;
+                if (e != null)
+                {
+                    e.Block = block.Type;
+                    if (block.Attempt != null) { e.Attempt = block.Attempt.Act; e.Succeeded = block.Attempt.Succeeded; }
+                }
             }
         }
 

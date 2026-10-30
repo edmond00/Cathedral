@@ -54,11 +54,12 @@ public static class ChroniclerPrompt
     public const int MaxItemChars = 320;
 
     /// <summary>
-    /// Longest an observation may be in the prompt: its first sentence, cut here. An observation is the
-    /// setting, not an event, and given whole (a third of the notes, the longest items) it became the
-    /// paragraph — the brewer's cask and froth told at length, the conversation that followed not at all.
+    /// Longest the first sentence of an observation or of an act's telling may be in the prompt. An
+    /// observation is the setting, not an event, and given whole (a third of the notes, the longest
+    /// items) it became the paragraph — the brewer's cask and froth told at length, the conversation
+    /// that followed not at all.
     /// </summary>
-    public const int MaxSceneChars = 140;
+    public const int MaxSentenceChars = 140;
 
     /// <summary>
     /// Longest the whole list of what happened may be; past it, the settings go first, then the oldest
@@ -68,7 +69,7 @@ public static class ChroniclerPrompt
 
     private const string Common = @"
 Rules:
-- Tell what happened: what the traveller did and what came of it, who was met and what was said, what was gained, lost or learned. A SCENE note is only where it happened; give it a clause at most.
+- Tell what happened: what the traveller did or failed to do and what came of it, who was met and what was said, what was gained, lost or learned. A SCENE note is only where it happened; give it a clause at most.
 - Use only what the notes say. Never invent a person, a name, a place, an object or an event.
 - Call people what the notes call them (""the brewer"", ""the reeve""). Never give anyone a name the notes do not use.
 - Write one paragraph of plain prose, three to five sentences. No title, no list, no date line.
@@ -131,8 +132,9 @@ Rules:
     private const string ScenePrefix = "- SCENE";
 
     /// <summary>
-    /// One note. What was done, said and changed goes in whole; an observation goes in as a setting,
-    /// its first sentence. A thought does not go in: the thinking block is the mind turning over what
+    /// One note. What was said and changed goes in whole; an act goes in as what was tried and whether
+    /// it worked, with the first sentence of its telling (the rest is the acting mind's musing on it);
+    /// an observation goes in as a setting, its first sentence. A thought does not go in: the thinking block is the mind turning over what
     /// to do, and the act it settles on is the outcome after it — given both, the chronicler told the
     /// musing and the act came second. A feeling goes in only for the tinted diary, which asks for it.
     /// </summary>
@@ -152,6 +154,8 @@ Rules:
                 NarrationBlockType.Observation => $"{ScenePrefix}{who}: {FirstSentence(e.Source)}",
                 NarrationBlockType.Thinking    => null,
                 NarrationBlockType.Emotion     => config.Voice == ChronicleVoice.DiaryTinted ? $"- FELT{who}: {Clip(e.Source)}" : null,
+                NarrationBlockType.Outcome when e.Attempt.Length > 0
+                    => $"- {(e.Succeeded ? "DID" : "FAILED TO")}{who}: {e.Attempt}. {FirstSentence(e.Source)}",
                 NarrationBlockType.Action or NarrationBlockType.Outcome => $"- DID{who}: {Clip(e.Source)}",
                 NarrationBlockType.Speaking    => $"- SAID{who}: {Clip(e.Source)}",
                 _                              => $"- NOTE{who}: {Clip(e.Source)}",
@@ -165,7 +169,7 @@ Rules:
         s = s.Replace('\n', ' ').Trim();
         int end = s.IndexOfAny(new[] { '.', '!', '?' });
         if (end > 0) s = s[..(end + 1)];
-        return s.Length <= MaxSceneChars ? s : s[..MaxSceneChars].TrimEnd() + "…";
+        return s.Length <= MaxSentenceChars ? s : s[..MaxSentenceChars].TrimEnd() + "…";
     }
 
     private static string Clip(string s)
