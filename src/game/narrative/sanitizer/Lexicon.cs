@@ -439,7 +439,10 @@ public sealed class Lexicon
         // ("the Roman road" → "the imperial road"). A common word capitalised mid-sentence was
         // capitalised for emphasis or as a title, so the emphasis is carried over.
         if (proper) return replacement;
-        return char.IsUpper(original[0]) ? Capitalise(replacement) : replacement;
+        // The pronoun "I" is capital wherever it stands, which is no emphasis: "then I see" →
+        // "then my eyes find".
+        bool pronoun = original.Length > 1 && original[0] == 'I' && original[1] is ' ' or '\'' or '’';
+        return char.IsUpper(original[0]) && !pronoun ? Capitalise(replacement) : replacement;
     }
 
     // The first letter, past a leading apostrophe: "'tis" → "'Tis".

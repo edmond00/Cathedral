@@ -226,6 +226,10 @@ public static class ForbiddenWordsAudit
             ("I stand before the gate.", "I stand before the gate."),
             ("After a while, I go.", "After a while, I go."),
             ("Father Ansel blesses the bread.", "Father Ansel blesses the bread."),
+            ("I see a cart; I saw the gate.", "I behold a cart; I beheld the gate."),
+            ("Farewell, and peace be with you. Rest in peace.", "Vale, and pax tecum. Requiescat in pace."),
+            // Left alone: "I see" that understands, and a farewell bidden.
+            ("I see that you lied. I see. I bid him farewell.", "I see that you lied. I see. I bid him farewell."),
         },
         [Register.Rustic] = new[]
         {
@@ -238,6 +242,7 @@ public static class ForbiddenWordsAudit
             // Left alone: "think of" is not an opinion.
             ("I think of home.", "I think of home."),
             ("I thought nothing of it.", "I thought nowt of it."),
+            ("I see a lass; I saw nothing.", "I spy a lass; I spied nowt."),
         },
         [Register.Cant] = new[]
         {
@@ -255,6 +260,7 @@ public static class ForbiddenWordsAudit
             ("I was frightened of the huge dog.", "I was scared of the great big dog."),
             ("An enormous barn and a tiny stomach.", "A great big barn and a teeny tummy."),
             ("Mother laughs; father is angry.", "Mam laughs; da is cross."),
+            ("I see a rabbit. I saw a cat.", "I can see a bunny. I saw a cat."),
             ("It is a very old and difficult road.", "It is an ever so old and hard road."),
             // Left alone: a priest, a prioress, "by and large", "very well".
             ("Father Ansel speaks to Mother Superior.", "Father Ansel speaks to Mother Superior."),
@@ -266,6 +272,9 @@ public static class ForbiddenWordsAudit
             ("She bought a tool and tried to sell it.", "She purchased an instrument and endeavoured to sell it."),
             ("It seems he talked to the reeve so that we could buy bread.", "It appears he conversed with the reeve in order that we could purchase bread."),
             ("In the middle of the square, because of the rain, I looked at the sky.", "In the midst of the square, owing to the rain, I regarded the sky."),
+            ("I see the seal; I copy it word for word.", "I observe the seal; I copy it verbatim."),
+            ("The law, that is to say the writ, binds him in good faith, namely the oath.", "The law, id est the writ, binds him bona fide, videlicet the oath."),
+            ("I see what you mean, and I see why.", "I see what you mean, and I see why."),
             // Left alone: "so that's", and a look taken.
             ("So that's the way, and I take a look at it.", "So that's the way, and I take a look at it."),
         },
@@ -287,6 +296,8 @@ public static class ForbiddenWordsAudit
             ("The man draws a knife by the door.", "The two-leg draws a bite-iron by the den-mouth."),
             ("People sit by the fire with their children.", "Two-legs sit by the hot-light with their cubs."),
             ("A lantern hangs from a rope in the house.", "A caged-light hangs from a long-vine in the stone-den."),
+            ("Then I see a man; I saw the door.", "Then my eyes find a two-leg; my eyes found the den-mouth."),
+            ("I see a man.", "My eyes find a two-leg."),
             ("The men's swords and arrows.", "The two-legs' long-claws and flying-thorns."),
         },
     };

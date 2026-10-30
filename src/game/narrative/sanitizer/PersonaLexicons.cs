@@ -68,6 +68,24 @@ internal sealed class PersonaLexicons : LexiconBuilder
         (nameof(Register.Feral), Feral),
     };
 
+    // "I see" is the narrator's commonest words, opening one observation in five, and so the surest
+    // place for a voice to show. But it also means "I understand", and those are left as they are:
+    // "I see that he lied", "I see what you mean", "I see." A register that has its own word for
+    // seeing passes it here; null leaves the past tense alone.
+    private void Seeing(string present, string? past)
+    {
+        foreach (var verb in past == null ? new[] { "see" } : new[] { "see", "saw" })
+        {
+            foreach (var next in new[] { "that", "what", "why", "how", "now", "to", "it's", "it is", "it was",
+                                         "there", "you're", "you've", "you'll", "your point" })
+                W($"I {verb} {next}", $"I {verb} {next}");
+            foreach (var stop in new[] { ".", ",", "!", "?", ";" })
+                W($"I {verb}{stop}", $"I {verb}{stop}");
+        }
+        W("I see", present);
+        if (past != null) W("I saw", past);
+    }
+
     // "Very" is an intensifier everywhere but in these, where it means "itself".
     private void KeepVeryItself()
     {
@@ -100,6 +118,11 @@ internal sealed class PersonaLexicons : LexiconBuilder
         N("evening", "eventide");
         N("morning", "morn");
         N("sky", "firmament", "skies", "firmaments");
+        Seeing("I behold", "I beheld");
+        // The chapel's Latin, where the English is a set phrase of its own.
+        Ws("peace be with you, peace be upon you", "pax tecum");
+        W("rest in peace", "requiescat in pace");
+        P("Farewell", "Vale");
     }
 
     private void Rustic()
@@ -124,6 +147,7 @@ internal sealed class PersonaLexicons : LexiconBuilder
         N("boy", "lad");
         N("stomach", "belly");
         W("money", "brass");
+        Seeing("I spy", "I spied");
     }
 
     private void Cant()
@@ -166,6 +190,7 @@ internal sealed class PersonaLexicons : LexiconBuilder
         KeepVeryItself();
         W("very well", "very well");
         W("very", "ever so");
+        Seeing("I can see", null);
     }
 
     private void Learned()
@@ -188,6 +213,15 @@ internal sealed class PersonaLexicons : LexiconBuilder
         W("clever", "astute");
         N("idea", "notion");
         N("tool", "instrument");
+        Seeing("I observe", "I observed");
+        // The schoolmen's Latin, where the English is a set phrase it translates exactly. Not "per
+        // se", "vice versa" or "et cetera": the forbidden words take those out of every text, as the
+        // clichés they are in modern English.
+        W("word for word", "verbatim");
+        W("that is to say", "id est");
+        W("namely", "videlicet");
+        W("after death", "post mortem");
+        W("in good faith", "bona fide");
     }
 
     private void Terse()
@@ -241,5 +275,6 @@ internal sealed class PersonaLexicons : LexiconBuilder
         N("wagon", "wheel-box");
         W("clothes", "false-fur");
         W("bread", "grain-meat");
+        Seeing("my eyes find", "my eyes found");
     }
 }
