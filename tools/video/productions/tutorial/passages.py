@@ -79,6 +79,28 @@ def table_for(tables, marks, section):
     return chosen
 
 
+def replacements():
+    """The game's layer-1 word replacements (ForbiddenWordsDictionary), which every passage goes through
+    before it is shown, streaming included: the logs hold the model's raw words, the screen the replaced
+    ones."""
+    src = Path(__file__).resolve().parents[4] / "src/game/narrative/sanitizer/ForbiddenWordsDictionary.cs"
+    return dict(re.findall(r'\{\s*"([^"]+)",\s*"([^"]+)"\s*\}', src.read_text())) if src.exists() else {}
+
+
+def replace_words(text: str, table: dict) -> str:
+    """As the game replaces: each listed word, its capital kept, and the article before it agreeing."""
+    def sub(m):
+        art, space, w = m.group(1), m.group(2), m.group(3)
+        new = table.get(w.lower())
+        if new is None:
+            return m.group(0)
+        new = new[:1].upper() + new[1:] if w[:1].isupper() else new
+        if art:
+            art = art[0] + ("n" if new[0].lower() in "aeiou" else "")
+        return (art or "") + (space or "") + new
+    return re.sub(r"(?:\b([Aa]n?)(\s+))?([A-Za-z']+)", sub, text)
+
+
 def generation_ends(session: Path):
     """[(wall-clock end, seconds spent writing)] for every request the server finished."""
     out = []
@@ -101,6 +123,7 @@ def main():
     if "--names" in sys.argv:
         tables = [(e["from"], e["map"]) for e in json.loads(Path(sys.argv[sys.argv.index("--names") + 1]).read_text())]
     ends = generation_ends(session)
+    table = replacements()
     rows = []
     for req in sorted(session.glob("slot_*/request_*")):
         resp = req / "llm_response.txt"
@@ -125,6 +148,7 @@ def main():
         writing = near[1] if near and abs(near[0] - end_wall.total_seconds()) < 2.0 else 0.0
         text = resp.read_text().strip()
         section = section_at(marks, t0 + dur)
+        text = replace_words(text, table)
         said = re.match(r'I say to [^:]+:\s*"(.*)"\s*$', text, re.S)
         if said:
             text = said.group(1)

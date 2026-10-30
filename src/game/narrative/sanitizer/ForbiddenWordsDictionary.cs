@@ -68,6 +68,10 @@ public static class ForbiddenWordsDictionary
         { "university",   "academy" },
         { "professor",    "master scholar" },
 
+        // A word nobody inside the age would use of it: the prompts say "a medieval world", and the
+        // model echoes it back ("this vast, medieval plain"). Within the world it is simply old.
+        { "medieval",     "old" },
+
         // Anachronistic weapons
         { "pistol",       "hand crossbow" },
         { "rifle",        "long crossbow" },
@@ -104,6 +108,7 @@ public static class ForbiddenWordsDictionary
 
             if (_map.TryGetValue(stem, out string? replacement))
             {
+                FixArticle(sb, replacement);
                 sb.Append(ApplyCasing(replacement, token));
             }
             else
@@ -119,6 +124,26 @@ public static class ForbiddenWordsDictionary
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    // "a" or "an" just before the word being replaced, with the space after it
+    private static readonly Regex _articleBefore = new(@"\b([Aa])(n?)(\s+)$", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Makes the article in front of a replaced word agree with what replaces it: "a medieval plain"
+    /// becomes "an old plain", not "a old plain", and "an alright" becomes "a very well". Only the
+    /// article written just before the word is touched.
+    /// </summary>
+    private static void FixArticle(StringBuilder sb, string replacement)
+    {
+        int look = Math.Min(sb.Length, 8);
+        string tail = sb.ToString(sb.Length - look, look);
+        var m = _articleBefore.Match(tail);
+        if (!m.Success) return;
+        bool vowel = "aeiouAEIOU".IndexOf(replacement[0]) >= 0;
+        string article = m.Groups[1].Value + (vowel ? "n" : "");
+        sb.Length -= m.Length;
+        sb.Append(article).Append(m.Groups[3].Value);
+    }
 
     /// <summary>
     /// Very lightweight stemmer: strips common English plural/verb suffixes
