@@ -282,6 +282,20 @@ public sealed class RecordGate
                     if (!isHumor) a = new[] { "die", die!.Value.ToString() };
                     else a = new[] { "humor", a[1] };
                 }
+                // `click skill <group>` opens a weapon's or an organ's group of skills. Pressing an open
+                // group closes it, and whether it is still open from the last turn depends on how that
+                // turn went, which a script written ahead cannot know: an open group is left as it is.
+                if (a.Length >= 2 && a[0].Equals("skill", StringComparison.OrdinalIgnoreCase)
+                    && _game.CurrentMode == GameMode.Fighting && _game.CliFight is { } openFight)
+                {
+                    var (mr, mb) = openFight.CliActionMenuBounds();
+                    if (FindText("▼ " + string.Join(' ', a[1..]), 0, 0, mr, mb) != null)
+                    {
+                        CliMode.Emit($"ok: nothing needed (\"{string.Join(' ', a[1..])}\" is open)");
+                        RecordMode.Log("skipped", new() { ["line"] = line });
+                        return null;
+                    }
+                }
                 var (pixel, label, err) = LocateClick(a);
                 if (err != null) return err;
                 Press(pixel, label, line, hold > 0 ? hold : (a[0].Equals("arrow", StringComparison.OrdinalIgnoreCase) ? 0.6 : 0));

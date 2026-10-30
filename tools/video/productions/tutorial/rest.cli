@@ -110,28 +110,82 @@ regions
 wait turn 900
 click end-turn
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click end-turn
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -155,21 +209,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -193,21 +283,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -231,21 +357,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -269,21 +431,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -307,21 +505,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -345,21 +579,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -383,21 +653,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -421,21 +727,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -459,21 +801,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -631,21 +1009,57 @@ wait mode Fighting 900
 cursor rest
 hold 5
 regions
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -669,21 +1083,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -707,21 +1157,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -745,21 +1231,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -783,21 +1305,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -821,21 +1379,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -859,21 +1453,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -897,21 +1527,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -935,21 +1601,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
@@ -973,21 +1675,57 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
-# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
-# falls short, and end the turn.
-skip-unless fighting 33
+# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
+# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
+# then thrust, spend humors only while the roll falls short, and end the turn.
+skip-unless fighting 69
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
-skip-unless dice 1
+skip-unless dice 10
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 1
 click continue
 wait turn 900
 click skill Short Sword
