@@ -15,7 +15,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:childhood_reminescence",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 2,
@@ -32,7 +35,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:lullaby",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 3,
@@ -49,7 +55,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:aristocracy",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 4,
@@ -66,7 +75,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:heraldry",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 5,
@@ -83,7 +95,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:sloth",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 6,
@@ -100,7 +115,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:puppet_theather",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 7,
@@ -117,7 +135,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:archeology",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 8,
@@ -134,7 +155,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:bushcraft",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 9,
@@ -151,7 +175,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:survivalism",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 10,
@@ -167,7 +194,11 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "visit:20369"
+      "Key": "visit:20369",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 11,
@@ -178,12 +209,16 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I turn my head to the grey wolf, pacing at the tree-line. His eyes, fixed and low, whisper secrets of the night. He means no harm, but I remain vigilant, a shadow in the steppe.",
+      "Source": "I turn my head to the grey wolf, pacing at the tree-line. Its eyes, fixed and low, speak of secrets and shadows. I must be ready, for it knows my heart, but I will not let fear\u0027s grip hold me.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 12,
@@ -194,12 +229,16 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I observe the grey wolf's pacing at the tree-line, its head low and eyes fixed, but I am of higher lineage and rank than this common sight. My intent is to turn my attention to a more worthy cause, one that does not require the faintest hint of a courtesy.",
+      "Source": "I note the grey wolf\u0027s pacing at the tree-line, its head low and eyes fixed, but there is nothing here to elevate my gaze. I would rather turn my attention to a more worthy cause, one that acknowledges my rank and lineage.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 13,
@@ -210,12 +249,16 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I note the grey wolf's pacing at the tree-line, its head low and eyes fixed, but I discern no rank in this place, no lineage to honour here. I shall turn my attention to the stars, the ancient tales and the winds that whisper secrets of old.",
+      "Source": "I note the grey wolf\u0027s pacing at the tree-line, its head low and eyes fixed, but there is nothing here to mark a lord\u0027s concern. I find myself inclined to pass this moment, preferring to observe a more distinguished hunt in the distant hills.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 14,
@@ -226,12 +269,16 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I observe the grey wolf pacing at the tree-line, its head low and eyes fixed upon something unseen. While I do not perceive any immediate task, my rank commands a haughty glance, and I shall turn my attention to the steward's quarters, where a proper cup of cold milk awaits.",
+      "Source": "I observe the grey wolf pacing at the tree-line, its head low and eyes fixed upon something unseen. Despite its earnest scrutiny, there is nothing here of note for a noble\u0027s idle hour. I will turn my attention to the more worthy pursuits of a lord, where the proper precedence is clear and the haughty gaze of my betters is not to be ignored.",
       "Written": "",
       "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     }
   ],
   "NextGroup": 3,

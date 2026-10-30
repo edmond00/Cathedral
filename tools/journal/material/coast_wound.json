@@ -15,7 +15,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:childhood_reminescence",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 2,
@@ -32,7 +35,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:empathy",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 3,
@@ -49,7 +55,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:nautical_jargon",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 4,
@@ -66,7 +75,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:knotwork",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 5,
@@ -83,7 +95,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:streetwise",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 6,
@@ -100,7 +115,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:mythomania",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 7,
@@ -117,7 +135,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:masquerade",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 8,
@@ -134,7 +155,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:survivalism",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 9,
@@ -151,7 +175,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:iron_stomach",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 10,
@@ -167,7 +194,11 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "visit:26448"
+      "Key": "visit:26448",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 11,
@@ -178,12 +209,16 @@
       "LocationId": 26448,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I find myself among the tide pools, a shelf of rock pitted with pools the tide leaves full, each a small world. Around me are marks of alleys, exits marked, a sand flat, a thicket of bramble, a crab, a pool, and a rocky shore. I notice a sound, the alley's racing between the shore and the rock, waves running through it and cold rising from below.",
+      "Source": "I find myself among the alleys, in the morning. This place is a shelf of iron pitted with marks where tides leave their marks, each a small world. Around me are a sand flat, a thicket of bushes, a crab, and a rocky shore. I watch the tide pool, a dark mark on the golden plain, anemones at its bottom, a dangerous thing to ignore. I let my focus go, nothing more here is worth my wary urban gaze.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 12,
@@ -194,12 +229,16 @@
       "LocationId": 26448,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I mark the sun-warmed slab of rock above the tideline. Dry and warm on its landward side, it beckons. I will rely on my skills to survive here, choosing each step with care.",
+      "Source": "I mark the dark, wide, flat sand left by the tide. A survivor\u0027s eye, wary of alleys and exits, draws me close. I\u0027ll test the practical skill needed to stay alive in this harsh place.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 13,
@@ -210,12 +249,36 @@
       "LocationId": 26448,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I failed to heed the flat rock, lost the thread of thoughts, starved before night.",
+      "Source": "I need not look at the sand flat closely, for action calls. Better to eat what\u0027s here and last till morning.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 3,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
+    },
+    {
+      "Seq": 14,
+      "Kind": 0,
+      "Day": 0,
+      "Place": "Plain",
+      "Area": "Tide Pool Zone",
+      "LocationId": 26448,
+      "Actor": "Aentonyuz the Wild",
+      "ByCompanion": false,
+      "Source": "I won\u0027t delve into the sand flat closely, for it draws no insight, and I rethink my course. I could plunge into the golden plain flat, instead. I\u0027ll trust the tying and handling of ropes and knots to navigate this flat.",
+      "Written": "",
+      "State": 1,
+      "Group": 2,
+      "Block": 1,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 15,
@@ -226,78 +289,118 @@
       "LocationId": 26448,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I watch the water's edge, recalling how I once hid from looters, the salty breeze reminding me of those times spent by the port. I let my focus go, where once I'd watch for scraps on the street.",
+      "Source": "I sought the soft earth, but my hands alone lack the strength. A shovel is needed, and with it, I dig deep into the sand\u0027s embrace.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
-      "Block": 0,
-      "Key": ""
+      "Block": 3,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 16,
-      "Kind": 0,
-      "Day": 0,
+      "Kind": 3,
+      "Day": 5,
       "Place": "Plain",
-      "Area": "Tide Pool Zone",
-      "LocationId": 26448,
+      "Area": "",
+      "LocationId": 26446,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I mark the rock's edge, the salt-bright pool, and the anemones at the bottom. My intent is to examine closely, to stay alive here, to trust only the practical skill of this place.",
+      "Source": "First came to the plain",
       "Written": "",
       "State": 0,
-      "Group": 2,
-      "Block": 1,
-      "Key": ""
+      "Group": 3,
+      "Block": null,
+      "Key": "visit:26446",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 17,
       "Kind": 0,
-      "Day": 0,
+      "Day": 5,
       "Place": "Plain",
       "Area": "Tide Pool Zone",
-      "LocationId": 26448,
+      "LocationId": 26446,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I search the pool for food, not to stand and stare. Finds what keeps me, not what tastes nice.",
+      "Source": "I find myself among the tide pools, in the morning, just as I did when the looters raided our home. Each pool is a small world, a parallel to the chaos I once faced, where survival was as simple as finding sustenance in the dirt. I watch the tide pool, a memory of a similar place where I once pretended to be dead among corpses, the anemones at the bottom of this cupped rock pool now drawing my attention.",
       "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": 3,
-      "Key": ""
+      "State": 1,
+      "Group": 3,
+      "Block": 0,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 18,
       "Kind": 0,
-      "Day": 0,
+      "Day": 5,
       "Place": "Plain",
       "Area": "Tide Pool Zone",
-      "LocationId": 26448,
+      "LocationId": 26446,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I won't delve into the tide pool's secrets. That would be foolish, and I'll think on it again. I could seize a crab here. I'll use the street's harsh conditions to stay alive, marking the safe alleyways.",
+      "Source": "I mark the rock by the salt-bright pool, wary of its depth. I grip the knots, ready to swing between the trees by the exit.",
       "Written": "",
-      "State": 0,
-      "Group": 2,
+      "State": 1,
+      "Group": 3,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 19,
       "Kind": 0,
-      "Day": 0,
+      "Day": 5,
       "Place": "Plain",
       "Area": "Tide Pool Zone",
-      "LocationId": 26448,
+      "LocationId": 26446,
       "Actor": "Aentonyuz the Wild",
       "ByCompanion": false,
-      "Source": "I missed a crab, starved now.",
+      "Source": "I could not tighten my grip on the rock, and thus lost the thread of my thoughts, a line slackened under the strain of my own failure.",
       "Written": "",
-      "State": 0,
-      "Group": 2,
+      "State": 1,
+      "Group": 3,
       "Block": 3,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "grab a rock",
+      "Succeeded": false
+    },
+    {
+      "Seq": 20,
+      "Kind": 0,
+      "Day": 5,
+      "Place": "Plain",
+      "Area": "Tide Pool Zone",
+      "LocationId": 26446,
+      "Actor": "Aentonyuz the Wild",
+      "ByCompanion": false,
+      "Source": "I was drawn to a tide pool once, like this one, where anemones swayed in the rock\u0027s grip. It reminds me of how I\u0027d search for food by the sea, pretending to be invisible until the day\u0027s danger passed. I recall pretending to be dead among corpses, and now, a scuttling crab draws my attention, its claws still snapping. I let my focus go, where once I let my wits wander on the streets, a child without a penny to spare.",
+      "Written": "",
+      "State": 1,
+      "Group": 3,
+      "Block": 0,
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     }
   ],
-  "NextGroup": 2,
-  "PendingGroupCount": 0
+  "NextGroup": 4,
+  "PendingGroupCount": 2
 }

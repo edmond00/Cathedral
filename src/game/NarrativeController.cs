@@ -1583,7 +1583,7 @@ public class NarrativeController
                     ModusMentis: refusalMm ?? action.ThinkingModusMentis,
                     Text: refusalText,
                     Keywords: null,
-                    Actions: null);
+                    Actions: null) { Attempt = new ActionAttempt(OutcomeNarrator.ActionDisplay(action), Succeeded: false) };
                 void CommitRuleFailure()
                 {
                     _scrollBuffer.AddBlock(ruleBlock);
@@ -1658,7 +1658,7 @@ public class NarrativeController
                     Text: $"[IMPOSSIBLE] {plausibilityResult.Narration}",
                     Keywords: null,
                     Actions: null
-                );
+                ) { Attempt = evalResult.Action == null ? null : new ActionAttempt(OutcomeNarrator.ActionDisplay(evalResult.Action), Succeeded: false) };
                 void CommitPlausibility()
                 {
                     _scrollBuffer.AddBlock(plausibilityBlock);

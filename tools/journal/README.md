@@ -58,7 +58,5 @@ rolling summary), **length** (90, 160, 260 tokens).
 Keyed `"<grouping>/<variant>/<source>/<group>": [fidelity, coverage, readability, voice]` in
 `manual_scores.json`.
 
-`material/` was captured before the recorder dropped bookkeeping chips and marked lessons. It has since
-been brought in line by hand — the `Modus mentis practised/learned` and `Focus lost` facts removed,
-every `Learned …` milestone marked `Lesson` — so what the prompts render from it is what the game
-records today.
+`material/` was recaptured with the recorder as it now stands (attempts on outcomes, bookkeeping
+dropped, lessons marked); the variant table in the report was measured on the earlier capture.

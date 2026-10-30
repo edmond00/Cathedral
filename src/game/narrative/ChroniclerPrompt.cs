@@ -69,10 +69,10 @@ public static class ChroniclerPrompt
 
     private const string Common = @"
 Rules:
-- Tell what happened: what the traveller did or failed to do and what came of it, who was met and what was said, what was gained, lost or learned. A SCENE note is only where it happened; give it a clause at most.
+- Tell the events in the notes: what the traveller did or failed to do and what came of it, the people met and what passed between them. A SCENE note is only where it happened; give it a clause at most. Tell what was said in your own words; quote one short line at most.
 - Use only what the notes say. Never invent a person, a name, a place, an object or an event.
 - Call people what the notes call them (""the brewer"", ""the reeve""). Never give anyone a name the notes do not use.
-- Write one paragraph of plain prose, three to five sentences. No title, no list, no date line.
+- Write one paragraph of plain prose, at most five sentences. When little happened, write one or two sentences and stop; never add anything to fill the paragraph. No title, no list, no date line.
 - Do not repeat the previous entry, and do not copy the notes word for word.";
 
     public static readonly IReadOnlyDictionary<ChronicleVoice, string> System = new Dictionary<ChronicleVoice, string>
@@ -113,12 +113,7 @@ Rules:
                 : $"The journey so far: {memory}\n");
 
         sb.Append("\nNotes, in order:\n");
-        var items = group.Select(e => Item(e, config)).Where(s => s != null).Select(s => s!).ToList();
-        // Over budget, the settings go first, then the oldest items: the end of a visit is where it lands.
-        for (int i = 0; i < items.Count && items.Sum(x => x.Length + 1) > MaxInputChars; )
-            if (items[i].StartsWith(ScenePrefix, StringComparison.Ordinal)) items.RemoveAt(i); else i++;
-        while (items.Count > 1 && items.Sum(i => i.Length + 1) > MaxInputChars) items.RemoveAt(0);
-        foreach (var i in items) sb.Append(i).Append('\n');
+        foreach (var i in Notes(group, config)) sb.Append(i).Append('\n');
 
         sb.Append(config.Voice switch
         {
@@ -128,6 +123,24 @@ Rules:
         });
         return sb.ToString();
     }
+
+    private static List<string> Notes(IReadOnlyList<JournalEntry> group, ChronicleConfig config)
+    {
+        var items = group.Select(e => Item(e, config)).Where(s => s != null).Select(s => s!).ToList();
+        // Over budget, the settings go first, then the oldest items: the end of a visit is where it lands.
+        for (int i = 0; i < items.Count && items.Sum(x => x.Length + 1) > MaxInputChars; )
+            if (items[i].StartsWith(ScenePrefix, StringComparison.Ordinal)) items.RemoveAt(i); else i++;
+        while (items.Count > 1 && items.Sum(i => i.Length + 1) > MaxInputChars) items.RemoveAt(0);
+        return items;
+    }
+
+    /// <summary>
+    /// The token cap for one group: the configured one for a full visit, less for a thin one. Given a
+    /// single setting and 140 tokens to fill, the model filled them with a brewer, a reeve and a
+    /// conversation that never happened; a quiet visit gets a sentence or two.
+    /// </summary>
+    public static int TokensFor(IReadOnlyList<JournalEntry> group, ChronicleConfig config) =>
+        Math.Clamp(40 + Notes(group, config).Sum(i => i.Length) / 6, 50, config.MaxTokens);
 
     private const string ScenePrefix = "- SCENE";
 
@@ -148,7 +161,9 @@ Rules:
         {
             JournalEntryKind.Milestone when marks && !e.Lesson => $"- MILESTONE: {e.Source}",
             JournalEntryKind.Fact when facts      => $"- CHANGED: {(e.Phrase.Length > 0 ? e.Phrase : e.Source)}",
-            JournalEntryKind.Dialogue when narration => $"- SAID by {e.Actor}: \"{Clip(e.Source.Trim('"'))}\"",
+            // Unquoted and cut to a sentence: quoted whole, the lines were copied out one after another
+            // until the token cap fell mid-quote.
+            JournalEntryKind.Dialogue when narration => $"- SAID by {e.Actor}: {FirstSentence(e.Source.Trim('"'))}",
             JournalEntryKind.Narration when narration => e.Block switch
             {
                 NarrationBlockType.Observation => $"{ScenePrefix}{who}: {FirstSentence(e.Source)}",
@@ -156,7 +171,10 @@ Rules:
                 NarrationBlockType.Emotion     => config.Voice == ChronicleVoice.DiaryTinted ? $"- FELT{who}: {Clip(e.Source)}" : null,
                 NarrationBlockType.Outcome when e.Attempt.Length > 0
                     => $"- {(e.Succeeded ? "DID" : "FAILED TO")}{who}: {e.Attempt}. {FirstSentence(e.Source)}",
-                NarrationBlockType.Action or NarrationBlockType.Outcome => $"- DID{who}: {Clip(e.Source)}",
+                // An outcome with no act behind it is a mind turning a goal down before any button
+                // existed — a thought, told as one ("I want not to stand and look at the well").
+                NarrationBlockType.Outcome     => null,
+                NarrationBlockType.Action      => $"- DID{who}: {Clip(e.Source)}",
                 NarrationBlockType.Speaking    => $"- SAID{who}: {Clip(e.Source)}",
                 _                              => $"- NOTE{who}: {Clip(e.Source)}",
             },

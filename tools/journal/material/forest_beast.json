@@ -15,7 +15,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:childhood_reminescence",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 2,
@@ -32,7 +35,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:butchery",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 3,
@@ -49,7 +55,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:peasantry",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 4,
@@ -66,7 +75,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:ripelore",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 5,
@@ -83,7 +95,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:gluttony",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 6,
@@ -100,7 +115,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:fables_and_tales",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 7,
@@ -117,7 +135,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:athletics",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 8,
@@ -134,7 +155,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:mycology",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 9,
@@ -151,7 +175,10 @@
       "Group": 1,
       "Block": null,
       "Key": "mm:Protagonist:survivalism",
-      "Lesson": true
+      "Phrase": "",
+      "Lesson": true,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 10,
@@ -167,7 +194,11 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "visit:7471"
+      "Key": "visit:7471",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 11,
@@ -178,12 +209,16 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I turn to the wolf, its form as stark and unforgiving as the day my grandfather warned us of dangers hidden in the shadows. The growl from its chest echoes a memory of looters, their cold eyes and ruthless hands. This one means me harm, just as they did, and I must stay wary and ready.",
+      "Source": "I see the wolf, a rangy creature with fangs bared, a growl in its chest. This one means me harm, right here in this hot steppe. I must stay wary and ready, my legs still from running from the looters.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 0,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 12,
@@ -194,12 +229,16 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I perceive a wolf, its fur rangy, fangs bared, a deep growl rumbling from its chest. I want to examine this creature closely, for it marks the edge of our survival here. I will use the practical skill of staying alive in these harsh conditions, where waiting has a price.",
+      "Source": "I see the wolf\u0027s rangy form, its fangs swell in the harsh sun, and a growl echoes, rich and deep. I want to draw close, to study this creature closely. I will stay alive here in this scorching steppe, relying on the practical skill of those who have walked these lands before.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 13,
@@ -210,12 +249,16 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I step closer, not to watch, but to taste what I can find. Hot sun beats, I need something now.",
+      "Source": "I thirst, so I drink wolf\u0027s blood. Failed, but the steppe burns.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 3,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 14,
@@ -226,12 +269,16 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I will not examine the wolf closely, for waiting past its hour only dulls my senses to the wildness that comes before it. I could still examine the wolf closely, another way now. The carcass's joints will speak their readiness, their swell and colour, their scent turning just before the meat goes bad.",
+      "Source": "I will not examine the wolf closely, for the hour is not yet ripe, and I sense the price of waiting has come. I could still examine the wolf closely, another way now, by the cutting of carcasses into joints, as the scent of the meat draws me towards its best point before it turns, and I know the price of waiting has not yet come.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     },
     {
       "Seq": 15,
@@ -242,62 +289,18 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I cannot peer closely, for the wolf stands here, a threat real and raw. The blade is sharp, but my sight is clouded by the beast's looming presence.",
+      "Source": "I cannot come close, for fear the wolf\u0027s sharp teeth might rend my flesh. The threat is real, and the threat is now.",
       "Written": "",
-      "State": 0,
+      "State": 1,
       "Group": 2,
       "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 16,
-      "Kind": 0,
-      "Day": 0,
-      "Place": "Hot steppe",
-      "Area": "Clearing",
-      "LocationId": 7471,
-      "Actor": "Haralhd",
-      "ByCompanion": false,
-      "Source": "I notice the wolf's rangy form, its fur a stark contrast to the parched earth, and the scent of salt and fear rises with the heat. The growl rolls through the air, a warning that is also a testament to its strength. I want to slay it, but the practical skill of staying alive in this harsh steppe guides me. I will rely on my knowledge of this place, the calm that comes from knowing the hour a thing is at its best, to avoid the folly of impatience and wait until the time is right.",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": 1,
-      "Key": ""
-    },
-    {
-      "Seq": 17,
-      "Kind": 0,
-      "Day": 0,
-      "Place": "Hot steppe",
-      "Area": "Clearing",
-      "LocationId": 7471,
-      "Actor": "Haralhd",
-      "ByCompanion": false,
-      "Source": "I shun it, fearing what it might breed.",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 18,
-      "Kind": 0,
-      "Day": 0,
-      "Place": "Hot steppe",
-      "Area": "Clearing",
-      "LocationId": 7471,
-      "Actor": "Haralhd",
-      "ByCompanion": false,
-      "Source": "I see the beast's weight swell, its skin a deep colour of ripe flesh, and the scent of it comes up, just before it turns. So, I will not rush it, for waiting past its hour is a cruel price to pay. I could yet slay it, another way. I will rely on the plain ways of country folk, their calm in the heat, their senses sharp as a blade's edge, their readiness as clear as the scent of the dying blooms.",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": 1,
-      "Key": ""
+      "Key": "",
+      "Phrase": "",
+      "Lesson": false,
+      "Attempt": "",
+      "Succeeded": false
     }
   ],
-  "NextGroup": 2,
-  "PendingGroupCount": 0
+  "NextGroup": 3,
+  "PendingGroupCount": 1
 }

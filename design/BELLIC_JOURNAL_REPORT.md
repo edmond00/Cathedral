@@ -229,6 +229,40 @@ Read alongside the numbers, which miss things both ways:
 
 **Chosen:** third-person chronicle, everything recorded except bookkeeping, a visit per paragraph, no memory, 140 tokens.
 
+#### Events, not musings (follow-up)
+
+Read in play, the paragraphs told the character's observations and thoughts and let the events slip. The
+notes explained it: observations were a third of the items and the longest, thoughts another third, and the
+"DID" items were the acting mind's florid telling of an act ("I search the pool for food, not to stand and
+stare") rather than the act. Changed, in `ChroniclerPrompt` and the recorder:
+
+- **An act is recorded as what was tried and whether it worked.** The outcome block carries an
+  `ActionAttempt` (the plain phrase the thinking chose, and the verdict), kept on the entry; the chronicler
+  is told `FAILED TO: grab a rock.` with the first sentence of the telling. A refusal by a rule, or as
+  impossible, carries one too. An outcome with no attempt — a mind turning a goal down — is left out.
+- **Thoughts are left out; an observation is a one-sentence `SCENE`; a feeling reaches only the tinted diary.**
+- **Lines go unquoted, first sentence only**, and the prompt asks for what was said in its own words: quoted
+  whole, the conversation was copied out until the cap fell mid-quote.
+- **The token cap follows the notes** (`TokensFor`: 40 + characters/6, between 50 and 140). With the
+  observations gone a quiet visit was one setting line, and given 140 tokens the model invented a brewer, a
+  reeve and two conversations to fill them. The prompt also says a quiet visit gets a sentence or two.
+
+Measured on a fresh capture of the same eight scenarios (14 visits; now committed as the material), same
+seed, both prompts rendered by the game:
+
+| prompt | n | invented/para | coverage | copied | repeat | voice | words | prompt tok | gen tok | gen s/job |
+|---|---|---|---|---|---|---|---|---|---|---|
+| before | 14 | 0.07 | 0.50 | 0.14 | 0.03 | 0.86 | 90 | 392 | 136 | 18.9 |
+| **after** | 14 | **0.00** | **0.63** | **0.09** | **0.03** | **0.86** | **49** | **210** | **73** | **9.7** |
+
+Read beside the notes: every act now appears ("could not grab a rock", "failed to examine the gate bar
+closely", "sat on the mounting block and let the time pass… waited until dawn", the introduction to the
+brewer and what he answered), and quiet visits are one or two sentences with nothing added. Still wrong:
+one conversation of two still quotes three lines; one paragraph in fourteen opens by copying the header
+("Day 1, at the plain (hedgerow). Eghbert Moorshield is here."); the narrator's own oddities pass through
+when they are the act ("his fingers as quick as shadows" for listening to a goose). Half the prompt and
+half the generation also halve how long a preempted job can hold the server.
+
 #### Six groups, raw input beside the paragraph (shipped configuration)
 
 #### hall_dialogue, visit 2
