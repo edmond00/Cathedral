@@ -78,4 +78,8 @@ expect-state where period=Noon
 inspect opening
 expect-state opening focus=npc
 expect-state opening farmer_
+# And to the place's own music. The journey thins it to one track; an ordinary arrival restores the
+# full band, and a routine's arrival once skipped that and played the road's drone in the town.
+inspect music
+expect-state music tracks=4
 quit

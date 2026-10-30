@@ -2811,9 +2811,7 @@ public class LocationTravelGameController : IDisposable
     private void StartLocationInteraction(int vertexIndex, Cathedral.Glyph.Microworld.LocationType locationType)
     {
         Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for location '{locationType.Name}'");
-        // Sample a deterministic mood for this specific location and play full music
-        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(locationType.Name, vertexIndex));
-        _ambianceEngine?.SetActiveTrackCount(4);
+        PlayPlaceMusic(vertexIndex);
         StartNarrativeInteraction(vertexIndex);
     }
 
@@ -2824,10 +2822,22 @@ public class LocationTravelGameController : IDisposable
     private void StartBiomeInteraction(int vertexIndex, Cathedral.Glyph.Microworld.BiomeType biomeType)
     {
         Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for biome '{biomeType.Name}'");
-        // Sample a deterministic mood for this biome tile and play full music
-        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(biomeType.Name, vertexIndex));
-        _ambianceEngine?.SetActiveTrackCount(4);
+        PlayPlaceMusic(vertexIndex);
         StartNarrativeInteraction(vertexIndex);
+    }
+
+    /// <summary>
+    /// The place's own music at full band: a deterministic mood sampled from the location at
+    /// <paramref name="vertexIndex"/>, or from its biome where there is none. The journey left the
+    /// music thinned to one track, so every way into a place — an ordinary arrival and every
+    /// routine — must come through here, or the place plays the road's drone.
+    /// </summary>
+    private void PlayPlaceMusic(int vertexIndex)
+    {
+        var info = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+        var name = info.location.HasValue ? info.location.Value.Name : info.biome.Name;
+        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(name, vertexIndex));
+        _ambianceEngine?.SetActiveTrackCount(4);
     }
 
     /// <summary>
@@ -5861,6 +5871,8 @@ public class LocationTravelGameController : IDisposable
     private void EnterRoutine(int vertex, Cathedral.Game.Narrative.Routines.Routine routine)
     {
         if (_core.Terminal == null || _protagonist == null) { ReturnToWorldView(); return; }
+
+        PlayPlaceMusic(vertex);
 
         var ctx = RoutineCheckContextFor(vertex);
         var why = ctx == null ? "the place cannot be reached" : routine.Unavailability(ctx);
