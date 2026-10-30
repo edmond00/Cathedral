@@ -14,7 +14,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Lesson": true
     },
     {
       "Seq": 2,
@@ -30,7 +31,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:butchery"
+      "Key": "mm:Protagonist:butchery",
+      "Lesson": true
     },
     {
       "Seq": 3,
@@ -46,7 +48,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:peasantry"
+      "Key": "mm:Protagonist:peasantry",
+      "Lesson": true
     },
     {
       "Seq": 4,
@@ -62,7 +65,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:ripelore"
+      "Key": "mm:Protagonist:ripelore",
+      "Lesson": true
     },
     {
       "Seq": 5,
@@ -78,7 +82,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:gluttony"
+      "Key": "mm:Protagonist:gluttony",
+      "Lesson": true
     },
     {
       "Seq": 6,
@@ -94,7 +99,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:fables_and_tales"
+      "Key": "mm:Protagonist:fables_and_tales",
+      "Lesson": true
     },
     {
       "Seq": 7,
@@ -110,7 +116,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:athletics"
+      "Key": "mm:Protagonist:athletics",
+      "Lesson": true
     },
     {
       "Seq": 8,
@@ -126,7 +133,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:mycology"
+      "Key": "mm:Protagonist:mycology",
+      "Lesson": true
     },
     {
       "Seq": 9,
@@ -142,7 +150,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:survivalism"
+      "Key": "mm:Protagonist:survivalism",
+      "Lesson": true
     },
     {
       "Seq": 10,
@@ -217,7 +226,7 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I will not examine the wolf closely, for waiting past its hour only dulls my senses to the wildness that comes before it. I could still examine the wolf closely, another way now. The carcass\u0027s joints will speak their readiness, their swell and colour, their scent turning just before the meat goes bad.",
+      "Source": "I will not examine the wolf closely, for waiting past its hour only dulls my senses to the wildness that comes before it. I could still examine the wolf closely, another way now. The carcass's joints will speak their readiness, their swell and colour, their scent turning just before the meat goes bad.",
       "Written": "",
       "State": 0,
       "Group": 2,
@@ -233,7 +242,7 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I cannot peer closely, for the wolf stands here, a threat real and raw. The blade is sharp, but my sight is clouded by the beast\u0027s looming presence.",
+      "Source": "I cannot peer closely, for the wolf stands here, a threat real and raw. The blade is sharp, but my sight is clouded by the beast's looming presence.",
       "Written": "",
       "State": 0,
       "Group": 2,
@@ -249,7 +258,7 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I notice the wolf\u0027s rangy form, its fur a stark contrast to the parched earth, and the scent of salt and fear rises with the heat. The growl rolls through the air, a warning that is also a testament to its strength. I want to slay it, but the practical skill of staying alive in this harsh steppe guides me. I will rely on my knowledge of this place, the calm that comes from knowing the hour a thing is at its best, to avoid the folly of impatience and wait until the time is right.",
+      "Source": "I notice the wolf's rangy form, its fur a stark contrast to the parched earth, and the scent of salt and fear rises with the heat. The growl rolls through the air, a warning that is also a testament to its strength. I want to slay it, but the practical skill of staying alive in this harsh steppe guides me. I will rely on my knowledge of this place, the calm that comes from knowing the hour a thing is at its best, to avoid the folly of impatience and wait until the time is right.",
       "Written": "",
       "State": 0,
       "Group": 2,
@@ -281,7 +290,7 @@
       "LocationId": 7471,
       "Actor": "Haralhd",
       "ByCompanion": false,
-      "Source": "I see the beast\u0027s weight swell, its skin a deep colour of ripe flesh, and the scent of it comes up, just before it turns. So, I will not rush it, for waiting past its hour is a cruel price to pay. I could yet slay it, another way. I will rely on the plain ways of country folk, their calm in the heat, their senses sharp as a blade\u0027s edge, their readiness as clear as the scent of the dying blooms.",
+      "Source": "I see the beast's weight swell, its skin a deep colour of ripe flesh, and the scent of it comes up, just before it turns. So, I will not rush it, for waiting past its hour is a cruel price to pay. I could yet slay it, another way. I will rely on the plain ways of country folk, their calm in the heat, their senses sharp as a blade's edge, their readiness as clear as the scent of the dying blooms.",
       "Written": "",
       "State": 0,
       "Group": 2,

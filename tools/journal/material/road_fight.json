@@ -14,7 +14,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Lesson": true
     },
     {
       "Seq": 2,
@@ -30,7 +31,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:sense_of_humor"
+      "Key": "mm:Protagonist:sense_of_humor",
+      "Lesson": true
     },
     {
       "Seq": 3,
@@ -46,7 +48,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:beast_sense"
+      "Key": "mm:Protagonist:beast_sense",
+      "Lesson": true
     },
     {
       "Seq": 4,
@@ -62,7 +65,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:hospitality"
+      "Key": "mm:Protagonist:hospitality",
+      "Lesson": true
     },
     {
       "Seq": 5,
@@ -78,7 +82,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:hard_labor"
+      "Key": "mm:Protagonist:hard_labor",
+      "Lesson": true
     },
     {
       "Seq": 6,
@@ -94,7 +99,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:avarice"
+      "Key": "mm:Protagonist:avarice",
+      "Lesson": true
     },
     {
       "Seq": 7,
@@ -110,7 +116,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:high_society_manners"
+      "Key": "mm:Protagonist:high_society_manners",
+      "Lesson": true
     },
     {
       "Seq": 8,
@@ -126,7 +133,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:brute_force"
+      "Key": "mm:Protagonist:brute_force",
+      "Lesson": true
     },
     {
       "Seq": 9,
@@ -142,7 +150,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:endurance"
+      "Key": "mm:Protagonist:endurance",
+      "Lesson": true
     },
     {
       "Seq": 10,
@@ -201,7 +210,7 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy an ancient, weathered stone cross, its carvings worn smooth like the hands of a wise old man. But there\u0027s naught here to mend, so I\u0027ll jest and turn my gaze to the sky.",
+      "Source": "I spy an ancient, weathered stone cross, its carvings worn smooth like the hands of a wise old man. But there's naught here to mend, so I'll jest and turn my gaze to the sky.",
       "Written": "",
       "State": 1,
       "Group": 3,
@@ -217,7 +226,7 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy an ancient, weathered stone cross on a stepped base, its carving worn to a whisper. Yet, \u0027tis nothing worth doing, so I\u0027ll jest and shift my gaze to something lighter.",
+      "Source": "I spy an ancient, weathered stone cross on a stepped base, its carving worn to a whisper. Yet, 'tis nothing worth doing, so I'll jest and shift my gaze to something lighter.",
       "Written": "",
       "State": 1,
       "Group": 3,
@@ -233,7 +242,7 @@
       "LocationId": 28437,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I spy an ancient, weathered stone cross atop a stepped base, its carvings worn smooth like the hands of the aged. But there\u0027s naught here to do but sigh, so I\u0027ll skip this drear spot and seek a jest instead.",
+      "Source": "I spy an ancient, weathered stone cross atop a stepped base, its carvings worn smooth like the hands of the aged. But there's naught here to do but sigh, so I'll skip this drear spot and seek a jest instead.",
       "Written": "",
       "State": 1,
       "Group": 3,
@@ -265,7 +274,7 @@
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I find myself at noon in the village square, where my days spent at the stable now echo the foot-traffic crossing every direction. The well, the ways, the peat cut, and the mounting block still stand, their presence a silent reminder of lessons learned. I watch a well, a central stone-rimmed well at the square\u0027s heart, a wooden bucket on its rope. Childhood memories of saving coins and dreams of fortune echo here, as I once pushed through a storm with worn legs.",
+      "Source": "I find myself at noon in the village square, where my days spent at the stable now echo the foot-traffic crossing every direction. The well, the ways, the peat cut, and the mounting block still stand, their presence a silent reminder of lessons learned. I watch a well, a central stone-rimmed well at the square's heart, a wooden bucket on its rope. Childhood memories of saving coins and dreams of fortune echo here, as I once pushed through a storm with worn legs.",
       "Written": "",
       "State": 1,
       "Group": 4,
@@ -302,7 +311,8 @@
       "State": 0,
       "Group": 4,
       "Block": null,
-      "Key": "mm:Protagonist:wayfaring"
+      "Key": "mm:Protagonist:wayfaring",
+      "Lesson": true
     },
     {
       "Seq": 20,
@@ -337,70 +347,6 @@
       "Key": ""
     },
     {
-      "Seq": 22,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis learned: Wayfaring",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 23,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Childhood Reminescence (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 24,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Sense of Humor (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 25,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Village Orchard",
-      "LocationId": 1824,
-      "Actor": "Nyccolhoth Lhavyniwyn",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Hard Labor (1/12 xp)",
-      "Written": "",
-      "State": 1,
-      "Group": 4,
-      "Block": null,
-      "Key": ""
-    },
-    {
       "Seq": 26,
       "Kind": 0,
       "Day": 5,
@@ -409,7 +355,7 @@
       "LocationId": 1824,
       "Actor": "Nyccolhoth Lhavyniwyn",
       "ByCompanion": false,
-      "Source": "I walk through the grass, the scent of the goat\u0027s breath heavy in my nose. My body tenses at the warning in its posture, a kinship to all creatures. The waterside whispers, the old man\u0027s hands warm and familiar, the forge\u0027s fire crackling, but my focus remains on the goat\u0027s flicked ear, a silent command. I catch the scent of ripe apples, the posture of an old tree wary, as branches hold heavy with fruit. It warns, a beast\u0027s kin, ready to move if danger nears.",
+      "Source": "I walk through the grass, the scent of the goat's breath heavy in my nose. My body tenses at the warning in its posture, a kinship to all creatures. The waterside whispers, the old man's hands warm and familiar, the forge's fire crackling, but my focus remains on the goat's flicked ear, a silent command. I catch the scent of ripe apples, the posture of an old tree wary, as branches hold heavy with fruit. It warns, a beast's kin, ready to move if danger nears.",
       "Written": "",
       "State": 1,
       "Group": 4,

@@ -33,7 +33,7 @@ thread count the player's Settings screen would use. Every request also lands in
 
 ```bash
 python3 tools/journal/collect.py material/                      # hours on a 4-core CPU
-$G --journal-prompts material/ prompts.jsonl
+$G --journal-prompts material/ prompts.jsonl     # tools/journal/material/ holds the eight runs measured
 python3 tools/journal/bench.py prompts.jsonl outputs.jsonl
 python3 tools/journal/score.py outputs.jsonl --manual tools/journal/manual_scores.json --samples 6
 ```
@@ -57,3 +57,8 @@ rolling summary), **length** (90, 160, 260 tokens).
 
 Keyed `"<grouping>/<variant>/<source>/<group>": [fidelity, coverage, readability, voice]` in
 `manual_scores.json`.
+
+`material/` was captured before the recorder dropped bookkeeping chips and marked lessons. It has since
+been brought in line by hand — the `Modus mentis practised/learned` and `Focus lost` facts removed,
+every `Learned …` milestone marked `Lesson` — so what the prompts render from it is what the game
+records today.

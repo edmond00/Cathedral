@@ -53,11 +53,22 @@ public static class ChroniclerPrompt
     /// <summary>Longest a single narration or line may be in the prompt; past it, the start is kept.</summary>
     public const int MaxItemChars = 320;
 
-    /// <summary>Longest the whole list of what happened may be; past it, the oldest items go first.</summary>
+    /// <summary>
+    /// Longest an observation may be in the prompt: its first sentence, cut here. An observation is the
+    /// setting, not an event, and given whole (a third of the notes, the longest items) it became the
+    /// paragraph — the brewer's cask and froth told at length, the conversation that followed not at all.
+    /// </summary>
+    public const int MaxSceneChars = 140;
+
+    /// <summary>
+    /// Longest the whole list of what happened may be; past it, the settings go first, then the oldest
+    /// items.
+    /// </summary>
     public const int MaxInputChars = 2400;
 
     private const string Common = @"
 Rules:
+- Tell what happened: what the traveller did and what came of it, who was met and what was said, what was gained, lost or learned. A SCENE note is only where it happened; give it a clause at most.
 - Use only what the notes say. Never invent a person, a name, a place, an object or an event.
 - Call people what the notes call them (""the brewer"", ""the reeve""). Never give anyone a name the notes do not use.
 - Write one paragraph of plain prose, three to five sentences. No title, no list, no date line.
@@ -65,9 +76,9 @@ Rules:
 
     public static readonly IReadOnlyDictionary<ChronicleVoice, string> System = new Dictionary<ChronicleVoice, string>
     {
-        [ChronicleVoice.Chronicle] = @"You are the chronicler of a traveller's journey. You are given notes on one stretch of it — what was seen, said and done, and what changed — and you write that stretch up as a short passage of a chronicle: third person, past tense, sober and clear, naming the traveller as the notes do." + Common,
-        [ChronicleVoice.Diary] = @"You keep the diary of a traveller. You are given notes on one stretch of the journey — what was seen, said and done, and what changed — and you write that stretch up as the traveller's own diary entry: first person, past tense, plain and personal, the way someone writes at the end of a day." + Common,
-        [ChronicleVoice.DiaryTinted] = @"You keep the diary of a traveller. You are given notes on one stretch of the journey — what was seen, said and done, what changed, and what it made the traveller feel — and you write that stretch up as the traveller's own diary entry: first person, past tense, plain and personal. Let the feelings in the notes colour how the entry is told, without naming them as a list." + Common,
+        [ChronicleVoice.Chronicle] = @"You are the chronicler of a traveller's journey. You are given notes on one stretch of it — what was done, said and changed, and where — and you write that stretch up as a short passage of a chronicle: third person, past tense, sober and clear, naming the traveller as the notes do." + Common,
+        [ChronicleVoice.Diary] = @"You keep the diary of a traveller. You are given notes on one stretch of the journey — what was done, said and changed, and where — and you write that stretch up as the traveller's own diary entry: first person, past tense, plain and personal, the way someone writes at the end of a day." + Common,
+        [ChronicleVoice.DiaryTinted] = @"You keep the diary of a traveller. You are given notes on one stretch of the journey — what was done, said and changed, where, and what it made the traveller feel — and you write that stretch up as the traveller's own diary entry: first person, past tense, plain and personal. Let the feelings in the notes colour how the entry is told, without naming them as a list." + Common,
         [ChronicleVoice.CampaignLog] = @"You keep a terse campaign log of a traveller's journey. You are given notes on one stretch of it and you write a log entry: past tense, short factual sentences, what was done and what came of it, nothing else." + Common,
     };
 
@@ -102,7 +113,9 @@ Rules:
 
         sb.Append("\nNotes, in order:\n");
         var items = group.Select(e => Item(e, config)).Where(s => s != null).Select(s => s!).ToList();
-        // Oldest first out when over budget: the end of a visit is where it lands.
+        // Over budget, the settings go first, then the oldest items: the end of a visit is where it lands.
+        for (int i = 0; i < items.Count && items.Sum(x => x.Length + 1) > MaxInputChars; )
+            if (items[i].StartsWith(ScenePrefix, StringComparison.Ordinal)) items.RemoveAt(i); else i++;
         while (items.Count > 1 && items.Sum(i => i.Length + 1) > MaxInputChars) items.RemoveAt(0);
         foreach (var i in items) sb.Append(i).Append('\n');
 
@@ -115,6 +128,14 @@ Rules:
         return sb.ToString();
     }
 
+    private const string ScenePrefix = "- SCENE";
+
+    /// <summary>
+    /// One note. What was done, said and changed goes in whole; an observation goes in as a setting,
+    /// its first sentence. A thought does not go in: the thinking block is the mind turning over what
+    /// to do, and the act it settles on is the outcome after it — given both, the chronicler told the
+    /// musing and the act came second. A feeling goes in only for the tinted diary, which asks for it.
+    /// </summary>
     private static string? Item(JournalEntry e, ChronicleConfig config)
     {
         bool narration = config.Inputs is ChronicleInputs.NarrationOnly or ChronicleInputs.Everything;
@@ -126,22 +147,26 @@ Rules:
             JournalEntryKind.Milestone when marks && !e.Lesson => $"- MILESTONE: {e.Source}",
             JournalEntryKind.Fact when facts      => $"- CHANGED: {(e.Phrase.Length > 0 ? e.Phrase : e.Source)}",
             JournalEntryKind.Dialogue when narration => $"- SAID by {e.Actor}: \"{Clip(e.Source.Trim('"'))}\"",
-            JournalEntryKind.Narration when narration && e.Block == NarrationBlockType.Emotion
-                                                    => $"- FELT{who}: {Clip(e.Source)}",
-            JournalEntryKind.Narration when narration => $"- {Label(e.Block)}{who}: {Clip(e.Source)}",
+            JournalEntryKind.Narration when narration => e.Block switch
+            {
+                NarrationBlockType.Observation => $"{ScenePrefix}{who}: {FirstSentence(e.Source)}",
+                NarrationBlockType.Thinking    => null,
+                NarrationBlockType.Emotion     => config.Voice == ChronicleVoice.DiaryTinted ? $"- FELT{who}: {Clip(e.Source)}" : null,
+                NarrationBlockType.Action or NarrationBlockType.Outcome => $"- DID{who}: {Clip(e.Source)}",
+                NarrationBlockType.Speaking    => $"- SAID{who}: {Clip(e.Source)}",
+                _                              => $"- NOTE{who}: {Clip(e.Source)}",
+            },
             _ => null,
         };
     }
 
-    private static string Label(NarrationBlockType? block) => block switch
+    private static string FirstSentence(string s)
     {
-        NarrationBlockType.Observation => "SAW",
-        NarrationBlockType.Thinking    => "THOUGHT",
-        NarrationBlockType.Action      => "DID",
-        NarrationBlockType.Outcome     => "DID",
-        NarrationBlockType.Speaking    => "SAID",
-        _                              => "NOTE",
-    };
+        s = s.Replace('\n', ' ').Trim();
+        int end = s.IndexOfAny(new[] { '.', '!', '?' });
+        if (end > 0) s = s[..(end + 1)];
+        return s.Length <= MaxSceneChars ? s : s[..MaxSceneChars].TrimEnd() + "…";
+    }
 
     private static string Clip(string s)
     {

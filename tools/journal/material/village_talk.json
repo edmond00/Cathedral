@@ -14,7 +14,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Lesson": true
     },
     {
       "Seq": 2,
@@ -30,7 +31,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:butchery"
+      "Key": "mm:Protagonist:butchery",
+      "Lesson": true
     },
     {
       "Seq": 3,
@@ -46,7 +48,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:peasantry"
+      "Key": "mm:Protagonist:peasantry",
+      "Lesson": true
     },
     {
       "Seq": 4,
@@ -62,7 +65,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:ripelore"
+      "Key": "mm:Protagonist:ripelore",
+      "Lesson": true
     },
     {
       "Seq": 5,
@@ -78,7 +82,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:gluttony"
+      "Key": "mm:Protagonist:gluttony",
+      "Lesson": true
     },
     {
       "Seq": 6,
@@ -94,7 +99,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:friendship"
+      "Key": "mm:Protagonist:friendship",
+      "Lesson": true
     },
     {
       "Seq": 7,
@@ -110,7 +116,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:stealth"
+      "Key": "mm:Protagonist:stealth",
+      "Lesson": true
     },
     {
       "Seq": 8,
@@ -126,7 +133,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:hunt"
+      "Key": "mm:Protagonist:hunt",
+      "Lesson": true
     },
     {
       "Seq": 9,
@@ -142,7 +150,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:survivalism"
+      "Key": "mm:Protagonist:survivalism",
+      "Lesson": true
     },
     {
       "Seq": 10,
@@ -169,7 +178,7 @@
       "LocationId": 4010,
       "Actor": "Kenryc Greygate",
       "ByCompanion": false,
-      "Source": "I find myself at noon in the heart of the village, tracks leading to the open dirt square, quarry sharpened for the hunt, prey marked, ready to take. I mark the thorn hedge, square-craft row, where thorns are set and pleached thick, drawing focus on the thorny run, ready for the quarry\u0027s take. I let my focus go, tracking no more, as the hunt\u0027s prize slipped away.",
+      "Source": "I find myself at noon in the heart of the village, tracks leading to the open dirt square, quarry sharpened for the hunt, prey marked, ready to take. I mark the thorn hedge, square-craft row, where thorns are set and pleached thick, drawing focus on the thorny run, ready for the quarry's take. I let my focus go, tracking no more, as the hunt's prize slipped away.",
       "Written": "",
       "State": 0,
       "Group": 2,
@@ -201,7 +210,7 @@
       "LocationId": 4010,
       "Actor": "Kenryc Greygate",
       "ByCompanion": false,
-      "Source": "I wish not to delve into the thorn hedge\u0027s thorns, for I yearn to act, not to stand and stare. My hands yearn to plow, to sow, to tend the soil with care. My heart beats for the barn, for the fields, for the seasons\u0027 work.",
+      "Source": "I wish not to delve into the thorn hedge's thorns, for I yearn to act, not to stand and stare. My hands yearn to plow, to sow, to tend the soil with care. My heart beats for the barn, for the fields, for the seasons' work.",
       "Written": "",
       "State": 0,
       "Group": 2,
@@ -238,7 +247,8 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "mm:Protagonist:hedgecraft"
+      "Key": "mm:Protagonist:hedgecraft",
+      "Lesson": true
     },
     {
       "Seq": 16,
@@ -249,75 +259,11 @@
       "LocationId": 4010,
       "Actor": "Kenryc Greygate",
       "ByCompanion": false,
-      "Source": "I took the thorn hedge close, marking each thorn\u0027s curve. Thus, I learned its craft well, as quarry\u0027s run guides the hunter\u0027s path.",
+      "Source": "I took the thorn hedge close, marking each thorn's curve. Thus, I learned its craft well, as quarry's run guides the hunter's path.",
       "Written": "",
       "State": 0,
       "Group": 2,
       "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 17,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis learned: Hedgecraft",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 18,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Hunt (1/12 xp)",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 19,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Ripelore (1/12 xp)",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 20,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Hunt (2/12 xp)",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
       "Key": ""
     },
     {
@@ -361,7 +307,7 @@
       "LocationId": 4010,
       "Actor": "Kenryc Greygate",
       "ByCompanion": false,
-      "Source": "I need not stand and observe the ivy\u0027s grasp, for my hands are steeped in thorns and stakes, ready to mend the fence where the wall\u0027s rotted. My eyes are sharp, the gap a dog will find before the sheep do.",
+      "Source": "I need not stand and observe the ivy's grasp, for my hands are steeped in thorns and stakes, ready to mend the fence where the wall's rotted. My eyes are sharp, the gap a dog will find before the sheep do.",
       "Written": "",
       "State": 0,
       "Group": 2,
@@ -398,7 +344,8 @@
       "State": 0,
       "Group": 2,
       "Block": null,
-      "Key": "mm:Protagonist:architecture"
+      "Key": "mm:Protagonist:architecture",
+      "Lesson": true
     },
     {
       "Seq": 26,
@@ -409,75 +356,11 @@
       "LocationId": 4010,
       "Actor": "Kenryc Greygate",
       "ByCompanion": false,
-      "Source": "I marked the ivy\u0027s growth, keenly examined the house wall. Thanks to this, I learned much about architecture, its secrets and shapes.",
+      "Source": "I marked the ivy's growth, keenly examined the house wall. Thanks to this, I learned much about architecture, its secrets and shapes.",
       "Written": "",
       "State": 0,
       "Group": 2,
       "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 27,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis learned: Architecture",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 28,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Childhood Reminescence (1/12 xp)",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 29,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Ripelore (2/12 xp)",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
-      "Key": ""
-    },
-    {
-      "Seq": 30,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Coast",
-      "Area": "Square",
-      "LocationId": 4010,
-      "Actor": "Kenryc Greygate",
-      "ByCompanion": false,
-      "Source": "Modus mentis practised: Hunt (3/12 xp)",
-      "Written": "",
-      "State": 0,
-      "Group": 2,
-      "Block": null,
       "Key": ""
     }
   ],

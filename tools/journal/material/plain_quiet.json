@@ -14,7 +14,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Lesson": true
     },
     {
       "Seq": 2,
@@ -30,7 +31,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:butchery"
+      "Key": "mm:Protagonist:butchery",
+      "Lesson": true
     },
     {
       "Seq": 3,
@@ -46,7 +48,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:peasantry"
+      "Key": "mm:Protagonist:peasantry",
+      "Lesson": true
     },
     {
       "Seq": 4,
@@ -62,7 +65,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:ripelore"
+      "Key": "mm:Protagonist:ripelore",
+      "Lesson": true
     },
     {
       "Seq": 5,
@@ -78,7 +82,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:gluttony"
+      "Key": "mm:Protagonist:gluttony",
+      "Lesson": true
     },
     {
       "Seq": 6,
@@ -94,7 +99,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:friendship"
+      "Key": "mm:Protagonist:friendship",
+      "Lesson": true
     },
     {
       "Seq": 7,
@@ -110,7 +116,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:masquerade"
+      "Key": "mm:Protagonist:masquerade",
+      "Lesson": true
     },
     {
       "Seq": 8,
@@ -126,7 +133,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:mycology"
+      "Key": "mm:Protagonist:mycology",
+      "Lesson": true
     },
     {
       "Seq": 9,
@@ -142,7 +150,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:survivalism"
+      "Key": "mm:Protagonist:survivalism",
+      "Lesson": true
     },
     {
       "Seq": 10,
@@ -206,22 +215,6 @@
       "State": 1,
       "Group": 2,
       "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 14,
-      "Kind": 2,
-      "Day": 0,
-      "Place": "Plain",
-      "Area": "Hedgerow",
-      "LocationId": 8068,
-      "Actor": "Eghbert Moorshield",
-      "ByCompanion": false,
-      "Source": "Focus lost: -1 noetic point",
-      "Written": "",
-      "State": 1,
-      "Group": 2,
-      "Block": null,
       "Key": ""
     },
     {
@@ -313,7 +306,7 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I will not linger, for the berry\u0027s time is ripe, and my hand knows well the hour it should be plucked. I could still examine the berry bush closely, another way. I will rely on the cutting of joints, for it holds the scent and colour of the ripest time, before they spoil on the branch.",
+      "Source": "I will not linger, for the berry's time is ripe, and my hand knows well the hour it should be plucked. I could still examine the berry bush closely, another way. I will rely on the cutting of joints, for it holds the scent and colour of the ripest time, before they spoil on the branch.",
       "Written": "",
       "State": 1,
       "Group": 3,
@@ -329,27 +322,11 @@
       "LocationId": 32010,
       "Actor": "Eghbert Moorshield",
       "ByCompanion": false,
-      "Source": "I failed to examine the berry bush closely, a mistake that severed the thread of my thoughts, leaving clean cuts of regret in my mind\u0027s blade.",
+      "Source": "I failed to examine the berry bush closely, a mistake that severed the thread of my thoughts, leaving clean cuts of regret in my mind's blade.",
       "Written": "",
       "State": 1,
       "Group": 3,
       "Block": 3,
-      "Key": ""
-    },
-    {
-      "Seq": 22,
-      "Kind": 2,
-      "Day": 5,
-      "Place": "Plain",
-      "Area": "Hedgerow",
-      "LocationId": 32010,
-      "Actor": "Eghbert Moorshield",
-      "ByCompanion": false,
-      "Source": "Focus lost: -1 noetic point",
-      "Written": "",
-      "State": 1,
-      "Group": 3,
-      "Block": null,
       "Key": ""
     },
     {

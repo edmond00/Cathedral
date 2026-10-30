@@ -1942,6 +1942,11 @@ A block no modus mentis narrated (`ModusMentis` null: a trade note, a fight's lo
 talking and is not recorded. A lesson milestone is shown but marked `Lesson` and kept from the
 chronicler, which turned modus mentis names into "learning social interaction".
 
+**Everything is recorded; the chronicler is told the events.** `ChroniclerPrompt.Item` gives acts,
+outcomes, lines and facts whole, an observation as a setting (`SCENE`, its first sentence), and no
+thought at all — a feeling only to the tinted diary. Given the narration whole, the observations (a
+third of the notes, the longest) became the paragraph and the visit's events came second.
+
 Narration is credited to whoever is acting when the block commits — the Speak About hand-off commits
 the speech before switching member, so the speech stays the speaker's and what follows is the
 companion's. **A visit is the chronicler's unit**: entering the world map closes the group and its

@@ -14,7 +14,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:childhood_reminescence"
+      "Key": "mm:Protagonist:childhood_reminescence",
+      "Lesson": true
     },
     {
       "Seq": 2,
@@ -30,7 +31,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:lullaby"
+      "Key": "mm:Protagonist:lullaby",
+      "Lesson": true
     },
     {
       "Seq": 3,
@@ -46,7 +48,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:aristocracy"
+      "Key": "mm:Protagonist:aristocracy",
+      "Lesson": true
     },
     {
       "Seq": 4,
@@ -62,7 +65,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:heraldry"
+      "Key": "mm:Protagonist:heraldry",
+      "Lesson": true
     },
     {
       "Seq": 5,
@@ -78,7 +82,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:sloth"
+      "Key": "mm:Protagonist:sloth",
+      "Lesson": true
     },
     {
       "Seq": 6,
@@ -94,7 +99,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:puppet_theather"
+      "Key": "mm:Protagonist:puppet_theather",
+      "Lesson": true
     },
     {
       "Seq": 7,
@@ -110,7 +116,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:archeology"
+      "Key": "mm:Protagonist:archeology",
+      "Lesson": true
     },
     {
       "Seq": 8,
@@ -126,7 +133,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:bushcraft"
+      "Key": "mm:Protagonist:bushcraft",
+      "Lesson": true
     },
     {
       "Seq": 9,
@@ -142,7 +150,8 @@
       "State": 0,
       "Group": 1,
       "Block": null,
-      "Key": "mm:Protagonist:survivalism"
+      "Key": "mm:Protagonist:survivalism",
+      "Lesson": true
     },
     {
       "Seq": 10,
@@ -185,7 +194,7 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I observe the grey wolf\u0027s pacing at the tree-line, its head low and eyes fixed, but I am of higher lineage and rank than this common sight. My intent is to turn my attention to a more worthy cause, one that does not require the faintest hint of a courtesy.",
+      "Source": "I observe the grey wolf's pacing at the tree-line, its head low and eyes fixed, but I am of higher lineage and rank than this common sight. My intent is to turn my attention to a more worthy cause, one that does not require the faintest hint of a courtesy.",
       "Written": "",
       "State": 1,
       "Group": 2,
@@ -201,7 +210,7 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I note the grey wolf\u0027s pacing at the tree-line, its head low and eyes fixed, but I discern no rank in this place, no lineage to honour here. I shall turn my attention to the stars, the ancient tales and the winds that whisper secrets of old.",
+      "Source": "I note the grey wolf's pacing at the tree-line, its head low and eyes fixed, but I discern no rank in this place, no lineage to honour here. I shall turn my attention to the stars, the ancient tales and the winds that whisper secrets of old.",
       "Written": "",
       "State": 1,
       "Group": 2,
@@ -217,7 +226,7 @@
       "LocationId": 20369,
       "Actor": "Gaios the Fair",
       "ByCompanion": false,
-      "Source": "I observe the grey wolf pacing at the tree-line, its head low and eyes fixed upon something unseen. While I do not perceive any immediate task, my rank commands a haughty glance, and I shall turn my attention to the steward\u0027s quarters, where a proper cup of cold milk awaits.",
+      "Source": "I observe the grey wolf pacing at the tree-line, its head low and eyes fixed upon something unseen. While I do not perceive any immediate task, my rank commands a haughty glance, and I shall turn my attention to the steward's quarters, where a proper cup of cold milk awaits.",
       "Written": "",
       "State": 1,
       "Group": 2,
