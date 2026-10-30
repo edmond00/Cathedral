@@ -170,7 +170,7 @@ public static class BuildingRooms
             case RoomRole.Loft:
                 room.PointsOfInterest.Add(new HayPointOfInterest("Hay Pile", new() { "Hay heaped under the rafters, and a row of apples laid out on it to keep" },
                     new() { new ItemElement(new Narrative.Items.Hay()), new ItemElement(new Narrative.Items.Apple()) }, new[] { "heaped", "sweet" })
-                    { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "thrift", ["smell"] = "harvest_joy" } });
+                    { Play = new TumblePlay("jump down into {0} and roll about in it"), Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "thrift", ["smell"] = "harvest_joy" } });
                 break;
             case RoomRole.Parlour:
                 room.PointsOfInterest.Add(BuildCandleStand());

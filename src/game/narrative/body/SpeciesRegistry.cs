@@ -22,11 +22,22 @@ public static class SpeciesRegistry
     public static readonly Species Hyena       = new HyenaSpecies();
     public static readonly Species Warthog     = new WarthogSpecies();
 
+    // The great reptiles (AnatomyType.Reptile). The small ones stay shallow creatures.
+    public static readonly Species Crocodile    = new CrocodileSpecies();
+    public static readonly Species GiantMonitor = new GiantMonitorSpecies();
+    public static readonly Species HornedLizard = new HornedLizardSpecies();
+    public static readonly Species CaveLizard   = new CaveLizardSpecies();
+    public static readonly Species Carnotaurus  = new CarnotaurusSpecies();
+    public static readonly Species Stegosaurus  = new StegosaurusSpecies();
+    public static readonly Species Triceratops  = new TriceratopsSpecies();
+    public static readonly Species Ankylosaurus = new AnkylosaurusSpecies();
+
     /// <summary>Every species, in declaration order.</summary>
     public static readonly Species[] All =
     {
         Human, Wolf, Fox, Cat, Dog, Bear, Boar,
         Lion, Tiger, Jaguar, Puma, SnowLeopard, Hyena, Warthog,
+        Crocodile, GiantMonitor, HornedLizard, CaveLizard, Carnotaurus, Stegosaurus, Triceratops, Ankylosaurus,
     };
 
     /// <summary>

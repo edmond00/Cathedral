@@ -34,8 +34,11 @@ bears neither the Observation nor the Thinking function beside them; it may bear
 Emotion or Fighting as any other may, save that action and emotion remain exclusive. What it wants is
 declared once, as between one and five wants in an order of preference — each a manner of acting,
 that manner upon one kind of thing, or a family of them, and a family of things may be named by what
-they are, so that every mushroom answers a will for mushrooms — and everything it attends to and
-proposes follows from that declaration (see §7). A will is learnable only by a body able to do every
+they are, so that every mushroom answers a will for mushrooms, or by what they teach, so that a want
+may be a manner of acting upon whatever, so acted upon, teaches that very will. Every will that some
+thing teaches holds a want of this last kind, for a mind indifferent to the thing that taught it
+would decline the one object most plainly its own — and everything it attends to and proposes
+follows from that declaration (see §7). A will is learnable only by a body able to do every
 one of the things it wants. A will is a desire for recognisable things and not a general competence:
 a modus mentis whose manner wants particular acts — of fungi, of a trade, of the hunt — may be a will
 of several wants that its manner covers, while one whose manner is general, a sense or a temper or a

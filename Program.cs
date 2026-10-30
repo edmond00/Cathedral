@@ -218,7 +218,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --allow-reentry                    DEBUG: let a world-map click on your own vertex re-enter that location.");
     Console.WriteLine("                                     The game refuses it — arriving somewhere already opens it, so a visit");
     Console.WriteLine("                                     costs a journey. Scripts need it: `travel here` is how they get in");
-    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
+    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand,");
+    Console.WriteLine("                                     the climate beasts, and the great reptiles: crocodile, giant monitor, horned");
+    Console.WriteLine("                                     lizard, cave lizard, carnotaurus, stegosaurus, triceratops, ankylosaurus).");
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
     Console.WriteLine("  --encounter-on-arrival <creature>  DEBUG: force a travel encounter on the FINAL step of the next journey, once.");
@@ -227,7 +229,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --encounter-mid-journey <creature> DEBUG: force a travel encounter on the first step of the next journey that is");
     Console.WriteLine("                                     not its last, once. Winning it resumes the walk — the case that walked the rest of");
     Console.WriteLine("                                     the way over a black screen. Needs a journey of two steps or more");
-    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
+    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox, the climate");
+    Console.WriteLine("                                     beasts, or a great reptile such as crocodile or stegosaurus) in the opening");
     Console.WriteLine("                                     area of every scene, at every period. A wilderness factory only rolls one in");
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
@@ -262,6 +265,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
     Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
+    Console.WriteLine("  --play-audit                       Print the PLAY audit (share of areas holding a play, kinds of play, lessons) and exit");
+    Console.WriteLine("  --will-lesson-audit                Every object that teaches a will must be one that will acts on or passes through on its way");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -495,6 +500,13 @@ if (args.Length >= 1 && args[0] == "--verb-audit")
     return;
 }
 
+// Play audit: where PLAY is offered (a quarter of the areas is the aim), what is played, what it teaches.
+if (args.Length >= 1 && args[0] == "--play-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.PlayAudit.BuildReport());
+    return;
+}
+
 // Verb probe: for each verb, the exact flags that reach it from a cold start. What a CLI test for
 // that verb has to open with. Headless: builds scenes and asks every verb; no LLM, no window.
 // Outcome audit: the catalogue of consequences, who produces each, and the two silent faults —
@@ -607,6 +619,14 @@ if (args.Length >= 1 && args[0] == "--crime-audit")
 if (args.Length >= 1 && args[0] == "--will-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.BuildReport(args.Length >= 2 && !args[1].StartsWith('-') ? args[1] : null));
+    return;
+}
+
+// Will lesson audit: every object that teaches a will must be something that will acts on, or on its
+// way — else picking the mind the object taught refuses the object. Headless.
+if (args.Length >= 1 && args[0] == "--will-lesson-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillLessonAudit.BuildReport());
     return;
 }
 

@@ -16,7 +16,8 @@ public class TailoringModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy cloth to cut").Selling(ItemKind.Cloth),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up cloth").YieldingKind(ItemKind.Cloth));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up cloth").YieldingKind(ItemKind.Cloth),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a tailor's gear").Teaching<TailoringModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.TailoryArea) }, new[] { typeof(Cathedral.Game.Scene.MarketArea) });
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

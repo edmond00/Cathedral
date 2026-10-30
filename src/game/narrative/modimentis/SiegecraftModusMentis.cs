@@ -15,7 +15,8 @@ public class SiegecraftModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.ScaleUpVerb>("get over a wall"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.BreakVerb>("breach what is shut"));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.BreakVerb>("breach what is shut"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study the marks of a siege").Teaching<SiegecraftModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

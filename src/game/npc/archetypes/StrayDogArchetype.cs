@@ -1,4 +1,5 @@
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Npc.Archetypes;
 
@@ -10,6 +11,10 @@ public class StrayDogArchetype : NamedNpcArchetype
     public override int MaxAgeDays => 12 * LifetimeStat.DaysPerYear;
 
     public override string ArchetypeId => "stray_dog";
+
+    /// <summary>A stray dog not set against you will take a fuss and a stick to chase.</summary>
+    public override PlayActivity? Play => Romped;
+    private static readonly PlayActivity Romped = new PettingPlay("scratch {0} behind the ears and throw a stick for it to fetch", 3, claws: true);
     public override Species Species => SpeciesRegistry.Dog;
     public override bool DefaultEnemy => true;
     public override bool DefaultPersistent => false;

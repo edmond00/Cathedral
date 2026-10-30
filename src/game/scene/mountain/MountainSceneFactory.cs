@@ -350,7 +350,7 @@ public class MountainSceneFactory : WildSceneFactory
         descriptions: new() { "The fall itself, a rope of white water unravelling into spray before it reaches the pool" },
         items: new() { new ItemElement(new Moss()), new ItemElement(new Fern()) },
         moods: new[] { "roaring", "white", "unravelling", "endless" }
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string>
+    ) { Play = new PoolJumpPlay("climb the rocks beside {0} and leap off them into the pool below"), Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string>
         { ["examine"] = "plunge", ["listen"] = "water_voice", ["smell"] = "petrichor", ["contemplate"] = "awe" } };
 
     private static PointOfInterest BuildDryLedge() => new HollowPointOfInterest(

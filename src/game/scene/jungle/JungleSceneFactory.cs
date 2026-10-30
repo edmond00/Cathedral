@@ -380,7 +380,7 @@ public class JungleSceneFactory : WildSceneFactory
         displayName: "Falling Water",
         descriptions: new() { "The fall itself, a brown-white column of water thundering into the pool, a rainbow standing in the spray" },
         moods: new[] { "thundering", "brown-white", "rainbowed", "endless" }
-    ) { Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string>
+    ) { Play = new PoolJumpPlay("climb the rocks beside {0} and leap off them into the pool below"), Senses = SensoryProfile.FullyAlive, VerbModiMentis = new Dictionary<string, string>
         { ["examine"] = "plunge", ["listen"] = "water_voice", ["smell"] = "petrichor", ["contemplate"] = "awe" } };
 
     private static PointOfInterest BuildCenotePool() => new PoolPointOfInterest(
@@ -417,7 +417,7 @@ public class JungleSceneFactory : WildSceneFactory
         descriptions: new() { "Lianas dropping out of the dark above, thick as cables, some of them looped and knotted on themselves" },
         items: new() { new ItemElement(new Liana()), new ItemElement(new Liana()) },
         moods: new[] { "hanging", "looped", "rope-thick", "swaying" }
-    ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork" } };
+    ) { Play = new SwingPlay(), Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "knotwork" } };
 
     private static PointOfInterest BuildPitchers() => new PitcherPointOfInterest(
         displayName: "Pitcher Plants",
@@ -490,7 +490,7 @@ public class JungleSceneFactory : WildSceneFactory
         items: new() { new ItemElement(new Mushroom()), new ItemElement(new Grub()), new ItemElement(new Log()) },
         moods: new[] { "soft", "fungal", "teeming", "rotting" },
         isNatural: true
-    ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "taint_sense" } };
+    ) { Play = new BalanceWalkPlay(), Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "mycology", ["smell"] = "taint_sense" } };
 
     private static PointOfInterest BuildToppledIdol() => new RubblePointOfInterest(
         displayName: "Toppled Idol",
@@ -524,6 +524,11 @@ public class JungleSceneFactory : WildSceneFactory
 
         TrySpawnBeast(rng, scene, new JaguarArchetype(), 0.35);
         TrySpawnBeast(rng, scene, new TigerArchetype(),  0.15);
+
+        var reptiles = ReptileRandom(locationId);
+        TrySpawnBeast(reptiles, scene, new CrocodileArchetype(),   0.30, _wet);
+        TrySpawnBeast(reptiles, scene, new StegosaurusArchetype(), 0.15);
+        TrySpawnBeast(reptiles, scene, new TriceratopsArchetype(), 0.08);
 
         TrySpawnCreature(rng, scene, new MonkeyArchetype(),      0.60);
         TrySpawnCreature(rng, scene, new ParrotArchetype(),      0.60);

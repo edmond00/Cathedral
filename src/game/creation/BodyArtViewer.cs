@@ -726,7 +726,7 @@ public class BodyArtViewer
     /// printed straight through the claws. Beast art is shallower there, so it can simply drop.
     /// </summary>
     private int BeastAgeRowDrop =>
-        _protagonist.AnatomyType == Cathedral.Game.Narrative.AnatomyType.Beast ? 4 : 0;
+        _protagonist.AnatomyType != Cathedral.Game.Narrative.AnatomyType.Human ? 4 : 0;
 
     /// <summary>Bar colour by remaining life: it sours as the end approaches.</summary>
     private static Vector4 AgeBarColor(float remainingFraction) => remainingFraction switch

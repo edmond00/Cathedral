@@ -46,6 +46,9 @@ public static class WillCoverageAudit
     /// one target, and 64% over 159 once 45 crafts joined them with several targets (the 114 alone: 69%). <see cref="MaxBreadth"/>: the share of location kinds above which a will with several
     /// targets fails, since added targets are exactly how a desire grows into a general mind. A will of one
     /// target whose act exists everywhere (to sit, to smell) was the design before; it is noted, not failed.
+    /// A target bound to the will's own lesson (<see cref="WillTarget.Teaching{TModusMentis}"/>) does not
+    /// count toward "several": it reaches only what the content already says teaches the will, and a will
+    /// made broad by it is broad because its lesson is declared broadly (<c>--will-lesson-audit</c>).
     /// </summary>
     public const double MinRelated = 0.60, MinRelatedOverall = 0.60, MaxBreadth = 0.75;
 
@@ -55,6 +58,8 @@ public static class WillCoverageAudit
         public string Id { get; set; } = "";
         public string Targets { get; set; } = "";
         public int TargetCount { get; set; }
+        /// <summary>The targets that are desires of the will's own — every one but those bound to its lesson.</summary>
+        public int DesireCount { get; set; }
         public bool Gated { get; set; }
         public int Starts { get; set; }
         public int Planned { get; set; }
@@ -64,11 +69,14 @@ public static class WillCoverageAudit
         public double RelatedMeanSteps { get; set; }
         public int Kinds { get; set; }
         public int KindsPlanned { get; set; }
+        /// <summary>Location kinds where a target of the will's own (not one bound to its lesson) is planned.</summary>
+        public int KindsPlannedOwn { get; set; }
         public string[] Places { get; set; } = Array.Empty<string>();
         public Dictionary<string, double> PerKind { get; set; } = new();
         public double Coverage => Starts == 0 ? 0 : (double)Planned / Starts;
         public double Related => RelatedStarts == 0 ? double.NaN : (double)RelatedPlanned / RelatedStarts;
         public double Breadth => Kinds == 0 ? 0 : (double)KindsPlanned / Kinds;
+        public double OwnBreadth => Kinds == 0 ? 0 : (double)KindsPlannedOwn / Kinds;
     }
 
     public static string BuildReport(string? jsonPath = null)
@@ -81,9 +89,15 @@ public static class WillCoverageAudit
             Id          = m.ModusMentisId,
             Targets     = WillAudit.Describe(m),
             TargetCount = WillAudit.TargetCount(m),
+            DesireCount = m.Will?.Count(t => t.Teaches == null) ?? 0,
             Places      = m.WillPlaces.Select(t => t.Name).ToArray(),
         });
         var perKind = wills.ToDictionary(m => m, _ => new Dictionary<string, (int Starts, int Planned)>());
+        // The will's own targets, without those bound to its lesson — what breadth is judged on. Null when
+        // the two are the same set (or the will has no target of its own to judge).
+        var own     = wills.ToDictionary(m => m, m => m.Will!.Any(t => t.Teaches != null) && m.Will!.Any(t => t.Teaches == null)
+                                                     ? WillTargets.Of(m.Will!.Where(t => t.Teaches == null).ToArray()) : null);
+        var ownKinds = wills.ToDictionary(m => m, _ => new HashSet<string>());
         var census  = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
 
         var started = DateTime.UtcNow;
@@ -108,6 +122,9 @@ public static class WillCoverageAudit
                 var (s, p) = perKind[will].GetValueOrDefault(label);
                 perKind[will][label] = (s + 1, p + (path != null ? 1 : 0));
                 if (path != null) { row.Planned++; row.MeanSteps += path.Steps.Count; }
+                if (path != null && (own[will] is not { } mine || path.Target?.Teaches == null
+                                     || PlanFor(scene, new PoV(entry, hour), actor, will, mine) != null))
+                    ownKinds[will].Add(label);
 
                 // A related place: the first area of a kind the will declares, planned from there.
                 var related = scene.AllAreas.FirstOrDefault(a => will.WillPlaces.Any(t => t.IsInstanceOfType(a)));
@@ -127,6 +144,7 @@ public static class WillCoverageAudit
             row.Gated        = WillAudit.PlayGated(will) && row.Planned == 0;
             row.Kinds        = perKind[will].Count;
             row.KindsPlanned = perKind[will].Count(kv => kv.Value.Planned > 0);
+            row.KindsPlannedOwn = ownKinds[will].Count;
             row.PerKind      = perKind[will].ToDictionary(kv => kv.Key, kv => (double)kv.Value.Planned / kv.Value.Starts);
         }
 
@@ -165,7 +183,7 @@ public static class WillCoverageAudit
             bool noPlaces = row.Places.Length == 0;
             bool narrow   = row.RelatedStarts > 0 && row.Related < MinRelated;
             bool broad    = row.Breadth > MaxBreadth;
-            bool grown    = broad && row.TargetCount > 1;
+            bool grown    = row.OwnBreadth > MaxBreadth && row.DesireCount > 1;
             string mark   = noPlaces || grown ? "✗" : narrow ? "!" : broad ? "~" : "✓";
             sb.AppendLine($"  {mark} {row.Id,-22} {row.TargetCount,4} {100 * row.Coverage,5:0}% {row.MeanSteps,5:0.0} "
                         + $"{(row.RelatedStarts == 0 ? "  none" : $"{100 * row.Related,6:0}%")} {100 * row.Breadth,6:0}%  "
@@ -246,9 +264,10 @@ public static class WillCoverageAudit
         return sb.ToString();
     }
 
-    private static ActionPath? PlanFor(Cathedral.Game.Scene.Scene scene, PoV pov, PartyMember actor, ModusMentis will)
+    private static ActionPath? PlanFor(Cathedral.Game.Scene.Scene scene, PoV pov, PartyMember actor, ModusMentis will,
+                                       WillTargets? targets = null)
     {
-        try { return ActionPathPlanner.Plan(scene, pov, actor, will.Will!); }
+        try { return ActionPathPlanner.Plan(scene, pov, actor, targets ?? will.Will!); }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"WillCoverageAudit: {will.ModusMentisId} could not be planned ({ex.Message})");

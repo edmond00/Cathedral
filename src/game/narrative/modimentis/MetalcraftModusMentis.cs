@@ -17,7 +17,8 @@ public class MetalcraftModusMentis : ModusMentis
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("take up ore", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Ore),
         WillTarget.ToAny("take up iron to work", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Metal),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy iron").Selling(ItemKind.Metal));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy iron").Selling(ItemKind.Metal),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a smith's work and gear").Teaching<MetalcraftModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ForgeArea) }, new[] { typeof(Cathedral.Game.Scene.SeamArea) }, new[] { typeof(Cathedral.Game.Scene.ShaftArea) });
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

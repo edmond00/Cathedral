@@ -381,7 +381,7 @@ public static partial class VerbAudit
                     .Select(id => ModusMentisRegistry.Instance.GetModusMentis(id))
                     .Any(mm => mm != null && ModusMentisAnatomy.IsLearnableBy(mm, anatomy));
 
-                if (anatomy == AnatomyType.Beast && NoBeastCounterpart.Contains(verb.VerbId)) continue;
+                if (anatomy != AnatomyType.Human && NoBeastCounterpart.Contains(verb.VerbId)) continue;
 
                 if (!anyLearnable && CanBeAttemptedBy(verb, anatomy))
                     warnings.Add($"verb '{verb.VerbId}' teaches {anatomy} nothing — "

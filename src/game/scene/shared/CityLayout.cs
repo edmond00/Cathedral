@@ -304,7 +304,7 @@ public static class CityLayout
                         { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "water_voice" } }
                     : new FountainPointOfInterest("Fountain", new() { "A stone basin fed by a spout in a carved face, children splashing at its edge" },
                         new() { I(new WaterDraught()) }, new[] { "splashing", "carved", "central" })
-                        { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "architecture", ["listen"] = "water_voice" } });
+                        { Play = new PaddlePlay(), Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "architecture", ["listen"] = "water_voice" } });
                 pois.Add(new StatuePointOfInterest("Statue", new() { rng.NextDouble() < 0.5 ? "A weathered statue of a founder, his name worn off the plinth" : "A statue of a robed figure holding up a book, pigeons on its head" },
                     moods: new[] { "weathered", "proud", "pigeon-spattered" })
                     { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "archeology", ["contemplate"] = "vanitas" } });

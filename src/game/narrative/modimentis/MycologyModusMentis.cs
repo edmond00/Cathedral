@@ -17,7 +17,8 @@ public class MycologyModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("gather mushrooms", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Mushroom),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look closely at a fungus").YieldingKind(ItemKind.Mushroom));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look closely at a fungus").YieldingKind(ItemKind.Mushroom),
+        WillTarget.ToAny("seek out where fungus grows", typeof(Cathedral.Game.Scene.Verbs.ExamineVerb), typeof(Cathedral.Game.Scene.Verbs.SmellVerb)).Teaching<MycologyModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.MushroomCellar, Places.Woodland, Places.Damp);
     public override string[] Organs => new[] { "eyes", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;

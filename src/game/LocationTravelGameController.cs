@@ -215,6 +215,15 @@ public class LocationTravelGameController : IDisposable
         ["snow leopard"] = () => new Cathedral.Game.Npc.Archetypes.SnowLeopardArchetype(),
         ["white bear"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteBearArchetype(),
         ["white wolf"]   = () => new Cathedral.Game.Npc.Archetypes.WhiteWolfArchetype(),
+        ["crocodile"]     = () => new Cathedral.Game.Npc.Archetypes.CrocodileArchetype(),
+        ["giant monitor"] = () => new Cathedral.Game.Npc.Archetypes.GiantMonitorArchetype(),
+        ["carnotaurus"]   = () => new Cathedral.Game.Npc.Archetypes.CarnotaurusArchetype(),
+        ["triceratops"]   = () => new Cathedral.Game.Npc.Archetypes.TriceratopsArchetype(),
+        // Not met on the road, but reachable by --start-fight, which reads this table.
+        ["horned lizard"] = () => new Cathedral.Game.Npc.Archetypes.HornedLizardArchetype(),
+        ["cave lizard"]   = () => new Cathedral.Game.Npc.Archetypes.CaveLizardArchetype(),
+        ["stegosaurus"]   = () => new Cathedral.Game.Npc.Archetypes.StegosaurusArchetype(),
+        ["ankylosaurus"]  = () => new Cathedral.Game.Npc.Archetypes.AnkylosaurusArchetype(),
     };
 
     // Death screen

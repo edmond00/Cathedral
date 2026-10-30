@@ -17,7 +17,8 @@ public class SpoorReadingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<TrackVerb>("read a trail and follow it"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read a print in the ground").On<Cathedral.Game.Scene.FootprintPointOfInterest>());
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read a print in the ground").On<Cathedral.Game.Scene.FootprintPointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("read the signs a beast left").Teaching<SpoorReadingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "snout", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

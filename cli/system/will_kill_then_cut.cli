@@ -2,8 +2,8 @@
 #
 # Butchery wants to cut a carcass, and a carcass is spawned by the kill: before anything has died the
 # planner has nothing to reach (it sees no further than a kill), and the will had nothing to do. It
-# declares slaying a beast as its second target, so the plan goes for the chicken first (aim=2/2) and,
-# once the body is down, for the body (aim=1/2) — cutting is declared first, and nearest wins.
+# declares slaying a beast as its second target, so the plan goes for the chicken first (aim=2/3) and,
+# once the body is down, for the body (aim=1/3) — cutting is declared first, and nearest wins.
 #
 # The kill half is copied from cli/verb/cut/success.cli: the knife is the reference tool of both verbs,
 # so neither combination reaches the item critic.
@@ -25,7 +25,7 @@ advance 12 180
 
 expect-state will "will butchery steps=1"
 expect-state will "slay"
-expect-state will "aim=2/2"
+expect-state will "aim=2/3"
 expect-state will "kill a beast for its meat"
 
 click keyword 0
@@ -50,6 +50,6 @@ advance 12 180
 
 expect-state will "will butchery steps=1"
 expect-state will "cut"
-expect-state will "aim=1/2"
+expect-state will "aim=1/3"
 expect-state will "cut a carcass into joints"
 quit

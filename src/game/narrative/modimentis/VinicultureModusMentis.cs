@@ -16,7 +16,8 @@ public class VinicultureModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("pick grapes", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Grape>(),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("taste the wine the grapes went into").Selling(ItemKind.Liquor));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("taste the wine the grapes went into").Selling(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the vines").Teaching<VinicultureModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.VineyardArea) });
     public override string[] Organs        => new[] { "hands", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

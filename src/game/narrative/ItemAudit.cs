@@ -185,14 +185,16 @@ public static class ItemAudit
         var warnings = new List<string>();
         var registry = Fight.FightingSkillRegistry.Instance;
 
-        // A human and a beast: their anatomies name different regions (a beast has limbs and a
-        // muzzle where a human has upper_limbs and a visage), so a location that reaches nothing on
-        // one may be exactly right on the other.
+        // A human, a beast and a reptile: their anatomies name different regions (a beast has limbs
+        // and a muzzle where a human has upper_limbs and a visage, and only a reptile has horns), so
+        // a location that reaches nothing on one may be exactly right on another.
         var bodies = new (string Name, Fight.Fighter Fighter)[]
         {
             ("human", new Fight.Fighter(new Protagonist(), 0, 0, false, Fight.FighterFaction.Enemy)),
             ("beast", new Fight.Fighter(new EnemyCombatant("beast", new WolfSpecies()), 0, 0, false,
                                         Fight.FighterFaction.Enemy)),
+            ("reptile", new Fight.Fighter(new EnemyCombatant("reptile", new CrocodileSpecies()), 0, 0, false,
+                                          Fight.FighterFaction.Enemy)),
         };
         var pools = bodies.ToDictionary(b => b.Name, b => Fight.FightResolver.BuildAnatomyWoundPool(b.Fighter));
 
@@ -201,7 +203,7 @@ public static class ItemAudit
         sb.AppendLine("  Wounds each authored localisation can reach, per anatomy. A zero on BOTH means");
         sb.AppendLine("  the blow can only ever graze there, however well it is rolled.");
         sb.AppendLine();
-        sb.AppendLine($"  {"skill",-19} {"human",-26} {"beast",-16} {"damage",-20} graze");
+        sb.AppendLine($"  {"skill",-19} {"human",-26} {"beast",-16} {"reptile",-16} {"damage",-20} graze");
 
         foreach (var skill in registry.GetAll()
                      .Where(s => s.WoundTargetMode == Fight.WoundTargetMode.FixedBodyPart
@@ -243,7 +245,8 @@ public static class ItemAudit
                              .Select(w => w.WoundName).Distinct().OrderBy(n => n);
 
             sb.AppendLine($"  {skill.SkillId,-19} {string.Join(" ", perBody["human"]),-26} " +
-                          $"{string.Join(" ", perBody["beast"]),-16} {skill.DamageTypes,-20} {string.Join("/", graze)}");
+                          $"{string.Join(" ", perBody["beast"]),-16} {string.Join(" ", perBody["reptile"]),-16} " +
+                          $"{skill.DamageTypes,-20} {string.Join("/", graze)}");
 
             if (skill.DamageTypes == DamageType.None)
                 warnings.Add($"{skill.SkillId}: no damage type — its grazes are indistinguishable from every " +

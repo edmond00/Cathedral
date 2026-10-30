@@ -14,7 +14,9 @@ public class ThresheryModusMentis : ModusMentis
         "Beats and sifts harvested grain to part seed from chaff. Sets the body to threshing and winnowing, and reads the work by how clean the grain comes.";
     public override string SkillMeans       => "the threshing and sifting of grain";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTarget.ToAny("take up sheaves to thresh", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain);
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up sheaves to thresh", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over sheaves for threshing").Teaching<ThresheryModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, new[] { typeof(Cathedral.Game.Scene.ThreshingArea) }, new[] { typeof(Cathedral.Game.Scene.BarnArea) });
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

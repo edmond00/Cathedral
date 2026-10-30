@@ -1300,7 +1300,9 @@ public class FightModeAdapter
             var skill = _state.PendingLearnSkill;
             var accent = Config.Colors.BrightPurple; // matches the learnable-skill UI palette
             string subtitle = $"LEARNING CHECK — {skill.RequiredModusMentisId} (cerebellum)";
-            _dice.Start(_state.DiceNumberOfDice, _state.DiceDifficulty,
+            // LearningDifficulty is the count of sixes to BEAT (FightResolver.AttemptSkillLearning
+            // succeeds on sixes > difficulty); the dice box wants the count NEEDED.
+            _dice.Start(_state.DiceNumberOfDice, _state.LearningDifficulty + 1,
                 subtitle: subtitle, difficultyVerb: "to learn", accentColor: accent);
             primaryOwner = _state.ActiveFighter;
         }
@@ -1332,7 +1334,9 @@ public class FightModeAdapter
                     secondaryDice: _state.DiceNumberOfDice,
                     primaryLabel: "Defense",
                     secondaryLabel: "Attack",
-                    subtitle: subtitle);
+                    subtitle: subtitle,
+                    // An attack hits only on strictly more sixes (FightResolver), so a tie holds.
+                    primaryWinsTies: true);
                 primaryOwner = _state.PendingTarget; // the defender is the player
             }
             else

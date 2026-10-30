@@ -305,6 +305,14 @@ public abstract class WildSceneFactory : SceneFactory
         scene.NpcSchedules[sceneNpc.Id] = RoamingSchedule(rng, range);
     }
 
+    /// <summary>
+    /// The generator the great reptiles are rolled from. They were added beside beasts whose rolls
+    /// come off the build generator, and drawing from that one would shift every creature, item and
+    /// sign rolled after them — so a location id players and scripts know would grow different
+    /// wildlife for the sake of a crocodile. Same idea as <c>ExtrasRandom</c>, its own stream.
+    /// </summary>
+    protected static Random ReptileRandom(int locationId) => new(unchecked(locationId * 0x27D4EB2F + 0x5E9));
+
     /// <summary>Rolls for a shallow creature pinned to one area of <paramref name="range"/> (every area by default).</summary>
     protected void TrySpawnCreature(Random rng, Scene scene, ShallowNpcArchetype archetype, double chance,
                                     IReadOnlyList<Area>? range = null)

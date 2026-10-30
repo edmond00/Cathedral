@@ -15,7 +15,8 @@ public class PerfumeryModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.ToAny("gather flowers for their scent", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Flower),
-        WillTarget.ToAny("gather a strewing herb", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Herb));
+        WillTarget.ToAny("gather a strewing herb", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose out a scent worth keeping").Teaching<PerfumeryModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Grassland, Places.Fields);
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

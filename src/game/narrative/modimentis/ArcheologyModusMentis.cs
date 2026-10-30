@@ -18,7 +18,8 @@ public class ArcheologyModusMentis : ModusMentis
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<DigVerb>("dig for old remains").On<Scene.DiggableGroundPointOfInterest>(),
         WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study an old thing").YieldingKind(ItemKind.Relic),
-        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study what old stones remember").Teaching<ArcheologyModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 

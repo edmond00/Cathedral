@@ -237,7 +237,7 @@ public static class OutcomeAudit
     /// </summary>
     private static readonly HashSet<string> TeachesOnly = new()
     {
-        "examine", "listen", "smell", "contemplate", "ignore",
+        "examine", "listen", "smell", "contemplate", "ignore", "play",
     };
 
     private static void Record(Dictionary<Type, SortedSet<string>> into, Type outcome, string producer)
