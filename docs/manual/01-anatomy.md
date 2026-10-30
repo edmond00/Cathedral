@@ -64,7 +64,8 @@ condition. The *genitories* determine the sex and lend the raw vigour behind a b
 further office in the working of the frame.
 
 **Of the limbs.** The *arms* are the organs of gross force, the *hands* of manual dexterity — the
-latter setting how much potency may be drawn from an implement. The *legs* mediate celerity, and the
+former setting how heavy a thing each hand may hold (see [Chapter IV §3](04-items.md#3-anchors)),
+the latter how much potency may be drawn from an implement. The *legs* mediate celerity, and the
 *feet* stance and endurance, whence sure footing on treacherous ground and the dice of flight.
 
 ## 3. The bestial frame

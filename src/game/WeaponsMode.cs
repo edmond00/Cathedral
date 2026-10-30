@@ -42,4 +42,18 @@ public static class WeaponsMode
                           "Round Shield (left hand) and a Hunting Bow in the pack ***");
         Console.ResetColor();
     }
+
+    /// <summary>
+    /// Lifts each arm to at least level 1 when creation is accepted. The sword and the shield are
+    /// medium weights, and an arm of level 0 bears only light things (<see cref="PartyMember.HoldLimit"/>):
+    /// held in a weak hand they would sit there unwielded, and the flag would again fail at the one
+    /// thing it is for. Applied ahead of <c>--organs</c>, which still wins when it names the arms.
+    /// </summary>
+    public static void StrengthenArmsIfActive(Protagonist protagonist)
+    {
+        if (!IsActive) return;
+        foreach (var partId in new[] { "right_arm", "left_arm" })
+            if (protagonist.GetOrganPartById(partId) is { } arm && arm.Score < 1)
+                arm.Score = 1;
+    }
 }

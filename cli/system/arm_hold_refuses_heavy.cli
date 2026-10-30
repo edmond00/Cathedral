@@ -1,0 +1,38 @@
+# A heavy thing with no hand strong enough for it and no bag to take it is refused like a full pack.
+#
+# The Test Rack's iron bar is heavy, and with --organs arms=0 each hand bears light things only
+# (PartyMember.HoldLimit). The seed-42 kit carries nothing that would contain the bar, so
+# CanAcquire refuses before the dice, naming the weight rather than the room — the same refusal
+# path InventoryCapacityRule takes for a full pack. grab/success.cli is the same scene with arms=2.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Rack" --organs arms=0
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal grab
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+
+# Refused before any roll: no banner, no item, nothing applied.
+expect-not SUCCESS
+expect too heavy for my arms
+expect-not Item received:
+expect-no-outcome item_acquisition
+expect-no-state items iron_bar
+dump
+quit

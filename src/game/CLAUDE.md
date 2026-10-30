@@ -1753,6 +1753,41 @@ Three consequences worth knowing:
 phase runs on "examine the flower patch closely" instead). `--verb-audit` prints what each anatomy is
 barred from — 25 of 54 verbs for a beast.
 
+### What a hand can hold: weapons, weights and the arms
+
+**One weapon to a hand, by type.** `WeaponItem` seals `Item.Size` behind `WeaponSize Bulk`, which has
+only `Medium` and `Large`: a hold is nine slots, so a medium weapon leaves three and two can never
+share one. A new weapon declares `Bulk`, not `Size`; there is no way to author a small one.
+
+**A real weapon out-strikes a bare limb.** `Level` is the weapon medium's level, multiplied into dice
+exactly as a hand's score is, and a hand or foot tops out at 3 (`WeaponItem.StrikingLimbCeiling`). So
+every weapon is levelled 4–6, and only an `IsImprovised` one (branch, wooden stick — level 0, opens the
+category's skills and lends nothing) may sit at or under the ceiling. The price is ten copper per level
+above the ceiling. A new weapon picks a level above 3 or declares itself improvised.
+
+**The arm behind a hand decides what it can hold** (`PartyMember.HoldLimit`): the arm part's effective
+score after wounds — `right_arm` for `RightHold`, `left_arm` for `LeftHold` — at 0 bears a light item,
+1 a medium one, 2 a heavy one; a disabled arm counts as 0, and an anatomy with no arm (a beast's holds
+are its mouth) is not governed. A new weapon's `Weight` is therefore also which arms can fight with it,
+and `--item-audit` fails when the real weapons stop spreading over the three tiers.
+
+- **Every placement asks `PartyMember.CanPlace(anchor, item)`**, never `EquipmentAnchor.CanAccept`
+  alone: acquisition (`TryAcquireItem`, `CanAcquire`), the inventory's drag, move and drop, and the
+  trade menu's room check. A heavy thing with no strong-enough hand and no container to take it is
+  refused through `CanAcquire` exactly like a full pack (`InventoryCapacityRule`), worded for the
+  weight. A container takes it whatever the arms.
+- **Only what sits in the hand is weighed.** A bag is held by its handle: a heavy item in a medium bag
+  in a level-1 hand is fine. The contents are carried, not wielded.
+- **The fight reads `PartyMember.WieldedWeapons`**, never the raw hold lists: a weapon directly in the
+  hand and no heavier than its arm bears. A weapon placed while the arm was sound stays in the hand when
+  a wound weakens it and simply stops being one — no medium, no tab, "too heavy" on the Bellic tab.
+- **A weapon combined from the pack for a first blow** must be wieldable by some hand
+  (`CanWieldInSomeHand`): `ToolCombinationRules.Resolve` refuses it as `TooHeavy`, with no request made,
+  and `FirstBlow.MediumsFor` agrees.
+- `--weapons` lifts both arms to 1 at acceptance so its medium loadout is wielded (`--organs` still
+  wins); `--grant-item` forces an item it cannot place into a hand, because the grant runs against the
+  pre-creation scores. `cli/system/arm_hold_limit.cli` and `arm_hold_refuses_heavy.cli`.
+
 ### A verb teaches per body, not per verb
 
 **A verb's lesson is a candidate list, not one id.** `Verb.GrantedModusMentisIds(target)` returns them

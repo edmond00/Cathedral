@@ -43,7 +43,7 @@ A **medium** is the physical thing a blow is struck with. Three kinds:
 
 - **An organ** — the hands, the feet, the fangs, the claws.
 - **A body region** — the upper limbs entire, and the like. Its level is the region's total score.
-- **A weapon** — held in a hand. Its level is the weapon's own.
+- **A weapon** — held in a hand whose arm can bear its burden (see [Chapter IV §3](04-items.md#3-anchors)). Its level is the weapon's own.
 
 Where an organ's parts act **independently**, each part is a medium in its own right and strikes
 separately, drawing dice from its own score alone: the left hand and the right hand are two mediums,

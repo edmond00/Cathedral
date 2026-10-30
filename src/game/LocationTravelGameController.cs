@@ -3510,6 +3510,8 @@ public class LocationTravelGameController : IDisposable
                 // ResetGameState called InitializeMemory earlier with initial random scores;
                 // now we rebuild modules to reflect the final configured values.
                 // --organs first: memory size and the humor queues are both derived from the scores.
+                // --weapons ahead of it, so an explicit --organs arms=… still has the last word.
+                WeaponsMode.StrengthenArmsIfActive(protagonist);
                 StartingBodyMode.ApplyOrgans(protagonist);
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();

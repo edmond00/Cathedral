@@ -43,12 +43,32 @@ outerwear, belt gear, and each hold).
 
 The rule of admission is short:
 
-- The two **holds** — the hands — take anything.
+- The two **holds** — the hands — take anything their arm can bear (below).
 - Every **other** anchor is a garment slot and takes only a garment whose own slot maps to it.
 - **A liquid is refused everywhere.** It may exist only inside a vessel, never loose upon the body
   and never in a pack.
 
 What can be placed nowhere is held in overflow, awaiting a free place.
+
+### What a hand can bear
+
+Each hold is governed by the arm behind it — the right hold by the right arm, the left by the left —
+and admits nothing heavier than that arm's score allows, the score being taken after its wounds:
+
+| Arm | Bears up to |
+|---|---|
+| 0 | light |
+| 1 | medium |
+| 2 | heavy |
+
+An insignificant thing is within every arm's bearing, and an arm disabled by a High wound bears as
+an arm of nought. Only what sits directly in the hand is weighed: a bag is held by its handle, so a
+heavy thing within a medium bag is a medium burden to the hand that carries the bag. A container
+takes a heavy thing whatever the arms, and a heavy thing that neither a hand nor any container can
+take is refused, exactly as a pack that is full refuses.
+
+A thing placed in a hand while its arm was sound stays there when a wound weakens the arm; it is
+then held and no longer borne, which matters only to a weapon (§8).
 
 ## 4. Vessels and storage
 
@@ -210,7 +230,15 @@ A weapon is the one category that reaches into combat, and it does so by two dec
 
 **Its level** is the bonus dice it lends when it is the medium a blow is struck through — the same
 office an organ's score performs for an unarmed blow (see [Chapter VIII
-§3](08-fighting.md#3-mediums)).
+§3](08-fighting.md#3-mediums)). A made weapon always surpasses a bare limb: a hand or a foot reaches
+at most three, and every weapon not improvised is of level four, five or six.
+
+**Its bulk** is never small. Every weapon is medium or large, so that no hand, of nine slots, can
+hold two.
+
+**Its burden** decides which arms can fight with it, by the bearing of §3: a light weapon serves
+any arm, a medium one an arm of one or more, a heavy one only an arm of two. Weapons are made in all
+three burdens.
 
 **Its category** — long blade, axe, bow, blunt, and the rest — decides *which fighting skills it
 bears*. A skill is written against a category rather than against a particular weapon, so every long
@@ -225,7 +253,7 @@ what they have learned as much as by what they carry.
 category's skills as any weapon does, but lends no dice to them: the blow it carries is the
 fighter's learning and nothing more. As an implement it lends a single die.
 
-A weapon must be held in a hand to serve as a medium within a fight; one in a pack is a burden and nothing else. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)).
+A weapon must be held directly in a hand, and be within that hand's arm's bearing, to serve as a medium within a fight; one in a pack or a bag is a burden and nothing else, and one too heavy for the arm that holds it is held and not wielded. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)); a weapon so taken up must be within the bearing of one of the two arms, or the blow is refused.
 
 ## 9. Garments
 

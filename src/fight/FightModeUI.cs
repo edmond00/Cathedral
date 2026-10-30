@@ -366,13 +366,14 @@ public static class FightModeUI
         // One tab per equipped weapon (per anchor). With a weapon in each hand, even when
         // it's the same category, you get TWO independent tabs so the same skill can be
         // used once per tab per turn.
-        bool hasRight = fighter.Member.EquippedItems[EquipmentAnchor.RightHold].OfType<IWeaponItem>().Any();
-        bool hasLeft  = fighter.Member.EquippedItems[EquipmentAnchor.LeftHold].OfType<IWeaponItem>().Any();
+        // Only what the arm can bear: a weapon too heavy for its hand is held, not wielded.
+        bool hasRight = fighter.Member.WieldedWeapons(EquipmentAnchor.RightHold).Any();
+        bool hasLeft  = fighter.Member.WieldedWeapons(EquipmentAnchor.LeftHold).Any();
         bool needHandSuffix = hasRight && hasLeft;
 
         foreach (var anchor in new[] { EquipmentAnchor.RightHold, EquipmentAnchor.LeftHold })
         {
-            foreach (var item in fighter.Member.EquippedItems[anchor].OfType<IWeaponItem>())
+            foreach (var item in fighter.Member.WieldedWeapons(anchor))
             {
                 var category = WeaponMediumRegistry.GetById(item.WeaponCategory);
                 if (category == null) continue;

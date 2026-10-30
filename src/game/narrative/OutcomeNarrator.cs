@@ -278,6 +278,7 @@ public class OutcomeNarrator
             ToolFailureKind.NoProficiency => NeutralNarration.ItemCombinationNoProficiency(item.WithArticle()),
             ToolFailureKind.BeyondSkill   => NeutralNarration.ItemCombinationBeyondSkill(display, item.WithArticle()),
             ToolFailureKind.NotAWeapon    => NeutralNarration.ItemCombinationNotAWeapon(item.WithArticle()),
+            ToolFailureKind.TooHeavy      => NeutralNarration.ItemCombinationTooHeavy(item.WithArticle()),
             _                             => NeutralNarration.ItemCombinationFailure(display, item.WithArticle()),
         };
         if (kind == ToolFailureKind.WrongTool && !string.IsNullOrWhiteSpace(criticReason))

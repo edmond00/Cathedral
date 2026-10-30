@@ -1,3 +1,4 @@
+using System;
 using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 using Cathedral.Fight;
@@ -9,24 +10,64 @@ namespace Cathedral.Game.Narrative.Items;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>
+/// How much of a hand a weapon fills. Only the two sizes that leave no room for a second weapon
+/// beside it: a hold is nine slots, so a medium weapon leaves three — a knife's worth of a pouch,
+/// never another medium — and a large one fills the hand alone.
+/// </summary>
+public enum WeaponSize
+{
+    Medium = ItemSize.Medium,
+    Large  = ItemSize.Large,
+}
+
+/// <summary>
 /// Base class for all hand-held combat weapons.
 /// Implements <see cref="IWeaponItem"/> so the fight system can use them as weapon mediums.
+///
+/// <para><b>One weapon to a hand, by construction.</b> <see cref="Item.Size"/> is sealed here and
+/// read from <see cref="Bulk"/>, which has no small value: a weapon cannot be authored small, so two
+/// can never share a nine-slot hold. <c>--item-audit</c> checks it again, in case the seal is ever
+/// lifted.</para>
+///
+/// <para><b>A real weapon out-strikes a bare limb.</b> <see cref="Level"/> is the weapon medium's
+/// level, the number a skill multiplies into dice exactly as it multiplies a hand's score — so a
+/// weapon at or under <see cref="StrikingLimbCeiling"/> lends no more than a trained fist and is not
+/// worth drawing. Every weapon not <see cref="IsImprovised"/> must exceed it; <c>--item-audit</c>
+/// fails naming any that does not.</para>
 /// </summary>
 public abstract class WeaponItem : Item, IWeaponItem
 {
     public sealed override ItemCategory Category       => ItemCategory.Weapon;
     public sealed override string       SubcategoryKey => WeaponCategory;
 
+    /// <summary>The weapon's size, medium or large: see the class remarks.</summary>
+    public abstract WeaponSize Bulk { get; }
+    public sealed override ItemSize Size => (ItemSize)Bulk;
+
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.RightHold;
     public abstract int Level { get; }
+
+    /// <summary>
+    /// The best score a human striking limb can reach — a hand or a foot at its maximum of 3. A
+    /// weapon's level is counted from here: <c>--item-audit</c> reads the real ceiling off the human
+    /// anatomy and fails if this constant drifts from it.
+    /// </summary>
+    public const int StrikingLimbCeiling = 3;
+
+    /// <summary>
+    /// A thing picked up and swung rather than made to fight with — a branch, a stick. It opens a
+    /// weapon category's skills and lends nothing beyond them (<see cref="Level"/> 0), and it is the
+    /// only kind of weapon allowed to fall at or under <see cref="StrikingLimbCeiling"/>.
+    /// </summary>
+    public virtual bool IsImprovised => false;
 
     // Weapons are sold as part of the blacksmith's Ironwork, and as the quartermaster's Arms (a bow,
     // which is no ironwork, overrides this with Arms alone). Goods are priced in copper across the
     // board — the other denominations are reserved for wages and larger transactions — so a
-    // weapon's level maps onto ten copper a step: a level-3 warblade costs thirty, against a
-    // barrel's twenty-five and a lantern's thirty.
+    // weapon maps onto ten copper per level above a bare limb: a level-6 warblade costs thirty,
+    // against a barrel's twenty-five and a lantern's thirty.
     public override List<ItemTag> Tags    => new() { ItemTag.Ironwork, ItemTag.Arms };
-    public override int           PriceReference => (Level < 1 ? 1 : Level) * 10;
+    public override int           PriceReference => Math.Max(1, Level - StrikingLimbCeiling) * 10;
 
     /// <summary>
     /// How much a weapon helps when combined with a <em>narration</em> action — a different
@@ -68,9 +109,9 @@ public sealed class ArmingSword : WeaponItem
     public override string ItemId      => "arming_sword";
     public override string DisplayName => "Arming Sword";
     public override string Description => "A straight double-edged arming sword with a plain iron cross-guard";
-    public override ItemSize Size      => ItemSize.Medium;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override int     Level      => 5;
     public override string WeaponCategory => "long_blade";
 }
 
@@ -81,9 +122,9 @@ public sealed class Longsword : WeaponItem
     public override string ItemId      => "longsword";
     public override string DisplayName => "Longsword";
     public override string Description => "A long straight blade of tempered steel with a leather-wrapped grip and heavy pommel";
-    public override ItemSize Size      => ItemSize.Large;
-    public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 3;
+    public override WeaponSize Bulk      => WeaponSize.Large;
+    public override WeightClass   Weight     => WeightClass.Heavy;
+    public override int     Level      => 6;
     public override string WeaponCategory => "long_blade";
 }
 
@@ -98,9 +139,9 @@ public sealed class HuntingKnife : WeaponItem
     public override string ItemId      => "hunting_knife";
     public override string DisplayName => "Hunting Knife";
     public override string Description => "A thick-bladed hunting knife with a bone handle and a single-edged blade for gutting game";
-    public override ItemSize Size      => ItemSize.Small;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Light;
-    public override int     Level      => 1;
+    public override int     Level      => 4;
     public override string WeaponCategory => "short_blade";
 }
 
@@ -111,9 +152,9 @@ public sealed class IronDagger : WeaponItem
     public override string ItemId      => "iron_dagger_weapon";
     public override string DisplayName => "Iron Dagger";
     public override string Description => "A plain double-edged iron dagger with a tapered blade and a riveted pommel";
-    public override ItemSize Size      => ItemSize.Small;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Light;
-    public override int     Level      => 2;
+    public override int     Level      => 5;
     public override string WeaponCategory => "short_blade";
 }
 
@@ -128,9 +169,9 @@ public sealed class CavalrySaber : WeaponItem
     public override string ItemId      => "cavalry_saber";
     public override string DisplayName => "Cavalry Saber";
     public override string Description => "A curved single-edged saber with a brass hand guard and a sharkskin grip";
-    public override ItemSize Size      => ItemSize.Medium;
-    public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
+    public override WeightClass   Weight     => WeightClass.Light;
+    public override int     Level      => 5;
     public override string WeaponCategory => "saber";
 }
 
@@ -141,9 +182,9 @@ public sealed class Cutlass : WeaponItem
     public override string ItemId      => "cutlass";
     public override string DisplayName => "Cutlass";
     public override string Description => "A heavy-bladed cutlass with a broad curve and a basket hilt of iron rings";
-    public override ItemSize Size      => ItemSize.Medium;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 3;
+    public override int     Level      => 6;
     public override string WeaponCategory => "saber";
 }
 
@@ -158,9 +199,9 @@ public sealed class Cudgel : WeaponItem
     public override string ItemId      => "cudgel";
     public override string DisplayName => "Cudgel";
     public override string Description => "A thick knotted branch trimmed into a fighting club, heavy at the head";
-    public override ItemSize Size      => ItemSize.Medium;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 1;
+    public override int     Level      => 4;
     public override string WeaponCategory => "blunt";
 }
 
@@ -171,9 +212,9 @@ public sealed class Warhammer : WeaponItem
     public override string ItemId      => "warhammer";
     public override string DisplayName => "Warhammer";
     public override string Description => "A flanged iron warhammer with a cross-peen head and a leather-wrapped haft";
-    public override ItemSize Size      => ItemSize.Medium;
-    public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
+    public override WeightClass   Weight     => WeightClass.Heavy;
+    public override int     Level      => 5;
     public override string WeaponCategory => "blunt";
 }
 
@@ -188,9 +229,9 @@ public sealed class BattleAxe : WeaponItem
     public override string ItemId      => "battle_axe";
     public override string DisplayName => "Battle Axe";
     public override string Description => "A single-bit iron axe with a bearded head and an ash haft bound in leather";
-    public override ItemSize Size      => ItemSize.Medium;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override int     Level      => 5;
     public override string WeaponCategory => "axe";
 }
 
@@ -201,9 +242,9 @@ public sealed class WarAxe : WeaponItem
     public override string ItemId      => "war_axe";
     public override string DisplayName => "War Axe";
     public override string Description => "A double-bitted war axe of dark iron, the hafts grooved for grip";
-    public override ItemSize Size      => ItemSize.Large;
+    public override WeaponSize Bulk      => WeaponSize.Large;
     public override WeightClass   Weight     => WeightClass.Heavy;
-    public override int     Level      => 3;
+    public override int     Level      => 6;
     public override string WeaponCategory => "axe";
 }
 
@@ -218,9 +259,9 @@ public sealed class WarPick : WeaponItem
     public override string ItemId      => "war_pick";
     public override string DisplayName => "War Pick";
     public override string Description => "A single-pointed iron war pick with a hammerhead back and an oak haft";
-    public override ItemSize Size      => ItemSize.Medium;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override int     Level      => 5;
     public override string WeaponCategory => "pickaxe";
 }
 
@@ -231,9 +272,9 @@ public sealed class HeavyPick : WeaponItem
     public override string ItemId      => "heavy_pick";
     public override string DisplayName => "Heavy Pick";
     public override string Description => "A miner's heavy iron pick, its point ground to a weapon edge";
-    public override ItemSize Size      => ItemSize.Large;
+    public override WeaponSize Bulk      => WeaponSize.Large;
     public override WeightClass   Weight     => WeightClass.Heavy;
-    public override int     Level      => 1;
+    public override int     Level      => 4;
     public override string WeaponCategory => "pickaxe";
 }
 
@@ -248,9 +289,9 @@ public sealed class HuntingSpear : WeaponItem
     public override string ItemId      => "hunting_spear";
     public override string DisplayName => "Hunting Spear";
     public override string Description => "A hunting spear with a leaf-shaped iron point and a smooth ash shaft";
-    public override ItemSize Size      => ItemSize.Large;
+    public override WeaponSize Bulk      => WeaponSize.Large;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override int     Level      => 5;
     public override string WeaponCategory => "spear";
 }
 
@@ -261,9 +302,9 @@ public sealed class WarSpear : WeaponItem
     public override string ItemId      => "war_spear";
     public override string DisplayName => "War Spear";
     public override string Description => "A heavy-socketed war spear with a broad iron head and a steel-shod butt";
-    public override ItemSize Size      => ItemSize.Large;
-    public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 3;
+    public override WeaponSize Bulk      => WeaponSize.Large;
+    public override WeightClass   Weight     => WeightClass.Heavy;
+    public override int     Level      => 6;
     public override string WeaponCategory => "spear";
 }
 
@@ -279,9 +320,9 @@ public sealed class HuntingBow : WeaponItem
     public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override string DisplayName => "Hunting Bow";
     public override string Description => "A short self-bow of yew, unstrung and bound with waxed linen";
-    public override ItemSize Size      => ItemSize.Large;
-    public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 1;
+    public override WeaponSize Bulk      => WeaponSize.Large;
+    public override WeightClass   Weight     => WeightClass.Light;
+    public override int     Level      => 4;
     public override string WeaponCategory => "bow";
 }
 
@@ -293,9 +334,9 @@ public sealed class Longbow : WeaponItem
     public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override string DisplayName => "Longbow";
     public override string Description => "A tall war longbow of laminated horn and sinew, the draw weight substantial";
-    public override ItemSize Size      => ItemSize.Large;
+    public override WeaponSize Bulk      => WeaponSize.Large;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 3;
+    public override int     Level      => 6;
     public override string WeaponCategory => "bow";
 }
 
@@ -310,9 +351,9 @@ public sealed class LightCrossbow : WeaponItem
     public override string ItemId      => "light_crossbow";
     public override string DisplayName => "Light Crossbow";
     public override string Description => "A light crossbow with a simple nut-and-prod mechanism and a short wooden tiller";
-    public override ItemSize Size      => ItemSize.Medium;
+    public override WeaponSize Bulk      => WeaponSize.Medium;
     public override WeightClass   Weight     => WeightClass.Medium;
-    public override int     Level      => 2;
+    public override int     Level      => 5;
     public override string WeaponCategory => "crossbow";
 }
 
@@ -323,9 +364,9 @@ public sealed class HeavyCrossbow : WeaponItem
     public override string ItemId      => "heavy_crossbow";
     public override string DisplayName => "Heavy Crossbow";
     public override string Description => "A heavy steel-prod crossbow with a windlass crank and a carved cheek-piece";
-    public override ItemSize Size      => ItemSize.Large;
+    public override WeaponSize Bulk      => WeaponSize.Large;
     public override WeightClass   Weight     => WeightClass.Heavy;
-    public override int     Level      => 3;
+    public override int     Level      => 6;
     public override string WeaponCategory => "crossbow";
 }
 
@@ -340,9 +381,9 @@ public sealed class RoundShield : WeaponItem
     public override string ItemId        => "round_shield";
     public override string DisplayName   => "Round Shield";
     public override string Description   => "A round iron-bossed shield of limewood, the rim bound in leather";
-    public override ItemSize Size        => ItemSize.Medium;
-    public override WeightClass   Weight       => WeightClass.Heavy;
-    public override int     Level        => 1;
+    public override WeaponSize Bulk        => WeaponSize.Medium;
+    public override WeightClass   Weight       => WeightClass.Medium;
+    public override int     Level        => 4;
     public override string WeaponCategory => "shield";
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.LeftHold;
 }
@@ -354,9 +395,9 @@ public sealed class TowerShield : WeaponItem
     public override string ItemId        => "tower_shield";
     public override string DisplayName   => "Tower Shield";
     public override string Description   => "A tall kite-shaped shield of planked wood faced in iron plate";
-    public override ItemSize Size        => ItemSize.Large;
+    public override WeaponSize Bulk        => WeaponSize.Large;
     public override WeightClass   Weight       => WeightClass.Heavy;
-    public override int     Level        => 2;
+    public override int     Level        => 5;
     public override string WeaponCategory => "shield";
     public override EquipmentAnchor? PreferredAnchor => EquipmentAnchor.LeftHold;
 }

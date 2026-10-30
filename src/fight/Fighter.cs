@@ -278,10 +278,7 @@ public class Fighter
         }
 
         // ── Weapon-medium learnable skills ────────────────────────────
-        var equippedWeapons = Member.EquippedItems[EquipmentAnchor.RightHold]
-            .Concat(Member.EquippedItems[EquipmentAnchor.LeftHold])
-            .OfType<IWeaponItem>()
-            .ToList();
+        var equippedWeapons = Member.WieldedWeapons().ToList();
 
         var weaponLearnables = new List<FightingSkill>();
         var seenCategories   = new HashSet<string>();

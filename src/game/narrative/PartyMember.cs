@@ -222,6 +222,77 @@ public abstract class PartyMember
     /// </summary>
     public void Equip(EquipmentAnchor anchor, Item item) => EquippedItems[anchor].Add(item);
 
+    // ── What a hand can bear ──────────────────────────────────────
+
+    /// <summary>
+    /// The heaviest thing the arm behind a hold can bear, or null when this anatomy has no arm for
+    /// that hand (a beast's holds are its mouth, and no organ governs them).
+    ///
+    /// <para>The arm's effective score after wounds, one weight class a level: 0 bears a light item,
+    /// 1 a medium one, 2 a heavy one. A disabled arm counts as 0 — it can still close round a knife
+    /// handle, and refusing it that would leave a wounded character with a hand that holds nothing.
+    /// <see cref="WeightClass.Insignificant"/> is under every bar.</para>
+    ///
+    /// <para>Only what sits <em>in</em> the hand is weighed. A bag is held by its handle, so a heavy
+    /// item in a medium bag is the bag's weight to the hand; the contents are carried, not wielded —
+    /// see <see cref="WieldedWeapons"/>.</para>
+    /// </summary>
+    public WeightClass? HoldLimit(EquipmentAnchor hold)
+    {
+        string? partId = hold switch
+        {
+            EquipmentAnchor.RightHold => "right_arm",
+            EquipmentAnchor.LeftHold  => "left_arm",
+            _                         => null,
+        };
+        if (partId == null) return null;
+
+        foreach (var bp in _bodyParts)
+            foreach (var organ in bp.Organs)
+                foreach (var part in organ.Parts)
+                    if (part.Id == partId)
+                        return Math.Max(0, GetEffectiveScore(part, organ, bp)) switch
+                        {
+                            0 => WeightClass.Light,
+                            1 => WeightClass.Medium,
+                            _ => WeightClass.Heavy,
+                        };
+        return null;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="item"/> may sit directly in <paramref name="anchor"/> on this body:
+    /// the anchor's own rule (<see cref="EquipmentAnchorExtensions.CanAccept"/>) and, for a hand,
+    /// the arm's <see cref="HoldLimit"/>. Capacity is not asked here. Every placement on a body goes
+    /// through this rather than <c>CanAccept</c> alone, or a weak arm is handed a war axe by
+    /// whichever path forgot.
+    /// </summary>
+    public bool CanPlace(EquipmentAnchor anchor, Item item) =>
+        anchor.CanAccept(item)
+        && (HoldLimit(anchor) is not { } limit || item.Weight <= limit);
+
+    /// <summary>
+    /// The weapons a fight can use in this hand: held directly in it (a sword in a bag is luggage)
+    /// and no heavier than the arm can bear. A weapon placed while the arm was sound stays in the
+    /// hand when a wound weakens it, and simply stops being one — the fight reads this, never the
+    /// raw anchor list.
+    /// </summary>
+    public IEnumerable<Cathedral.Fight.IWeaponItem> WieldedWeapons(EquipmentAnchor hold) =>
+        EquippedItems.TryGetValue(hold, out var held)
+            ? held.Where(i => CanPlace(hold, i)).OfType<Cathedral.Fight.IWeaponItem>()
+            : Enumerable.Empty<Cathedral.Fight.IWeaponItem>();
+
+    /// <summary>Wielded weapons in both hands, right before left — the order the fight reads them in.</summary>
+    public IEnumerable<Cathedral.Fight.IWeaponItem> WieldedWeapons() =>
+        WieldedWeapons(EquipmentAnchor.RightHold).Concat(WieldedWeapons(EquipmentAnchor.LeftHold));
+
+    /// <summary>
+    /// Whether some hand of this body could wield <paramref name="item"/> — the question a weapon
+    /// combined from the pack has to answer before it can strike a first blow.
+    /// </summary>
+    public bool CanWieldInSomeHand(Item item) =>
+        CanPlace(EquipmentAnchor.RightHold, item) || CanPlace(EquipmentAnchor.LeftHold, item);
+
     // ── Carrying weight ───────────────────────────────────────────
 
     /// <summary>
@@ -343,7 +414,7 @@ public abstract class PartyMember
         if (item.PreferredAnchor.HasValue)
         {
             var preferred = item.PreferredAnchor.Value;
-            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+            if (CanPlace(preferred, item) && AvailableSlots(preferred) >= item.SlotCount)
             {
                 EquippedItems[preferred].Add(item);
                 return true;
@@ -353,7 +424,7 @@ public abstract class PartyMember
         // 2. Any free compatible anchor with capacity
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
         {
-            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+            if (CanPlace(anchor, item) && AvailableSlots(anchor) >= item.SlotCount)
             {
                 EquippedItems[anchor].Add(item);
                 return true;
@@ -401,17 +472,23 @@ public abstract class PartyMember
         if (item.PreferredAnchor.HasValue)
         {
             var preferred = item.PreferredAnchor.Value;
-            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+            if (CanPlace(preferred, item) && AvailableSlots(preferred) >= item.SlotCount)
                 return AcquireCheck.Allow;
         }
 
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
-            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+            if (CanPlace(anchor, item) && AvailableSlots(anchor) >= item.SlotCount)
                 return AcquireCheck.Allow;
 
         foreach (var container in GetAllItems().OfType<IContainer>())
             if (container.CanContain(item) && item.SlotCount <= container.AvailableSlots)
                 return AcquireCheck.Allow;
+
+        // Refused the same way as a full pack, but worded for what actually stopped it: a free hand
+        // too weak to bear the thing, with no bag that would take it instead.
+        foreach (var hold in new[] { EquipmentAnchor.RightHold, EquipmentAnchor.LeftHold })
+            if (hold.CanAccept(item) && AvailableSlots(hold) >= item.SlotCount && !CanPlace(hold, item))
+                return AcquireCheck.Deny($"{item.WithArticle()} is too heavy for my arms to hold, and I have nowhere else to put it");
 
         return AcquireCheck.Deny($"I have nowhere left to put {item.WithArticle()}");
     }

@@ -242,6 +242,16 @@ distribution and what it means at each backbone tier. Then it warns about:
   line is the only thing standing between layered garments and an unhittable torso, so read it
   after touching any `DefenseDice`.
 
+**The weapon rules fail the suite** (✗ lines, unlike the warnings above), and the weapons table
+prints each weapon's size, weight, level and the arm level that holds it:
+
+- a weapon smaller than medium — two would share a nine-slot hand. `WeaponItem` seals `Size` behind
+  `WeaponSize`, which has no small value, so this only fires for an `IWeaponItem` written outside it;
+- a weapon not `IsImprovised` whose `Level` does not exceed the best human striking limb (read off the
+  anatomy, 3 today) — no better than a fist. `WeaponItem.StrikingLimbCeiling` must agree with it;
+- the real weapons unbalanced across the three hold tiers — fewer than a fifth of them light, medium
+  or heavy (an arm of level 0/1/2 holds up to that weight), or any insignificant weapon.
+
 It also samples `FightResolver.PreRollHitLocation` 60k times and compares the result against each
 body part's share of the wound pool. Armour needs the hit location *before* the dice, so unaimed
 attacks now pre-roll one; that check is the proof the pre-roll did not change where blows land.
