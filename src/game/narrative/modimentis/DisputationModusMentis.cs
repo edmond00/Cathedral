@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class DisputationModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "disputation";
     public override string DisplayName      => "Disputation";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Argues in form: states a position, admits the objection, answers it, and concedes only what must be conceded. Opens conversations closed to anybody who cannot show they have been taught to reason rather than merely to insist.";
     public override string SkillMeans       => "the formal argument put in its proper order";

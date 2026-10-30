@@ -608,6 +608,7 @@ You are humble, patient, and a little unworldly, and you may know a great deal m
 public class ScholarArchetype : SettledArchetype
 {
     public override string ArchetypeId => "scholar";
+    public override IReadOnlyList<Narrative.Sanitizer.Register> Registers => new[] { Narrative.Sanitizer.Register.Learned };
     public override string TradeModusMentisId => "pedagogy";
     public override SocialCategory? Social => SocialCategory.Bourgeois;
     public override string RoleNoun => "scholar";
@@ -658,6 +659,7 @@ You speak precisely and at length. You are condescending to the ignorant without
 public class StewardArchetype : SettledArchetype
 {
     public override string ArchetypeId => "steward";
+    public override IReadOnlyList<Narrative.Sanitizer.Register> Registers => new[] { Narrative.Sanitizer.Register.Learned };
     public override string TradeModusMentisId => "stewardry";
     public override SocialCategory? Social => SocialCategory.Bourgeois;
     public override string RoleNoun => "steward";

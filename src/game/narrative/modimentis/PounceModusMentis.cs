@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class PounceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "pounce";
     public override string DisplayName      => "Pounce";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Gathers the whole body into stillness and releases it in one committed spring at the chosen instant. Watches for the single right moment, and treats hesitation after launch as the only true mistake.";
     public override string SkillMeans       => "the still crouch and the sudden leap onto a target";

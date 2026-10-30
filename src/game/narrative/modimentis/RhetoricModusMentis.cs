@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class RhetoricModusMentis : ModusMentis
 {
     public override string ModusMentisId => "rhetoric";
     public override string DisplayName => "Rhetoric";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Builds an argument from marshalled reasons and works to sway an audience. Attends to the structure of a case, and inclines toward winning a point by ordered, deliberate speech.";
     public override string SkillMeans => "persuasion and argumentation";

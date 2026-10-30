@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class ColdBloodModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "cold_blood";
     public override string DisplayName      => "Cold Blood";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Terse };
     public override string MenuDescription =>
         "Carries out harm without heat, hesitation, or mercy when it is required. Keeps feeling out of the act, and treats violence as a task to be done cleanly and then set down again.";
     public override string SkillMeans       => "the calm execution of violence without emotion or hesitation";

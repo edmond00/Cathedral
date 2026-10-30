@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class LopeModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "lope";
     public override string DisplayName      => "Lope";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Falls into the ground-eating gait that can be held from dawn to dusk, trading speed for tirelessness. Runs down the faster by simply never stopping, and measures pursuit in hours rather than strides.";
     public override string SkillMeans       => "the tireless running pace that covers great distances";

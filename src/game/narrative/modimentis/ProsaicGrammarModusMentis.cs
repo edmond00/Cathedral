@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class ProsaicGrammarModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "prosaic_grammar";
     public override string DisplayName      => "Prosaic Grammar";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Shapes speech into elaborate, clause-laden prose wound through with subordinate turns. Inclines toward the ornate construction, favouring intricate language over plain statement.";
     public override string SkillMeans       => "elaborate formal speech full of long, winding sentences";

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class SmugglingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "smuggling";
     public override string DisplayName      => "Smuggling";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Moves goods past the tax-man and the gate: the false bottom, the double cask, the night landing on a quiet beach. Knows which guard drinks and which can be paid.";
     public override string SkillMeans       => "the moving of goods past toll and tax";

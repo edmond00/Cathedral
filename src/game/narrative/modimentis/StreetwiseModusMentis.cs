@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class StreetwiseModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "streetwise";
     public override string DisplayName      => "Streetwise";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Keeps an alley-bred wariness up, reading a rough street for danger, marks, and the quickest way out. Inclines toward suspicion and quick reckoning where crime and trouble are near.";
     public override string SkillMeans       => "the wariness and cunning learned on rough streets";

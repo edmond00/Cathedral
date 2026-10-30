@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class SandCastlesModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "sand_castles";
     public override string DisplayName      => "Castles in the Sand";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Sees castles in heaps: the tower a mound of wet sand could be, the wall in a bank, the moat a ditch would make, and builds them. Inclines toward making something out of what lies to hand, for the pleasure of the making.";
     public override string SkillMeans       => "building a castle of wet sand with towers and a moat";

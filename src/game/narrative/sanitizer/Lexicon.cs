@@ -142,6 +142,21 @@ public sealed class Lexicon
 
         var sb = new StringBuilder(text.Length + 16);
         int last = 0;
+        // A deleted word leaves its sentence start and its article to whatever follows it.
+        bool capitaliseNext = false;
+        Article? agreeNext = null;
+
+        void AppendText(int from, int to)
+        {
+            if (to <= from) return;
+            int at = sb.Length;
+            sb.Append(text, from, to - from);
+            if (!char.IsLetter(sb[at])) { capitaliseNext = false; agreeNext = null; return; }
+            if (capitaliseNext) sb[at] = char.ToUpperInvariant(sb[at]);
+            if (agreeNext is { } a) Agree(sb, a, text.AsSpan(from, to - from).ToString());
+            capitaliseNext = false;
+            agreeNext = null;
+        }
 
         foreach (Match m in Matches(text))
         {
@@ -149,8 +164,10 @@ public sealed class Lexicon
             var entry = Lookup(original);
             if (entry == null) continue;
 
-            sb.Append(text, last, m.Index - last);
+            AppendText(last, m.Index);
             last = m.Index + m.Length;
+            capitaliseNext = false;
+            agreeNext = null;
 
             bool sentenceStart = IsSentenceStart(sb);
             bool suppliedName = !sentenceStart && char.IsUpper(original[0])
@@ -174,6 +191,35 @@ public sealed class Lexicon
                 continue;
             }
 
+            // A deletion takes the space after it, and hands its sentence start and its article on:
+            // "Very well." → "Well.", "a very old man" → "an old man".
+            if (entry.Replacement.Length == 0)
+            {
+                // Set off by commas, it takes one of them: "Actually, it is" → "It is",
+                // "it is, really, fine" → "it is fine".
+                bool commaTaken = false;
+                if (last < text.Length && text[last] == ',')
+                {
+                    last++;
+                    int at = sb.Length;
+                    while (at > 0 && sb[at - 1] == ' ') at--;
+                    // The comma before it goes, and the space after the one it ends on stays.
+                    if (at > 0 && sb[at - 1] == ',') { sb.Length = at - 1; commaTaken = true; }
+                }
+                if (!commaTaken && last < text.Length && text[last] == ' ')
+                {
+                    last++;
+                    capitaliseNext = sentenceStart;
+                    agreeNext = TrailingArticle(sb) is { } t && t.Word.ToLowerInvariant() is "a" or "an" ? t : null;
+                }
+                else if (!commaTaken)
+                {
+                    while (sb.Length > 0 && sb[^1] == ' ') sb.Length--;
+                }
+                swaps?.Add(new Swap(original, "", entry));
+                continue;
+            }
+
             string replacement = entry.Replacement;
 
             // A replacement carrying its own article yields to one already in the text.
@@ -185,11 +231,7 @@ public sealed class Lexicon
 
             if (article is { } a && (a.Word.Equals("a", StringComparison.OrdinalIgnoreCase)
                                      || a.Word.Equals("an", StringComparison.OrdinalIgnoreCase)))
-            {
-                string agreed = StartsWithVowelSound(replacement) ? "an" : "a";
-                agreed = MatchCase(agreed, a.Word);
-                sb.Remove(a.Index, a.Word.Length).Insert(a.Index, agreed);
-            }
+                Agree(sb, a, replacement);
 
             sb.Append(replacement);
             swaps?.Add(new Swap(original, replacement, entry));
@@ -197,8 +239,15 @@ public sealed class Lexicon
         }
 
         if (last == 0) return text;
-        sb.Append(text, last, text.Length - last);
+        AppendText(last, text.Length);
         return sb.ToString();
+    }
+
+    // "a" or "an" before what now follows it.
+    private static void Agree(StringBuilder sb, Article a, string following)
+    {
+        string agreed = MatchCase(StartsWithVowelSound(following) ? "an" : "a", a.Word);
+        sb.Remove(a.Index, a.Word.Length).Insert(a.Index, agreed);
     }
 
     /// <summary>Where the first listed form of <paramref name="text"/> begins, or -1.</summary>

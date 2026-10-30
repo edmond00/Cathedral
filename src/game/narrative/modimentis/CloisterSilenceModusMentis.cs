@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class CloisterSilenceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "cloister_silence";
     public override string DisplayName      => "Cloister Silence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Terse };
     public override string MenuDescription =>
         "Lives in silence and hears everything because of it: the footfall in the next walk, the change in a brother's breathing, the unspoken trouble in a quiet house.";
     public override string SkillMeans       => "the hearing that silence teaches";

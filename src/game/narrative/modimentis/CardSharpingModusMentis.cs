@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class CardSharpingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "card_sharping";
     public override string DisplayName      => "Card Sharping";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Cheats at games of chance: the marked card, the loaded die, the second deal, the confederate at the next table. Keeps a calm face while the hand does its work.";
     public override string SkillMeans       => "the cheating at games of chance";

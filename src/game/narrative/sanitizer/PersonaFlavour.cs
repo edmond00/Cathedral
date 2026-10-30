@@ -31,6 +31,7 @@ public sealed class PersonaFlavour
     public const int SharePercent = 60;
 
     private static readonly ConcurrentDictionary<string, PersonaFlavour?> _byModusMentis = new();
+    private static readonly ConcurrentDictionary<string, (Lexicon Lexicon, IReadOnlyDictionary<string, string> Lemmas)> _byRegisters = new();
 
     private readonly Lexicon _lexicon;
     private readonly string _voice;
@@ -50,10 +51,23 @@ public sealed class PersonaFlavour
         Registers = registers;
         _voice    = voice;
         _share    = share;
-        _lexicon  = new Lexicon(registers.SelectMany(PersonaLexicons.For));
-        KeywordLemmas = _lexicon.Entries
-            .GroupBy(e => e.Replacement.ToLowerInvariant())
-            .ToDictionary(g => g.Key, g => g.First().Lemma ?? g.First().Form.ToLowerInvariant());
+        (_lexicon, KeywordLemmas) = _byRegisters.GetOrAdd(string.Join(",", registers), _ => Build(registers));
+    }
+
+    private static (Lexicon, IReadOnlyDictionary<string, string>) Build(IReadOnlyList<Register> registers)
+    {
+        var lexicon = new Lexicon(registers.SelectMany(PersonaLexicons.For));
+        var lemmas  = new Dictionary<string, string>();
+        foreach (var e in lexicon.Entries.Where(e => e.Replacement.Length > 0))
+        {
+            string lemma = e.Lemma ?? e.Form.ToLowerInvariant();
+            string replacement = e.Replacement.ToLowerInvariant();
+            lemmas.TryAdd(replacement, lemma);
+            // A keyword is one word, so a kenning is found at its last: "bite-iron" at "iron".
+            if (e.Lemma != null && replacement.LastIndexOfAny(new[] { '-', ' ' }) is int cut and >= 0)
+                lemmas.TryAdd(replacement[(cut + 1)..], lemma);
+        }
+        return (lexicon, lemmas);
     }
 
     /// <summary>The flavour of <paramref name="mm"/>, or null when it declares no register.</summary>
@@ -61,6 +75,18 @@ public sealed class PersonaFlavour
     {
         if (mm == null || mm.Registers.Count == 0) return null;
         return _byModusMentis.GetOrAdd(mm.ModusMentisId, _ => new PersonaFlavour(mm.Registers, mm.ModusMentisId, SharePercent));
+    }
+
+    /// <summary>
+    /// The flavour of what <paramref name="npc"/> says, from its archetype's
+    /// <see cref="Npc.NamedNpcArchetype.Registers"/>, or null. The share is the person's own, so two
+    /// peasants do not drop into their dialect on the same lines.
+    /// </summary>
+    public static PersonaFlavour? For(Npc.NpcEntity? npc)
+    {
+        var registers = npc?.Archetype.Registers;
+        if (registers == null || registers.Count == 0) return null;
+        return new PersonaFlavour(registers, npc!.PersistentId, SharePercent);
     }
 
     /// <summary>A flavour of the given registers at a given share, for audits: 100 voices every line.</summary>

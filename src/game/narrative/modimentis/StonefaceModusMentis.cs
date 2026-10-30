@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class StonefaceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "stoneface";
     public override string DisplayName      => "Stoneface";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Terse };
     public override string MenuDescription =>
         "Holds the face still under provocation, surprise, and bluff, showing only what is chosen. Keeps tells off the features at the card table, the market, and the interrogation alike.";
     public override string SkillMeans       => "the expressionless face that shows nothing";

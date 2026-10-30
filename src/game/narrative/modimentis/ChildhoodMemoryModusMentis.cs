@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Cathedral.Game.Narrative.Memory;
@@ -30,6 +31,7 @@ public class ChildhoodMemoryModusMentis : ModusMentis
 
     public override string ModusMentisId    => "childhood_memory";
     public override string DisplayName      => "Childhood Reminescence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription  => BuildMenuDescription();
     public override string SkillMeans       => "the reuse of hard-won childhood experience";
     public override ModusMentisFunction[] Functions => new[]

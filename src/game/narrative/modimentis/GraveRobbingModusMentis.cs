@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,6 +11,7 @@ public class GraveRobbingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "grave_robbing";
     public override string DisplayName      => "Grave Robbing";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Opens graves and tombs at night for what was buried with the dead: the ring, the coin in the mouth, the good cloak. Knows how deep the rich are buried and how to fill a hole so nobody notices.";
     public override string SkillMeans       => "the robbing of graves";

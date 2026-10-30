@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
@@ -12,6 +13,7 @@ public class ScholarshipModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "scholarship";
     public override string DisplayName      => "Scholarship";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Draws on what is recorded in manuscripts, reading letters and old texts with patient study. Inclines reasoning toward written knowledge, and treats a question as something the record may already answer.";
     public override string SkillMeans       => "the knowledge found in books and old manuscripts";

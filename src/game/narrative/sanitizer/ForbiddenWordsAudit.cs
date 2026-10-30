@@ -183,6 +183,30 @@ public static class ForbiddenWordsAudit
             failures.Add($"keyword of \"{text}\" for a horse is '{keywords.FirstOrDefault()}', expected 'steed'");
         else
             Console.WriteLine($"  keyword kept: \"{text}\" → 'steed' names the horse");
+
+        // A kenning keeps it too, whether the tagger reads "bite-iron" as one word or as two: the
+        // lemma map holds the whole and its last part. Read with the tagger the game loads.
+        NounExtractor.InitializeAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models"))
+                     .GetAwaiter().GetResult();
+        var feral = PersonaFlavour.Of(100, Register.Feral);
+        string kenning = feral.Apply("I smell the knife left by the gatehouse, under the rain.");
+        var kennKeys = KeywordExtractor.ExtractKeywords(kenning, "knife", 1, flavourLemmas: feral.KeywordLemmas);
+        if (kennKeys.FirstOrDefault() is not ("bite-iron" or "iron"))
+            failures.Add($"keyword of \"{kenning}\" for a knife is '{kennKeys.FirstOrDefault()}', expected the kenning");
+        else
+            Console.WriteLine($"  keyword kept: \"{kenning}\" → '{kennKeys[0]}' names the knife");
+
+        // People speak in their standing's register (NamedNpcArchetype.Registers).
+        var speakers = typeof(Npc.NamedNpcArchetype).Assembly.GetTypes()
+            .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(Npc.NamedNpcArchetype)) && t.GetConstructor(Type.EmptyTypes) != null)
+            .Select(t => (Npc.NamedNpcArchetype)Activator.CreateInstance(t)!)
+            .Where(a => a.CanSpeak).ToList();
+        var byRegister = speakers.GroupBy(a => a.Registers.Count == 0 ? "plain" : string.Join("+", a.Registers))
+                                 .OrderBy(g => g.Key)
+                                 .Select(g => $"{g.Key} {g.Count()} ({string.Join(", ", g.Select(a => a.ArchetypeId).Take(4))}{(g.Count() > 4 ? ", …" : "")})");
+        Console.WriteLine($"  people: {string.Join("; ", byRegister)}");
+        foreach (var a in speakers.Where(a => a.Social == Npc.SocialCategory.Peasant && !a.Registers.Contains(Register.Rustic)))
+            failures.Add($"{a.ArchetypeId}: a peasant who does not speak Rustic");
         Console.WriteLine();
     }
 
@@ -215,10 +239,60 @@ public static class ForbiddenWordsAudit
             ("I think of home.", "I think of home."),
             ("I thought nothing of it.", "I thought nowt of it."),
         },
+        [Register.Cant] = new[]
+        {
+            ("My friend stole the man's purse.", "My mate nicked the cove's poke."),
+            ("The men have money and food.", "The coves have chink and grub."),
+            ("They threw him in prison, a very old man.", "They threw him in clink, a proper old cove."),
+            ("Keep your eyes open.", "Keep your peepers open."),
+            // Left alone: "very" meaning "itself", and "very much".
+            ("At the very end I thank you very much.", "At the very end I thank you very much."),
+            ("I read it in your very eyes.", "I read it in your very peepers."),
+        },
+        [Register.Childish] = new[]
+        {
+            ("My mother says the rabbit is very big.", "My mam says the bunny is ever so big."),
+            ("I was frightened of the huge dog.", "I was scared of the great big dog."),
+            ("An enormous barn and a tiny stomach.", "A great big barn and a teeny tummy."),
+            ("Mother laughs; father is angry.", "Mam laughs; da is cross."),
+            ("It is a very old and difficult road.", "It is an ever so old and hard road."),
+            // Left alone: a priest, a prioress, "by and large", "very well".
+            ("Father Ansel speaks to Mother Superior.", "Father Ansel speaks to Mother Superior."),
+            ("By and large, very well.", "By and large, very well."),
+        },
+        [Register.Learned] = new[]
+        {
+            ("I begin to think about the idea.", "I commence to consider the notion."),
+            ("She bought a tool and tried to sell it.", "She purchased an instrument and endeavoured to sell it."),
+            ("It seems he talked to the reeve so that we could buy bread.", "It appears he conversed with the reeve in order that we could purchase bread."),
+            ("In the middle of the square, because of the rain, I looked at the sky.", "In the midst of the square, owing to the rain, I regarded the sky."),
+            // Left alone: "so that's", and a look taken.
+            ("So that's the way, and I take a look at it.", "So that's the way, and I take a look at it."),
+        },
+        [Register.Terse] = new[]
+        {
+            ("Very well, it is very cold.", "Well, it is cold."),
+            ("It is a very old house, quite empty.", "It is an old house, empty."),
+            ("I really must go in order to be able to rest.", "I must go to be able to rest."),
+            ("In spite of the cold, I am able to walk.", "Despite the cold, I can walk."),
+            ("Each and every man made a decision.", "Every man decided."),
+            ("Actually, it is truly a fine day.", "It is a fine day."),
+            ("It is, really, a fine day.", "It is a fine day."),
+            // Left alone: what is not an intensifier.
+            ("Not quite; quite a few, not really. Really?", "Not quite; quite a few, not really. Really?"),
+            ("At the very end, I stop.", "At the very end, I stop."),
+        },
+        [Register.Feral] = new[]
+        {
+            ("The man draws a knife by the door.", "The two-leg draws a bite-iron by the den-mouth."),
+            ("People sit by the fire with their children.", "Two-legs sit by the hot-light with their cubs."),
+            ("A lantern hangs from a rope in the house.", "A caged-light hangs from a long-vine in the stone-den."),
+            ("The men's swords and arrows.", "The two-legs' long-claws and flying-thorns."),
+        },
     };
 
     /// <summary>
-    /// Reads lines of <c>ModusMentisClassName&lt;TAB&gt;text</c>, runs each text through Layer 1 and then
+    /// Reads lines of <c>ModusMentisClassName&lt;TAB&gt;text</c> (or <c>Register&lt;TAB&gt;text</c>), runs each text through Layer 1 and then
     /// the flavour of that modus mentis, as the rewriter does, and prints every line the flavour changed
     /// with the words it swapped, then the share of lines changed and the words most swapped.
     /// </summary>
@@ -230,7 +304,13 @@ public static class ForbiddenWordsAudit
         foreach (var line in File.ReadLines(path))
         {
             var tab = line.IndexOf('\t');
-            if (tab < 0 || !byClass.TryGetValue(line[..tab], out var mm) || PersonaFlavour.For(mm) is not { } flavour) continue;
+            if (tab < 0) continue;
+            // The first column names a modus mentis class, or a register outright (a person's lines).
+            string who = line[..tab];
+            PersonaFlavour? flavour = byClass.TryGetValue(who, out var mm) ? PersonaFlavour.For(mm)
+                                    : Enum.TryParse<Register>(who, out var register) ? PersonaFlavour.Of(PersonaFlavour.SharePercent, register)
+                                    : null;
+            if (flavour == null) continue;
             lines++;
             string text = ForbiddenWordsDictionary.Apply(line[(tab + 1)..]);
             var swaps = new List<Lexicon.Swap>();
@@ -238,7 +318,7 @@ public static class ForbiddenWordsAudit
             if (swaps.Count == 0) continue;
             flavoured++; swapsTotal += swaps.Count;
             foreach (var sw in swaps) { string k = $"{sw.Original.ToLowerInvariant()} → {sw.Replacement}"; counts[k] = counts.GetValueOrDefault(k) + 1; }
-            Console.WriteLine($"[{mm.ModusMentisId}: {string.Join(", ", flavour.Registers)}]\n- {text}\n+ {voiced}\n");
+            Console.WriteLine($"[{mm?.ModusMentisId ?? "person"}: {string.Join(", ", flavour.Registers)}]\n- {text}\n+ {voiced}\n");
         }
         Console.WriteLine($"{flavoured} of {lines} lines took the flavour, {swapsTotal} words in all");
         foreach (var (k, n) in counts.OrderByDescending(kv => kv.Value)) Console.WriteLine($"  {n,4}  {k}");

@@ -19,6 +19,8 @@ public class SavageArchetype : NamedNpcArchetype
 
     /// <summary>Outside the law and entirely content there.</summary>
     public override SocialCategory? Social  => SocialCategory.Outlaw;
+    // Outside the law, but far from any street its cant was learned in: few words, and no more of them.
+    public override IReadOnlyList<Narrative.Sanitizer.Register> Registers => new[] { Narrative.Sanitizer.Register.Terse };
 
     public override string RoleNoun => "savage";
     protected override bool LabelMentionsLocation => false;

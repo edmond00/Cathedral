@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class HowlingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "howling";
     public override string DisplayName      => "Howling";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Sends the long call and reads the answers: who is out there, how far, how many, and whether they are friend. Treats voice as a beacon across distance, binding the scattered together and warning the strange away.";
     public override string SkillMeans       => "long-distance calling and answering by voice";

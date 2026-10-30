@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class PettyThiefModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "petty_thief";
     public override string DisplayName      => "Petty Thief";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Watches for the quick lift: the loose purse, the unattended trinket, the palmed small thing. Keeps the hands ready to take unseen, and inclines toward the minor theft over the bold one.";
     public override string SkillMeans       => "the picking of pockets and small thefts";

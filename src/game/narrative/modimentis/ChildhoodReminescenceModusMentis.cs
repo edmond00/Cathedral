@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,6 +13,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "childhood_reminescence";
     public override string DisplayName      => "Childhood Reminescence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with what is slowly recovered, still in the phase of active recollection rather than settled memory.";
     public override string SkillMeans       => "the slow recovery of childhood memories";

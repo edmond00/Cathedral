@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,6 +11,7 @@ public class LootingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "looting";
     public override string DisplayName      => "Looting";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Goes through a fallen house or a fallen man quickly for what is worth carrying: the coin sewn into a hem, the ring on a swollen finger, the plate under the floorboard. Takes the best and leaves the rest.";
     public override string SkillMeans       => "the quick stripping of the fallen for valuables";

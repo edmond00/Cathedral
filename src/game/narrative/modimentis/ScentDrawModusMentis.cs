@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,6 +11,7 @@ public class ScentDrawModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "scent_draw";
     public override string DisplayName      => "Scent Draw";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Draws air on purpose rather than merely breathing it: long pulls through the nose that separate a scent into its parts, its age, and the direction it is coming from.";
     public override string SkillMeans       => "the deliberate drawing of air to take a scent apart";

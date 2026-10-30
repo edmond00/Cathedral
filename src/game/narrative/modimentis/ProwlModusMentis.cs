@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class ProwlModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "prowl";
     public override string DisplayName      => "Prowl";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Moves through ground low, slow, and silent, keeping to shadow and cover while cataloguing everything that stirs. Patrols rather than travels, and prefers to see the whole place before the place sees it.";
     public override string SkillMeans       => "the silent patrolling that spots others before being seen";

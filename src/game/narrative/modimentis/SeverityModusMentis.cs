@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Dialogue.Tree;
@@ -11,6 +12,7 @@ public class SeverityModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "severity";
     public override string DisplayName      => "Severity";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Terse };
     public override string MenuDescription =>
         "Sees rules, boundaries and penalties as things that hold a place together, and dislikes seeing them slack. Judges by what is owed rather than by what is convenient, and applies the same measure to itself.";
     public override string SkillMeans       => "the hard regard for what is owed and what is due";

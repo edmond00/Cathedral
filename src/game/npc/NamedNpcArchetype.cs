@@ -173,6 +173,24 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// </summary>
     public virtual SocialCategory? Social => null;
 
+    /// <summary>
+    /// The ways of speaking this person's lines are rewritten into, a share of the time
+    /// (<see cref="Narrative.Sanitizer.PersonaFlavour"/>) — the NPC side of
+    /// <see cref="ModusMentis.Registers"/>. Follows the standing by default: a peasant talks field and
+    /// byre, a monk the old high speech, a beggar the back streets' cant, a soldier clipped, a lord
+    /// like the schoolmen he was raised by. Override where the trade speaks otherwise than the rank.
+    /// </summary>
+    public virtual IReadOnlyList<Narrative.Sanitizer.Register> Registers => Social switch
+    {
+        SocialCategory.Peasant    => new[] { Narrative.Sanitizer.Register.Rustic },
+        SocialCategory.Religious  => new[] { Narrative.Sanitizer.Register.Archaic },
+        SocialCategory.Pauper     => new[] { Narrative.Sanitizer.Register.Cant },
+        SocialCategory.Outlaw     => new[] { Narrative.Sanitizer.Register.Cant },
+        SocialCategory.Military   => new[] { Narrative.Sanitizer.Register.Terse },
+        SocialCategory.Aristocrat => new[] { Narrative.Sanitizer.Register.Learned },
+        _                         => Array.Empty<Narrative.Sanitizer.Register>(),
+    };
+
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
     /// <summary>
