@@ -389,198 +389,352 @@ O.game(leave - 0.2, O.at("clip-end", "run_start"),
        "The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look "
        "at what we have.")
 
-# ── 6. the protagonist screen ─────────────────────────────────────────────────
-game(3223.0, 3226.3, "Escape opens the menu, and Protagonist opens the character screen.", fade=True)
-game(3226.3, 3236.0, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.")
-game(3236.0, 3246.0,
-     "The memory tab: everything we learned, filed in the memory of its kind. There are also two wills here, "
-     "Diligence and Provisioning. A will is a mind that wants one thing; we'll see both at work.",
-     "My advice: check this tab often, and file new ways of thinking before working memory pushes them out.")
-game(3246.0, 3270.5,
-     "The inventory. The sword is in hand, the townsman's clothes are worn, and so is the backpack, which holds "
-     "things. We open it, pick the bread, and eat it.")
-game(3270.5, 3294.0,
-     "Eating pushed the bread's humors into the paunch, at the front of its queue. Hover a humor to see what it "
-     "is: its warmth, which pays for effort, and what it does to a die. New humors enter at the front and move "
-     "back as older ones are used, and only the one at the very back can be spent on a roll.",
-     "My advice: what you eat today is the luck you will have a few days from now.")
-game(3294.0, 3297.7)
+# ── the rest of the run: from its own take, resumed from the opening's checkpoint ─────────────
+# rec_rest plays rest.cli, which loads the opening take's save (Continue) and plays tutorial.cli's second
+# half. As for the opening, every moment and number is read from the take; what the model happened to
+# write is remarked on from rest_notes.json, keyed by passage ("p<i>": said once passage i has been read).
+RS = Take("tutorial", "build/rec_rest", "passages_rest.json")
+REST_NOTES = json.loads((HERE / "rest_notes.json").read_text()) if (HERE / "rest_notes.json").exists() else {}
+NUMBER = "nought one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen".split()
 
-# ── 7. the road ───────────────────────────────────────────────────────────────
-game(3297.7, 3318.1,
-     "Back on the map, we pick the farm as our destination. A route goes cell by cell, and every cell costs days, "
-     "and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, "
-     "more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your "
-     "humors will last it.", fade=True)
 
-# ── 8. the first fight ────────────────────────────────────────────────────────
-game(3318.1, 3330.0, "A wolf on the road. We choose to fight it.", speed=FIGHT, fade=True)
-game(3330.0, 3357.0,
-     "A fight is played on a grid, in turns. Your movement points come from the backbone, and the ears' "
-     "initiative says who goes first: us. The wolf is far off. Rather than walk up to it, we end our turns and let "
-     "it come to us. Fighting on your own terms is good advice in any game.", speed=FIGHT)
-game(3357.0, 3373.6,                                                     # TAKE: five dice
-     "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short "
-     "sword and Swordsmanship give Snap Thrust: five dice.", speed=FIGHT)
-manim("AttackDefence",
-      "Here is a blow. The attacker rolls the skill's dice, plus the dice of the genitories. The defender rolls "
-      "dice for the lower body, for any guard or stance, and for the armour on the part struck. If the attacker "
-      "shows more sixes, the blow lands, and it leaves a wound on the part it hit. A tie goes to the defender.",
-      "A wolf wears no armour, and its defence is small.")
-game(3373.6, 3442.0,                                                     # TAKE
-     "The first three thrusts land. The log at the bottom names each wound: a broken backbone, then broken ribs. "
-     "Watch the wolf's turns too: it tries to learn new attacks in the middle of the fight, and fails. Beasts "
-     "learn the way you do.", speed=FIGHT)
-game(3442.0, 3474.0,                                                     # TAKE
-     "The fourth thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the humor "
-     "of pleasure, which turns any die into a six. We spend it on the first die, and the thrust lands.",
-     speed=FIGHT)
-game(3474.0, 3503.0,                                                     # TAKE
-     "The fifth needs two humors, from the hepar and the spleen, and the wolf falls. Those were well spent: a "
-     "fight that drags on costs warmth, and warmth is what carries you across the map.", speed=FIGHT)
-game(3503.0, end(25),
-     "The journey goes on to the farm. Arriving opens the place, and a mind takes our bearings.", R(25))
-game(end(25), end(26), R(26), W("That is the farmer, Zedayne Hartmead. She can give us work."))
+def num(n):
+    return NUMBER[n] if 0 <= n < len(NUMBER) else str(n)
 
-# ── 9. asking for work ────────────────────────────────────────────────────────
-game(end(26), 3773.0,
-     "We need twenty copper for boots, and the honest way to get coin is work. We click the farmer, choose "
-     "Think, and pick Diligence.", fade=True)
-game(3773.0, end(27),
-     "Diligence is a will: a mind that wants one thing, here, to ask for work. It does not weigh options. It "
-     "finds the shortest way from where we stand to what it wants, and proposes the first step.", R(27))
-game(end(27), end(28), R(28))
-game(end(28), 4029.5,                                                    # TAKE
-     "A will that can act does its own act, and does it eagerly, which lowers the difficulty by one. One six "
-     "needed; two come up.")
-game(4029.5, end(29), R(29),
-     W("Success, and a new way of thinking learned: Social Interaction. One honest remark: the passage says we "
-       "talked under the stars, but it is the afternoon. The model's words are flavour; the facts are the "
-       "game's."))
-game(end(29), end(30),
-     "Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the model "
-     "rewrites it in the voice of whoever says it. Zedayne speaks first.", R(30))
-t = reply(end(30), 31, "Diligence",
-          "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The "
-          "tongue decides how many are offered: we gave it two points, so three.")
-t = reply(t, 32, "Nautical Jargon")
-segments[-1]["vo"].append(W("A sailor's mind asking for farm work: it offers itself like a crew to a captain, "
-                            "bind me to your helm."))
-game(t, end(33), {"text": "Provisioning.", "at": round(P[33]["ts"] + SHOWS, 2)}, R(33, anchored=False),
-     W("Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it "
-       "pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and "
-       "salt."))
-game(end(33), end(34), "We choose Diligence's, the plainest.", R(34))
-t = reply(end(34), 35, "Social Interaction")
-t = reply(t, 36, "Diligence")
-t = reply(t, 37, "Bargaining")
-game(t, end(38), "We ask what the work is like, through Social Interaction.", R(38))
-t = reply(end(38), 39, "Diligence")
-t = reply(t, 40, "Nautical Jargon")
-t = reply(t, 41, "Social Interaction")
-game(t, 5004.4,                                                          # TAKE
-     "We take Diligence's answer, and that ends the branch. Now the whole conversation is settled by one roll. "
-     "Nine dice: two for what she thinks of us, five for the levels of the minds behind our three replies, and "
-     "two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. "
-     "One comes up. We spend three humors, on three dice, and that makes four.")
-game(5004.4, end(42),
-     "My advice for conversations: say your piece in full. A longer branch adds more dice than difficulty.",
-     R(42), W("She takes us on."))
-game(end(42), 5088.1)
 
-# ── 10. the job ───────────────────────────────────────────────────────────────
-game(5088.1, 5118.3,
-     "Work in this game is not a quest. You trade days of your life for coin and experience. A farmhand earns one "
-     "copper every ten days, so two hundred days earn twenty copper, the price of boots. The work also trains "
-     "three ways of thinking, the first one most.",
-     "And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price "
-     "of work.", fade=True)
-game(5118.3, 5119.3)
+def after(i):
+    """The remark on passage i, if the notes have one."""
+    return [W(REST_NOTES[f"p{i}"])] if f"p{i}" in REST_NOTES else []
 
-# ── 11. to the city ───────────────────────────────────────────────────────────
-game(5119.3, 5139.2, "With twenty copper in the purse, to the city.", fade=True)
-game(5139.2, 5184.0,                                                     # TAKE
-     "Another wolf, and this one starts right beside us. The first thrust falls short of its defence, and a "
-     "humor turns it.", speed=FIGHT, fade=True)
-game(5184.0, 5256.0, "Again, and again: each thrust needs one humor to land.", speed=FIGHT)    # TAKE
-game(5256.0, 5293.0, "The fourth needs three.", speed=FIGHT)                                 # TAKE
-game(5293.0, 5320.0,                                                     # TAKE
-     "The fifth lands, and the wolf falls. That was an unlucky fight: seven humors spent. A run of bad rolls "
-     "can drain them, and when a fight goes badly, running away is always possible: one six on the feet's dice.",
-     speed=FIGHT)
-game(5320.0, end(43), "We reach the city, and the cobbler's shop.", R(43))
-game(end(43), end(44), R(44),
-     W("This is one of the model's strengths: from a few traits the game gives it, it draws a person. A boot "
-       "over one knee, an argument about the gods, an old scar. The cobbler, Publiosh Tommaezoth, has a "
-       "character."))
 
-# ── 12. buying boots ──────────────────────────────────────────────────────────
-game(end(44), 5679.0,
-     "We think about him with Provisioning, our second will. Provisioning wants to buy.", fade=True)
-game(5679.0, end(45), R(45),
-     W("Provisioning sees everything in days of supplies. Its way to a purchase is to go and propose a trade."))
-game(end(45), end(46), R(46))
-game(end(46), 5941.9,                                                    # TAKE
-     "This time the act was given to Diligence, and Diligence is reluctant: buying is not its business. "
-     "Reluctance raises the difficulty by one, to two sixes. Five dice, and not a single six. Two humors, two "
-     "sixes.")
-game(5941.9, end(47), R(47),
-     W("This is the passage I like least in the take. It sounds like a failure, but the roll succeeded. A small "
-       "model sometimes bends the tone, and the game holds the result: the conversation opens all the same."))
-game(end(47), end(48), R(48))
-t = reply(end(48), 49, "Bargaining", "Our replies.")
-t = reply(t, 50, "Enterprise")
-game(t, end(51), {"text": "Social Interaction.", "at": round(P[51]["ts"] + SHOWS, 2)}, R(51, anchored=False),
-     W("Bargaining wants a rare gem, in a boot shop. The line it was given only said: I am after something "
-       "particular. Bargaining made it a haggler's line, and got carried away."))
-game(end(51), end(52), "We choose Bargaining's anyway, to see what happens.", R(52),
-     W("The cobbler brings us straight back to footwear. He can: his side of the tree knows we came for shoes."))
-t = reply(end(52), 53, "Social Interaction")
-t = reply(t, 54, "Diligence")
-t = reply(t, 55, "Enterprise")
-game(t, 6583.8,                                                          # TAKE
-     "We choose Social Interaction's, and roll. Ten dice: two for regard, two for the replies, two for our face, "
-     "and four for our clothes, because the townsman's cap, cloak, tunic and breeches all please a craftsman. "
-     "Proposing a trade is a formality: after two replies, one six. One comes up.",
-     "My advice: dress for the person you are talking to. Those are the cheapest dice in the game.")
-game(6583.8, end(56), R(56))
-game(end(56), end(57),
-     "Then one more passage, from a mind that took no part. Bargaining is also a feeling, moved by a good "
-     "trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five "
-     "into a six. A feeling now is luck for later.", R(57),
-     W("A hawk skimming the breeze after a hunt: even a merchant's mind reaches for its own images when it is "
-       "glad."))
-game(end(57), 6719.9)
+def mind_name(p):
+    return p["voice"].title().replace("Reminescence", "Reminiscence")
 
-# ── 13. the trade ─────────────────────────────────────────────────────────────
-game(6719.9, 6735.0,
-     "The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The "
-     "leather boots cost twenty copper: all we have. One click to add them, one to confirm.", fade=True)
-game(6735.0, end(58), "Back in the shop, a new look at the cobbler.", R(58),
-     W("A bleeding knee, this time: the model invented a detail. Read the game's text as a story told by a "
-       "slightly unreliable narrator. The rules underneath it are exact."))
 
-# ── 14. the boots ─────────────────────────────────────────────────────────────
-game(end(58), 6870.4,
-     "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place "
-     "is free. Garments can protect, carry things, and please people of a given standing, which adds dice in "
-     "conversation with them.", fade=True)
+def rs_clip(name):
+    return RS.clip(name)
 
-# ── 15. routines ──────────────────────────────────────────────────────────────
-game(6870.4, 6895.1,
-     "The purse is empty again, and that is fine. Every place you visit is kept as a mental map, and each map "
-     "holds routines: ways back in. Asking for work taught one at the farm.",
-     "The anamnesis decides how many maps you keep, four per point, and the oldest is forgotten first. You can "
-     "lock the ones you care about.", fade=True)
-game(6895.1, 6939.5,
-     "From the world map, a place's routines are one click away. The work routine takes us straight back to "
-     "work at the farm, with no conversation at all. Earning more coin is now a single trip.")
 
-# ── 16. closure ───────────────────────────────────────────────────────────────
-game(6939.5, 6954.5,
-     "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
-     "Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at "
-     "edmond zero zero dot itch dot io, slash proscribed.", fade=True)
+def rolls(t0, t1):
+    """The dice lines the take logged between two moments, in order: [(faces, success)]. The game log has
+    no clock, so they are matched to the presses that showed them: one `dice` command per roll."""
+    return [r for r in RS_ROLLS if t0 <= r["t"] <= t1]
+
+
+def humors_spent(t0, t1):
+    return len([c for c in RS.clicks if t0 <= c["t"] <= t1 and c.get("cmd", "").startswith("click humor")])
+
+
+# the take's rolls, each placed at the `dice` command that printed it
+_dice_cmds = [e["t"] for e in RS.events if e["type"] == "cmd" and str(e.get("line", "")).strip() == "dice"]
+_dice_lines = [l for l in RS.log if l.startswith("[cli] dice [")]
+RS_ROLLS = []
+for t, line in zip(_dice_cmds, _dice_lines):
+    faces = line.split("[", 2)[2].split("]")[0].split()
+    RS_ROLLS.append({"t": t, "faces": faces, "ok": "SUCCESS" in line})
+RESOLUTIONS = [l for l in RS.log if "DialogueTreeController: resolution '" in l and "dice (" in l]
+FITS = [l for l in RS.log if "Persona-fit for" in l]
+EMOTIONS = [l for l in RS.log if "emotion —" in l]
+
+
+def fight(name, intro, first_detail):
+    """A fight, thrust by thrust: what each roll did, and the humors that turned the ones that fell short."""
+    cb, ce = rs_clip(name)
+    engage = RS.click(cb, ce, label="ENGAGE")
+    swords = [c["t"] for c in RS.clicks if cb <= c["t"] <= ce and c.get("label") == "Short Sword"]
+    conts = [c["t"] for c in RS.clicks if cb <= c["t"] <= ce and c.get("label") == "Continue"]
+    waits = [c["t"] for c in RS.clicks if cb <= c["t"] < swords[0] and c.get("label") == "END TURN"]
+    RS.game(cb, engage + 0.3, intro, speed=FIGHT, fade=True)
+    RS.game(engage + 0.3, swords[0] - 0.2, *first_detail(len(waits)), speed=FIGHT)
+    first_roll = rolls(swords[0], conts[0])[0]
+    RS.game(swords[0] - 0.2, conts[0] + 0.3,
+            "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The "
+            f"short sword and Swordsmanship give Snap Thrust: {num(len(first_roll['faces']))} dice.", speed=FIGHT)
+    if name == "fight_1":
+        manim("AttackDefence",
+              "Here is a blow. The attacker rolls the skill's dice, plus the dice of the genitories. The defender "
+              "rolls dice for the lower body, for any guard or stance, and for the armour on the part struck. If "
+              "the attacker shows more sixes, the blow lands, and it leaves a wound on the part it hit. A tie goes "
+              "to the defender.", "A wolf wears no armour, and its defence is small.")
+    t, told_humor, spent_all = conts[0] + 0.3, name == "fight_2", 0
+    for k, c in enumerate(conts):
+        lo = swords[k] if k < len(swords) else t
+        spent = humors_spent(lo, c)
+        spent_all += spent
+        if k == 0:
+            if spent:
+                RS.game(t, t + 0.1)
+            continue
+        if not spent:
+            line = "The thrust lands."
+        elif not told_humor:
+            line = ("This thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the "
+                    "humor of pleasure, which turns any die into a six. "
+                    + ("We spend it, and the thrust lands." if spent == 1 else
+                       f"We spend {num(spent)} of them, and the thrust lands."))
+            told_humor = True
+        else:
+            line = (f"It falls short, and {num(spent)} humor{'s' if spent != 1 else ''} turn{'s' if spent == 1 else ''}"
+                    " it.")
+        nxt = conts[k] + 0.3
+        RS.game(t, nxt, line, *([W(REST_NOTES[f"{name}_{k + 1}"])] if f"{name}_{k + 1}" in REST_NOTES else []),
+                speed=FIGHT)
+        t = nxt
+    first_spent = humors_spent(swords[0], conts[0])
+    total = spent_all
+    return t, total
+
+
+def conversation(t, idx, lead_line, depth_kind):
+    """A conversation walked through: each line the other speaks, each reply offered (named by the mind that
+    wrote it), the reply chosen, and the roll that settles it, itemised from the game's own log line."""
+    groups, cur = [], []
+    for i in idx:
+        if is_dialogue(RS.P[i]) and RS.P[i]["voice"].startswith("You are "):
+            if cur:
+                groups.append(("replies", cur))
+                cur = []
+            groups.append(("npc", [i]))
+        else:
+            cur.append(i)
+    if cur:
+        groups.append(("replies", cur))
+    said_first, chosen_next, branch = False, None, 0
+    for g, (kind, items) in enumerate(groups):
+        if kind == "npc":
+            i = items[0]
+            pre = []
+            if not said_first:
+                pre = [lead_line]
+                said_first = True
+            if chosen_next:
+                pre.append(chosen_next)
+                chosen_next = None
+            final = g == len(groups) - 1
+            RS.game(t, RS.end(i), *pre, RS.R(i), *after(i))
+            t = RS.end(i)
+            continue
+        branch += 1
+        for n, i in enumerate(items):
+            intro = []
+            if branch == 1 and n == 0:
+                intro = ["Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can "
+                         "speak, and the tongue decides how many are offered."]
+            RS.game(t, RS.end(i), *intro, {"text": mind_name(RS.P[i]) + ".", "at": RS.shows(i)},
+                    {"text": RS.P[i]["text"], "style": "reading"}, *after(i))
+            t = RS.end(i)
+        pick = next((c for c in RS.clicks if c["t"] > t - 1 and c.get("cmd", "").startswith("click option")), None)
+        by = next((mind_name(RS.P[i]) for i in items if pick and RS.P[i]["text"].strip()[:30] in pick.get("label", "")), None)
+        chosen_next = f"We choose {by}'s." if by else None
+        nxt_npc = next((gg for gg in groups[g + 1:] if gg[0] == "npc"), None)
+        roll = rolls(t, RS.P[nxt_npc[1][0]]["t1"] if nxt_npc else 1e9)
+        if roll:
+            res = RESOLUTIONS.pop(0)
+            dice = int(res.split("— ", 1)[1].split(" dice")[0])
+            terms = res.split("dice (", 1)[1].rsplit("), difficulty", 1)[0]
+            need = int(res.rsplit("difficulty ", 1)[1].strip())
+            words = []
+            for term in terms.split(" + "):
+                n_, what = term.split(" ", 1)[0], term.split(" ", 1)[1]
+                if what.startswith("affinity"):
+                    words.append(f"{num(int(n_))} for what they think of us")
+                elif what.startswith("replica"):
+                    words.append(f"{num(int(n_))} for the levels of the minds behind our replies")
+                elif what.startswith("beauty"):
+                    words.append(f"{num(int(n_))} for our face")
+                elif what.startswith("attire"):
+                    words.append(f"{num(int(n_))} for our clothes, which please a "
+                                 + ("craftsman" if "Bourgeois" in what else "person of that standing"))
+            r = roll[0]
+            sixes = r["faces"].count("6")
+            dice_end = next(c["t"] for c in RS.clicks if c["t"] > r["t"] and c.get("label") in ("CONTINUE", "Continue")) - 0.2
+            spent = humors_spent(r["t"], dice_end + 0.2)
+            line = ((chosen_next + " That ends the branch, and the whole conversation is settled by one roll. ")
+                    if chosen_next else "The conversation is settled by one roll. ")
+            line += f"{num(dice).capitalize()} dice: " + ", ".join(words[:-1]) + (", and " if len(words) > 1 else "") + words[-1] + ". "
+            line += (f"{depth_kind}: after {num(branch)} replies, it needs {num(need)} six{'es' if need != 1 else ''}. ")
+            line += (f"{num(sixes).capitalize()} come{'s' if sixes == 1 else ''} up." if sixes else "Not a single six comes up.")
+            if spent:
+                line += f" We spend {num(spent)} humor{'s' if spent != 1 else ''}, and the roll succeeds."
+            RS.game(t, dice_end, line, *([W(REST_NOTES["advice_" + depth_kind.split()[0].lower()])]
+                                         if "advice_" + depth_kind.split()[0].lower() in REST_NOTES else []))
+            t, chosen_next = dice_end, None
+    return t
+
+
+def act(t, keyword_word, mind_line, idx, roll_line):
+    """Thinking with a will: its reasoning, its act, the roll, the outcome."""
+    reason, intent, outcome = idx
+    RS.game(t, RS.end(reason), mind_line, RS.R(reason), *after(reason))
+    RS.game(RS.end(reason), RS.end(intent), RS.R(intent), *after(intent))
+    r = rolls(RS.end(intent), RS.P[outcome]["t1"])[0]
+    dice_end = next(c["t"] for c in RS.clicks if c["t"] > r["t"] and c.get("label") == "Continue") - 0.2
+    RS.game(RS.end(intent), dice_end, roll_line(r, humors_spent(r["t"], dice_end + 0.2)))
+    RS.game(dice_end, RS.end(outcome), RS.R(outcome), *after(outcome))
+    return RS.end(outcome)
+
+
+# 6. the character screen
+resumed = next(e["t"] for e in RS.events if e["type"] == "mode" and e["t"] > RS.at("mark", "resume")
+               and e.get("mode") == "WorldView")
+ab, ae = rs_clip("anatomy")
+RS.game(resumed + 0.5, ab, "Escape opens the menu, and Protagonist opens the character screen.", fade=True)
+RS.game(ab, ae, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.")
+mb, me = rs_clip("memory")
+RS.game(ae, me,
+        "The memory tab: everything we learned, filed in the memory of its kind. There are also two wills here, "
+        "Diligence and Provisioning. A will is a mind that wants one thing; we'll see both at work.",
+        "My advice: check this tab often, and file new ways of thinking before working memory pushes them out.")
+ib, ie = rs_clip("inventory")
+RS.game(me, ie,
+        "The inventory. The sword is in hand, the townsman's clothes are worn, and so is the backpack, which holds "
+        "things. We open it, pick the bread, and eat it.")
+hb, he = rs_clip("humors")
+RS.game(ie, he,
+        "Eating pushed the bread's humors into the paunch, at the front of its queue. Hover a humor to see what it "
+        "is: its warmth, which pays for effort, and what it does to a die. New humors enter at the front and move "
+        "back as older ones are used, and only the one at the very back can be spent on a roll.",
+        "My advice: what you eat today is the luck you will have a few days from now.")
+tb, te = rs_clip("travel_farm")
+RS.game(he, tb)
+
+# 7. the road
+RS.game(tb, te,
+        "Back on the map, we pick the farm as our destination. A route goes cell by cell, and every cell costs days, "
+        "and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, "
+        "more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your "
+        "humors will last it.", fade=True)
+
+# 8. the first fight, and the farm
+t, spent1 = fight("fight_1", "A wolf on the road. We choose to fight it.",
+                  lambda waits: ["A fight is played on a grid, in turns. Your movement points come from the backbone, "
+                                 "and the ears' initiative says who goes first."
+                                 + (" The wolf is far off. Rather than walk up to it, we end our turns and let it come "
+                                    "to us. Fighting on your own terms is good advice in any game." if waits else "")])
+fb, fe = rs_clip("farm_arrival")
+arrive = RS.between(t - 1, fe)
+RS.game(t, RS.end(arrive[0]), "The wolf falls, and the journey goes on to the farm. Arriving opens the place, and a "
+        "mind takes our bearings.", RS.R(arrive[0]), *after(arrive[0]), fade=True)
+for i in arrive[1:]:
+    RS.game(RS.end(i - 1), RS.end(i), RS.R(i), *after(i))
+t = RS.end(arrive[-1])
+
+# 9. asking for work
+jb, je = rs_clip("find_job")
+idx = RS.between(t, je)
+farmer = REST_NOTES.get("farmer", "the farmer")
+kw = RS.click(jb, je, cmd="click keyword")
+think_mind = next(c.get("label") for c in RS.clicks if c["t"] > kw and c.get("cmd", "").startswith("choose")
+                  and c.get("label") != "Think")
+RS.game(t, kw + 2.5, f"We need twenty copper for boots, and the honest way to get coin is work. We click the farmer, "
+        f"choose Think, and pick {think_mind}.", fade=True)
+fit = FITS.pop(0)
+t = act(kw + 2.5, None,
+        f"{think_mind} is a will: a mind that wants one thing, here, to ask for work. It does not weigh options. It "
+        "finds the shortest way from where we stand to what it wants, and proposes the first step.",
+        idx[:3],
+        lambda r, spent: ("A will that can act does its own act, and does it eagerly, which lowers the difficulty by "
+                          "one. " if "eager" in fit else "")
+        + f"{num(len(r['faces'])).capitalize()} dice, and {num(r['faces'].count('6'))} six"
+        + ("es." if r["faces"].count("6") != 1 else ".")
+        + (f" {num(spent).capitalize()} humor{'s' if spent != 1 else ''} turn the roll." if spent else ""))
+t = conversation(t, idx[3:],
+                 f"Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the "
+                 f"model rewrites it in the voice of whoever says it. {farmer} speaks first.",
+                 "Asking for work is a matter of consequence")
+RS.game(t, RS.click(t, je + 1, label="footer button") - 0.2, *([W(REST_NOTES["job_done"])] if "job_done" in REST_NOTES else []))
+t = RS.click(t, je + 1, label="footer button") - 0.2
+
+# 10. the job
+jmb, jme = rs_clip("job_menu")
+RS.game(t, jme - 1.0,
+        "Work in this game is not a quest. You trade days of your life for coin and experience. A farmhand earns one "
+        "copper every ten days, so two hundred days earn twenty copper, the price of boots. The work also trains "
+        "three ways of thinking, the first one most.",
+        "And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price "
+        "of work.", fade=True)
+cb_, ce_ = rs_clip("travel_city")
+RS.game(jme - 1.0, ce_, "With twenty copper in the purse, to the city.")
+
+# 11. the second fight, and the city
+t, spent2 = fight("fight_2", "Another wolf, and this one starts right beside us.", lambda waits: [])
+RS.game(t, t + 0.1, *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []))
+yb, ye = rs_clip("city_arrival")
+arrive = RS.between(t - 1, ye)
+RS.game(t, RS.end(arrive[0]), "We reach the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]),
+        fade=True)
+for i in arrive[1:]:
+    RS.game(RS.end(i - 1), RS.end(i), RS.R(i), *after(i))
+t = RS.end(arrive[-1])
+
+# 12. buying boots
+bb, be = rs_clip("buy_boots")
+idx = RS.between(t, be)
+cobbler = REST_NOTES.get("cobbler", "the cobbler")
+kw = RS.click(bb, be, cmd="click keyword")
+think_mind = next(c.get("label") for c in RS.clicks if c["t"] > kw and c.get("cmd", "").startswith("choose")
+                  and c.get("label") != "Think")
+RS.game(t, kw + 2.5, f"We think about him with {think_mind}, our second will. {think_mind} wants to buy.", fade=True)
+fit = FITS.pop(0)
+actor = mind_name(RS.P[idx[1]])
+t = act(kw + 2.5, None, "", idx[:3],
+        lambda r, spent: (f"This time the act was given to {actor}, and {actor} is reluctant: buying is not its "
+                          "business. Reluctance raises the difficulty by one. " if "Reluctant" in fit else
+                          ("The will carries it out itself, eagerly: the difficulty falls by one. " if "eager" in fit else ""))
+        + f"{num(len(r['faces'])).capitalize()} dice, and "
+        + (f"{num(r['faces'].count('6'))} six{'es' if r['faces'].count('6') != 1 else ''}." if r['faces'].count('6') else "not a single six.")
+        + (f" {num(spent).capitalize()} humor{'s' if spent != 1 else ''}, and the roll succeeds." if spent else ""))
+emotion = [i for i in idx[3:] if not is_dialogue(RS.P[i])]
+talk = [i for i in idx[3:] if i not in emotion]
+t = conversation(t, talk,
+                 f"{cobbler} answers. The same kind of tree, for a trade.",
+                 "Proposing a trade is a formality")
+for i in emotion:
+    felt = EMOTIONS[0] if EMOTIONS else ""
+    RS.game(t, RS.end(i),
+            f"Then one more passage, from a mind that took no part in the act. {mind_name(RS.P[i])} is also a feeling, "
+            "moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: "
+            "laetitia, which turns a five into a six. A feeling now is luck for later.", RS.R(i), *after(i))
+    t = RS.end(i)
+RS.game(t, be)
+
+# 13. the trade
+tb, te = rs_clip("trade")
+after_trade = RS.between(tb, te)
+confirm = RS.click(tb, te, label="trade:confirm")
+RS.game(be, confirm + 0.8,
+        "The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The "
+        "leather boots cost twenty copper: all we have. One click to add them, one to confirm.", fade=True)
+t = confirm + 0.8
+for i in after_trade:
+    RS.game(t, RS.end(i), "Back in the shop, a new look at the cobbler." if i == after_trade[0] else "", RS.R(i), *after(i))
+    t = RS.end(i)
+
+# 14. the boots
+wb, we = rs_clip("wear_boots")
+RS.game(t, we,
+        "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place "
+        "is free. Garments can protect, carry things, and please people of a given standing, which adds dice in "
+        "conversation with them.", fade=True)
+
+# 15. routines
+ob, oe = rs_clip("chorography")
+RS.game(we, oe,
+        "The purse is empty again, and that is fine. Every place you visit is kept as a mental map, and each map "
+        "holds routines: ways back in. Asking for work taught one at the farm.",
+        "The anamnesis decides how many maps you keep, four per point, and the oldest is forgotten first. You can "
+        "lock the ones you care about.", fade=True)
+rb, re_ = rs_clip("routine_box")
+RS.game(oe, re_,
+        "From the world map, a place's routines are one click away. The work routine takes us straight back to "
+        "work at the farm, with no conversation at all. Earning more coin is now a single trip.")
+
+# 16. closure
+kb, ke = rs_clip("closure")
+RS.game(re_, ke,
+        "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
+        "Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at "
+        "edmond zero zero dot itch dot io, slash proscribed.", fade=True)
 
 storyboard = {
     "title": "Proscribed Palimpsest: the first hour",
@@ -602,11 +756,12 @@ storyboard = {
                  "farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 "
                  "--job-only farmhand --humors all=voluptas --save-path build/rec_opening2/save.json"},
                    "tutorial": {
-        "script": "tutorial.cli", "dir": "build/rec_tutorial_b", "timeout": 14400,
-        "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "
-                 "--no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only "
-                 "farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 "
-                 "--job-only farmhand --humors all=voluptas"}},
+        "script": "rest.cli", "dir": "build/rec_rest", "timeout": 14400,
+        "note": "Resumed from the opening's checkpoint: copy build/rec_opening2/saves/01_get_up.json to "
+                "build/rec_rest_save.json before re-recording.",
+        "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
+                 "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
+                 "--save-path build/rec_rest_save.json"}},
     "manim_file": "scenes.py",
     "segments": segments,
 }
