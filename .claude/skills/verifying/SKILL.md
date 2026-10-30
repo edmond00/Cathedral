@@ -144,6 +144,9 @@ Run `help` for the authoritative list. The essentials:
                             box), panned into view. The location map has no legend: what the
                             pointer is over is named in a label above it, in the mouse-following
                             popup, which `dump` does not see — read it with `inspect pointer-label`
+  point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
+                            left_hand…), so the panel shows that part's derived stats — the
+                            player's hover, reached by id rather than by a cell
   click arrow <direction>   press an arm of the compass rose (left|right|up|down) — the mouse's copy
                             of the arrow keys, drawn top-right on the world map and the selection
                             sky. Reports

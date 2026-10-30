@@ -53,7 +53,8 @@ What can be placed nowhere is held in overflow, awaiting a free place.
 ### What a hand can bear
 
 Each hold is governed by the arm behind it — the right hold by the right arm, the left by the left —
-and admits nothing heavier than that arm's score allows, the score being taken after its wounds:
+and admits nothing heavier than that arm's **Hand Load** allows, the score being taken after its
+wounds:
 
 | Arm | Bears up to |
 |---|---|

@@ -158,6 +158,13 @@ public class ManagementMenuRenderer
         return cell;
     }
 
+    /// <summary>
+    /// The screen cell of an organ part on the Anatomy tab's body art, by part id; null off that tab
+    /// or when the art draws no such part.
+    /// </summary>
+    public (int X, int Y)? CliOrganPartCell(string organPartId)
+        => _activeTab == ManagementTab.Anatomy ? _bodyViewer.CliCellOfOrganPart(organPartId) : null;
+
     /// <summary>Takes the Chorography tab's pointer label down (the menu is being left).</summary>
     public void HideMapLabel() => _mapsPanel.HideLabel();
 

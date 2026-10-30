@@ -623,6 +623,20 @@ public class LocationTravelGameController : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Hover an organ part on the Anatomy tab's body art — what a player does to read that part's
+    /// stats in the panel (Hand Load under each arm, and the rest).
+    /// </summary>
+    public string? CliPointAtOrganPart(string organPartId)
+    {
+        var cell = _currentMode == GameMode.ProtagonistManagement
+            ? _managementMenuRenderer?.CliOrganPartCell(organPartId) : null;
+        if (cell is not { } c)
+            return $"no organ part \"{organPartId}\" drawn on the Anatomy tab (open it with `manage Anatomy`)";
+        CliHoverCell(c.X, c.Y);
+        return null;
+    }
+
     /// <summary>Inject a hover at a terminal cell (some UI only reacts once hovered).</summary>
     public void CliHoverCell(int x, int y) => OnTerminalCellHovered(x, y);
 

@@ -226,39 +226,16 @@ public abstract class PartyMember
 
     /// <summary>
     /// The heaviest thing the arm behind a hold can bear, or null when this anatomy has no arm for
-    /// that hand (a beast's holds are its mouth, and no organ governs them).
-    ///
-    /// <para>The arm's effective score after wounds, one weight class a level: 0 bears a light item,
-    /// 1 a medium one, 2 a heavy one. A disabled arm counts as 0 — it can still close round a knife
-    /// handle, and refusing it that would leave a wounded character with a hand that holds nothing.
-    /// <see cref="WeightClass.Insignificant"/> is under every bar.</para>
+    /// that hand (a beast's holds are its mouth, and no organ governs them). The arm's effective score
+    /// after wounds, one weight class a level — 0 light, 1 medium, 2 heavy — read through the Hand
+    /// Load stats (<see cref="HandLoadStat"/>), so the figure the anatomy panel shows is the one
+    /// enforced. <see cref="WeightClass.Insignificant"/> is under every bar.
     ///
     /// <para>Only what sits <em>in</em> the hand is weighed. A bag is held by its handle, so a heavy
     /// item in a medium bag is the bag's weight to the hand; the contents are carried, not wielded —
-    /// see <see cref="WieldedWeapons"/>.</para>
+    /// see <see cref="WieldedWeapons(EquipmentAnchor)"/>.</para>
     /// </summary>
-    public WeightClass? HoldLimit(EquipmentAnchor hold)
-    {
-        string? partId = hold switch
-        {
-            EquipmentAnchor.RightHold => "right_arm",
-            EquipmentAnchor.LeftHold  => "left_arm",
-            _                         => null,
-        };
-        if (partId == null) return null;
-
-        foreach (var bp in _bodyParts)
-            foreach (var organ in bp.Organs)
-                foreach (var part in organ.Parts)
-                    if (part.Id == partId)
-                        return Math.Max(0, GetEffectiveScore(part, organ, bp)) switch
-                        {
-                            0 => WeightClass.Light,
-                            1 => WeightClass.Medium,
-                            _ => WeightClass.Heavy,
-                        };
-        return null;
-    }
+    public WeightClass? HoldLimit(EquipmentAnchor hold) => HandLoadStat.Of(this, hold);
 
     /// <summary>
     /// Whether <paramref name="item"/> may sit directly in <paramref name="anchor"/> on this body:

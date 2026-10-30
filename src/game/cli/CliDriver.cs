@@ -462,6 +462,8 @@ public sealed class CliDriver
           point card <area>         hover an area's card on the menu map shown (the Chorography tab, the
                                     routine box), panned into view; `inspect pointer-label` reads
                                     the label it puts above the pointer, and on what ground
+          point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
+                                    left_hand…), so the panel shows that part's stats
           click world <confirm|cancel>  the world-selection screen's two buttons
           click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
                                     mouse's copy of the arrow keys
@@ -1226,8 +1228,13 @@ public sealed class CliDriver
             Report(_game.CliPointAtCard(name), $"pointed at the card {name}");
             return;
         }
+        if (a.Length >= 2 && a[0].Equals("organ", StringComparison.OrdinalIgnoreCase))
+        {
+            Report(_game.CliPointAtOrganPart(a[1]), $"pointed at the organ part {a[1]}");
+            return;
+        }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal> | point card <area>"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id>"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;

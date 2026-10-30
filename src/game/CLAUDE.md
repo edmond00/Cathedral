@@ -1797,7 +1797,9 @@ every weapon is levelled 4–6, and only an `IsImprovised` one (branch, wooden s
 category's skills and lends nothing) may sit at or under the ceiling. The price is ten copper per level
 above the ceiling. A new weapon picks a level above 3 or declares itself improvised.
 
-**The arm behind a hand decides what it can hold** (`PartyMember.HoldLimit`): the arm part's effective
+**The arm behind a hand decides what it can hold** (`PartyMember.HoldLimit`, which reads the Hand Load
+stats — `RightHandLoadStat` / `LeftHandLoadStat`, shown under each arm on the Anatomy tab, so the figure
+on screen is the one enforced; `point organ right_arm` hovers it, `cli/system/hand_load_stat.cli`): the arm part's effective
 score after wounds — `right_arm` for `RightHold`, `left_arm` for `LeftHold` — at 0 bears a light item,
 1 a medium one, 2 a heavy one; a disabled arm counts as 0, and an anatomy with no arm (a beast's holds
 are its mouth) is not governed. A new weapon's `Weight` is therefore also which arms can fight with it,
