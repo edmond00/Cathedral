@@ -185,7 +185,7 @@ Back on the map, we pick the farm as our destination. A route goes cell by cell,
 
 A wolf on the road. We choose to fight it.
 
-A fight is played on a grid, in turns. Your movement points come from the backbone, and the ears' initiative says who goes first: us. The wolf is far off. Rather than walk up to it, we end our turns and let it come to us. Fighting on your own terms is good advice in any game.
+A fight is played on a grid, in turns. Your movement points come from the backbone, and the ears' initiative says who goes first. The wolf is far off. Rather than walk up to it, we end our turns and let it come to us. Fighting on your own terms is good advice in any game. It strikes first. Its blow is rolled against our defence, and the humors work there too: we spend two on our defence dice, and the blow is turned aside.
 
 Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice.
 
@@ -193,146 +193,189 @@ Fighting skills come from two things: the ways of thinking you hold, and what yo
 Here is a blow. The attacker rolls the skill's dice, plus the dice of the genitories. The defender rolls dice for the lower body, for any guard or stance, and for the armour on the part struck. If the attacker shows more sixes, the blow lands, and it leaves a wound on the part it hit. A tie goes to the defender.
 A wolf wears no armour, and its defence is small.
 
-The first three thrusts land. The log at the bottom names each wound: a broken backbone, then broken ribs. Watch the wolf's turns too: it tries to learn new attacks in the middle of the fight, and fails. Beasts learn the way you do.
+This thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the humor of pleasure, which turns any die into a six. We spend it, and the thrust lands: tail amputee. Every blow that lands leaves a wound with a name.
 
-The fourth thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the humor of pleasure, which turns any die into a six. We spend it on the first die, and the thrust lands.
+Again the humors hold our defence. The thrust lands: puncture.
 
-The fifth needs two humors, from the hepar and the spleen, and the wolf falls. Those were well spent: a fight that drags on costs warmth, and warmth is what carries you across the map.
+Once more its blow is turned. The thrust lands: broken ribs.
 
-The journey goes on to the farm. Arriving opens the place, and a mind takes our bearings.
-> *I find myself in the longhouse hall, in the afternoon. This place echoes my childhood at the port city, where I spent time on the docks and dreamed of ancient ruins. Around me is my acquaintance Zedayne Hartmead, the farmer, just as I remember from when I first bought a sword with my first earned coin.*
+Its blows are turned aside again. It falls short, and one humor turns it: evisceration.
 
-> *I recall the time when I stood at the docks, gauging the strength of a stranger. It's similar to now, someone measuring me, thinner than expected, looking past me at something not obvious.*
-That is the farmer, Zedayne Hartmead. She can give us work.
+Again the humors hold our defence. It falls short, and two humors turn it: broken ribs.
+
+The wolf falls, and the journey goes on to the farm. Arriving opens the place, and a mind takes our bearings.
+> *I find myself in the longhouse hall, the afternoon sun casting shadows across the hearth. Around me is my acquaintance Zedayne Hartmead, the farmer, her presence a steady warmth in this wooden place.*
+
+> *I sense Zedayne Hartmead standing near the edge of the field, her posture relaxed yet watchful. She stands subtly out of place, her attire out of sync with the earthy surroundings, yet she carries a quiet assurance that is unmistakable. Her gaze meets mine, a silent invitation to explore a corner of the land that has been touched in an unusual way.*
+Empathy feels something out of place here, a corner of land touched in an unusual way. Nothing at the farm backs it up. Read it as this mind's own way of seeing: a thought, not a clue.
 
 We need twenty copper for boots, and the honest way to get coin is work. We click the farmer, choose Think, and pick Diligence.
 
 Diligence is a will: a mind that wants one thing, here, to ask for work. It does not weigh options. It finds the shortest way from where we stand to what it wants, and proposes the first step.
-> *I notice her at the field's edge, her lean posture mirroring the land's weariness. Her gaze wanders, yet I see her measuring me, her thin frame a testament to the labor unseen. I wish to offer my steadiness and skill, to prove my worth as a farmhand. I will finish what was begun, ensuring each task is done with the same care that started it.*
+> *I observe Zedayne Hartmead, our acquaintance, the farmer. I desire to meet her to offer my labor as a farmhand. I trust in the meticulous completion of what was started, ensuring the last row remains as straight as the first.*
 
-> *I will go to her request to take on the role of a farmhand.*
+> *I will meet her in the barn to request to work as a farmhand.*
 
-A will that can act does its own act, and does it eagerly, which lowers the difficulty by one. One six needed; two come up.
+A will that can act does its own act, and does it eagerly, which lowers the difficulty by one. Five dice, and two sixes.
 
-> *I am done. Meeting her was a start, but I began to learn her ways and share my own, as we talked under the stars. The work continues, the path is not yet completed.*
-Success, and a new way of thinking learned: Social Interaction. One honest remark: the passage says we talked under the stars, but it is the afternoon. The model's words are flavour; the facts are the game's.
+> *I finished our meeting with Zedayne Hartmead. The care I put into it was consistent, as it had been from the start. Now I know how to engage in social interactions.*
+Diligence judges the act by its own measure: the care stayed the same from first to last. And look at the last line. Doing it taught a new way of thinking, Social Interaction, and from now on it can write replies too.
 
-Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the model rewrites it in the voice of whoever says it. Zedayne speaks first.
-> *Why seek you my door, Aentonyoth Marshwall?*
+Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the model rewrites it in the voice of whoever says it. Zedayne Hartmead speaks first.
+> *Why have you come to me, then?*
 
-Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The tongue decides how many are offered: we gave it two points, so three.
+Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak, and the tongue decides how many are offered.
 Diligence.
-> *Hast thou a place for a farmhand's work, Zedayne Hartmead? How fares the wages?*
+> *Hast thou need for a sturdy hand, Zedayne Hartmead? What is the price?*
 
 Nautical Jargon.
-> *Strong as a hound, bold as a gale, bind me to your helm, Zedayne Hartmead.*
-A sailor's mind asking for farm work: it offers itself like a crew to a captain, bind me to your helm.
+> *Willing as the sea in storm, my strength is true. Any work you ask, I'll take and do.*
+Nautical Jargon talks like a sailor, even in a barn. Odd minds make odd replies, and some of the best moments in a run come from them.
 
 Provisioning.
-> *Seek a place where days of grain, firewood, and salt are few, and know thyself a farmer's help.*
-Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and salt.
+> *Seeking a place to earn my keep, Zedayne Hartmead. How much does the work fetch?*
 
-We choose Diligence's, the plainest.
-> *Henceforth, a farmhand's life lies within your grasp, earning a copper for each ten days' toil, and fraught with hardship.*
+We choose Diligence's.
+> *Farmhand tasks await thee. Ten copper for each ten days, and the toil is great.*
+She says ten copper. The job menu will say one. The model rewrites a fixed line, and now and then it gets a number wrong. The menu is the rule; trust the menu.
 
 Social Interaction.
-> *How's a day's work for you?*
+> *What tasks will I be doing?*
 
 Diligence.
-> *The price is set. I shall not dispute it.*
+> *Because it takes skill and care, a task left unfinished is not truly done.*
 
 Bargaining.
-> *What does a day's work entail, friend?*
+> *For such a time to remain, must be for some fair cause indeed.*
 
-We ask what the work is like, through Social Interaction.
-> *From dawn till dusk, by the fields, in all weathers. There's no time for idling. Only when tasks are within is there work.*
+We choose Social Interaction's.
+> *From dawn till dusk, at the farm, through any storm. They mock and then I win and they follow suit within two years*
+That last sentence is the farmer's own, slightly mad pride. Read it as a woman who has heard every doubt about her farm, and outlasted them all.
 
 Diligence.
-> *The sweat of my brow and the strength of my arms have earned their due, no matter how hard the task may be.*
+> *For lesser wages, I have sweated harder. Yet this fear not, for my heart is undaunted.*
 
 Nautical Jargon.
-> *Worse fates I've faced, but still I stand. Less for more, 'tis naught to dread.*
+> *Less for worse, I've done more. That doth not faze me.*
 
 Social Interaction.
-> *Less for worse has been done, but fear not, for mine is no new tale.*
+> *For me, no task is too harsh if I can earn a fair wage.*
 
-We take Diligence's answer, and that ends the branch. Now the whole conversation is settled by one roll. Nine dice: two for what she thinks of us, five for the levels of the minds behind our three replies, and two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. One comes up. We spend three humors, on three dice, and that makes four.
+We choose Diligence's. That ends the branch, and the whole conversation is settled by one roll. Nine dice: two for what they think of us, five for the levels of the minds behind our replies, and two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. One comes up. We spend three humors, and the roll succeeds.
+My advice: when a conversation matters, pick replies written by your strongest minds. Their levels become dice in that final roll.
 
-My advice for conversations: say your piece in full. A longer branch adds more dice than difficulty.
-> *So you shall take on this task. But I seek a hand well versed in the ways of the fields.*
-She takes us on.
+> *So shalt thou, but one whose hands have tilled these fields.*
+
+The conversation was the hard part. The job itself is just a menu.
 
 Work in this game is not a quest. You trade days of your life for coin and experience. A farmhand earns one copper every ten days, so two hundred days earn twenty copper, the price of boots. The work also trains three ways of thinking, the first one most.
 And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price of work.
 
 With twenty copper in the purse, to the city.
 
-Another wolf, and this one starts right beside us. The first thrust falls short of its defence, and a humor turns it.
+Another wolf, on the road to the city.
 
-Again, and again: each thrust needs one humor to land.
+Again we end our turns, and let it come to us.
 
-The fourth needs three.
+Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice.
 
-The fifth lands, and the wolf falls. That was an unlucky fight: seven humors spent. A run of bad rolls can drain them, and when a fight goes badly, running away is always possible: one six on the feet's dice.
+It falls short, and one humor turns it: broken backbone. Every blow that lands leaves a wound with a name.
+
+The thrust lands: broken backbone.
+
+The thrust lands: pierced paunch.
+
+It falls short, and two humors turn it: tail amputee.
+
+The thrust lands: puncture.
+
+It falls short, and one humor turns it: broken ribs.
+
+Look at what the first thrust did. It broke the wolf's backbone, and the backbone is where movement comes from. From then on the wolf had no points left to act with, and it never struck back once. Where you hit matters.
 
 We reach the city, and the cobbler's shop.
-> *I find myself in the cobbler's shop, a low shop with a scent of leather and wax. Around me, Publiosh Tommaezoth the cobbler of the city moves with hands skilled in the art. The air carries his gentle touch and the soft clatter of tools, a reminder of the care he brings to each pair of boots.*
+> *I find myself in the cobbler's shop, in the morning. This place is a low shop smelling of leather and wax, boots hung by their laces from the beams. Around me is my acquaintance Publiosh Tommaezoth, the cobbler of the city. He feels weary, as though he's been working without pause.*
 
-> *I see Publiosh Tommaezoth, the cobbler, standing there, a boot over one knee, hammering in hobnails without looking up, arguing about the gods while hammering in a heel. He stands between the two least happy, positioned as if drilled young by an old blade-scar on his forearm.*
-This is one of the model's strengths: from a few traits the game gives it, it draws a person. A boot over one knee, an argument about the gods, an old scar. The cobbler, Publiosh Tommaezoth, has a character.
+> *I notice my acquaintance Publiosh Tommaezoth, the city cobbler, as he hammers with an old boot over his knee, untroubled by the discomfort.*
 
 We think about him with Provisioning, our second will. Provisioning wants to buy.
 
-> *I notice someone with a boot over one knee hammers in hobnails without looking up, argues about the gods while hammering in a heel, positioned between the two least happy. It only colors how the salt will last - a fortnight, and the bread does not. I want to meet him to buy shoes and boots.*
-Provisioning sees everything in days of supplies. Its way to a purchase is to go and propose a trade.
 
-> *I will go to him to discuss buying shoes and boots in this medieval city.*
+> *I observe Publiosh Tommaezoth, the city cobbler, and my acquaintance. The salt will last for a few more days, and the boots and shoes are crucial. I must meet him to propose a purchase before they run out.*
+Provisioning frets about salt we do not even carry. A will sees the world through what it wants, and this one wants supplies, so it finds a shortage everywhere. Read it as the character's own anxious habit.
 
-This time the act was given to Diligence, and Diligence is reluctant: buying is not its business. Reluctance raises the difficulty by one, to two sixes. Five dice, and not a single six. Two humors, two sixes.
+> *I will walk to the market to propose purchasing shoes and boots.*
 
-> *I only finished the proposal as it was meant to be. Now, I await Publiosh Tommaezoth's response, my hands still as clean as they were when I began.*
-This is the passage I like least in the take. It sounds like a failure, but the roll succeeded. A small model sometimes bends the tone, and the game holds the result: the conversation opens all the same.
+This time the act was given to Diligence, and Diligence is reluctant: buying is not its business. Reluctance raises the difficulty by one. Five dice, and two sixes.
 
-> *Aentonyoth Marshwall, seek what dost desire?*
+> *I completed our meeting with Publiosh Tommaezoth, securing the purchase of shoes and boots. The care and effort didn't diminish at the end as they had at the beginning.*
+The outcome runs a little ahead of itself: nothing is bought yet. What the act secured is the meeting. The purchase is still a conversation away.
 
-Our replies.
-Bargaining.
-> *Seeking a rare gem, might I perchance find what you offer?*
+Publiosh Tommaezoth answers. The same kind of tree, for a trade.
+> *Aentonyoth Marshwall, might you have a quest in mind?*
+A quest, he asks. There are no quests in this game; read it as a cobbler hoping we bring him business.
 
-Enterprise.
-> *And what tariffs do these wares bear on their journey?*
+Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak, and the tongue decides how many are offered.
+Diligence.
+> *Publiosh Tommaezoth, what wares are you offering?*
 
-Social Interaction.
-> *What rare treasure are you seeking now?*
-Bargaining wants a rare gem, in a boot shop. The line it was given only said: I am after something particular. Bargaining made it a haggler's line, and got carried away.
+Nautical Jargon.
+> *Publiosh Tommaezoth, what wares do ye lay before me?*
 
-We choose Bargaining's anyway, to see what happens.
-> *Seek not what not of shoes nor boots be, for mine are few and rare, nor any thing else but these. Yet if thy quest be of footwear, ask now and I shall tell thee if I hold the key.*
-The cobbler brings us straight back to footwear. He can: his side of the tree knows we came for shoes.
+Provisioning.
+> *Publiosh Tommaezoth, what wares are ye offering today?*
 
-Social Interaction.
-> *Let us find the just right item for your tasks, not just the first available one.*
+We choose Diligence's.
+> *Boots and shoes, first and foremost. A variety of leather boots, riding boots, and a shoe last, do you seek anything in particular?*
 
 Diligence.
-> *The choice you make shall not be near but precise, as work demands the finest.*
+> *What will endure through the storms, that is what I seek.*
 
-Enterprise.
-> *What ventures does it serve, and how far can it endure without a hitch?*
+Deference.
+> *The best of it, not the dearest, stands forth.*
 
-We choose Social Interaction's, and roll. Ten dice: two for regard, two for the replies, two for our face, and four for our clothes, because the townsman's cap, cloak, tunic and breeches all please a craftsman. Proposing a trade is a formality: after two replies, one six. One comes up.
-My advice: dress for the person you are talking to. Those are the cheapest dice in the game.
+Social Interaction.
+> *Of what do you think will endure through the years? That is the sort of treasure I seek.*
 
-> *Matched to your needs, I have the fitting shoe.*
+We choose Diligence's.
+> *Aye, few do ask, and rightly so. A shoe's true form is for one sole, yet it deceives all others. Beware when buying old, for some items will stand you long. And here, some will indeed cost you less.*
+His answer wanders into a riddle. The fixed meaning underneath is plain enough: some of the cheap stock is good.
 
-Then one more passage, from a mind that took no part. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five into a six. A feeling now is luck for later.
-> *I traded my wares, and in the price beneath the price, I felt glad and lighter than before, like a hawk skimming the breeze after a successful hunt.*
-A hawk skimming the breeze after a hunt: even a merchant's mind reaches for its own images when it is glad.
+Provisioning.
+> *And the cheap stuff. Is it good work, or is it shoddy?*
+
+Nautical Jargon.
+> *Affordable goods, ask if they serve fair wages, or if they're mere scraps?*
+
+Deference.
+> *Then let us see what you have, so I may be done with this quickly.*
+
+We choose Provisioning's.
+> *Honest though it may be, doth it not seem a shame to speak thus of my wares?*
+
+Deference.
+> *Honesty so rare, it stands apart. Your goods, most welcome sight.*
+
+Social Interaction.
+> *Seek then the goods of proven honesty, for my purse is not so deep as to risk poorer fare.*
+
+Empathy.
+> *The honest sort, that's what a hearted buyer seeks, and my purse does not stretch for such.*
+
+We choose Deference's. That ends the branch, and the whole conversation is settled by one roll. Fifteen dice: two for what they think of us, seven for the levels of the minds behind our replies, two for our face, and four for our clothes, which please a craftsman. Proposing a trade is a formality: after four replies, it needs two sixes. One comes up. We spend one humor, and the roll succeeds.
+My advice: dress for the people you deal with. Here the townsman's clothes alone gave four dice.
+
+> *Once upon a time, I've sold you a wrong thing, twice that. Now, come and see what I have, properly.*
+He admits he once sold us the wrong thing, twice. A frank cobbler, or a careless one. Either way, the tree has reached its end.
+
+Then one more passage, from a mind that took no part in the act. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five into a six. A feeling now is luck for later.
+> *I was granted a chance to trade, and it left me feeling glad and lighter than before, as if the world held just a bit more silver beneath its crust.*
+More silver beneath the world's crust: a good trade, felt as buried treasure.
 
 The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The leather boots cost twenty copper: all we have. One click to add them, one to confirm.
 
 Back in the shop, a new look at the cobbler.
-> *I see Publiosh Tommaezoth, cobbler of the city, his knee bleeding, hammering away, arguing with a fellow craftsman. He stands between the quarrellers, a steadfast figure with an old scar on his forearm, a silent witness to their discord.*
-A bleeding knee, this time: the model invented a detail. Read the game's text as a story told by a slightly unreliable narrator. The rules underneath it are exact.
+> *I see Publiosh Tommaezoth, the cobbler, as he hammers away, his old boot over one knee unbothered, already asking a question before I have finished approaching.*
 
 In the inventory, the boots are already on our feet: a garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds dice in conversation with them.
 

@@ -59,10 +59,18 @@
    "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 --job-only farmhand --humors all=voluptas --save-path build/rec_opening2/save.json"
   },
   "tutorial": {
-   "script": "tutorial.cli",
-   "dir": "build/rec_tutorial_b",
+   "script": "rest.cli",
+   "dir": "build/rec_rest",
    "timeout": 14400,
-   "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 --job-only farmhand --humors all=voluptas"
+   "note": "Resumed from the opening's checkpoint: copy build/rec_opening2/saves/01_get_up.json to build/rec_rest_save.json before re-recording.",
+   "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand --save-path build/rec_rest_save.json"
+  },
+  "city": {
+   "script": "city.cli",
+   "dir": "build/rec_city",
+   "timeout": 14400,
+   "note": "Resumed from rest.cli's checkpoint after the job menu: copy build/rec_rest/saves/03_job_menu.json to build/rec_city_save.json before re-recording; re-record while the second fight is lost.",
+   "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand --save-path build/rec_city_save.json"
   }
  },
  "manim_file": "scenes.py",
@@ -902,8 +910,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3223.0,
-   "to": 3226.3,
+   "from": 17.46,
+   "to": 28.94,
    "fade": true,
    "vo": [
     "Escape opens the menu, and Protagonist opens the character screen."
@@ -912,8 +920,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3226.3,
-   "to": 3236.0,
+   "from": 28.94,
+   "to": 39.05,
    "fade": false,
    "vo": [
     "The anatomy tab: the body we built. Wounds will show here, on the organ they hit."
@@ -922,8 +930,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3236.0,
-   "to": 3246.0,
+   "from": 39.05,
+   "to": 49.62,
    "fade": false,
    "vo": [
     "The memory tab: everything we learned, filed in the memory of its kind. There are also two wills here, Diligence and Provisioning. A will is a mind that wants one thing; we'll see both at work.",
@@ -933,8 +941,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3246.0,
-   "to": 3270.5,
+   "from": 49.62,
+   "to": 76.75,
    "fade": false,
    "vo": [
     "The inventory. The sword is in hand, the townsman's clothes are worn, and so is the backpack, which holds things. We open it, pick the bread, and eat it."
@@ -943,8 +951,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3270.5,
-   "to": 3294.0,
+   "from": 76.75,
+   "to": 102.04,
    "fade": false,
    "vo": [
     "Eating pushed the bread's humors into the paunch, at the front of its queue. Hover a humor to see what it is: its warmth, which pays for effort, and what it does to a die. New humors enter at the front and move back as older ones are used, and only the one at the very back can be spent on a roll.",
@@ -954,15 +962,15 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3294.0,
-   "to": 3297.7,
+   "from": 102.04,
+   "to": 106.44,
    "fade": false
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3297.7,
-   "to": 3318.1,
+   "from": 106.44,
+   "to": 121.95,
    "fade": true,
    "vo": [
     "Back on the map, we pick the farm as our destination. A route goes cell by cell, and every cell costs days, and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your humors will last it."
@@ -971,8 +979,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3318.1,
-   "to": 3330.0,
+   "from": 121.95,
+   "to": 128.49,
    "fade": true,
    "vo": [
     "A wolf on the road. We choose to fight it."
@@ -982,19 +990,19 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3330.0,
-   "to": 3357.0,
+   "from": 128.49,
+   "to": 177.08,
    "fade": false,
    "vo": [
-    "A fight is played on a grid, in turns. Your movement points come from the backbone, and the ears' initiative says who goes first: us. The wolf is far off. Rather than walk up to it, we end our turns and let it come to us. Fighting on your own terms is good advice in any game."
+    "A fight is played on a grid, in turns. Your movement points come from the backbone, and the ears' initiative says who goes first. The wolf is far off. Rather than walk up to it, we end our turns and let it come to us. Fighting on your own terms is good advice in any game. It strikes first. Its blow is rolled against our defence, and the humors work there too: we spend two on our defence dice, and the blow is turned aside."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3357.0,
-   "to": 3373.6,
+   "from": 177.08,
+   "to": 185.47,
    "fade": false,
    "vo": [
     "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice."
@@ -1012,65 +1020,87 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3373.6,
-   "to": 3442.0,
+   "from": 185.47,
+   "to": 191.13,
    "fade": false,
    "vo": [
-    "The first three thrusts land. The log at the bottom names each wound: a broken backbone, then broken ribs. Watch the wolf's turns too: it tries to learn new attacks in the middle of the fight, and fails. Beasts learn the way you do."
+    "This thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the humor of pleasure, which turns any die into a six. We spend it, and the thrust lands: tail amputee. Every blow that lands leaves a wound with a name."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3442.0,
-   "to": 3474.0,
+   "from": 191.13,
+   "to": 239.7,
    "fade": false,
    "vo": [
-    "The fourth thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the humor of pleasure, which turns any die into a six. We spend it on the first die, and the thrust lands."
+    "Again the humors hold our defence. The thrust lands: puncture."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3474.0,
-   "to": 3503.0,
+   "from": 239.7,
+   "to": 279.38,
    "fade": false,
    "vo": [
-    "The fifth needs two humors, from the hepar and the spleen, and the wolf falls. Those were well spent: a fight that drags on costs warmth, and warmth is what carries you across the map."
+    "Once more its blow is turned. The thrust lands: broken ribs."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3503.0,
-   "to": 3652.1,
+   "from": 279.38,
+   "to": 326.93,
    "fade": false,
    "vo": [
-    "The journey goes on to the farm. Arriving opens the place, and a mind takes our bearings.",
+    "Its blows are turned aside again. It falls short, and one humor turns it: evisceration."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 326.93,
+   "to": 375.09,
+   "fade": false,
+   "vo": [
+    "Again the humors hold our defence. It falls short, and two humors turn it: broken ribs."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 375.09,
+   "to": 487.2,
+   "fade": true,
+   "vo": [
+    "The wolf falls, and the journey goes on to the farm. Arriving opens the place, and a mind takes our bearings.",
     {
-     "text": "I find myself in the longhouse hall, in the afternoon. This place echoes my childhood at the port city, where I spent time on the docks and dreamed of ancient ruins. Around me is my acquaintance Zedayne Hartmead, the farmer, just as I remember from when I first bought a sword with my first earned coin.",
+     "text": "I find myself in the longhouse hall, the afternoon sun casting shadows across the hearth. Around me is my acquaintance Zedayne Hartmead, the farmer, her presence a steady warmth in this wooden place.",
      "style": "reading",
-     "at": 3516.0
+     "at": 402.9
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3652.1,
-   "to": 3755.4,
+   "from": 487.2,
+   "to": 653.25,
    "fade": false,
    "vo": [
     {
-     "text": "I recall the time when I stood at the docks, gauging the strength of a stranger. It's similar to now, someone measuring me, thinner than expected, looking past me at something not obvious.",
+     "text": "I sense Zedayne Hartmead standing near the edge of the field, her posture relaxed yet watchful. She stands subtly out of place, her attire out of sync with the earthy surroundings, yet she carries a quiet assurance that is unmistakable. Her gaze meets mine, a silent invitation to explore a corner of the land that has been touched in an unusual way.",
      "style": "reading",
-     "at": 3666.6
+     "at": 502.3
     },
     {
-     "text": "That is the farmer, Zedayne Hartmead. She can give us work.",
+     "text": "Empathy feels something out of place here, a corner of land touched in an unusual way. Nothing at the farm backs it up. Read it as this mind's own way of seeing: a thought, not a clue.",
      "wait": true
     }
    ]
@@ -1078,8 +1108,8 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3755.4,
-   "to": 3773.0,
+   "from": 653.25,
+   "to": 663.97,
    "fade": true,
    "vo": [
     "We need twenty copper for boots, and the honest way to get coin is work. We click the farmer, choose Think, and pick Diligence."
@@ -1088,56 +1118,56 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3773.0,
-   "to": 3967.1,
+   "from": 663.97,
+   "to": 779.5,
    "fade": false,
    "vo": [
     "Diligence is a will: a mind that wants one thing, here, to ask for work. It does not weigh options. It finds the shortest way from where we stand to what it wants, and proposes the first step.",
     {
-     "text": "I notice her at the field's edge, her lean posture mirroring the land's weariness. Her gaze wanders, yet I see her measuring me, her thin frame a testament to the labor unseen. I wish to offer my steadiness and skill, to prove my worth as a farmhand. I will finish what was begun, ensuring each task is done with the same care that started it.",
+     "text": "I observe Zedayne Hartmead, our acquaintance, the farmer. I desire to meet her to offer my labor as a farmhand. I trust in the meticulous completion of what was started, ensuring the last row remains as straight as the first.",
      "style": "reading",
-     "at": 3792.8
+     "at": 686.1
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 3967.1,
-   "to": 4010.58,
+   "from": 779.5,
+   "to": 827.33,
    "fade": false,
    "vo": [
     {
-     "text": "I will go to her request to take on the role of a farmhand.",
+     "text": "I will meet her in the barn to request to work as a farmhand.",
      "style": "reading",
-     "at": 3976.6
+     "at": 826.93
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4010.58,
-   "to": 4029.5,
+   "from": 827.33,
+   "to": 844.22,
    "fade": false,
    "vo": [
-    "A will that can act does its own act, and does it eagerly, which lowers the difficulty by one. One six needed; two come up."
+    "A will that can act does its own act, and does it eagerly, which lowers the difficulty by one. Five dice, and two sixes."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4029.5,
-   "to": 4121.44,
+   "from": 844.22,
+   "to": 936.76,
    "fade": false,
    "vo": [
     {
-     "text": "I am done. Meeting her was a start, but I began to learn her ways and share my own, as we talked under the stars. The work continues, the path is not yet completed.",
+     "text": "I finished our meeting with Zedayne Hartmead. The care I put into it was consistent, as it had been from the start. Now I know how to engage in social interactions.",
      "style": "reading",
-     "at": 4039.9
+     "at": 857.6
     },
     {
-     "text": "Success, and a new way of thinking learned: Social Interaction. One honest remark: the passage says we talked under the stars, but it is the afternoon. The model's words are flavour; the facts are the game's.",
+     "text": "Diligence judges the act by its own measure: the care stayed the same from first to last. And look at the last line. Doing it taught a new way of thinking, Social Interaction, and from now on it can write replies too.",
      "wait": true
     }
    ]
@@ -1145,32 +1175,32 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4121.44,
-   "to": 4171.12,
+   "from": 936.76,
+   "to": 991.42,
    "fade": false,
    "vo": [
-    "Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the model rewrites it in the voice of whoever says it. Zedayne speaks first.",
+    "Now a conversation. A conversation is a tree, written by hand. Each line has a fixed meaning, and the model rewrites it in the voice of whoever says it. Zedayne Hartmead speaks first.",
     {
-     "text": "Why seek you my door, Aentonyoth Marshwall?",
+     "text": "Why have you come to me, then?",
      "style": "reading",
-     "at": 4140.5
+     "at": 956.2
     }
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4171.12,
-   "to": 4243.6,
+   "from": 991.42,
+   "to": 1061.2,
    "fade": false,
    "vo": [
-    "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak. The tongue decides how many are offered: we gave it two points, so three.",
+    "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak, and the tongue decides how many are offered.",
     {
      "text": "Diligence.",
-     "at": 4188.8
+     "at": 1008.0
     },
     {
-     "text": "Hast thou a place for a farmhand's work, Zedayne Hartmead? How fares the wages?",
+     "text": "Hast thou need for a sturdy hand, Zedayne Hartmead? What is the price?",
      "style": "reading"
     }
    ]
@@ -1178,20 +1208,20 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4243.6,
-   "to": 4312.0,
+   "from": 1061.2,
+   "to": 1155.1,
    "fade": false,
    "vo": [
     {
      "text": "Nautical Jargon.",
-     "at": 4259.6
+     "at": 1086.7
     },
     {
-     "text": "Strong as a hound, bold as a gale, bind me to your helm, Zedayne Hartmead.",
+     "text": "Willing as the sea in storm, my strength is true. Any work you ask, I'll take and do.",
      "style": "reading"
     },
     {
-     "text": "A sailor's mind asking for farm work: it offers itself like a crew to a captain, bind me to your helm.",
+     "text": "Nautical Jargon talks like a sailor, even in a barn. Odd minds make odd replies, and some of the best moments in a run come from them.",
      "wait": true
     }
    ]
@@ -1199,20 +1229,35 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4312.0,
-   "to": 4397.89,
+   "from": 1155.1,
+   "to": 1235.29,
    "fade": false,
    "vo": [
     {
      "text": "Provisioning.",
-     "at": 4335.4
+     "at": 1177.5
     },
     {
-     "text": "Seek a place where days of grain, firewood, and salt are few, and know thyself a farmer's help.",
+     "text": "Seeking a place to earn my keep, Zedayne Hartmead. How much does the work fetch?",
      "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1235.29,
+   "to": 1311.58,
+   "fade": false,
+   "vo": [
+    "We choose Diligence's.",
+    {
+     "text": "Farmhand tasks await thee. Ten copper for each ten days, and the toil is great.",
+     "style": "reading",
+     "at": 1252.2
     },
     {
-     "text": "Diligence and Provisioning were given the very same line: I am after work as a farmhand; what does it pay? Provisioning, which counts everything in days of supplies, turned it into grain, firewood and salt.",
+     "text": "She says ten copper. The job menu will say one. The model rewrites a fixed line, and now and then it gets a number wrong. The menu is the rule; trust the menu.",
      "wait": true
     }
    ]
@@ -1220,31 +1265,16 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4397.89,
-   "to": 4493.1,
-   "fade": false,
-   "vo": [
-    "We choose Diligence's, the plainest.",
-    {
-     "text": "Henceforth, a farmhand's life lies within your grasp, earning a copper for each ten days' toil, and fraught with hardship.",
-     "style": "reading",
-     "at": 4415.4
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 4493.1,
-   "to": 4549.6,
+   "from": 1311.58,
+   "to": 1366.8,
    "fade": false,
    "vo": [
     {
      "text": "Social Interaction.",
-     "at": 4519.3
+     "at": 1334.9
     },
     {
-     "text": "How's a day's work for you?",
+     "text": "What tasks will I be doing?",
      "style": "reading"
     }
    ]
@@ -1252,16 +1282,16 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4549.6,
-   "to": 4601.3,
+   "from": 1366.8,
+   "to": 1431.6,
    "fade": false,
    "vo": [
     {
      "text": "Diligence.",
-     "at": 4565.2
+     "at": 1381.3
     },
     {
-     "text": "The price is set. I shall not dispute it.",
+     "text": "Because it takes skill and care, a task left unfinished is not truly done.",
      "style": "reading"
     }
    ]
@@ -1269,16 +1299,16 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4601.3,
-   "to": 4656.98,
+   "from": 1431.6,
+   "to": 1495.79,
    "fade": false,
    "vo": [
     {
      "text": "Bargaining.",
-     "at": 4625.2
+     "at": 1454.0
     },
     {
-     "text": "What does a day's work entail, friend?",
+     "text": "For such a time to remain, must be for some fair cause indeed.",
      "style": "reading"
     }
    ]
@@ -1286,94 +1316,18 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 4656.98,
-   "to": 4754.35,
+   "from": 1495.79,
+   "to": 1590.73,
    "fade": false,
    "vo": [
-    "We ask what the work is like, through Social Interaction.",
+    "We choose Social Interaction's.",
     {
-     "text": "From dawn till dusk, by the fields, in all weathers. There's no time for idling. Only when tasks are within is there work.",
+     "text": "From dawn till dusk, at the farm, through any storm. They mock and then I win and they follow suit within two years",
      "style": "reading",
-     "at": 4670.6
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 4754.35,
-   "to": 4838.0,
-   "fade": false,
-   "vo": [
-    {
-     "text": "Diligence.",
-     "at": 4770.6
+     "at": 1512.2
     },
     {
-     "text": "The sweat of my brow and the strength of my arms have earned their due, no matter how hard the task may be.",
-     "style": "reading"
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 4838.0,
-   "to": 4918.9,
-   "fade": false,
-   "vo": [
-    {
-     "text": "Nautical Jargon.",
-     "at": 4853.7
-    },
-    {
-     "text": "Worse fates I've faced, but still I stand. Less for more, 'tis naught to dread.",
-     "style": "reading"
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 4918.9,
-   "to": 4982.68,
-   "fade": false,
-   "vo": [
-    {
-     "text": "Social Interaction.",
-     "at": 4932.9
-    },
-    {
-     "text": "Less for worse has been done, but fear not, for mine is no new tale.",
-     "style": "reading"
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 4982.68,
-   "to": 5004.4,
-   "fade": false,
-   "vo": [
-    "We take Diligence's answer, and that ends the branch. Now the whole conversation is settled by one roll. Nine dice: two for what she thinks of us, five for the levels of the minds behind our three replies, and two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. One comes up. We spend three humors, on three dice, and that makes four."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 5004.4,
-   "to": 5080.78,
-   "fade": false,
-   "vo": [
-    "My advice for conversations: say your piece in full. A longer branch adds more dice than difficulty.",
-    {
-     "text": "So you shall take on this task. But I seek a hand well versed in the ways of the fields.",
-     "style": "reading",
-     "at": 5015.7
-    },
-    {
-     "text": "She takes us on.",
+     "text": "That last sentence is the farmer's own, slightly mad pride. Read it as a woman who has heard every doubt about her farm, and outlasted them all.",
      "wait": true
     }
    ]
@@ -1381,15 +1335,100 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5080.78,
-   "to": 5088.1,
-   "fade": false
+   "from": 1590.73,
+   "to": 1672.7,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Diligence.",
+     "at": 1606.6
+    },
+    {
+     "text": "For lesser wages, I have sweated harder. Yet this fear not, for my heart is undaunted.",
+     "style": "reading"
+    }
+   ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5088.1,
-   "to": 5118.3,
+   "from": 1672.7,
+   "to": 1733.2,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Nautical Jargon.",
+     "at": 1688.1
+    },
+    {
+     "text": "Less for worse, I've done more. That doth not faze me.",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1733.2,
+   "to": 1792.25,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Social Interaction.",
+     "at": 1747.2
+    },
+    {
+     "text": "For me, no task is too harsh if I can earn a fair wage.",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1792.25,
+   "to": 1813.56,
+   "fade": false,
+   "vo": [
+    "We choose Diligence's. That ends the branch, and the whole conversation is settled by one roll. Nine dice: two for what they think of us, five for the levels of the minds behind our replies, and two for our face. Asking for work is a matter of consequence: after three replies, it needs four sixes. One comes up. We spend three humors, and the roll succeeds.",
+    {
+     "text": "My advice: when a conversation matters, pick replies written by your strongest minds. Their levels become dice in that final roll.",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1813.56,
+   "to": 1869.15,
+   "fade": false,
+   "vo": [
+    {
+     "text": "So shalt thou, but one whose hands have tilled these fields.",
+     "style": "reading",
+     "at": 1824.6
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1869.15,
+   "to": 1875.33,
+   "fade": false,
+   "vo": [
+    {
+     "text": "The conversation was the hard part. The job itself is just a menu.",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 1875.33,
+   "to": 1912.49,
    "fade": true,
    "vo": [
     "Work in this game is not a quest. You trade days of your life for coin and experience. A farmhand earns one copper every ten days, so two hundred days earn twenty copper, the price of boots. The work also trains three ways of thinking, the first one most.",
@@ -1399,15 +1438,15 @@
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 5118.3,
-   "to": 5119.3,
+   "from": 1912.49,
+   "to": 1913.49,
    "fade": false
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5119.3,
-   "to": 5139.2,
+   "recording": "city",
+   "from": 24.12,
+   "to": 41.49,
    "fade": true,
    "vo": [
     "With twenty copper in the purse, to the city."
@@ -1415,86 +1454,150 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5139.2,
-   "to": 5184.0,
+   "recording": "city",
+   "from": 41.49,
+   "to": 48.09,
    "fade": true,
    "vo": [
-    "Another wolf, and this one starts right beside us. The first thrust falls short of its defence, and a humor turns it."
+    "Another wolf, on the road to the city."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5184.0,
-   "to": 5256.0,
+   "recording": "city",
+   "from": 48.09,
+   "to": 113.97,
    "fade": false,
    "vo": [
-    "Again, and again: each thrust needs one humor to land."
+    "Again we end our turns, and let it come to us."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5256.0,
-   "to": 5293.0,
+   "recording": "city",
+   "from": 113.97,
+   "to": 122.45,
    "fade": false,
    "vo": [
-    "The fourth needs three."
+    "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5293.0,
-   "to": 5320.0,
+   "recording": "city",
+   "from": 122.45,
+   "to": 127.96,
    "fade": false,
    "vo": [
-    "The fifth lands, and the wolf falls. That was an unlucky fight: seven humors spent. A run of bad rolls can drain them, and when a fight goes badly, running away is always possible: one six on the feet's dice."
+    "It falls short, and one humor turns it: broken backbone. Every blow that lands leaves a wound with a name."
    ],
    "speed": 2.0
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5320.0,
-   "to": 5497.8,
+   "recording": "city",
+   "from": 127.96,
+   "to": 152.96,
    "fade": false,
    "vo": [
-    "We reach the city, and the cobbler's shop.",
+    "The thrust lands: broken backbone."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 152.96,
+   "to": 177.55,
+   "fade": false,
+   "vo": [
+    "The thrust lands: pierced paunch."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 177.55,
+   "to": 205.71,
+   "fade": false,
+   "vo": [
+    "It falls short, and two humors turn it: tail amputee."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 205.71,
+   "to": 229.45,
+   "fade": false,
+   "vo": [
+    "The thrust lands: puncture."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 229.45,
+   "to": 255.11,
+   "fade": false,
+   "vo": [
+    "It falls short, and one humor turns it: broken ribs."
+   ],
+   "speed": 2.0
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 255.11,
+   "to": 255.21,
+   "fade": false,
+   "vo": [
     {
-     "text": "I find myself in the cobbler's shop, a low shop with a scent of leather and wax. Around me, Publiosh Tommaezoth the cobbler of the city moves with hands skilled in the art. The air carries his gentle touch and the soft clatter of tools, a reminder of the care he brings to each pair of boots.",
-     "style": "reading",
-     "at": 5334.6
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 5497.8,
-   "to": 5662.2,
-   "fade": false,
-   "vo": [
-    {
-     "text": "I see Publiosh Tommaezoth, the cobbler, standing there, a boot over one knee, hammering in hobnails without looking up, arguing about the gods while hammering in a heel. He stands between the two least happy, positioned as if drilled young by an old blade-scar on his forearm.",
-     "style": "reading",
-     "at": 5513.0
-    },
-    {
-     "text": "This is one of the model's strengths: from a few traits the game gives it, it draws a person. A boot over one knee, an argument about the gods, an old scar. The cobbler, Publiosh Tommaezoth, has a character.",
+     "text": "Look at what the first thrust did. It broke the wolf's backbone, and the backbone is where movement comes from. From then on the wolf had no points left to act with, and it never struck back once. Where you hit matters.",
      "wait": true
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5662.2,
-   "to": 5679.0,
+   "recording": "city",
+   "from": 255.11,
+   "to": 427.7,
+   "fade": true,
+   "vo": [
+    "We reach the city, and the cobbler's shop.",
+    {
+     "text": "I find myself in the cobbler's shop, in the morning. This place is a low shop smelling of leather and wax, boots hung by their laces from the beams. Around me is my acquaintance Publiosh Tommaezoth, the cobbler of the city. He feels weary, as though he's been working without pause.",
+     "style": "reading",
+     "at": 285.2
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 427.7,
+   "to": 509.33,
+   "fade": false,
+   "vo": [
+    {
+     "text": "I notice my acquaintance Publiosh Tommaezoth, the city cobbler, as he hammers with an old boot over his knee, untroubled by the discomfort.",
+     "style": "reading",
+     "at": 440.9
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 509.33,
+   "to": 520.0,
    "fade": true,
    "vo": [
     "We think about him with Provisioning, our second will. Provisioning wants to buy."
@@ -1502,260 +1605,401 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5679.0,
-   "to": 5864.1,
+   "recording": "city",
+   "from": 520.0,
+   "to": 645.5,
    "fade": false,
    "vo": [
+    "",
     {
-     "text": "I notice someone with a boot over one knee hammers in hobnails without looking up, argues about the gods while hammering in a heel, positioned between the two least happy. It only colors how the salt will last - a fortnight, and the bread does not. I want to meet him to buy shoes and boots.",
+     "text": "I observe Publiosh Tommaezoth, the city cobbler, and my acquaintance. The salt will last for a few more days, and the boots and shoes are crucial. I must meet him to propose a purchase before they run out.",
      "style": "reading",
-     "at": 5699.1
+     "at": 549.1
     },
     {
-     "text": "Provisioning sees everything in days of supplies. Its way to a purchase is to go and propose a trade.",
+     "text": "Provisioning frets about salt we do not even carry. A will sees the world through what it wants, and this one wants supplies, so it finds a shortage everywhere. Read it as the character's own anxious habit.",
      "wait": true
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5864.1,
-   "to": 5918.99,
+   "recording": "city",
+   "from": 645.5,
+   "to": 692.4,
    "fade": false,
    "vo": [
     {
-     "text": "I will go to him to discuss buying shoes and boots in this medieval city.",
+     "text": "I will walk to the market to propose purchasing shoes and boots.",
      "style": "reading",
-     "at": 5879.8
+     "at": 666.4
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5918.99,
-   "to": 5941.9,
+   "recording": "city",
+   "from": 692.4,
+   "to": 709.17,
    "fade": false,
    "vo": [
-    "This time the act was given to Diligence, and Diligence is reluctant: buying is not its business. Reluctance raises the difficulty by one, to two sixes. Five dice, and not a single six. Two humors, two sixes."
+    "This time the act was given to Diligence, and Diligence is reluctant: buying is not its business. Reluctance raises the difficulty by one. Five dice, and two sixes."
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 5941.9,
-   "to": 6022.89,
+   "recording": "city",
+   "from": 709.17,
+   "to": 788.86,
    "fade": false,
    "vo": [
     {
-     "text": "I only finished the proposal as it was meant to be. Now, I await Publiosh Tommaezoth's response, my hands still as clean as they were when I began.",
+     "text": "I completed our meeting with Publiosh Tommaezoth, securing the purchase of shoes and boots. The care and effort didn't diminish at the end as they had at the beginning.",
      "style": "reading",
-     "at": 5952.8
+     "at": 720.9
     },
     {
-     "text": "This is the passage I like least in the take. It sounds like a failure, but the roll succeeded. A small model sometimes bends the tone, and the game holds the result: the conversation opens all the same.",
+     "text": "The outcome runs a little ahead of itself: nothing is bought yet. What the act secured is the meeting. The purchase is still a conversation away.",
      "wait": true
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6022.89,
-   "to": 6073.15,
+   "recording": "city",
+   "from": 788.86,
+   "to": 840.84,
    "fade": false,
    "vo": [
+    "Publiosh Tommaezoth answers. The same kind of tree, for a trade.",
     {
-     "text": "Aentonyoth Marshwall, seek what dost desire?",
+     "text": "Aentonyoth Marshwall, might you have a quest in mind?",
      "style": "reading",
-     "at": 6040.8
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 6073.15,
-   "to": 6144.2,
-   "fade": false,
-   "vo": [
-    "Our replies.",
-    {
-     "text": "Bargaining.",
-     "at": 6092.7
+     "at": 808.0
     },
     {
-     "text": "Seeking a rare gem, might I perchance find what you offer?",
-     "style": "reading"
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 6144.2,
-   "to": 6211.8,
-   "fade": false,
-   "vo": [
-    {
-     "text": "Enterprise.",
-     "at": 6167.6
-    },
-    {
-     "text": "And what tariffs do these wares bear on their journey?",
-     "style": "reading"
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 6211.8,
-   "to": 6257.58,
-   "fade": false,
-   "vo": [
-    {
-     "text": "Social Interaction.",
-     "at": 6227.4
-    },
-    {
-     "text": "What rare treasure are you seeking now?",
-     "style": "reading"
-    },
-    {
-     "text": "Bargaining wants a rare gem, in a boot shop. The line it was given only said: I am after something particular. Bargaining made it a haggler's line, and got carried away.",
+     "text": "A quest, he asks. There are no quests in this game; read it as a cobbler hoping we bring him business.",
      "wait": true
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6257.58,
-   "to": 6379.68,
+   "recording": "city",
+   "from": 840.84,
+   "to": 887.7,
    "fade": false,
    "vo": [
-    "We choose Bargaining's anyway, to see what happens.",
+    "Then our replies. Each is one branch of the tree, voiced by one of the minds we hold that can speak, and the tongue decides how many are offered.",
     {
-     "text": "Seek not what not of shoes nor boots be, for mine are few and rare, nor any thing else but these. Yet if thy quest be of footwear, ask now and I shall tell thee if I hold the key.",
-     "style": "reading",
-     "at": 6275.3
+     "text": "Diligence.",
+     "at": 858.5
     },
     {
-     "text": "The cobbler brings us straight back to footwear. He can: his side of the tree knows we came for shoes.",
-     "wait": true
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 6379.68,
-   "to": 6440.8,
-   "fade": false,
-   "vo": [
-    {
-     "text": "Social Interaction.",
-     "at": 6394.7
-    },
-    {
-     "text": "Let us find the just right item for your tasks, not just the first available one.",
+     "text": "Publiosh Tommaezoth, what wares are you offering?",
      "style": "reading"
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6440.8,
-   "to": 6506.0,
+   "recording": "city",
+   "from": 887.7,
+   "to": 952.7,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Nautical Jargon.",
+     "at": 911.3
+    },
+    {
+     "text": "Publiosh Tommaezoth, what wares do ye lay before me?",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 952.7,
+   "to": 1002.56,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Provisioning.",
+     "at": 968.5
+    },
+    {
+     "text": "Publiosh Tommaezoth, what wares are ye offering today?",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1002.56,
+   "to": 1097.76,
+   "fade": false,
+   "vo": [
+    "We choose Diligence's.",
+    {
+     "text": "Boots and shoes, first and foremost. A variety of leather boots, riding boots, and a shoe last, do you seek anything in particular?",
+     "style": "reading",
+     "at": 1020.5
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1097.76,
+   "to": 1159.0,
    "fade": false,
    "vo": [
     {
      "text": "Diligence.",
-     "at": 6457.1
+     "at": 1114.7
     },
     {
-     "text": "The choice you make shall not be near but precise, as work demands the finest.",
+     "text": "What will endure through the storms, that is what I seek.",
      "style": "reading"
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6506.0,
-   "to": 6565.96,
+   "recording": "city",
+   "from": 1159.0,
+   "to": 1226.8,
    "fade": false,
    "vo": [
     {
-     "text": "Enterprise.",
-     "at": 6520.1
+     "text": "Deference.",
+     "at": 1183.1
     },
     {
-     "text": "What ventures does it serve, and how far can it endure without a hitch?",
+     "text": "The best of it, not the dearest, stands forth.",
      "style": "reading"
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6565.96,
-   "to": 6583.8,
-   "fade": false,
-   "vo": [
-    "We choose Social Interaction's, and roll. Ten dice: two for regard, two for the replies, two for our face, and four for our clothes, because the townsman's cap, cloak, tunic and breeches all please a craftsman. Proposing a trade is a formality: after two replies, one six. One comes up.",
-    "My advice: dress for the person you are talking to. Those are the cheapest dice in the game."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "tutorial",
-   "from": 6583.8,
-   "to": 6635.09,
+   "recording": "city",
+   "from": 1226.8,
+   "to": 1307.53,
    "fade": false,
    "vo": [
     {
-     "text": "Matched to your needs, I have the fitting shoe.",
-     "style": "reading",
-     "at": 6594.2
+     "text": "Social Interaction.",
+     "at": 1249.2
+    },
+    {
+     "text": "Of what do you think will endure through the years? That is the sort of treasure I seek.",
+     "style": "reading"
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6635.09,
-   "to": 6713.78,
+   "recording": "city",
+   "from": 1307.53,
+   "to": 1442.88,
    "fade": false,
    "vo": [
-    "Then one more passage, from a mind that took no part. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five into a six. A feeling now is luck for later.",
+    "We choose Diligence's.",
     {
-     "text": "I traded my wares, and in the price beneath the price, I felt glad and lighter than before, like a hawk skimming the breeze after a successful hunt.",
+     "text": "Aye, few do ask, and rightly so. A shoe's true form is for one sole, yet it deceives all others. Beware when buying old, for some items will stand you long. And here, some will indeed cost you less.",
      "style": "reading",
-     "at": 6643.5
+     "at": 1324.8
     },
     {
-     "text": "A hawk skimming the breeze after a hunt: even a merchant's mind reaches for its own images when it is glad.",
+     "text": "His answer wanders into a riddle. The fixed meaning underneath is plain enough: some of the cheap stock is good.",
      "wait": true
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6713.78,
-   "to": 6719.9,
+   "recording": "city",
+   "from": 1442.88,
+   "to": 1507.6,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Provisioning.",
+     "at": 1459.2
+    },
+    {
+     "text": "And the cheap stuff. Is it good work, or is it shoddy?",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1507.6,
+   "to": 1573.6,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Nautical Jargon.",
+     "at": 1520.6
+    },
+    {
+     "text": "Affordable goods, ask if they serve fair wages, or if they're mere scraps?",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1573.6,
+   "to": 1634.54,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Deference.",
+     "at": 1588.1
+    },
+    {
+     "text": "Then let us see what you have, so I may be done with this quickly.",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1634.54,
+   "to": 1706.21,
+   "fade": false,
+   "vo": [
+    "We choose Provisioning's.",
+    {
+     "text": "Honest though it may be, doth it not seem a shame to speak thus of my wares?",
+     "style": "reading",
+     "at": 1650.6
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1706.21,
+   "to": 1768.1,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Deference.",
+     "at": 1719.8
+    },
+    {
+     "text": "Honesty so rare, it stands apart. Your goods, most welcome sight.",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1768.1,
+   "to": 1834.4,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Social Interaction.",
+     "at": 1781.4
+    },
+    {
+     "text": "Seek then the goods of proven honesty, for my purse is not so deep as to risk poorer fare.",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1834.4,
+   "to": 1902.82,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Empathy.",
+     "at": 1848.5
+    },
+    {
+     "text": "The honest sort, that's what a hearted buyer seeks, and my purse does not stretch for such.",
+     "style": "reading"
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1902.82,
+   "to": 1916.02,
+   "fade": false,
+   "vo": [
+    "We choose Deference's. That ends the branch, and the whole conversation is settled by one roll. Fifteen dice: two for what they think of us, seven for the levels of the minds behind our replies, two for our face, and four for our clothes, which please a craftsman. Proposing a trade is a formality: after four replies, it needs two sixes. One comes up. We spend one humor, and the roll succeeds.",
+    {
+     "text": "My advice: dress for the people you deal with. Here the townsman's clothes alone gave four dice.",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1916.02,
+   "to": 1999.42,
+   "fade": false,
+   "vo": [
+    {
+     "text": "Once upon a time, I've sold you a wrong thing, twice that. Now, come and see what I have, properly.",
+     "style": "reading",
+     "at": 1929.8
+    },
+    {
+     "text": "He admits he once sold us the wrong thing, twice. A frank cobbler, or a careless one. Either way, the tree has reached its end.",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 1999.42,
+   "to": 2087.59,
+   "fade": false,
+   "vo": [
+    "Then one more passage, from a mind that took no part in the act. Bargaining is also a feeling, moved by a good trade. It tells how the trade felt, and pushes a humor of joy into the spleen: laetitia, which turns a five into a six. A feeling now is luck for later.",
+    {
+     "text": "I was granted a chance to trade, and it left me feeling glad and lighter than before, as if the world held just a bit more silver beneath its crust.",
+     "style": "reading",
+     "at": 2016.3
+    },
+    {
+     "text": "More silver beneath the world's crust: a good trade, felt as buried treasure.",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 2087.59,
+   "to": 2095.03,
    "fade": false
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6719.9,
-   "to": 6735.0,
+   "recording": "city",
+   "from": 2095.03,
+   "to": 2108.51,
    "fade": true,
    "vo": [
     "The cobbler's shelf. Every price is in one coin, copper, silver or gold, and coins never convert. The leather boots cost twenty copper: all we have. One click to add them, one to confirm."
@@ -1763,28 +2007,24 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6735.0,
-   "to": 6850.5,
+   "recording": "city",
+   "from": 2108.51,
+   "to": 2202.9,
    "fade": false,
    "vo": [
     "Back in the shop, a new look at the cobbler.",
     {
-     "text": "I see Publiosh Tommaezoth, cobbler of the city, his knee bleeding, hammering away, arguing with a fellow craftsman. He stands between the quarrellers, a steadfast figure with an old scar on his forearm, a silent witness to their discord.",
+     "text": "I see Publiosh Tommaezoth, the cobbler, as he hammers away, his old boot over one knee unbothered, already asking a question before I have finished approaching.",
      "style": "reading",
-     "at": 6737.9
-    },
-    {
-     "text": "A bleeding knee, this time: the model invented a detail. Read the game's text as a story told by a slightly unreliable narrator. The rules underneath it are exact.",
-     "wait": true
+     "at": 2123.0
     }
    ]
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6850.5,
-   "to": 6870.4,
+   "recording": "city",
+   "from": 2202.9,
+   "to": 2225.22,
    "fade": true,
    "vo": [
     "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds dice in conversation with them."
@@ -1792,9 +2032,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6870.4,
-   "to": 6895.1,
+   "recording": "city",
+   "from": 2225.22,
+   "to": 2252.14,
    "fade": true,
    "vo": [
     "The purse is empty again, and that is fine. Every place you visit is kept as a mental map, and each map holds routines: ways back in. Asking for work taught one at the farm.",
@@ -1803,9 +2043,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6895.1,
-   "to": 6939.5,
+   "recording": "city",
+   "from": 2252.14,
+   "to": 2295.72,
    "fade": false,
    "vo": [
     "From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip."
@@ -1813,9 +2053,9 @@
   },
   {
    "type": "game",
-   "recording": "tutorial",
-   "from": 6939.5,
-   "to": 6954.5,
+   "recording": "city",
+   "from": 2295.72,
+   "to": 2310.84,
    "fade": true,
    "vo": [
     "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at edmond zero zero dot itch dot io, slash proscribed."

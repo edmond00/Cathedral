@@ -17,6 +17,7 @@ Times below are moments of take B's timeline: clicks (timeline.jsonl) and passag
 Another take means new times and new numbers: the lines that describe this run are marked TAKE.
 """
 import json
+import re
 from pathlib import Path
 
 HERE = Path(__file__).parent
@@ -41,7 +42,8 @@ def R(i, anchored=True):
 
 def is_dialogue(p):
     """A line said in a conversation (the speaker's or a reply), not a narration passage."""
-    return "I say to" in p.get("prompt", "") or p["voice"].startswith("You are ")
+    return ("I say to" in p.get("prompt", "") or "speaking directly to" in p.get("prompt", "")
+            or p["voice"].startswith("You are "))
 
 
 def is_passage(p):
@@ -433,11 +435,14 @@ def use(take, notes):
     RS = take
     REST_NOTES = json.loads((HERE / notes).read_text()) if (HERE / notes).exists() else {}
     dice_cmds = [e["t"] for e in RS.events if e["type"] == "cmd" and str(e.get("line", "")).strip() == "dice"]
-    dice_lines = [l for l in RS.log if l.startswith("[cli] dice [")]
+    # each `dice` answers on the next line, with the roll or with "no dice roll on screen" (a guarded turn
+    # whose fight was over); a skipped one is neither in the log's "> dice" lines nor in the timeline
+    answers = [RS.log[i + 1] for i, l in enumerate(RS.log[:-1]) if l.strip() == "[cli] > dice"]
     RS_ROLLS = []
-    for t, line in zip(dice_cmds, dice_lines):
-        faces = line.split("[", 2)[2].split("]")[0].split()
-        RS_ROLLS.append({"t": t, "faces": faces, "ok": "SUCCESS" in line})
+    for t, line in zip(dice_cmds, answers):
+        if line.startswith("[cli] dice ["):
+            faces = line.split("[", 2)[2].split("]")[0].split()
+            RS_ROLLS.append({"t": t, "faces": faces, "ok": "SUCCESS" in line})
     RESOLUTIONS = [l for l in RS.log if "DialogueTreeController: resolution '" in l and "dice (" in l]
     FITS = [l for l in RS.log if "Persona-fit for" in l]
     EMOTIONS = [l for l in RS.log if "emotion —" in l]
@@ -447,60 +452,79 @@ use(Take("tutorial", "build/rec_rest", "passages_rest.json"), "rest_notes.json")
 
 
 def fight(name, intro, first_detail):
-    """A fight, thrust by thrust: what each roll did, and the humors that turned the ones that fell short."""
+    """A fight, thrust by thrust: what each roll did, the humors that turned the ones that fell short, and the
+    wound each landed one left, read in order from the fight's log."""
     cb, ce = rs_clip(name)
     engage = RS.click(cb, ce, label="ENGAGE")
     swords = [c["t"] for c in RS.clicks if cb <= c["t"] <= ce and c.get("label") == "Short Sword"]
     conts = [c["t"] for c in RS.clicks if cb <= c["t"] <= ce and c.get("label") == "Continue"]
-    waits = [c["t"] for c in RS.clicks if cb <= c["t"] < swords[0] and c.get("label") == "END TURN"]
+    thrusts = []                                   # (sword click, Continue closing its dice box, roll)
+    for j, s_ in enumerate(swords):                # a thrust out of reach rolls nothing, and its turn just ends
+        c = next((c for c in conts if c > s_), None)
+        r = [r for r in RS_ROLLS if s_ < r["t"] < min(c or 1e9, swords[j + 1] if j + 1 < len(swords) else 1e9)]
+        if r and c:
+            thrusts.append((s_, c, r[0]))
+    # the log's own account of the thrusts, in order: the wound each landed one made, None for a miss
+    lo = next(i for i, l in enumerate(RS.log) if l.strip() == f"[cli] > mark {name}")
+    hi = next((i for i, l in enumerate(RS.log) if i > lo and l.startswith("[cli] > mark ")), len(RS.log))
+    results = []
+    for l in RS.log[lo:hi]:
+        if l.startswith("Fight [Normal]: ") and " uses Snap Thrust on " in l:
+            results.append(None)
+        elif l.startswith("Fight [Wound]: HIT! ") and results and results[-1] is None:
+            results[-1] = l.split("HIT! ", 1)[1].split(" on ", 1)[0].lower()
+    struck = sum(1 for l in RS.log[lo:hi] if l.startswith("Fight [Normal]: ") and " uses " in l
+                 and " on Aentonyoth" in l)
+    waits = [c["t"] for c in RS.clicks if cb <= c["t"] < thrusts[0][0] and c.get("label") == "END TURN"]
+    guard0 = humors_spent(engage, thrusts[0][0])
     RS.game(cb, engage + 0.3, intro, speed=FIGHT, fade=True)
-    RS.game(engage + 0.3, swords[0] - 0.2, *first_detail(len(waits)), speed=FIGHT)
-    first_roll = rolls(swords[0], conts[0])[0]
-    RS.game(swords[0] - 0.2, conts[0] + 0.3,
+    RS.game(engage + 0.3, thrusts[0][0] - 0.2, *first_detail(len(waits), guard0), speed=FIGHT)
+    s0, c0, r0 = thrusts[0]
+    RS.game(s0 - 0.2, r0["t"] + 0.3,
             "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The "
-            f"short sword and Swordsmanship give Snap Thrust: {num(len(first_roll['faces']))} dice.", speed=FIGHT)
+            f"short sword and Swordsmanship give Snap Thrust: {num(len(r0['faces']))} dice.", speed=FIGHT)
     if name == "fight_1":
         manim("AttackDefence",
               "Here is a blow. The attacker rolls the skill's dice, plus the dice of the genitories. The defender "
               "rolls dice for the lower body, for any guard or stance, and for the armour on the part struck. If "
               "the attacker shows more sixes, the blow lands, and it leaves a wound on the part it hit. A tie goes "
               "to the defender.", "A wolf wears no armour, and its defence is small.")
-    t, told_humor, spent_all, told_guard = conts[0] + 0.3, name == "fight_2", 0, name == "fight_2"
-    for k, c in enumerate(conts):
-        lo = swords[k] if k < len(swords) else t
-        spent = humors_spent(lo, c)
-        spent_all += spent
-        if k == 0:
-            if spent:
-                RS.game(t, t + 0.1)
-            continue
-        guard = humors_spent(conts[k - 1], swords[k] if k < len(swords) else c)   # spent on our defence
+    t, told_humor, told_guard, told_wound = r0["t"] + 0.3, name == "fight_2", guard0 > 0, False
+    for k, (s_, c, r) in enumerate(thrusts):
+        spent = humors_spent(s_, c)
         lead = ""
+        guard = humors_spent(thrusts[k - 1][1], s_) if k else 0           # spent on our defence since
         if guard and not told_guard:
             lead = ("The wolf strikes back. Its blows are rolled against our defence, and the humors work there too: "
                     f"we spend {num(guard)} on our defence dice, and its blows are turned aside. ")
             told_guard = True
         elif guard:
-            lead = "Its blows are turned aside again. "
-        if not spent:
-            line = lead + "The thrust lands."
+            lead = ["Its blows are turned aside again. ", "Again the humors hold our defence. ",
+                    "Once more its blow is turned. "][k % 3]
+        wound = results[k] if k < len(results) else None
+        if r["ok"] or not spent:
+            line = lead + ("The thrust lands" if wound else "The thrust falls short")
         elif not told_humor:
             line = lead + ("This thrust falls short. Under the dice, the humors. At the back of the hepar is voluptas, the "
-                    "humor of pleasure, which turns any die into a six. "
-                    + ("We spend it, and the thrust lands." if spent == 1 else
-                       f"We spend {num(spent)} of them, and the thrust lands."))
+                           "humor of pleasure, which turns any die into a six. "
+                           + ("We spend it, and the thrust lands" if spent == 1 else
+                              f"We spend {num(spent)} of them, and the thrust lands"))
             told_humor = True
         else:
-            line = lead + (f"It falls short, and {num(spent)} humor{'s' if spent != 1 else ''} turn{'s' if spent == 1 else ''}"
-                    " it.")
-        nxt = conts[k] + 0.3
+            line = lead + (f"It falls short, and {num(spent)} humor{'s' if spent != 1 else ''} turn"
+                           f"{'s' if spent == 1 else ''} it")
+        if wound and not told_wound:
+            line += f": {wound}. Every blow that lands leaves a wound with a name."
+            told_wound = True
+        elif wound:
+            line += f": {wound}."
+        else:
+            line += "."
+        nxt = c + 0.3
         RS.game(t, nxt, line, *([W(REST_NOTES[f"{name}_{k + 1}"])] if f"{name}_{k + 1}" in REST_NOTES else []),
                 speed=FIGHT)
         t = nxt
-    first_spent = humors_spent(swords[0], conts[0])
-    total = spent_all
-    return t, total
-
+    return t, struck
 
 def conversation(t, idx, lead_line, depth_kind):
     """A conversation walked through: each line the other speaks, each reply offered (named by the mind that
@@ -552,7 +576,8 @@ def conversation(t, idx, lead_line, depth_kind):
             need = int(res.rsplit("difficulty ", 1)[1].strip())
             words = []
             for term in terms.split(" + "):
-                n_, what = term.split(" ", 1)[0], term.split(" ", 1)[1]
+                what, n_ = re.match(r"(\D+?) (\d+)", term).groups()
+                what = term
                 if what.startswith("affinity"):
                     words.append(f"{num(int(n_))} for what they think of us")
                 elif what.startswith("replica"):
@@ -593,7 +618,7 @@ def act(t, keyword_word, mind_line, idx, roll_line):
 
 # 6. the character screen
 resumed = next(e["t"] for e in RS.events if e["type"] == "mode" and e["t"] > RS.at("mark", "resume")
-               and e.get("mode") == "WorldView")
+               and e.get("to") == "WorldView")
 ab, ae = rs_clip("anatomy")
 RS.game(resumed + 0.5, ab, "Escape opens the menu, and Protagonist opens the character screen.", fade=True)
 RS.game(ab, ae, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.")
@@ -624,10 +649,13 @@ RS.game(tb, te,
 
 # 8. the first fight, and the farm
 t, spent1 = fight("fight_1", "A wolf on the road. We choose to fight it.",
-                  lambda waits: ["A fight is played on a grid, in turns. Your movement points come from the backbone, "
-                                 "and the ears' initiative says who goes first."
-                                 + (" The wolf is far off. Rather than walk up to it, we end our turns and let it come "
-                                    "to us. Fighting on your own terms is good advice in any game." if waits else "")])
+                  lambda waits, guard: ["A fight is played on a grid, in turns. Your movement points come from the "
+                                        "backbone, and the ears' initiative says who goes first."
+                                        + (" The wolf is far off. Rather than walk up to it, we end our turns and let it "
+                                           "come to us. Fighting on your own terms is good advice in any game." if waits else "")
+                                        + (" It strikes first. Its blow is rolled against our defence, and the humors work "
+                                           f"there too: we spend {num(guard)} on our defence dice, and the blow is turned "
+                                           "aside." if guard else "")])
 fb, fe = rs_clip("farm_arrival")
 arrive = RS.between(t - 1, fe)
 RS.game(t, RS.end(arrive[0]), "The wolf falls, and the journey goes on to the farm. Arriving opens the place, and a "
@@ -676,7 +704,8 @@ cb_, ce_ = rs_clip("travel_city")
 RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True)
 
 # 11. the second fight, and the city
-t, spent2 = fight("fight_2", "Another wolf, and this one starts right beside us.", lambda waits: [])
+t, spent2 = fight("fight_2", "Another wolf, on the road to the city.",
+                  lambda waits, guard: ["Again we end our turns, and let it come to us."] if waits else [])
 RS.game(t, t + 0.1, *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []))
 yb, ye = rs_clip("city_arrival")
 arrive = RS.between(t - 1, ye)
