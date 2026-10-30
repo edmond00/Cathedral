@@ -65,6 +65,7 @@ class Segment:
     src_t0: float | None = None          # a game segment: where in its recording it starts
     pieces: list = field(default_factory=list)   # and how its footage is retimed: (start, end, speed)
     slowed: list | None = None           # speeds the fit chose instead, when the narration needs longer
+    cuts: list = field(default_factory=list)     # the recording moments the narration is anchored to
     # The narration in groups, each starting where its first part is anchored: (wav, seconds, anchor),
     # the anchor None (straight after the group before), "end" (once the picture has played) or a moment
     # of the recording (a game segment). `starts` is where each group starts in the segment.
@@ -180,6 +181,69 @@ class Build:
         tts.write_wav(out, joined)
         return out, len(joined) / audio.RATE
 
+    def fit_slow(self, seg: Segment) -> float:
+        """Slows a game segment's footage where its narration needs more time, stretch by stretch, so that
+        no anchor drifts: an explanation that overruns the moment its reading is anchored to slows the
+        footage before that moment (the text appears as the explanation ends); narration that outlasts the
+        footage slows what comes after the last anchor. The model's waits slow first (down to their real
+        pace), then the rest (down to half speed); only what still does not fit is held."""
+        g = self.game_timing(seg)
+        lead, tail = self.voice["lead_in"], self.voice["tail"]
+        gap = float(self.voice.get("part_gap", 0.35))
+        pieces = g["pieces"]
+        durs = [(b_ - a_) / sp if sp > 0 else 0.0 for a_, b_, sp in pieces]
+
+        def out_at(t: float) -> float:          # output time of recording moment t, with durs as they are
+            o = 0.0
+            for (a_, b_, sp), d in zip(pieces, durs):
+                if sp <= 0:
+                    continue
+                if t >= b_:
+                    o += d
+                elif t > a_:
+                    return o + d * (t - a_) / (b_ - a_)
+                else:
+                    return o
+            return o
+
+        def stretch(lo: float, hi: float, extra: float) -> None:
+            """Adds up to `extra` seconds to the pieces lying within recording moments lo..hi."""
+            for floor_speed, pick in ((1.0, lambda sp: sp > 1.0), (0.5, lambda sp: 0 < sp <= 1.0)):
+                idx = [i for i, (a_, b_, sp) in enumerate(pieces) if a_ >= lo - 1e-6 and b_ <= hi + 1e-6 and pick(sp)]
+                cap = {i: (pieces[i][1] - pieces[i][0]) / floor_speed - durs[i] for i in idx}
+                total = sum(c for c in cap.values() if c > 0)
+                if total <= 0 or extra <= 0:
+                    continue
+                take = min(extra, total)
+                for i in idx:
+                    if cap[i] > 0:
+                        durs[i] += take * cap[i] / total
+                extra -= take
+
+        t, last = lead, g["t0"]
+        for i, (_, secs, anchor) in enumerate(seg.groups):
+            want = t + (gap if i else 0.0)
+            if anchor not in (None, "end"):
+                a = float(anchor)
+                if out_at(a) < want:
+                    stretch(last, a, want - out_at(a))
+                want = max(want, out_at(a))
+                last = max(last, a)
+            elif anchor == "end":
+                # the footage runs until what was said before it is done; this part is then said over
+                # the finished frame (a result shown whole), not over yet more slowing
+                wait_after = float(self.voice.get("wait_after", 0.3))
+                if sum(durs) + wait_after < want:
+                    stretch(last, g["t1"] + 1, want - wait_after - sum(durs))
+                want = max(want, sum(durs) + wait_after)
+                last = g["t1"] + 1
+            t = want + secs
+        need = t + tail
+        if need > sum(durs) and last <= g["t1"]:
+            stretch(last, g["t1"] + 1, need - sum(durs))
+        seg.slowed = [((b_ - a_) / d if d > 0 else sp) for (a_, b_, sp), d in zip(pieces, durs)]
+        return self.place_groups(seg, self.game_timing(seg))
+
     def place_groups(self, seg: Segment, g: dict | None) -> float:
         """Where each group of the narration starts, given the picture's timing; returns when it ends."""
         lead, tail = self.voice["lead_in"], self.voice["tail"]
@@ -202,34 +266,13 @@ class Build:
         footage is not frozen on its last frame (unless the storyboard says "fit": "hold"): its footage is
         slowed to fit, the model's waits first (down to their real pace, text streaming as it did), then
         what the player does (down to half speed); only what still does not fit is held."""
+        mode = seg.spec.get("fit", self.sb.get("fit", "hold"))
+        if seg.spec["type"] == "game" and mode == "slow":
+            seg.cuts = sorted({float(a) for _, _, a in seg.groups if a not in (None, "end")})
+            seg.slowed = None
+            return max(self.fit_slow(seg), float(seg.spec.get("min", 0)))
         g = self.game_timing(seg) if seg.spec["type"] == "game" else None
         need = self.place_groups(seg, g)
-        mode = seg.spec.get("fit", self.sb.get("fit", "hold"))
-        if g is not None and mode == "slow" and need > g["natural"] + 0.05:
-            for _ in range(12):
-                pieces = g["pieces"]
-                durs = [(b_ - a_) / sp if sp > 0 else 0.0 for a_, b_, sp in pieces]
-                extra = need - sum(durs)
-                if extra <= 0.05:
-                    break
-                fast = [i for i, (a_, b_, sp) in enumerate(pieces) if sp > 1.0]
-                cap_fast = sum((pieces[i][1] - pieces[i][0]) - durs[i] for i in fast)
-                take = min(extra, cap_fast)
-                if cap_fast > 0:
-                    for i in fast:
-                        durs[i] += take * ((pieces[i][1] - pieces[i][0]) - durs[i]) / cap_fast
-                extra -= take
-                if extra > 0.05:
-                    slow = [i for i, (a_, b_, sp) in enumerate(pieces) if 0 < sp <= 1.0 and durs[i] < 2 * (b_ - a_) - 1e-6]
-                    cap_slow = sum(2 * (pieces[i][1] - pieces[i][0]) - durs[i] for i in slow)
-                    if cap_slow <= 0:
-                        break
-                    take = min(extra, cap_slow)
-                    for i in slow:
-                        durs[i] += take * (2 * (pieces[i][1] - pieces[i][0]) - durs[i]) / cap_slow
-                seg.slowed = [((b_ - a_) / d if d > 0 else sp) for (a_, b_, sp), d in zip(pieces, durs)]
-                g = self.game_timing(seg)
-                need = self.place_groups(seg, g)
         return max(need, float(seg.spec.get("min", 0)))
 
     # ── 3. pictures ───────────────────────────────────────────────────────────
@@ -320,6 +363,14 @@ class Build:
             cursor = b_
         if cursor < t1:
             pieces.append((cursor, t1, speed))
+        for cut in sorted(seg.cuts):              # split at the narration's anchors, so each stretch slows alone
+            out = []
+            for a_, b_, sp in pieces:
+                if a_ < cut < b_:
+                    out += [(a_, cut, sp), (cut, b_, sp)]
+                else:
+                    out.append((a_, b_, sp))
+            pieces = out
         if seg.slowed is not None and len(seg.slowed) == len(pieces):
             pieces = [(a_, b_, sp) for (a_, b_, _), sp in zip(pieces, seg.slowed)]
 
@@ -460,7 +511,8 @@ class Build:
             rec = self.recordings[name]
             return rec.path / rec.manifest["files"]["music_audio"]
 
-        path = wav_of(rec_name)          # a game segment reads its own recording's; others carry on
+        first = next((s.spec["recording"] for s in segs if s.src_t0 is not None), rec_name)
+        path = wav_of(rec_name if rec_name in self.recordings else first)   # each game segment then reads its own
 
         def read(a: float, length: float, where: Path | None = None) -> np.ndarray:
             where = where or path
