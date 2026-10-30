@@ -160,7 +160,7 @@ class Take:
         game(t0, t1, *vo, rec=self.name, **kw)
 
 
-O = Take("opening", "build/rec_opening", "passages_opening.json")
+O = Take("opening", "build/rec_opening2", "passages_opening.json")
 
 # what the model happened to write, said where it is read; the rest of the opening is generic
 OPENING_NOTES = json.loads((HERE / "opening_notes.json").read_text()) if (HERE / "opening_notes.json").exists() else {}
@@ -596,11 +596,11 @@ storyboard = {
     "music": {"take_audio": "tutorial", "level_db": -34, "duck": 0.65},
     "clicks": {"gain": 0.5},
     "recordings": {"opening": {
-        "script": "opening.cli", "dir": "build/rec_opening", "timeout": 7200,
+        "script": "opening.cli", "dir": "build/rec_opening2", "timeout": 7200,
         "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "
                  "--no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only "
                  "farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 "
-                 "--job-only farmhand --humors all=voluptas --save-path build/rec_opening/save.json"},
+                 "--job-only farmhand --humors all=voluptas --save-path build/rec_opening2/save.json"},
                    "tutorial": {
         "script": "tutorial.cli", "dir": "build/rec_tutorial_b", "timeout": 14400,
         "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "

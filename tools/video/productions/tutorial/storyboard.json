@@ -54,9 +54,9 @@
  "recordings": {
   "opening": {
    "script": "opening.cli",
-   "dir": "build/rec_opening",
+   "dir": "build/rec_opening2",
    "timeout": 7200,
-   "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 --job-only farmhand --humors all=voluptas --save-path build/rec_opening/save.json"
+   "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 --job-only farmhand --humors all=voluptas --save-path build/rec_opening2/save.json"
   },
   "tutorial": {
    "script": "tutorial.cli",
@@ -70,8 +70,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 163.4,
-   "to": 168.14,
+   "from": 183.09,
+   "to": 188.15,
    "fade": true,
    "vo": [
     "Your character in this game is not a sheet of numbers. It is a body, built organ by organ, and a crowd of minds living in it: some notice, some think, some act, and some only feel. Each one speaks in its own voice, and nothing they say is written in advance.",
@@ -81,8 +81,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 168.14,
-   "to": 182.78,
+   "from": 188.15,
+   "to": 203.41,
    "fade": false,
    "vo": [
     "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, each with a name. The sky is fixed, the same on every machine, so a moon always stands for the same world. Two players who pick the same moon walk the same land and meet the same people, so they can compare notes."
@@ -91,8 +91,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 182.78,
-   "to": 193.17,
+   "from": 203.41,
+   "to": 213.88,
    "fade": false,
    "vo": [
     "Choosing a moon generates its world, and its history comes first. Realms rise and fall; castles, temples and cities are founded; then farmland, villages and pastures spread out from them. The card says what kind of world it is. We take Fenumoth, a wooded world. For a first run, any moon will do: every one of them is built to be livable."
@@ -101,15 +101,15 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 193.17,
-   "to": 196.23,
+   "from": 213.88,
+   "to": 217.04,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 196.23,
-   "to": 202.1,
+   "from": 217.04,
+   "to": 223.14,
    "fade": true,
    "vo": [
     "Now the protagonist. There are no strength or charisma scores in this game. A character is a body: five regions, which are the head, the face, the trunk, the arms and the legs; twenty-two organs; twenty-eight organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than half of what the body could reach, so creating a character is really choosing what to give up."
@@ -168,8 +168,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 202.11,
-   "to": 209.07,
+   "from": 223.15,
+   "to": 230.76,
    "fade": true,
    "vo": [
     "First, thinking and memory: the head. As a whole, the head sets your noetic points, how many times you can look and think in one scene, and it sizes working memory, where everything you learn arrives. The anamnesis sizes the residual memory, and how many places you remember: four per point. We raise it by one."
@@ -178,8 +178,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 209.07,
-   "to": 216.73,
+   "from": 230.76,
+   "to": 238.9,
    "fade": false,
    "vo": [
     "The cerebrum sizes the memory for knowledge, like bargaining or archaeology. Two points."
@@ -188,8 +188,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 216.73,
-   "to": 223.8,
+   "from": 238.9,
+   "to": 246.25,
    "fade": false,
    "vo": [
     "The cerebellum sizes the memory for practised skills, like swordsmanship or knotwork, and it lets you learn a new move in the middle of a fight. Two points."
@@ -198,8 +198,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 223.8,
-   "to": 227.67,
+   "from": 246.25,
+   "to": 250.05,
    "fade": false,
    "vo": [
     "The hippocampus sizes the memory for the ways of thinking that use the senses."
@@ -208,8 +208,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 227.67,
-   "to": 231.24,
+   "from": 250.05,
+   "to": 253.62,
    "fade": false,
    "vo": [
     "And the pineal gland sets how much experience a level costs, from twelve points down to six. With two points or more, it also lets a mind doubt its own plan and think again."
@@ -248,8 +248,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 231.24,
-   "to": 237.38,
+   "from": 253.62,
+   "to": 259.96,
    "fade": false,
    "vo": [
     "The senses. The eyes set the reach of a ranged blow, in cells."
@@ -258,8 +258,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 237.38,
-   "to": 244.94,
+   "from": 259.96,
+   "to": 267.31,
    "fade": false,
    "vo": [
     "The ears add their score to your initiative, which decides who acts first in a fight. We raise both."
@@ -268,8 +268,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 244.94,
-   "to": 248.55,
+   "from": 267.31,
+   "to": 271.0,
    "fade": false,
    "vo": [
     "The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it tells you which humors are in a food before you eat it."
@@ -278,8 +278,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 248.55,
-   "to": 255.47,
+   "from": 271.0,
+   "to": 278.0,
    "fade": false,
    "vo": [
     "Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends.",
@@ -289,8 +289,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 255.47,
-   "to": 259.12,
+   "from": 278.0,
+   "to": 281.61,
    "fade": false,
    "vo": [
     "The teeth only decide whether you can eat hard food. We leave them."
@@ -299,8 +299,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 259.12,
-   "to": 271.37,
+   "from": 281.61,
+   "to": 293.8,
    "fade": false,
    "vo": [
     "The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen and the pulmones. Each keeps a queue of forty-nine humors. A sound organ makes mostly blood; a failing one, mostly black bile.",
@@ -310,8 +310,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 271.37,
-   "to": 281.11,
+   "from": 293.8,
+   "to": 303.87,
    "fade": false,
    "vo": [
     "The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four points here, for five in all. I would always do this: it is the difference between a failed roll and a saved one."
@@ -320,8 +320,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 281.11,
-   "to": 290.78,
+   "from": 303.87,
+   "to": 313.0,
    "fade": false,
    "vo": [
     "Life. The heart sets how long you live, how many companions you can lead, one per point, and how many youthful humors you start with, which are warm and lucky. Four points: a long life, and room for a party later."
@@ -330,8 +330,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 290.78,
-   "to": 297.03,
+   "from": 313.0,
+   "to": 319.35,
    "fade": false,
    "vo": [
     "The genitories add dice to every blow you strike. One point."
@@ -340,8 +340,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 297.03,
-   "to": 305.24,
+   "from": 319.35,
+   "to": 327.34,
    "fade": false,
    "vo": [
     "The body in a fight. The backbone sets how much you can carry, and your movement points in a fight: twice its score. Three more points."
@@ -350,8 +350,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 305.24,
-   "to": 312.71,
+   "from": 327.34,
+   "to": 334.8,
    "fade": false,
    "vo": [
     "The hands decide which tools you can use. A practised hand does not get more out of a tool; it can make more things serve as tools. Two points for the right hand."
@@ -360,8 +360,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 312.71,
-   "to": 320.96,
+   "from": 334.8,
+   "to": 343.12,
    "fade": false,
    "vo": [
     "In a fight, each hand and each foot strikes on its own, and the arms are the organs of brute force."
@@ -370,8 +370,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 320.96,
-   "to": 328.93,
+   "from": 343.12,
+   "to": 350.83,
    "fade": false,
    "vo": [
     "The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how far one journey can reach, and your natural defence."
@@ -380,8 +380,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 328.93,
-   "to": 339.19,
+   "from": 350.83,
+   "to": 361.13,
    "fade": false,
    "vo": [
     "The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It comes from the trunk as a whole, a third of its score plus one, and each wound costs a point of it until it heals. Twenty-five points spent. That is the body."
@@ -390,23 +390,23 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 340.05,
-   "to": 404.76,
+   "from": 362.06,
+   "to": 473.85,
    "fade": true,
    "vo": [
     "The body has no past yet. The game gives it one through five childhood memories, and they are played exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.",
     {
-     "text": "I almost have it, a half-remembered sobbing, the woman's voice lost in the dark.",
+     "text": "I almost have it, something comes back. This was a half-remembered muffled weeping, a woman's voice somewhere in the dark, wistful and faintly aching.",
      "style": "reading",
-     "at": 361.9
+     "at": 387.4
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 404.76,
-   "to": 410.26,
+   "from": 473.85,
+   "to": 479.75,
    "fade": false,
    "vo": [
     "That text was not written in advance. It was written a moment ago, by a language model running on this computer. It runs entirely on your machine: no account, no server, nothing sent anywhere, and it works on the processor alone.",
@@ -425,38 +425,38 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 410.26,
-   "to": 530.0,
+   "from": 479.75,
+   "to": 604.0,
    "fade": false,
    "vo": [
     "We click the word voice, choose Think, and pick the mind that will think. For now, there is only one.",
     {
-     "text": "I wistfully trace the edges of forgotten weeping, a woman's voice hushed and distant. I reach, half-remembered, towards sobs from my childhood, let them come as they will, through the slow, aching recovery of my past.",
+     "text": "I wistfully recall a half-echoed sob, a woman's voice lost in shadows. I yearn to trace childhood sobs, let them whisper through my tired mind. I will let memories slowly rise, like ancient dust on an old wind.",
      "style": "reading",
-     "at": 433.2
+     "at": 504.4
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 530.0,
-   "to": 567.06,
+   "from": 604.0,
+   "to": 659.4,
    "fade": false,
    "vo": [
     "Now the acting mind puts the goal into words.",
     {
-     "text": "I will try to remember sobs from my childhood on this vast plain.",
+     "text": "I will try to recall the sobbing of my childhood in this wistful, aching way, half-familiar yet distant.",
      "style": "reading",
-     "at": 566.66
+     "at": 659.0
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 567.06,
-   "to": 572.52,
+   "from": 659.4,
+   "to": 665.12,
    "fade": false,
    "vo": [
     "The act is offered as a line. We click it, then Execute."
@@ -465,15 +465,15 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 572.52,
-   "to": 637.99,
+   "from": 665.12,
+   "to": 773.02,
    "fade": false,
    "vo": [
     "In childhood nothing is rolled: remembering always succeeds.",
     {
-     "text": "I tried to recall the sobs from my childhood, and they came back, a shadowy memory on the dock by the ancient port city.",
+     "text": "I tried to recall the sobs of my childhood, and they came back, faint and distant, as if from a shadowy place. It felt half-familiar, as if I'd known them once, but not quite, not yet.",
      "style": "reading",
-     "at": 580.9
+     "at": 674.2
     },
     {
      "text": "Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code decided what that means for your character. Every passage works like this: the words are the model's; what they give you is the game's.",
@@ -484,65 +484,65 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 637.99,
-   "to": 643.83,
+   "from": 773.02,
+   "to": 779.04,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 643.83,
-   "to": 724.15,
+   "from": 779.04,
+   "to": 870.4,
    "fade": true,
    "vo": [
     "The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A new mind notices different things.",
     {
-     "text": "I hear the waves' lullaby, smell the sweat mingling with the salty air, a low, rhythmic thunder echoing in my mind.",
+     "text": "I hear the distant waves, feel the faint scent of sweat and sea. This was the low thunder of memories, a mix of salt and old emotions rising from the earth.",
      "style": "reading",
-     "at": 666.1
+     "at": 802.3
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 724.15,
-   "to": 851.4,
+   "from": 870.4,
+   "to": 1023.8,
    "fade": false,
    "vo": [
     "We click the word sweat.",
     {
-     "text": "I recall the faint thunder and the lingering scent, and long to revisit the sounds of the waves and the sweat of my childhood. I'll let these whispers of memory slowly rise from the fertile soil, as if they have been here all along, half-forgotten.",
+     "text": "I half-remember that low, rhythmic thunder, and the sour, salt-and-sweat smell from below. I yearn to recall the sound of waves and the scent of sweat from my childhood. I will let these memories slowly recover, one fragment at a time, in this old world of iron and myth.",
      "style": "reading",
-     "at": 748.9
+     "at": 897.0
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 851.4,
-   "to": 949.1,
+   "from": 1023.8,
+   "to": 1088.64,
    "fade": false,
    "vo": [
     {
-     "text": "I will try to recall the sound of waves and the scent of sweat from my childhood, wistful and faintly aching, as if they are half-familiar echoes in the vast, medieval plain.",
+     "text": "I will try to recall the sound of waves and the scent of sweat from my childhood, half-familiar yet distant on this vast plain.",
      "style": "reading",
-     "at": 948.7
+     "at": 1088.24
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 949.1,
-   "to": 1061.59,
+   "from": 1088.64,
+   "to": 1201.77,
    "fade": false,
    "vo": [
     {
-     "text": "I tried to recall the sound of waves and the scent of sweat, and it did come back. It was as if a mist lifted, revealing a distant shore and the docks where the scent lingered, heavy and familiar yet half-forgotten.",
+     "text": "I tried to recall the sound of waves and the scent of sweat, and it came back to me, like a whisper on the breeze. The docks, heavy bundles, and the soft smell of sea and labor, all felt half-familiar, a distant ache.",
      "style": "reading",
-     "at": 963.0
+     "at": 1104.0
     },
     {
      "text": "This one gives two ways of thinking: Hard Labor and Tide Watching. The docks taught us to work, and to read the water.",
@@ -553,54 +553,54 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 1061.59,
-   "to": 1067.66,
+   "from": 1201.77,
+   "to": 1207.74,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1067.66,
-   "to": 1150.31,
+   "from": 1207.74,
+   "to": 1272.87,
    "fade": true,
    "vo": [
     "The third memory: something sharp.",
     {
-     "text": "I recall a sharp edge, a half-remembered gleam of metal behind a trader's stall. The faint smell of oil and iron lingers, a sharp memory in the air.",
+     "text": "I recall a sharpness, a half-remembered gleam of iron behind a trader's stall, faintly scenting oil and iron.",
      "style": "reading",
-     "at": 1080.0
+     "at": 1220.5
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1150.31,
-   "to": 1292.3,
+   "from": 1272.87,
+   "to": 1421.9,
    "fade": false,
    "vo": [
-    "We click the word sharp.",
+    "We click the word sharpness.",
     {
-     "text": "I wistfully recall the gleam of metal, half-faintly, and the smell of oil and iron. I seek a sharp edge of childhood, to recover its soft corners. I will let my thoughts drift, seeking that elusive memory, in the gentle shadows of a medieval world.",
+     "text": "I remember a half-recognizable gleam of metal near a trader's stall, the scent of oil and iron lingering. I seek to recall a sharp edge from my childhood, and I will let the slow recovery of memories guide me, as if the plain itself is a canvas of faded dreams.",
      "style": "reading",
-     "at": 1176.9
+     "at": 1299.9
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1292.3,
-   "to": 1334.09,
+   "from": 1421.9,
+   "to": 1466.8,
    "fade": false,
    "vo": [
     {
-     "text": "I will try to recall a keen scent from my childhood on this vast plain.",
+     "text": "I will try to remember a sharp taste from my childhood in this half-forgotten world.",
      "style": "reading",
-     "at": 1333.69
+     "at": 1466.4
     },
     {
-     "text": "The acting mind reaches for a keen scent rather than a blade. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds.",
+     "text": "The acting mind reaches for a sharp taste rather than a blade. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds.",
      "wait": true
     }
    ]
@@ -608,14 +608,14 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 1334.09,
-   "to": 1433.3,
+   "from": 1466.8,
+   "to": 1589.33,
    "fade": false,
    "vo": [
     {
-     "text": "I tried to recall a blade from my youth, and it came back to me. A sword, sharp and old, bought with my first coin, from the market's trader on the edge of the forest.",
+     "text": "I tried to recall a sword from my childhood, and it came back, sharp and real as a distant dream. A market trader's coin, a blade bought with first earned coin, felt as familiar as a half-forgotten scent on the wind.",
      "style": "reading",
-     "at": 1348.7
+     "at": 1482.0
     },
     {
      "text": "A short sword, and Bargaining.",
@@ -626,68 +626,72 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 1433.3,
-   "to": 1439.05,
+   "from": 1589.33,
+   "to": 1595.12,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1439.05,
-   "to": 1518.82,
+   "from": 1595.12,
+   "to": 1689.83,
    "fade": true,
    "vo": [
     "The fourth: a dream of a golden arch.",
     {
-     "text": "I recall a dream, a golden arch that curves great and bright in the sky. Fuzzy and ancient, it radiates an impossible brilliance, ancient and immense.",
+     "text": "I recall a dream, a golden arch that curved like an ancient curve of gold in a dream sky. Fuzzy yet vivid, it was immense and blindingly bright.",
      "style": "reading",
-     "at": 1451.7
+     "at": 1608.8
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1518.82,
-   "to": 1701.1,
+   "from": 1689.83,
+   "to": 1841.5,
    "fade": false,
    "vo": [
     "We click the word arch.",
     {
-     "text": "I wistfully recall a golden arc, a fuzzy great curve in the sky, ancient and immense, its light impossibly bright. I yearn to trace the dream's path, to recall childhood's glow, where memories slowly emerge, half-familiar yet distant. In this medieval world, I will let my thoughts drift, seeking the golden arch with a faint ache of longing.",
+     "text": "I remember a faint curve of gold, ancient and immense, in the dream sky. I want to trace that golden arch from my childhood dreams. I will let the slow recovery of these forgotten memories take me, as if the world is a vast, silent plain where shadows hold the echoes of my youth.",
      "style": "reading",
-     "at": 1544.7
+     "at": 1716.5
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1701.1,
-   "to": 1754.67,
+   "from": 1841.5,
+   "to": 1901.83,
    "fade": false,
    "vo": [
     {
-     "text": "I will try to recall a golden arch from my childhood dreams, half-familiar on the vast medieval plain.",
+     "text": "I will try to recall a dream of a golden arch from my childhood in the old world.",
      "style": "reading",
-     "at": 1754.27
+     "at": 1901.43
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1754.67,
-   "to": 1869.84,
+   "from": 1901.83,
+   "to": 2016.87,
    "fade": false,
    "vo": [
     {
-     "text": "I tried to recall a dream of a golden arch from my childhood, and it came back to me with a wistful ache. A golden arch rising over ruins, as if a beacon for lost times, until I felt a gentle pull to find it.",
+     "text": "I wove the threads of my dream, a golden arch rising over ruins, until sleep's soft grasp pulled me away. Lost but not forgotten, the image lingers, a whisper in the wind.",
      "style": "reading",
-     "at": 1768.5
+     "at": 1917.6
     },
     {
      "text": "A traveller's backpack, with bread and cheese inside, and Archaeology. Keep the bread in mind.",
+     "wait": true
+    },
+    {
+     "text": "And the dream ends the way dreams do: sleep pulls the child away before the arch is reached.",
      "wait": true
     }
    ]
@@ -695,54 +699,54 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 1869.84,
-   "to": 1875.62,
+   "from": 2016.87,
+   "to": 2022.8,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1875.62,
-   "to": 1973.71,
+   "from": 2022.8,
+   "to": 2137.98,
    "fade": true,
    "vo": [
     "The last memory: shelter.",
     {
-     "text": "I almost have it... a shelter, this elusive dark hillside, no door, no overhang, no gap, nothing to crawl into. Familiar yet distant, as if through mist.",
+     "text": "I almost have it... a shelter on a dark hillside, elusive and steep, no door, no overhang, no gap to crawl into. Familiar yet distant, half-familiar shadows linger in the vast, empty plain.",
      "style": "reading",
-     "at": 1891.0
+     "at": 2038.7
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 1973.71,
-   "to": 2097.7,
+   "from": 2137.98,
+   "to": 2288.9,
    "fade": false,
    "vo": [
     "We click the word shelter.",
     {
-     "text": "I wistfully recall a dark hillside, elusive and unsheltered, where no door or overhang beckons. I yearn to trace the shelter of my childhood, let it surface slowly through the fog of tiredness.",
+     "text": "I wistfully recall a dark hillside, elusive and unsheltered, with no door, no overhang, no gap to crawl into. I long to capture shelter from my childhood, and slowly, through the fog of memory, I will try to recover its essence.",
      "style": "reading",
-     "at": 2000.6
+     "at": 2164.8
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 2097.7,
-   "to": 2200.03,
+   "from": 2288.9,
+   "to": 2356.48,
    "fade": false,
    "vo": [
     {
-     "text": "I will try to remember the warmth of my childhood home, a gentle fire and soft textiles, as I sit on the old stone steps, my mind weaving these shapes and scents into a soft quilt of memory.",
+     "text": "I will try to remember a warmth from my childhood, a sheltered feeling, in the gentle twilight of my tired mind.",
      "style": "reading",
-     "at": 2199.63
+     "at": 2356.08
     },
     {
-     "text": "Here the acting mind wanders off to a warm home and a fire, the very opposite of this memory. Read it as a child's wishful thinking: what comes back has no shelter at all.",
+     "text": "Here the acting mind reaches for warmth and a sheltered feeling, the very opposite of this memory. Read it as a child's wishful thinking: what comes back has no shelter at all.",
      "wait": true
     }
    ]
@@ -750,14 +754,14 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2200.03,
-   "to": 2314.96,
+   "from": 2356.48,
+   "to": 2458.09,
    "fade": false,
    "vo": [
     {
-     "text": "I tried to recall the shelter of my youth, and it came back to me with a ache. Searching for refuge from the tempest, I found none, and in my daze, I lay at the foot of an ancient tree.",
+     "text": "I tried to remember shelter from my childhood, and it came back to me wistfully. It was searching for shelter from the storm, and finding nothing... a faint ache at the foot of a tree.",
      "style": "reading",
-     "at": 2214.3
+     "at": 2371.6
     },
     {
      "text": "This one gives no item, only two ways of thinking: Exploration and Endurance. My advice for your own childhood: read the fragments, and pick what you want your character to be. The memories you choose are your starting kit.",
@@ -768,36 +772,36 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2314.96,
-   "to": 2320.84,
+   "from": 2458.09,
+   "to": 2463.77,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 2320.84,
-   "to": 2403.4,
+   "from": 2463.77,
+   "to": 2558.6,
    "fade": true,
    "vo": [
     "Childhood is over. The body wakes on open ground, spent, and a mind takes our bearings.",
     {
-     "text": "I remember the docks, where every step pressed into the bone, and now my legs ache as if they're carrying the weight of a storm.",
+     "text": "I dream of searching for shelter from the storm and finding none, but now my legs ache, a deep, grinding soreness where every step has pressed into the bone.",
      "style": "reading",
-     "at": 2345.7
+     "at": 2488.6
     }
    ]
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 2403.4,
-   "to": 2504.08,
+   "from": 2558.6,
+   "to": 2662.65,
    "fade": false,
    "vo": [
     {
-     "text": "I stretch my limbs, feeling the bone-deep exhaustion from my childhood at the docks. It's not just tiredness, but spent from carrying heavy loads day after day, as if the road had drained something more than muscle.",
+     "text": "I bend my back once more against the heavy stones, feeling the same bone-deep exhaustion settle through my body. It's not just tiredness, but spent, as if the endless march has drained something more than muscle.",
      "style": "reading",
-     "at": 2412.8
+     "at": 2568.7
     },
     {
      "text": "Getting up is the first real roll of the game.",
@@ -808,15 +812,15 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2504.08,
-   "to": 2628.7,
+   "from": 2662.65,
+   "to": 2769.3,
    "fade": false,
    "vo": [
     "We think about the legs, this time with Tide Watching, one of the minds from the docks. Listen to how differently it reasons.",
     {
-     "text": "I wait at the turn, knowing the window is closing. The run will not come until after, and the flat will stay walkable just a little longer. I must hold on, for the stamina to keep going long after others tire.",
+     "text": "I must press on, the flat window is closing, the soreness grows, I will keep my strength for when others tire, for the run is yet to come.",
      "style": "reading",
-     "at": 2540.1
+     "at": 2701.6
     },
     {
      "text": "Tide Watching reads getting up as a tide: a window closing, a run still to come. That is what a persona does: the same question, put to a different mind, comes back in its own voice.",
@@ -827,17 +831,17 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2628.7,
-   "to": 2677.73,
+   "from": 2769.3,
+   "to": 2816.79,
    "fade": false,
    "vo": [
     {
-     "text": "I will rest where shadows lengthen and rise when light returns, continuing my journey.",
+     "text": "I will walk onward, my journey undiminished by the weariness.",
      "style": "reading",
-     "at": 2642.7
+     "at": 2783.8
     },
     {
-     "text": "Endurance, which will act, puts it its own way: rest, then rise.",
+     "text": "Endurance, which will act, has one answer to everything: walk on.",
      "wait": true
     }
    ]
@@ -845,8 +849,8 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2677.73,
-   "to": 2690.22,
+   "from": 2816.79,
+   "to": 2829.21,
    "fade": false,
    "vo": [
     "We click the act, and Execute. The dice: four of them, and two sixes."
@@ -863,14 +867,14 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2690.22,
-   "to": 2735.49,
+   "from": 2829.21,
+   "to": 2877.28,
    "fade": false,
    "vo": [
     {
-     "text": "I rise and press on, the weight of my journey yet to be decided.",
+     "text": "I pressed on, my strength holding despite the weariness, the journey not done yet.",
      "style": "reading",
-     "at": 2699.1
+     "at": 2839.3
     },
     {
      "text": "Success. Look at the lines below: every mind in the chain gained a point of experience, and the act taught a new one, Vigor. Doing things is how you learn.",
@@ -881,15 +885,15 @@
   {
    "type": "game",
    "recording": "opening",
-   "from": 2735.49,
-   "to": 2741.3,
+   "from": 2877.28,
+   "to": 2883.03,
    "fade": false
   },
   {
    "type": "game",
    "recording": "opening",
-   "from": 2741.3,
-   "to": 2751.58,
+   "from": 2883.03,
+   "to": 2893.24,
    "fade": false,
    "vo": [
     "The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look at what we have."
