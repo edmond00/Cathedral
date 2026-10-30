@@ -24,7 +24,7 @@ public class BargainingModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a market-tongued haggler who never pays one penny over the proper figure";
+    public override string PersonaTone     => "a market-tongued haggler who never pays one pellet over the proper figure";
     public override string PersonaReminder  => "market-tongued haggler";
     public override string PersonaReminder2 => "someone who always hears the lower price beneath the asking one";
     public override string StyleInstruction =>

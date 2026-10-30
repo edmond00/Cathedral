@@ -48,9 +48,9 @@ public class PlowmanArchetype : PeasantArchetype
     {
         [DialogueTopic.Beasts]     = "I know my oxen better than I know most people, and I'd say that's the right way round",
         [DialogueTopic.Weather]    = "you can't plough wet clay. It rolls up on the share and you spend the day scraping instead of turning",
-        [DialogueTopic.Seasons]    = "the ploughing weeks are the hardest of my year and the ones I'd not give up",
+        [DialogueTopic.Seasons]    = "the ploughing eleven-days are the hardest of my round and the ones I'd not give up",
         [DialogueTopic.Work]       = "a straight furrow is the one thing I've got that nobody can argue with",
-        [DialogueTopic.Health]     = "my back. Everyone who's held the stilts more than ten years says the same word",
+        [DialogueTopic.Health]     = "my back. Everyone who's held the stilts more than ten rounds says the same word",
         [DialogueTopic.Rest]       = "a quiet word at noon and a sit-down out of the wind. That'll do me",
         [DialogueTopic.Food]       = "bring me ale at noon and you can talk at me as long as you like",
         [DialogueTopic.Stories]    = "there's an old song for the ploughing. I sing it badly and the oxen don't complain",

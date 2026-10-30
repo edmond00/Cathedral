@@ -38,7 +38,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Forge-Deafened",
                 Wounds      = new Func<Wound>[] { () => new PerforatedEardrumLeftWound() },
                 Appearance  = "leans in close and still asks you to say it again",
-                Persona     = "Thirty years beside the anvil has taken most of your hearing. You shout without meaning to and you miss half of what is said to you.",
+                Persona     = "Thirty rounds beside the anvil has taken most of your hearing. You shout without meaning to and you miss half of what is said to you.",
                 Opinions    = new[] { (DialogueTopic.Health, "The hammer took my ears. Everyone said it would and I couldn't hear them saying it") },
             },
             new PersonalityTrait
@@ -61,7 +61,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "aesthetic", "scrutiny", "patience" },
                 Appearance  = "turning a finished piece over and over, plainly unhappy with it",
                 Persona     = "You break up work that does not satisfy you rather than sell it. It costs you money and you would do it again tomorrow.",
-                Opinions    = new[] { (DialogueTopic.Trade, "I've put good iron back in the fire rather than let it out with my mark on it. Twice this month") },
+                Opinions    = new[] { (DialogueTopic.Trade, "I've put good iron back in the fire rather than let it out with my mark on it. Twice this season") },
             },
             new PersonalityTrait
             {
@@ -115,7 +115,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "endurance", "meditation" },
                 Organs      = new[] { ("pineal_gland", -1) },
                 Appearance  = "grey about the eyes, and blinks slowly like someone half in a dream",
-                Persona     = "You have not had a full night's sleep in twenty years. You are gentle and vague and you lose the thread of sentences.",
+                Persona     = "You have not had a full night's sleep in twenty rounds. You are gentle and vague and you lose the thread of sentences.",
                 Opinions    = new[] { (DialogueTopic.Rest, "I sleep in pieces. An hour here, two while the oven cools. I've forgotten what the other kind is like") },
                 DailyLabour = "firing the oven at an hour that has no name, and dozing upright between batches",
             },
@@ -182,7 +182,7 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new BlackEyeRightWound() },
                 Appearance  = "thick-armed, with a fresh bruise about one eye and no apparent concern about it",
                 Persona     = "You throw people out of your own house most weeks and you are good at it. You are friendly right up until you are not.",
-                Opinions    = new[] { (DialogueTopic.Neighbours, "Two or three a month need carrying out. It's not personal and they're back by the week's end") },
+                Opinions    = new[] { (DialogueTopic.Neighbours, "Two or three in thirty days need carrying out. It's not personal and they're back by the eleven-day's end") },
             },
             new PersonalityTrait
             {
@@ -190,11 +190,11 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Lost a Batch",
                 ModiMentis  = new[] { "grudgekeeping", "scrutiny" },
                 Appearance  = "checking and rechecking something in a way that suggests it went wrong once",
-                Persona     = "A whole season's brewing went sour on you last year and nearly finished you. You are superstitious and controlling about the process now.",
+                Persona     = "A whole season's brewing went sour on you last round and nearly finished you. You are superstitious and controlling about the process now.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Work,    "I lost a full gyle to the heat last summer. I've not slept easy in a warm spell since"),
-                    (DialogueTopic.Weather, "A close, thundery week and I'm at that tub every hour like a man watching a sick child"),
+                    (DialogueTopic.Weather, "A close, thundery eleven-day and I'm at that tub every hour like a man watching a sick child"),
                 },
             },
             new PersonalityTrait
@@ -230,8 +230,8 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new FingersAmputeeRightWound() },
                 ModiMentis  = new[] { "steady_hand" },
                 Appearance  = "the right hand is short of a thumb and most of a finger",
-                Persona     = "The saw took your thumb years ago. You have relearned the entire trade left-handed and you are better than you were.",
-                Opinions    = new[] { (DialogueTopic.Work, "Took my thumb at twenty-six. Learned it all again the other way round. Took four years") },
+                Persona     = "The saw took your thumb rounds ago. You have relearned the entire trade left-handed and you are better than you were.",
+                Opinions    = new[] { (DialogueTopic.Work, "Took my thumb at twenty-six. Learned it all again the other way round. Took four rounds") },
             },
             new PersonalityTrait
             {
@@ -285,8 +285,8 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Never Made a Leaker",
                 ModiMentis  = new[] { "aesthetic", "patience", "bearing" },
                 Appearance  = "an unhurried certainty about the hands that is almost annoying to watch",
-                Persona     = "No barrel of yours has ever leaked and you will tell anyone this within a minute of meeting them.",
-                Opinions    = new[] { (DialogueTopic.Work, "Not one. Forty years and not one cask of mine has ever wept. Ask anybody") },
+                Persona     = "No barrel of yours has ever leaked and you will tell anyone this within a moment of meeting them.",
+                Opinions    = new[] { (DialogueTopic.Work, "Not one. Forty rounds and not one cask of mine has ever wept. Ask anybody") },
             },
             new PersonalityTrait
             {
@@ -368,7 +368,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "endurance" },
                 Organs      = new[] { ("pulmones", -1) },
                 Appearance  = "flour-pale to the eyebrows, and coughs in a way that stops the conversation",
-                Persona     = "Thirty years of meal dust has ruined your chest. You cough badly, especially indoors, and you know exactly where it ends.",
+                Persona     = "Thirty rounds of meal dust has ruined your chest. You cough badly, especially indoors, and you know exactly where it ends.",
                 Opinions    = new[] { (DialogueTopic.Health, "The dust. It goes in and it stays in. Every miller I've known coughed like this at the end") },
             },
             new PersonalityTrait
@@ -399,11 +399,11 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Knows Who Will Starve",
                 ModiMentis  = new[] { "tallycraft", "empathy", "scrutiny" },
                 Appearance  = "watches the sacks coming in with something more careful than commerce in it",
-                Persona     = "Every sack in the district passes through your hands, so you know months before anyone else which households will not last the winter. It sits on you.",
+                Persona     = "Every sack in the district passes through your hands, so you know seasons before anyone else which households will not last the winter. It sits on you.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Harvest,    "I see it first. I know by the turn of the year who'll be short, and I've not worked out what to do with knowing"),
-                    (DialogueTopic.Neighbours, "There's two houses bringing less each month. Nobody's noticed but me, and I'll not be the one to say it aloud"),
+                    (DialogueTopic.Harvest,    "I see it first. I know by the turn of the round who'll be short, and I've not worked out what to do with knowing"),
+                    (DialogueTopic.Neighbours, "There's two houses bringing less each season. Nobody's noticed but me, and I'll not be the one to say it aloud"),
                 },
             });
 
@@ -454,7 +454,7 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new BrokenBackboneWound() },
                 Appearance  = "permanently curved forward, as though still sitting at the treadles while standing up",
                 Persona     = "Your back has set into the shape of the loom. Standing straight hurts and you have stopped trying.",
-                Opinions    = new[] { (DialogueTopic.Health, "The chair did it. Forty years in the same chair and now I'm the shape of it") },
+                Opinions    = new[] { (DialogueTopic.Health, "The chair did it. Forty rounds in the same chair and now I'm the shape of it") },
             },
             new PersonalityTrait
             {
@@ -500,7 +500,7 @@ public sealed partial class PersonalityTraitRegistry
                 TraitId          = "apprentice_prodigy",
                 DisplayName      = "Better Than the Master",
                 ModiMentis       = new[] { "finesse", "steady_hand", "aesthetic" },
-                Appearance       = "young hands moving with a confidence that does not match the years",
+                Appearance       = "young hands moving with a confidence that does not match the rounds",
                 Persona          = "You are already better at the craft than the man teaching you, and you both know it. You are careful never to show it, and not careful enough.",
                 SelfIntroduction = "only the apprentice here — though you might ask who actually made the piece you're looking at",
                 Opinions         = new[] { (DialogueTopic.Work, "I'll say this quietly: there's work goes out under his mark that came off my bench") },
@@ -539,7 +539,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "social_interaction", "mythomania" },
                 Appearance  = "visibly delighted that someone is talking to them",
                 Persona     = "You are lonely and starved of conversation, so you tell anyone friendly far more about the workshop's business than you should.",
-                Opinions    = new[] { (DialogueTopic.Neighbours, "You want to know who's behind on payments? I shouldn't. But I know, and it's been a long week") },
+                Opinions    = new[] { (DialogueTopic.Neighbours, "You want to know who's behind on payments? I shouldn't. But I know, and it's been a long eleven-day") },
             },
             new PersonalityTrait
             {

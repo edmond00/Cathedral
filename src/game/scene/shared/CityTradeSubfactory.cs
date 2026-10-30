@@ -114,7 +114,7 @@ public static class CityTradeSubfactory
             { Senses = SensoryProfile.Fragrant, VerbModiMentis = Teach(("examine", "anatomy_lore"), ("smell", "carrion_sense"), ("contemplate", "vanitas")) });
 
         shop.PointsOfInterest.Add(new BlockPointOfInterest("Chopping Block",
-            new() { "A great round of elm worn into a hollow by years of the cleaver" },
+            new() { "A great round of elm worn into a hollow by rounds of the cleaver" },
             new() { I(new Cleaver()) }, new[] { "hollowed", "scarred", "stained" })
             { Senses = SensoryProfile.Audible, VerbModiMentis = Teach(("examine", "butchery"), ("listen", "keen_ear")) });
 
@@ -187,7 +187,7 @@ public static class CityTradeSubfactory
             new[] { "dim", "fragrant", "hushed", "dusty" });
 
         shop.PointsOfInterest.Add(new JarPointOfInterest("Painted Jars",
-            new() { "Rows of waisted majolica jars, each labelled in a careful Latin hand" },
+            new() { "Rows of waisted glazed jars, each labelled in a careful Academic hand" },
             new() { I(new Albarello()), I(new Theriac()) }, new[] { "painted", "labelled", "ordered" })
             { Senses = SensoryProfile.Fragrant, VerbModiMentis = Teach(("examine", "physic"), ("smell", "apothecary_nose")) });
 

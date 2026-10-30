@@ -264,7 +264,7 @@ public sealed class Bamboo : WoodRawItem
     public override string ItemId      => "bamboo";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Bamboo";
-    public override string Description => "A jointed cane of green bamboo, hollow, light and very hard";
+    public override string Description => "A jointed cane of green cane, hollow, light and very hard";
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Light;
     public override int PriceReference => 4;

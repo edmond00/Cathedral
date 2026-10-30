@@ -52,7 +52,7 @@ public class SwineherdArchetype : PeasantArchetype
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
         [DialogueTopic.Beasts]     = "a pig is cleverer than a dog and twice as stubborn. Anyone who calls them filthy has never watched one choose where to lie",
-        [DialogueTopic.Wilds]      = "acorn-time in the wood is the best month of my year. They come back fat and I come back happy",
+        [DialogueTopic.Wilds]      = "acorn-time in the wood is the best season of my round. They come back fat and I come back happy",
         [DialogueTopic.Food]       = "bacon through winter is the difference between hard and hungry. Everyone forgets that until spring",
         [DialogueTopic.Seasons]    = "autumn for the mast, and then the killing when the cold comes. That's the shape of it",
         [DialogueTopic.Neighbours] = "folk stand upwind of me and eat my pork all winter. I find that funny more days than not",

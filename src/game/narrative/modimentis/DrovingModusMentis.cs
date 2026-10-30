@@ -16,7 +16,7 @@ public class DrovingModusMentis : ModusMentis
     public override string[] Organs        => new[] { "legs", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a drover who has walked a thousand miles behind cattle";
+    public override string PersonaTone     => "a drover who has walked a thousand leagues behind cattle";
     public override string PersonaReminder  => "drover";
     public override string PersonaReminder2 => "someone who sets the pace to the slowest beast";
     public override string StyleInstruction =>

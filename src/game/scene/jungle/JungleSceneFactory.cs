@@ -250,10 +250,10 @@ public class JungleSceneFactory : WildSceneFactory
         moods: new[] { "bright", "steaming", "tangled", "loud" });
 
     private static Area BuildBambooBrake() => new ThicketArea(
-        displayName: "Bamboo Brake",
-        contextDescription: "in the bamboo brake",
-        transitionDescription: "slip into the bamboo",
-        descriptions: new() { "Bamboo in clumps so dense the light comes through green, the canes knocking together overhead" },
+        displayName: "Cane Brake",
+        contextDescription: "in the cane brake",
+        transitionDescription: "slip into the cane",
+        descriptions: new() { "Cane in clumps so dense the light comes through green, the canes knocking together overhead" },
         moods: new[] { "knocking", "green-lit", "dense", "creaking" });
 
     private static Area BuildRiverbank() => new RiverbankArea(
@@ -435,7 +435,7 @@ public class JungleSceneFactory : WildSceneFactory
     ) { Senses = SensoryProfile.Fragrant, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "herblore", ["smell"] = "perfumery", ["contemplate"] = "aesthetic" } };
 
     private static PointOfInterest BuildBambooStand() => new BambooPointOfInterest(
-        displayName: "Bamboo Stand",
+        displayName: "Cane Stand",
         descriptions: new() { "A clump of green canes as thick as an arm, jointed, rising out of sight, creaking as they sway" },
         items: new() { new ItemElement(new Bamboo()), new ItemElement(new Bamboo()), new ItemElement(new Twig()) },
         moods: new[] { "creaking", "jointed", "towering", "green" }

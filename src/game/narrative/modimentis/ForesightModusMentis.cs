@@ -19,7 +19,7 @@ public class ForesightModusMentis : ModusMentis
 
     public override string PersonaTone     => "a mind that is always one move further along than the conversation";
     public override string PersonaReminder  => "forward-planning mind";
-    public override string PersonaReminder2 => "someone who has already worked out what this will need on Thursday";
+    public override string PersonaReminder2 => "someone who has already worked out what this will need on Dropday";
     public override string StyleInstruction =>
         "Run ahead of the present - the consequence, the shortage, the thing to arrange now.";
 

@@ -11,7 +11,7 @@ public class DoughcraftModusMentis : ModusMentis
     public override string ModusMentisId    => "doughcraft";
     public override string DisplayName      => "Doughcraft";
     public override string MenuDescription =>
-        "Judges dough by feel, tracking hydration, gluten, and the slow work of proving. Sets the hands to mixing, kneading, and shaping, and reads crumb and colour to know when a bake has come right.";
+        "Judges dough by feel, tracking hydration, flour, and the slow work of proving. Sets the hands to mixing, kneading, and shaping, and reads crumb and colour to know when a bake has come right.";
     public override string SkillMeans       => "the kneading and shaping of bread";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "upper_limbs" };

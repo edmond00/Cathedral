@@ -11,7 +11,7 @@ public class CoppicingModusMentis : ModusMentis
     public override string ModusMentisId    => "coppicing";
     public override string DisplayName      => "Coppicing";
     public override string MenuDescription =>
-        "Cuts a wood so it keeps producing: the angle that sheds water, the height that regrows, which stools to take this year and which to leave. Farming timber rather than harvesting it, on a cycle of years.";
+        "Cuts a wood so it keeps producing: the angle that sheds water, the height that regrows, which stools to take this round and which to leave. Farming timber rather than harvesting it, on a cycle of rounds.";
     public override string SkillMeans       => "the cutting of a wood so that it grows again";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
@@ -22,11 +22,11 @@ public class CoppicingModusMentis : ModusMentis
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a woodsman's patience that thinks in seven-year cycles";
+    public override string PersonaTone     => "a woodsman's patience that thinks in seven-round cycles";
     public override string PersonaReminder  => "coppice-cutting woodsman";
-    public override string PersonaReminder2 => "someone who cuts this year for the wood ten years out";
+    public override string PersonaReminder2 => "someone who cuts this round for the wood ten rounds out";
     public override string StyleInstruction =>
-        "Patient and far-sighted - judge whatever is in front of you by what it will be years from now.";
+        "Patient and far-sighted - judge whatever is in front of you by what it will be rounds from now.";
 
     public override string PersonaPrompt => @"You are the inner voice of COPPICING, which is cutting a wood in such a way that there is still a wood.
 

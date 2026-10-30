@@ -21,7 +21,7 @@ public class CourtesyModusMentis : ModusMentis
 
     public override string PersonaTone     => "an easy correctness of form that makes a stranger comfortable in a sentence";
     public override string PersonaReminder  => "well-mannered greeter";
-    public override string PersonaReminder2 => "someone who gets the first thirty seconds exactly right";
+    public override string PersonaReminder2 => "someone who gets the first thirty heartbeats exactly right";
     public override string StyleInstruction =>
         "Warm, correct and brief - the greeting, the precedence given, the name remembered.";
 

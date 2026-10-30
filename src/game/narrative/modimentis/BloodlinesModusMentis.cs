@@ -10,7 +10,7 @@ public class BloodlinesModusMentis : ModusMentis
     public override string ModusMentisId    => "bloodlines";
     public override string DisplayName      => "Bloodlines";
     public override string MenuDescription =>
-        "Keeps the breeding of animals in mind across generations: which sire threw sound legs, which dam passed on a temper, which line runs to size and which to milk. Plans matings years ahead.";
+        "Keeps the breeding of animals in mind across generations: which sire threw sound legs, which dam passed on a temper, which line runs to size and which to milk. Plans matings rounds ahead.";
     public override string SkillMeans       => "the reckoning of breeding across generations";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "cerebrum", "hippocampus" };

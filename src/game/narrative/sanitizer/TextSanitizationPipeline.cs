@@ -148,8 +148,13 @@ public static class TextSanitizationPipeline
         if (string.IsNullOrWhiteSpace(text))
             return text;
 
-        // Layer 1 — dictionary replacement (always runs, sync)
-        text = ForbiddenWordsDictionary.Apply(text);
+        // Layer 1 — dictionary replacement (always runs, sync). Logged, so a playtest's log says which
+        // words the model reached for: the list grows from these lines (see --forbidden-words-scan).
+        string layered = ForbiddenWordsDictionary.Apply(text, sourceVocabulary);
+        if (layered != text)
+            Console.WriteLine("TextSanitizationPipeline: Layer 1 replaced [" +
+                string.Join(", ", ForbiddenWordsDictionary.FindForms(text)) + "]");
+        text = layered;
 
         // In playground mode, observation text is already a placeholder — skip Catalyst + LLM.
         if (PlaygroundMode.IsActive)
@@ -169,7 +174,7 @@ public static class TextSanitizationPipeline
             return text;
         }
 
-        return await RewriteAsync(text, anachronisms, realWorldNames);
+        return await RewriteAsync(text, anachronisms, realWorldNames, sourceVocabulary);
     }
 
     /// <summary>
@@ -269,7 +274,7 @@ public static class TextSanitizationPipeline
     // ── Rewriter ───────────────────────────────────────────────────────────────
 
     private static async Task<string> RewriteAsync(
-        string text, List<string> anachronisms, List<string> realWorldNames)
+        string text, List<string> anachronisms, List<string> realWorldNames, IReadOnlySet<string>? sourceVocabulary)
     {
         try
         {
@@ -300,7 +305,9 @@ public static class TextSanitizationPipeline
                 if (!string.IsNullOrWhiteSpace(rewritten))
                 {
                     Console.WriteLine($"TextSanitizationPipeline: rewrite done ({rewritten.Length} chars).");
-                    return rewritten;
+                    // The rewriter is the same model and reaches for the same words; Layer 1 is
+                    // free, so its output gets it too.
+                    return ForbiddenWordsDictionary.Apply(rewritten, sourceVocabulary);
                 }
             }
 

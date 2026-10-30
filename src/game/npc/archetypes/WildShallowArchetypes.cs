@@ -142,7 +142,7 @@ public class KingfisherArchetype : BirdShallowArchetype
     public override string TypeDisplayName => "Kingfisher";
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
         sizes:  new[] { "small", "dagger-billed" },
-        colors: new[] { "electric blue", "orange-breasted", "jewel-bright" },
+        colors: new[] { "vivid blue", "orange-breasted", "jewel-bright" },
         noun:   "kingfisher",
         traits: new[] { "perched over the water, quite still", "a streak of blue low along the bank", "dropping into the water and coming up with a fish" });
     protected override string CorpseBodyDescription => "the tiny jewel-coloured body of a kingfisher, its blue as bright in death";

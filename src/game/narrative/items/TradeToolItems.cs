@@ -36,7 +36,7 @@ public sealed class BlacksmithApron : WearableItem
 {
     public override string ItemId           => "blacksmith_apron";
     public override string DisplayName      => "Scorched Leather Apron";
-    public override string Description      => "A heavy leather apron burned through in a constellation of small holes";
+    public override string Description      => "A heavy leather apron burned through in an ember-pattern of small holes";
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Outerwear;
     public override List<ItemTag> Tags      => new() { ItemTag.Clothing };
@@ -304,7 +304,7 @@ public sealed class MashPaddle : Item
 {
     public override string ItemId      => "mash_paddle";
     public override string DisplayName => "Mash Paddle";
-    public override string Description => "A broad oak paddle stained dark to the handle by years of wort";
+    public override string Description => "A broad oak paddle stained dark to the handle by rounds of wort";
     public override ItemSize Size      => ItemSize.Large;
     public override WeightClass Weight       => WeightClass.Medium;
     public override ItemCategory Category => ItemCategory.Tool;

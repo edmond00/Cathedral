@@ -75,7 +75,7 @@ public static class DialogueTopicExtensions
     public static string Label(this DialogueTopic topic) => topic switch
     {
         DialogueTopic.Weather    => "the weather",
-        DialogueTopic.Seasons    => "the turning of the year",
+        DialogueTopic.Seasons    => "the turning of the round",
         DialogueTopic.Harvest    => "the harvest",
         DialogueTopic.Food       => "food and drink",
         DialogueTopic.Beasts     => "beasts and livestock",

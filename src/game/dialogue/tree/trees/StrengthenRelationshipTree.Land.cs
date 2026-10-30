@@ -42,9 +42,9 @@ public partial class StrengthenRelationshipTree
 
     private static NpcLineNode WeatherWorst() => new(
         nodeId:          "weather_worst",
-        replica:         "A winter some years ago. It took the roofs off two houses, and we spent three weeks digging out.",
-        replicaIndirect: "I tell {you:name} about a winter that took the roofs off two houses and left us three weeks digging out.",
-        replicaHeard:    "{npc:name} tells me about a winter that took the roofs off two houses and left them three weeks digging out.",
+        replica:         "A winter some rounds ago. It took the roofs off two houses, and we spent three eleven-days digging out.",
+        replicaIndirect: "I tell {you:name} about a winter that took the roofs off two houses and left us three eleven-days digging out.",
+        replicaHeard:    "{npc:name} tells me about a winter that took the roofs off two houses and left them three eleven-days digging out.",
 
         new PlayerOption("weather_ask_after", "ask how they came through it",
             "How did you come through it?",
@@ -77,8 +77,8 @@ public partial class StrengthenRelationshipTree
             End("weather_teach_end", 3,
                 "If the birds go quiet all at once, get under cover. That is the one I would give away.",
                 "I tell {you:name} that if the birds go quiet all at once they should get under cover.",
-                "It is not something to hand over. Watch the sky for twenty years as I did.",
-                "I tell {you:name} to watch the sky for twenty years as I did.",
+                "It is not something to hand over. Watch the sky for twenty rounds as I did.",
+                "I tell {you:name} to watch the sky for twenty rounds as I did.",
                 typeof(SkyReadingModusMentis))),
 
         new PlayerOption("weather_mention_omens", "ask whether they hold with signs and omens",
@@ -98,12 +98,12 @@ public partial class StrengthenRelationshipTree
     private static NpcLineNode SeasonsTopic() => new(
         nodeId:          "seasons_topic",
         replica:         "It does. {npc:opinion_seasons}",
-        replicaIndirect: "I tell {you:name} that of the turning year I think {npc:opinion_seasons}.",
-        replicaHeard:    "{npc:name} tells me what they think of the turning year.",
+        replicaIndirect: "I tell {you:name} that of the turning round I think {npc:opinion_seasons}.",
+        replicaHeard:    "{npc:name} tells me what they think of the turning round.",
 
-        new PlayerOption("seasons_favourite", "ask which part of the year they like best",
-            "Which part of the year do you like best?",
-            "I ask {npc:name} which part of the year they like best.",
+        new PlayerOption("seasons_favourite", "ask which part of the round they like best",
+            "Which part of the round do you like best?",
+            "I ask {npc:name} which part of the round they like best.",
             End("seasons_favourite_end", 2,
                 "The turn into the long days. Everything is still ahead and nothing has gone wrong yet.",
                 "I tell {you:name} it is the turn into the long days, when nothing has gone wrong yet.",
@@ -113,17 +113,17 @@ public partial class StrengthenRelationshipTree
 
         new PlayerOption("seasons_hardest", "ask which part they dread",
             "Which part do you dread?",
-            "I ask {npc:name} which part of the year they dread.",
+            "I ask {npc:name} which part of the round they dread.",
             SeasonsHardest()),
 
-        new PlayerOption("seasons_agree", "say the year moves faster every time round",
-            "The year comes round quicker each time. Or I am slower.",
-            "I tell {npc:name} the year comes round quicker each time.",
+        new PlayerOption("seasons_agree", "say the round moves faster every time round",
+            "The round comes round quicker each time. Or I am slower.",
+            "I tell {npc:name} the round comes round quicker each time.",
             End("seasons_quicker_end", 2,
                 "That is exactly it, and I have never heard it put so plainly. You are good company.",
                 "I tell {you:name} I have never heard it put so plainly, and that they are good company.",
-                "Speak for yourself. My years are long enough.",
-                "I tell {you:name} to speak for themselves, since my years are long enough.",
+                "Speak for yourself. My rounds are long enough.",
+                "I tell {you:name} to speak for themselves, since my rounds are long enough.",
                 typeof(ForesightModusMentis))));
 
     private static NpcLineNode SeasonsHardest() => new(
@@ -133,7 +133,7 @@ public partial class StrengthenRelationshipTree
         replicaHeard:    "{npc:name} says it is the dark half, since they go out in it and come back in it and never see the day.",
 
         new PlayerOption("seasons_ask_endure", "ask what gets them through it",
-            "What gets you through that part of the year?",
+            "What gets you through that part of the round?",
             "I ask {npc:name} what gets them through it.",
             End("seasons_endure_end", 3,
                 "Company, mostly. Which is my way of thanking you for stopping.",
@@ -142,9 +142,9 @@ public partial class StrengthenRelationshipTree
                 "I tell {you:name} I get through it and do not need it examined.",
                 typeof(EnduranceModusMentis))),
 
-        new PlayerOption("seasons_offer_company", "offer to come by more often through the dark months",
-            "Then I will come by more often through the dark months, if you do not mind.",
-            "I offer {npc:name} to come by more often through the dark months.",
+        new PlayerOption("seasons_offer_company", "offer to come by more often through the dark seasons",
+            "Then I will come by more often through the dark seasons, if you do not mind.",
+            "I offer {npc:name} to come by more often through the dark seasons.",
             End("seasons_company_end", 3,
                 "I would not mind at all. See that you hold to it.",
                 "I tell {you:name} I would not mind at all, and to hold to it.",
@@ -159,22 +159,22 @@ public partial class StrengthenRelationshipTree
     private static NpcLineNode HarvestTopic() => new(
         nodeId:          "harvest_topic",
         replica:         "The crop. {npc:opinion_harvest}",
-        replicaIndirect: "I tell {you:name} that of this year's crop I think {npc:opinion_harvest}.",
-        replicaHeard:    "{npc:name} tells me what they think of this year's crop.",
+        replicaIndirect: "I tell {you:name} that of this round's crop I think {npc:opinion_harvest}.",
+        replicaHeard:    "{npc:name} tells me what they think of this round's crop.",
 
-        new PlayerOption("harvest_wish_well", "wish them a good year of it",
+        new PlayerOption("harvest_wish_well", "wish them a good round of it",
             "I hope it is a heavy crop and the weather stays dry for it.",
             "I wish {npc:name} a heavy crop and dry weather to carry it.",
             End("harvest_wish_end", 2,
-                "Say that again in three months and I will buy you a drink on it.",
-                "I tell {you:name} to say that again in three months and I will buy them a drink.",
+                "Say that again in ninety days and I will buy you a drink on it.",
+                "I tell {you:name} to say that again in ninety days and I will buy them a drink.",
                 "Wishing does not fill a barn. But thank you.",
                 "I tell {you:name} wishing does not fill a barn.",
                 typeof(HarvestryModusMentis))),
 
-        new PlayerOption("harvest_ask_lean", "ask what happens in a lean year",
-            "What happens in a bad year?",
-            "I ask {npc:name} what happens in a bad year.",
+        new PlayerOption("harvest_ask_lean", "ask what happens in a lean round",
+            "What happens in a bad round?",
+            "I ask {npc:name} what happens in a bad round.",
             HarvestLean()),
 
         new PlayerOption("harvest_ask_share", "ask how much of it they actually keep",
@@ -199,20 +199,20 @@ public partial class StrengthenRelationshipTree
                 typeof(ThriftModusMentis))),
 
         new PlayerOption("harvest_offer_help", "say you would help if it came to that",
-            "If a third year comes, you will not carry it alone. I will see to that.",
-            "I promise {npc:name} they will not carry a third such year alone.",
+            "If a third round comes, you will not carry it alone. I will see to that.",
+            "I promise {npc:name} they will not carry a third such round alone.",
             End("harvest_help_end", 3,
                 "That is a serious thing to say to someone. I will remember you said it.",
                 "I tell {you:name} that is a serious thing to say, and that I will remember they said it.",
-                "Easy words. Everyone is generous in a good year.",
-                "I tell {you:name} everyone is generous in a good year.",
+                "Easy words. Everyone is generous in a good round.",
+                "I tell {you:name} everyone is generous in a good round.",
                 typeof(HardLaborModusMentis))));
 
     private static NpcLineNode HarvestShare() => new(
         nodeId:          "harvest_share",
-        replica:         "Less than you would hope and more than some get. There is the tithe, the toll, and what is owed from last year. What is left is mine.",
-        replicaIndirect: "I tell {you:name} there is the tithe, the toll and last year's debt, and that what is left is mine.",
-        replicaHeard:    "{npc:name} says there is the tithe, the toll and last year's debt, and that what is left is theirs.",
+        replica:         "Less than you would hope and more than some get. There is the tithe, the toll, and what is owed from last round. What is left is mine.",
+        replicaIndirect: "I tell {you:name} there is the tithe, the toll and last round's debt, and that what is left is mine.",
+        replicaHeard:    "{npc:name} says there is the tithe, the toll and last round's debt, and that what is left is theirs.",
 
         new PlayerOption("harvest_ask_fair", "ask whether they think that fair",
             "Do you think that is fair?",

@@ -10,7 +10,7 @@ public class AlchemyModusMentis : ModusMentis
     public override string ModusMentisId    => "alchemy";
     public override string DisplayName      => "Alchemy";
     public override string MenuDescription =>
-        "Works with the hidden natures of matter: salts, sulphurs, mercury, the fire that changes one thing into another. Reads a reaction by smell and colour, and half believes the great work is possible.";
+        "Works with the hidden natures of matter: salts, sulphurs, quicksilver, the fire that changes one thing into another. Reads a reaction by smell and colour, and half believes the great work is possible.";
     public override string SkillMeans       => "the study of the hidden natures of matter";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "nose", "cerebrum" };

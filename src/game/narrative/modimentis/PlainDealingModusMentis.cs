@@ -11,7 +11,7 @@ public class PlainDealingModusMentis : ModusMentis
     public override string ModusMentisId    => "plain_dealing";
     public override string DisplayName      => "Plain Dealing";
     public override string MenuDescription =>
-        "Names the defect, quotes one price, and does not move. Loses money on individual bargains and makes it back over years, because people come looking for the trader who does not need to be watched.";
+        "Names the defect, quotes one price, and does not move. Loses money on individual bargains and makes it back over rounds, because people come looking for the trader who does not need to be watched.";
     public override string SkillMeans       => "the one honest price, named and held";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
     public override WillTargets? Will => WillTarget.ToAny("trade at an honest price", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));

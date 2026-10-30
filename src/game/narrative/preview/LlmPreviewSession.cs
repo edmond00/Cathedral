@@ -349,7 +349,7 @@ public sealed class PreviewPart
             // Layer 1 (deterministic replacement) then Layers 2/3 detection — no LLM rewrite here.
             // Detection runs on the pre-transform text (as the committed sanitizer does); the transform
             // (e.g. placeholder → real name) is applied only to what is displayed.
-            string layered = ForbiddenWordsDictionary.Apply(candidate);
+            string layered = ForbiddenWordsDictionary.Apply(candidate, _sourceVocabulary);
             var (anach, names) = TextSanitizationPipeline.Detect(layered, _sourceVocabulary);
             if (anach.Count == 0 && names.Count == 0)
                 _liveTail = Display(layered.TrimEnd());

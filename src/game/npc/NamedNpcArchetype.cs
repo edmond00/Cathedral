@@ -380,8 +380,8 @@ public abstract class NamedNpcArchetype : NpcArchetype
     private static string DefaultOpinion(Dialogue.Tree.DialogueTopic topic) => topic switch
     {
         Dialogue.Tree.DialogueTopic.Weather    => "it does what it likes and we do what we can under it",
-        Dialogue.Tree.DialogueTopic.Seasons    => "each part of the year asks its own work of you, and it never asks politely",
-        Dialogue.Tree.DialogueTopic.Harvest    => "a good year feeds you and a bad one teaches you; we've had both",
+        Dialogue.Tree.DialogueTopic.Seasons    => "each part of the round asks its own work of you, and it never asks politely",
+        Dialogue.Tree.DialogueTopic.Harvest    => "a good round feeds you and a bad one teaches you; we've had both",
         Dialogue.Tree.DialogueTopic.Food       => "plain fare, enough of it, and hot — that's all I ask of a table",
         Dialogue.Tree.DialogueTopic.Beasts     => "a beast will tell you what it needs if you've the patience to watch it",
         Dialogue.Tree.DialogueTopic.Wilds      => "the wild has its uses, but I'd not sleep out in it by choice",

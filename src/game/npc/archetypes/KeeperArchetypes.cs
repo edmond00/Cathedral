@@ -47,7 +47,7 @@ public class QuartermasterArchetype : SettledArchetype
     public override string SelfIntroduction => "the quartermaster. Every spear, every boot and every sack of meal in this place passes through my hands";
     public override string Workplace        => "the stores and the gate";
     public override string Craft            => "the stores";
-    public override string DailyLabour      => "counting out the arms, counting in the food, and finding out which of the two has gone missing this week";
+    public override string DailyLabour      => "counting out the arms, counting in the food, and finding out which of the two has gone missing this eleven-day";
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
@@ -159,7 +159,7 @@ public class CellarerArchetype : SettledArchetype
         [DialogueTopic.Trade]   = "our ale is the best for three valleys, and we sell it to keep the roof on",
         [DialogueTopic.Harvest] = "the tithe comes in at harvest and I have to make it last until the next one",
         [DialogueTopic.Work]    = "the abbot keeps the rule. I keep the larder. Between us the house stands",
-        [DialogueTopic.Seasons] = "Lent is lean and Easter is not. I plan the year around both",
+        [DialogueTopic.Seasons] = "The chapter-feast is lean and the Sowing Feast is not. I plan the round around both",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)

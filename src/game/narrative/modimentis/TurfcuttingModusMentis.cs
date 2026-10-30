@@ -11,7 +11,7 @@ public class TurfcuttingModusMentis : ModusMentis
     public override string ModusMentisId    => "turfcutting";
     public override string DisplayName      => "Turf Cutting";
     public override string MenuDescription =>
-        "Cuts and stacks peat and turf: the depth to take, the way to set it so it dries, and the reckoning of how much a winter needs. Slow, wet, methodical work that decides whether a household is warm in February.";
+        "Cuts and stacks peat and turf: the depth to take, the way to set it so it dries, and the reckoning of how much a winter needs. Slow, wet, methodical work that decides whether a household is warm in the Stillness.";
     public override string SkillMeans       => "the cutting and stacking of peat and turf";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(

@@ -11,15 +11,15 @@ public class WayfaringModusMentis : ModusMentis
     public override string ModusMentisId    => "wayfaring";
     public override string DisplayName      => "Wayfaring";
     public override string MenuDescription =>
-        "Reads the road as it is walked: the ground ahead, the weather turning, the mile still owed before shelter. Keeps the legs at a pace that lasts, and marks the roadside signs that walking people live by.";
+        "Reads the road as it is walked: the ground ahead, the weather turning, the league still owed before shelter. Keeps the legs at a pace that lasts, and marks the roadside signs that walking people live by.";
     public override string SkillMeans       => "the traveller's knowledge of roads, pace and weather";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
-    public override string PersonaTone     => "a road-worn walker who measures the world in miles owed before nightfall";
+    public override string PersonaTone     => "a road-worn walker who measures the world in leagues owed before nightfall";
     public override string PersonaReminder  => "road-worn wayfarer";
-    public override string PersonaReminder2 => "someone whose legs keep the count of the day's remaining miles";
+    public override string PersonaReminder2 => "someone whose legs keep the count of the day's remaining leagues";
     public override string StyleInstruction =>
         "Honest and road-worn - judge whatever is in front of you by the distance still to go.";
 

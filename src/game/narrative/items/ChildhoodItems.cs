@@ -206,8 +206,8 @@ public sealed class SoftLeatherShoes : WearableItem
 public sealed class TravelersBackpack : WearableContainerItem
 {
     public override string ItemId           => "travelers_backpack";
-    public override string DisplayName      => "Travellers' Backpack";
-    public override string Description      => "A heavy canvas backpack with leather straps, sized for the road";
+    public override string DisplayName      => "Travellers' Pack";
+    public override string Description      => "A heavy canvas pack with leather straps, sized for the road";
     public override ItemSize Size           => ItemSize.Large;
     public override WearSlot Slot           => WearSlot.Outerwear;
     public override ContainerKind Kind      => ContainerKind.Storage;

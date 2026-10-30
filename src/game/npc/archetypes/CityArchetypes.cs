@@ -55,7 +55,7 @@ public class CobblerArchetype : CraftsmanArchetype
         [DialogueTopic.Neighbours] = "I know who limps, who drinks and who walks to the widow's at night. Heels do not lie",
         [DialogueTopic.Trade]      = "the tanner robs me, I rob the gentry, and the poor get their boots mended for bread",
         [DialogueTopic.Weather]    = "rain is good for trade. Mud is better",
-        [DialogueTopic.Health]     = "my back is bent like a hook and my eyes are going. Thirty years of looking down does that",
+        [DialogueTopic.Health]     = "my back is bent like a hook and my eyes are going. Thirty rounds of looking down does that",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
@@ -105,7 +105,7 @@ public class TailorArchetype : CraftsmanArchetype
         [DialogueTopic.Trade]      = "the merchants dress like lords now. The lords dress like merchants. It is all very good for me",
         [DialogueTopic.Neighbours] = "I have measured half the town. I know who has grown fat and who is wasting, and I say nothing",
         [DialogueTopic.Kin]        = "my mother sewed, and hers. The needle passes down like the nose",
-        [DialogueTopic.Stories]    = "I once made a coat for a man who was hanged in it the next week. It fitted beautifully",
+        [DialogueTopic.Stories]    = "I once made a coat for a man who was hanged in it the next eleven-day. It fitted beautifully",
         [DialogueTopic.Rest]       = "rest? There is always a hem waiting",
     };
 
@@ -206,7 +206,7 @@ public class ButcherArchetype : CraftsmanArchetype
         [DialogueTopic.Food]    = "people who turn their noses up at tripe have never been hungry",
         [DialogueTopic.Beasts]  = "I do it quick and I do it clean. That is more mercy than the wolves show",
         [DialogueTopic.Work]    = "find the joint and the knife does the work. Miss it and you are hacking like a soldier",
-        [DialogueTopic.Weather] = "a hot week is a ruinous week. The flies come before the customers",
+        [DialogueTopic.Weather] = "a hot eleven-day is a ruinous eleven-day. The flies come before the customers",
         [DialogueTopic.Trade]   = "the drovers bring the beasts, the tanner takes the hides, the chandler the fat. Nothing is wasted but the squeal",
         [DialogueTopic.Health]  = "I have all ten fingers. Ask any other butcher how rare that is",
     };
@@ -250,11 +250,11 @@ public class TannerArchetype : CraftsmanArchetype
     public override string SelfIntroduction => "the tanner. Yes, it is me you can smell. You get used to it. I did";
     public override string Workplace        => "the pits";
     public override string Craft            => "leather";
-    public override string DailyLabour      => "fleshing, liming, laying down hides in the bark pits and turning them, month after month";
+    public override string DailyLabour      => "fleshing, liming, laying down hides in the bark pits and turning them, season after season";
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Work]       = "a hide takes a year to become good leather. People who want it in a month get what they deserve",
+        [DialogueTopic.Work]       = "a hide takes a round to become good leather. People who want it in thirty days get what they deserve",
         [DialogueTopic.Neighbours] = "they built the town upwind of me on purpose. I do not blame them",
         [DialogueTopic.Trade]      = "every saddle, boot and belt in this town started in my pits. They hold their noses and pay",
         [DialogueTopic.Water]      = "the stream below the yard runs brown. The water-carriers know not to draw from it",
@@ -308,8 +308,8 @@ public class PotterArchetype : CraftsmanArchetype
         [DialogueTopic.Work]    = "centre the clay first. If it is not centred, nothing you do after will save it",
         [DialogueTopic.Weather] = "damp weather and the pots will not dry. Dry weather and they crack. There is no good weather",
         [DialogueTopic.Trade]   = "pots break. That is the whole secret of my trade",
-        [DialogueTopic.Seasons] = "I fire the big kiln four times a year. The whole street comes out to watch",
-        [DialogueTopic.Wilds]   = "the best clay is in the river bank two miles north. I will not tell you where exactly",
+        [DialogueTopic.Seasons] = "I fire the big kiln four times a round. The whole street comes out to watch",
+        [DialogueTopic.Wilds]   = "the best clay is in the river bank two leagues north. I will not tell you where exactly",
         [DialogueTopic.Rest]    = "I sit at the wheel and it is rest and work both. Strange trade",
     };
 
@@ -360,7 +360,7 @@ public class ApothecaryArchetype : CraftsmanArchetype
         [DialogueTopic.Wilds]   = "the herb-women know more than they let on. I buy from them and say it came from the east",
         [DialogueTopic.Trade]   = "theriac has sixty ingredients and I have perhaps forty of them. Nobody has ever noticed",
         [DialogueTopic.Food]    = "you are what you eat. You, I would guess, eat badly",
-        [DialogueTopic.Omens]   = "the stars govern the body. I do not prescribe on an evil day, whatever the patient wants",
+        [DialogueTopic.Omens]   = "the embers govern the body. I do not prescribe on an evil day, whatever the patient wants",
         [DialogueTopic.Stories] = "a man came to me certain he was made of glass. I cured him with a hammer. Gently",
     };
 
@@ -412,7 +412,7 @@ public class BarberArchetype : CraftsmanArchetype
         [DialogueTopic.Work]       = "steady hands and a strong arm. And a loud voice, to drown out the screaming",
         [DialogueTopic.Trade]      = "the physicians look down on me. Then their servants come to me because I am cheap and I work",
         [DialogueTopic.Stories]    = "I pulled a tooth from a guard captain once that had three roots. He fainted. I kept the tooth",
-        [DialogueTopic.Rest]       = "Sundays I shave for free outside the church. It brings in the week's teeth",
+        [DialogueTopic.Rest]       = "Sildays I shave for free outside the church. It brings in the eleven-day's teeth",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
@@ -515,8 +515,8 @@ public class LaundressArchetype : SettledArchetype
     {
         [DialogueTopic.Neighbours] = "you can tell everything about a household from its washing. Everything",
         [DialogueTopic.Work]       = "cold water for blood, never hot. Hot sets it. Remember that, if you ever need to",
-        [DialogueTopic.Weather]    = "a sunny day and the sheets bleach white as bone. A wet week and nothing dries and everyone shouts",
-        [DialogueTopic.Health]     = "the lye eats your hands. Look at mine. Forty years and they look sixty",
+        [DialogueTopic.Weather]    = "a sunny day and the sheets bleach white as bone. A wet eleven-day and nothing dries and everyone shouts",
+        [DialogueTopic.Health]     = "the lye eats your hands. Look at mine. Forty rounds and they look sixty",
         [DialogueTopic.Kin]        = "my girls work beside me. They will marry better than I did, if I have any say",
         [DialogueTopic.Stories]    = "the stories you hear at the wash house would curl a priest's hair",
     };
@@ -564,7 +564,7 @@ public class WaterCarrierArchetype : SettledArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Water]      = "the square well is sweet in spring and foul by autumn. The north well is good all year. Nobody listens",
+        [DialogueTopic.Water]      = "the square well is sweet in spring and foul by autumn. The north well is good all round. Nobody listens",
         [DialogueTopic.Neighbours] = "I go into every kitchen on my round. I know who is sick before the priest does",
         [DialogueTopic.Health]     = "the flux comes from bad water. I have seen it go through a street that drew from the wrong well",
         [DialogueTopic.Work]       = "keep the buckets level and the step soft. Spill it and you carry it twice",
@@ -617,7 +617,7 @@ public class BeggarArchetype : SettledArchetype
         [DialogueTopic.Neighbours] = "nobody sees a beggar. So a beggar sees everybody",
         [DialogueTopic.Rest]       = "the doss house, if I have the copper. The church porch if I do not",
         [DialogueTopic.Kin]        = "I had a trade once, and a wife. Ask me another day",
-        [DialogueTopic.Weather]    = "summer you can sleep anywhere. Winter kills one of us every week",
+        [DialogueTopic.Weather]    = "summer you can sleep anywhere. Winter kills one of us every eleven-day",
         [DialogueTopic.Omens]      = "give to a beggar and luck follows. Everyone knows that. Not everyone acts on it",
     };
 

@@ -17,7 +17,7 @@ public class StonefaceModusMentis : ModusMentis
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a governed face that has not betrayed a feeling in years and does not plan to start";
+    public override string PersonaTone     => "a governed face that has not betrayed a feeling in rounds and does not plan to start";
     public override string PersonaReminder  => "unreadable face";
     public override string PersonaReminder2 => "someone whose features answer to their owner and no one else";
     public override string StyleInstruction =>

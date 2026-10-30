@@ -12,7 +12,7 @@ public class ThermodynamicsModusMentis : ModusMentis
     public override string DisplayName => "Thermodynamics";
     public override string MenuDescription =>
         "Reads a physical process through heat, work, and entropy, following how energy moves and dissipates. Inclines reasoning toward the flow of warmth and power rather than surface appearance.";
-    public override string SkillMeans => "energy and physics principles";
+    public override string SkillMeans => "energy and natural philosophy principles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
 
@@ -20,8 +20,8 @@ public class ThermodynamicsModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
-    public override string PersonaTone => "a precise physicist who sees all phenomena as energy transformations governed by immutable laws";
-    public override string PersonaReminder => "energy flow physicist";
+    public override string PersonaTone => "a precise natural philosopher who sees all phenomena as energy transformations governed by immutable laws";
+    public override string PersonaReminder => "energy flow natural philosopher";
     public override string PersonaReminder2 => "someone who perceives heat, flow, and entropy in all things";
     public override string StyleInstruction =>
         "Detached and analytical - see in whatever is in front of you energy passing and dispersing.";

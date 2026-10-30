@@ -201,8 +201,8 @@ public class ConfessTree : DialogueTree
                 "I let myself. It was easier than stopping.",
                 "I tell them I let myself because it was easier.",
                 End("violence_let_end", 2,
-                    "That is the truest thing anyone has said to me this week.",
-                    "I tell them it is the truest thing I have heard this week.",
+                    "That is the truest thing anyone has said to me this eleven-day.",
+                    "I tell them it is the truest thing I have heard this eleven-day.",
                     "Easier. Everyone says easier.",
                     "I tell them everyone says easier.",
                     typeof(MortificationModusMentis), typeof(TheologyModusMentis))));
@@ -591,9 +591,9 @@ public class TalkOfFarPlacesTree : DialogueTree
 
     private static readonly NpcLineNode Sea = new(
         nodeId:          "sea_pressed",
-        replica:         "Like the world forgot you. Three weeks of it, once.",
-        replicaIndirect: "I tell them about three weeks out of sight of land.",
-        replicaHeard:    "They tell me about three weeks out of sight of land.",
+        replica:         "Like the world forgot you. Three eleven-days of it, once.",
+        replicaIndirect: "I tell them about three eleven-days out of sight of land.",
+        replicaHeard:    "They tell me about three eleven-days out of sight of land.",
 
             new PlayerOption("sea_fear", "ask if they were afraid",
                 "Were you afraid?",
@@ -868,8 +868,8 @@ public class AskTeachingTree : DialogueTree
         replicaHeard:    "They ask whether I can find the pole.",
 
             new PlayerOption("heavens_yes", "say yes",
-                "From the wagon stars, yes.",
-                "I tell them I find it from the wagon stars.",
+                "From the wagon embers, yes.",
+                "I tell them I find it from the wagon embers.",
                 End("heavens_yes_end", 2,
                     "Good. Then everything else turns around it. Watch.",
                     "I show them how everything turns around the pole.",
@@ -909,8 +909,8 @@ public class AskTeachingTree : DialogueTree
                 End("body_physician_end", 2,
                     "Then first the parts and where they lie. Liver, here; the great vessel, here.",
                     "I begin with the parts and where they lie.",
-                    "That is years, not an afternoon.",
-                    "I tell them that is years.",
+                    "That is rounds, not an afternoon.",
+                    "I tell them that is rounds.",
                     typeof(AnatomyLoreModusMentis), typeof(DiagnosisModusMentis))));
 
     private static readonly NpcLineNode Law = new(
@@ -945,9 +945,9 @@ public class AskTeachingTree : DialogueTree
         replicaIndirect: "I ask what they want to know.",
         replicaHeard:    "They ask what I want to know.",
 
-        new PlayerOption("heavens", "ask about the stars",
-            "The stars. What they are, how they move.",
-            "I ask about the stars.",
+        new PlayerOption("heavens", "ask about the embers",
+            "The embers. What they are, how they move.",
+            "I ask about the embers.",
             Heavens),
 
         new PlayerOption("body", "ask about the body and its healing",

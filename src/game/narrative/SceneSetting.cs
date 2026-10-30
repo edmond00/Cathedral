@@ -23,15 +23,22 @@ public static class SceneSetting
     /// <para>
     /// Written flat and with named examples on purpose: a small model obeys "no bullets, no offices"
     /// where it ignores an abstraction like "avoid anachronisms". The examples are the drift actually
-    /// observed in play (office, bullet, photo album), none of which the sanitizer's word lists catch.
+    /// observed in play (office, bullet, photo album); Layer 1 of the sanitizer now replaces most of them
+    /// as well (<see cref="Sanitizer.ForbiddenWords"/>).
+    /// </para>
+    /// <para>
+    /// It names the world without the words "medieval" and "modern". The model echoes the words of
+    /// its rule back into the narration — "as they stand in my medieval steppe", "where nothing modern
+    /// and real stands" — and in a paired run of the shipped model over the game's own prompts every
+    /// such echo came from the wording that held them.
     /// </para>
     /// </summary>
     public const string Rule =
-        "Everything you write happens in a medieval world of iron, myth and hand labour. " +
-        "Never write anything modern or from the real world: no machines, engines, guns, bullets, " +
+        "Everything you write happens in an old world of iron, myth and hand labour. " +
+        "Never write anything from after that world or from the real world: no machines, engines, guns, bullets, " +
         "photographs, albums, offices, factories, hospitals, schools, plastic, rubber, electricity, " +
         "chemistry, brand names, and no real country, city, people or date. " +
-        "If a thing has no medieval name, do not mention the thing at all.";
+        "If a thing has no name in such a world, do not mention the thing at all.";
 
     /// <summary>
     /// Where the current scene is, as a short noun phrase fit to drop into a prompt ("windswept
@@ -60,7 +67,7 @@ public static class SceneSetting
     /// </summary>
     public static string Reminder()
     {
-        const string setting = "Remember: a medieval world, nothing modern and nothing from the real world.";
+        const string setting = "Remember: an old world of iron and hand labour, nothing from the real world.";
         return Place.Length == 0
             ? setting
             : $"{setting} You are in {Article(Place)} {Place} — write only what belongs there.";

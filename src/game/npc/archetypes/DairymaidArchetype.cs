@@ -53,11 +53,11 @@ public class DairymaidArchetype : PeasantArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Beasts]     = "a cow milks best for a quiet voice. Shout at her once and she'll hold it back all week out of spite",
+        [DialogueTopic.Beasts]     = "a cow milks best for a quiet voice. Shout at her once and she'll hold it back all eleven-day out of spite",
         [DialogueTopic.Food]       = "fresh butter on warm bread. There's nothing on any lord's table better than that, and I'd argue it",
         [DialogueTopic.Weather]    = "thundery weather turns the milk before you can get it into the pan. I hate a close sky",
         [DialogueTopic.Seasons]    = "spring grass makes yellow butter and summer's the best cheese. Winter milk is thin, sad stuff",
-        [DialogueTopic.Health]     = "my hands are red raw half the year and my back went years ago. Nobody warns you about the back",
+        [DialogueTopic.Health]     = "my hands are red raw half the round and my back went rounds ago. Nobody warns you about the back",
         [DialogueTopic.Rest]       = "I'm done by noon, and that's the one mercy in it",
         [DialogueTopic.Kin]        = "I'd like a house of my own one day, with two cows in it and nobody's schedule but mine",
         [DialogueTopic.Stories]    = "they say a cheese won't set if there's a quarrel in the house. Laugh, but I've seen it hold true",

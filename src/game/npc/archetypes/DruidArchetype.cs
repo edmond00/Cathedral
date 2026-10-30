@@ -55,9 +55,9 @@ public class DruidArchetype : NamedNpcArchetype
     {
         [DialogueTopic.Wilds]      = "the wood is not a place I live in. It is the thing I belong to, and it has no need of me at all",
         [DialogueTopic.Weather]    = "rain is not weather. It is the wood drinking, and it drinks when it chooses",
-        [DialogueTopic.Seasons]    = "the year does not turn. It breathes — in through spring, out through autumn — and we are inside it",
+        [DialogueTopic.Seasons]    = "the round does not turn. It breathes — in through spring, out through autumn — and we are inside it",
         [DialogueTopic.Beasts]     = "the fox and the hare keep an older bargain than any village council ever wrote down",
-        [DialogueTopic.Health]     = "most sickness is a body out of step with the year. Nettle, willow-bark and patience mend more than anyone credits",
+        [DialogueTopic.Health]     = "most sickness is a body out of step with the round. Nettle, willow-bark and patience mend more than anyone credits",
         [DialogueTopic.Omens]      = "the moss remembers what the stone forgets. Signs are only memory, spoken by something with no mouth",
         [DialogueTopic.Stories]    = "the old tales are the wood's own account of itself, badly copied by people in a hurry",
         [DialogueTopic.Work]       = "you cannot make a wood. You can only stop making it worse, and that is work enough",

@@ -11,7 +11,7 @@ public class VinicultureModusMentis : ModusMentis
     public override string ModusMentisId    => "viniculture";
     public override string DisplayName      => "Viniculture";
     public override string MenuDescription =>
-        "Works the vine through its year: pruning to two buds, tying the canes, thinning the leaves to let the sun at the bunches. Smells when the grapes are ready before the sugar can be tasted.";
+        "Works the vine through its round: pruning to two buds, tying the canes, thinning the leaves to let the sun at the bunches. Smells when the grapes are ready before the sugar can be tasted.";
     public override string SkillMeans       => "the tending of the vine from pruning to vintage";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
@@ -22,7 +22,7 @@ public class VinicultureModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
-    public override string PersonaTone     => "a vine-dresser whose year is measured in buds, canes and bunches";
+    public override string PersonaTone     => "a vine-dresser whose round is measured in buds, canes and bunches";
     public override string PersonaReminder  => "vine-dresser";
     public override string PersonaReminder2 => "someone who prunes to two buds without counting";
     public override string StyleInstruction =>

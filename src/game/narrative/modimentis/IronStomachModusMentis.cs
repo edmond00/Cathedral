@@ -17,7 +17,7 @@ public class IronStomachModusMentis : ModusMentis
     public override string[] Organs        => new[] { "paunch", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
-    public override string PersonaTone     => "a gut hardened by years of bad food and worse drink that flinches at nothing set before it";
+    public override string PersonaTone     => "a gut hardened by rounds of bad food and worse drink that flinches at nothing set before it";
     public override string PersonaReminder  => "iron-gutted eater";
     public override string PersonaReminder2 => "someone whose stomach has outlasted everything put into it";
     public override string StyleInstruction =>

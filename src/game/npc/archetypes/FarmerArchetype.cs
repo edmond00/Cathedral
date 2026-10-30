@@ -59,7 +59,7 @@ public class FarmerArchetype : NamedNpcArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Harvest]    = "a farm is one bad year from ruin and two good years from nothing much. Nobody believes that until it happens to them",
+        [DialogueTopic.Harvest]    = "a farm is one bad round from ruin and two good rounds from nothing much. Nobody believes that until it happens to them",
         [DialogueTopic.Weather]    = "I've watched this sky my whole life and it still surprises me. Anyone who claims to predict it is selling something",
         [DialogueTopic.Beasts]     = "the beasts eat first, then the household. Get that order wrong once and you'll not get it wrong twice",
         [DialogueTopic.Work]       = "there's no idle season. There's only the season where the work is indoors",
@@ -67,7 +67,7 @@ public class FarmerArchetype : NamedNpcArchetype
         [DialogueTopic.Neighbours] = "I lend a team and I expect a team lent back. That's the whole of how a village stands up",
         [DialogueTopic.Trade]      = "I sell in autumn when everyone's selling, so I sell cheap. Anyone who tells you farmers grow rich has never held a farm",
         [DialogueTopic.Roads]      = "strangers on my land want work, want food, or want taking hold of. I find out which, quickly",
-        [DialogueTopic.Seasons]    = "the year is a wheel and you're under it. Keep up or it rolls over you",
+        [DialogueTopic.Seasons]    = "the round is a wheel and you're under it. Keep up or it rolls over you",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)

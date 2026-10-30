@@ -10,7 +10,7 @@ public class ClerkshipModusMentis : ModusMentis
     public override string ModusMentisId    => "clerkship";
     public override string DisplayName      => "Clerkship";
     public override string MenuDescription =>
-        "Writes the documents that make things official: the deed, the writ, the receipt, the letter in the proper form. Knows the formulas, the seals and who must sign what.";
+        "Writes the documents that make things official: the deed, the writ, the tally, the letter in the proper form. Knows the formulas, the seals and who must sign what.";
     public override string SkillMeans       => "the drawing-up of official documents";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "cerebrum" };

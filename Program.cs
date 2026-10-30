@@ -276,6 +276,9 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --demo-max-runs <n>                Demo mode with n runs instead of the configured number");
     Console.WriteLine("  --demo-state-dir <dir>             Demo mode with both run-count copies kept under <dir> instead of AppData");
     Console.WriteLine("  --demo-reset                       With --demo-state-dir: start from a fresh installation (for CLI scripts)");
+    Console.WriteLine("  --forbidden-words-audit            Check the Layer 1 word list (placeholder names, re-replaced forms, known rewrites) and exit");
+    Console.WriteLine("  --forbidden-words-dump <file.tsv>  Write the Layer 1 word list (category, form, replacement) as TSV and exit");
+    Console.WriteLine("  --forbidden-words-scan <file>      Apply the Layer 1 word list to each line of a text file, print every change and exit");
     Console.WriteLine("  --demo-audit                       Check the demo run limit (tampering, missing/corrupt/inconsistent copies, the limit) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -507,6 +510,27 @@ if (args.Length >= 1 && args[0] == "--outcome-audit")
 
 // Demo run limit: tampering, missing and corrupted copies, inconsistent copies and the limit itself,
 // against throwaway folders. Headless; never touches the real state files.
+// Layer 1 word list: its structural rules and the sentences whose rewrite is known. Headless.
+if (args.Length >= 1 && args[0] == "--forbidden-words-audit")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Run();
+    return;
+}
+
+// --forbidden-words-dump <file.tsv>: the whole Layer 1 list, by category.
+if (args.Length >= 2 && args[0] == "--forbidden-words-dump")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Dump(args[1]);
+    return;
+}
+
+// --forbidden-words-scan <file>: apply the Layer 1 list to each line of a text file, print the changes.
+if (args.Length >= 2 && args[0] == "--forbidden-words-scan")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Scan(args[1]);
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--demo-audit")
 {
     Cathedral.DemoLimitAudit.Run();

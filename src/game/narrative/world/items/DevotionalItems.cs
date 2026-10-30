@@ -151,7 +151,7 @@ public sealed class Astrolabe : Item
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Valuable, ItemKind.Tool });
     public override string ItemId      => "astrolabe";
     public override string DisplayName => "Astrolabe";
-    public override string Description => "A brass disc engraved with stars and lines, a pointer pivoting at its centre";
+    public override string Description => "A brass disc engraved with embers and lines, a pointer pivoting at its centre";
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Medium;

@@ -77,8 +77,8 @@ public class ApprenticeArchetype : CraftsmanArchetype
 
     public override string SelfIntroduction =>
         Master == null
-            ? "nobody yet — I'm bound apprentice here, and I've years of it left"
-            : $"nobody yet — I'm bound apprentice to the {Master.RoleNoun}, and I've years of it left";
+            ? "nobody yet — I'm bound apprentice here, and I've rounds of it left"
+            : $"nobody yet — I'm bound apprentice to the {Master.RoleNoun}, and I've rounds of it left";
 
     public override string Workplace => Master?.Workplace ?? "the master's workshop";
 

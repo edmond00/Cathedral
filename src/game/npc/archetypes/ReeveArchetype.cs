@@ -59,10 +59,10 @@ public class ReeveArchetype : PeasantArchetype
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
         [DialogueTopic.Work]       = "I don't ask for more than a person can do. I do ask for all of it",
-        [DialogueTopic.Harvest]    = "the harvest is the year's account, and my name is on the bottom of it",
+        [DialogueTopic.Harvest]    = "the harvest is the round's account, and my name is on the bottom of it",
         [DialogueTopic.Neighbours] = "I'm one of them and I'm set over them. There's no comfortable way to stand in that",
         [DialogueTopic.Trade]      = "the boundary stones and the tally-stick. Argue with either and you'll find I've a long memory",
-        [DialogueTopic.Weather]    = "a wet week costs me a hundred days of labour I'll never get back. I feel it as money",
+        [DialogueTopic.Weather]    = "a wet eleven-day costs me a hundred days of labour I'll never get back. I feel it as money",
         [DialogueTopic.Kin]        = "my people work the strips beside everyone else's. It keeps me honest, mostly",
         [DialogueTopic.Rest]       = "the feast days are kept properly here. A field worked through them turns sullen and yields worse",
         [DialogueTopic.Roads]      = "strangers looking for work I can use. Strangers looking about them I'd rather see moving on",

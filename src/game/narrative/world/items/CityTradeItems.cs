@@ -330,7 +330,7 @@ public sealed class Albarello : Item
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel, ItemKind.Remedy });
     public override string ItemId      => "albarello";
     public override string DisplayName => "Albarello";
-    public override string Description => "A waisted apothecary's jar of painted majolica, its label in a careful hand";
+    public override string Description => "A waisted apothecary's jar of painted glazed, its label in a careful hand";
     public override ItemCategory Category => ItemCategory.Container;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;

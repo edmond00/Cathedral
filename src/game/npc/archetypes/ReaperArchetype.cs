@@ -48,12 +48,12 @@ public class ReaperArchetype : PeasantArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Harvest]    = "three weeks in the year decide the other forty-nine. Everything I am is bent toward them",
+        [DialogueTopic.Harvest]    = "three eleven-days in the round decide the other forty-nine. Everything I am is bent toward them",
         [DialogueTopic.Weather]    = "rain on cut corn left lying is the worst sight there is. You watch the sky the whole time",
         [DialogueTopic.Work]       = "you find a rhythm and you don't break it. Break it and your arms remember all at once how tired they are",
         [DialogueTopic.Stories]    = "there's a song for the last sheaf and everyone sings it, even the ones who say they won't",
-        [DialogueTopic.Rest]       = "noon, in the shade, with the sickle laid down. Twenty minutes and I'd swear I was a new man",
-        [DialogueTopic.Health]     = "cuts on my hands from the straw, every year, and they never quite heal before it's over",
+        [DialogueTopic.Rest]       = "noon, in the shade, with the sickle laid down. Twenty moments and I'd swear I was a new man",
+        [DialogueTopic.Health]     = "cuts on my hands from the straw, every round, and they never quite heal before it's over",
         [DialogueTopic.Seasons]    = "I'm a reaper in summer and a sower in spring. Same back, different name",
         [DialogueTopic.Food]       = "bread out of grain I cut myself. It doesn't taste better, but it sits better",
     };

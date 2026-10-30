@@ -100,7 +100,7 @@ public static class BuildingRooms
         RoomRole.Store
             => "A cluttered store room of stacked crates, tools and spare stock",
         RoomRole.Workroom
-            => "A ground-floor room given over to a trade, the bench under the window and the work of years in its floorboards",
+            => "A ground-floor room given over to a trade, the bench under the window and the work of rounds in its floorboards",
         RoomRole.Byre
             => $"The beasts' end of the {mat} house, a step down from the hearth, stalls along the wall and the warmth of the animals coming through",
         RoomRole.Loft

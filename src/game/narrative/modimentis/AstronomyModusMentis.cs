@@ -10,7 +10,7 @@ public class AstronomyModusMentis : ModusMentis
     public override string ModusMentisId    => "astronomy";
     public override string DisplayName      => "Astronomy";
     public override string MenuDescription =>
-        "Knows the sky: the wandering stars and their returns, the moons that name the worlds, the hour told by the turning heaven. Can find north on a clear night and the date from the stars.";
+        "Knows the sky: the wandering embers and their returns, the eggmoons that name the worlds, the hour told by the turning heaven. Can find north on a clear night and the date from the embers.";
     public override string SkillMeans       => "the knowledge of the sky and its motions";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
@@ -19,9 +19,9 @@ public class AstronomyModusMentis : ModusMentis
 
     public override string PersonaTone     => "a star-watcher who tells the hour from the heavens";
     public override string PersonaReminder  => "astronomer";
-    public override string PersonaReminder2 => "someone who knows which moon is which";
+    public override string PersonaReminder2 => "someone who knows which eggmoon is which";
     public override string StyleInstruction =>
-        "Read the sky - stars, moons, their motions - and draw from it hour, date and direction.";
+        "Read the sky - embers, eggmoons, their motions - and draw from it hour, date and direction.";
 
     public override string PersonaPrompt => @"You are the inner voice of ASTRONOMY, and you have looked up and you know roughly what hour it is and what month.
 

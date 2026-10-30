@@ -10,7 +10,7 @@ public class SkyReadingModusMentis : ModusMentis
     public override string ModusMentisId    => "sky_reading";
     public override string DisplayName      => "Sky Reading";
     public override string MenuDescription =>
-        "Reads the hour off the light, the season off the sun's height, and direction off the stars. Knows how much daylight is left, which is the single most useful number on any journey.";
+        "Reads the hour off the light, the season off the sun's height, and direction off the embers. Knows how much daylight is left, which is the single most useful number on any journey.";
     public override string SkillMeans       => "the reading of hour and direction from the sky";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
     public override string[] Organs        => new[] { "eyes", "pineal_gland" };

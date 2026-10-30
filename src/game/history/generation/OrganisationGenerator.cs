@@ -11,7 +11,7 @@ public static class OrganisationGenerator
 {
     private static readonly string[] Emblems =
     {
-        "Black Ford", "White Stag", "Iron Hand", "Seventh Gate", "Silver Spur", "Broken Lance", "Red Hound", "Ashen Star",
+        "Black Ford", "White Stag", "Iron Hand", "Seventh Gate", "Silver Spur", "Broken Lance", "Red Hound", "Ashen Ember",
         "Closed Eye", "Green Thorn", "Salt Crown", "Last Bridge", "Hollow Oak", "Golden Bit", "Burning Wheel", "Grey Mare",
         "Twin Towers", "Long Night", "Raven's Wing", "Bleeding Rose",
     };

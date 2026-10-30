@@ -45,7 +45,7 @@ public class CriticContext
             : "";
         return string.Join("\n", new[]
         {
-            "Setting: a medieval world, pre-industrial, no firearms or modern technology.",
+            "Setting: an old world of iron and hand labour, before engines and firearms.",
             $"The scene: a {worldDesc}. The character is {nodeDesc}.",
             goalLine,
             itemLine

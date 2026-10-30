@@ -11,7 +11,7 @@ public class NavigationModusMentis : ModusMentis
     public override string ModusMentisId    => "navigation";
     public override string DisplayName      => "Navigation";
     public override string MenuDescription =>
-        "Finds the way over open water: the stars, the sun's height at noon, the speed reckoned from a log line, the coast recognised from its shape. Knows where the ship is when no land is in sight.";
+        "Finds the way over open water: the embers, the sun's height at noon, the speed reckoned from a log line, the coast recognised from its shape. Knows where the ship is when no land is in sight.";
     public override string SkillMeans       => "the finding of the way over open water";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("set a course over open water");

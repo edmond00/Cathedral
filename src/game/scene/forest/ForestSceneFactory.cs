@@ -279,7 +279,7 @@ public class ForestSceneFactory : WildSceneFactory
         displayName: "Holloway",
         contextDescription: "down in the holloway",
         transitionDescription: "step down into the holloway",
-        descriptions: new() { "A lane worn down by centuries of feet until its banks stand head-high, roots hanging out of them and the trees meeting overhead" },
+        descriptions: new() { "A lane worn down by hundreds of rounds of feet until its banks stand head-high, roots hanging out of them and the trees meeting overhead" },
         moods: new[] { "sunken", "green-roofed", "rooty", "old" });
 
     private static Area BuildDrippingSpring() => new WellspringArea(
@@ -342,7 +342,7 @@ public class ForestSceneFactory : WildSceneFactory
         displayName: "Hazel Coppice",
         contextDescription: "in the hazel coppice",
         transitionDescription: "step into the coppice",
-        descriptions: new() { "Hazel cut back to the stool in turn, a few years' growth here and straight new rods there, the cut stools like green fountains" },
+        descriptions: new() { "Hazel cut back to the stool in turn, a few rounds' growth here and straight new rods there, the cut stools like green fountains" },
         moods: new[] { "managed", "straight-rodded", "light", "cut" });
 
     private static Area BuildHollowOak() => new AlcoveArea(

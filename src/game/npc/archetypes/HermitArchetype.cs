@@ -58,8 +58,8 @@ public class HermitArchetype : NamedNpcArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Rest]       = "down there, rest is what's left over. Up here it's the whole day, and it took me years to bear it",
-        [DialogueTopic.Neighbours] = "three moons since anyone came this way. What does that tell you?",
+        [DialogueTopic.Rest]       = "down there, rest is what's left over. Up here it's the whole day, and it took me rounds to bear it",
+        [DialogueTopic.Neighbours] = "ninety days since anyone came this way. What does that tell you?",
         [DialogueTopic.Food]       = "what the rock gives. Less than you'd think. Enough, so far",
         [DialogueTopic.Weather]    = "the mountain makes its own. It doesn't consult the valley and it doesn't consult me",
         [DialogueTopic.Kin]        = "I had people. That's all I'll say on it",

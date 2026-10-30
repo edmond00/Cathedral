@@ -49,7 +49,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Wilds,  "The wood feeds whoever knows it. That's how I see it and the lord sees it differently"),
-                    (DialogueTopic.Food,   "There's meat on my table more weeks than there ought to be. I'll leave it there") ,
+                    (DialogueTopic.Food,   "There's meat on my table more eleven-days than there ought to be. I'll leave it there") ,
                 },
             },
             new PersonalityTrait
@@ -94,10 +94,10 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Lost a Clamp to the Wind",
                 ModiMentis  = new[] { "firecraft", "vigilance", "weeping" },
                 Appearance  = "a burnt-through patch on one sleeve, and something defeated about the shoulders",
-                Persona     = "A week's burn went up in a night and you watched it. You are ruinously behind and you check the mound obsessively.",
+                Persona     = "An eleven-day's burn went up in a night and you watched it. You are ruinously behind and you check the mound obsessively.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Work,    "A week awake, and the wind found a hole in the turf, and it was gone by morning. All of it"),
+                    (DialogueTopic.Work,    "An eleven-day awake, and the wind found a hole in the turf, and it was gone by morning. All of it"),
                     (DialogueTopic.Weather, "Wind. Everything else I can work in. Wind and I'm out there all night with a shovel"),
                 },
             },
@@ -117,7 +117,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName      = "Alone Too Long",
                 ModiMentis       = new[] { "introspection", "meditation", "survivalism" },
                 Appearance       = "talks a great deal, then stops abruptly as though catching themselves",
-                Persona          = "You go a week or more without seeing anyone. When you do meet someone you talk far too much, then notice and go silent.",
+                Persona          = "You go an eleven-day or more without seeing anyone. When you do meet someone you talk far too much, then notice and go silent.",
                 SelfIntroduction = "the one who burns the coal — sorry, I've not spoken to a soul in nine days, I'll slow down",
                 Opinions         = new[] { (DialogueTopic.Neighbours, "Nine days since I saw a face. Then I meet one and can't stop talking. Stop me when you've had enough") },
             },
@@ -153,7 +153,7 @@ public sealed partial class PersonalityTraitRegistry
                 Organs      = new[] { ("nose", 1) },
                 Appearance  = "sniffs the air twice and appears to learn something from it",
                 Persona     = "You can tell the state of a burn from the colour and smell of the smoke at fifty paces. It is a real and unteachable skill and you are proud of it.",
-                Opinions    = new[] { (DialogueTopic.Work, "I can smell what a clamp is doing from the far side of the clearing. Forty years buys you that and not much else") },
+                Opinions    = new[] { (DialogueTopic.Work, "I can smell what a clamp is doing from the far side of the clearing. Forty rounds buys you that and not much else") },
             });
 
         // ── Fisherman ──────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "You have never once been surprised by weather on the water and you are quietly, insufferably proud of it. Others wait to see whether you launch.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Weather, "I've never once been caught out. Not once in thirty years. Half this shore won't launch till they've seen whether I do"),
+                    (DialogueTopic.Weather, "I've never once been caught out. Not once in thirty rounds. Half this shore won't launch till they've seen whether I do"),
                     (DialogueTopic.Omens,   "It's not a gift. It's looking at the same sky every day since I was six") ,
                 },
             },
@@ -245,7 +245,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "A fall buried you for most of a day and they dug you out. Your ribs never set right and neither did your nerve, though you still go down.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Work,   "I was under it the best part of a day. They got me out. I went back down the following week and I'd not recommend it"),
+                    (DialogueTopic.Work,   "I was under it the best part of a day. They got me out. I went back down the following eleven-day and I'd not recommend it"),
                     (DialogueTopic.Health, "My ribs never set right. I breathe shallow. You get used to breathing shallow"),
                 },
             },
@@ -285,7 +285,7 @@ public sealed partial class PersonalityTraitRegistry
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Items       = new Func<Item>[] { () => new MinersLamp() },
                 Appearance  = "squints painfully in daylight and is entirely at ease in the dark",
-                Persona     = "Years underground have made daylight actively unpleasant to you. You work by touch and by a lamp turned low and you find the surface too bright and too loud.",
+                Persona     = "Rounds underground have made daylight actively unpleasant to you. You work by touch and by a lamp turned low and you find the surface too bright and too loud.",
                 Opinions    = new[] { (DialogueTopic.Weather, "Sun's the worst of it. I come up and I can't see for an hour. Give me a wet grey day") },
             },
             new PersonalityTrait
@@ -294,10 +294,10 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Works Alone Now",
                 ModiMentis  = new[] { "elegy", "endurance", "stoneface" },
                 Appearance  = "carries gear for two and uses one set",
-                Persona     = "You worked the seam with someone for twenty years and they died in it. You still carry both sets of tools and you will not take on anyone new.",
+                Persona     = "You worked the seam with someone for twenty rounds and they died in it. You still carry both sets of tools and you will not take on anyone new.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Kin,  "Twenty years the two of us on that seam. I still take both picks down. I know how that looks"),
+                    (DialogueTopic.Kin,  "Twenty rounds the two of us on that seam. I still take both picks down. I know how that looks"),
                     (DialogueTopic.Work, "Alone now. I'll not take another partner, so don't offer") ,
                 },
             },
@@ -312,7 +312,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Work,  "It talks before it goes. Little sounds. I've walked men out of a shaft on nothing but that and been right both times"),
-                    (DialogueTopic.Omens, "Not a gift. Ears and thirty years. Though I'll not swear to that at two in the morning") ,
+                    (DialogueTopic.Omens, "Not a gift. Ears and thirty rounds. Though I'll not swear to that at two in the morning") ,
                 },
             });
     }

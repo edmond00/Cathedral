@@ -52,7 +52,7 @@ public class WeaverArchetype : CraftsmanArchetype
         [DialogueTopic.Weather]    = "grey days are the ruin of me. I can't see the pattern and I won't weave a fault into good cloth",
         [DialogueTopic.Beasts]     = "I can tell you which farm a fleece came off before you name it. Thin sheep make thin thread",
         [DialogueTopic.Work]       = "one careless hand at my loom undoes a day. That's why I'm sharp with people at it",
-        [DialogueTopic.Seasons]    = "shearing, then retting the flax, then the long dark half of the year at the treadles. That's my year",
+        [DialogueTopic.Seasons]    = "shearing, then retting the flax, then the long dark half of the round at the treadles. That's my round",
         [DialogueTopic.Kin]        = "everyone in my house winds thread from the moment they can hold a spindle. It isn't cruelty, it's cloth",
         [DialogueTopic.Neighbours] = "I see whose cloak is fraying and whose is new. It tells you more about a household than talking to them does",
         [DialogueTopic.Health]     = "my eyes and my back. Both going, both from the same chair",

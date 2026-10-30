@@ -3,7 +3,7 @@
 # Ripelore chooses to steal from the chest and Discipline, a high-morality action modus mentis, is
 # pinned as the means. HighMoralityRefusesCrimeRule refuses it during the think, unasked: the
 # refusal is narrated and no button is produced — the act is never offered, so no point can be
-# spent attempting it. The refusal reaches the proposal ledger like any other: Scientific Research,
+# spent attempting it. The refusal reaches the proposal ledger like any other: Learned Research,
 # a different mind, is still offered stealing, and since it was refused once already this phase the
 # means is narrowed to those the willingness rules let through. `means none` hands the draw back to
 # the RNG, so the button can only appear if that narrowing kept Discipline out.
@@ -35,7 +35,7 @@ advance 12 180
 expect against every principle I hold
 expect-not ] steal
 
-# Scientific Research: still offered stealing, carried out by a means that would not refuse.
+# Learned Research: still offered stealing, carried out by a means that would not refuse.
 means none
 click keyword 0
 choose 0

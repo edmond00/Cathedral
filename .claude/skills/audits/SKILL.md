@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The fifteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a modus mentis, a will's targets or places, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The sixteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit, --biome-audit and --forbidden-words-audit. Use after adding or editing a verb, an outcome, a modus mentis, a will's targets or places, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, the Layer 1 forbidden-word list, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -427,6 +427,38 @@ Run it after touching a variant's numbers, `WorldShape`, the biome thresholds, `
 `SettlementSprawl` or `SettlementTable`, `WorldVariant.SettlementDensity`, a settled glyph, or anything
 in `WorldRegions`. Walk what it
 reports with `--world-variant <id>`.
+
+### Checking the forbidden-word list (Layer 1 of the sanitizer)
+
+```bash
+dotnet run -- --forbidden-words-audit
+dotnet run -- --forbidden-words-scan <file>    # apply the list to each line of a text file, print what changed
+```
+
+`ForbiddenWords.cs` is the list of real-world and modern words every LLM text is rewritten without
+(`ForbiddenWordsDictionary.Apply`, no request made): *mile* → *league*, *week* → *eleven-day*, *moon*
+→ *eggmoon*, *Napoleon* → *Aqilon*. It replaces by exact surface form — every plural and verb form is
+listed, never stemmed — and re-agrees the sentence around the replacement (a/an, a replacement's own
+article dropped after a determiner, a count rewritten with its unit: *two months* → *sixty days*).
+
+The audit fails on three silent faults and on any known rewrite going wrong:
+
+- a form that is a `NameFaking` placeholder name — those are swapped back to characters' real names
+  after Layer 1, so replacing one renames a character;
+- a replacement holding a listed form ("throwing star"), which the next text would fix and this one not;
+- an empty replacement;
+- a sentence in its table rewritten differently from the expected line. The table also holds lines
+  that must come back **unchanged** — the period's own words with a second sense (*second*, *a pen of
+  sheep*, *March onward!*, *Minute and devoted*, *the Fallen God*). Add one there whenever an entry
+  turns out to bite an ordinary sentence.
+
+Before adding a word: grep the game's own text for it. A word the lore uses (*Imperial Senate*,
+*tide-opera*, *salt magazine*, *the Fallen God*), a content word with an ordinary second sense
+(*runway* in the moss, *vintage* of a vine) or a species name (*Arctic Fox*) stays out of the list.
+Run `--forbidden-words-scan` over the game's string literals after a large addition; every hit there is
+either text to change or an entry to drop.
+
+Run it after editing `ForbiddenWords.cs` or `ForbiddenWordsDictionary.cs`.
 
 ### Checking the world histories
 

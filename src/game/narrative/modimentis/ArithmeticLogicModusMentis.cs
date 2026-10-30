@@ -20,7 +20,7 @@ public class ArithmeticLogicModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a clerkly mind that counts before it commits, in pence and pounds, paces and pints";
+    public override string PersonaTone     => "a clerkly mind that counts before it commits, in pellets and pounds, paces and pints";
     public override string PersonaReminder  => "clerkly counter";
     public override string PersonaReminder2 => "someone who refuses a deal whose numbers do not balance";
     public override string StyleInstruction =>

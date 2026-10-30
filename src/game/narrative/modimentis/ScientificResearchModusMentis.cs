@@ -9,7 +9,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 public class ScientificResearchModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "scientific_research";
-    public override string DisplayName      => "Scientific Research";
+    public override string DisplayName      => "Learned Research";
     public override string MenuDescription =>
         "Approaches a problem by method: forming a guess, testing it, and noting the result with care. Inclines toward ordered, evidence-led inquiry over intuition or assumption.";
     public override string SkillMeans       => "methodical testing and careful observation";
@@ -21,7 +21,7 @@ public class ScientificResearchModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a natural philosopher who tests everything twice and still has one more question";
-    public override string PersonaReminder  => "old-school natural philosopher";
+    public override string PersonaReminder  => "old-fashioned natural philosopher";
     public override string PersonaReminder2 => "someone who would rather be wrong precisely than right vaguely";
     public override string StyleInstruction =>
         "Careful and scrupulous - treat whatever is in front of you as something to be tested before it is believed.";

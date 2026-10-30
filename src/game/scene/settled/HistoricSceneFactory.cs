@@ -354,7 +354,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
                     { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "fortification")) });
                 if (_kind == PlaceKind.Commandery)
                     yield return Make((n, c, t, d, m) => new ShoreArea(n, c, t, d, m), "Sea Wall", "on the sea wall",
-                        "A sloped stone wall with the sea breaking against its foot, the star fort's points behind it", new[] { "wind-scoured", "salt", "loud" },
+                        "A sloped stone wall with the sea breaking against its foot, the bastion fort's points behind it", new[] { "wind-scoured", "salt", "loud" },
                         new CairnPointOfInterest("Sea Mark", new() { "A tall cairn painted white, a mark for ships" }, Items(() => new Rock()), new[] { "white", "tall" })
                         { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "pilotage")) });
                 else
@@ -544,7 +544,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
                 R(EdificeRoom.Countinghouse), R(EdificeRoom.Armoury), R(EdificeRoom.Chapel), R(EdificeRoom.Observatory, 1, EdificeLevel.Top),
                 R(EdificeRoom.Dungeon, 1, EdificeLevel.Below), R(EdificeRoom.Treasury), R(EdificeRoom.Store), R(EdificeRoom.Guardroom),
                 R(EdificeRoom.Latrine),
-            }, (3, 5), "star fort", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Chancery }, SleepStyle.Dormitories, (2, 4), (22, 30)),
+            }, (3, 5), "bastion fort", new HashSet<EdificeRoom> { EdificeRoom.Entrance, EdificeRoom.Chancery }, SleepStyle.Dormitories, (2, 4), (22, 30)),
             PlaceKind.Temple => (new[]
             {
                 R(EdificeRoom.GreatHall, 1, EdificeLevel.Ground), R(EdificeRoom.Chapel, 2), R(EdificeRoom.Crypt, 1, EdificeLevel.Below),
@@ -865,7 +865,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
                 TerrainSubfactory.BuildYewTree()),
             () => Open((n, c, t, d, m) => new OverhangArea(n, c, t, d, m), "Hermit's Cave", "in the hermit's cave",
                 "A dry hollow under a rock where a holy man lived and died, his bed of stone still there", new[] { "dry", "bare", "holy" },
-                new HollowPointOfInterest("Stone Bed", new() { "A shelf of rock worn smooth by one body over many years" }, Items(() => new Rock()), new[] { "worn", "bare" })
+                new HollowPointOfInterest("Stone Bed", new() { "A shelf of rock worn smooth by one body over many rounds" }, Items(() => new Rock()), new[] { "worn", "bare" })
                 { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "humility"), ("contemplate", "meditation")) }),
             () => Open((n, c, t, d, m) => new WalkArea(n, c, t, d, m), "Votive Tree", "under the votive tree",
                 "A single great tree hung with offerings — shoes, combs, little tin limbs for cures hoped for", new[] { "hung", "great", "hopeful" },
@@ -888,7 +888,7 @@ public sealed class HistoricSceneFactory : SettledSceneFactory
             { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "grave_robbing"), ("contemplate", "elegy")) });
         Open((n, c, t, d, m) => new GroundArea(n, c, t, d, m), "New Graves", "by the new graves",
             "Fresh graves with wooden markers, the earth still dark", new[] { "raw", "sad", "dark" },
-            new GravePointOfInterest("Fresh Grave", new() { "A grave dug and filled within the month" }, Items(() => new Clay(), () => new Clay()), new[] { "raw", "soft" })
+            new GravePointOfInterest("Fresh Grave", new() { "A grave dug and filled within the season" }, Items(() => new Clay(), () => new Clay()), new[] { "raw", "soft" })
             { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "sextonry"), ("smell", "charnel_sense")) });
         Extras(rng, new Action[]
         {

@@ -11,7 +11,7 @@ public class TanningModusMentis : ModusMentis
     public override string ModusMentisId    => "tanning";
     public override string DisplayName      => "Tanning";
     public override string MenuDescription =>
-        "Turns a raw hide into leather: scrapes it clean of flesh and hair, limes it, and steeps it for months in pits of oak bark, judging by touch when it is done.";
+        "Turns a raw hide into leather: scrapes it clean of flesh and hair, limes it, and steeps it for seasons in pits of oak bark, judging by touch when it is done.";
     public override string SkillMeans       => "the making of leather from hides";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(

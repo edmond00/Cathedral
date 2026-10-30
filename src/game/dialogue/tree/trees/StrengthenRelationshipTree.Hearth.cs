@@ -151,9 +151,9 @@ public partial class StrengthenRelationshipTree
 
     private static NpcLineNode KinOld() => new(
         nodeId:          "kin_old",
-        replica:         "Slower every year, and sharper with it. They have opinions about how I do everything, and they were right about most of it.",
-        replicaIndirect: "I tell {you:name} they grow slower every year and sharper with it, and were right about most of it.",
-        replicaHeard:    "{npc:name} says the older ones grow slower every year and sharper with it, and were right about most of it.",
+        replica:         "Slower every round, and sharper with it. They have opinions about how I do everything, and they were right about most of it.",
+        replicaIndirect: "I tell {you:name} they grow slower every round and sharper with it, and were right about most of it.",
+        replicaHeard:    "{npc:name} says the older ones grow slower every round and sharper with it, and were right about most of it.",
 
         new PlayerOption("kin_laugh", "laugh and say that never changes",
             "That never stops, for anyone.",
@@ -169,7 +169,7 @@ public partial class StrengthenRelationshipTree
             "What did you learn from them that stayed with you?",
             "I ask {npc:name} what they learned from them that stayed.",
             End("kin_learned_end", 3,
-                "How to keep going when there is no reason to. I have used it every year since.",
+                "How to keep going when there is no reason to. I have used it every round since.",
                 "I tell {you:name} I learned to keep going when there is no reason to.",
                 "Bruises and bad habits. Let us leave it there.",
                 "I tell {you:name} it was bruises and bad habits.",
@@ -212,9 +212,9 @@ public partial class StrengthenRelationshipTree
 
     private static NpcLineNode RestFeast() => new(
         nodeId:          "rest_feast",
-        replica:         "Properly. Nobody works, and anyone who tries is talked about all year. There is little here that is ours. That is.",
-        replicaIndirect: "I tell {you:name} nobody works on them, that anyone who tries is talked about all year, and that little else here is ours.",
-        replicaHeard:    "{npc:name} says nobody works on the feast days, that anyone who tries is talked about all year, and that little else there is theirs.",
+        replica:         "Properly. Nobody works, and anyone who tries is talked about all round. There is little here that is ours. That is.",
+        replicaIndirect: "I tell {you:name} nobody works on them, that anyone who tries is talked about all round, and that little else here is ours.",
+        replicaHeard:    "{npc:name} says nobody works on the feast days, that anyone who tries is talked about all round, and that little else there is theirs.",
 
         new PlayerOption("rest_ask_join", "ask whether you would be welcome at the next one",
             "Would there be room for me at the next one?",
@@ -273,8 +273,8 @@ public partial class StrengthenRelationshipTree
         replicaHeard:    "{npc:name} says they carry it, and that the woman up the way who does willow-bark charges more than they will pay.",
 
         new PlayerOption("health_urge_go", "urge them to go anyway",
-            "Go anyway. An ache you have carried a year will not leave on its own.",
-            "I urge {npc:name} to go anyway, since an ache carried a year will not leave on its own.",
+            "Go anyway. An ache you have carried a round will not leave on its own.",
+            "I urge {npc:name} to go anyway, since an ache carried a round will not leave on its own.",
             End("health_urge_end", 3,
                 "You are not the first to say it. You may be the first I listen to.",
                 "I tell {you:name} they may be the first I listen to.",
@@ -283,8 +283,8 @@ public partial class StrengthenRelationshipTree
                 typeof(MercyModusMentis))),
 
         new PlayerOption("health_ask_worse", "ask whether it is getting worse",
-            "Is it worse than it was last year?",
-            "I ask {npc:name} whether it is worse than last year.",
+            "Is it worse than it was last round?",
+            "I ask {npc:name} whether it is worse than last round.",
             End("health_worse_end", 3,
                 "It is. I have not said that to anyone. Do not make anything of it.",
                 "I admit to {you:name} that it is, and ask them not to make anything of it.",
@@ -325,8 +325,8 @@ public partial class StrengthenRelationshipTree
             End("health_promise_end", 4,
                 "I will hold you to that, {you:name}.",
                 "I tell {you:name} I will hold them to that.",
-                "Words. Everyone is brave about someone else's bad year.",
-                "I tell {you:name} everyone is brave about someone else's bad year.",
+                "Words. Everyone is brave about someone else's bad round.",
+                "I tell {you:name} everyone is brave about someone else's bad round.",
                 typeof(OathmakingModusMentis))),
 
         new PlayerOption("health_say_not_yet", "point out that day is not today",

@@ -163,7 +163,7 @@ public static class CityLayout
             new[]
             {
                 new Way("Fair Ground", "A trampled open ground where the furs are sold at the fairs, empty between them", new[] { "open", "muddy", "cold" }),
-                new Way("Kremlin Yard", "The yard before the town's log stockade, a bell on a frame at its centre", new[] { "stockaded", "cold", "watchful" }),
+                new Way("Citadel Yard", "The yard before the town's log stockade, a bell on a frame at its centre", new[] { "stockaded", "cold", "watchful" }),
                 new Way("Horse Market", "A frozen square of horse-traders, steaming beasts tethered in rows", new[] { "frozen", "steaming", "loud" }),
                 new Way("Church Green", "A snowy green round an onion-domed wooden church", new[] { "snowy", "domed", "quiet" }),
             },

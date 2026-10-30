@@ -24,7 +24,7 @@ public sealed partial class PersonalityTraitRegistry
             Opinions    = new[]
             {
                 (DialogueTopic.Trade,   "Everything's worth what someone will pay, and my job is finding the one who'll pay most"),
-                (DialogueTopic.Harvest, "A good year drops the price. Folk cheer a heavy harvest and then wonder why they're poor"),
+                (DialogueTopic.Harvest, "A good round drops the price. Folk cheer a heavy harvest and then wonder why they're poor"),
             },
         });
 
@@ -114,7 +114,7 @@ public sealed partial class PersonalityTraitRegistry
             DisplayName = "Grudge-Bearer",
             ModiMentis  = new[] { "grudgekeeping", "rote" },
             Appearance  = "watchful in a way that suggests they are keeping count of something",
-            Persona     = "You remember every slight, going back decades, with dates. You are civil to people you have not forgiven, which is most people.",
+            Persona     = "You remember every slight, going back tens of rounds, with dates. You are civil to people you have not forgiven, which is most people.",
             Opinions    = new[]
             {
                 (DialogueTopic.Neighbours, "I could name you six households in this place and exactly what each of them did"),

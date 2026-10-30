@@ -10,14 +10,14 @@ public class IlluminationModusMentis : ModusMentis
     public override string ModusMentisId    => "illumination";
     public override string DisplayName      => "Illumination";
     public override string MenuDescription =>
-        "Paints the pages of books: the gold leaf breathed onto gesso, the tiny bright figures in the capitals, the vines in the margins. Grinds the colours and works for weeks on a single page.";
+        "Paints the pages of books: the gold leaf breathed onto gesso, the tiny bright figures in the capitals, the vines in the margins. Grinds the colours and works for eleven-days on a single page.";
     public override string SkillMeans       => "the painting of manuscripts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
-    public override string PersonaTone     => "an illuminator who works for weeks on one letter";
+    public override string PersonaTone     => "an illuminator who works for eleven-days on one letter";
     public override string PersonaReminder  => "illuminator";
     public override string PersonaReminder2 => "someone who gives the smallest detail all their care";
     public override string StyleInstruction =>

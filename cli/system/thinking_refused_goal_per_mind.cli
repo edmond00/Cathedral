@@ -3,7 +3,7 @@
 # Ripelore chooses to examine the tree and Knack, which does not observe, refuses it
 # (ExamineActionNeedsObservationRule). Asked again about the same object, Ripelore is no longer
 # offered examining — it would converge on it and be refused the same way — so the pinned goal
-# misses and it settles on the only other goal there is. Scientific Research, a different mind, is
+# misses and it settles on the only other goal there is. Learned Research, a different mind, is
 # still offered examining — and since it was refused once already this phase, the means is no longer
 # left to chance: only an action modus mentis that observes is offered, with no refusal left to it.
 # `means none` hands the draw back to the RNG, so the button can only appear if that narrowing ran.
@@ -43,7 +43,7 @@ advance 12 180
 expect ] climb back down the test giant tree
 expect-not ] examine the test giant tree closely
 
-# Scientific Research: still offered examining, carried out by an observing means. Pinned to
+# Learned Research: still offered examining, carried out by an observing means. Pinned to
 # Woodcraft: several held means observe (a will counts), and one of them acts discreetly.
 means woodcraft
 click keyword 0

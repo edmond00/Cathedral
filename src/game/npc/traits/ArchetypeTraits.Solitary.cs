@@ -80,7 +80,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Kin,     "There is one who comes. Not mine, and their people would stop it if they knew. So we do not tell their people"),
-                    (DialogueTopic.Stories, "For the first time in thirty years there is somebody to hand them to. You have no idea what that is worth"),
+                    (DialogueTopic.Stories, "For the first time in thirty rounds there is somebody to hand them to. You have no idea what that is worth"),
                 },
             },
             new PersonalityTrait
@@ -89,7 +89,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Something Follows Her",
                 ModiMentis  = new[] { "beast_sense", "husbandry", "beast_sense" },
                 Appearance  = "there is an animal at the edge of sight that has not run off, and does not intend to",
-                Persona     = "A wild animal attached itself to you years ago and has never left. You do not call it tame and you do not call it yours.",
+                Persona     = "A wild animal attached itself to you rounds ago and has never left. You do not call it tame and you do not call it yours.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Beasts, "It is not mine and it is not tame. It stays. That is the whole of the arrangement and it suits us both"),
@@ -121,7 +121,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "decipher", "archeology", "scholarship" },
                 Organs      = new[] { ("cerebrum", 1), ("anamnesis", 1) },
                 Appearance  = "fingertips worn smooth, as though from tracing the same lines over and over",
-                Persona     = "There are marks cut into the rock up here older than any village and you have spent years working at them. You have got further than you tell people.",
+                Persona     = "There are marks cut into the rock up here older than any village and you have spent rounds working at them. You have got further than you tell people.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Stories, "There are marks in the stone up here older than any tale still told below. Nobody comes to read them but me"),
@@ -247,7 +247,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "stealth", "stalking", "scrutiny" },
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Appearance  = "knows things about you that nothing in this conversation explains",
-                Persona     = "You have watched the village from the treeline for years. You know their routines, their names, their quarrels. They have no idea.",
+                Persona     = "You have watched the village from the treeline for rounds. You know their routines, their names, their quarrels. They have no idea.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Neighbours, "I know your people. Names. Who fights. Who steals. They do not know I know"),

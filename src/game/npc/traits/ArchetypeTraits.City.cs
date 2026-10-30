@@ -27,7 +27,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Bent at the Bench",
                 ModiMentis  = new[] { "diligence", "endurance" },
                 Wounds      = new Func<Wound>[] { () => new BrokenBackboneWound() },
-                Appearance  = "a back bent like a hook from thirty years at the low bench",
+                Appearance  = "a back bent like a hook from thirty rounds at the low bench",
                 Persona     = "Your back has set in the shape of your work and you can no longer stand fully straight. You do not complain; you sit down.",
                 Opinions    = new[] { (DialogueTopic.Health, "I have not stood straight since my apprenticeship. The bench takes its due") },
             },
@@ -49,7 +49,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new BespokeShoes() },
                 Appearance  = "a pair of exquisite shoes on display that are not for sale",
                 Persona     = "You make shoes for the best houses in the town and you know you are the best cobbler in the province. You make sure everyone else knows it too.",
-                Opinions    = new[] { (DialogueTopic.Work, "the lord's steward sends for me twice a year. Twice a year, mind") },
+                Opinions    = new[] { (DialogueTopic.Work, "the lord's steward sends for me twice a round. Twice a round, mind") },
             },
             new PersonalityTrait
             {
@@ -57,7 +57,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Marched in the Wars",
                 ModiMentis  = new[] { "soldiery", "war_weariness", "endurance" },
                 Appearance  = "an old army boot nailed over the door",
-                Persona     = "You marched a thousand miles in bad boots in the last war and swore you would never let anyone suffer that again. You still give soldiers a discount.",
+                Persona     = "You marched a thousand leagues in bad boots in the last war and swore you would never let anyone suffer that again. You still give soldiers a discount.",
                 Opinions    = new[] { (DialogueTopic.Roads, "I walked to the border and back in boots that split on the first day. Never again, for anyone") },
             },
             new PersonalityTrait
@@ -108,7 +108,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "steady_hand", "patience" },
                 Items       = new Func<Item>[] { () => new ReadingLenses() },
                 Appearance  = "peers at faces from a hand's breadth away",
-                Persona     = "Forty years of fine stitching have ruined your eyes for anything further off than your needle. You recognise people by their coats.",
+                Persona     = "Forty rounds of fine stitching have ruined your eyes for anything further off than your needle. You recognise people by their coats.",
                 Opinions    = new[] { (DialogueTopic.Health, "I can thread a needle in candlelight and I cannot tell you who is standing at the door") },
             },
             new PersonalityTrait
@@ -117,7 +117,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Follows the Capital's Fashions",
                 ModiMentis  = new[] { "aesthetic", "ambition", "worldliness" },
                 Appearance  = "talks constantly of what they are wearing in the capital",
-                Persona     = "You copy every fashion that reaches the town from the capital, a year late, and you believe that makes you the height of taste.",
+                Persona     = "You copy every fashion that reaches the town from the capital, a round late, and you believe that makes you the height of taste.",
                 Opinions    = new[] { (DialogueTopic.Stories, "in the capital they slash the sleeves to show the lining. It will come here. I will be ready") },
             },
             new PersonalityTrait
@@ -127,7 +127,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "obsequies", "condolence", "threadwork" },
                 Appearance  = "a stack of plain linen folded apart from the rest",
                 Persona     = "You sew wedding clothes and shrouds and you take the same care over both. You have been at more deathbeds than the priest.",
-                Opinions    = new[] { (DialogueTopic.Kin, "I made her christening gown and her wedding dress and her shroud. Same hands, same care") },
+                Opinions    = new[] { (DialogueTopic.Kin, "I made her seed-blessing gown and her wedding dress and her shroud. Same hands, same care") },
             });
 
         // ── Chandler ──────────────────────────────────────────────────────────────
@@ -240,7 +240,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "brawling", "brute_force", "temerity" },
                 Wounds      = new Func<Wound>[] { () => new BrokenNoseWound() },
                 Appearance  = "a nose broken flat and forearms like hams",
-                Persona     = "The butchers' street fights the tanners' street every feast day and you have led the charge for twenty years. You are proud of every scar.",
+                Persona     = "The butchers' street fights the tanners' street every feast day and you have led the charge for twenty rounds. You are proud of every scar.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "the tanners think they are hard. They are not. We have the cleavers") },
             },
             new PersonalityTrait
@@ -292,8 +292,8 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "hallmark", "patience", "tanning" },
                 Items       = new Func<Item>[] { () => new TannedLeather() },
                 Appearance  = "runs a thumb over every hide that leaves the yard",
-                Persona     = "Your leather is a year in the pits and not a day less, and the saddlers of three towns buy nothing else. You will not hurry for any price.",
-                Opinions    = new[] { (DialogueTopic.Work, "a year in the pits. Not eleven months. A year") },
+                Persona     = "Your leather is a round in the pits and not a day less, and the saddlers of three towns buy nothing else. You will not hurry for any price.",
+                Opinions    = new[] { (DialogueTopic.Work, "a round in the pits. Not three hundred and thirty days. A round") },
             },
             new PersonalityTrait
             {
@@ -333,7 +333,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "firecraft", "smoke_reading", "vigil" },
                 Appearance  = "eyebrows singed off, eyes red from watching flames",
                 Persona     = "You sit up three nights with every firing, watching the colour of the flame, and you have never lost a kiln-load. The others say you talk to the fire.",
-                Opinions    = new[] { (DialogueTopic.Seasons, "the big firing is next week. I will not sleep for three nights. I never do") },
+                Opinions    = new[] { (DialogueTopic.Seasons, "the big firing is next eleven-day. I will not sleep for three nights. I never do") },
             },
             new PersonalityTrait
             {
@@ -371,7 +371,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "archeology", "curiosity", "provenance" },
                 Items       = new Func<Item>[] { () => new Potsherd() },
                 Appearance  = "a shelf of ancient broken pottery dug up around the town",
-                Persona     = "You collect old shards that turn up in gardens and ditches and you can tell which are a hundred years old and which a thousand.",
+                Persona     = "You collect old shards that turn up in gardens and ditches and you can tell which are a hundred rounds old and which a thousand.",
                 Opinions    = new[] { (DialogueTopic.Stories, "this shard is older than the empire. Someone drank from it before there was a town here") },
             });
 
@@ -402,7 +402,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Corresponds with Physicians",
                 ModiMentis  = new[] { "scientific_research", "diagnosis", "scholarship" },
                 Items       = new Func<Item>[] { () => new Parchment() },
-                Appearance  = "ink-stained fingers and letters from the university",
+                Appearance  = "ink-stained fingers and letters from the academy",
                 Persona     = "You write to physicians in the capital about every unusual case and you believe you are on the edge of a great discovery about fevers.",
                 Opinions    = new[] { (DialogueTopic.Health, "the fevers come from bad air, the physicians say. I think it is the water. I am writing to them") },
             },
@@ -422,7 +422,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "mercy", "physic", "almsgiving" },
                 Items       = new Func<Item>[] { () => new Herb() },
                 Appearance  = "a queue of the poor at the back door on market days",
-                Persona     = "You treat those who cannot pay one morning a week and lose money on it every time. It is the only part of the trade you are proud of.",
+                Persona     = "You treat those who cannot pay one morning an eleven-day and lose money on it every time. It is the only part of the trade you are proud of.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "the rich pay for the poor here, though they do not know it") },
             },
             new PersonalityTrait
@@ -454,7 +454,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "surgery", "sangfroid", "war_weariness" },
                 Items       = new Func<Item>[] { () => new Saw() },
                 Appearance  = "a saw on the wall that is not for wood",
-                Persona     = "You took off legs on a battlefield for six years and nothing in a town barber's shop can shock you. You do not speak of the war.",
+                Persona     = "You took off legs on a battlefield for six rounds and nothing in a town barber's shop can shock you. You do not speak of the war.",
                 Opinions    = new[] { (DialogueTopic.Health, "a clean cut and hot pitch. I have done it in the rain with a man screaming. A tooth is nothing") },
             },
             new PersonalityTrait
@@ -630,8 +630,8 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Yoke-Crooked",
                 ModiMentis  = new[] { "endurance", "athletics" },
                 Wounds      = new Func<Wound>[] { () => new ShoulderDislocationRightWound() },
-                Appearance  = "one shoulder higher than the other from years under the yoke",
-                Persona     = "Years under the yoke have set your shoulders crooked and you walk with a little sideways lean even without the buckets.",
+                Appearance  = "one shoulder higher than the other from rounds under the yoke",
+                Persona     = "Rounds under the yoke have set your shoulders crooked and you walk with a little sideways lean even without the buckets.",
                 Opinions    = new[] { (DialogueTopic.Health, "the yoke shapes you. Look at any old water-carrier. We all lean the same way") },
             },
             new PersonalityTrait
@@ -646,11 +646,11 @@ public sealed partial class PersonalityTraitRegistry
             new PersonalityTrait
             {
                 TraitId     = "water_carrier_drought_dread",
-                DisplayName = "Fears the Dry Year",
+                DisplayName = "Fears the Dry Round",
                 ModiMentis  = new[] { "dread", "sky_reading", "foresight" },
                 Appearance  = "always looking at the sky for rain",
-                Persona     = "You lived through the dry year when the wells failed and people died at the cisterns, and you watch the sky every day for it coming again.",
-                Opinions    = new[] { (DialogueTopic.Weather, "no rain for three weeks. The well is a foot lower. I have seen this before") },
+                Persona     = "You lived through the dry round when the wells failed and people died at the cisterns, and you watch the sky every day for it coming again.",
+                Opinions    = new[] { (DialogueTopic.Weather, "no rain for three eleven-days. The well is a foot lower. I have seen this before") },
             },
             new PersonalityTrait
             {
@@ -717,7 +717,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "soldiery", "war_weariness", "grudgekeeping" },
                 Wounds      = new Func<Wound>[] { () => new KneeFractureRightWound() },
                 Appearance  = "a ruined knee and an old army coat",
-                Persona     = "You gave the empire your knee and twenty years and it gave you a discharge paper and the street. You are bitter about it to anyone who will listen.",
+                Persona     = "You gave the empire your knee and twenty rounds and it gave you a discharge paper and the street. You are bitter about it to anyone who will listen.",
                 Opinions    = new[] { (DialogueTopic.Kin, "my regiment was my kin. Most of them are dead, and the rest are here begging like me") },
             },
             new PersonalityTrait

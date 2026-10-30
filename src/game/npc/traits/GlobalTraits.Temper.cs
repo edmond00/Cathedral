@@ -89,7 +89,7 @@ public sealed partial class PersonalityTraitRegistry
             Persona     = "You expect things to go badly and you say so out loud. You are not unkind about it — you simply do not see the point of pretending.",
             Opinions    = new[]
             {
-                (DialogueTopic.Harvest, "It'll be a poor one. It usually is, and when it isn't, that's next year's trouble stored up"),
+                (DialogueTopic.Harvest, "It'll be a poor one. It usually is, and when it isn't, that's next round's trouble stored up"),
                 (DialogueTopic.Weather, "It'll turn. It always turns, and never the way you'd want"),
             },
         });

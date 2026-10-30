@@ -36,7 +36,7 @@ public static class AnimalPenSubfactory
         // represents. Reading what an animal is going to become had no animal to read.
         pen.PointsOfInterest.Add(new LambPointOfInterest(
             displayName: "Lamb Pen",
-            descriptions: new() { "A hurdled corner of the pen holding this year's lambs, close-huddled and noisy" },
+            descriptions: new() { "A hurdled corner of the pen holding this round's lambs, close-huddled and noisy" },
             moods: new[] { "noisy", "close", "warm", "restless" }
         ) { Senses = SensoryProfile.FullyAlive,
             VerbModiMentis = new Dictionary<string, string>

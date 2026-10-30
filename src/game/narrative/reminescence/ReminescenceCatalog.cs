@@ -327,7 +327,7 @@ internal static class ReminescenceCatalog
             fragments: new List<FragmentData>
             {
                 new("dark shadows",
-                    observationText:  "thick darkness pressing against the walls — no lamp, no stars, nowhere to go",
+                    observationText:  "thick darkness pressing against the walls — no lamp, no embers, nowhere to go",
                     outcomeText:      "hiding in shadow so as not to be seen the night you ran away",
                     outcome: To("survive", skills: new[] { typeof(StealthModusMentis) }),
                     contextSummary:   "hiding in shadow the night you ran away"),
@@ -421,7 +421,7 @@ internal static class ReminescenceCatalog
             {
                 new("a company of knights",
                     observationText:  "the noise of children shouting, playing at something urgent in the sun",
-                    outcomeText:      "playing knights with other children — your old friends from those years",
+                    outcomeText:      "playing knights with other children — your old friends from those rounds",
                     outcome: To("pillage", skills: new[] { typeof(FriendshipModusMentis) }),
                     contextSummary:   "playing with childhood friends"),
 
@@ -460,7 +460,7 @@ internal static class ReminescenceCatalog
             {
                 new("a large, heavy book",
                     observationText:  "a great weight of pages, the spine pressing into your palms — too many words to count",
-                    outcomeText:      "a great encyclopedia full of concepts you could not understand, until you left to find a library that could explain them",
+                    outcomeText:      "a great compendium full of concepts you could not understand, until you left to find a library that could explain them",
                     outcome: To("travel",
                         skills: new[] { typeof(ScientificResearchModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),

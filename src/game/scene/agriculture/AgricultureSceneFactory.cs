@@ -191,7 +191,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
     internal static readonly Func<Area>[] EdgePool =
     {
         () => Edge((n, c, t, d, m) => new PondArea(n, c, t, d, m), "Farm Pond", "by the farm pond",
-            "A pond dug for the beasts and the dry months, ducks on it and the edges trodden to mud", new[] { "trodden", "still", "muddy" },
+            "A pond dug for the beasts and the dry seasons, ducks on it and the edges trodden to mud", new[] { "trodden", "still", "muddy" },
             new PoolPointOfInterest("Pond Water", new() { "Brown still water, a moorhen ticking at the reeds" }, Items(() => new Reed()), new[] { "brown", "still" })
             { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "drainage"), ("contemplate", "meditation")) }),
         () => Edge((n, c, t, d, m) => new GardenArea(n, c, t, d, m), "Bee Garden", "in the bee garden",
@@ -205,7 +205,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
             "Poor ground left to grass and thistle, grazed by whatever the holding keeps", new[] { "rough", "thistly", "grazed" },
             TerrainSubfactory.BuildFlowerPatch()),
         () => Edge((n, c, t, d, m) => new ThicketArea(n, c, t, d, m), "Bramble Corner", "in the bramble corner",
-            "A corner nobody has worked in years, gone to bramble and elder, blackberries in season", new[] { "tangled", "berried", "neglected" },
+            "A corner nobody has worked in rounds, gone to bramble and elder, blackberries in season", new[] { "tangled", "berried", "neglected" },
             TerrainSubfactory.BuildBerryBush()),
     };
 
@@ -555,7 +555,7 @@ public sealed class AgricultureSceneFactory : SettledSceneFactory
     {
         var a = new CellarArea("Wine Cellar", "in the wine cellar", "go down into the wine cellar",
             new() { "A low cellar of casks in ranks, the air cold and sour-sweet" }, new[] { "cold", "dark", "sour-sweet" });
-        a.PointsOfInterest.Add(new BarrelPointOfInterest("Casks", new() { "Ranks of casks chalked with the year" },
+        a.PointsOfInterest.Add(new BarrelPointOfInterest("Casks", new() { "Ranks of casks chalked with the round" },
             Items(() => new Wine(), () => new Wine(), () => new Raisins()), new[] { "ranked", "chalk-marked" })
             { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "cellarcraft"), ("smell", "bouquet")) });
         return a;

@@ -80,7 +80,7 @@ public class HotSteppeSceneFactory : WildSceneFactory
             "Yellow grass and thorn to the horizon under a white sky, the heat standing on it",
             seed => new NoisyGenerator { Seed = seed, Density = 0.82f }, dry, tier: 1);
         if (kopje.Count > 0)
-            AddSection(scene, "Kopje", "A heap of granite boulders standing out of the grass, the only high ground for miles",
+            AddSection(scene, "Kopje", "A heap of granite boulders standing out of the grass, the only high ground for leagues",
                 seed => new WaveGenerator { Seed = seed }, kopje, tier: 1);
         if (river.Count > 0)
             AddSection(scene, "River Forest", "A ribbon of tall green trees along a brown river, in country that is otherwise dry",
@@ -181,7 +181,7 @@ public class HotSteppeSceneFactory : WildSceneFactory
         displayName: "Salt Lick",
         contextDescription: "at the salt lick",
         transitionDescription: "walk over to the salt lick",
-        descriptions: new() { "A bare patch of whitish earth gouged into hollows by the tongues and tusks of every animal for miles" },
+        descriptions: new() { "A bare patch of whitish earth gouged into hollows by the tongues and tusks of every animal for leagues" },
         moods: new[] { "bare", "gouged", "whitish", "much-visited" });
 
     private static Area BuildKopjeFoot() => new BoulderArea(

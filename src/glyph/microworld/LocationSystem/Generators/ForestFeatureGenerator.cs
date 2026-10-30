@@ -115,7 +115,7 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                     ["morning"] = new("morning", "Morning", "Bright daylight illuminates the forest floor in dappled patterns", "sun rises"),
                     ["afternoon"] = new("afternoon", "Afternoon", "Warm afternoon sun creates shifting light and shadow", "noon passes"),
                     ["dusk"] = new("dusk", "Dusk", "Golden light fades as shadows lengthen between the trees", "dusk falls"),
-                    ["night"] = new("night", "Night", "Darkness envelops the forest, lit only by pale moonlight", "night falls")
+                    ["night"] = new("night", "Night", "Darkness envelops the forest, lit only by pale eggmoon-light", "night falls")
                 },
                 "morning", StateScope.Location),
                 
@@ -193,7 +193,7 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 new Dictionary<string, string>()),
                 
             ["old_growth_area"] = new("old_growth_area", "Old Growth Area", 
-                "Massive ancient trees that have stood for centuries",
+                "Massive ancient trees that have stood for hundreds of rounds",
                 "deep_woods", new List<string> { "deep_woods" },
                 new List<string>(), new List<string>(),
                 new Dictionary<string, string>()),
@@ -363,7 +363,7 @@ public class ForestFeatureGenerator : LocationFeatureGenerator
                 
             case 1: // Fairy Ring
                 sublocations["fairy_ring"] = new("fairy_ring", "Fairy Ring", 
-                    "Perfect circle of mushrooms in a moonlit clearing",
+                    "Perfect circle of mushrooms in an eggmoon-lit clearing",
                     "deep_woods", new List<string> { "deep_woods", "mushroom_grove" },
                     new List<string> { "dusk", "night" }, new List<string>(), // Only visible in evening/night
                     new Dictionary<string, string>());

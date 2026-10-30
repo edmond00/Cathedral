@@ -11,7 +11,7 @@ public class ThriftModusMentis : ModusMentis
     public override string ModusMentisId    => "thrift";
     public override string DisplayName      => "Thrift";
     public override string MenuDescription =>
-        "Gets the last use out of everything. Mends rather than replaces, keeps what might serve, and knows the exact price of what it is about to part with. Unglamorous, faintly mean, and the reason there is anything left in March.";
+        "Gets the last use out of everything. Mends rather than replaces, keeps what might serve, and knows the exact price of what it is about to part with. Unglamorous, faintly mean, and the reason there is anything left in the Weeping.";
     public override string SkillMeans       => "the getting of the last use out of a thing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
     public override string[] Organs        => new[] { "hands", "anamnesis" };

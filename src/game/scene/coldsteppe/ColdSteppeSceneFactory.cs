@@ -184,7 +184,7 @@ public class ColdSteppeSceneFactory : WildSceneFactory
         displayName: "Patterned Ground",
         contextDescription: "on the patterned ground",
         transitionDescription: "walk out onto the patterned ground",
-        descriptions: new() { "Flat ground the frost has sorted into rings and stripes of stone, mile on mile, as if laid out by a mason" },
+        descriptions: new() { "Flat ground the frost has sorted into rings and stripes of stone, league on league, as if laid out by a mason" },
         moods: new[] { "sorted", "ringed", "orderly", "uncanny" });
 
     private static Area BuildFrostRings() => new FrostfieldArea(

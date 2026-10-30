@@ -11,7 +11,7 @@ public class VagabondageModusMentis : ModusMentis
     public override string ModusMentisId    => "vagabondage";
     public override string DisplayName      => "Vagabondage";
     public override string MenuDescription =>
-        "Travels with nowhere particular to be, and lives off the margins of that: which barns are unlocked, which houses feed a stranger, how to be moved on without being detained. Free and one bad week from disaster.";
+        "Travels with nowhere particular to be, and lives off the margins of that: which barns are unlocked, which houses feed a stranger, how to be moved on without being detained. Free and one bad eleven-day from disaster.";
     public override string SkillMeans       => "the living made from a road with no destination";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTarget.To<VoyageTowardVerb>("wander on");

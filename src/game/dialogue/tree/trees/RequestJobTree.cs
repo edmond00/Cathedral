@@ -188,13 +188,13 @@ public class RequestJobTree : DialogueTree
 
     private static NpcLineNode ShowWilling() => new(
         nodeId:          "show_willing",
-        replica:         "Strong and willing. So is every third person who comes here, and half of them leave by the second week.",
-        replicaIndirect: "I tell {you:name} every third person who comes here is strong and willing, and half of them leave by the second week.",
-        replicaHeard:    "{npc:name} says every third person who comes there is strong and willing, and half of them leave by the second week.",
+        replica:         "Strong and willing. So is every third person who comes here, and half of them leave by the second eleven-day.",
+        replicaIndirect: "I tell {you:name} every third person who comes here is strong and willing, and half of them leave by the second eleven-day.",
+        replicaHeard:    "{npc:name} says every third person who comes there is strong and willing, and half of them leave by the second eleven-day.",
 
         new PlayerOption("willing_stand_by", "stand by what you said",
-            "Then judge me by the second week, not by today.",
-            "I tell {npc:name} to judge me by the second week, not by today.",
+            "Then judge me by the second eleven-day, not by today.",
+            "I tell {npc:name} to judge me by the second eleven-day, not by today.",
             End("willing_stand_end", 2,
                 "We will see whether the work matches the promise. There is work to be had.",
                 "I tell {you:name} we will see whether the work matches the promise.",
@@ -316,8 +316,8 @@ public class RequestJobTree : DialogueTree
                 typeof(OathmakingModusMentis))),
 
         new PlayerOption("pay_say_why_ask", "explain why you asked",
-            "I ask because I was paid the newcomer's rate for a year once.",
-            "I tell {npc:name} I was paid the newcomer's rate for a year once.",
+            "I ask because I was paid the newcomer's rate for a round once.",
+            "I tell {npc:name} I was paid the newcomer's rate for a round once.",
             End("pay_why_end", 3,
                 "Then someone used you badly. Not here. The rate is the rate.",
                 "I tell {you:name} someone used them badly, and that the rate is the rate here.",
@@ -377,12 +377,12 @@ public class RequestJobTree : DialogueTree
                 typeof(GregariousnessModusMentis))),
 
         new PlayerOption("need_press_case", "press your case while they are listening",
-            "Then take me on. Nobody will work harder for the first month.",
-            "I ask {npc:name} to take me on, since nobody will work harder for the first month.",
+            "Then take me on. Nobody will work harder for the first season.",
+            "I ask {npc:name} to take me on, since nobody will work harder for the first season.",
             End("need_press_end", 3,
-                "The first month. We will see about the second. You are taken on.",
-                "I tell {you:name} we will see about the second month, and that they are taken on.",
-                "The first month, and then what? I need hands, not enthusiasm.",
+                "The first season. We will see about the second. You are taken on.",
+                "I tell {you:name} we will see about the second season, and that they are taken on.",
+                "The first season, and then what? I need hands, not enthusiasm.",
                 "I tell {you:name} I need hands, not enthusiasm.",
                 typeof(WheedlingModusMentis))));
 

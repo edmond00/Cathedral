@@ -59,10 +59,10 @@ public class OrchardistArchetype : SettledArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Harvest] = "a tree remembers a bad year for two more. You pick what it gives and you thank it",
+        [DialogueTopic.Harvest] = "a tree remembers a bad round for two more. You pick what it gives and you thank it",
         [DialogueTopic.Seasons] = "winter is when the real work is done - you cut, and spring tells you if you cut right",
         [DialogueTopic.Work] = "there is no hurrying a tree. Anybody who tries ends up with firewood",
-        [DialogueTopic.Weather] = "a late frost on the blossom and that is the year gone, whatever happens after",
+        [DialogueTopic.Weather] = "a late frost on the blossom and that is the round gone, whatever happens after",
         [DialogueTopic.Wilds] = "deer at the bark, birds at the fruit, wasps in the windfalls. The wild wants my trees as much as I do",
         [DialogueTopic.Kin] = "my father planted the far rows. I will plant some my children will pick",
         [DialogueTopic.Food] = "there is nothing like a pear eaten off the branch on the day it is ready. One day, and it is gone",
@@ -113,12 +113,12 @@ public class VintnerArchetype : SettledArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Harvest] = "the vintage is decided in the last fortnight. All the year before is only a promise",
+        [DialogueTopic.Harvest] = "the vintage is decided in the last fourteen days. All the round before is only a promise",
         [DialogueTopic.Weather] = "rain at the vintage swells the grapes and thins the wine. I pray for dry and I am never answered",
         [DialogueTopic.Food] = "wine is food. Anyone who says otherwise has been drinking bad wine",
         [DialogueTopic.Trade] = "the merchants come up from the coast and lie to me about the price. I lie back. We both know it",
         [DialogueTopic.Work] = "two buds, no more. Leave three and you have more grapes and less wine",
-        [DialogueTopic.Rest] = "after the vintage, a month of nothing. I have earned it and so has the vine",
+        [DialogueTopic.Rest] = "after the vintage, thirty days of nothing. I have earned it and so has the vine",
         [DialogueTopic.Neighbours] = "the next valley says their wine is better. Their wine is vinegar with ambitions",
     };
 
@@ -173,7 +173,7 @@ public class PlanterArchetype : SettledArchetype
         [DialogueTopic.Weather] = "the rains are late and every day late is money I will never see",
         [DialogueTopic.Neighbours] = "they're all planters like me, and we all watch each other's prices",
         [DialogueTopic.Roads] = "the road to the coast is the only road that matters. Without it the crop rots where it stands",
-        [DialogueTopic.Health] = "fever takes a hand a week in the wet season. I count them and I hire more",
+        [DialogueTopic.Health] = "fever takes a hand an eleven-day in the wet season. I count them and I hire more",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
@@ -227,7 +227,7 @@ public class PickerArchetype : SettledArchetype
         [DialogueTopic.Food] = "we eat what the master sends down. It is enough. Mostly",
         [DialogueTopic.Kin] = "my children pick beside me. Smaller baskets",
         [DialogueTopic.Weather] = "the heat at noon is the worst. People fall down in the rows",
-        [DialogueTopic.Health] = "my back, my hands, my eyes. Pick for twenty years and you will know",
+        [DialogueTopic.Health] = "my back, my hands, my eyes. Pick for twenty rounds and you will know",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
@@ -381,7 +381,7 @@ public class GravediggerArchetype : SettledArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Work] = "six feet down, straight sides. Do it right once and nobody thinks about it for a hundred years",
+        [DialogueTopic.Work] = "six feet down, straight sides. Do it right once and nobody thinks about it for a hundred rounds",
         [DialogueTopic.Kin] = "I have buried most of mine. I know where every one of them is",
         [DialogueTopic.Omens] = "people think a graveyard is full of spirits. It is full of grass",
         [DialogueTopic.Health] = "I know what people die of. Mostly it is the winter",
@@ -440,7 +440,7 @@ public class GuardArchetype : SettledArchetype
         [DialogueTopic.Neighbours] = "the townsfolk look at us like we are dogs, until there is trouble",
         [DialogueTopic.Rest] = "four hours off, eight on. You sleep when you can and where you fall",
         [DialogueTopic.Trade] = "a guard's pay is a joke. Everybody knows how we make it up",
-        [DialogueTopic.Omens] = "never look at the moon on the wall at night. Old guard's rule",
+        [DialogueTopic.Omens] = "never look at the eggmoon on the wall at night. Old guard's rule",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
@@ -542,7 +542,7 @@ public class PriestArchetype : SettledArchetype
         [DialogueTopic.Health] = "I sit with the dying more than the doctor does. Someone should",
         [DialogueTopic.Harvest] = "I bless the fields every spring. The fields do not seem to notice, but the people do",
         [DialogueTopic.Rest] = "the holy days are for rest. Nobody keeps them properly any more",
-        [DialogueTopic.Stories] = "every saint's day has its story, and I tell them all, every year",
+        [DialogueTopic.Stories] = "every saint's day has its story, and I tell them all, every round",
         [DialogueTopic.Trade] = "the temple does not trade. It accepts gifts. There is a difference",
     };
 
@@ -594,7 +594,7 @@ public class MonkArchetype : SettledArchetype
         [DialogueTopic.Work] = "prayer is work and work is prayer. The rule says so and I have found it true",
         [DialogueTopic.Food] = "one meal, eaten in silence while a brother reads. You notice the bread more",
         [DialogueTopic.Neighbours] = "the village comes for alms and for physic. We give both",
-        [DialogueTopic.Stories] = "the library holds books nobody outside these walls has read in a century",
+        [DialogueTopic.Stories] = "the library holds books nobody outside these walls has read in a hundred rounds",
         [DialogueTopic.Kin] = "I had a family once. Now I have brothers",
     };
 
@@ -636,7 +636,7 @@ public class ScholarArchetype : SettledArchetype
     public override string SelfIntroduction => "a master of this school. I teach, I read, and I am usually late for both";
     public override string Workplace        => "the lecture hall";
     public override string Craft            => "letters and number";
-    public override string DailyLabour      => "lecturing, examining, disputing, copying and arguing with colleagues about all four";
+    public override string DailyLabour      => "lecturing, examining, disputing, copying and arguing with fellows about all four";
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
@@ -854,9 +854,9 @@ public class SailorArchetype : SettledArchetype
     {
         [DialogueTopic.Water] = "the sea does not care about you. Remember that and it might let you live",
         [DialogueTopic.Weather] = "I can smell a storm coming a day out. Most landsmen cannot smell rain when it is falling",
-        [DialogueTopic.Rest] = "in port. All of it, in a week, every copper",
-        [DialogueTopic.Food] = "salt fish and hard bread for a month at sea. You stop tasting it",
-        [DialogueTopic.Omens] = "never whistle on deck. Never sail on the last day of the month. Never let a priest aboard",
+        [DialogueTopic.Rest] = "in port. All of it, in an eleven-day, every copper",
+        [DialogueTopic.Food] = "salt fish and hard bread for thirty days at sea. You stop tasting it",
+        [DialogueTopic.Omens] = "never whistle on deck. Never sail on the last day of the season. Never let a priest aboard",
         [DialogueTopic.Kin] = "a sweetheart in every port is the saying. One in two ports is closer to the truth",
         [DialogueTopic.Stories] = "I have seen a fish as big as a church. You do not believe me. Nobody ever does",
     };
@@ -962,7 +962,7 @@ public class ClerkArchetype : SettledArchetype
         [DialogueTopic.Trade] = "a copper a page, and the page is worth more than the copper. Nobody sees that",
         [DialogueTopic.Neighbours] = "they come to me when they need something written. Otherwise they do not see me",
         [DialogueTopic.Rest] = "the office closes at sunset. My work does not",
-        [DialogueTopic.Stories] = "the archive has records going back three hundred years. Nobody reads them but me",
+        [DialogueTopic.Stories] = "the archive has records going back three hundred rounds. Nobody reads them but me",
         [DialogueTopic.Kin] = "my father was a clerk. His father was a clerk. It is in the hand",
     };
 

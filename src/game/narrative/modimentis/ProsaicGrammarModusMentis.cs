@@ -20,7 +20,7 @@ public class ProsaicGrammarModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a baroque hand whose periods unfold in clause upon clause before they consent to close";
+    public override string PersonaTone     => "an ornate hand whose periods unfold in clause upon clause before they consent to close";
     public override string PersonaReminder  => "ornate grammarian";
     public override string PersonaReminder2 => "someone whose sentences unwind through long, intricate clauses";
     public override string StyleInstruction =>

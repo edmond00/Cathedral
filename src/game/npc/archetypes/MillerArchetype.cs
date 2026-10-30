@@ -50,13 +50,13 @@ public class MillerArchetype : CraftsmanArchetype
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
         [DialogueTopic.Water]      = "the race is everything. Too little and the wheel stands idle; too much and it takes my sluice out",
-        [DialogueTopic.Harvest]    = "a heavy harvest is a heavy month. Everyone wants their grain ground the same week",
+        [DialogueTopic.Harvest]    = "a heavy harvest is a heavy season. Everyone wants their grain ground the same eleven-day",
         [DialogueTopic.Trade]      = "everyone thinks the miller cheats them. I take the toll I'm owed, and I take it in front of them",
         [DialogueTopic.Neighbours] = "I know exactly who has grain to bring and who'll be hungry come the thaw. They know I know",
-        [DialogueTopic.Weather]    = "a still week is worse for me than a storm. Give me wind or give me water, but give me something",
+        [DialogueTopic.Weather]    = "a still eleven-day is worse for me than a storm. Give me wind or give me water, but give me something",
         [DialogueTopic.Work]       = "the stone must be dressed or the meal comes out coarse. Folk blame the flour and never the man who let the grooves go",
         [DialogueTopic.Stories]    = "there's a tale in every village about a miller who cheated and came to grief. I've heard it about myself",
-        [DialogueTopic.Health]     = "the noise. Thirty years of it. Speak up or don't bother",
+        [DialogueTopic.Health]     = "the noise. Thirty rounds of it. Speak up or don't bother",
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
