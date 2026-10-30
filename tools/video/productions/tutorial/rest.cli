@@ -1,0 +1,706 @@
+# The rest of the tutorial: from the world map after getting up to the closing frame, recorded on its own
+# and started from the opening take's checkpoint (its save from arriving on the world map,
+# build/rec_opening2/saves/01_get_up.json, copied to the --save-path before the take), so the opening is
+# not replayed. Continue loads it; everything after is tutorial.cli's own second half. The take keeps a
+# checkpoint at each arrival on the world map (saves/ in its folder), so any later part can be re-shot the
+# same way.
+#
+# FLAGS: as tutorial.cli's (the start-area, observe-only, npc-static, npc-affinity, job-only and
+#        force-encounter flags act on the scenes and journeys still to come), plus --save-path.
+allow-flag-miss --start-area
+allow-flag-miss --observe-only
+
+wait mode MainMenu 900
+mark resume
+click menu Continue
+wait mode WorldView 900
+cursor rest
+hold 2
+
+# The protagonist screen, the way a player opens it: Escape, then Protagonist.
+pause
+wait 900
+click menu Protagonist
+wait 900
+
+mark anatomy
+clip anatomy
+click tab anatomy
+wait 900
+cursor rest
+hold 6
+clip end anatomy
+
+mark memory
+clip memory
+click tab memory
+wait 900
+cursor rest
+hold 6
+clip end memory
+
+# The inventory: the sword in hand, the cloak and clothes, the backpack. Open the backpack and eat
+# the bread in it.
+mark inventory
+clip inventory
+click tab inventory
+wait 900
+cursor rest
+hold 5
+click element backpack
+wait 900
+hold 3
+click element content:bread
+wait 900
+cursor rest
+hold 4
+click element consume
+wait 900
+hold 3
+clip end inventory
+
+# The humors: the bread's humors have entered the paunch at the spiral's mouth (index 0 is the
+# newest). Pointing at it shows what it is and what it does to a die.
+mark humors
+clip humors
+click tab humors
+wait 900
+cursor rest
+hold 5
+point element humor:paunch:0
+hold 6
+point element humor:paunch:1
+hold 4
+cursor rest
+hold 3
+clip end humors
+
+click back
+wait 900
+click menu Continue
+wait mode WorldView 900
+
+# ── Travel to the farm ───────────────────────────────────────────────────────────────────────────────
+mark travel_farm
+clip travel_farm
+travel 7011
+wait 900
+cursor rest
+hold 4
+travel-go
+wait mode EncounterPrompt 900
+clip end travel_farm
+
+# ── The first fight: a wolf on the road ─────────────────────────────────────────────────────────────
+# --force-encounter puts a wolf on this journey's middle step. The fight is seeded end to end (the
+# arena from the run's GameRng, the wolf from the travel generator, every roll from the fight's own
+# stream), so its course is the same on every replay whatever the model wrote before it: the wolf
+# starts far off and needs two of our turns to close, then falls to the fifth snap thrust. Our own
+# turns are ended to let it come; it never lands a blow.
+mark fight_1
+clip fight_1
+cursor rest
+hold 4
+click engage
+wait mode Fighting 900
+cursor rest
+hold 5
+regions
+# Turns 1 and 2: wait for the wolf.
+click end-turn
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 1: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 2: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 3: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 4: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 5: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+# The wolf is dead; the journey goes on by itself and arrives at the farm.
+wait mode LocationInteraction 900
+clip end fight_1
+
+# ── The farm: find a job ────────────────────────────────────────────────────────────────────────────
+# --start-area opens the visit in the Longhouse Hall, where --npc-static keeps the farmer, and
+# --observe-only lets the opening observation look at her alone, so her keyword is always there to be
+# clicked (`@farmer`, by what it names rather than by the word the model wrote). --npc-affinity makes
+# her a distant acquaintance, which asking for work requires. Diligence is a will whose one want is
+# request_job: thinking with it finds exactly one way (--job-only leaves the farmhand's post alone on
+# offer), and it carries the act out itself.
+mark farm
+clip farm_arrival
+advance 12 900
+cursor rest
+hold 6
+clip end farm_arrival
+
+mark find_job
+clip find_job
+click keyword @farmer
+choose 0
+hold 2
+choose diligence
+advance 12 900
+cursor rest
+hold 4
+click action 0
+choose 0
+advance 12 900
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+advance 20 900
+cursor rest
+hold 4
+# The conversation: answer while it asks. Which reply each mind voices is the model's choice and the
+# branches end at depth two or three, so `click option 0 needed` replies only while a reply is offered.
+click option 0 needed
+advance 12 900
+hold 2
+click option 0 needed
+advance 12 900
+hold 2
+click option 0 needed
+advance 12 900
+hold 2
+click option 0 needed
+advance 12 900
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+advance 20 900
+cursor rest
+hold 4
+click button
+wait mode Working 900
+clip end find_job
+
+# ── The job menu ─────────────────────────────────────────────────────────────────────────────────────
+# Two hundred days as a farmhand at one copper per ten days: twenty copper, the price of the boots.
+mark job_menu
+clip job_menu
+cursor rest
+hold 5
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+click element work:days-plus
+cursor rest
+hold 4
+click element work:confirm
+wait 900
+cursor rest
+hold 4
+click element work:continue
+wait mode WorldView 900
+clip end job_menu
+
+# ── Travel to the city ───────────────────────────────────────────────────────────────────────────────
+mark travel_city
+clip travel_city
+travel 27788
+wait 900
+cursor rest
+hold 4
+travel-go
+wait mode EncounterPrompt 900
+clip end travel_city
+
+# ── The second fight ─────────────────────────────────────────────────────────────────────────────────
+# Another wolf, already beside us and slower than we are: five snap thrusts, our turns ended between.
+mark fight_2
+clip fight_2
+cursor rest
+hold 4
+click engage
+wait mode Fighting 900
+cursor rest
+hold 5
+regions
+# Turn 1: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 2: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 3: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 4: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+click end-turn
+wait 900
+cursor rest
+hold 3
+# Turn 5: a snap thrust with the short sword (the skill group opens first; it closes again after
+# every action). Humors are spent only if the roll is failing.
+click skill Short Sword
+wait 900
+click skill Snap Thrust
+wait 900
+click fighter enemy
+wait 900
+cursor rest
+hold 3
+dice
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+wait 900
+cursor rest
+hold 3
+wait mode LocationInteraction 900
+clip end fight_2
+
+# ── The city: buy boots ──────────────────────────────────────────────────────────────────────────────
+# The visit opens in the Cobbler's Shop (--start-area), on the cobbler (--observe-only). Provisioning
+# is a will to buy: one way, carried out by itself. The cobbler's shelf is seeded by his id and lists
+# Leather Boots first, at twenty copper.
+mark city
+clip city_arrival
+advance 12 900
+cursor rest
+hold 6
+clip end city_arrival
+
+mark buy_boots
+clip buy_boots
+click keyword @cobbler
+choose 0
+hold 2
+choose provisioning
+advance 12 900
+cursor rest
+hold 4
+click action 0
+choose 0
+advance 12 900
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+advance 20 900
+cursor rest
+hold 4
+click option 0 needed
+advance 12 900
+hold 2
+click option 0 needed
+advance 12 900
+hold 2
+click option 0 needed
+advance 12 900
+hold 2
+click option 0 needed
+advance 12 900
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+click humor hepar needed
+click die needed
+hold 2
+click continue
+advance 20 900
+cursor rest
+hold 4
+click button
+wait mode Trading 900
+clip end buy_boots
+
+# ── The trade menu ───────────────────────────────────────────────────────────────────────────────────
+mark trade
+clip trade
+cursor rest
+hold 6
+click element trade:plus:0
+hold 3
+click element trade:confirm
+wait mode LocationInteraction 900
+cursor rest
+hold 3
+clip end trade
+
+# ── Wear the boots ───────────────────────────────────────────────────────────────────────────────────
+# A bought garment goes straight to its place when that place is free: the boots are on the feet
+# already. The inventory shows them there, and the purse empty.
+mark wear_boots
+clip wear_boots
+pause
+wait 900
+click menu Protagonist
+wait 900
+click tab inventory
+wait 900
+cursor rest
+hold 4
+click element leather_boots
+wait 900
+cursor rest
+hold 6
+clip end wear_boots
+
+# ── No coins left: the routine that brings us back ──────────────────────────────────────────────────
+# Each place visited is a mental map; the farm's holds the Work routine learned with the job.
+mark routines
+clip chorography
+click tab chorography
+wait 900
+cursor rest
+hold 5
+click element place:farm
+wait 900
+cursor rest
+hold 4
+click element routine-next
+wait 900
+cursor rest
+hold 6
+clip end chorography
+
+click back
+wait 900
+click menu Continue
+wait 900
+advance 12 900
+click button
+wait mode WorldView 900
+
+# From the world map, the farm's routines are one click from the travel plan.
+clip routine_box
+travel 7011
+wait 900
+cursor rest
+hold 3
+click element travel-routines-button
+wait 900
+cursor rest
+hold 4
+click element routines-next
+wait 900
+cursor rest
+hold 6
+click element routines-return
+wait 900
+click element travel-clear-button
+wait 900
+clip end routine_box
+
+# ── Closure ──────────────────────────────────────────────────────────────────────────────────────────
+mark closure
+clip closure
+cursor hide
+hold 15
+clip end closure
+state
+quit
