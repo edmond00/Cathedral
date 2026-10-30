@@ -106,14 +106,33 @@ wait mode Fighting 900
 cursor rest
 hold 5
 regions
-# Let the wolf come: two turns ended, each once it is ours.
+# Let the wolf come: two turns ended, each once it is ours (a blow it lands on the way is dismissed).
 wait turn 900
 click end-turn
 wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
 click end-turn
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -136,9 +155,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -161,9 +193,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -186,9 +231,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -211,9 +269,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -236,9 +307,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -261,9 +345,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -286,9 +383,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -311,9 +421,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -336,9 +459,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -495,9 +631,22 @@ wait mode Fighting 900
 cursor rest
 hold 5
 regions
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -520,9 +669,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -545,9 +707,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -570,9 +745,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -595,9 +783,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -620,9 +821,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -645,9 +859,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -670,9 +897,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -695,9 +935,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust
@@ -720,9 +973,22 @@ hold 2
 click end-turn
 wait 900
 
-# A turn of ours, if the fight is still on: wait for our move, thrust, spend humors only while the roll
-# falls short, end the turn. (The skipped count covers every command of the block after the guard.)
-skip-unless fighting 21
+# A turn of ours, if the fight is still on: wait for the fight to need us, dismiss up to four of the
+# enemy's blows (each a dice box waiting for Continue), then thrust, spend humors only while the roll
+# falls short, and end the turn.
+skip-unless fighting 33
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
+wait turn 900
+skip-unless dice 1
+click continue
 wait turn 900
 click skill Short Sword
 click skill Snap Thrust

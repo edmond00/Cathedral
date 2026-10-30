@@ -2284,8 +2284,10 @@ public class FightModeAdapter
     }
 
     /// <summary>One-line summary of the fight for `state`.</summary>
-    /// <summary>True while the party has the move: a player-controlled fighter choosing its action.</summary>
-    public bool CliPartyChoosing => _state.Phase == TurnPhase.SelectingAction && _state.ActiveFighter is { IsPlayerControlled: true };
+    /// <summary>True while the fight waits on the player: a party fighter choosing its action, or a dice box
+    /// (an enemy's blow included) waiting for its Continue.</summary>
+    public bool CliPartyChoosing => (_state.Phase == TurnPhase.SelectingAction && _state.ActiveFighter is { IsPlayerControlled: true })
+                                 || _state.Phase == TurnPhase.WaitingForDiceComplete;
 
     public string CliState()
     {

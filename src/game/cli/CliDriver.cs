@@ -274,13 +274,18 @@ public sealed class CliDriver
         if (line.StartsWith("skip-unless ", StringComparison.OrdinalIgnoreCase))
         {
             var p = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (p.Length == 3 && p[1].Equals("fighting", StringComparison.OrdinalIgnoreCase) && int.TryParse(p[2], out int n))
+            // `skip-unless dice <n>`: the same, unless a fight's dice box is waiting for its Continue (an
+            // enemy's blow, which the player dismisses before the turn comes back).
+            if (p.Length == 3 && int.TryParse(p[2], out int n)
+                && (p[1].Equals("fighting", StringComparison.OrdinalIgnoreCase) || p[1].Equals("dice", StringComparison.OrdinalIgnoreCase)))
             {
-                bool on = _game.CurrentMode == GameMode.Fighting;
+                bool on = p[1].Equals("dice", StringComparison.OrdinalIgnoreCase)
+                    ? _game.CurrentMode == GameMode.Fighting && _game.CliFight?.CliDice != null
+                    : _game.CurrentMode == GameMode.Fighting;
                 if (!on) _skip = n;
-                CliMode.Emit(on ? "ok: fighting, carrying on" : $"ok: no fight, skipping the next {n}");
+                CliMode.Emit(on ? $"ok: {p[1]}, carrying on" : $"ok: no {p[1]}, skipping the next {n}");
             }
-            else CliMode.Emit("error: skip-unless fighting <n>");
+            else CliMode.Emit("error: skip-unless fighting|dice <n>");
             return;
         }
 
