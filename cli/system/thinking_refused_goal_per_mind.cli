@@ -31,14 +31,14 @@ advance 12 180
 # Think with Ripelore; Knack refuses to examine.
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect I want to act, not to stand and
 
 # Ripelore again: examining is withheld, so the button is something else.
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect ] climb back down the test giant tree
 expect-not ] examine the test giant tree closely
