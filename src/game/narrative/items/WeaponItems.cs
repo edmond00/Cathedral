@@ -137,6 +137,7 @@ public sealed class HuntingKnife : WeaponItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Blade, ItemKind.Tool });
     public override string ItemId      => "hunting_knife";
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms, ItemTag.Pelt };   // the skinner's knife, at the tanner's too
     public override string DisplayName => "Hunting Knife";
     public override string Description => "A thick-bladed hunting knife with a bone handle and a single-edged blade for gutting game";
     public override WeaponSize Bulk      => WeaponSize.Medium;
@@ -197,6 +198,7 @@ public sealed class Cudgel : WeaponItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon });
     public override string ItemId      => "cudgel";
+    public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms, ItemTag.Woodwork };
     public override string DisplayName => "Cudgel";
     public override string Description => "A thick knotted branch trimmed into a fighting club, heavy at the head";
     public override WeaponSize Bulk      => WeaponSize.Medium;
@@ -317,7 +319,7 @@ public sealed class HuntingBow : WeaponItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bow });
     public override string ItemId      => "hunting_bow";
-    public override List<ItemTag> Tags => new() { ItemTag.Arms };
+    public override List<ItemTag> Tags => new() { ItemTag.Arms, ItemTag.Woodwork };
     public override string DisplayName => "Hunting Bow";
     public override string Description => "A short self-bow of yew, unstrung and bound with waxed linen";
     public override WeaponSize Bulk      => WeaponSize.Large;
@@ -331,7 +333,7 @@ public sealed class Longbow : WeaponItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bow });
     public override string ItemId      => "longbow";
-    public override List<ItemTag> Tags => new() { ItemTag.Arms };
+    public override List<ItemTag> Tags => new() { ItemTag.Arms, ItemTag.Woodwork };
     public override string DisplayName => "Longbow";
     public override string Description => "A tall war longbow of laminated horn and sinew, the draw weight substantial";
     public override WeaponSize Bulk      => WeaponSize.Large;
@@ -379,6 +381,7 @@ public sealed class RoundShield : WeaponItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shield });
     public override string ItemId        => "round_shield";
+    public override List<ItemTag> Tags   => new() { ItemTag.Ironwork, ItemTag.Arms, ItemTag.Woodwork };
     public override string DisplayName   => "Round Shield";
     public override string Description   => "A round iron-bossed shield of limewood, the rim bound in leather";
     public override WeaponSize Bulk        => WeaponSize.Medium;

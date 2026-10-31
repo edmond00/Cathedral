@@ -123,23 +123,35 @@ public sealed class WillTarget
     /// Narrows the target to what holds or is an item of <paramref name="kind"/> — a family that cuts
     /// across classes (<see cref="ItemKind"/>): every mushroom, every blade, every holy thing.
     /// </summary>
-    public WillTarget YieldingKind(ItemKind kind)
-        => With(e => e switch
+    public WillTarget YieldingKind(ItemKind kind) => YieldingKind(kind, kind.ToString(), _ => true);
+
+    /// <summary>
+    /// <see cref="YieldingKind(ItemKind)"/> narrowed again by <paramref name="such"/>: a judge of arms
+    /// wants a weapon, and not a branch. <paramref name="label"/> names the narrowed set in the audit.
+    /// </summary>
+    public WillTarget YieldingKind(ItemKind kind, string label, Func<Item, bool> such)
+    {
+        bool Is(Item item) => item.Kinds.Contains(kind) && such(item);
+        return With(e => e switch
             {
-                ItemElement ie      => ie.Item.Kinds.Contains(kind),
-                PointOfInterest poi => poi.Items.Any(i => i.Item.Kinds.Contains(kind)),
+                ItemElement ie      => Is(ie.Item),
+                PointOfInterest poi => poi.Items.Any(i => Is(i.Item)),
                 _                   => false,
-            }, $"yielding {kind}");
+            }, $"yielding {label}");
+    }
 
     /// <summary>
     /// Narrows the target to somebody whose wares include an item of <paramref name="kind"/> — a will
     /// to buy a blade is a proposal to buy made to a trader who sells one. Read off the trader's
     /// <c>BuyCatalog</c>, which is what the purchase would offer.
     /// </summary>
-    public WillTarget Selling(ItemKind kind)
+    public WillTarget Selling(ItemKind kind) => Selling(kind, kind.ToString(), _ => true);
+
+    /// <summary><see cref="Selling(ItemKind)"/> narrowed again by <paramref name="such"/>, as <see cref="YieldingKind(ItemKind, string, Func{Item, bool})"/>.</summary>
+    public WillTarget Selling(ItemKind kind, string label, Func<Item, bool> such)
         => With(e => e is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc }
-                     && npc.BuyCatalog?.Offers.Any(o => o.Prototype.Kinds.Contains(kind)) == true,
-                $"selling {kind}");
+                     && npc.BuyCatalog?.Offers.Any(o => o.Prototype.Kinds.Contains(kind) && such(o.Prototype)) == true,
+                $"selling {label}");
 
     /// <summary>
     /// Narrows a will to PLAY to one or more kinds of play (<see cref="PlayActivity"/> subclasses): a
