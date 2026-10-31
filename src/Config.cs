@@ -962,6 +962,12 @@ public static class Config
         public const char PathDestinationChar = '+'; // Plus for destination
         public const char ForbiddenDestinationChar = '⨯'; // Cross for impassable tiles (sea/ocean on foot)
 
+        /// <summary>How much larger the place a will's search is reading is drawn than its own glyph.</summary>
+        public const float SearchedCellScale = 2.2f;
+
+        /// <summary>The searched place's glyph beats between these multiples of its size, this many times a second.</summary>
+        public const float SearchedCellPulseMin = 0.8f, SearchedCellPulseMax = 1.25f, SearchedCellPulseHz = 3f;
+
         // Numbered glyphs used to mark waypoints in click-order on the world map.
         // Falls back to PathDestinationChar past the array length.
         public static readonly char[] WaypointNumberChars = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨' };
@@ -1580,6 +1586,19 @@ public static class Config
 
         /// <summary>How long a transient world-map notice stays on screen.</summary>
         public const double NoticeSeconds = 4.0;
+
+        /// <summary>
+        /// A will's search (the Memory tab's "Wants" rows) reads at most one place per this many
+        /// seconds, however quickly the places are read, so the place under check can be seen beating
+        /// on the sphere. Nothing under <c>--playground</c> (<see cref="AnimationsAreInstant"/>).
+        /// </summary>
+        public const double WillSearchMinSecondsPerPlace = 0.08;
+
+        /// <summary>How long the box holds on the place found before the trip to it is planned.</summary>
+        public const double WillSearchFoundHoldSeconds = 0.8;
+
+        /// <summary>Milliseconds a frame may spend reading places for a will's search (at least one a frame).</summary>
+        public const int WillSearchFrameBudgetMs = 12;
 
         // Colors
         public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;

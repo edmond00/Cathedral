@@ -148,6 +148,13 @@ public class LocationTravelGameController : IDisposable
     // Travel planning (waypoints + bottom UI)
     private TravelPlanner? _travelPlanner;
     private TravelInfoRenderer? _travelInfoRenderer;
+
+    // A will's target sought across the world map (the Memory tab's "Wants" rows): the search under
+    // way, its box, and the journey it proposed with the line that says why.
+    private WillSearch? _willSearch;
+    private WillSearchRenderer? _willSearchRenderer;
+    private string? _willProposal;
+    private int _willProposalVertex = -1;
     private Cathedral.Pathfinding.AStar? _travelAStar;
     // Latest planner state cached for rendering
     private List<int>? _plannedPath;
@@ -884,6 +891,9 @@ public class LocationTravelGameController : IDisposable
     {
         if (_currentMode == GameMode.Traveling) return false;
 
+        // A will's search checks its places a few a frame: `wait` outlasts it.
+        if (_willSearch != null) return false;
+
         // A moon's history being built for the viewer is work in flight: `wait` must outlast it, or
         // `inspect world-preview` reads state=building.
         if (_currentMode == GameMode.WorldSelection && _previewTask is { IsCompleted: false }) return false;
@@ -1384,7 +1394,13 @@ public class LocationTravelGameController : IDisposable
                     _forbiddenFlashVertex = -1;
                 }
             }
-            RenderWorldViewUI();
+            if (_willSearch != null)
+            {
+                // The arrow pad stays usable: the world can be turned to watch the search.
+                if (CameraPadActive) _cameraArrowPad!.Draw();
+                TickWillSearch();
+            }
+            else RenderWorldViewUI();
         }
 
         // Render travel progress box and advance flash animation during Traveling.
@@ -1489,7 +1505,10 @@ public class LocationTravelGameController : IDisposable
             destinationRealm: destinationRealm,
             routinesAvailable: routinesAvailable,
             // An overloaded member grounds the whole party until something is put down.
-            overloadWarning: _protagonist?.TravelWeightBlocker);
+            overloadWarning: _protagonist?.TravelWeightBlocker,
+            // Said only while the plan still ends where the will's search proposed.
+            proposal: _travelPlanner.HasWaypoints && _travelPlanner.FinalDestination == _willProposalVertex
+                ? _willProposal : null);
     }
 
     /// <summary>
@@ -1761,6 +1780,15 @@ public class LocationTravelGameController : IDisposable
         // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
         // are clickable (everything else is transparent and falls through to the world
         // sphere via TerminalHUD.TransparentClickPassthrough).
+        if (_currentMode == GameMode.WorldView && _willSearch != null)
+        {
+            if (_willSearchRenderer?.IsOverCancelButton(x, y) == true)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                CancelWillSearch("cancelled");
+            }
+            return;
+        }
         if (_currentMode == GameMode.WorldView && _travelInfoRenderer != null)
         {
             if (_travelInfoRenderer.IsOverTravelButton(x, y))
@@ -2020,6 +2048,7 @@ public class LocationTravelGameController : IDisposable
 
         // Track hover for the travel UI so the TRAVEL button highlights.
         _travelInfoRenderer?.SetHover(x, y);
+        _willSearchRenderer?.SetHover(x, y);
         _worldSelectionRenderer?.SetHover(x, y);
         if (CameraPadActive && _cameraArrowPad!.SetHover(x, y)
             && _cameraArrowPad.Hovered != CameraArrow.None)
@@ -2244,6 +2273,9 @@ public class LocationTravelGameController : IDisposable
         {
             ClearTravelPlan();
         }
+        // A will's search reads the world map from the world map; leaving it ends the search.
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView && _willSearch != null)
+            CancelWillSearch($"left the world map for {newMode}");
 
         // The location name that follows the cursor on the world map lives in the mouse-following
         // popup, and only UpdatePopupTerminal clears it — which the narration branch of Update never
@@ -2385,6 +2417,13 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // A will's search is under way: the world is being read, not walked. Its CANCEL ends it.
+        if (_willSearch != null)
+        {
+            Console.WriteLine("LocationTravelGameController: Ignoring world map click during a will's search");
+            return;
+        }
+
         // Check if this vertex has a location
         var (location, biome) = _interface.GetCurrentLocationInfo();
         
@@ -2435,6 +2474,247 @@ public class LocationTravelGameController : IDisposable
             // Clicked on a different vertex - toggle it as a travel waypoint.
             ToggleWaypoint(vertexIndex);
         }
+    }
+
+    // ── A will's search (the Memory tab's "Wants" rows) ─────────────────────────────────────────
+
+    /// <summary>
+    /// A will's target pressed on the Memory tab: back to the world map, and check every place
+    /// within reach for it, a few a frame behind a progress box (<see cref="TickWillSearch"/>).
+    /// </summary>
+    private void BeginWillSearch(PartyMember member, string modusMentisId, int targetIndex)
+    {
+        var mm = member.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == modusMentisId);
+        // A modus mentis builds its targets afresh on every read, so the target is read once, here.
+        if (mm?.Will is not { } will || targetIndex < 0 || targetIndex >= will.Count) return;
+        var target = will[targetIndex];
+
+        Console.WriteLine($"LocationTravelGameController: {member.DisplayName}'s {modusMentisId} seeks "
+                        + $"\"{target.Purpose}\" across the world map");
+        _core.SetNarrationMode(true);
+        _managementMenuRenderer = null;
+        _managementBackToMenu = true;
+        ResumeFromMenu();
+        // The world map may have opened on something else first (a companion to dismiss).
+        if (_currentMode != GameMode.WorldView || _travelRoutinesBox != null) return;
+
+        ClearTravelPlan();
+        int avatar = _interface.GetAvatarVertex();
+        var graph = _interface.GetTravelGraph();
+        if (avatar < 0 || graph == null || _core.Terminal == null) return;
+
+        // Nearest by road, not by eye: one Dijkstra over the travel graph from the avatar, on the
+        // costs the trip itself will be planned on. A place with no road is never checked at all.
+        var inReach = _interface.EnumerateReachableVertices().ToHashSet();
+        var cost = RoadCosts(graph, avatar, inReach);
+        var candidates = cost.Keys.OrderBy(v => cost[v]).ThenBy(v => v).ToList();
+        _willSearch = new WillSearch(member, mm.DisplayName, target, candidates);
+        _willSearchRenderer ??= new WillSearchRenderer(_core.Terminal);
+        _travelInfoRenderer?.Erase();
+        _interface.HandleVertexUnhovered();
+        Console.WriteLine($"LocationTravelGameController: will search over {candidates.Count} place(s) with a road, "
+                        + $"of {inReach.Count} within reach");
+    }
+
+    /// <summary>
+    /// The cost of the cheapest road from <paramref name="from"/> to each of <paramref name="wanted"/>
+    /// that has one: Dijkstra over the travel graph's own move costs (the ones A* plans the trip on),
+    /// stopped once every wanted vertex is settled. Unreached vertices are absent.
+    /// </summary>
+    private static Dictionary<int, float> RoadCosts(Cathedral.Pathfinding.IPathGraph graph, int from, HashSet<int> wanted)
+    {
+        var settled = new Dictionary<int, float>();
+        var best = new Dictionary<int, float> { [from] = 0f };
+        var queue = new PriorityQueue<int, float>();
+        queue.Enqueue(from, 0f);
+        int left = wanted.Count;
+        while (left > 0 && queue.TryDequeue(out int v, out float d))
+        {
+            if (settled.ContainsKey(v)) continue;
+            settled[v] = d;
+            if (wanted.Contains(v)) left--;
+            foreach (int n in graph.GetConnectedNodes(v))
+            {
+                if (settled.ContainsKey(n)) continue;
+                float nd = d + graph.GetMoveCost(v, n);
+                if (best.TryGetValue(n, out float old) && old <= nd) continue;
+                best[n] = nd;
+                queue.Enqueue(n, nd);
+            }
+        }
+        return settled.Where(kv => wanted.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    /// <summary>
+    /// One frame of the search: checks places, nearest first, until the frame's budget is spent —
+    /// never faster than one place per <see cref="Config.TravelUI.WillSearchMinSecondsPerPlace"/>
+    /// (nothing under <c>--playground</c>) — and stops at the first that will do. The box then holds on
+    /// it for <see cref="Config.TravelUI.WillSearchFoundHoldSeconds"/> before the trip is planned.
+    /// </summary>
+    private void TickWillSearch()
+    {
+        var search = _willSearch!;
+        bool instant = Config.AnimationsAreInstant;
+
+        if (!search.IsDone)
+        {
+            double perPlace = instant ? 0 : Config.TravelUI.WillSearchMinSecondsPerPlace;
+            double elapsed = (DateTime.UtcNow - search.StartedAt).TotalSeconds;
+            int allowed = perPlace <= 0 ? search.Candidates.Count : (int)(elapsed / perPlace) + 1;
+            var budget = System.Diagnostics.Stopwatch.StartNew();
+            bool first = true;
+            while (!search.IsDone && search.Checked < allowed
+                   && (first || budget.ElapsedMilliseconds < Config.TravelUI.WillSearchFrameBudgetMs))
+            {
+                first = false;
+                int v = search.Next();
+                search.Record(v, WillTargetMetAt(search, v));
+            }
+        }
+        MarkSearchedCell(search.Current);
+
+        // Over: nothing found, or the place found has been shown long enough.
+        double hold = instant ? 0 : Config.TravelUI.WillSearchFoundHoldSeconds;
+        if (search.IsDone && (search.Found < 0 || (DateTime.UtcNow - search.FoundAt).TotalSeconds >= hold))
+        {
+            FinishWillSearch();
+            return;
+        }
+        _willSearchRenderer?.Draw(search, search.Current >= 0 ? GetLocationNameAtVertex(search.Current) : null);
+    }
+
+    /// <summary>
+    /// Whether the search's target would be met at <paramref name="vertex"/> on arrival — planned from
+    /// the entry area, at the place's own arrival hour, by the member whose will it is. The road to it
+    /// was settled when the candidates were ordered.
+    /// </summary>
+    private bool WillTargetMetAt(WillSearch search, int vertex)
+    {
+        try
+        {
+            var scene = BuildSceneForLocation(vertex, out _, applyDepletion: true, probe: true);
+            if (scene == null) return false;
+            var entry = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene) ?? scene.AllAreas.FirstOrDefault();
+            if (entry == null) return false;
+            var period = Config.Debug.ForcedPeriod ?? scene.ArrivalPeriod;
+            return Cathedral.Game.Scene.ActionPathPlanner.Plan(scene, new PoV(entry, period), search.Member,
+                                                               WillTargets.Of(search.Target)) != null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LocationTravelGameController: will search could not read vertex {vertex}: {ex.Message}");
+            return false;
+        }
+        finally
+        {
+            // Every probe is a scene of its own, and the planner's caches are keyed on the scene.
+            Cathedral.Game.Scene.ActionPathPlanner.Forget();
+        }
+    }
+
+    /// <summary>
+    /// The search is over: propose the journey to the place found — the first, so the nearest by road —
+    /// planned as though it had been clicked, with the TRAVEL box saying why; or say that nowhere
+    /// within reach will do.
+    /// </summary>
+    private void FinishWillSearch()
+    {
+        var search = _willSearch!;
+        _willSearch = null;
+        MarkSearchedCell(-1);
+        _willSearchRenderer?.Erase();
+        Console.WriteLine($"LocationTravelGameController: will search done — \"{search.Target.Purpose}\" "
+                        + (search.Found >= 0 ? $"met at vertex {search.Found}, place {search.Checked} of {search.Candidates.Count}"
+                                             : $"met nowhere in {search.Candidates.Count} place(s)")
+                        + $", in {(DateTime.UtcNow - search.StartedAt).TotalSeconds:0.00}s");
+
+        if (search.Found < 0)
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            _travelInfoRenderer?.ShowTransientMessage($"Nowhere within reach to {search.Target.Purpose}.");
+            return;
+        }
+
+        ClearTravelPlan();
+        ToggleWaypoint(search.Found);
+        if (_travelPlanner?.FinalDestination != search.Found) return;
+        _willProposalVertex = search.Found;
+        _willProposal = $"{search.ModusMentisName}: {search.Target.Purpose}";
+    }
+
+    /// <summary>Ends a will's search without proposing anything.</summary>
+    private void CancelWillSearch(string why)
+    {
+        if (_willSearch == null) return;
+        Console.WriteLine($"LocationTravelGameController: will search {why} after "
+                        + $"{_willSearch.Checked}/{_willSearch.Candidates.Count} place(s)");
+        _willSearch = null;
+        MarkSearchedCell(-1);
+        _willSearchRenderer?.Erase();
+        Cathedral.Game.Scene.ActionPathPlanner.Forget();
+    }
+
+    /// <summary>The cell the search last read, drawn highlighted on the sphere; -1 for none.</summary>
+    private int _searchedCell = -1;
+
+    /// <summary>
+    /// Moves the sphere's highlight to <paramref name="vertex"/> (the place just read), restoring the
+    /// one before, and beats it; -1 clears it. The avatar's own cell is never repainted.
+    /// </summary>
+    private void MarkSearchedCell(int vertex)
+    {
+        if (vertex != _searchedCell && _searchedCell >= 0) _interface.RestoreCellGlyph(_searchedCell);
+        _searchedCell = vertex;
+        if (vertex < 0) return;
+        // Repainted every frame so it beats, wall-clock paced like the bar's sweeping head.
+        const float lo = Config.GlyphSphere.SearchedCellPulseMin, hi = Config.GlyphSphere.SearchedCellPulseMax;
+        double phase = (DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds * Config.GlyphSphere.SearchedCellPulseHz * 2 * Math.PI;
+        float pulse = lo + (hi - lo) * (0.5f + 0.5f * (float)Math.Sin(phase));
+        _interface.HighlightSearchedCell(vertex, pulse);
+    }
+
+    /// <summary>
+    /// The search for <c>inspect will-search</c>: under way (how far, what), or the journey it last
+    /// proposed (`proposal vertex=… text=…`), or none.
+    /// </summary>
+    public IReadOnlyList<string> CliWillSearchLines()
+    {
+        if (_willSearch is { } w)
+            return new[] { $"will-search state=running checked={w.Checked}/{w.Candidates.Count} found={w.Found} highlighted={_searchedCell} purpose=\"{w.Target.Purpose}\"" };
+        if (_willProposal != null && _travelPlanner?.HasWaypoints == true && _travelPlanner.FinalDestination == _willProposalVertex)
+            return new[] { $"will-search state=proposed vertex={_willProposalVertex} name={GetLocationNameAtVertex(_willProposalVertex)} text={_willProposal}" };
+        return new[] { "will-search state=none" };
+    }
+
+    /// <summary>The selected modus mentis's n-th "Wants" row, pressed through the screen's own click path.</summary>
+    public string? CliClickWant(int target)
+    {
+        if (_currentMode != GameMode.ProtagonistManagement || _managementMenuRenderer == null)
+            return "the protagonist screen is not open (`manage Memory`, then `select mm <id>`)";
+        if (_managementMenuRenderer.CliWantCell(target) is not { } cell)
+            return $"no clickable want {target} (select a will with `select mm <id>`; the rows are buttons only over the world map)";
+        CliHoverCell(cell.X, cell.Y);
+        CliClickCell(cell.X, cell.Y);
+        return null;
+    }
+
+    /// <summary>The cell of the selected will's n-th "Wants" row while it is a button, for <c>--record</c>.</summary>
+    public (int X, int Y)? CliWantCell(int target) => _currentMode == GameMode.ProtagonistManagement
+        ? _managementMenuRenderer?.CliWantCell(target) : null;
+
+    /// <summary>The search box's CANCEL while a will's search runs, for <c>--record</c>.</summary>
+    public (int X, int Y)? CliWillSearchCancelCell => _willSearch != null ? _willSearchRenderer?.CancelCell : null;
+
+    /// <summary>The "Wants" rows that are buttons on screen now, by index.</summary>
+    public IReadOnlyList<int> CliWantRows => _currentMode == GameMode.ProtagonistManagement
+        ? _managementMenuRenderer?.CliWantRows ?? Array.Empty<int>() : Array.Empty<int>();
+
+    /// <summary>The search box's CANCEL, pressed through the click path. False when no search runs.</summary>
+    public bool CliCancelWillSearch()
+    {
+        if (_willSearch == null || _willSearchRenderer?.CancelCell is not { } cell) return false;
+        CliClickCell(cell.X, cell.Y);
+        return true;
     }
 
     /// <summary>
@@ -2540,6 +2820,8 @@ public class LocationTravelGameController : IDisposable
         _interface.SetHoverPathOrigin(-1);
         _plannedPath = null;
         _plannedEstimate = null;
+        _willProposal = null;
+        _willProposalVertex = -1;
 
         // Cancel any pending forbidden-cell flash.
         if (_forbiddenFlashVertex >= 0)
@@ -3649,6 +3931,11 @@ public class LocationTravelGameController : IDisposable
 
             // A Meet/Buy/Sell/Work routine's detail shows how its person stands with you today, read
             // from the location's memory (keyed by persistent id) without building the scene.
+            // Memory tab: a will's "Wants" row seeks that target in every place within reach — only
+            // over the world map, where the search can end by planning the journey there.
+            if (MenuReturnMode == GameMode.WorldView && _interface.IsWorldGenerated)
+                _managementMenuRenderer.OnSeekWillTarget = BeginWillSearch;
+
             _managementMenuRenderer.RoutineRelationLookup = (locId, npcId) =>
             {
                 if (!_locationStates.TryGetValue(locId, out var state)) return null;
@@ -3888,6 +4175,9 @@ public class LocationTravelGameController : IDisposable
 
         // Where the avatar stands against the last journey's two ends — how a script tells that a
         // flight from an encounter on the last step fell back to where it came from.
+        // A will's search from the Memory tab: under way, the journey it proposed, or none.
+        if (subject == "will-search") return CliWillSearchLines().ToList();
+
         if (subject == "avatar")
         {
             int v = _interface.GetAvatarVertex();
@@ -5179,6 +5469,12 @@ public class LocationTravelGameController : IDisposable
             // menu is the only place with an Exit button, so without this there is no way to quit
             // the game from it. Nothing is lost by pausing — the allocation lives on the
             // protagonist, not in the renderer, so resuming rebuilds the same screen.
+            // The world map backs out of a will's search first, as its CANCEL does.
+            case GameMode.WorldView when _willSearch != null:
+                Console.WriteLine("ESC pressed - cancelled the will's search");
+                CancelWillSearch("cancelled");
+                return true;
+
             case GameMode.Dialogue:
             case GameMode.Working:
             case GameMode.Gathering:
@@ -5999,7 +6295,7 @@ public class LocationTravelGameController : IDisposable
     /// generator), no first-contact enmity, no name faking (which is global, and may belong to a
     /// visit the menu was opened over).</param>
     private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis,
-        bool applyDepletion = true, bool visit = false, bool viewOnly = false)
+        bool applyDepletion = true, bool visit = false, bool viewOnly = false, bool probe = false)
     {
         lis = null;
         if (_llamaServer == null || _protagonist == null) return null;
@@ -6049,7 +6345,9 @@ public class LocationTravelGameController : IDisposable
         if (!_locationStates.TryGetValue(vertexIndex, out var state))
         {
             state = LocationInstanceState.ForScene(vertexIndex, locationName ?? biomeName);
-            _locationStates[vertexIndex] = state;
+            // A probe (a will's search reading a place it has not been to) keeps no state of its
+            // own: a place is remembered by being visited, not by being thought about.
+            if (!probe) _locationStates[vertexIndex] = state;
         }
         lis = state;
 
@@ -6067,6 +6365,13 @@ public class LocationTravelGameController : IDisposable
             _protagonist.EnterMentalMap(vertexIndex, Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location).DisplayName);
         _protagonist.MentalMapOf(vertexIndex)?.AttachTo(scene);
         if (viewOnly) return scene;
+        // A probe reads the place as an arrival would find it — what was taken is still gone — and
+        // touches nothing else: no beasts flagged, no names faked.
+        if (probe)
+        {
+            if (applyDepletion) ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
+            return scene;
+        }
 
         // Debug: --spawn-beast puts one where the script opens. Before the first-contact pass below,
         // so it is flagged an enemy exactly like a beast the factory rolled.

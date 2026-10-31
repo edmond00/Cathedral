@@ -184,6 +184,7 @@ so, and says why.
 | Fighting | cancels the armed skill or move target; pauses when nothing is armed |
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
+| WorldView, while a will's search runs | cancels the search (its CANCEL button); pauses otherwise, as above |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
 | ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, B, from any phase the menu opens over but a fight) — that phase |
 | Settings | back to the main menu — the same press as its Back button |
@@ -860,6 +861,22 @@ So:
   what the content already says teaches the will, and a will made broad by it is broad because its lesson
   is declared broadly. Tillage is the example: every `DiggableGroundPointOfInterest` teaches it on examine,
   so it wants a clay bank in the wild — if that is wrong, the lesson is what changes.
+
+**A will's target can be sought across the world map.** Over the world map (and only there —
+`MenuReturnMode == WorldView`), the Memory tab's "Wants" rows are buttons (`▸`, not `•`). Pressing one
+returns to the map and runs `LocationTravelGameController.BeginWillSearch`: the vertices
+`EnumerateReachableVertices` gives are ordered **nearest by road** (`RoadCosts`, one Dijkstra on the
+travel graph's own move costs — the ones A* plans the trip on; a place with no road is never read) and
+checked one at a time behind a progress box (`WillSearch.cs`) — `BuildSceneForLocation(…, probe: true)`
+and `ActionPathPlanner.Plan` for **that one target** from the entry area at the place's arrival hour, by
+the member whose will it is — and the search **stops at the first that will do**, which is therefore the
+nearest. A probe stores no `LocationInstanceState` for a place never visited and applies depletion, so it
+reads the place as an arrival would find it; the planner is `Forget()`-ed after each, since its caches
+key on the scene. The box holds on the place found a moment, then the trip is planned as if clicked and
+the TRAVEL box says why; nowhere is a transient notice. The place being read beats on the sphere
+(`MicroworldInterface.HighlightSearchedCell`, its own glyph lit and enlarged), restored as the next is read. Escape and CANCEL end it, and so does
+leaving the map. `cli/system/will_search_world.cli` walks the proposed trip and asserts the will has a
+way there.
 
 **Every childhood path leaves a general thinker** (rule C3, `ReminescenceRuleValidator`, fatal): a will
 thinks only toward its targets, so a childhood granting none but wills would leave a body unable to

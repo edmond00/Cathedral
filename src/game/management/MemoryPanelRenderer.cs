@@ -93,6 +93,42 @@ public class MemoryPanelRenderer
 
     public bool IsHovering => _hoveredSlot.HasValue || _hoveredButton != null;
 
+    /// <summary>
+    /// Whether a will's "Wants" rows may be clicked to seek that target across the world map. Only
+    /// while the screen is open over the world map with nothing else running: the search ends by
+    /// planning a journey, which no other phase could take.
+    /// </summary>
+    public bool CanSeekWillTargets { get; set; }
+
+    /// <summary>A "Wants" row pressed: whose modus mentis, its id, and which of its targets.</summary>
+    private (PartyMember Member, string ModusMentisId, int Target)? _seekRequest;
+
+    /// <summary>The "Wants" row last pressed, consumed by the caller (which then leaves the screen).</summary>
+    public (PartyMember Member, string ModusMentisId, int Target)? TakeSeekRequest()
+    {
+        var r = _seekRequest;
+        _seekRequest = null;
+        return r;
+    }
+
+    /// <summary>
+    /// The cell of the selected modus mentis's <paramref name="target"/>-th "Wants" row, as it was last
+    /// drawn, for <c>--cli</c>'s <c>click want</c>. Null when no such row is clickable.
+    /// </summary>
+    public (int X, int Y)? CliWantCell(int target)
+    {
+        foreach (var b in _buttonHits)
+            if (b.Id == $"{WantPrefix}{target}" && b.Enabled) return (b.X0, b.Y0);
+        return null;
+    }
+
+    /// <summary>The clickable "Wants" rows last drawn, by target index.</summary>
+    public IReadOnlyList<int> CliWantRows =>
+        _buttonHits.Where(b => b.Enabled && b.Id.StartsWith(WantPrefix))
+                   .Select(b => int.Parse(b.Id[WantPrefix.Length..])).ToList();
+
+    private const string WantPrefix = "want:";
+
     // ── Constructor ──────────────────────────────────────────────
     /// <param name="popup">Ignored — detail is shown inline. Kept for API compat.</param>
     public MemoryPanelRenderer(TerminalHUD terminal, PopupTerminalHUD? popup = null)
@@ -549,16 +585,22 @@ public class MemoryPanelRenderer
         // A will wants one to five things; list them as the functions are listed, one per row, in the
         // words each is voiced with ("pick a lock"), the label on the first row only. One line joining
         // them would not fit the column past the second.
+        // Over the world map each row is also a button: pressing it seeks that target in every place
+        // within reach (LocationTravelGameController's will search). The row index of each is kept so
+        // its hit area can be registered once the block's rows are known.
+        var wantRows = new List<(int MetaIndex, int Target)>();
         if (modusMentis.Will is { } will)
         {
             const string TargetLabel = "Wants";
             int room = leftW - 6 - TargetLabel.Length;
             bool firstTarget = true;
-            foreach (var target in will)
+            for (int t = 0; t < will.Count; t++)
             {
-                string purpose = target.Purpose;
+                string purpose = will[t].Purpose;
                 if (purpose.Length > room && room > 1) purpose = purpose[..(room - 1)] + "…";
-                metaLines.Add((firstTarget ? TargetLabel : new string(' ', TargetLabel.Length), $"• {purpose}", Config.Colors.BrightYellow));
+                if (CanSeekWillTargets) wantRows.Add((metaLines.Count, t));
+                metaLines.Add((firstTarget ? TargetLabel : new string(' ', TargetLabel.Length),
+                               $"{(CanSeekWillTargets ? "▸" : "•")} {purpose}", Config.Colors.BrightYellow));
                 firstTarget = false;
             }
         }
@@ -578,6 +620,18 @@ public class MemoryPanelRenderer
             _terminal.Text(StartX + 2, metaRow, lbl, Config.Colors.DarkGray40, DetailBg);
             _terminal.Text(StartX + 2 + lbl.Length + 1, metaRow, val, vc, DetailBg);
             metaRow++;
+        }
+
+        foreach (var (metaIndex, target) in wantRows)
+        {
+            int y = row + metaIndex;
+            if (y >= DetailPanelRow + panelH - 1) break;
+            var (lbl, val, _) = metaLines[metaIndex];
+            int x0 = StartX + 2 + lbl.Length + 1;
+            string id = $"{WantPrefix}{target}";
+            if (_hoveredButton == id)
+                _terminal.Text(x0, y, val, Config.Colors.White, BtnHovBg);
+            _buttonHits.Add(new ButtonHit(id, x0, y, x0 + val.Length - 1, y, true));
         }
 
         // XP progress bar (left column, in the gap row below the meta block)
@@ -680,6 +734,10 @@ public class MemoryPanelRenderer
                     case "consolidate": ExecuteConsolidate(); break;
                     case "archive":     ExecuteArchive();     break;
                     case "reject":      ExecuteReject();      break;
+                    default:
+                        if (btn.Id.StartsWith(WantPrefix) && _member != null && SelectedModusMentis() is { } mm)
+                            _seekRequest = (_member, mm.ModusMentisId, int.Parse(btn.Id[WantPrefix.Length..]));
+                        break;
                 }
                 return true;
             }
@@ -717,6 +775,15 @@ public class MemoryPanelRenderer
             return true;
         }
         return false;
+    }
+
+    /// <summary>The modus mentis in the selected slot, or null.</summary>
+    private ModusMentis? SelectedModusMentis()
+    {
+        if (!_selectedSlot.HasValue || _member == null) return null;
+        var (modType, slotIdx) = _selectedSlot.Value;
+        var mod = _member.MemoryModules.FirstOrDefault(m => m.Type == modType);
+        return mod != null && slotIdx < mod.Slots.Count ? mod.Slots[slotIdx].ModusMentis : null;
     }
 
     private void ExecuteConsolidate()

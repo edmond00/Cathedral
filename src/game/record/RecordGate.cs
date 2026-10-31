@@ -505,6 +505,14 @@ public sealed class RecordGate
                 return choice.Cell is { } ac ? At(ac, $"area {choice.Name}") : Fail($"'{choice.Name}' cannot be brought into view");
             }
 
+            case "want":
+                // A will's "Wants" row on the Memory tab, while it is a button (over the world map).
+                return int.TryParse(arg, out int wn) && _game.CliWantCell(wn) is { } wc2
+                    ? At(wc2, $"want {wn}") : Fail($"no clickable want \"{arg}\" on screen");
+
+            case "search-cancel":
+                return _game.CliWillSearchCancelCell is { } sc2 ? At(sc2, "CANCEL") : Fail("no will's search on screen");
+
             case "cell":
                 if (a.Length < 3 || !int.TryParse(a[1], out int x) || !int.TryParse(a[2], out int y)) return Fail("click cell <x> <y>");
                 return At((x, y), $"cell {x},{y}");
