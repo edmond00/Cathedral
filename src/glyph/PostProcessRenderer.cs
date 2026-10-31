@@ -113,6 +113,10 @@ namespace Cathedral.Glyph
             new(DitherMode.Noise,   2, 1), // NeutralOutcome
             // Hit — a blow lands: two tones in coarse blocks, the frame shattered for a beat.
             new(DitherMode.Bayer4Mono, 2, 4, 0.18f),
+            // Transition — a change of phase or screen. Frequent, so it is a click's weight with
+            // the click's palette and duration; only the grain differs (noise, not Bayer), so
+            // the two read as related but distinct. Never pixelated: that is the hit's.
+            new(DitherMode.Noise,   3, 1),
         };
 
         /// <summary>Whether event pulses fire at all. F/G/H tune the resting state regardless.</summary>
@@ -129,31 +133,6 @@ namespace Cathedral.Glyph
         private int _pendingPulse = -1;
         private GameEventType _activePulse;
         private float _pulseRemaining;
-
-        // ── Transition dissolve ───────────────────────────────────────────────────
-        //
-        // GameEventType.Transition is not a pulse: a pulse holds one look and snaps back,
-        // where a change of phase plays a short animation over it. The frame drops to a
-        // chunky two-level Bayer dither and resolves, a step at a time, through finer cells
-        // and more levels back to the resting dither - the old screen breaking up and the
-        // new one assembling out of the grain. It outranks every pulse, so the hover and
-        // click that land in the same breath do not cut it short.
-
-        /// <summary>Seconds the dissolve takes, coarse to resting.</summary>
-        public float TransitionDuration { get; set; } = Cathedral.Config.PostProcess.TransitionDuration;
-
-        /// <summary>
-        /// The dissolve's stages, coarse first: cell size in pixels and levels per channel.
-        /// Played at equal shares of <see cref="TransitionDuration"/>; the last stage hands
-        /// back to the resting dither.
-        /// </summary>
-        private static readonly (int PixelScale, int Levels)[] TransitionStages =
-        {
-            (8, 2), (6, 2), (4, 3), (3, 3), (2, 4), (1, 5),
-        };
-
-        private int _pendingTransition;   // 1 = a transition was asked for since the last Update
-        private float _transitionElapsed = float.MaxValue;
 
         // ── Magnifier ─────────────────────────────────────────────────────────────
         //
@@ -241,12 +220,6 @@ namespace Cathedral.Glyph
         {
             if (!PulsesEnabled) return;
 
-            if (evt == GameEventType.Transition)
-            {
-                Volatile.Write(ref _pendingTransition, 1);
-                return;
-            }
-
             int incoming = (int)evt;
             while (true)
             {
@@ -272,24 +245,12 @@ namespace Cathedral.Glyph
             }
 
             if (_pulseRemaining > 0f) _pulseRemaining -= deltaSeconds;
-
-            // A transition restarts the dissolve from its coarsest stage. Advanced after the
-            // restart, so the first frame drawn is the coarse one whatever the frame time.
-            if (Interlocked.Exchange(ref _pendingTransition, 0) == 1)
-                _transitionElapsed = 0f;
-            else if (_transitionElapsed < float.MaxValue)
-                _transitionElapsed += deltaSeconds;
         }
 
-        private bool TransitionActive =>
-            _transitionElapsed < TransitionDuration && TransitionDuration > 0f && Mode != DitherMode.Off;
-
-        /// <summary>The dissolve stage showing now; only meaningful while <see cref="TransitionActive"/>.</summary>
-        private (int PixelScale, int Levels) TransitionStage =>
-            TransitionStages[Math.Clamp((int)(_transitionElapsed / TransitionDuration * TransitionStages.Length),
-                                        0, TransitionStages.Length - 1)];
-
-        /// <summary>A hit outranks outcomes, which outrank clicks, which outrank hovers.</summary>
+        /// <summary>
+        /// A hit outranks outcomes, which outrank clicks, which outrank hovers. A transition sits
+        /// with the outcomes, so the click that caused it does not hide it in the same frame.
+        /// </summary>
         private static int PulsePriority(int evt) => (GameEventType)evt switch
         {
             GameEventType.SmallInteraction => 0,
@@ -307,29 +268,20 @@ namespace Cathedral.Glyph
         /// </summary>
         private bool ZoomDither => _zoomActive && Mode != DitherMode.Off;
 
-        // Precedence: zoom (held, deliberate) beats a transition, which beats a pulse (transient), which beats the
+        // Precedence: zoom (held, deliberate) beats a pulse (transient), which beats the
         // resting state. Zoom also suppresses the pulse's levels/scale, so a hover landing
         // mid-zoom cannot shift the grain under a held magnifier. Mode Off stays off
         // throughout - disabling the layer disables the pulses with it.
-        // A transition dissolve sits between the two: it outranks any pulse, and yields to
-        // a held magnifier.
         private DitherMode EffectiveMode =>
-            ZoomDither       ? DitherMode.Bayer4Mono
-          : TransitionActive ? DitherMode.Bayer8
-          : PulseActive      ? PulseTable[(int)_activePulse].Mode
-          :                    Mode;
+            ZoomDither    ? DitherMode.Bayer4Mono
+          : PulseActive   ? PulseTable[(int)_activePulse].Mode
+          :                 Mode;
 
         private int EffectiveLevels =>
-            ZoomDither       ? Levels
-          : TransitionActive ? Math.Min(TransitionStage.Levels, Math.Max(2, Levels))
-          : PulseActive      ? PulseTable[(int)_activePulse].Levels
-          :                    Levels;
+            !ZoomDither && PulseActive ? PulseTable[(int)_activePulse].Levels : Levels;
 
         private int EffectivePixelScale =>
-            ZoomDither       ? PixelScale
-          : TransitionActive ? Math.Max(TransitionStage.PixelScale, PixelScale)
-          : PulseActive      ? PulseTable[(int)_activePulse].PixelScale
-          :                    PixelScale;
+            !ZoomDither && PulseActive ? PulseTable[(int)_activePulse].PixelScale : PixelScale;
 
         /// <summary>
         /// Binds the offscreen target. Returns false when the pass is disabled or the
@@ -388,9 +340,7 @@ namespace Cathedral.Glyph
             GL.Uniform1(_uMode, (int)EffectiveMode);
             GL.Uniform1(_uLevels, Math.Max(2, EffectiveLevels));
             GL.Uniform1(_uPixelScale, (float)Math.Max(1, EffectivePixelScale));
-            // The dissolve is drawn at full strength whatever the resting blend: a half-strength
-            // two-level frame reads as a smudge, not as the screen breaking up.
-            GL.Uniform1(_uStrength, !ZoomDither && TransitionActive ? 1f : Math.Clamp(Strength, 0f, 1f));
+            GL.Uniform1(_uStrength, Math.Clamp(Strength, 0f, 1f));
             GL.Uniform2(_uResolution, (float)width, (float)height);
 
             GL.BindVertexArray(_emptyVao);
@@ -416,7 +366,7 @@ namespace Cathedral.Glyph
 
         public string Describe()
             => $"dither={Mode} levels={Levels} pixelScale={PixelScale} strength={Strength:0.00} " +
-               $"pulses={(PulsesEnabled ? $"on ({PulseDuration:0.00}s, transition {TransitionDuration:0.00}s)" : "off")}";
+               $"pulses={(PulsesEnabled ? $"on ({PulseDuration:0.00}s)" : "off")}";
 
         private void EnsureTarget(int width, int height)
         {

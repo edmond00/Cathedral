@@ -95,8 +95,8 @@ internal sealed class UiSfxPlayer : IUiSfx
     }
 
     /// <summary>
-    /// Play the phase-transition sweep. WinMM plays one sound at a time, so this cuts short the click
-    /// that usually caused it — which is why the sweep opens on a transient of its own.
+    /// Play the phase-transition swish. WinMM plays one sound at a time, so this cuts short the click
+    /// that usually caused it; the swish stands in for it.
     /// </summary>
     public void PlayTransition()
     {
@@ -125,7 +125,7 @@ internal sealed class UiSfxPlayer : IUiSfx
     /// <summary>80 ms decaying harmonic tone (520 + 1040 + 1560 Hz) — digital click.</summary>
     private static byte[] BuildClickWav(float amplitude = 1f) => BuildWav(ClickSamples(amplitude), SfxSampleRate);
 
-    /// <summary>220 ms bit-crushed falling sweep — the phase-transition mark.</summary>
+    /// <summary>170 ms swish of filtered noise — the phase-transition mark.</summary>
     private static byte[] BuildTransitionWav(float amplitude = 1f) => BuildWav(TransitionSamples(amplitude), SfxSampleRate);
 
     /// <summary>The ticks' sample rate. Shared with the OpenAL player, which plays these same samples.</summary>
@@ -172,47 +172,49 @@ internal sealed class UiSfxPlayer : IUiSfx
     }
 
     /// <summary>
-    /// The transition sweep as 16-bit mono PCM at <see cref="SfxSampleRate"/>: the sound of the dither
-    /// dissolve it accompanies. A soft square falls from 1100 Hz to 140 Hz while it is decimated
-    /// (sample-and-hold, 1 to 9 samples) and quantised ever coarser (5 bits down to 2) — the same
-    /// coarse-to-fine-and-back the screen does, in the ear. A short hashed-noise grain on the attack
-    /// stands in for the click it usually cuts off on WinMM. Deterministic, no generator: the bytes
-    /// are the same on every machine, as the other ticks are.
+    /// The transition swish as 16-bit mono PCM at <see cref="SfxSampleRate"/>: a breath of air, as of a
+    /// page turned or a curtain drawn. Noise through a gentle band-pass whose centre glides down from
+    /// 2.4 kHz to 900 Hz, its hiss taken off by a low-pass at 2.5 kHz, swelling in over the first 40 ms and dying away by 170 ms. Nothing tonal, so
+    /// it never sounds like the synthesiser and never clashes with the key of the music; quieter than
+    /// the click, since it plays far more often than any outcome. Deterministic (a fixed xorshift, no
+    /// generator), so the bytes are the same on every machine, as the other ticks are.
     /// </summary>
     internal static short[] TransitionSamples(float amplitude = 1f)
     {
         const int sampleRate = SfxSampleRate;
-        const int durationMs = 220;
+        const int durationMs = 170;
+        const float swellSeconds = 0.04f;
         int n = sampleRate * durationMs / 1000;
         var samples = new short[n];
-        double phase = 0;
-        float held = 0f;
         uint noise = 0x9E3779B9u;
+        float low = 0f, band = 0f;          // state-variable filter state
+        float soft = 0f;                    // one-pole low-pass after it: takes the hiss off the top
+        float softCoeff = 1f - MathF.Exp(-2f * MathF.PI * 2500f / sampleRate);
+        const float damping = 0.8f;         // 1/Q: wide enough to sound like air, not a whistle
         for (int i = 0; i < n; i++)
         {
             float t = (float)i / n;
-
-            // Exponential glide down, so each octave takes the same time.
-            double freq = 1100.0 * Math.Pow(140.0 / 1100.0, t);
-            phase += 2.0 * Math.PI * freq / sampleRate;
-            float s = MathF.Sin((float)phase);
-            float tone = 0.55f * MathF.Sign(s) + 0.45f * s;   // a square with its edge softened
+            float seconds = (float)i / sampleRate;
 
             noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5;
-            float grain = ((noise & 0xFFFF) / 32767.5f - 1f) * MathF.Exp(-t * 60f) * 0.6f;
+            float white = (noise & 0xFFFF) / 32767.5f - 1f;
 
-            // Decimate: hold each value for longer as the sweep falls.
-            int hold = 1 + (int)(t * 8f);
-            if (i % hold == 0) held = tone + grain;
+            float centre = 2400f * MathF.Pow(900f / 2400f, t);
+            float f = 2f * MathF.Sin(MathF.PI * centre / sampleRate);
+            low  += f * band;
+            float high = white - low - damping * band;
+            band += f * high;
+            soft += (band - soft) * softCoeff;
 
-            // Quantise the held value ever coarser.
-            float bits = 5f - 3f * t;
-            float steps = MathF.Pow(2f, bits) / 2f;
-            float crushed = MathF.Round(held * steps) / steps;
+            // A raised-cosine swell, then a smooth fall to silence at the end.
+            float swell = seconds < swellSeconds
+                ? 0.5f - 0.5f * MathF.Cos(MathF.PI * seconds / swellSeconds)
+                : 1f;
+            float fall = seconds < swellSeconds
+                ? 1f
+                : MathF.Pow(1f - (seconds - swellSeconds) / (durationMs / 1000f - swellSeconds), 2f);
 
-            float attack = Math.Min(1f, i / (sampleRate * 0.003f));
-            float decay = MathF.Exp(-t * 4.5f) * (1f - t);
-            samples[i] = (short)Math.Clamp(crushed * attack * decay * 7000f * amplitude, short.MinValue, short.MaxValue);
+            samples[i] = (short)Math.Clamp(soft * swell * fall * 10000f * amplitude, short.MinValue, short.MaxValue);
         }
         return samples;
     }

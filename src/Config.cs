@@ -1138,10 +1138,6 @@ public static class Config
         // event, the visual counterpart of the UI sound effects. See PostProcessRenderer.
         public static bool PulsesEnabled = true;
         public static float PulseDuration = 0.15f; // Seconds a pulse lasts before decaying back
-
-        // Phase transitions (GameEventType.Transition): a dissolve from a coarse two-level
-        // dither back to the resting one, over this many seconds. Rides the pulse switch.
-        public static float TransitionDuration = 0.35f;
     }
 
     #endregion

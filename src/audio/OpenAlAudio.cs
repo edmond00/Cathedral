@@ -86,7 +86,7 @@ internal static class OpenAlAudio
     }
 }
 
-/// <summary>The hover and click ticks and the transition sweep through OpenAL: the very samples WinMM plays.</summary>
+/// <summary>The hover and click ticks and the transition swish through OpenAL: the very samples WinMM plays.</summary>
 internal sealed class OpenAlUiSfx : IUiSfx
 {
     // A few sources in rotation, so a click does not cut off the hover that came a frame before it.

@@ -148,7 +148,7 @@ public sealed class AmbianceEngine : IDisposable
 
     /// <summary>
     /// One press can change mode twice in a row (leaving a place for the map, which at once starts a
-    /// journey; a fight that hands back to narration which repaints its map), and two sweeps on top of
+    /// journey; a fight that hands back to narration which repaints its map), and two swishes on top of
     /// each other read as a stutter. A transition within <see cref="TransitionDebounceMs"/> of the last
     /// is the same transition.
     /// </summary>

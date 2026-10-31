@@ -24,7 +24,7 @@ public enum AudioBackend
     OpenAL
 }
 
-/// <summary>The hover and click ticks, and the phase-transition sweep.</summary>
+/// <summary>The hover and click ticks, and the phase-transition swish.</summary>
 internal interface IUiSfx : IDisposable
 {
     void SetVolume(float v01);

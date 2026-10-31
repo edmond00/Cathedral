@@ -59,11 +59,9 @@ public enum GameEventType
     /// trade menu, the pause menu opening...) or the narration panel swapped its text for the
     /// location map and back. Fired from <c>LocationTravelGameController.SetMode</c>, the one funnel
     /// every mode change goes through, and from the narration panel's map edge.
-    /// SFX: a short bit-crushed PCM sweep, outside the music like the hover and click ticks.
+    /// SFX: a soft swish of air, PCM outside the music like the hover and click ticks.
     /// Music: none - a transition is too frequent to colour the phrase.
-    /// Visual: a dither dissolve (see <c>PostProcessRenderer</c>), coarse to fine.
-    /// Kept last: <c>PostProcessRenderer</c> indexes its pulse table by the members above, and plays
-    /// this one as a dissolve of its own instead.
+    /// Visual: a pulse of a click's weight with a noise grain in place of the click's Bayer.
     /// </summary>
     Transition,
 }
