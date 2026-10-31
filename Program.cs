@@ -574,7 +574,7 @@ if (args.Length >= 1 && args[0] == "--save-audit")
 if (args.Length >= 2 && args[0] == "--export-sfx")
 {
     Cathedral.Audio.UiSfxPlayer.ExportWavs(args[1]);
-    Console.WriteLine($"--export-sfx: hover.wav and click.wav written to {args[1]}");
+    Console.WriteLine($"--export-sfx: hover.wav, click.wav and transition.wav written to {args[1]}");
     return;
 }
 

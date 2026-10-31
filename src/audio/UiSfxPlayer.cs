@@ -33,8 +33,10 @@ internal sealed class UiSfxPlayer : IUiSfx
     // ── Pinned WAV buffers ────────────────────────────────────────────────────
     private GCHandle _hoverHandle;
     private GCHandle _clickHandle;
+    private GCHandle _transitionHandle;
     private nint _hoverPtr;
     private nint _clickPtr;
+    private nint _transitionPtr;
     private float _volume = 1f;
     private bool _disposed;
 
@@ -61,13 +63,17 @@ internal sealed class UiSfxPlayer : IUiSfx
         PlaySound(nint.Zero, nint.Zero, 0);
         if (_hoverHandle.IsAllocated) _hoverHandle.Free();
         if (_clickHandle.IsAllocated) _clickHandle.Free();
+        if (_transitionHandle.IsAllocated) _transitionHandle.Free();
 
         var hoverWav = BuildHoverWav(_volume);
         var clickWav = BuildClickWav(_volume);
+        var transitionWav = BuildTransitionWav(_volume);
         _hoverHandle = GCHandle.Alloc(hoverWav, GCHandleType.Pinned);
         _clickHandle = GCHandle.Alloc(clickWav, GCHandleType.Pinned);
+        _transitionHandle = GCHandle.Alloc(transitionWav, GCHandleType.Pinned);
         _hoverPtr    = _hoverHandle.AddrOfPinnedObject();
         _clickPtr    = _clickHandle.AddrOfPinnedObject();
+        _transitionPtr = _transitionHandle.AddrOfPinnedObject();
     }
 
     // Both ticks go through WinMM rather than the MIDI device, so --silent (which works by opening no
@@ -89,7 +95,17 @@ internal sealed class UiSfxPlayer : IUiSfx
     }
 
     /// <summary>
-    /// Writes the two ticks as WAV files (<c>hover.wav</c>, <c>click.wav</c>) — <c>--export-sfx</c>, which
+    /// Play the phase-transition sweep. WinMM plays one sound at a time, so this cuts short the click
+    /// that usually caused it — which is why the sweep opens on a transient of its own.
+    /// </summary>
+    public void PlayTransition()
+    {
+        if (Cathedral.Config.Debug.Silent) return;
+        PlaySound(_transitionPtr, nint.Zero, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
+    }
+
+    /// <summary>
+    /// Writes the UI sounds as WAV files (<c>hover.wav</c>, <c>click.wav</c>, <c>transition.wav</c>) — <c>--export-sfx</c>, which
     /// is where tools/video gets the click it lays under a recording's cursor. The very bytes the game
     /// plays, so the video's click is the game's click.
     /// </summary>
@@ -98,6 +114,7 @@ internal sealed class UiSfxPlayer : IUiSfx
         Directory.CreateDirectory(directory);
         File.WriteAllBytes(Path.Combine(directory, "hover.wav"), BuildHoverWav());
         File.WriteAllBytes(Path.Combine(directory, "click.wav"), BuildClickWav());
+        File.WriteAllBytes(Path.Combine(directory, "transition.wav"), BuildTransitionWav());
     }
 
     // ── PCM generation ────────────────────────────────────────────────────────
@@ -107,6 +124,9 @@ internal sealed class UiSfxPlayer : IUiSfx
 
     /// <summary>80 ms decaying harmonic tone (520 + 1040 + 1560 Hz) — digital click.</summary>
     private static byte[] BuildClickWav(float amplitude = 1f) => BuildWav(ClickSamples(amplitude), SfxSampleRate);
+
+    /// <summary>220 ms bit-crushed falling sweep — the phase-transition mark.</summary>
+    private static byte[] BuildTransitionWav(float amplitude = 1f) => BuildWav(TransitionSamples(amplitude), SfxSampleRate);
 
     /// <summary>The ticks' sample rate. Shared with the OpenAL player, which plays these same samples.</summary>
     internal const int SfxSampleRate = 22050;
@@ -151,6 +171,52 @@ internal sealed class UiSfxPlayer : IUiSfx
         return samples;
     }
 
+    /// <summary>
+    /// The transition sweep as 16-bit mono PCM at <see cref="SfxSampleRate"/>: the sound of the dither
+    /// dissolve it accompanies. A soft square falls from 1100 Hz to 140 Hz while it is decimated
+    /// (sample-and-hold, 1 to 9 samples) and quantised ever coarser (5 bits down to 2) — the same
+    /// coarse-to-fine-and-back the screen does, in the ear. A short hashed-noise grain on the attack
+    /// stands in for the click it usually cuts off on WinMM. Deterministic, no generator: the bytes
+    /// are the same on every machine, as the other ticks are.
+    /// </summary>
+    internal static short[] TransitionSamples(float amplitude = 1f)
+    {
+        const int sampleRate = SfxSampleRate;
+        const int durationMs = 220;
+        int n = sampleRate * durationMs / 1000;
+        var samples = new short[n];
+        double phase = 0;
+        float held = 0f;
+        uint noise = 0x9E3779B9u;
+        for (int i = 0; i < n; i++)
+        {
+            float t = (float)i / n;
+
+            // Exponential glide down, so each octave takes the same time.
+            double freq = 1100.0 * Math.Pow(140.0 / 1100.0, t);
+            phase += 2.0 * Math.PI * freq / sampleRate;
+            float s = MathF.Sin((float)phase);
+            float tone = 0.55f * MathF.Sign(s) + 0.45f * s;   // a square with its edge softened
+
+            noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5;
+            float grain = ((noise & 0xFFFF) / 32767.5f - 1f) * MathF.Exp(-t * 60f) * 0.6f;
+
+            // Decimate: hold each value for longer as the sweep falls.
+            int hold = 1 + (int)(t * 8f);
+            if (i % hold == 0) held = tone + grain;
+
+            // Quantise the held value ever coarser.
+            float bits = 5f - 3f * t;
+            float steps = MathF.Pow(2f, bits) / 2f;
+            float crushed = MathF.Round(held * steps) / steps;
+
+            float attack = Math.Min(1f, i / (sampleRate * 0.003f));
+            float decay = MathF.Exp(-t * 4.5f) * (1f - t);
+            samples[i] = (short)Math.Clamp(crushed * attack * decay * 7000f * amplitude, short.MinValue, short.MaxValue);
+        }
+        return samples;
+    }
+
     private static byte[] BuildWav(short[] samples, int sampleRate)
     {
         int byteCount = samples.Length * 2;
@@ -177,6 +243,7 @@ internal sealed class UiSfxPlayer : IUiSfx
         PlaySound(nint.Zero, nint.Zero, 0); // stop any pending async sound
         if (_hoverHandle.IsAllocated) _hoverHandle.Free();
         if (_clickHandle.IsAllocated) _clickHandle.Free();
+        if (_transitionHandle.IsAllocated) _transitionHandle.Free();
     }
 }
 

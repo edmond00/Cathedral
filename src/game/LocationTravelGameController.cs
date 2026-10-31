@@ -2298,6 +2298,12 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
 
+        // Every phase and screen change is marked the same way: a dither dissolve and a short sweep.
+        // Here, in the one funnel, so a transition added later is marked without anyone remembering
+        // to. RedrawCurrentMode (an overlay dismissed over a live phase) does not pass through here,
+        // which is right: nothing changed.
+        _ambianceEngine?.TriggerGameEvent(GameEventType.Transition);
+
         RunModeEnter(newMode);
         if (Cathedral.Game.Cli.CliMode.IsActive) _cliOverlayOnEntry[newMode] = CliOverlayReading();
 

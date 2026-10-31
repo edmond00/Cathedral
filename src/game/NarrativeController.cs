@@ -3194,6 +3194,9 @@ public class NarrativeController
     /// <summary>An arrow key with the map up: pans it. False when the map is hidden or the key is another.</summary>
     public bool PanDebugMap(OpenTK.Windowing.GraphicsLibraryFramework.Keys key) => _debugMap.HandleKey(key);
 
+    /// <summary>Whether the last frame drew the map rather than the narration — the edge <see cref="Update"/> marks.</summary>
+    private bool _mapWasDrawn;
+
     /// <summary>A modal popup (modus mentis / item / choice) is open over the panel.</summary>
     private bool IsAnyPopupVisible =>
         _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
@@ -3204,6 +3207,14 @@ public class NarrativeController
     public void Update()
     {
         RenderPanel();
+
+        // The map standing in for the text, or the text coming back, is a change of screen like a
+        // change of mode, whatever put it there: the ↹ or Tab, RETURN, a walk, a backtrack.
+        if (_ui.MapDrawn != _mapWasDrawn)
+        {
+            _mapWasDrawn = _ui.MapDrawn;
+            _ambianceEngine?.TriggerGameEvent(GameEventType.Transition);
+        }
 
         // A popup is a modal choice, so the panel behind it is greyed out the same way
         // the generation preview box greys it: recolouring the text rather than darkening

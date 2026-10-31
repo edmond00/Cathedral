@@ -157,6 +157,7 @@ internal sealed class SynthMusicEngine : IMusicEngine
         // Hover and click are PCM ticks, outside the music entirely.
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
         if (evt == GameEventType.StrongInteraction) { _uiSfx.PlayClick(); return; }
+        if (evt == GameEventType.Transition) { _uiSfx.PlayTransition(); return; }
         if (_core == null) return;
 
         // A hit is a sting and nothing more: the fight's music is answer enough.

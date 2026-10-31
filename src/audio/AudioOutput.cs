@@ -24,12 +24,13 @@ public enum AudioBackend
     OpenAL
 }
 
-/// <summary>The hover and click ticks.</summary>
+/// <summary>The hover and click ticks, and the phase-transition sweep.</summary>
 internal interface IUiSfx : IDisposable
 {
     void SetVolume(float v01);
     void PlayHover();
     void PlayClick();
+    void PlayTransition();
 }
 
 /// <summary>The looping brown-noise wash under a model call, a dice roll or a journey.</summary>

@@ -299,6 +299,7 @@ internal sealed class LegacyAmbianceEngine : IMusicEngine
         // Hover sound is PCM-only — return immediately so no melody signal, no interrupt,
         // and no 400 ms cooldown is consumed. MIDI device doesn't even need to be open.
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
+        if (evt == GameEventType.Transition) { _uiSfx.PlayTransition(); return; }
 
         if (!CanSend) return;
 
