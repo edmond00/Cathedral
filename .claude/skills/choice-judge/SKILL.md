@@ -196,6 +196,15 @@ triceratops investigation:
   the faculty and the second call would cost ~70 tokens instead of ~150: 39 cases fewer at weight 0
   (346 → 307 of 386), and the onlooker could not win them back. The faculty comes first.
 - **The full onlooker contrast** (weight 1): see above.
+- **A baseline with no faculty at all** — the same prompt with the faculty line removed, in place of
+  the onlooker. Measured in the same run as the onlooker (plain nouns on, 354 of 386 with no
+  baseline): best at weight 0.2 with 358, against the onlooker's 362 at 0.3; 357 at 0.3, 354 at 0.5,
+  299 at 1. It never fixed the two Reply cases the onlooker fixes, and it falls apart faster as the
+  weight rises (Means 32 of 73 at weight 1, the onlooker 49): with no faculty, the question "which
+  would *it* attend to?" has nobody to be about, and the model's answer to that is a poorer picture of
+  its own tastes than an ordinary mind is. Same cost as the onlooker, so there is no reason to prefer it.
+- **The onlooker on KeepFocus and Willingness as well**: no case changed at 0.3 or 0.5, for a call
+  each.
 - **Telling the judge what a misread name is**, a glossary line, kind tags, appositions — see "Names
   the judge misreads".
 - **A description on every Focus option** ("focus on hanging lianas: lianas dropping out of the dark
