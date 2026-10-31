@@ -1619,13 +1619,16 @@ and all three **end by themselves** after a short dwell, with no Continue (`_wal
 | LEAVE | where the party stands → the entry area by known ways (`AreaVisits.BackReach`, a jump when none) → `⎆`. **Unchecked** |
 | RUNAWAY, and fleeing a fight in narration | the same way out (`EscapeRoute`), but every area on it — a path opened into the areas it runs past (`ThroughPaths`) — is read with `ConfrontationSelector.Current` as if the party stood there. The walk stops at the first one that confronts, the PoV moves there (`StandAt`), and the roll is made again over the map |
 
-**A failed runaway forces nothing.** It used to start the fight (enemy) or the caught-red-handed tree
-(witness); now `StopEscape` resumes the narration in the area where the party was stopped, opening on
-the person who stopped it, without refilling the noetic points. The confrontation conversation is
-still reached by a failed act before the confronter, or by `explain_myself`. A fight fled in a
+**Where a runaway fails decides what it costs.** The roll made in the area RUNAWAY was pressed in is
+the narration's own: failing it starts the fight (enemy) or the caught-red-handed tree (witness),
+as it always did. A roll at a stop further along the walk out (`_escape.Done > 0`) is the map's:
+failing it, `StopEscape` resumes the narration in that area, opening on the person who stopped the
+party, without refilling the noetic points. The starting area is never a stop — its own roll, or the
+fight fled in it, already got the party away from it. A fight fled in a
 location (`FightAdapterResult.Runaway`) no longer exits straight to the world: the game controller
 calls `FleeAfterFight`, whose checks start at the next area, the fight having been the getting away
-from this one. `cli/system/runaway_route.cli` (two staged enemies, a success then a stop) and
+from this one. `cli/system/runaway_route.cli` (two staged enemies: a success, a stop on the way, then the narration's
+own roll failing into a fight) and
 `fight_runaway_narration.cli`.
 
 There is deliberately **no criminal record**. One existed — written, escalated and cleared, with not a

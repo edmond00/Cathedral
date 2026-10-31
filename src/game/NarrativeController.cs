@@ -158,8 +158,9 @@ public class NarrativeController
     /// way from where it stood to the area the location is entered by, then the map's way out. A
     /// checked escape — RUNAWAY, or fleeing a fight — stops at every area on the way where somebody
     /// confronts the party (<see cref="ConfrontationSelector.Current"/>, read for that area) and rolls
-    /// to get past them; a failed roll ends it there and the narration resumes in that area. LEAVE walks
-    /// out unchecked.
+    /// to get past them; a failed roll there ends it and the narration resumes in that area. The area the
+    /// escape starts from is not one of its stops: a RUNAWAY's own roll (whose failure is a fight or a
+    /// confrontation) or a fled fight has already got the party away from it. LEAVE walks out unchecked.
     /// </summary>
     private sealed class EscapeRoute
     {
@@ -220,6 +221,7 @@ public class NarrativeController
     // (via FinishExitRunaway) instead of the normal thinking-action OnDiceRollContinue.
     private bool _exitRunawayPending;
     private NpcEntity? _exitRunawayTarget;
+    private bool _exitRunawayIsEnemy;
 
     // ── LLM generation preview box ───────────────────────────────────────────────
     // Streams the text being generated over the greyed-out menu, gated by a CONTINUE button.
@@ -5333,6 +5335,7 @@ public class NarrativeController
     {
         _exitRunawayPending  = true;
         _exitRunawayTarget   = target;
+        _exitRunawayIsEnemy  = isEnemy;
 
         int diceCount = ProtagonistRunawayDiceCount();
         // The humors reach this roll as they reach every other: the dice are the protagonist's, so are
@@ -5361,13 +5364,23 @@ public class NarrativeController
     /// <summary>
     /// Resolves an exit-runaway roll after the player clicks Continue on the dice overlay.
     /// Success → the escape goes on along the way out (to the next area where somebody stands in the
-    /// way, or out of the location). Failure → the escape ends where the party was stopped and the
-    /// narration resumes there, its next phase opening on whoever stopped them.
+    /// way, or out of the location). Failure depends on where the roll was made:
+    /// <list type="bullet">
+    /// <item>in the area RUNAWAY was pressed in — the narration's own runaway — a fight starts with the
+    /// enemy, or the caught-red-handed conversation with the witness (enemy precedence is already
+    /// baked into the kind);</item>
+    /// <item>at a stop further along the walk out — the escape ends there and the narration resumes in
+    /// that area, opening on whoever stopped the party.</item>
+    /// </list>
     /// </summary>
     private void FinishExitRunaway()
     {
         bool success   = _dice.IsCurrentlySuccess;
         var  target    = _exitRunawayTarget;
+        bool isEnemy   = _exitRunawayIsEnemy;
+        // A stop on the walk out has walked at least one step of the way; the narration's own roll
+        // is made before any.
+        bool onTheWay  = _escape is { Done: > 0 };
 
         _exitRunawayPending = false;
         _exitRunawayTarget  = null;
@@ -5381,8 +5394,35 @@ public class NarrativeController
             return;
         }
 
-        Console.WriteLine($"NarrativeController: RUNAWAY failed at '{_pov?.Where.DisplayName}' — stopped by '{target?.DisplayName}'");
-        StopEscape(target);
+        if (onTheWay)
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed on the way out at '{_pov?.Where.DisplayName}' — stopped by '{target?.DisplayName}'");
+            StopEscape(target);
+            return;
+        }
+
+        _escape = null;
+        if (target == null)
+        {
+            // Defensive: nothing to escalate to, just leave.
+            _narrationState.RequestedExit = true;
+            return;
+        }
+
+        if (isEnemy)
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — fight starts vs '{target.DisplayName}'");
+            _pendingFightOutcome = new FightTriggerOutcome(target, $"failed to run away from {target.DisplayName}");
+        }
+        else
+        {
+            // They came because they heard a crime: they accuse you of that one. Otherwise they caught you
+            // on private ground, and what they saw is trespass.
+            var catchTree = ConfrontationSelector.TreeFor(_scene, target, null, _pov?.Where.IsPrivate ?? true);
+            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({catchTree.TreeId})");
+            // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
+            SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
+        }
     }
 
     // ── The way out ──────────────────────────────────────────────────────────

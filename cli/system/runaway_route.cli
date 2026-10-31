@@ -4,6 +4,8 @@
 # out in the map's margin) to the area it is entered by. Leaving goes back out the same way, along
 # the ways it knows. A RUNAWAY rolls in every area of that walk where somebody confronts the party:
 # a success walks on to the next, a failure stops it there and the narration resumes in that area.
+# The area RUNAWAY is pressed in is not one of those stops: its roll is the narration's own, and a
+# failure there starts the fight (enemy) or the confrontation (witness), as it always did.
 #
 # The track from the field runs past the yard to the rock, so the way back out from the rock is
 # Rock → Yard → Field (where the location was entered). The brewer is put in the rock and the weaver
@@ -58,11 +60,12 @@ expect after trying to run away
 expect RUNAWAY
 expect-no-state dialogue caught_red_handed
 
-# The second try at the weaver gets past: the rest of the way, and out of the location.
-strategy succeed
+# From here it is the narration's own RUNAWAY again, and failing that one is what it always was: the
+# weaver is an enemy, so the fight starts.
+strategy fail-dice
 click button
 wait
 click continue
-wait mode WorldView 90
+wait mode Fighting 90
 
 quit
