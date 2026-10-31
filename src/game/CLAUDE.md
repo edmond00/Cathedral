@@ -653,6 +653,23 @@ likeliest letter almost never said "eager". Willingness is therefore not a pick 
 rules leave on offer. The model is near-certain on ~90% of answers, wrong ones included, so a
 confident mistake is fixed in the descriptions and the prompts, never by a threshold.
 
+**Focus, Goal, Means and Reply are read net of an ONLOOKER**: the same list is scored a second time
+for a faculty with no bent of its own (`ChoiceJudge.OnlookerDescription`), and `BaselineWeight` (0.3)
+of its score is taken off each option's. The model has tastes of its own — it gave Cruelty bribery to
+make a prisoner talk — and the onlooker shares them, so they cancel and the faculty's own pull is left.
+It costs a second forward pass on those four kinds (~+1.4 s a decision on CPU); `BaselineWeight = 0`
+switches it off. The log records both scores.
+
+**A name the model misreads is put in plain words before the judge reads it.** The model knows
+"triceratops" as an extinct dinosaur, and in play no faculty — Beast Sense included — would look at an
+appeased one. A species that needs it declares `Species.JudgeNoun` ("three-horned beast"), and
+`ChoiceJudge.InJudgeWords` swaps the name for it, as a whole word, everywhere in the prompt; only the
+judge reads that. The four great reptiles have one. Telling the judge what the word means (a glossary,
+a kind tag) does not work — see the skill.
+
+A beast's tracks are named by its kind (`PlaceBeastSign`: "Triceratops Tracks"), never by its
+generated name: "Torntread Tracks" told the player a name nobody gave and the judge nothing.
+
 **Invoke the `choice-judge` skill before adding or editing a modus mentis or a judge.** It has the
 writing rules both must follow — the judge matches words before natures, so a description that says
 "waits" picks "sit and wait" — and `tools/judge/`, the labelled benchmark and the description audit

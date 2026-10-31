@@ -2,8 +2,9 @@
 
 Everything the judge reads is taken from the game's own source at import time — the six system
 prompts, the questions, the willingness scale, the setting rule appended to every slot, the
-decision thresholds, and every modus mentis's DisplayName / MenuDescription / PersonaTone /
-SkillMeans — so a measurement here is a measurement of what the game sends, and cannot drift from it.
+decision thresholds, the onlooker and its weight, the species' judge nouns, and every modus mentis's
+DisplayName / MenuDescription / PersonaTone / SkillMeans — so a measurement here is a measurement of
+what the game sends, and cannot drift from it.
 
 Needs a llama-server on --port (default 8091) loaded with the shipped model, e.g. on CPU:
     models/llama/llama-server.exe -m models/model.gguf -c 8192 -ngl 0 --port 8091
@@ -33,6 +34,24 @@ CONST = {m.group(1): float(m.group(2))
 _setting = _read("src/game/narrative/SceneSetting.cs")
 SETTING = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"',
                              re.search(r'public const string Rule\s*=(.*?);', _setting, re.S).group(1)))
+ONLOOKER = re.search(r'OnlookerDescription\s*=\s*"((?:[^"\\]|\\.)*)"', _judge).group(1)
+BASELINE_KINDS = re.findall(r"ChoiceKind\.(\w+)",
+                            re.search(r"BaselineKinds\s*=\s*new\(\)\s*\{([^}]*)\}", _judge).group(1))
+
+# ── the judge's plain words for names the model misreads (Species.JudgeNoun) ─────────────────────
+JUDGE_NOUNS = {}
+for _f in glob.glob(os.path.join(ROOT, "src/game/narrative/body/species/*.cs")):
+    for _cls in re.split(r"\bclass\s+\w+\s*:\s*Species\b", open(_f, encoding="utf-8").read())[1:]:
+        _n = re.search(r'DisplayName\s*=>\s*"([^"]+)"', _cls); _j = re.search(r'JudgeNoun\s*=>\s*"([^"]+)"', _cls)
+        if _n and _j: JUDGE_NOUNS[_n.group(1)] = _j.group(1)
+assert JUDGE_NOUNS, "no Species.JudgeNoun parsed"
+
+def in_judge_words(text):
+    """ChoiceJudge.InJudgeWords: every misread name, as a whole word in any case, in plain words."""
+    for w, n in JUDGE_NOUNS.items():
+        text = re.sub(r"\b" + re.escape(w) + r"\b", n, text, flags=re.I)
+    return text
+
 KINDS = ["Focus", "KeepFocus", "Goal", "Means", "Willingness", "Reply"]
 assert set(KINDS) <= set(SYSTEM) and set(KINDS) <= set(QUESTION), "ChoiceJudge.cs no longer parses"
 SCALE = [STANCE[s] for s in ("eager", "willing", "reluctant", "unwilling")]
@@ -77,13 +96,14 @@ def third_person(t):
         parts[i] = s
     return '"'.join(parts)
 
-def build_prompt(kind, mm, situation, options, question=None):
-    s = ("The thinking faculty: " if kind == "Means" else "The faculty: ") + describe(mm) + "\n\n"
+def build_prompt(kind, mm, situation, options, question=None, faculty=None):
+    """faculty: the description text in place of describe(mm) (the onlooker's, for the baseline)."""
+    s = ("The thinking faculty: " if kind == "Means" else "The faculty: ") + (faculty or describe(mm)) + "\n\n"
     if situation and situation.strip():
         s += "The situation: " + third_person(re.sub(r"\s+", " ", situation.strip())) + "\n\n"
     s += (question or QUESTION[kind]) + "\n"
     s += "".join(f"{L[i]} - {third_person(o.strip())}\n" for i, o in enumerate(options))
-    return s + "\nAnswer with the letter and nothing else."
+    return in_judge_words(s + "\nAnswer with the letter and nothing else.")
 
 def means_option(mm):
     """A means option as ThinkingExecutor labels it: "{DisplayName}: {SkillMeans}"."""
@@ -110,6 +130,16 @@ def letter_logprobs(kind, prompt, n, system=None):
 
 def lse(v):
     m = max(v); return m + math.log(sum(math.exp(x - m) for x in v))
+
+def scores(kind, mm, situation, options, question=None, decline_index=-1):
+    """The scores ChoiceJudge.PickAsync decides from: the faculty's letter log-probabilities, less
+    BaselineWeight x the onlooker's on the kinds read against it (the decline keeps its own).
+    Returns (scores, raw faculty scores, onlooker scores or None)."""
+    raw = letter_logprobs(kind, build_prompt(kind, mm, situation, options, question), len(options))
+    w = CONST["BaselineWeight"]
+    if w <= 0 or kind not in BASELINE_KINDS: return raw, raw, None
+    on = letter_logprobs(kind, build_prompt(kind, mm, situation, options, question, faculty=ONLOOKER), len(options))
+    return [x if i == decline_index else x - w * o for i, (x, o) in enumerate(zip(raw, on))], raw, on
 
 # ── the decision rules, as ChoiceJudge applies them ──────────────────────────────────────────────
 def decide(kind, lp, decline_index=-1):

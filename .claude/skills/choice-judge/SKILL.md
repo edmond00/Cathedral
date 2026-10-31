@@ -24,6 +24,40 @@ The faculty: SPITE - <MenuDescription> Its manner: <PersonaTone>.
 and, when it is offered as a means, `Spite: <SkillMeans>`. Those four fields are the whole of what
 the judge knows. `PersonaPrompt` and the reminders are not shown to it (they voice the rewrite).
 
+## Names the judge misreads: `Species.JudgeNoun`
+
+The judge reads the options, the situation and the act as plain text, and the model brings what it
+knows of every word. It knows **triceratops, stegosaurus, ankylosaurus and carnotaurus as dinosaurs
+extinct for ages** (asked, it says no one could meet a living triceratops), and that sank them in every
+judge at once: in play every faculty that observed an appeased triceratops — Beast Sense included —
+took a tapir, its tracks, herbs or nothing. Measured with Beast Sense, a jungle and five other options:
+a jaguar, boar, bear or hyena in the triceratops's place is picked 5 times in 6 at about −1; every one
+of the four dinosaurs 0 times in 6 at about −12. With no other beast on the list it still took a
+strangler fig, a thorn bush or a boulder over the dinosaur, and judged Husbandry *reluctant* to tame it.
+
+`ChoiceJudge.InJudgeWords` replaces each such name, as a whole word, everywhere in the prompt, with
+the species' `JudgeNoun` ("three-horned beast", "plated beast", "armoured beast", "horned hunting
+beast"). The player and the narration keep the name. Read that way the beast is a beast like any other:
+Beast Sense picks it 2–4 times in 6 against a jaguar, Herblore and Caution never, and the other
+faculties about as often as they pick the jaguar. **What did not work**, all measured on the same case:
+
+- **Telling it** — a system-prompt line ("a creature named is a living animal, whatever its name"),
+  a kind tag on every option ("(an animal)", "(a plant)"), "(a living animal)" on the beast: no change.
+  The model's knowledge of the word beats any assurance about it.
+- **A glossary line** ("In this world, a triceratops is a great three-horned grazing beast"): 6 in 6 —
+  and the same line glossing a *swamp* made Herblore look at the swamp 4 times in 6, from 0. A glossed
+  word wins for being glossed. It is salience, not understanding; so is a description given to one
+  option only.
+- **The name with an apposition** ("the triceratops, a great three-horned grazing beast"): the name
+  still sinks it (0–2 in 6).
+
+**When to declare one:** only for a name the model reads as something nobody could meet — extinct,
+legendary, a modern coinage. A bird it finds dull is not misread; small creatures (dove, firefly,
+butterfly) score low for Beast Sense because they are not the beasts it is about. Test a name before
+declaring a noun: put it in a Focus list for a mind made for it, beside a familiar creature and some
+scenery, over every rotation; a misread name loses to the familiar one by ten points or more. The
+noun must be plain, short and not a word of a different act (rule 3 below holds for it too).
+
 ## Writing a modus mentis for the judge
 
 **`MenuDescription`** (player-facing too; ≤ ~60 words, continuous prose, third person, no subject):
@@ -128,9 +162,50 @@ Both are checked twice:
 | Goal | decline only if its log-odds over all real goals > `GoalDeclineLogOdds` (10) | right declines scored +11…+22, wrong ones ≤ +4.4: 89% → 92% |
 | Willingness | assent if log P(eager∪willing) − log P(reluctant∪unwilling) > `AssentLogOdds` (−1.8); then eager vs willing at `EagerLogOdds` (−6.4), unwilling vs reluctant at `UnwillingLogOdds` (−0.6) | the likeliest letter gave 1 eager in 40; this gives ~10 each and one more right |
 
+**Focus, Goal, Means and Reply are scored net of an onlooker.** Each option's score is
+log P(letter | the faculty) − `BaselineWeight` (0.3) × log P(letter | the ONLOOKER), the same list in
+the same order with `OnlookerDescription` ("an ordinary attention with no bent of its own") in the
+faculty's place; the decline keeps the faculty's own score; the rules above then read the net scores.
+The model has tastes of its own and they win confident answers: the means judge gave Cruelty *bribery*
+to make a prisoner talk and Covetousness *busking* to earn coins, because the model prefers bribery and
+busking to violence and theft. The onlooker shares those tastes, so taking part of its score off leaves
+the faculty's own pull. On the bench (same server, same run) it fixed 11 decisions and broke 1: the
+two Cruelty means, both Covetousness means, Bargaining's goal and Beast Sense's, two Reply cases and
+three Focus cases; it broke one of Mercy's means for calming the triceratops.
+
+Why this works where a content-free prior failed: that prior is the same list with *nothing* in it, so
+it can only correct the letters' position bias, which is small. The onlooker reads the same options in
+the same scene, so it measures how attractive each *option* is to the model — which is where the
+confident mistakes come from. Why 0.3 and not the full contrast: at 1 the net score is the faculty's
+*difference* from an ordinary mind, and a faculty whose right answer is also the obvious one (Herblore
+and the herb patch) loses it — Means fell from 63 to 49 of 73, Goal from 97 to 85 of 104. The sweep:
+0.1 +4, 0.2 +7, **0.3 +10**, 0.5 +9, 0.75 +7, 1.0 −19 (cases right, against none). KeepFocus and
+Willingness are not read against it: neither moved, and they cost a call each.
+
+**The cost** is a second forward pass on four kinds of six: ~150 more prompt tokens a decision (the
+system prompt is cached; the user message is not, since the faculty comes first and the two prompts
+part there), about +1.4 s a decision on a 4-core CPU at ~95 prompt tokens/s. `BaselineWeight = 0`
+switches it off.
+
 Measured and rejected (keep them rejected unless the model changes): averaging several option orders
 (position bias is already small; it cost 4× and lost accuracy), dividing out a per-letter or
-content-free prior (worse), sampling (it only adds noise to a near-certain answer).
+content-free prior (worse), sampling (it only adds noise to a near-certain answer). Also, from the
+triceratops investigation:
+
+- **The faculty after the options**, so the faculty and onlooker prompts would share everything up to
+  the faculty and the second call would cost ~70 tokens instead of ~150: 39 cases fewer at weight 0
+  (346 → 307 of 386), and the onlooker could not win them back. The faculty comes first.
+- **The full onlooker contrast** (weight 1): see above.
+- **Telling the judge what a misread name is**, a glossary line, kind tags, appositions — see "Names
+  the judge misreads".
+- **A description on every Focus option** ("focus on hanging lianas: lianas dropping out of the dark
+  above, thick as cables…", the game's own description text): measured on ten Focus cases, 29 → 37 of
+  40 on top of the plain nouns, mostly the new cases (the temple stair 0 → 4, herbs 2 → 4) — but a
+  decline case lost one (the cellar, 3 → 2): described options make the bare "let your focus go"
+  thin beside them. Not shipped: ~14 more tokens an option (~+110 on a typical list, in every Focus
+  call), measured on a subset with hand-written descriptions, and the game's descriptions do not carry
+  an NPC's state (an appeased triceratops's hint still "lowers its three horns toward you"). Worth
+  measuring on the whole Focus set if a state-aware description is ever written.
 
 The eager/unwilling splits are **bench medians**; the game's real mix of acts differs (the means is
 usually chosen for fit), so the shares in play will differ too. Every decision logs its log-odds
@@ -153,8 +228,31 @@ python tools/judge/mm_audit.py --ids spite,fording # label-free probes; the full
   A case must have one clearly right answer; "wading crosses a river too" makes a bad case.
 - **`judge_bench.py`** — scores them with the game's rules, every rotation of the options. Run it
   before and after any prompt, threshold or description change and compare; a change that wins one
-  case and loses another elsewhere is not a fix. Baseline on this branch: 94.5% overall.
-- **`mm_audit.py`** — three probes that need no labels: SELF (does the judge recognise its own
+  case and loses another elsewhere is not a fix. **The model's server matters**: the numbers below
+  are from llama.cpp built from the source vendored in llama-cpp-python 0.3.36 (not the b11515 the game
+  ships) on a 4-core Linux CPU, where develop's prompts scored 95.9% on the 338 decisions of the old
+  cases (published: 94.5% on b11515). The server is not perfectly deterministic: the same prompts
+  scored 346 and 348 of 386 on two runs. Compare runs from one server only.
+  On that server, with the great-reptile cases added (48 decisions):
+
+  | kind | develop's prompts | plain nouns + onlooker |
+  |---|---|---|
+  | Focus | 60/79 | 69/79 |
+  | KeepFocus | 28/28 | 28/28 |
+  | Goal | 97/104 | 99/104 |
+  | Means | 63/73 | 65/73 |
+  | Willingness | 52/54 | 53/54 |
+  | Reply | 48/48 | 48/48 |
+  | **all** | **348/386 (90.2%)** | **362/386 (93.8%)** |
+  | the old cases only | 324/338 (95.9%) | 329/338 (97.3%) |
+  | the new cases only | 24/48 | 33/48 |
+
+  The plain nouns alone gave 354 (the old cases are untouched by them, by construction). What the
+  new cases still miss: Beast Sense prefers a strangler fig to "the three-horned beast" (3 of 5),
+  Architecture lets its focus go in a ruined temple whatever the beast (a description fixed that, see
+  above), and Mercy's means for calming the beast is Brawling — a weak label, Husbandry is "livestock".
+- **`mm_audit.py`** — reads the raw faculty scores, not net of the onlooker (it probes descriptions,
+  and the onlooker is the same for all). Three probes that need no labels: SELF (does the judge recognise its own
   means from its description), OWN (does an action modus mentis assent to its own work), GOAL (a
   fixed scene, picks listed for reading). A pass is necessary, not sufficient — Spite passed all
   three while choosing "sit and wait" in a labelled case. An OWN flag must be **confirmed with a

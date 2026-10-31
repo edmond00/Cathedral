@@ -43,6 +43,10 @@ WILLINGNESS = [  # place, area, object, act, made for it, foreign to it, crimina
     ("a forest", "riverbank", "a wide river", "swim across the wide river", "natation", "tailoring", 0),
     ("a farm", "yard", "a fattened pig", "butcher the fattened pig", "butchery", "incensing", 0),
     ("a village", "green", "a feast", "dance at the feast", "dance", "stoneface", 0),
+    # The great reptiles: the model knows these names as extinct animals and passes over them for any
+    # living beast in the same list (the playtest: no faculty would look at an appeased triceratops).
+    ("a jungle", "strangler figs", "the appeased triceratops", "tame the triceratops", "husbandry", "calligraphy", 0),
+    ("a hot steppe", "thorn scrub", "the carnotaurus", "attack the carnotaurus", "ferocity", "midwifery", 1),
 ]
 MEANS = [  # thinking, place, area, goal, action options, acceptable
     ("caution", "a town", "city gate", "get past the guard at the gate", ["sneak_art", "bribery", "brawling", "cookery", "dance"], ["sneak_art"]),
@@ -60,6 +64,8 @@ MEANS = [  # thinking, place, area, goal, action options, acceptable
     ("greed", "a town", "market square", "get the merchant's coins", ["cutpurse", "card_sharping", "hard_labor", "pilgrimage"], ["cutpurse", "card_sharping"]),
     ("herblore", "a village", "cottage", "treat the wounded leg", ["simpling", "bonesetting", "butchery", "forcing"], ["simpling"]),
     ("anatomy_lore", "a village", "cottage", "treat the wounded leg", ["simpling", "bonesetting", "butchery", "forcing"], ["bonesetting"]),
+    ("mercy", "a jungle", "strangler figs", "calm the frightened triceratops", ["husbandry", "brawling", "forcing", "butchery"], ["husbandry"]),
+    ("cruelty", "a hot steppe", "thorn scrub", "bring down the stegosaurus", ["pugilitas", "husbandry", "lute_playing", "cookery"], ["pugilitas"]),
 ]
 GOAL = [  # thinking, place, area, object, goals, acceptable (DECLINE_GOAL is always appended)
     ("speleology", "a cave", "galleries", "a crack breathing cold air", ["examine the crack closely", "attack the bat", "sit and wait"], ["examine the crack closely"]),
@@ -93,6 +99,9 @@ GOAL = [  # thinking, place, area, object, goals, acceptable (DECLINE_GOAL is al
     ("gossip", "a village", "alehouse", "the alehouse keeper (a woman)", ["ask her for a coin", "strike up a conversation with her, introducing myself"], ["strike up a conversation with her, introducing myself"]),
     ("bargaining", "a town", "market square", "the cloth merchant (a man)", ["strike up a conversation with him, introducing myself", "ask him for a coin"], ["strike up a conversation with him, introducing myself"]),
     ("spite", "a farm", "courtyard", "the farmhand (a woman)", ["strike up a conversation with her, introducing myself", "ask her for a coin"], [DECLINE_GOAL]),
+    # The great reptiles (see WILLINGNESS): the right goal names the beast, and so do the wrong ones.
+    ("beast_sense", "a jungle", "strangler figs", "the appeased triceratops", ["tame the triceratops", "attack the triceratops", "sit and wait"], ["tame the triceratops"]),
+    ("caution", "a hot steppe", "thorn scrub", "the carnotaurus", ["attack the carnotaurus", "provoke the carnotaurus", "move away to the road", "examine the carnotaurus closely"], ["move away to the road"]),
 ]
 FOCUS = [  # observation, place, area, objects, acceptable
     ("herblore", "a forest", "clearing", ["a herb patch", "a fallen log", "a grey wolf", "a woodpecker"], ["a herb patch"]),
@@ -109,6 +118,15 @@ FOCUS = [  # observation, place, area, objects, acceptable
     ("veinsight", "a mountain", "quarry", ["a seam of ore in the rock", "a cart", "a quarryman", "a crow"], ["a seam of ore in the rock"]),
     ("sky_reading", "a castle", "cellar", ["a barrel", "a rat", "a cobwebbed shelf"], [DECLINE_FOCUS]),
     ("herd_eye", "a monastery", "scriptorium", ["a lectern", "a manuscript", "an inkpot"], [DECLINE_FOCUS]),
+    # The great reptiles: the model knows these names as extinct and passed over a triceratops in
+    # play for a tapir, its tracks, herbs or nothing at all. Each beast-reading case pairs the beast
+    # with scenery, tracks or herbs; the controls keep the odd name on the list where it is wrong.
+    ("beast_sense", "a jungle", "strangler figs", ["the triceratops", "hanging lianas", "a blackwater swamp", "woodland herbs", "a strangler fig"], ["the triceratops"]),
+    ("beast_sense", "a hot steppe", "thorn scrub", ["the stegosaurus", "a termite mound", "a dry riverbed", "a thorn bush"], ["the stegosaurus"]),
+    ("beast_sense", "a canyon", "rockfall", ["the ankylosaurus", "ankylosaurus tracks", "a fallen boulder", "a dry wash"], ["the ankylosaurus"]),
+    ("herblore", "a jungle", "strangler figs", ["the triceratops", "woodland herbs", "a blackwater swamp", "hanging lianas"], ["woodland herbs"]),
+    ("horsemanship", "a hot steppe", "waterhole", ["the stegosaurus", "a horse", "a thorn bush", "a water trough"], ["a horse"]),
+    ("architecture", "a jungle", "ruined temple", ["the triceratops", "a carved temple stair", "a tapir", "hanging lianas"], ["a carved temple stair"]),
 ]
 KEEP = [  # place, area, object, keeps it, drops it
     ("a forest", "clearing", "a herb patch", "herblore", "soldiery"),
@@ -123,6 +141,8 @@ KEEP = [  # place, area, object, keeps it, drops it
     ("a forest", "clearing", "a deer track", "spoor_eye", "architecture"),
     ("a village", "alehouse", "a scarred mercenary", "physiognomy", "mycology"),
     ("a desert", "salt pan", "a slip face", "exploration", "gluttony"),
+    ("a jungle", "strangler figs", "the triceratops", "beast_sense", "architecture"),
+    ("a hot steppe", "thorn scrub", "the stegosaurus", "beast_sense", "pageantry"),
 ]
 _BAKER = ("the baker, a stout man with floury arms", "buying bread", "the baker says the bread is fresh this morning",
           ["praise the baker's craft", "offer half the asking price", "insult the baker's bread", "ask about the baker's family"])
