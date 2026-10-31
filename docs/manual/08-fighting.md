@@ -209,6 +209,10 @@ learned one they choose afresh, now knowing it, and pay for the blow as for any 
 is preferred to an untried one of like worth, since the check may fail.
 
 **Flight.** Leaving the fight requires the **feet's** measure in dice and one six among them.
+A fight fled inside a place leaves the field, not yet the place: the party then makes for the place's
+way in as a runaway does, and anybody who confronts it in an area further on stops it there on the
+terms of [Chapter VI §7](06-narration.md#7-of-crime-and-of-being-seen). The area of the fight itself
+is not weighed again.
 
 Walking away ends the fight and nothing else. Enmity persists — the person who drew steel on you is
 still an enemy on your next visit, still an armed presence in the room, and any failed act before

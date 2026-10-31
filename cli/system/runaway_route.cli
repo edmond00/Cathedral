@@ -1,0 +1,68 @@
+# runaway route — the way out of a location is walked, and anybody on it stands in the way
+#
+# Arriving is shown on the map: the party comes in from the location's way in (the arena-exit glyph
+# out in the map's margin) to the area it is entered by. Leaving goes back out the same way, along
+# the ways it knows. A RUNAWAY rolls in every area of that walk where somebody confronts the party:
+# a success walks on to the next, a failure stops it there and the narration resumes in that area.
+#
+# The track from the field runs past the yard to the rock, so the way back out from the rock is
+# Rock → Yard → Field (where the location was entered). The brewer is put in the rock and the weaver
+# in the yard, both hostile (`hostile`): getting away from the brewer then walks into the weaver.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# The arrival walked in from the way in.
+expect-state map walk in to Test Field
+
+strategy succeed
+goal follow_path
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Rock
+
+observe none
+hostile brewer Test Rock
+hostile weaver Test Yard
+click button
+advance 12 180
+expect RUNAWAY
+expect-state where Test Rock
+
+# Away from the brewer: the dice settle, then the second roll is set to fail before the walk on.
+click button
+wait
+click continue
+strategy fail-dice
+wait
+click continue
+advance 12 180
+expect-state map walk from Test Rock to Test Yard
+expect-state where Test Yard
+expect after trying to run away
+expect RUNAWAY
+expect-no-state dialogue caught_red_handed
+
+# The second try at the weaver gets past: the rest of the way, and out of the location.
+strategy succeed
+click button
+wait
+click continue
+wait mode WorldView 90
+
+quit

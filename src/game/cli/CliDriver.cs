@@ -307,6 +307,7 @@ public sealed class CliDriver
                 case "wound":       CmdWound(rest);                   break;
                 case "cripple":     CmdCripple(rest);                 break;
                 case "starve":      CmdStarve(rest);                  break;
+                case "hostile":     CmdHostile(rest);                 break;
                 case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
                 case "advance":     CmdAdvance(rest);                 break;
@@ -524,6 +525,11 @@ public sealed class CliDriver
           starve [protagonist|companions|<name>]
                                     sour every humor queue to critical — the other lethal state a
                                     visit can arrive at (default: protagonist)
+          hostile <archetype-id|name> <area>
+                                    put a person of this scene in an area, counting the party an
+                                    enemy — somebody standing on the way out of the location, which
+                                    a RUNAWAY must roll to get past. Moving away from an enemy is
+                                    refused, so no walk a script can make stages that otherwise
           cripple <mm-id> [protagonist|companions|<name>]
                                     High-wound every organ/region a modus mentis draws on, until it
                                     is BROKEN — effective level 0 or below, so it rolls nothing and
@@ -1869,6 +1875,15 @@ public sealed class CliDriver
     {
         string who = a.Length > 0 ? a[0].Trim('"') : "protagonist";
         Report(_game.CliStarve(who), $"humors soured: {who}");
+    }
+
+    private void CmdHostile(string[] a)
+    {
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: no narration in progress"); return; }
+        if (a.Length < 2) { CliMode.Emit("error: hostile <archetype-id|name> <area>"); return; }
+        string who = a[0].Trim('"'), area = string.Join(' ', a.Skip(1)).Trim('"');
+        Report(n.CliMakeHostile(who, area), $"{who} stands in {area}, hostile");
     }
 
     private void CmdFightWound(string[] a)
