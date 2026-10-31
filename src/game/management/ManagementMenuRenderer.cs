@@ -655,6 +655,10 @@ public class ManagementMenuRenderer
         return true;
     }
 
+    /// <summary>The cell of a Memory-tab detail button, for <c>--cli</c>; null when it is not drawn.</summary>
+    public (int X, int Y, bool Enabled)? CliMemoryButtonCell(string id)
+        => _activeTab == ManagementTab.Memory ? _memoryPanel.CliButtonCell(id) : null;
+
     /// <summary>Expands a skill on the Bellic tab by name, for <c>--cli</c>.</summary>
     public bool CliSelectBellicSkill(string skillName)
     {

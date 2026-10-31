@@ -448,6 +448,8 @@ public sealed class CliDriver
           click skill <name>        use a fighting skill by name (see `regions` in a fight)
           click fighter <name>      click a fighter's map cell — the target step for an attack
           click end-turn            end the active fighter's turn (the END TURN button)
+          click memory <button>     a Memory-tab detail button: consolidate, reject,
+                                    always-reject, archive (`select mm <id>` first)
           click engage              the travel encounter prompt's ENGAGE button
           click companion-death     the companion-death notice's CONTINUE — modal over every mode
           click menu <label>        press a main-menu button (New, Continue, …)
@@ -1060,6 +1062,18 @@ public sealed class CliDriver
                 if (f == null) { CliMode.Emit("error: not in a fight"); return; }
                 string name = string.Join(' ', a[1..]).Trim('"');
                 Report(f.CliClickFighter(name), $"clicked fighter \"{name}\"");
+                break;
+            }
+            case "memory":
+            {
+                // `click memory <button>`: a button of the Memory tab's detail box, pressed through
+                // the player's click path. Select the slot first with `select mm <id>`.
+                if (a.Length < 2) { CliMode.Emit("error: click memory <consolidate|reject|always-reject|archive>"); return; }
+                var cell = _game.CliMemoryButtonCell(a[1]);
+                if (cell is not { } c) { CliMode.Emit($"error: no memory button '{a[1]}' on screen (`manage Memory`, then `select mm <id>`)"); return; }
+                if (!c.Enabled) { CliMode.Emit($"error: memory button '{a[1]}' is disabled"); return; }
+                _game.CliClickCell(c.X, c.Y);
+                CliMode.Emit($"ok: pressed memory button {a[1]}");
                 break;
             }
             case "button":

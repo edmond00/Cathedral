@@ -175,6 +175,10 @@ Run `help` for the authoritative list. The essentials:
                             and you follow with `click fighter`
   click fighter <name>      a fighter's map cell — the target step for an attack
   click end-turn            the fight's END TURN button
+  click memory <button>     a button of the Memory tab's detail box — consolidate, reject,
+                            always-reject, archive — through the player's click path. Select
+                            the slot first (`manage Memory`, `select mm <id>`). `inspect skills`
+                            lists ALWAYS REJECT's ignore list as `skill-rejected <id>` lines
   click engage              the travel encounter prompt's ENGAGE button — its only button, so
                             without this a staged encounter is a dead end and the fight behind
                             it is unreachable

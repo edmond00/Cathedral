@@ -157,6 +157,18 @@ public class MemoryPanelRenderer
         return false;
     }
 
+    /// <summary>
+    /// The cell a <c>--cli</c> script clicks to press the detail box's button <paramref name="id"/>
+    /// (consolidate, reject, always-reject, archive), as last drawn. Null when it is not on screen.
+    /// </summary>
+    public (int X, int Y, bool Enabled)? CliButtonCell(string id)
+    {
+        foreach (var b in _buttonHits)
+            if (string.Equals(b.Id, id, StringComparison.OrdinalIgnoreCase))
+                return (b.X0, b.Y0, b.Enabled);
+        return null;
+    }
+
     /// <summary>Full render of the memory panel for a party member.</summary>
     public void Render(PartyMember member)
     {
@@ -693,7 +705,13 @@ public class MemoryPanelRenderer
 
                 // REJECT: drop the modusMentis outright. Working-memory only — it is the player's
                 // way to open a slot before the FIFO evicts something they wanted to keep.
-                RenderButton("reject", "REJECT", StartX + 2 + "[ CONSOLIDATE ]".Length + 2, btnRow,
+                // ALWAYS REJECT does the same and puts it on the member's ignore list, so no lesson
+                // teaches it again. One cell between the three: with two, ALWAYS REJECT runs past the
+                // column divider (46 cells of left column).
+                int rejectX = StartX + 2 + "[ CONSOLIDATE ]".Length + 1;
+                RenderButton("reject", "REJECT", rejectX, btnRow,
+                             enabled: true, disabledReason: null, destructive: true);
+                RenderButton("always-reject", "ALWAYS REJECT", rejectX + "[ REJECT ]".Length + 1, btnRow,
                              enabled: true, disabledReason: null, destructive: true);
             }
             else if (selectedModType == MemoryModuleType.Procedural
@@ -733,7 +751,8 @@ public class MemoryPanelRenderer
                 {
                     case "consolidate": ExecuteConsolidate(); break;
                     case "archive":     ExecuteArchive();     break;
-                    case "reject":      ExecuteReject();      break;
+                    case "reject":        ExecuteReject(forever: false); break;
+                    case "always-reject": ExecuteReject(forever: true);  break;
                     default:
                         if (btn.Id.StartsWith(WantPrefix) && _member != null && SelectedModusMentis() is { } mm)
                             _seekRequest = (_member, mm.ModusMentisId, int.Parse(btn.Id[WantPrefix.Length..]));
@@ -818,7 +837,9 @@ public class MemoryPanelRenderer
     /// the freed slot lands at the back of the FIFO queue — the point of the button is to bank room
     /// for the next thing learned, and a hole in the middle would not do that.
     /// </summary>
-    private void ExecuteReject()
+    /// <param name="forever">ALWAYS REJECT: also puts the modus mentis on the member's ignore list
+    /// (<see cref="PartyMember.RejectModusMentisForever"/>), so no later lesson teaches it again.</param>
+    private void ExecuteReject(bool forever)
     {
         if (!_selectedSlot.HasValue || _member == null) return;
         var (modType, slotIdx) = _selectedSlot.Value;
@@ -829,7 +850,14 @@ public class MemoryPanelRenderer
         var slot = working.Slots[slotIdx];
         if (!slot.IsFilled) return;
 
-        _member.RejectModusMentis(slot.ModusMentis!);
+        var mm = slot.ModusMentis!;
+        if (forever)
+        {
+            if (_member.RejectModusMentisForever(mm))
+                Console.WriteLine($"MemoryPanel: {mm.DisplayName} rejected for good — it will not be learned again");
+        }
+        else
+            _member.RejectModusMentis(mm);
         _selectedSlot = null;
     }
 

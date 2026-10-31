@@ -245,6 +245,7 @@ public class Fighter
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
                 if (CurrentCineticPoints < skill.CineticPointsCost) continue;
+                if (Member.IsModusMentisRejected(skill.RequiredModusMentisId)) continue; // ALWAYS REJECT
                 if (Member.LearnedModiMentis.Any(m =>
                     m.ModusMentisId == skill.RequiredModusMentisId ||
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
@@ -267,6 +268,7 @@ public class Fighter
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
                 if (CurrentCineticPoints < skill.CineticPointsCost) continue;
+                if (Member.IsModusMentisRejected(skill.RequiredModusMentisId)) continue; // ALWAYS REJECT
                 if (Member.LearnedModiMentis.Any(m =>
                     m.ModusMentisId == skill.RequiredModusMentisId ||
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
@@ -292,6 +294,7 @@ public class Fighter
             {
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
+                if (Member.IsModusMentisRejected(skill.RequiredModusMentisId)) continue; // ALWAYS REJECT
                 if (Member.LearnedModiMentis.Any(m =>
                     m.ModusMentisId == skill.RequiredModusMentisId ||
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId))) continue;

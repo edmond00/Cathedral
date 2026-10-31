@@ -4762,6 +4762,10 @@ public class NarrativeController
                        + $" effective={actor.GetEffectiveModusMentisLevel(m)}"
                        + $" max={actor.GetMaxLevelForModusMentis(m)}"
                        + $" broken={actor.IsModusMentisBroken(m)}");
+        // ALWAYS REJECT's ignore list: refused for good, never learned again.
+        if (All("skills"))
+            foreach (var id in actor.RejectedModiMentisIds.OrderBy(i => i, System.StringComparer.Ordinal))
+                outp.Add($"skill-rejected {id}");
 
         if (All("npcs") && _scene != null && _pov != null)
             foreach (var npc in _scene.Npcs)

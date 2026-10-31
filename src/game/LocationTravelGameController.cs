@@ -844,6 +844,10 @@ public class LocationTravelGameController : IDisposable
     public bool CliSelectModusMentis(string modusMentisId) =>
         _managementMenuRenderer?.CliSelectModusMentis(modusMentisId) == true;
 
+    /// <summary>The cell of a Memory-tab detail button (consolidate, reject, always-reject, archive).</summary>
+    public (int X, int Y, bool Enabled)? CliMemoryButtonCell(string id) =>
+        _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliMemoryButtonCell(id) : null;
+
     /// <summary>Everything carried, for <c>--cli</c> discovery of selectable item names.</summary>
     public IReadOnlyList<string> CliCarriedItemNames =>
         _managementMenuRenderer?.CliCarriedItemNames ?? Array.Empty<string>();

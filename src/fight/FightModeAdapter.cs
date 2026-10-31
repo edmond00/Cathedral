@@ -1512,7 +1512,8 @@ public class FightModeAdapter
         if (result.Success)
         {
             var template = ModusMentisRegistry.Instance.GetModusMentis(skill.RequiredModusMentisId);
-            if (template != null && !active.Member.LearnedModiMentis.Any(m => m.ModusMentisId == template.ModusMentisId))
+            if (template != null && !active.Member.IsModusMentisRejected(template.ModusMentisId)
+                && !active.Member.LearnedModiMentis.Any(m => m.ModusMentisId == template.ModusMentisId))
             {
                 var instance = (ModusMentis)Activator.CreateInstance(template.GetType())!;
                 instance.Level = 1;

@@ -49,6 +49,19 @@ public abstract class PartyMember
     /// <summary>Alias for ModiMentis — kept for call-site compatibility.</summary>
     public List<ModusMentis> LearnedModiMentis { get; set; }
 
+    /// <summary>
+    /// Modi mentis this member has refused for good, by id — the memory panel's ALWAYS REJECT. A lesson
+    /// naming one of these teaches nothing: no chip, no slot, no experience. It is an ignore list, not
+    /// a forgetting: whatever is already held is unaffected, and only the play-time lessons consult it
+    /// (verbs, conversations, fights, work); the childhood grants and NPC generation never see it.
+    /// Persisted in the save.
+    /// </summary>
+    public HashSet<string> RejectedModiMentisIds { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>True when <paramref name="modusMentisId"/> is on <see cref="RejectedModiMentisIds"/>.</summary>
+    public bool IsModusMentisRejected(string? modusMentisId)
+        => modusMentisId != null && RejectedModiMentisIds.Contains(modusMentisId);
+
     // ── Inventory ────────────────────────────────────────────────
     /// <summary>
     /// Items that could not be placed in any anchor slot or container.
@@ -699,6 +712,14 @@ public abstract class PartyMember
 
     public ModusMentis? LearnModusMentis(ModusMentis modusMentis)
     {
+        // Backstop for ALWAYS REJECT. Every lesson path checks the list before it gets here so that
+        // nothing is reported, but a path that forgets must still learn nothing.
+        if (IsModusMentisRejected(modusMentis.ModusMentisId))
+        {
+            Console.WriteLine($"PartyMember: {DisplayName} has rejected '{modusMentis.ModusMentisId}' for good — not learned.");
+            return null;
+        }
+
         if (MemoryModules.Count == 0) InitializeMemory();
         var working = GetMemoryModule(MemoryModuleType.Working)
             ?? throw new InvalidOperationException("Working memory module is missing.");
@@ -847,6 +868,18 @@ public abstract class PartyMember
 
         working.Compact();
         ModiMentis.Remove(modusMentis);
+        return true;
+    }
+
+    /// <summary>
+    /// <see cref="RejectModusMentis"/>, and the modus mentis's id onto
+    /// <see cref="RejectedModiMentisIds"/> so no later lesson teaches it again. Returns false, and
+    /// records nothing, if the modus mentis is not in working memory.
+    /// </summary>
+    public bool RejectModusMentisForever(ModusMentis modusMentis)
+    {
+        if (!RejectModusMentis(modusMentis)) return false;
+        RejectedModiMentisIds.Add(modusMentis.ModusMentisId);
         return true;
     }
 

@@ -270,7 +270,18 @@ public sealed class ModusMentisGrantOutcome : Outcome
             return null;
         }
 
-        return new ModusMentisGrantOutcome(template, actor.GetModusMentisById(modusMentisId) != null);
+        // Refused for good from the memory panel (ALWAYS REJECT): the lesson is simply not given.
+        // A modus mentis already held is still practised — the list stops learning, not use.
+        bool known = actor.GetModusMentisById(modusMentisId) != null;
+        if (!known && actor.IsModusMentisRejected(modusMentisId))
+        {
+            Console.WriteLine(
+                $"ModusMentisGrantOutcome: {actor.DisplayName} has rejected '{modusMentisId}' for good — "
+                + "the action teaches them nothing.");
+            return null;
+        }
+
+        return new ModusMentisGrantOutcome(template, known);
     }
 
     protected override void Apply(OutcomeContext ctx)

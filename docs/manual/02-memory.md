@@ -166,7 +166,7 @@ modus mentis at the far end is pushed out and **lost outright** — struck from 
 altogether. It does not fall back into any other module. Whatever has not been filed by the time the
 next thing is learned is what stands to be lost.
 
-Filing is done deliberately, and there are three moves.
+Filing is done deliberately, and there are four moves.
 
 **Consolidate** takes a modus mentis out of working memory and lodges it in the long-term module of
 its own kind — procedural, semantic or sensory. It requires a free slot in that module, and there is
@@ -182,6 +182,12 @@ better.
 **Reject** discards a modus mentis from working memory on the spot. It exists so that room can be
 banked *before* the queue takes the choice away — the slot freed goes to the back of the queue, so
 the next thing learned has somewhere to sit.
+
+**Reject for good** discards it in the same manner and further sets it on the character's list of
+refusals, which is kept with the character for the rest of the run. A modus mentis on that list is
+never learned again: an act, a conversation or a stint of work that would teach it teaches nothing
+in its place, and a fighting skill that it unlocks is no longer offered to be taken up in a fight. The list governs learning only; it takes nothing from what is
+already held, and nothing removes a modus mentis from it once set there.
 
 The **residual** queue is the last holding, and it is a reprieve rather than a store: what enters it
 has been put out of active use, and enough archiving after it will push it out of memory for good.
