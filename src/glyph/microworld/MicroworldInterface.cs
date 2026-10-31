@@ -1189,6 +1189,20 @@ namespace Cathedral.Glyph.Microworld
                 purple, 1.5f);
         }
 
+        /// <summary>
+        /// Marks the cell a will's search is reading: its own glyph (the location or biome icon),
+        /// lit like the avatar whatever the range darkening, and enlarged (times <paramref name="pulse"/>,
+        /// which the caller swings to make it beat).
+        /// <see cref="RestoreCellGlyph"/> puts it back.
+        /// </summary>
+        public void HighlightSearchedCell(int vertexIndex, float pulse = 1f)
+        {
+            if (vertexIndex < 0 || vertexIndex == _protagonistVertex
+                || !vertexData.TryGetValue(vertexIndex, out var data)) return;
+            float size = (data.Location?.Size ?? data.Biome.Size) * Config.GlyphSphere.SearchedCellScale * pulse;
+            core.SetVertexGlyph(vertexIndex, data.GlyphChar, new Vector4(1f, 1f, 1f, 1f), size, isUIElement: true);
+        }
+
         /// <summary>Restores a cell previously decorated by <see cref="FlashForbiddenCell"/>.</summary>
         public void RestoreCellGlyph(int vertexIndex)
         {

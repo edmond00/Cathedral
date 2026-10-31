@@ -2540,6 +2540,7 @@ public class LocationTravelGameController : IDisposable
             int v = search.Next();
             search.Record(v, WillTargetMetAt(search, v, graph, avatar));
         }
+        MarkSearchedCell(search.Current);
 
         if (search.IsDone)
         {
@@ -2590,6 +2591,7 @@ public class LocationTravelGameController : IDisposable
     {
         var search = _willSearch!;
         _willSearch = null;
+        MarkSearchedCell(-1);
         _willSearchRenderer?.Erase();
         Console.WriteLine($"LocationTravelGameController: will search done — \"{search.Target.Purpose}\" met in "
                         + $"{search.Found.Count} of {search.Candidates.Count} place(s) in {(DateTime.UtcNow - search.StartedAt).TotalSeconds:0.00}s"
@@ -2618,8 +2620,28 @@ public class LocationTravelGameController : IDisposable
         Console.WriteLine($"LocationTravelGameController: will search {why} after "
                         + $"{_willSearch.Checked}/{_willSearch.Candidates.Count} place(s)");
         _willSearch = null;
+        MarkSearchedCell(-1);
         _willSearchRenderer?.Erase();
         Cathedral.Game.Scene.ActionPathPlanner.Forget();
+    }
+
+    /// <summary>The cell the search last read, drawn highlighted on the sphere; -1 for none.</summary>
+    private int _searchedCell = -1;
+
+    /// <summary>
+    /// Moves the sphere's highlight to <paramref name="vertex"/> (the place just read), restoring the
+    /// one before, and beats it; -1 clears it. The avatar's own cell is never repainted.
+    /// </summary>
+    private void MarkSearchedCell(int vertex)
+    {
+        if (vertex != _searchedCell && _searchedCell >= 0) _interface.RestoreCellGlyph(_searchedCell);
+        _searchedCell = vertex;
+        if (vertex < 0) return;
+        // Repainted every frame so it beats, wall-clock paced like the bar's sweeping head.
+        const float lo = Config.GlyphSphere.SearchedCellPulseMin, hi = Config.GlyphSphere.SearchedCellPulseMax;
+        double phase = (DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds * Config.GlyphSphere.SearchedCellPulseHz * 2 * Math.PI;
+        float pulse = lo + (hi - lo) * (0.5f + 0.5f * (float)Math.Sin(phase));
+        _interface.HighlightSearchedCell(vertex, pulse);
     }
 
     /// <summary>
@@ -2629,7 +2651,7 @@ public class LocationTravelGameController : IDisposable
     public IReadOnlyList<string> CliWillSearchLines()
     {
         if (_willSearch is { } w)
-            return new[] { $"will-search state=running checked={w.Checked}/{w.Candidates.Count} found={w.Found.Count} purpose=\"{w.Target.Purpose}\"" };
+            return new[] { $"will-search state=running checked={w.Checked}/{w.Candidates.Count} found={w.Found.Count} highlighted={_searchedCell} purpose=\"{w.Target.Purpose}\"" };
         if (_willProposal != null && _travelPlanner?.HasWaypoints == true && _travelPlanner.FinalDestination == _willProposalVertex)
             return new[] { $"will-search state=proposed vertex={_willProposalVertex} name={GetLocationNameAtVertex(_willProposalVertex)} text={_willProposal}" };
         return new[] { "will-search state=none" };

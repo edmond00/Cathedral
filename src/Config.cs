@@ -962,6 +962,12 @@ public static class Config
         public const char PathDestinationChar = '+'; // Plus for destination
         public const char ForbiddenDestinationChar = '⨯'; // Cross for impassable tiles (sea/ocean on foot)
 
+        /// <summary>How much larger the place a will's search is reading is drawn than its own glyph.</summary>
+        public const float SearchedCellScale = 2.2f;
+
+        /// <summary>The searched place's glyph beats between these multiples of its size, this many times a second.</summary>
+        public const float SearchedCellPulseMin = 0.8f, SearchedCellPulseMax = 1.25f, SearchedCellPulseHz = 3f;
+
         // Numbered glyphs used to mark waypoints in click-order on the world map.
         // Falls back to PathDestinationChar past the array length.
         public static readonly char[] WaypointNumberChars = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨' };

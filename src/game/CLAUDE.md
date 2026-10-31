@@ -871,7 +871,8 @@ returns to the map and runs `LocationTravelGameController.BeginWillSearch`: ever
 member whose will it is. A probe stores no `LocationInstanceState` for a place never visited and
 applies depletion, so it reads the place as an arrival would find it; the planner is `Forget()`-ed after
 each, since its caches key on the scene. The nearest place found (fewest cells) is planned as if clicked
-and the TRAVEL box says why; nowhere is a transient notice. Escape and CANCEL end it, and so does
+and the TRAVEL box says why; nowhere is a transient notice. The place being read beats on the sphere
+(`MicroworldInterface.HighlightSearchedCell`, its own glyph lit and enlarged), restored as the next is read. Escape and CANCEL end it, and so does
 leaving the map. `cli/system/will_search_world.cli` walks the proposed trip and asserts the will has a
 way there.
 
