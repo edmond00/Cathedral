@@ -147,13 +147,13 @@ internal static class ReminescenceCatalog
                 new("manure smelt",
                     observationText:  "a heavy, pungent smell — earthy and animal and inescapable",
                     outcomeText:      "the smell of manure as you pushed wheelbarrows of it and handled pig carcasses",
-                    outcome: To("work", skills: new[] { typeof(DirtyLaborModusMentis) }),
+                    outcome: To("work", skills: new[] { typeof(DirtyLaborModusMentis), typeof(ShantyModusMentis) }),
                     contextSummary:   "doing heavy farm labour"),
 
                 new("apple pie smelt",
                     observationText:  "a sweet, drifting warmth — something baking somewhere inside",
                     outcomeText:      "the smell of apple pie, and the taste of sausage, stew and water from the leather canteen",
-                    outcome: To("comfort", skills: new[] { typeof(GluttonyModusMentis) }),
+                    outcome: To("comfort", skills: new[] { typeof(GluttonyModusMentis), typeof(RelishModusMentis) }),
                     contextSummary:   "eating well off the land"),
             });
 
@@ -172,13 +172,13 @@ internal static class ReminescenceCatalog
                 new("a small black donkey",
                     observationText:  "a stubborn, round-eyed creature watching you with suspicion in the half-dark",
                     outcomeText:      "a small black donkey you tormented as a child — annoying and tormenting the poor creature",
-                    outcome: To("rascal", skills: new[] { typeof(FoulPlayModusMentis) }),
+                    outcome: To("rascal", skills: new[] { typeof(FoulPlayModusMentis), typeof(CrueltyModusMentis) }),
                     contextSummary:   "tormenting the stable animals"),
 
                 new("an old grey mule",
                     observationText:  "a tired, patient grey shape standing still in dim light",
                     outcomeText:      "an old grey mule you cared for — feeding and brushing it every day",
-                    outcome: To("work", skills: new[] { typeof(HardLaborModusMentis) }),
+                    outcome: To("work", skills: new[] { typeof(HardLaborModusMentis), typeof(HusbandryModusMentis) }),
                     contextSummary:   "caring for the animals every day"),
             });
 
@@ -197,7 +197,7 @@ internal static class ReminescenceCatalog
                 new("a laughing gull",
                     observationText:  "a flash of white wings and a cackling cry over narrow sun-bleached rooftops",
                     outcomeText:      "a laughing gull you chased through the narrow streets of the port city, living by your wits on the street",
-                    outcome: To("rascal", skills: new[] { typeof(StreetwiseModusMentis) }),
+                    outcome: To("rascal", skills: new[] { typeof(StreetwiseModusMentis), typeof(ThrongModusMentis) }),
                     contextSummary:   "living by your wits on the street"),
 
                 new("the sound of waves and smell of sweat",
@@ -205,7 +205,7 @@ internal static class ReminescenceCatalog
                     outcomeText:      "the sound of waves and the smell of sweat on the docks, loading and unloading heavy bundles from ships",
                     // Tidewatching beside the labour: a docker works to the tide, and it is the one general
                     // thinker every path through these docks is sure of (rule C3).
-                    outcome: To("work", skills: new[] { typeof(HardLaborModusMentis), typeof(TidewatchingModusMentis) }),
+                    outcome: To("work", skills: new[] { typeof(HardLaborModusMentis), typeof(TidewatchingModusMentis), typeof(StevedoringModusMentis) }),
                     contextSummary:   "doing hard labour on the docks"),
             });
 
@@ -224,14 +224,14 @@ internal static class ReminescenceCatalog
                     observationText:  "something small and metallic, cold against the floorstone — easy to miss",
                     outcomeText:      "a small hairpin you found on the dormitory floor and used to lockpick the door the night you ran away",
                     outcome: To("runaway",
-                        skills: new[] { typeof(LockpickingModusMentis) },
+                        skills: new[] { typeof(LockpickingModusMentis), typeof(KeywiseModusMentis) },
                         items:  new Func<Item>[] { () => new Hairpin() }),
                     contextSummary:   "picking a lock to escape the orphanage the night you ran away"),
 
                 new("chair, table, paper, inkwell",
                     observationText:  "a row of still shapes in lamplight — ordered, patient, waiting",
                     outcomeText:      "a chair, a table, paper and an inkwell — the tools of your lessons at the orphanage",
-                    outcome: To("study", skills: new[] { typeof(ScholarshipModusMentis) }),
+                    outcome: To("study", skills: new[] { typeof(ScholarshipModusMentis), typeof(CopyingModusMentis) }),
                     contextSummary:   "following lessons under a strict tutor"),
             });
 
@@ -250,13 +250,13 @@ internal static class ReminescenceCatalog
                 new("strange light in the night",
                     observationText:  "a pale glow seeping under a doorway in the deep of the night, where there should have been none",
                     outcomeText:      "a strange light you chose to follow — running away from the temple that same night",
-                    outcome: To("runaway", skills: new[] { typeof(ClairvoyanceModusMentis) }),
+                    outcome: To("runaway", skills: new[] { typeof(ClairvoyanceModusMentis), typeof(NightwalkingModusMentis) }),
                     contextSummary:   "following a strange light to escape the temple"),
 
                 new("candlelight",
                     observationText:  "the wavering halo of a single candle, late in the night, very quiet",
                     outcomeText:      "candlelight over an old manuscript, studying late into the night at the temple",
-                    outcome: To("study", skills: new[] { typeof(DecipherModusMentis) }),
+                    outcome: To("study", skills: new[] { typeof(DecipherModusMentis), typeof(VigilModusMentis) }),
                     contextSummary:   "studying old manuscripts late into the night"),
             });
 
@@ -275,13 +275,13 @@ internal static class ReminescenceCatalog
                 new("a pillow, silk sheets, fruits and cheese",
                     observationText:  "a softness, a warmth, and something cool and sweet within reach — no need to move",
                     outcomeText:      "silk sheets and a pillow, fruits and cheese brought by a servant — days of idle comfort in bed",
-                    outcome: To("comfort", skills: new[] { typeof(SlothModusMentis) }),
+                    outcome: To("comfort", skills: new[] { typeof(SlothModusMentis), typeof(GourmandiseModusMentis) }),
                     contextSummary:   "living in idle comfort"),
 
                 new("smell of old books, voice of an old man",
                     observationText:  "the dry smell of old paper and a measured, deliberate voice reading aloud",
                     outcomeText:      "the smell of old books and the voice of your preceptor, following your lessons at the castle",
-                    outcome: To("study", skills: new[] { typeof(ScholarshipModusMentis) }),
+                    outcome: To("study", skills: new[] { typeof(ScholarshipModusMentis), typeof(RhetoricModusMentis) }),
                     contextSummary:   "following lessons from your preceptor"),
             });
 
@@ -298,21 +298,21 @@ internal static class ReminescenceCatalog
                 new("a broken tooth",
                     observationText:  "the sharp shock of a blow and a hard white shard on the ground",
                     outcomeText:      "a broken tooth from a fight with another child — you remember breaking their jaw",
-                    outcome: To("pillage", skills: new[] { typeof(PugilitasModusMentis) }),
+                    outcome: To("pillage", skills: new[] { typeof(PugilitasModusMentis), typeof(BrawlingModusMentis) }),
                     contextSummary:   "fighting other children in the streets"),
 
                 new("a gold coin",
                     observationText:  "a bright disc, warm and heavy in a palm that was not yours",
                     outcomeText:      "a gold coin you stole from a rich traveller at a fair",
                     outcome: To("gold_thirst",
-                        skills: new[] { typeof(PettyThiefModusMentis) },
+                        skills: new[] { typeof(PettyThiefModusMentis), typeof(AssessmentModusMentis) },
                         coins:  new[] { (CoinType.Gold, 1) }),
                     contextSummary:   "stealing from a rich traveller"),
 
                 new("a glass of wine",
                     observationText:  "a cloying sweetness, red lips and laughter in a brightly lit room you had no right to enter",
                     outcomeText:      "a glass of wine you drank at a villa, pretending to be of noble lineage — too much wine, and vomiting on the floor",
-                    outcome: To("pillage", skills: new[] { typeof(MythomaniaModusMentis) }),
+                    outcome: To("pillage", skills: new[] { typeof(MythomaniaModusMentis), typeof(CarousalModusMentis) }),
                     contextSummary:   "pretending to be of noble lineage"),
             });
 
@@ -329,19 +329,19 @@ internal static class ReminescenceCatalog
                 new("dark shadows",
                     observationText:  "thick darkness pressing against the walls — no lamp, no embers, nowhere to go",
                     outcomeText:      "hiding in shadow so as not to be seen the night you ran away",
-                    outcome: To("survive", skills: new[] { typeof(StealthModusMentis) }),
+                    outcome: To("survive", skills: new[] { typeof(StealthModusMentis), typeof(NightEarModusMentis) }),
                     contextSummary:   "hiding in shadow the night you ran away"),
 
                 new("a small flame",
                     observationText:  "a tiny orange finger of fire trembling in the dark, far too small to warm anything",
                     outcomeText:      "a candle you lit as a diversion — and the whole building burning behind you that night",
-                    outcome: To("survive", skills: new[] { typeof(ArsonFireModusMentis) }),
+                    outcome: To("survive", skills: new[] { typeof(ArsonFireModusMentis), typeof(RecklessnessModusMentis) }),
                     contextSummary:   "burning a building to escape"),
 
                 new("sound of glass breaking",
                     observationText:  "a sharp, splintering crack splitting the night silence — then running footsteps",
                     outcomeText:      "the sound of a window breaking as you smashed it to escape, then running away across the rooftops",
-                    outcome: To("survive", skills: new[] { typeof(AcrobaticsModusMentis) }),
+                    outcome: To("survive", skills: new[] { typeof(AcrobaticsModusMentis), typeof(RooftopsModusMentis) }),
                     contextSummary:   "smashing a window and fleeing across the rooftops"),
             });
 
@@ -359,19 +359,19 @@ internal static class ReminescenceCatalog
                 new("triangles and circles",
                     observationText:  "lines and curves drawn in dust — shapes that kept insisting on a hidden pattern",
                     outcomeText:      "triangles and circles from your geometry lessons",
-                    outcome: To("curiosity", skills: new[] { typeof(GeometricSchemeModusMentis) }),
+                    outcome: To("curiosity", skills: new[] { typeof(GeometricSchemeModusMentis), typeof(ArchitectureModusMentis) }),
                     contextSummary:   "learning geometry"),
 
                 new("numbers and symbols",
                     observationText:  "columns of marks on a slate, arranged in a logic you were beginning to see",
                     outcomeText:      "numbers and symbols from your arithmetic lessons",
-                    outcome: To("curiosity", skills: new[] { typeof(ArithmeticLogicModusMentis) }),
+                    outcome: To("curiosity", skills: new[] { typeof(ArithmeticLogicModusMentis), typeof(AlgebraicAnalysisModusMentis) }),
                     contextSummary:   "learning arithmetic"),
 
                 new("letters and words",
                     observationText:  "marks on a page that were beginning to mean something, slowly, one by one",
                     outcomeText:      "letters and words — you remember the day you learnt to read",
-                    outcome: To("curiosity", skills: new[] { typeof(ProsaicGrammarModusMentis) }),
+                    outcome: To("curiosity", skills: new[] { typeof(ProsaicGrammarModusMentis), typeof(PoetryModusMentis) }),
                     contextSummary:   "learning to read"),
             });
 
@@ -388,14 +388,14 @@ internal static class ReminescenceCatalog
                 new("something unlucky",
                     observationText:  "the clatter of dice on wood, and a silence that meant you had lost",
                     outcomeText:      "gambling your first silver coin and losing it in one throw",
-                    outcome: To("gold_thirst", skills: new[] { typeof(GamblingModusMentis) }),
+                    outcome: To("gold_thirst", skills: new[] { typeof(GamblingModusMentis), typeof(SuperstitionModusMentis) }),
                     contextSummary:   "gambling your first earned coin away"),
 
                 new("something sharp",
                     observationText:  "a gleam of metal behind a trader's stall, the faint smell of oil and iron",
                     outcomeText:      "a sword you bought with your first earned coin from a market trader",
                     outcome: To("dream",
-                        skills: new[] { typeof(BargainingModusMentis) },
+                        skills: new[] { typeof(BargainingModusMentis), typeof(ArmouryLoreModusMentis) },
                         items:  new Func<Item>[] { () => new ShortSword() }),
                     contextSummary:   "buying a sword with your first earned coin"),
 
@@ -403,7 +403,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a closed fist, and the plain satisfaction of keeping it closed",
                     outcomeText:      "choosing to keep your silver coin rather than spend or gamble it",
                     outcome: To("gold_thirst",
-                        skills: new[] { typeof(AvariceModusMentis) },
+                        skills: new[] { typeof(AvariceModusMentis), typeof(ThriftModusMentis) },
                         coins:  new[] { (CoinType.Silver, 1) }),
                     contextSummary:   "saving every coin you earned"),
             });
@@ -422,14 +422,14 @@ internal static class ReminescenceCatalog
                 new("a company of knights",
                     observationText:  "the noise of children shouting, playing at something urgent in the sun",
                     outcomeText:      "playing knights with other children — your old friends from those rounds",
-                    outcome: To("pillage", skills: new[] { typeof(FriendshipModusMentis) }),
+                    outcome: To("pillage", skills: new[] { typeof(FriendshipModusMentis), typeof(EspritDeCorpsModusMentis) }),
                     contextSummary:   "playing with childhood friends"),
 
                 new("a magic sword",
                     observationText:  "a smooth stick, light in the hand, that your mind kept turning into something more",
                     outcomeText:      "a wooden stick you imagined as a magic sword",
                     outcome: To("dream",
-                        skills: new[] { typeof(SocialInteractionModusMentis) },
+                        skills: new[] { typeof(SocialInteractionModusMentis), typeof(PlayfulnessModusMentis) },
                         items:  new Func<Item>[] { () => new WoodenStick() }),
                     contextSummary:   "imagining a wooden stick as a magic sword"),
 
@@ -437,14 +437,14 @@ internal static class ReminescenceCatalog
                     observationText:  "a small painted face of wood, blank-eyed and still in your hands",
                     outcomeText:      "a wooden doll you imagined as a sleeping princess",
                     outcome: To("dream",
-                        skills: new[] { typeof(PuppetTheatherModusMentis) },
+                        skills: new[] { typeof(PuppetTheatherModusMentis), typeof(WhittlecraftModusMentis) },
                         items:  new Func<Item>[] { () => new WoodenDoll() }),
                     contextSummary:   "playing with a wooden doll"),
 
                 new("an old magician",
                     observationText:  "an old face in dim light and a storytelling voice, slow and warm, always one more tale",
                     outcomeText:      "your grandfather's bedtime stories at nightfall — always one more, always one more",
-                    outcome: To("pillage", skills: new[] { typeof(FablesAndTalesModusMentis) }),
+                    outcome: To("pillage", skills: new[] { typeof(FablesAndTalesModusMentis), typeof(CuriosityModusMentis) }),
                     contextSummary:   "listening to your grandfather's tales"),
             });
 
@@ -462,7 +462,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a great weight of pages, the spine pressing into your palms — too many words to count",
                     outcomeText:      "a great compendium full of concepts you could not understand, until you left to find a library that could explain them",
                     outcome: To("travel",
-                        skills: new[] { typeof(ScientificResearchModusMentis) },
+                        skills: new[] { typeof(ScientificResearchModusMentis), typeof(PhilosophyModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "reading everything you could find"),
 
@@ -470,7 +470,7 @@ internal static class ReminescenceCatalog
                     observationText:  "crumbling edges and small faded letters beneath your finger — someone else's journey",
                     outcomeText:      "an old dusty manuscript telling of a traveller crossing the world, until you left to do the same",
                     outcome: To("travel",
-                        skills: new[] { typeof(VoyageModusMentis) },
+                        skills: new[] { typeof(VoyageModusMentis), typeof(WanderlustModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of travelling the world like the explorers in the books"),
 
@@ -478,7 +478,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a dark cover marked with signs your eye kept sliding off — impossible to hold in mind",
                     outcomeText:      "a black book of indecipherable symbols, until you left to find someone who could teach you the language",
                     outcome: To("travel",
-                        skills: new[] { typeof(LinguisticModusMentis) },
+                        skills: new[] { typeof(LinguisticModusMentis), typeof(EnciphermentModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "trying to decipher a book of unknown symbols"),
             });
@@ -497,7 +497,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a great curve of gold in a dream sky — ancient, enormous, and impossibly bright",
                     outcomeText:      "a dream of a golden arch rising over the ruins of an ancient city, until you left to find it",
                     outcome: To("travel",
-                        skills: new[] { typeof(ArcheologyModusMentis) },
+                        skills: new[] { typeof(ArcheologyModusMentis), typeof(RuinSenseModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of ancient ruins with a golden arch"),
 
@@ -505,7 +505,7 @@ internal static class ReminescenceCatalog
                     observationText:  "enormous dark wings folding through a dream sky — something reptilian, something breathing fire",
                     outcomeText:      "a dream of a great lizard with scaled wings breathing fire, until you left to find that creature",
                     outcome: To("travel",
-                        skills: new[] { typeof(ClairvoyanceModusMentis) },
+                        skills: new[] { typeof(ClairvoyanceModusMentis), typeof(DreamloreModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of a great fire-breathing lizard"),
 
@@ -513,7 +513,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a deep red gleam, like stained glass, in a dark dreaming space — a chest, a dungeon, a promise",
                     outcomeText:      "a dream of a chest of purple rubies in a dark dungeon, until you left to find that treasure",
                     outcome: To("travel",
-                        skills: new[] { typeof(GreedModusMentis) },
+                        skills: new[] { typeof(GreedModusMentis), typeof(TreasureHuntingModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of a chest of purple rubies in a dark dungeon"),
             });
@@ -532,7 +532,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a ragged stranger with something heavy in bulging, reeking bags",
                     outcomeText:      "a dirty traveller carrying bags of gold nuggets, until you left to find a gold mine of your own",
                     outcome: To("travel",
-                        skills: new[] { typeof(TreasureHuntingModusMentis) },
+                        skills: new[] { typeof(TreasureHuntingModusMentis), typeof(GoldFeverModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of finding a gold mine"),
 
@@ -540,7 +540,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a figure stepping into the light with fine cloth and a scent you had never smelled before",
                     outcomeText:      "a perfumed traveller from a great bustling city, until you left to make your fortune there",
                     outcome: To("travel",
-                        skills: new[] { typeof(HighSocietyMannersModusMentis) },
+                        skills: new[] { typeof(HighSocietyMannersModusMentis), typeof(AmbitionModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of making a fortune in the city"),
 
@@ -548,7 +548,7 @@ internal static class ReminescenceCatalog
                     observationText:  "a strange voice, strange goods spread on a cloth, a smell of distant places you had no name for",
                     outcomeText:      "an eccentric foreign merchant with rare goods from a distant land, until you left to trade in those countries",
                     outcome: To("travel",
-                        skills: new[] { typeof(EnterpriseModusMentis) },
+                        skills: new[] { typeof(EnterpriseModusMentis), typeof(PidginModusMentis) },
                         items:  new Func<Item>[] { BuildTravelersBackpack }),
                     contextSummary:   "dreaming of trading in distant lands"),
             });
@@ -567,19 +567,19 @@ internal static class ReminescenceCatalog
                 new("a shady corner",
                     observationText:  "a dark recess in a wall, barely large enough to press yourself into",
                     outcomeText:      "a shady corner where you hid while the looters ransacked everything around you",
-                    outcome: To("survive", skills: new[] { typeof(StealthModusMentis) }),
+                    outcome: To("survive", skills: new[] { typeof(StealthModusMentis), typeof(StillnessModusMentis) }),
                     contextSummary:   "hiding while looters raided and ransacked the place where you lived"),
 
                 new("a pile of corpses",
                     observationText:  "a shapeless heap in the shadows, utterly still while chaos moved around it",
                     outcomeText:      "a pile of corpses — you lay among them, pretending to be dead until the looters left",
-                    outcome: To("survive", skills: new[] { typeof(MasqueradeModusMentis) }),
+                    outcome: To("survive", skills: new[] { typeof(MasqueradeModusMentis), typeof(WarWearinessModusMentis) }),
                     contextSummary:   "pretending to be dead among corpses until the looters who raided the place where you lived had gone"),
 
                 new("pain in the leg",
                     observationText:  "a burning ache spreading up from the knees, the ground blurring below you",
                     outcomeText:      "the pain in your legs from running as fast as you could away from the pillage",
-                    outcome: To("survive", skills: new[] { typeof(AthleticsModusMentis) }),
+                    outcome: To("survive", skills: new[] { typeof(AthleticsModusMentis), typeof(SecondWindModusMentis) }),
                     contextSummary:   "running to escape the looters who raided the place where you lived until your legs gave out"),
             });
 
@@ -597,7 +597,7 @@ internal static class ReminescenceCatalog
                     observationText:  "soft, pale coils in the earth beneath your palm — still moving",
                     outcomeText:      "worms you ate from the dirt to survive, until you collapsed exhausted at the foot of a tree",
                     outcome: End(
-                        skills: new[] { typeof(SurvivalismModusMentis), typeof(IronStomachModusMentis) },
+                        skills: new[] { typeof(SurvivalismModusMentis), typeof(IronStomachModusMentis), typeof(SelfPreservationModusMentis) },
                         items:  new Func<Item>[] { () => new Worm() }),
                     contextSummary:   "eating worms from the dirt to survive"),
 
@@ -605,7 +605,7 @@ internal static class ReminescenceCatalog
                     observationText:  "small quick shapes darting at the edge of your vision, there and gone",
                     outcomeText:      "mice and squirrels you hunted and ate to survive, until you collapsed exhausted at the foot of a tree",
                     outcome: End(
-                        skills: new[] { typeof(HuntModusMentis), typeof(SurvivalismModusMentis) },
+                        skills: new[] { typeof(HuntModusMentis), typeof(SurvivalismModusMentis), typeof(RatcatcherModusMentis) },
                         items:  new Func<Item>[] { () => new MouseMeat(), () => new SquirrelMeat() }),
                     contextSummary:   "hunting mice and squirrels to survive"),
 
@@ -613,7 +613,7 @@ internal static class ReminescenceCatalog
                     observationText:  "pale caps huddled in the shadow of a root, wet with morning damp",
                     outcomeText:      "mushrooms you gathered and ate to survive, until you collapsed exhausted at the foot of a tree",
                     outcome: End(
-                        skills: new[] { typeof(MycologyModusMentis), typeof(SurvivalismModusMentis) },
+                        skills: new[] { typeof(MycologyModusMentis), typeof(SurvivalismModusMentis), typeof(ForageLoreModusMentis) },
                         items:  new Func<Item>[] { () => new Mushroom() }),
                     contextSummary:   "gathering mushrooms to survive"),
             });
@@ -632,19 +632,19 @@ internal static class ReminescenceCatalog
                 new("rain and winds",
                     observationText:  "a wall of water and roaring air, the ground slipping underfoot, no shelter in any direction",
                     outcomeText:      "rain and wind you pushed through until your legs gave out — losing consciousness at the foot of a tree",
-                    outcome: End(skills: new[] { typeof(BruteForceModusMentis), typeof(EnduranceModusMentis) }),
+                    outcome: End(skills: new[] { typeof(BruteForceModusMentis), typeof(EnduranceModusMentis), typeof(ResolveModusMentis) }),
                     contextSummary:   "pushing through a violent storm until your legs gave out"),
 
                 new("wet wood",
                     observationText:  "a pile of dark soaked sticks and no smoke, no heat — only the cold spreading inward",
                     outcomeText:      "wet wood that would not catch fire, and being too exhausted to try again — losing consciousness at the foot of a tree",
-                    outcome: End(skills: new[] { typeof(BushcraftModusMentis), typeof(SurvivalismModusMentis) }),
+                    outcome: End(skills: new[] { typeof(BushcraftModusMentis), typeof(SurvivalismModusMentis), typeof(FirecraftModusMentis) }),
                     contextSummary:   "failing to light a fire in the rain"),
 
                 new("shelter",
                     observationText:  "a dark hillside with no door, no overhang, no gap anywhere — nothing to crawl into",
                     outcomeText:      "searching for shelter from the storm and finding nothing — losing consciousness at the foot of a tree",
-                    outcome: End(skills: new[] { typeof(ExplorationModusMentis), typeof(EnduranceModusMentis) }),
+                    outcome: End(skills: new[] { typeof(ExplorationModusMentis), typeof(EnduranceModusMentis), typeof(WayfaringModusMentis) }),
                     contextSummary:   "searching for shelter from the storm and finding none"),
             });
     }

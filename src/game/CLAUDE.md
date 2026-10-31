@@ -867,6 +867,14 @@ think about anything it did not already want. Converting a modus mentis a childh
 it, which is why decipher, hunt, iconography and ripelore stayed ordinary; the docks fragment grants
 tidewatching for the one path that had none.
 
+**Every childhood path leaves a speaker too** (rule C4, same validator): a modus mentis with the
+Speaking function, a will counting since one that bears Speaking replies in every conversation.
+Without one the character has no reply in any conversation and Speak About stays greyed. A playtest
+reached exactly that, through 'a scream' → 'manure smelt' → 'nothing' → 'a dirty traveller', and
+the farm's manure fragment grants shanty for it. Both rules are also failed (✗) by `--mm-audit`,
+since every audit exits before the launch check runs. Every fragment grants two or three modi mentis;
+the openings and endings three.
+
 **Converting a mind regenerates people.** NPC skills are drawn from the observer, thinker and actor
 pools, and a will is in the first two: a craft that was action-only joins both. Each pool is now
 shuffled by a generator of its own seeded with one draw of the person's (`NpcContentGenerator.

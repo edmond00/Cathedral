@@ -504,6 +504,14 @@ public static class ModusMentisRuleValidator
             sb.AppendLine("  " + v);
         sb.AppendLine();
 
+        // ── Childhood rules (C1–C4, ReminescenceRuleValidator) ──
+        // Fatal at launch, but every audit exits before that check runs, so they are failed here too.
+        var childhood = Reminescence.ReminescenceRuleValidator.CollectViolations();
+        sb.AppendLine($"── childhood rules: {(childhood.Count == 0 ? "OK" : childhood.Count + " violation(s)")} ──");
+        foreach (var v in childhood)
+            sb.AppendLine("  ✗ " + v);
+        sb.AppendLine();
+
         // ── Coverage ──
         var organCounts = CountCoverage(all, OrganIds, organArity: 2);
         var regionCounts = CountCoverage(all, RegionIds, organArity: 1);
