@@ -55,24 +55,18 @@ expect they have seen what I was doing
 expect-not means me harm
 expect RUNAWAY
 
-# Running from them fails (the preset strategy reaches the RUNAWAY roll too). A failed escape forces
-# nothing: the party stays where it was stopped, and the narration resumes there, opening on whoever
-# stopped it. They came for you, so they still stand in the way. (The conversation over what they
-# heard is explain_myself's: see cli/verb/explain_myself/.)
+# Running from them fails (the preset strategy reaches the RUNAWAY roll too), and they confront you
+# with what they heard: violence, not the trespass a witness on private ground would accuse you of.
 click button
 advance 12 180
 click continue
 advance 12 180
-expect-no-state dialogue caught_red_handed
-expect after trying to run away
-expect RUNAWAY
-state
+expect-state dialogue caught_red_handed_murderer
 
-# The second try gets past them: the party walks out by the location's way in, and the visit ends.
-strategy succeed
-click button
+# The conversation over, the confrontation is too: the brewer goes back to the hall and the exit is
+# free again.
 advance 12 180
-click continue
-wait mode WorldView 90
+expect LEAVE
+expect-not RUNAWAY
 
 quit
