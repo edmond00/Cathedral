@@ -34,7 +34,8 @@ namespace Cathedral.Game.Narrative;
 /// things instead of circling the same one. As the pool shrinks, the persona is also given a refusal
 /// option — "let your focus go" — which produces a short in-voice line saying there is nothing more
 /// worth attending to. That option is withheld while the ledger is empty, so the request that opens a
-/// phase always yields at least one keyword to click.
+/// phase always yields at least one keyword to click, and once one persona has taken it, so it is
+/// taken at most once a phase.
 ///
 /// Overall / focus observation structure:
 ///   [0]   Observation of the first object (no transition)
@@ -776,7 +777,7 @@ public class ObservationPhaseController
         var (remaining, _) = NextPool(observed, candidates, ledger, isReminescence, siblingsFirst);
         if (!introduced && remaining.Count > 0)
         {
-            bool declineOffered = !ledger.IsEmpty;
+            bool declineOffered = ledger.MayDecline;
             var second = await SelectObservationObjectAsync(remaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
             // A choice used to be asked on this slot and wiped its history; the rewrite that follows
             // keeps history, so the slot is still cleared here to keep the block's context bounded.
@@ -801,7 +802,7 @@ public class ObservationPhaseController
         if (combinedLength < Config.Narrative.ObservationTriggerThirdThreshold
             && stillRemaining.Count > (zooming ? 0 : Config.Narrative.ObservationThirdMinRemaining))
         {
-            bool declineOffered = !ledger.IsEmpty;
+            bool declineOffered = ledger.MayDecline;
             var third = await SelectObservationObjectAsync(stillRemaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
             // A choice used to be asked on this slot and wiped its history; the rewrite that follows
             // keeps history, so the slot is still cleared here to keep the block's context bounded.
@@ -1242,7 +1243,8 @@ public class ObservationPhaseController
     ///
     /// <para><paramref name="candidates"/> arrives already stripped of everything this narration phase
     /// has observed, so the list shrinks request by request. The refusal option — "let your focus go" —
-    /// is offered exactly when <paramref name="ledger"/> is non-empty: with the pool narrowing, a
+    /// is offered exactly when <paramref name="ledger"/> is non-empty and nobody has taken it yet this
+    /// phase (<see cref="ObservationLedger.Declined"/>): with the pool narrowing, a
     /// persona forced to pick from two leftovers it cares nothing for would attend to them out of
     /// character, and it needs a way to say so. Withholding it while the ledger is empty is what keeps
     /// the request that opens a phase from producing a block with no keyword to click.</para>
@@ -1284,15 +1286,22 @@ public class ObservationPhaseController
         // Each object is offered as the act of attending to it — "focus on the plowman of the field
         // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
         // "a"/"an"). Playground mode never declines (the selector short-circuits to a real option).
-        string? decline = ledger.IsEmpty || !offerDecline || MustCommit()
+        string? decline = !ledger.MayDecline || !offerDecline || MustCommit()
             ? null
             : isReminescence ? "let the recollection go, nothing more is surfacing"
                              : "let your focus go, nothing else here is worth attending to";
-        return await _selector.SelectAsync(
+        var picked = await _selector.SelectAsync(
             ChoiceKind.Focus, modusMentis, candidates,
             c => $"focus on {GetNeutralPhrase(c, locationId)}",
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null),
             declineOption: decline, ct: ct);
+        // The refusal is spent once taken, like an observed object (ObservationLedger.Declined).
+        if (picked == null && decline != null)
+        {
+            ledger.Decline();
+            Console.WriteLine($"ObservationPhaseController: [{modusMentis.DisplayName}] let its focus go — the refusal is not offered again this phase.");
+        }
+        return picked;
     }
 
     /// <summary>

@@ -142,6 +142,13 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
 
+Once something has been attended to within the phase, an observing modus mentis choosing what to
+attend to next may instead decline to attend to anything further, and its account closes on that
+declaration. **The declining is spent once taken.** It is open to one modus mentis in a phase, and
+every modus mentis that observes after it must attend to something present: were each free to decline
+in turn, a thing in plain view could go unattended for the whole phase. A will's turning from what
+does not begin its course (§6) is a rule of its nature, not this declining, and is not spent.
+
 Attention may also be directed: a thing already rendered may be given to an observing modus mentis
 to attend to closely. That modus mentis may decline it, and if so turns to another thing of its own
 choosing among those not yet attended to — the refusal and the new observation rendered as one

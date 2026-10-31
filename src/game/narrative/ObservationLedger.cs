@@ -56,6 +56,23 @@ public sealed class ObservationLedger
     /// </summary>
     public bool IsEmpty => _observed.Count == 0;
 
+    /// <summary>
+    /// True once a Modus Mentis has taken the refusal option this phase ("let your focus go"). Like an
+    /// observed object, the refusal is spent once taken: the faculties that observe after it are not
+    /// offered it again, and must pick something in view. The judge leans to the refusal once the scene
+    /// has thinned (an animal-reading faculty let its focus go with an appeased triceratops in front of
+    /// it), and when every faculty took it in turn, a thing in plain view could not be reached at all.
+    /// Rule-based refusals (a will turning from what does not lead to its target) are not this option
+    /// and are untouched.
+    /// </summary>
+    public bool Declined { get; private set; }
+
+    /// <summary>Whether the refusal option may be offered: something has been observed, and nobody has refused yet.</summary>
+    public bool MayDecline => !IsEmpty && !Declined;
+
+    /// <summary>Records that a Modus Mentis took the refusal option.</summary>
+    public void Decline() => Declined = true;
+
     /// <summary>Raised for each object recorded as observed (the location map learns from it).</summary>
     public event Action<NarrativeAnchor>? Observed;
 
@@ -78,5 +95,6 @@ public sealed class ObservationLedger
     {
         _observed.Clear();
         _groups.Clear();
+        Declined = false;
     }
 }

@@ -957,6 +957,11 @@ budget reaches, and they were designed together — changing one alone re-breaks
   - `ObservationLedger` — what has been *looked at*. Keyed by **instance**, so two same-named things
     stay two things (which is what makes a second corpse reachable). Note `SceneFactory` merges
     same-named PoIs within an area at build, so ordinary scenery never has twins.
+    It also spends the **focus refusal** ("let your focus go"): `Declined` is set the first time a
+    mind takes it, and `MayDecline` withholds it from every later Focus choice of the phase. The
+    judge leaned to it as the scene thinned, and when one mind after another took it, an appeased
+    triceratops in plain view stayed unobserved by every faculty (Beast Sense included). A will's
+    rule-based turning away (`WillPriority`) is not this option and is never spent.
   - `ActionProposalLedger` — what has been offered a **button**. Keyed by **verb + target +
     variant**, *not* by instance: `RefreshSceneVerbs` re-expands every scene verb list immediately
     before each thinking request, so the `VerbAction` recorded and the one filtered are never the
