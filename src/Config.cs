@@ -1581,6 +1581,16 @@ public static class Config
         /// <summary>How long a transient world-map notice stays on screen.</summary>
         public const double NoticeSeconds = 4.0;
 
+        /// <summary>
+        /// A will's search over the places within reach (the Memory tab's "Wants" rows) takes at least
+        /// this long, however quickly the places are read, so its progress box can be seen to run.
+        /// Nothing under <c>--playground</c> (<see cref="AnimationsAreInstant"/>).
+        /// </summary>
+        public const double WillSearchMinSeconds = 1.5;
+
+        /// <summary>Milliseconds a frame may spend reading places for a will's search (at least one a frame).</summary>
+        public const int WillSearchFrameBudgetMs = 12;
+
         // Colors
         public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;
         public static readonly Vector4 BackgroundColor  = Colors.BlackTransparent;

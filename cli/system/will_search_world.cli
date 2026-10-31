@@ -1,0 +1,40 @@
+# will_search_world — a will's "Wants" row, pressed over the world map, seeks that target everywhere
+# within reach and proposes the journey to the nearest place it would be met in
+#
+# Woodcraft's first want is sound timber to take up. On the Memory tab over the world map its rows are
+# buttons (`click want <n>`); pressing one goes back to the map and reads every place within travel
+# range — a road to it, and ActionPathPlanner.Plan from its entry area at its own arrival hour — behind
+# a progress box, then plans the trip to the nearest and says why in the TRAVEL box. Walking it must
+# land somewhere the will does have a way to its target: the probe and the visit read the same place.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm woodcraft
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+expect-state will-search "will-search state=none"
+manage Memory
+select mm woodcraft
+expect "▸ take up sound timber"
+click want 0
+wait mode WorldView 30
+wait 120
+expect-state will-search "will-search state=proposed"
+expect "TRAVEL PLAN"
+expect "Woodcraft: take up sound timber"
+
+# The trip it planned is an ordinary one: TRAVEL walks it, and the place opens on arrival.
+travel-go
+wait mode LocationInteraction 120
+expect-no-state will "will woodcraft steps=none"
+expect-state will "will woodcraft steps="
+
+# Inside a visit the rows are only text: the search ends by planning a journey, which a visit cannot take.
+manage Memory
+select mm woodcraft
+expect "• take up sound timber"
+expect-not "▸ take up sound timber"
+quit

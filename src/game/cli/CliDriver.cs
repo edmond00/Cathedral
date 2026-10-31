@@ -700,6 +700,18 @@ public sealed class CliDriver
             return;
         }
 
+        // A will's "Wants" rows on the Memory tab, while they are buttons (over the world map).
+        foreach (var want in _game.CliWantRows)
+        {
+            CliMode.Emit($"  click want {want}  (seek this target in every place within reach)");
+            any = true;
+        }
+        if (_game.CurrentMode == GameMode.WorldView && _game.CliWillSearchLines()[0].Contains("state=running"))
+        {
+            CliMode.Emit("  click search-cancel  (end the will's search)");
+            any = true;
+        }
+
         if (_game.CliMenuButtons() is { } menu)
         {
             foreach (var (label, enabled, _, _) in menu)
@@ -981,6 +993,19 @@ public sealed class CliDriver
                 string name = string.Join(' ', a[1..]).Trim('"');
                 Report(f.CliClickSkill(name), $"used skill \"{name}\"");
                 break;
+            }
+            case "want":
+            {
+                // A will's "Wants" row on the Memory tab (after `select mm <id>`): seeks that target in
+                // every place within reach, and proposes the journey to the nearest.
+                if (a.Length < 2 || !int.TryParse(a[1], out int want)) { CliMode.Emit("error: click want <n>"); return; }
+                Report(_game.CliClickWant(want), $"pressed want {want}");
+                return;
+            }
+            case "search-cancel":
+            {
+                Report(_game.CliCancelWillSearch() ? null : "no will's search under way", "cancelled the will's search");
+                return;
             }
             case "menu-button":
             {

@@ -228,6 +228,12 @@ Run `help` for the authoritative list. The essentials:
                             (a will's targets under "Wants"). The starting kit
                             is random but seed-stable, so discover the names on one run
                             and they hold for every later run at that seed
+  click want <n>            press the selected will's n-th "Wants" row on the Memory tab (after
+                            `select mm <id>`). A button only over the world map: it goes back to
+                            the map, checks every place within reach for that target, and plans the
+                            trip to the nearest. `wait` outlasts the search; `inspect will-search`
+                            reads `state=running|proposed|none` (proposed carries vertex= name= text=)
+  click search-cancel       the search box's CANCEL (Escape does the same while it runs)
   scroll up|down [n]        scroll the shared history buffer
 
   clock <days>              push the world clock forward, then run the wound-healing sweep and

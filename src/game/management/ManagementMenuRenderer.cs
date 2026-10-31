@@ -147,6 +147,26 @@ public class ManagementMenuRenderer
     public Action? OnMapsPortholeClosed { get; set; }
 
     /// <summary>
+    /// A will's "Wants" row pressed on the Memory tab: the member, the modus mentis id and the target
+    /// index. Set only when the screen is open over the world map — the rows are buttons only then.
+    /// The handler leaves the screen, so nothing is drawn after it.
+    /// </summary>
+    public Action<PartyMember, string, int>? OnSeekWillTarget
+    {
+        get => _onSeekWillTarget;
+        set { _onSeekWillTarget = value; _memoryPanel.CanSeekWillTargets = value != null; }
+    }
+    private Action<PartyMember, string, int>? _onSeekWillTarget;
+
+    /// <summary>The cell of the selected modus mentis's n-th "Wants" row, while it is a button.</summary>
+    public (int X, int Y)? CliWantCell(int target)
+        => _activeTab == ManagementTab.Memory ? _memoryPanel.CliWantCell(target) : null;
+
+    /// <summary>The "Wants" rows that are buttons right now, by target index.</summary>
+    public IReadOnlyList<int> CliWantRows
+        => _activeTab == ManagementTab.Memory ? _memoryPanel.CliWantRows : Array.Empty<int>();
+
+    /// <summary>
     /// The screen cell of a card on the Chorography tab's map, by its area's name, panned into view first;
     /// null off the Chorography tab or when no card has that name.
     /// </summary>
@@ -706,6 +726,11 @@ public class ManagementMenuRenderer
         // press, which is exactly the answer this method owes its caller.
         if (_activeTab == ManagementTab.Memory && _memoryPanel.ProcessClick(x, y))
         {
+            if (_memoryPanel.TakeSeekRequest() is { } seek && _onSeekWillTarget != null)
+            {
+                _onSeekWillTarget(seek.Member, seek.ModusMentisId, seek.Target);
+                return true;
+            }
             Render();
             return true;
         }
