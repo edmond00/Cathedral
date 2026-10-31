@@ -930,6 +930,8 @@ public class LocationTravelGameController : IDisposable
             if (_narrativeController.CliTimeBoxState() == "passing") return false;
             // And the party walking on the map after a move.
             if (_narrativeController.CliWalkState() == "walking") return false;
+            // A walk in or out of the location goes on by itself: busy until it has.
+            if (_narrativeController.CliWalkGoesOn) return false;
         }
         return true;
     }
@@ -6707,8 +6709,12 @@ public class LocationTravelGameController : IDisposable
 
         if (result == FightAdapterResult.Runaway)
         {
-            Console.WriteLine("LocationTravelGameController: Player ran away, exiting to world view");
-            ExitNarrativeMode();
+            // Out of the fight is not yet out of the location: the party makes for the way out on
+            // the map, and anybody standing in the way further on can still stop it there. The
+            // escape asks for the exit itself once it is past them all.
+            Console.WriteLine("LocationTravelGameController: Player ran away, making for the way out");
+            SetMode(GameMode.LocationInteraction);
+            _narrativeController.FleeAfterFight();
             return;
         }
 

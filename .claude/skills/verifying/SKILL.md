@@ -262,6 +262,14 @@ Run `help` for the authoritative list. The essentials:
                             wound a party member OUTSIDE a fight, as a failed act's penalty does.
                             No count means enough to kill. A failed act's penalty is DRAWN from its
                             verb's table, and `--penalty-only wound` is the only way to make one injure
+  hostile <archetype-id|name> <area>
+                            put a person of the scene in an area for the rest of the visit, counting
+                            the party an enemy. Stages somebody standing on the way OUT of a location
+                            (a RUNAWAY rolls in every such area): moving away from an enemy is
+                            refused, so no walk a script makes can leave one behind it. The arrival
+                            and departure walks end by themselves (`wait` outlasts them), and
+                            `inspect map` reads `map walk in to <A>`, `walk out from <A>` or
+                            `walk from <A> to <B> … stopped` for them. cli/system/runaway_route.cli
   click menu-button         the ☰ in the top-right corner, through the player's click path: the
                             main menu, in exactly the phases Escape pauses (one list,
                             PausedPhaseName). Unlike `pause` it backs out of nothing first.

@@ -144,6 +144,35 @@ public class NarrativeController
     private string? _lastWalk;
 
     /// <summary>
+    /// A walk that goes on by itself once the party has arrived, after <see cref="WalkAutoDwellMs"/>,
+    /// with no Continue: coming into the location from its way in, and leaving it by its way out.
+    /// Nothing is decided on its arrival, so nothing is asked of the player there.
+    /// </summary>
+    private bool _walkAuto;
+    private DateTime? _walkSettledAt;
+    private string? _walkStatus;
+    private const int WalkAutoDwellMs = 650;
+
+    /// <summary>
+    /// The party on its way out of the location (LEAVE, RUNAWAY, or after fleeing a fight): the known
+    /// way from where it stood to the area the location is entered by, then the map's way out. A
+    /// checked escape — RUNAWAY, or fleeing a fight — stops at every area on the way where somebody
+    /// confronts the party (<see cref="ConfrontationSelector.Current"/>, read for that area) and rolls
+    /// to get past them; a failed roll ends it there and the narration resumes in that area. LEAVE walks
+    /// out unchecked.
+    /// </summary>
+    private sealed class EscapeRoute
+    {
+        public required IReadOnlyList<(Area To, string? Link)> Hops;
+        /// <summary>How many of <see cref="Hops"/> have been walked.</summary>
+        public int Done;
+        /// <summary>Where the party stands on the way.</summary>
+        public required Area At;
+        public required bool Checked;
+    }
+    private EscapeRoute? _escape;
+
+    /// <summary>
     /// A successful backtrack asking where to: the areas known ways reach, lit on the location map for
     /// a click. The outcome is narrated once one is chosen (<see cref="Scene.BacktrackTo"/>). Null when
     /// nothing asks.
@@ -191,7 +220,6 @@ public class NarrativeController
     // (via FinishExitRunaway) instead of the normal thinking-action OnDiceRollContinue.
     private bool _exitRunawayPending;
     private NpcEntity? _exitRunawayTarget;
-    private bool _exitRunawayIsEnemy;
 
     // ── LLM generation preview box ───────────────────────────────────────────────
     // Streams the text being generated over the greyed-out menu, gated by a CONTINUE button.
@@ -576,6 +604,10 @@ public class NarrativeController
 
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
+
+        // An arrival is shown coming in by the location's way in, while the opening is written.
+        if (arrivalPeriod != null && _scene?.Phase == NarrationPhase.Exploration)
+            ShowEntryWalk();
 
         Console.WriteLine("NarrativeController: Started observation phase");
     }
@@ -2418,11 +2450,14 @@ public class NarrativeController
     /// <see cref="AreaVisits.Move"/> recorded) on the location map. Waits for the time box when one is
     /// up, and takes over what its Continue would have resumed.
     /// </summary>
-    private void ShowWalk(Area from, IReadOnlyList<(Area To, string? Link)> hops, HashSet<string> fresh)
+    private void ShowWalk(Area from, IReadOnlyList<(Area To, string? Link)> hops, HashSet<string> fresh,
+                          List<DebugLocationMap.WalkStep>? entering = null)
     {
         if (_scene == null || hops.Count == 0) return;
         var steps = _debugMap.Walk(_scene, from, hops);
         if (steps.Count < 2) return;
+        // A routine's approach starts outside, at the way in, and comes in to the card it walks from.
+        if (entering is { Count: > 1 }) steps = entering.Concat(steps.Skip(1)).ToList();
         _lastWalk = $"walk from {from.DisplayName} to {hops[^1].To.DisplayName} steps={steps.Count} "
                   + $"via={string.Join(",", hops.Select(h => h.Link == null ? "jump" : "line"))}";
         Console.WriteLine($"NarrativeController: {_lastWalk}");
@@ -2437,9 +2472,12 @@ public class NarrativeController
     }
 
     private void StartWalk(List<DebugLocationMap.WalkStep> steps, IReadOnlyList<(Area To, string? Link)> hops,
-                           HashSet<string> fresh)
+                           HashSet<string> fresh, bool auto = false, string? status = null)
     {
         _walk = steps;
+        _walkAuto = auto;
+        _walkSettledAt = null;
+        _walkStatus = status;
         _walkHops = hops;
         _walkFresh = fresh;
         DebugLocationMap.WalkPannable = false;
@@ -2487,10 +2525,13 @@ public class NarrativeController
         _walkShown = at;
     }
 
-    private void OnWalkContinue()
+    private void OnWalkContinue(bool clicked = true)
     {
-        PlayClickSound();
+        if (clicked) PlayClickSound();
         _walk = null;
+        _walkAuto = false;
+        _walkSettledAt = null;
+        _walkStatus = null;
         DebugLocationMap.WalkPannable = false;
         _walkContinueRegion = default;
         _walkContinueHovered = false;
@@ -3226,6 +3267,20 @@ public class NarrativeController
         // click region each frame so stale zones don't linger during dice/loading/error states.
         _exitButtonRegion = default;
 
+        // A walk that goes on by itself (into the location, or out of it) ends here once the party
+        // has stood a moment where it arrived, and whatever follows is drawn this same frame.
+        if (_walk != null && _walkAuto)
+        {
+            AdvanceWalk();
+            if (WalkSettled)
+            {
+                _walkSettledAt ??= DateTime.UtcNow;
+                bool instant = Cli.CliMode.IsActive && !Record.RecordMode.IsActive;
+                if (instant || (DateTime.UtcNow - _walkSettledAt.Value).TotalMilliseconds >= WalkAutoDwellMs)
+                    OnWalkContinue(clicked: false);
+            }
+        }
+
         // Footer scene info — shown as the default footer in every state
         string sceneInfo = BuildSceneInfoLine();
 
@@ -3242,7 +3297,12 @@ public class NarrativeController
         if (_narrationState.IsDiceRollActive)
         {
             _dice.Advance();
-            RenderNarrationContent();
+            // An escape's roll is made where the party was stopped, on the map it is crossing.
+            if (_escape != null && _scene != null && _pov != null)
+                _ui.RenderDebugMap(_debugMap, _scene, _pov.Where, _graph.CurrentPeriod,
+                                   _debugMap.CardMiddle(_scene, _pov.Where));
+            else
+                RenderNarrationContent();
             _ui.RenderDiceComponent(_dice, _narrationState.IsDiceRollButtonHovered);
 
             string diceStatus = _narrationState.IsDiceRolling
@@ -3283,12 +3343,12 @@ public class NarrativeController
         {
             AdvanceWalk();
             var step = _walk[_walkShown];
-            DebugLocationMap.WalkPannable = WalkSettled;
+            DebugLocationMap.WalkPannable = WalkSettled && !_walkAuto;
             _ui.RenderDebugMap(_debugMap, _scene, step.Here, _graph.CurrentPeriod, (step.X, step.Y),
                                follow: !_walkArrivalCentred, withheld: WalkWithheld());
-            if (WalkSettled) _walkArrivalCentred = true;
-            _walkContinueRegion = WalkSettled ? _ui.RenderExitButton("CONTINUE", _walkContinueHovered) : default;
-            _ui.RenderStatusBar(WalkSettled ? "Click Continue" : "Walking...");
+            if (WalkSettled && !_walkAuto) _walkArrivalCentred = true;
+            _walkContinueRegion = WalkSettled && !_walkAuto ? _ui.RenderExitButton("CONTINUE", _walkContinueHovered) : default;
+            _ui.RenderStatusBar(_walkAuto ? _walkStatus ?? "Walking..." : WalkSettled ? "Click Continue" : "Walking...");
             return;
         }
 
@@ -3718,6 +3778,7 @@ public class NarrativeController
         {
             var r = _walkContinueRegion;
             if (!WalkSettled) _walkStepMs = 0;
+            else if (_walkAuto) OnWalkContinue(clicked: false);
             else if (_debugMap.HandleClick(mouseX, mouseY)) PlayClickSound();   // the pad, once arrived
             else if (r.Width > 0 && mouseY == r.Y && mouseX >= r.X && mouseX < r.X + r.Width) OnWalkContinue();
             return;
@@ -4377,8 +4438,31 @@ public class NarrativeController
         return true;
     }
 
+    /// <summary>
+    /// The CLI's <c>hostile</c>: puts a person of this scene in <paramref name="areaName"/> for the rest
+    /// of the visit (<see cref="Scene.Scene.DisplacedNpcs"/>, as a drawn-in witness is) and makes them
+    /// count the protagonist an enemy. Returns an error, or null.
+    /// </summary>
+    public string? CliMakeHostile(string who, string areaName)
+    {
+        if (_scene == null || _protagonist == null) return "no scene";
+        var area = _scene.AllAreas.FirstOrDefault(a => a.DisplayName.Equals(areaName, StringComparison.OrdinalIgnoreCase));
+        if (area == null) return $"no area '{areaName}'";
+        var sceneNpc = _scene.Npcs.FirstOrDefault(n => n.IsAlive && n.Entity is NpcEntity e
+                           && (e.Archetype.ArchetypeId.Equals(who, StringComparison.OrdinalIgnoreCase)
+                               || e.DisplayName.Equals(who, StringComparison.OrdinalIgnoreCase)));
+        if (sceneNpc?.Entity is not NpcEntity npc) return $"no person '{who}' in this scene";
+        _scene.DisplacedNpcs[sceneNpc.Id] = area;
+        npc.AffinityTable.SetEnemy(_protagonist.AffinityKey);
+        _npcPlacement?.PlaceForPeriod(_graph.CurrentPeriod);
+        return null;
+    }
+
     /// <summary>The walk on the map: none, walking (animating) or settled.</summary>
     public string CliWalkState() => _walk == null ? "none" : WalkSettled ? "settled" : "walking";
+
+    /// <summary>Whether a walk that ends by itself (into or out of the location) is still up.</summary>
+    public bool CliWalkGoesOn => _walk != null && _walkAuto;
 
     /// <summary>The walk's [ CONTINUE ] region, once the party has arrived.</summary>
     public (bool Present, int X, int Y, int Width) CliWalkContinue()
@@ -4928,11 +5012,38 @@ public class NarrativeController
     {
         var from = _approachFrom;
         _approachFrom = null;
-        if (from == null || _scene == null || _pov == null || from.Id == _pov.Where.Id) { then?.Invoke(); return; }
+        if (from == null || _scene == null || _pov == null) { then?.Invoke(); return; }
 
-        ShowWalk(from, AreaVisits.MoveBack(_scene, from, _pov.Where, _pov.When), fresh: new());
+        // In by the location's way in, first; then on by the known ways to the routine's area. With
+        // nothing to walk past the entry, the walk goes on by itself, as any arrival's does.
+        var entering = _debugMap.WalkIn(_scene, from);
+        if (from.Id == _pov.Where.Id)
+        {
+            if (entering.Count < 2) { then?.Invoke(); return; }
+            _lastWalk = $"walk in to {from.DisplayName} steps={entering.Count}";
+            Console.WriteLine($"NarrativeController: {_lastWalk}");
+            StartWalk(entering, Array.Empty<(Area, string?)>(), new(), auto: true, status: "Entering...");
+            _afterWalk = then;
+            return;
+        }
+
+        ShowWalk(from, AreaVisits.MoveBack(_scene, from, _pov.Where, _pov.When), fresh: new(), entering: entering);
         if (_walk == null) { then?.Invoke(); return; }
         _afterWalk = then;
+    }
+
+    /// <summary>
+    /// The party coming into the location, on the map: from the way in (the exit glyph) to the card of
+    /// the area it is entered by. Goes on by itself once there.
+    /// </summary>
+    private void ShowEntryWalk()
+    {
+        if (_scene == null || _pov == null) return;
+        var steps = _debugMap.WalkIn(_scene, _pov.Where);
+        if (steps.Count < 2) return;
+        _lastWalk = $"walk in to {_pov.Where.DisplayName} steps={steps.Count}";
+        Console.WriteLine($"NarrativeController: {_lastWalk}");
+        StartWalk(steps, Array.Empty<(Area, string?)>(), new(), auto: true, status: "Entering...");
     }
 
     /// <summary>
@@ -5122,15 +5233,18 @@ public class NarrativeController
         switch (kind)
         {
             case ExitButtonKind.Leave:
-                Console.WriteLine("NarrativeController: LEAVE clicked — exiting narration");
-                _narrationState.RequestedExit = true;
+                Console.WriteLine("NarrativeController: LEAVE clicked — walking out of the location");
+                BeginEscape(check: false);
+                ContinueEscape();
                 break;
             case ExitButtonKind.RunawayEnemy when target != null:
                 Console.WriteLine($"NarrativeController: RUNAWAY clicked — enemy '{target.DisplayName}' present");
+                BeginEscape(check: true);
                 _ = BeginExitRunawayAsync(target, isEnemy: true);
                 break;
             case ExitButtonKind.RunawayWitness when target != null:
                 Console.WriteLine($"NarrativeController: RUNAWAY clicked — witness '{target.DisplayName}' present");
+                BeginEscape(check: true);
                 _ = BeginExitRunawayAsync(target, isEnemy: false);
                 break;
         }
@@ -5219,7 +5333,6 @@ public class NarrativeController
     {
         _exitRunawayPending  = true;
         _exitRunawayTarget   = target;
-        _exitRunawayIsEnemy  = isEnemy;
 
         int diceCount = ProtagonistRunawayDiceCount();
         // The humors reach this roll as they reach every other: the dice are the protagonist's, so are
@@ -5247,14 +5360,14 @@ public class NarrativeController
 
     /// <summary>
     /// Resolves an exit-runaway roll after the player clicks Continue on the dice overlay.
-    /// Success → exit narration. Failure → start a fight (enemy) or the caught-red-handed
-    /// trespass dialogue (witness). Enemy precedence is already baked into <c>isEnemy</c>.
+    /// Success → the escape goes on along the way out (to the next area where somebody stands in the
+    /// way, or out of the location). Failure → the escape ends where the party was stopped and the
+    /// narration resumes there, its next phase opening on whoever stopped them.
     /// </summary>
     private void FinishExitRunaway()
     {
         bool success   = _dice.IsCurrentlySuccess;
         var  target    = _exitRunawayTarget;
-        bool isEnemy   = _exitRunawayIsEnemy;
 
         _exitRunawayPending = false;
         _exitRunawayTarget  = null;
@@ -5262,34 +5375,155 @@ public class NarrativeController
 
         if (success)
         {
-            Console.WriteLine("NarrativeController: RUNAWAY succeeded — exiting narration");
-            _narrationState.RequestedExit = true;
+            Console.WriteLine($"NarrativeController: RUNAWAY succeeded at '{_pov?.Where.DisplayName}' — going on");
+            if (_escape == null) BeginEscape(check: true);
+            ContinueEscape();
             return;
         }
 
-        if (target == null)
-        {
-            // Defensive: nothing to escalate to, just leave.
-            _narrationState.RequestedExit = true;
-            return;
-        }
-
-        if (isEnemy)
-        {
-            Console.WriteLine($"NarrativeController: RUNAWAY failed — fight starts vs '{target.DisplayName}'");
-            _pendingFightOutcome = new FightTriggerOutcome(target, $"failed to run away from {target.DisplayName}");
-        }
-        else
-        {
-            // They came because they heard a crime: they accuse you of that one. Otherwise they caught you
-            // on private ground, and what they saw is trespass.
-            var catchTree = ConfrontationSelector.TreeFor(_scene, target, null, _pov?.Where.IsPrivate ?? true);
-            Console.WriteLine($"NarrativeController: RUNAWAY failed — witness '{target.DisplayName}' confronts ({catchTree.TreeId})");
-            // A runaway confrontation has no observation→thinking→action origin — resample the narrator.
-            SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
-        }
+        Console.WriteLine($"NarrativeController: RUNAWAY failed at '{_pov?.Where.DisplayName}' — stopped by '{target?.DisplayName}'");
+        StopEscape(target);
     }
-    
+
+    // ── The way out ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Sets the party on its way out: the known way from where it stands to the area the location is
+    /// entered by (<see cref="AreaVisits.BackReach"/>, a backtrack's route — a jump, card to card, when
+    /// none is known). <paramref name="check"/> makes each area on the way ask a roll of whoever
+    /// confronts the party there.
+    /// </summary>
+    private void BeginEscape(bool check)
+    {
+        if (_scene == null || _pov == null) return;
+        var here  = _pov.Where;
+        var entry = _debugMap.EntryAreaOf(_scene) ?? here;
+        IReadOnlyList<(Area To, string? Link)> hops =
+              here.Id == entry.Id ? Array.Empty<(Area, string?)>()
+            : AreaVisits.BackReach(_scene, here, _pov.When).TryGetValue(entry, out var route) ? route
+            : new[] { (entry, (string?)null) };
+        _escape = new EscapeRoute { Hops = ThroughPaths(here, hops), At = here, Checked = check };
+        Console.WriteLine($"NarrativeController: way out from '{here.DisplayName}' by "
+                        + (hops.Count == 0 ? "the way in" : string.Join(" → ", hops.Select(h => h.To.DisplayName)))
+                        + (check ? " (checked)" : ""));
+    }
+
+    /// <summary>
+    /// The way out with every path opened up into the areas it runs past, each one step along the
+    /// neighbour way the path follows: a path is a walk past those areas, and anybody standing in one
+    /// of them is standing in the way.
+    /// </summary>
+    private IReadOnlyList<(Area To, string? Link)> ThroughPaths(Area from, IReadOnlyList<(Area To, string? Link)> hops)
+    {
+        var opened = new List<(Area To, string? Link)>();
+        var at = from;
+        foreach (var (to, link) in hops)
+        {
+            var path = link == null ? null
+                     : at.PointsOfInterest.Concat(to.PointsOfInterest).OfType<Cathedral.Game.Scene.Building.PathPointOfInterest>()
+                         .FirstOrDefault(p => p.StableKey == link);
+            if (path != null && path.Via.Count > 0)
+            {
+                var via = path.AreaA.Id == at.Id ? path.Via : path.Via.Reverse().ToList();
+                foreach (var v in via) { opened.Add((v, AreaVisits.LinkKey(at, v))); at = v; }
+                opened.Add((to, AreaVisits.LinkKey(at, to)));
+            }
+            else opened.Add((to, link));
+            at = to;
+        }
+        return opened;
+    }
+
+    /// <summary>Who confronts the party in <paramref name="area"/> at this hour, read as if it stood there.</summary>
+    private Confrontation? ConfrontationAt(Area area)
+        => _scene == null || _pov == null ? null
+         : ConfrontationSelector.Current(_scene, new PoV(area, _pov.When), _protagonist);
+
+    /// <summary>
+    /// Walks the escape on: to the next area on the way where somebody confronts the party (a checked
+    /// escape only), and the roll there; or, with nobody in the way, out of the location by the map's
+    /// way out, which ends the visit.
+    /// </summary>
+    private void ContinueEscape()
+    {
+        var e = _escape;
+        if (e == null || _scene == null || _pov == null) { _narrationState.RequestedExit = true; return; }
+
+        for (int j = e.Done; e.Checked && j < e.Hops.Count; j++)
+        {
+            var area = e.Hops[j].To;
+            if (ConfrontationAt(area) is not { } c) continue;
+
+            var leg = e.Hops.Skip(e.Done).Take(j - e.Done + 1).ToList();
+            var steps = _debugMap.Walk(_scene, e.At, leg);
+            e.Done = j + 1;
+            void Stopped()
+            {
+                StandAt(area);
+                Console.WriteLine($"NarrativeController: way out stopped at '{area.DisplayName}' by '{c.Npc.DisplayName}' ({c.Kind})");
+                _ = BeginExitRunawayAsync(c.Npc, isEnemy: c.Kind == ConfrontationKind.Enemy);
+            }
+            if (steps.Count < 2) { Stopped(); return; }
+            _lastWalk = $"walk from {e.At.DisplayName} to {area.DisplayName} steps={steps.Count} stopped";
+            Console.WriteLine($"NarrativeController: {_lastWalk}");
+            StartWalk(steps, leg, new(), auto: true, status: "Running away...");
+            _afterWalk = Stopped;
+            return;
+        }
+
+        var rest = e.Hops.Skip(e.Done).ToList();
+        var from = e.At;
+        var outSteps = _debugMap.WalkOut(_scene, from, rest);
+        string status = e.Checked ? "Running away..." : "Leaving...";
+        _escape = null;
+        foreach (var (to, _) in rest) AreaVisits.Arrive(_scene, to);
+        if (outSteps.Count < 2) { _narrationState.RequestedExit = true; return; }
+        _lastWalk = $"walk out from {from.DisplayName} steps={outSteps.Count}";
+        Console.WriteLine($"NarrativeController: {_lastWalk}");
+        StartWalk(outSteps, rest, new(), auto: true, status: status);
+        _afterWalk = () => _narrationState.RequestedExit = true;
+    }
+
+    /// <summary>The party stands in <paramref name="area"/> on its way out: point of view, node and map follow.</summary>
+    private void StandAt(Area area)
+    {
+        if (_scene == null || _pov == null || _escape == null) return;
+        _escape.At = area;
+        if (area.Id == _pov.Where.Id) return;
+        _pov.Where = area;
+        if (NodeForArea(area) is { } node) _currentNode = node;
+        AreaVisits.Arrive(_scene, area);
+        _recorder?.OnAreaEntered(_pov);
+        SceneDebugManager.UpdatePoV(_pov);
+    }
+
+    /// <summary>
+    /// The escape is over where the party was stopped: the narration resumes in that area, opening on
+    /// whoever stopped them. A failure, so the noetic points are not refilled.
+    /// </summary>
+    private void StopEscape(NpcEntity? stoppedBy)
+    {
+        _escape = null;
+        _narrationState.ShowContinueButton = false;
+        _narrationState.PendingTransitionNode = null;
+        _openingFocus = stoppedBy == null ? null
+                      : _scene?.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, stoppedBy));
+        BeginNarrationSegment("after trying to run away", refillNoetic: false);
+    }
+
+    /// <summary>
+    /// The party has fled a fight in this location: it makes for the way out, checked in every area
+    /// past this one (the fight itself was the getting away from here). Called by the game controller
+    /// on the fight's return, in place of leaving straight for the world.
+    /// </summary>
+    public void FleeAfterFight()
+    {
+        _narrationState.ShowContinueButton = false;
+        _narrationState.PendingTransitionNode = null;
+        BeginEscape(check: true);
+        ContinueEscape();
+    }
+
     /// <summary>
     /// Called by the game controller when returning from fight mode.
     /// Handles corpse spawning (victory), enemy affinity (runaway), and narration resumption.

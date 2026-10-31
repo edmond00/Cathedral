@@ -1605,6 +1605,29 @@ in the room with you. The witness branch additionally needs a *reason*: either t
 happen in the open — `pickpocket`, `stalk`, `attack` — would draw a witness across a public square who
 then watched you stroll off.
 
+**A location is left by its way in, and a RUNAWAY is checked the whole way there.** The location map
+lays a way in for every scene (`DebugLocationMap.LayExit`): the fight arena's exit glyph `⎆` out in
+the canvas margin, joined by a line to the card of the area the location is entered by
+(`SceneSyntheticGraphFactory.ResolveEntryArea`, so `--start-area` moves it). The line is a net of its
+own on the routing grid, so views routed later cross it rather than run along it. Three walks use it,
+and all three **end by themselves** after a short dwell, with no Continue (`_walkAuto`; instant under
+`--cli`, and `CliIsIdle` counts them busy until they have):
+
+| | walk |
+|---|---|
+| an arrival in exploration | `⎆` → the entry card, while the opening observation is written behind it. A routine's approach (`WalkTheApproach`) starts from `⎆` too, and keeps its Continue when it walks on past the entry |
+| LEAVE | where the party stands → the entry area by known ways (`AreaVisits.BackReach`, a jump when none) → `⎆`. **Unchecked** |
+| RUNAWAY, and fleeing a fight in narration | the same way out (`EscapeRoute`), but every area on it — a path opened into the areas it runs past (`ThroughPaths`) — is read with `ConfrontationSelector.Current` as if the party stood there. The walk stops at the first one that confronts, the PoV moves there (`StandAt`), and the roll is made again over the map |
+
+**A failed runaway forces nothing.** It used to start the fight (enemy) or the caught-red-handed tree
+(witness); now `StopEscape` resumes the narration in the area where the party was stopped, opening on
+the person who stopped it, without refilling the noetic points. The confrontation conversation is
+still reached by a failed act before the confronter, or by `explain_myself`. A fight fled in a
+location (`FightAdapterResult.Runaway`) no longer exits straight to the world: the game controller
+calls `FleeAfterFight`, whose checks start at the next area, the fight having been the getting away
+from this one. `cli/system/runaway_route.cli` (two staged enemies, a success then a stop) and
+`fight_runaway_narration.cli`.
+
 There is deliberately **no criminal record**. One existed — written, escalated and cleared, with not a
 single reader anywhere — and `CriminalAffinityType` survives only to word the confrontation.
 

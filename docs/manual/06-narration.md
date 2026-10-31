@@ -428,17 +428,26 @@ Fumbling the approach is itself a slip before the witness, and one is collared a
 for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
 discreet act that fails in the same room is seen.
 
+**Departure.** A place is left as it was entered, by its one way in, which lies beyond the area the
+place was entered by. To leave is to walk there: from the area stood in, back along the ways already
+known, to that area and out. A free departure is not stopped on the way.
+
 **Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
 roll of as many dice as the feet's runaway score, needing a single six, which the humors may bend
-as they bend any other roll. Success leaves the place.
-Failure begins the fight with an enemy, or the confrontation with a witness. A confrontation ends
-with the conversation it opens: a witness who came on the body's account then returns to the day
-they were drawn from, unless the conversation has made an enemy of them.
+as they bend any other roll. A runaway is checked the whole way out. Every area the walk to the way
+in passes through — the areas a path runs past among them — is weighed as though the body stood in
+it, and wherever an enemy or a witness would confront it there, it is stopped and rolls again on the
+same terms. Each success carries it on to the next such area, or out of the place when none is left.
+A failure costs nothing further and forces nothing: the body stays in the area where it was stopped,
+the noetic points are not restored, and the next phase opens on whoever stopped it — who still stands
+in the way of a second attempt.
+
+A confrontation ends with the conversation it opens: a witness who came on the body's account then
+returns to the day they were drawn from, unless the conversation has made an enemy of them.
 
 **Found waiting.** The householder who comes in at nightfall to find the body waiting in their house
 (see [Chapter V §8](05-travel.md#8-the-periods-of-the-day)) confronts it as any witness does, and
-the same three ways open the conversation — a failed act before them, a failed runaway, or going up
-to explain oneself. The conversation is not the one a crime opens. It asks why the body is still
+the same two ways open the conversation — a failed act before them, or going up to explain oneself. The conversation is not the one a crime opens. It asks why the body is still
 there and whether it is to be kept the night, and every resolution in it that rolls stands on the gravest of the
 ladders ([Chapter VII §2](07-social.md#2-the-conversation)). To win it is to be allowed to stay:
 for the rest of the visit, standing anywhere in that building is no trespass, and nobody in it
