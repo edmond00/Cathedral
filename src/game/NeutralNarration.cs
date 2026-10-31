@@ -786,12 +786,6 @@ public static class NeutralNarration
     // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
     // + DialogueReplicaWriter — not through this class.
 
-    // ── Critic ─────────────────────────────────────────────────────────────────
-
-    /// <summary>First-person critic verdict ("I think …"), matching the LLM reason's voice.</summary>
-    public static string CriticFailureReason()
-        => "I think this cannot be done as intended.";
-
     // ── Keyword helper ─────────────────────────────────────────────────────────
 
     /// <summary>

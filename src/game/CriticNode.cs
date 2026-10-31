@@ -28,6 +28,15 @@ public class CriticNode
     /// </summary>
     public Dictionary<string, CriticNode?> Branches { get; set; } = new();
 
+    /// <summary>
+    /// A second question about the same thing, asked alongside this one and weighed with it: the
+    /// verdict's side is the SUM of the two questions' log-odds of help against refusal, and the id on
+    /// that side — degree or refusal — is this node's. Null for an ordinary node. See
+    /// <c>ItemUseCritic.WeighAsync</c> and <c>CriticTrees.BuildItemAppropriatenessTree</c> for why one
+    /// question alone cannot do it. Its choice ids must be this node's.
+    /// </summary>
+    public CriticNode? Counterweight { get; set; }
+
     public CriticNode() { }
 
     public CriticNode(string name, string question, List<CriticChoice> choices)

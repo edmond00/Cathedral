@@ -104,31 +104,19 @@ public class ItemUseCritic : IDisposable
                 : null;
 
             if (debugOverride != null)
-            {
                 chosenId = debugOverride;
-            }
+            else if (node.Counterweight != null && !PlaygroundMode.IsActive)
+                chosenId = await WeighAsync(node);
             else
-            {
                 chosenId = await GetChoiceAsync(node.Question, node.Choices);
-            }
 
             nodeResult.ChosenId = chosenId;
 
+            // No reason is asked for: a refusal's reason is its choice's own fixed sentence
+            // (CriticTreeResult.CombinedFailureReason reads ErrorMessage). See CriticTrees.CannotReason.
             var choiceObj = node.Choices.FirstOrDefault(c => c.Id == chosenId);
             nodeResult.IsFailure = choiceObj?.IsFailure ?? false;
             nodeResult.ErrorMessage = choiceObj?.ErrorMessage ?? string.Empty;
-
-            if (nodeResult.IsFailure)
-            {
-                // Ask the critic why while its answer is still in context; resets slot afterwards
-                nodeResult.FailureReason = await GetFailureReasonAsync();
-                Console.WriteLine($"     Reason: {nodeResult.FailureReason}");
-            }
-            else
-            {
-                // No follow-up needed — reset now (skipReset=true was used in GetChoiceAsync)
-                _llamaServer.ResetInstance(_criticSlotId);
-            }
 
             _totalEvaluations++;
         }
@@ -167,17 +155,14 @@ public class ItemUseCritic : IDisposable
         string prompt = BuildChoicePrompt(question, choices);
         string grammar = BuildGrammar(choices);
 
-        // skipReset=true so context is preserved for a follow-up "why" call if needed.
-        // The caller (EvaluateNodeAsync) resets manually after the optional follow-up.
         string result = await _llamaServer.GenerateConstrainedStringAsync(
-            _criticSlotId, prompt, grammar, maxTokens: 20, skipReset: true);
+            _criticSlotId, prompt, grammar, maxTokens: 20, skipReset: false);
 
         // Validate the returned id is one of the expected choices
         result = result.Trim();
         if (!choices.Any(c => c.Id == result))
         {
             Console.Error.WriteLine($"ItemUseCritic: LLM returned unexpected id '{result}', falling back to first choice.");
-            _llamaServer.ResetInstance(_criticSlotId);
             return choices[0].Id;
         }
 
@@ -185,41 +170,115 @@ public class ItemUseCritic : IDisposable
     }
 
     /// <summary>
-    /// GBNF that forces the "why" explanation into the critic's own first-person voice: it must open
-    /// with "I think " and then run as a single line. This keeps the reason first-person so it embeds
-    /// cleanly into the (also first-person) failure narration without an "I …/You …" person clash.
+    /// The log-odds of help against refusal above which the two questions' summed verdict passes.
+    /// Zero, and deliberately not tuned: the sum of two log-odds is already the weighing, and a fitted
+    /// constant here would be fitted to the bench rather than to anything about the game.
+    /// <c>tools/prompts/critic_bench.py</c> reads it from here.
     /// </summary>
-    private const string FailureReasonGrammar = @"root ::= ""I think "" [^\n]+";
+    public const double HelpLogOdds = 0.0;
 
     /// <summary>
-    /// Asks the critic a follow-up "why" question while its previous answer is still in context.
-    /// Resets the slot afterwards. Returns a short first-person sentence ("I think …"), or empty on failure.
+    /// A node with a <see cref="CriticNode.Counterweight"/>: both questions read rather than sampled,
+    /// their log-odds of help against refusal summed for the side, and the node's own reading giving
+    /// the id on that side — the degree, or the refusal.
+    ///
+    /// <para><b>Why two questions.</b> Asked alone, the node's question ("compared to bare hands, does X
+    /// give a meaningful advantage?") refused a third of the sensible improvisations of the survey in
+    /// <c>tools/prompts/critic_bench.py</c> — a dagger driven into a stone wall's gaps, a shield as a
+    /// sled — and almost never passed a wrong one. Asked alone, the counterweight ("could X do any real
+    /// part of this, even clumsily?") let the improvisations through and a fifth of the wrong ones with
+    /// them: a small model can always imagine a clumsy use. They err on different cases, so the sum
+    /// keeps what each is right about: an item passes when the lenient question is surer of it than the
+    /// strict one is against it. The lenient question gives no id, because "even clumsily" drew nearly
+    /// all its answers to the clumsy degree. See <c>tools/prompts/NOTES.md</c>, "The item critic and
+    /// improvised tools".</para>
+    ///
+    /// <para><b>Why read, not sampled.</b> One sample at temperature 0.7 is one draw: on a quarter of
+    /// the survey the same item passed one time and failed the next. The first token's
+    /// log-probabilities give the whole distribution in the same forward pass, so the verdict is the
+    /// same every time. Ids, not letters: shown as letters A–E, the options came back "D" for most
+    /// cases, a hammer to break a door among them. The two questions share their text up to the
+    /// question itself, so the server reads the second from its prompt cache but for its last lines.</para>
     /// </summary>
-    private async Task<string> GetFailureReasonAsync()
+    private async Task<string> WeighAsync(CriticNode node)
     {
-        if (PlaygroundMode.IsActive)
-            return NeutralNarration.CriticFailureReason();
-
         if (!_isInitialized || !_llamaServer.IsServerReady || _criticSlotId < 0)
-            return string.Empty;
+        {
+            Console.Error.WriteLine("ItemUseCritic: Not initialized or server not ready");
+            return node.Choices.FirstOrDefault(c => !c.IsFailure)?.Id ?? node.Choices[0].Id;
+        }
 
-        try
-        {
-            string reason = await _llamaServer.GenerateConstrainedStringAsync(
-                _criticSlotId,
-                "In one short sentence (around 12 words), explain why you think that way. Begin with \"I think\".",
-                gbnfGrammar: FailureReasonGrammar,
-                maxTokens: 60,
-                skipReset: false); // reset after this call
-            return reason.Trim();
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"ItemUseCritic: Failed to get failure reason: {ex.Message}");
-            _llamaServer.ResetInstance(_criticSlotId);
-            return string.Empty;
-        }
+        var weightNode = node.Counterweight!;
+        var strict  = await ReadAsync(node.Question, node.Choices);
+        var lenient = await ReadAsync(weightNode.Question, weightNode.Choices);
+
+        double margin = strict.Margin + lenient.Margin - HelpLogOdds;
+        bool help = margin > 0;
+        string id = strict.Help == help ? strict.Answer : Likeliest(node.Choices, strict.LogProbs, failure: !help);
+
+        Console.WriteLine($"ItemUseCritic: {node.Name} -> {id} (strict {F(strict.Margin)} '{strict.Answer}', " +
+                          $"lenient {F(lenient.Margin)} '{lenient.Answer}', sum {F(margin)} vs {F(HelpLogOdds)})");
+        return id;
     }
+
+    private const double AbsentLogProb = -30.0;
+
+    private readonly record struct Reading(string Answer, bool Help, double Margin, double[] LogProbs);
+
+    /// <summary>
+    /// One question, read: each id's score is that of its first token (as the model's tokenizer splits it)
+    /// among the reply's likeliest first tokens; the margin is the log-odds of the help ids' first tokens
+    /// against the refusals' (a first token shared by two ids counted once); the answer is the greedy
+    /// reply when it is an id on the side the margin chose, else that side's likeliest.
+    /// </summary>
+    private async Task<Reading> ReadAsync(string question, List<CriticChoice> choices)
+    {
+        var (text, top) = await _llamaServer.GetGreedyReplyWithLogProbsAsync(_criticSlotId, BuildChoicePrompt(question, choices));
+        var pieces = new string[choices.Count];
+        var lp = new double[choices.Count];
+        for (int i = 0; i < choices.Count; i++)
+        {
+            pieces[i] = await _llamaServer.FirstTokenPieceAsync(choices[i].Id);
+            lp[i] = AbsentLogProb;
+            foreach (var (token, logProb) in top)
+            {
+                string t = token.Trim();
+                if (t.Length > 0 && t == pieces[i] && logProb > lp[i]) lp[i] = logProb;
+            }
+        }
+
+        var seen = new HashSet<(string, bool)>();
+        var help = new List<double>();
+        var refuse = new List<double>();
+        for (int i = 0; i < choices.Count; i++)
+            if (seen.Add((pieces[i], choices[i].IsFailure)))
+                (choices[i].IsFailure ? refuse : help).Add(lp[i]);
+        double margin = LogSumExp(help) - LogSumExp(refuse);
+
+        bool side = margin > 0;
+        text = text.Trim();
+        string answer = choices.Any(c => c.Id == text && c.IsFailure != side)
+            ? text
+            : Likeliest(choices, lp, failure: !side);
+        return new Reading(answer, side, margin, lp);
+    }
+
+    private static string Likeliest(List<CriticChoice> choices, double[] lp, bool failure)
+    {
+        int best = -1;
+        for (int i = 0; i < choices.Count; i++)
+            if (choices[i].IsFailure == failure && (best < 0 || lp[i] > lp[best])) best = i;
+        return choices[best].Id;
+    }
+
+    private static double LogSumExp(List<double> xs)
+    {
+        if (xs.Count == 0) return double.NegativeInfinity;
+        double m = xs.Max();
+        return m + Math.Log(xs.Sum(x => Math.Exp(x - m)));
+    }
+
+    private static string F(double x) => x.ToString("+0.0;-0.0", System.Globalization.CultureInfo.InvariantCulture);
 
     private static string BuildChoicePrompt(string question, List<CriticChoice> choices)
     {

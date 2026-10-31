@@ -1,0 +1,212 @@
+critic00 climb up the rocky slope / the rope help  -> clearly_helps
+critic01 climb the old oak / the loaf of bread no  -> cannot_help
+critic02 break open the smithy door / the hammer help low -> clearly_helps
+critic03 break open the smithy door / the feather no  -> cannot_help
+critic04 cross the stream / the walking staff help  -> clearly_helps
+critic05 cross the stream / the prayer book no  -> cannot_help
+critic06 unlock the chest / the hairpin help  -> detoured_use
+critic07 unlock the chest / the apple no  -> cannot_help
+critic08 calm the frightened horse / the apple help  -> plausibly_helps
+critic09 calm the frightened horse / the hammer no  -> cannot_help
+critic10 swim across the river / the iron pot no  -> cannot_help
+critic11 gather the spilled grain / the sack help  -> clearly_helps
+critic12 sing a song for the crowd / the shovel no  -> cannot_help
+critic13 listen at the barn wall / the axe no  -> cannot_help
+critic14 examine the cave paintings / the lantern help  -> clearly_helps
+critic15 dig the garden bed / the hoe help  -> serves_poorly
+critic16 dig the garden bed / the spade help low -> serves_poorly
+critic17 dig the garden bed / the feather no  -> makes_no_sense
+critic18 mine the ore seam / the sledgehammer help  -> serves_poorly
+critic19 mine the ore seam / the loaf of bread no  -> cannot_serve
+critic20 cut wood from the fallen log / the hatchet help  -> serves_poorly
+critic21 cut wood from the fallen log / the rope no  -> cannot_serve
+critic22 fish in the pond / the spear help  -> serves_well
+critic23 fish in the pond / the lantern no  -> cannot_serve
+critic24 cut the meat from the deer / the sword help  -> serves_well
+critic25 cut the meat from the deer / the wooden spoon no  -> cannot_serve
+critic26 cut the pelt from the wolf / the sickle help  -> serves_well
+critic27 cut wood from the stack / the prayer book no  -> cannot_serve
+held00 draw water from the well / the bucket help  -> clearly_helps
+held01 draw water from the well / the dagger no  -> cannot_help
+held02 take honey from the hive / the torch help  -> detoured_use
+held03 take honey from the hive / the lute no  -> cannot_help
+held04 calm the angry boar / the turnip help  -> plausibly_helps
+held05 calm the angry boar / the quill no  -> cannot_help
+held06 climb the crag / the grappling hook help  -> clearly_helps
+held07 climb the crag / the bowl no  -> cannot_help
+held08 cut wood from the fallen birch / the saw help  -> serves_poorly
+held09 cut wood from the fallen birch / the bread knife help  -> makes_no_sense
+held10 cut wood from the fallen birch / the blanket no  -> cannot_serve
+held11 dig the turnip field / the pitchfork help  -> serves_well
+held12 dig the turnip field / the candle no  -> cannot_serve
+held13 mine the ore seam / the iron bar help  -> serves_well
+held14 mine the ore seam / the rope no  -> cannot_serve
+held15 fish in the stream / the basket help  -> cannot_serve
+held16 fish in the stream / the hammer no  -> cannot_serve
+held17 cut the meat from the boar / the axe help  -> serves_well
+held18 cut the meat from the boar / the cup no  -> cannot_serve
+held19 unlock the door / the key ring help  -> clearly_helps
+survey000 scale the grove house wall / the iron dagger help high -> clearly_helps
+survey001 scale the grove house wall / the short sword help high -> detoured_use
+survey002 scale the grove house wall / the pitchfork help high -> detoured_use
+survey003 scale the grove house wall / the lariat help medium -> clearly_helps
+survey004 scale the grove house wall / the tallow candle no  -> cannot_help
+survey005 scale the cooper's house wall / the hunting knife help high -> clearly_helps
+survey006 scale the cooper's house wall / the pair of bone dice no  -> cannot_help
+survey007 scale the cooper's house wall / the reed pipe no  -> cannot_help
+survey008 climb up the toe-hold trail / the mattock help medium -> clearly_helps
+survey009 climb up the toe-hold trail / the war pick help medium -> clearly_helps
+survey010 climb up the toe-hold trail / the rope help  -> clearly_helps
+survey011 climb up the toe-hold trail / the whetstone no  -> detoured_use
+survey012 climb down the toe-hold trail / the rope help low -> clearly_helps
+survey013 climb back down the well shaft / the rope help low -> clearly_helps
+survey014 climb back down the well shaft / the tally stick no  -> cannot_help
+survey015 make my way across the brambles / the machete help low -> clearly_helps
+survey016 make my way across the brambles / the scythe help medium -> clearly_helps
+survey017 make my way across the brambles / the walking staff help high -> clearly_helps
+survey018 make my way across the brambles / the round shield help high -> clearly_helps
+survey019 make my way across the brambles / the cavalry saber help medium -> detoured_use
+survey020 make my way across the brambles / the bone needle no  -> cannot_help
+survey021 make my way across the brambles / the tally stick no  -> detoured_use
+survey022 make my way across the mud wallow / the walking staff help medium -> clearly_helps
+survey023 make my way across the quicksand / the walking staff help medium -> clearly_helps
+survey024 make my way across the quicksand / the hunting spear help high -> clearly_helps
+survey025 make my way across the quicksand / the pair of bone dice no  -> cannot_help
+survey026 make my way across the thin ice / the walking staff help medium -> clearly_helps
+survey027 make my way across the thin ice / the tallow candle no  -> cannot_help
+survey028 make my way across the snow bridge / the tower shield help high -> detoured_use
+survey029 make my way across the fallen trunk / the walking staff help medium -> clearly_helps
+survey030 make my way across the scree / the walking staff help low -> clearly_helps
+survey031 make my way across the scree / the wooden spoon no  -> cannot_help
+survey032 make my way across the lianas / the machete help low -> clearly_helps
+survey033 make my way across the lianas / the hunting knife help medium -> clearly_helps
+survey034 make my way across the lianas / the heavy crossbow no  -> detoured_use
+survey035 slip in through the chimney / the rope help medium -> clearly_helps
+survey036 slip in through the chimney / the pair of bone dice no  -> cannot_help
+survey037 slip in through the window / the knife help medium -> clearly_helps
+survey038 slip in through the window / the chisel help medium -> detoured_use
+survey039 slip in through the window / the reed pipe no  -> cannot_help
+survey040 grab a smoked ham / the shepherd's crook help medium -> detoured_use
+survey041 steal a smoked ham / the pitchfork help medium -> detoured_use
+survey042 grab a smoked ham / the currycomb no  -> cannot_help
+survey043 gather a pear / the pruning hook help medium -> cannot_help
+survey044 gather a pear / the rake help high -> cannot_help
+survey045 gather a pear / the picking basket help medium -> clearly_helps
+survey046 gather a pear / the heavy crossbow no  -> cannot_help
+survey047 gather a mushroom / the knife help medium -> clearly_helps
+survey048 gather a thyme / the sickle help medium -> clearly_helps
+survey049 gather a wild honeycomb / the torch help medium -> detoured_use
+survey050 go through his pockets / the razor help medium -> cannot_help
+survey051 go through his pockets / the tower shield no  -> cannot_help
+survey052 catch the frog in my hands / the fishing net help low -> clearly_helps
+survey053 catch the butterfly in my hands / the winnowing fan help high -> detoured_use
+survey054 catch the butterfly in my hands / the warhammer no  -> cannot_help
+survey055 crush the scorpion / the mallet help low -> clearly_helps
+survey056 crush the scorpion / the round shield help medium -> cannot_help
+survey057 crush the scorpion / the fishing line no  -> cannot_help
+survey058 kill them where they lie / the hunting knife help low -> clearly_helps
+survey059 kill them where they lie / the belaying pin help medium -> clearly_helps
+survey060 kill them where they lie / the rope help medium -> clearly_helps
+survey061 kill them where they lie / the reed pipe no  -> cannot_help
+survey062 cut a pelt / the iron dagger help low -> serves_poorly
+survey063 cut a meat / the cleaver help low -> serves_poorly
+survey064 cut a meat / the sickle help medium -> serves_poorly
+survey065 cut a meat / the scythe help high -> makes_no_sense
+survey066 cut a pelt / the flint help medium -> cannot_serve
+survey067 cut a pelt / the wooden mallet no  -> makes_no_sense
+survey068 cut a pelt / the tally stick no  -> cannot_serve
+survey069 slay it / the hunting spear help low -> serves_poorly
+survey070 slay it / the pitchfork help medium -> serves_well
+survey071 slay it / the hammer help medium -> makes_no_sense
+survey072 slay it / the reed pipe no  -> cannot_serve
+survey073 fish the pond / the bone fish-hooks help low -> serves_poorly
+survey074 fish the pond / the fishing line help low -> serves_poorly
+survey075 fish the pond / the hunting spear help medium -> serves_well
+survey076 fish the pond / the pitchfork help high -> cannot_serve
+survey077 fish the stream / the picking basket help high -> cannot_serve
+survey078 fish the pond / the tallow candle no  -> cannot_serve
+survey079 fish the pond / the round shield no  -> cannot_serve
+survey080 work the copper seam for ore / the heavy pick help low -> serves_poorly
+survey081 work the copper seam for ore / the mattock help low -> serves_well
+survey082 work the copper seam for ore / the war pick help medium -> serves_poorly
+survey083 work the copper seam for ore / the chisel help high -> serves_well
+survey084 work the copper seam for ore / the hammer help high -> serves_well
+survey085 work the copper seam for ore / the wooden spoon no  -> makes_no_sense
+survey086 work the copper seam for ore / the fishing net no  -> cannot_serve
+survey087 work the copper seam for ore / the loaf of bread no  -> cannot_serve
+survey088 cut wood from the fallen oak / the saw help low -> serves_poorly
+survey089 cut wood from the fallen oak / the war axe help low -> serves_poorly
+survey090 cut wood from the fallen oak / the machete help medium -> serves_poorly
+survey091 cut wood from the fallen oak / the cleaver help high -> serves_well
+survey092 cut wood from the fallen oak / the hunting knife help high -> cannot_serve
+survey093 cut wood from the fallen oak / the whetstone no  -> cannot_serve
+survey094 cut wood from the fallen oak / the bone needle no  -> cannot_serve
+survey095 dig into the clay bank / the mattock help low -> serves_poorly
+survey096 dig into the clay bank / the hoe help medium -> serves_poorly
+survey097 dig into the clay bank / the baker's peel help medium -> serves_poorly
+survey098 dig into the clay bank / the round shield help high -> cannot_serve
+survey099 dig into the clay bank / the hunting knife help high -> cannot_serve
+survey100 dig into the clay bank / the watering pot help high -> serves_well
+survey101 dig into the clay bank / the reed pipe no  -> cannot_serve
+survey102 dig into the clay bank / the bone needle no  -> cannot_serve
+survey103 dig into the clay bank / the feather no  -> cannot_serve
+survey104 break the strongbox apart / the warhammer help low -> serves_poorly
+survey105 break the strongbox apart / the mattock help low -> serves_poorly
+survey106 break the strongbox apart / the cudgel help medium -> serves_poorly
+survey107 break the strongbox apart / the chisel help medium -> serves_poorly
+survey108 break the strongbox apart / the walking staff help high -> makes_no_sense
+survey109 break the strongbox apart / the fishing line no  -> cannot_serve
+survey110 break the strongbox apart / the tallow candle no  -> cannot_serve
+survey111 unlock and open the cooper's door / the awl help medium -> cannot_serve
+survey112 unlock and open the cooper's door / the lancet help medium -> cannot_serve
+survey113 unlock and open the cooper's door / the hook help medium -> cannot_serve
+survey114 unlock and open the cooper's door / the hoof pick help high -> cannot_serve
+survey115 unlock and open the cooper's door / the marlinspike help high -> cannot_serve
+survey116 unlock and open the cooper's door / the warhammer no  -> cannot_serve
+survey117 unlock and open the cooper's door / the tally stick no  -> cannot_serve
+survey118 unlock and open the cooper's door / the lute no  -> cannot_serve
+
+current: right side 144/167 = 86.2%
+  band, of labelled help cases: exact 15/83 = 18.1%   within one 48/83 = 57.8%
+  false refusals 20/107 = 18.7%   false passes 3/60 = 5.0%
+  by tree:
+    ItemAppropriateness       79/86 = 91.9%   false refusal 4/55   false pass 3/31
+    ToolSubstitution          65/81 = 80.2%   false refusal 16/52   false pass 0/29
+  by kind:
+    anchor                     3/3 = 100.0%   false refusal 0/0   false pass 0/3
+    improvised                47/65 = 72.3%   false refusal 18/65   false pass 0/0
+    obvious                  17/17 = 100.0%   false refusal 0/17   false pass 0/0
+    old                       46/48 = 95.8%   false refusal 2/25   false pass 0/23
+    refuse                    31/34 = 91.2%   false refusal 0/0   false pass 3/34
+  by family:
+    break                       6/7 = 85.7%   false refusal 1/5   false pass 0/2
+    climb                     14/15 = 93.3%   false refusal 0/10   false pass 1/5
+    cross                     18/20 = 90.0%   false refusal 0/14   false pass 2/6
+    cut                         5/7 = 71.4%   false refusal 2/5   false pass 0/2
+    cut_wood                    6/7 = 85.7%   false refusal 1/5   false pass 0/2
+    dig                         7/9 = 77.8%   false refusal 2/6   false pass 0/3
+    fish                        5/7 = 71.4%   false refusal 2/5   false pass 0/2
+    intrude                    5/5 = 100.0%   false refusal 0/3   false pass 0/2
+    kill                       4/4 = 100.0%   false refusal 0/3   false pass 0/1
+    mine                       8/8 = 100.0%   false refusal 0/5   false pass 0/3
+    old                       46/48 = 95.8%   false refusal 2/25   false pass 0/23
+    slay                        3/4 = 75.0%   false refusal 1/3   false pass 0/1
+    take                       9/12 = 75.0%   false refusal 3/9   false pass 0/3
+    tiny                        5/6 = 83.3%   false refusal 1/4   false pass 0/2
+    unlock                      3/8 = 37.5%   false refusal 5/5   false pass 0/3
+  by group:
+    anchor                     3/3 = 100.0%   false refusal 0/0   false pass 0/3
+    blade                     19/26 = 73.1%   false refusal 7/26   false pass 0/0
+    bludgeon                    8/9 = 88.9%   false refusal 1/6   false pass 0/3
+    cord                      12/13 = 92.3%   false refusal 1/10   false pass 0/3
+    light                      5/5 = 100.0%   false refusal 0/1   false pass 0/4
+    missile                     1/2 = 50.0%   false refusal 0/0   false pass 1/2
+    old                       46/48 = 95.8%   false refusal 2/25   false pass 0/23
+    pick                       7/7 = 100.0%   false refusal 0/7   false pass 0/0
+    pole                      15/18 = 83.3%   false refusal 3/18   false pass 0/0
+    shield                      4/6 = 66.7%   false refusal 2/4   false pass 0/2
+    spike                       6/9 = 66.7%   false refusal 3/6   false pass 0/3
+    trifle                    15/17 = 88.2%   false refusal 0/0   false pass 2/17
+    vessel                      3/4 = 75.0%   false refusal 1/4   false pass 0/0
+  stability: log-odds margin under 1 on 6/167 cases; median |margin| 13.27
+  cost: 2.00 model calls a tool use, 445 user-message tokens, 6.40 s a verdict request (warm cache)

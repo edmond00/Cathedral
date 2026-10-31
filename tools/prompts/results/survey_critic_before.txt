@@ -1,0 +1,45 @@
+
+before: right side 657/835 = 78.7%
+  band, of labelled help cases: exact 65/415 = 15.7%   within one 192/415 = 46.3%
+  false refusals 163/535 = 30.5%   false passes 15/300 = 5.0%
+  by tree:
+    ItemAppropriateness     347/430 = 80.7%   false refusal 74/275   false pass 9/155
+    ToolSubstitution        310/405 = 76.5%   false refusal 89/260   false pass 6/145
+  by kind:
+    anchor                   15/15 = 100.0%   false refusal 0/0   false pass 0/15
+    improvised              188/325 = 57.8%   false refusal 137/325   false pass 0/0
+    obvious                   81/85 = 95.3%   false refusal 4/85   false pass 0/0
+    old                     218/240 = 90.8%   false refusal 22/125   false pass 0/115
+    refuse                  155/170 = 91.2%   false refusal 0/0   false pass 15/170
+  by family:
+    break                     27/35 = 77.1%   false refusal 7/25   false pass 1/10
+    climb                     63/75 = 84.0%   false refusal 12/50   false pass 0/25
+    cross                    83/100 = 83.0%   false refusal 9/70   false pass 8/30
+    cut                       26/35 = 74.3%   false refusal 9/25   false pass 0/10
+    cut_wood                  33/35 = 94.3%   false refusal 2/25   false pass 0/10
+    dig                       33/45 = 73.3%   false refusal 12/30   false pass 0/15
+    fish                      24/35 = 68.6%   false refusal 11/25   false pass 0/10
+    intrude                   20/25 = 80.0%   false refusal 4/15   false pass 1/10
+    kill                      13/20 = 65.0%   false refusal 7/15   false pass 0/5
+    mine                      32/40 = 80.0%   false refusal 7/25   false pass 1/15
+    old                     218/240 = 90.8%   false refusal 22/125   false pass 0/115
+    slay                      15/20 = 75.0%   false refusal 5/15   false pass 0/5
+    take                      36/60 = 60.0%   false refusal 24/45   false pass 0/15
+    tiny                      17/30 = 56.7%   false refusal 13/20   false pass 0/10
+    unlock                    17/40 = 42.5%   false refusal 19/25   false pass 4/15
+  by group:
+    anchor                   15/15 = 100.0%   false refusal 0/0   false pass 0/15
+    blade                    85/130 = 65.4%   false refusal 45/130   false pass 0/0
+    bludgeon                  30/45 = 66.7%   false refusal 12/30   false pass 3/15
+    cord                      55/65 = 84.6%   false refusal 9/50   false pass 1/15
+    light                     22/25 = 88.0%   false refusal 3/5   false pass 0/20
+    missile                    6/10 = 60.0%   false refusal 0/0   false pass 4/10
+    old                     218/240 = 90.8%   false refusal 22/125   false pass 0/115
+    pick                     35/35 = 100.0%   false refusal 0/35   false pass 0/0
+    pole                      65/90 = 72.2%   false refusal 25/90   false pass 0/0
+    shield                    16/30 = 53.3%   false refusal 14/20   false pass 0/10
+    spike                     23/45 = 51.1%   false refusal 21/30   false pass 1/15
+    trifle                    79/85 = 92.9%   false refusal 0/0   false pass 6/85
+    vessel                     8/20 = 40.0%   false refusal 12/20   false pass 0/0
+  stability: 43/167 cases change side between seeds
+  cost: 1.54 model calls a tool use, 218 user-message tokens, 0.93 s a verdict request (warm cache)

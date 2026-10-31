@@ -5561,8 +5561,8 @@ public class NarrativeController
                 return;
             }
 
-            // Lower-cased with an article, never the bare display name: the critic repeats whatever it is
-            // shown, and its reason is read into the refusal ("I think Hairpin is too narrow").
+            // Lower-cased with an article, never the bare display name, which reads to the critic as a
+            // proper name ("Hairpin").
             string itemContext = $"{item.WithArticle()} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
@@ -5587,6 +5587,7 @@ public class NarrativeController
                 var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
                 var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
                 criticContext.CombinedItemContext = itemContext;
+                criticContext.TargetDescription   = CriticTarget.Describe(_scene, action.PreselectedOutcome?.Target);
 
                 // A required verb asks a different question: not "does this beat bare hands" (bare
                 // hands are not an option there) but "can this do the work of the tool this needs".
