@@ -11,11 +11,11 @@ using Cathedral.Terminal.Utils;
 namespace Cathedral.Game
 {
     /// <summary>
-    /// One search, place by place: every vertex the avatar could set out for is checked in turn —
-    /// is there a road to it, and would the will's target be met there on arrival
-    /// (<see cref="Cathedral.Game.Scene.ActionPathPlanner.Plan"/> from the entry area at the place's
-    /// own arrival hour)? The controller does the checking (it alone can build a place's scene); this
-    /// holds the queue, the progress and what was found.
+    /// One search, place by place, from the nearest to the farthest by road: would the will's target
+    /// be met there on arrival (<see cref="Cathedral.Game.Scene.ActionPathPlanner.Plan"/> from the
+    /// entry area at the place's own arrival hour)? It stops at the first place that will do, which is
+    /// therefore the nearest. The controller does the checking (it alone can build a place's scene);
+    /// this holds the queue, the progress and the place found.
     /// </summary>
     public sealed class WillSearch
     {
@@ -23,7 +23,7 @@ namespace Cathedral.Game
         public string ModusMentisName { get; }
         public WillTarget Target { get; }
 
-        /// <summary>Every vertex to check, nearest by straight line first so the box reads outward.</summary>
+        /// <summary>Every vertex there is a road to, nearest by road first (fewest cost, then lowest vertex).</summary>
         public IReadOnlyList<int> Candidates { get; }
 
         /// <summary>How many candidates have been checked.</summary>
@@ -32,12 +32,16 @@ namespace Cathedral.Game
         /// <summary>The vertex last checked (the box's "checking" line); -1 before the first.</summary>
         public int Current { get; private set; } = -1;
 
-        /// <summary>Every place where the target would be met: its vertex and the length of the road to it in cells.</summary>
-        public List<(int Vertex, int Cells)> Found { get; } = new();
+        /// <summary>The place where the target would be met — the first, so the nearest — or -1.</summary>
+        public int Found { get; private set; } = -1;
+
+        /// <summary>When <see cref="Found"/> was found: the box holds on it a moment before the trip is planned.</summary>
+        public DateTime FoundAt { get; private set; }
 
         public DateTime StartedAt { get; } = DateTime.UtcNow;
 
-        public bool IsDone => Checked >= Candidates.Count;
+        /// <summary>Nothing left to check: a place was found, or every candidate has been read.</summary>
+        public bool IsDone => Found >= 0 || Checked >= Candidates.Count;
 
         public WillSearch(PartyMember member, string modusMentisName, WillTarget target, IReadOnlyList<int> candidates)
         {
@@ -50,17 +54,13 @@ namespace Cathedral.Game
         /// <summary>The next vertex to check, or -1 when every one has been.</summary>
         public int Next() => IsDone ? -1 : Candidates[Checked];
 
-        /// <summary>Records the outcome of checking <see cref="Next"/>: the road's length when the target is met there, else null.</summary>
-        public void Record(int vertex, int? cells)
+        /// <summary>Records the outcome of checking <see cref="Next"/>: whether the target is met there.</summary>
+        public void Record(int vertex, bool met)
         {
             Current = vertex;
             Checked++;
-            if (cells is int c) Found.Add((vertex, c));
+            if (met) { Found = vertex; FoundAt = DateTime.UtcNow; }
         }
-
-        /// <summary>The nearest place found (fewest cells of road, then lowest vertex), or null.</summary>
-        public (int Vertex, int Cells)? Nearest
-            => Found.Count == 0 ? null : Found.OrderBy(f => f.Cells).ThenBy(f => f.Vertex).First();
     }
 
     /// <summary>
@@ -133,15 +133,11 @@ namespace Cathedral.Game
             }
             _terminal.Text(inner + barW, _boxY + 5, count, Config.TravelUI.ValueColor, bg);
 
-            string checking = currentName == null ? "setting out in thought…" : $"checking {currentName}";
+            bool hit = search.Found >= 0;
+            string checking = currentName == null ? "setting out in thought…" : hit ? "" : $"checking {currentName}";
             _terminal.Text(inner, _boxY + 6, Truncate(checking, innerW), Config.TravelUI.LabelColor, bg);
-            string found = search.Found.Count switch
-            {
-                0 => "nothing found yet",
-                1 => "1 place found",
-                int n => $"{n} places found",
-            };
-            _terminal.Text(inner, _boxY + 7, found, search.Found.Count > 0 ? Config.TravelUI.ValueColor : Config.TravelUI.LabelColor, bg);
+            string found = hit ? $"found: {currentName}" : "nearest first, by road";
+            _terminal.Text(inner, _boxY + 7, Truncate(found, innerW), hit ? Config.TravelUI.ValueAccentColor : Config.TravelUI.LabelColor, bg);
 
             _cancelY = _boxY + BoxH - 2;
             _cancelX = _boxX + (BoxW - CancelLabel.Length) / 2;

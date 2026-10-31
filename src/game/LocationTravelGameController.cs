@@ -2503,46 +2503,79 @@ public class LocationTravelGameController : IDisposable
         var graph = _interface.GetTravelGraph();
         if (avatar < 0 || graph == null || _core.Terminal == null) return;
 
-        var here = graph.GetNodePosition(avatar);
-        var candidates = _interface.EnumerateReachableVertices()
-            .OrderBy(v => System.Numerics.Vector3.DistanceSquared(graph.GetNodePosition(v), here))
-            .ThenBy(v => v)
-            .ToList();
+        // Nearest by road, not by eye: one Dijkstra over the travel graph from the avatar, on the
+        // costs the trip itself will be planned on. A place with no road is never checked at all.
+        var inReach = _interface.EnumerateReachableVertices().ToHashSet();
+        var cost = RoadCosts(graph, avatar, inReach);
+        var candidates = cost.Keys.OrderBy(v => cost[v]).ThenBy(v => v).ToList();
         _willSearch = new WillSearch(member, mm.DisplayName, target, candidates);
         _willSearchRenderer ??= new WillSearchRenderer(_core.Terminal);
         _travelInfoRenderer?.Erase();
         _interface.HandleVertexUnhovered();
-        Console.WriteLine($"LocationTravelGameController: will search over {candidates.Count} place(s) within reach");
+        Console.WriteLine($"LocationTravelGameController: will search over {candidates.Count} place(s) with a road, "
+                        + $"of {inReach.Count} within reach");
     }
 
     /// <summary>
-    /// One frame of the search: checks places until the frame's budget is spent, never faster than
-    /// the box can be read (<see cref="Config.TravelUI.WillSearchMinSeconds"/>, nothing under
-    /// <c>--playground</c>), then draws the box. The last check proposes the journey.
+    /// The cost of the cheapest road from <paramref name="from"/> to each of <paramref name="wanted"/>
+    /// that has one: Dijkstra over the travel graph's own move costs (the ones A* plans the trip on),
+    /// stopped once every wanted vertex is settled. Unreached vertices are absent.
+    /// </summary>
+    private static Dictionary<int, float> RoadCosts(Cathedral.Pathfinding.IPathGraph graph, int from, HashSet<int> wanted)
+    {
+        var settled = new Dictionary<int, float>();
+        var best = new Dictionary<int, float> { [from] = 0f };
+        var queue = new PriorityQueue<int, float>();
+        queue.Enqueue(from, 0f);
+        int left = wanted.Count;
+        while (left > 0 && queue.TryDequeue(out int v, out float d))
+        {
+            if (settled.ContainsKey(v)) continue;
+            settled[v] = d;
+            if (wanted.Contains(v)) left--;
+            foreach (int n in graph.GetConnectedNodes(v))
+            {
+                if (settled.ContainsKey(n)) continue;
+                float nd = d + graph.GetMoveCost(v, n);
+                if (best.TryGetValue(n, out float old) && old <= nd) continue;
+                best[n] = nd;
+                queue.Enqueue(n, nd);
+            }
+        }
+        return settled.Where(kv => wanted.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    /// <summary>
+    /// One frame of the search: checks places, nearest first, until the frame's budget is spent —
+    /// never faster than one place per <see cref="Config.TravelUI.WillSearchMinSecondsPerPlace"/>
+    /// (nothing under <c>--playground</c>) — and stops at the first that will do. The box then holds on
+    /// it for <see cref="Config.TravelUI.WillSearchFoundHoldSeconds"/> before the trip is planned.
     /// </summary>
     private void TickWillSearch()
     {
         var search = _willSearch!;
-        var graph = _interface.GetTravelGraph();
-        int avatar = _interface.GetAvatarVertex();
+        bool instant = Config.AnimationsAreInstant;
 
-        // Paced: by now, this share of the places may have been checked.
-        double minSeconds = Config.AnimationsAreInstant ? 0 : Config.TravelUI.WillSearchMinSeconds;
-        double elapsed = (DateTime.UtcNow - search.StartedAt).TotalSeconds;
-        int allowed = minSeconds <= 0 ? search.Candidates.Count
-            : (int)Math.Ceiling(search.Candidates.Count * Math.Min(1.0, elapsed / minSeconds));
-        var budget = System.Diagnostics.Stopwatch.StartNew();
-        bool first = true;
-        while (!search.IsDone && search.Checked < allowed
-               && (first || budget.ElapsedMilliseconds < Config.TravelUI.WillSearchFrameBudgetMs))
+        if (!search.IsDone)
         {
-            first = false;
-            int v = search.Next();
-            search.Record(v, WillTargetMetAt(search, v, graph, avatar));
+            double perPlace = instant ? 0 : Config.TravelUI.WillSearchMinSecondsPerPlace;
+            double elapsed = (DateTime.UtcNow - search.StartedAt).TotalSeconds;
+            int allowed = perPlace <= 0 ? search.Candidates.Count : (int)(elapsed / perPlace) + 1;
+            var budget = System.Diagnostics.Stopwatch.StartNew();
+            bool first = true;
+            while (!search.IsDone && search.Checked < allowed
+                   && (first || budget.ElapsedMilliseconds < Config.TravelUI.WillSearchFrameBudgetMs))
+            {
+                first = false;
+                int v = search.Next();
+                search.Record(v, WillTargetMetAt(search, v));
+            }
         }
         MarkSearchedCell(search.Current);
 
-        if (search.IsDone)
+        // Over: nothing found, or the place found has been shown long enough.
+        double hold = instant ? 0 : Config.TravelUI.WillSearchFoundHoldSeconds;
+        if (search.IsDone && (search.Found < 0 || (DateTime.UtcNow - search.FoundAt).TotalSeconds >= hold))
         {
             FinishWillSearch();
             return;
@@ -2551,30 +2584,26 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// The road's length to <paramref name="vertex"/> in cells when the search's target would be met
-    /// there on arrival — planned from the entry area, at the place's own arrival hour, by the member
-    /// whose will it is — else null (no road, or not in that place).
+    /// Whether the search's target would be met at <paramref name="vertex"/> on arrival — planned from
+    /// the entry area, at the place's own arrival hour, by the member whose will it is. The road to it
+    /// was settled when the candidates were ordered.
     /// </summary>
-    private int? WillTargetMetAt(WillSearch search, int vertex, Cathedral.Pathfinding.IPathGraph? graph, int avatar)
+    private bool WillTargetMetAt(WillSearch search, int vertex)
     {
-        if (graph == null || _travelAStar == null || avatar < 0) return null;
-        var road = _travelAStar.FindPath(graph, avatar, vertex);
-        if (road == null || road.Nodes.Count < 2) return null;
         try
         {
             var scene = BuildSceneForLocation(vertex, out _, applyDepletion: true, probe: true);
-            if (scene == null) return null;
+            if (scene == null) return false;
             var entry = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene) ?? scene.AllAreas.FirstOrDefault();
-            if (entry == null) return null;
+            if (entry == null) return false;
             var period = Config.Debug.ForcedPeriod ?? scene.ArrivalPeriod;
-            var plan = Cathedral.Game.Scene.ActionPathPlanner.Plan(scene, new PoV(entry, period), search.Member,
-                                                                   WillTargets.Of(search.Target));
-            return plan != null ? road.Nodes.Count - 1 : null;
+            return Cathedral.Game.Scene.ActionPathPlanner.Plan(scene, new PoV(entry, period), search.Member,
+                                                               WillTargets.Of(search.Target)) != null;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"LocationTravelGameController: will search could not read vertex {vertex}: {ex.Message}");
-            return null;
+            return false;
         }
         finally
         {
@@ -2584,8 +2613,9 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>
-    /// The search is over: propose the journey to the nearest place found — planned as though it had
-    /// been clicked, with the TRAVEL box saying why — or say that nowhere within reach will do.
+    /// The search is over: propose the journey to the place found — the first, so the nearest by road —
+    /// planned as though it had been clicked, with the TRAVEL box saying why; or say that nowhere
+    /// within reach will do.
     /// </summary>
     private void FinishWillSearch()
     {
@@ -2593,11 +2623,12 @@ public class LocationTravelGameController : IDisposable
         _willSearch = null;
         MarkSearchedCell(-1);
         _willSearchRenderer?.Erase();
-        Console.WriteLine($"LocationTravelGameController: will search done — \"{search.Target.Purpose}\" met in "
-                        + $"{search.Found.Count} of {search.Candidates.Count} place(s) in {(DateTime.UtcNow - search.StartedAt).TotalSeconds:0.00}s"
-                        + (search.Found.Count > 0 ? $": {string.Join(", ", search.Found.Select(f => $"{f.Vertex}({f.Cells})"))}" : ""));
+        Console.WriteLine($"LocationTravelGameController: will search done — \"{search.Target.Purpose}\" "
+                        + (search.Found >= 0 ? $"met at vertex {search.Found}, place {search.Checked} of {search.Candidates.Count}"
+                                             : $"met nowhere in {search.Candidates.Count} place(s)")
+                        + $", in {(DateTime.UtcNow - search.StartedAt).TotalSeconds:0.00}s");
 
-        if (search.Nearest is not { } best)
+        if (search.Found < 0)
         {
             _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
             _travelInfoRenderer?.ShowTransientMessage($"Nowhere within reach to {search.Target.Purpose}.");
@@ -2605,12 +2636,10 @@ public class LocationTravelGameController : IDisposable
         }
 
         ClearTravelPlan();
-        ToggleWaypoint(best.Vertex);
-        if (_travelPlanner?.FinalDestination != best.Vertex) return;
-        _willProposalVertex = best.Vertex;
-        int others = search.Found.Count - 1;
-        _willProposal = $"{search.ModusMentisName}: {search.Target.Purpose}"
-                      + (others > 0 ? $" (+{others} more)" : "");
+        ToggleWaypoint(search.Found);
+        if (_travelPlanner?.FinalDestination != search.Found) return;
+        _willProposalVertex = search.Found;
+        _willProposal = $"{search.ModusMentisName}: {search.Target.Purpose}";
     }
 
     /// <summary>Ends a will's search without proposing anything.</summary>
@@ -2651,7 +2680,7 @@ public class LocationTravelGameController : IDisposable
     public IReadOnlyList<string> CliWillSearchLines()
     {
         if (_willSearch is { } w)
-            return new[] { $"will-search state=running checked={w.Checked}/{w.Candidates.Count} found={w.Found.Count} highlighted={_searchedCell} purpose=\"{w.Target.Purpose}\"" };
+            return new[] { $"will-search state=running checked={w.Checked}/{w.Candidates.Count} found={w.Found} highlighted={_searchedCell} purpose=\"{w.Target.Purpose}\"" };
         if (_willProposal != null && _travelPlanner?.HasWaypoints == true && _travelPlanner.FinalDestination == _willProposalVertex)
             return new[] { $"will-search state=proposed vertex={_willProposalVertex} name={GetLocationNameAtVertex(_willProposalVertex)} text={_willProposal}" };
         return new[] { "will-search state=none" };

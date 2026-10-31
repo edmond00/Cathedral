@@ -1588,11 +1588,14 @@ public static class Config
         public const double NoticeSeconds = 4.0;
 
         /// <summary>
-        /// A will's search over the places within reach (the Memory tab's "Wants" rows) takes at least
-        /// this long, however quickly the places are read, so its progress box can be seen to run.
-        /// Nothing under <c>--playground</c> (<see cref="AnimationsAreInstant"/>).
+        /// A will's search (the Memory tab's "Wants" rows) reads at most one place per this many
+        /// seconds, however quickly the places are read, so the place under check can be seen beating
+        /// on the sphere. Nothing under <c>--playground</c> (<see cref="AnimationsAreInstant"/>).
         /// </summary>
-        public const double WillSearchMinSeconds = 1.5;
+        public const double WillSearchMinSecondsPerPlace = 0.08;
+
+        /// <summary>How long the box holds on the place found before the trip to it is planned.</summary>
+        public const double WillSearchFoundHoldSeconds = 0.8;
 
         /// <summary>Milliseconds a frame may spend reading places for a will's search (at least one a frame).</summary>
         public const int WillSearchFrameBudgetMs = 12;
