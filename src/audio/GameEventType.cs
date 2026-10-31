@@ -45,6 +45,14 @@ public enum GameEventType
     /// Music: extra-long inter-phrase pause (contemplative breath ×3).
     /// </summary>
     NeutralOutcome,
+
+    /// <summary>
+    /// A blow lands in a fight: the Continue that confirms a successful attack, the player's or an
+    /// enemy's. Louder and shorter than any other event, so the moment a wound is dealt is felt.
+    /// SFX: a struck crash, kick, war drum, snare, cymbal and a low power chord all at once.
+    /// Music: none (the fight already carries the tension). Visual: the hardest dither pulse.
+    /// </summary>
+    Hit,
 }
 
 /// <summary>

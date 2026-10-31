@@ -1425,6 +1425,21 @@ internal sealed class LegacyAmbianceEngine : IMusicEngine
                 });
                 break;
             }
+
+            case GameEventType.Hit:
+            {
+                // A blow lands: a low sawtooth power chord (A1+E2+A2) at full velocity, cut short.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSawtooth);
+                SendNoteOn(ch, 33, 127);
+                SendNoteOn(ch, 40, 127);
+                SendNoteOn(ch, 45, 127);
+                _ = Task.Run(() =>
+                {
+                    Thread.Sleep(160);
+                    SendNoteOff(ch, 33); SendNoteOff(ch, 40); SendNoteOff(ch, 45);
+                });
+                break;
+            }
         }
     }
 

@@ -111,6 +111,8 @@ namespace Cathedral.Glyph
             new(DitherMode.Noise,   2, 1), // PositiveOutcome   — success
             new(DitherMode.Noise,   2, 1), // NegativeOutcome   — failure
             new(DitherMode.Noise,   2, 1), // NeutralOutcome
+            // Hit — a blow lands: two tones in coarse blocks, the frame shattered for a beat.
+            new(DitherMode.Bayer4Mono, 2, 4, 0.18f),
         };
 
         /// <summary>Whether event pulses fire at all. F/G/H tune the resting state regardless.</summary>
@@ -241,11 +243,12 @@ namespace Cathedral.Glyph
             if (_pulseRemaining > 0f) _pulseRemaining -= deltaSeconds;
         }
 
-        /// <summary>Outcomes outrank clicks, which outrank hovers.</summary>
+        /// <summary>A hit outranks outcomes, which outrank clicks, which outrank hovers.</summary>
         private static int PulsePriority(int evt) => (GameEventType)evt switch
         {
             GameEventType.SmallInteraction => 0,
             GameEventType.StrongInteraction => 1,
+            GameEventType.Hit => 3,
             _ => 2
         };
 

@@ -1582,9 +1582,9 @@ public class FightModeAdapter
     private void FinishAttackResolution(Fighter active)
     {
         _dice.Hide();
-        _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
         if (_state.PendingSkill == null || _state.PendingTarget == null || _state.DiceFinalValues == null)
         {
+            _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
             _state.Phase = TurnPhase.TurnEnding;
             AfterActionUpdate();
             return;
@@ -1597,6 +1597,7 @@ public class FightModeAdapter
         // parrying. The sixes become an effect instead.
         if (_state.PendingTarget == active)
         {
+            _sfx?.Invoke(GameEventType.NeutralOutcome); // box closes
             var skill = _state.PendingSkill;
             int sixes = _state.DiceFinalValues.Count(v => v == 6);
             var rolled = skill.CreateRolledEffect(active, sixes);
@@ -1624,7 +1625,13 @@ public class FightModeAdapter
             state: _state,
             defenseDiceValues: _state.DiceSecondaryFinalValues);
 
-        if (result.IsHit && result.Wound != null)
+        // The box closes on a blow landing, whoever struck it: the Continue that confirms a wound is
+        // the loudest, hardest moment of the fight, a crash and a shattered frame for a fraction of
+        // a second. A miss closes it as quietly as ever.
+        bool landed = result.IsHit && result.Wound != null;
+        _sfx?.Invoke(landed ? GameEventType.Hit : GameEventType.NeutralOutcome);
+
+        if (landed)
         {
             FightResolver.ApplyWound(_state.PendingTarget, result.Wound);
             _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Wound);
