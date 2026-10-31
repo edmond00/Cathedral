@@ -706,6 +706,16 @@ public sealed class CliDriver
             CliMode.Emit($"  click want {want}  (seek this target in every place within reach)");
             any = true;
         }
+        if (_game.CliWillButtonCell != null)
+        {
+            CliMode.Emit("  click will-button  (the ◎: every will the party holds, and what each wants)");
+            any = true;
+        }
+        if (_game.CliWillPickerLines() is { Count: > 1 } picker && picker[1].Contains("state=open"))
+        {
+            CliMode.Emit("  click will <mm-id>  (select a will in the picker)  ·  click picker up|down|close");
+            any = true;
+        }
         if (_game.CurrentMode == GameMode.WorldView && _game.CliWillSearchLines()[0].Contains("state=running"))
         {
             CliMode.Emit("  click search-cancel  (end the will's search)");
@@ -1000,6 +1010,25 @@ public sealed class CliDriver
                 // every place within reach, and proposes the journey to the nearest.
                 if (a.Length < 2 || !int.TryParse(a[1], out int want)) { CliMode.Emit("error: click want <n>"); return; }
                 Report(_game.CliClickWant(want), $"pressed want {want}");
+                return;
+            }
+            case "will-button":
+                // The ◎ beside the ☰ on the world map: the will picker.
+                Report(_game.CliPress(_game.CliWillButtonCell, "will button"), "pressed the will button");
+                return;
+            case "will":
+            {
+                // A will's row in the open picker, by id (scrolled into view first).
+                if (a.Length < 2) { CliMode.Emit("error: click will <mm-id>"); return; }
+                Report(_game.CliPress(_game.CliPickerWillCell(a[1]), $"will \"{a[1]}\" in the picker"), $"selected will {a[1]}");
+                return;
+            }
+            case "picker":
+            {
+                // The picker's ▲ / ▼ rows and its CLOSE.
+                string which = a.Length > 1 ? a[1].ToLowerInvariant() : "";
+                if (which is not ("up" or "down" or "close")) { CliMode.Emit("error: click picker up|down|close"); return; }
+                Report(_game.CliPress(_game.CliPickerCell(which), $"picker {which}"), $"pressed picker {which}");
                 return;
             }
             case "search-cancel":

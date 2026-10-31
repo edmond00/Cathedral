@@ -184,6 +184,7 @@ so, and says why.
 | Fighting | cancels the armed skill or move target; pauses when nothing is armed |
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
+| WorldView, while the will picker is open | closes the picker (its CLOSE button) |
 | WorldView, while a will's search runs | cancels the search (its CANCEL button); pauses otherwise, as above |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
 | ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, B, from any phase the menu opens over but a fight) — that phase |
@@ -877,6 +878,18 @@ the TRAVEL box says why; nowhere is a transient notice. The place being read bea
 (`MicroworldInterface.HighlightSearchedCell`, its own glyph lit and enlarged), restored as the next is read. Escape and CANCEL end it, and so does
 leaving the map. `cli/system/will_search_world.cli` walks the proposed trip and asserts the will has a
 way there.
+
+**The ◎ beside the ☰ is the same search without the protagonist screen** (`WillPickerBox`, a second
+`MenuButton` offset four cells left). It is up on the interactive world map whenever the party holds a
+will, and not under any other modal box or a running search. Its box lists **every will the party
+holds** — the protagonist's, then each companion's, by name — down the left, and the selected one's
+wants down the right as buttons. A party can hold dozens of wills, so the left list is what scrolls
+(eighteen rows; ▲ / ▼ rows and the wheel, which the picker takes instead of the camera), and a will
+holds at most five wants, so the right pane never does. A want closes the picker and calls
+`StartWillSearch`, which is what the Memory tab's rows reach after closing the screen
+(`BeginWillSearch`). The picker is modal: a click outside it does nothing, and world clicks are
+ignored under it. `cli/system/will_picker.cli` (`click will-button`, `click will <id>`,
+`click picker up|down|close`, `click want <n>`, `inspect will-picker`).
 
 **Every childhood path leaves a general thinker** (rule C3, `ReminescenceRuleValidator`, fatal): a will
 thinks only toward its targets, so a childhood granting none but wills would leave a body unable to

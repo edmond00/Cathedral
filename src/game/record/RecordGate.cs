@@ -510,6 +510,15 @@ public sealed class RecordGate
                 return int.TryParse(arg, out int wn) && _game.CliWantCell(wn) is { } wc2
                     ? At(wc2, $"want {wn}") : Fail($"no clickable want \"{arg}\" on screen");
 
+            case "will-button":
+                return _game.CliWillButtonCell is { } wb ? At(wb, "will button") : Fail("no will button on screen");
+
+            case "will":
+                return _game.CliPickerWillCell(arg) is { } pw ? At(pw, $"will {arg}") : Fail($"no will \"{arg}\" in the picker");
+
+            case "picker":
+                return _game.CliPickerCell(arg.ToLowerInvariant()) is { } pc ? At(pc, $"picker {arg}") : Fail($"no picker {arg} on screen");
+
             case "search-cancel":
                 return _game.CliWillSearchCancelCell is { } sc2 ? At(sc2, "CANCEL") : Fail("no will's search on screen");
 

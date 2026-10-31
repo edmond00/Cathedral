@@ -153,6 +153,11 @@ public class LocationTravelGameController : IDisposable
     // way, its box, and the journey it proposed with the line that says why.
     private WillSearch? _willSearch;
     private WillSearchRenderer? _willSearchRenderer;
+
+    // The world map's shortcut to the same search: the corner button beside the ☰, and the box it
+    // opens, listing every will the party holds and what each wants.
+    private MenuButton? _willButton;
+    private WillPickerBox? _willPicker;
     private string? _willProposal;
     private int _willProposalVertex = -1;
     private Cathedral.Pathfinding.AStar? _travelAStar;
@@ -1061,6 +1066,7 @@ public class LocationTravelGameController : IDisposable
             _travelInfoRenderer = new TravelInfoRenderer(_core.Terminal);
             _cameraArrowPad     = new CameraArrowPad(_core.Terminal);
             _menuButton         = new MenuButton(_core.Terminal);
+            _willButton         = new MenuButton(_core.Terminal, " ◎ ", rightOffset: 4);
         }
 
         // Show main menu on startup
@@ -1113,6 +1119,62 @@ public class LocationTravelGameController : IDisposable
             _menuButton.Draw(hovered: _menuButton.Contains(_mouseCellX, _mouseCellY));
         else
             _menuButton.Hide();
+
+        if (_willButton == null) return;
+        if (WillButtonShown)
+            _willButton.Draw(hovered: _willButton.Contains(_mouseCellX, _mouseCellY));
+        else
+            _willButton.Hide();
+    }
+
+    /// <summary>
+    /// The ◎ beside the ☰: on the interactive world map, with nothing modal over it and no search
+    /// already running, while somebody in the party holds a will.
+    /// </summary>
+    private bool WillButtonShown =>
+        _currentMode == GameMode.WorldView && _companionDeathBox == null && _companionRemovalRenderer == null
+        && _travelRoutinesBox == null && _willSearch == null && _willPicker == null
+        && _protagonist != null
+        && (_protagonist.LearnedModiMentis.Any(m => m.IsWill)
+            || _protagonist.CompanionParty.Any(c => c.LearnedModiMentis.Any(m => m.IsWill)));
+
+    /// <summary>
+    /// Every will the party holds, for the picker: the protagonist's first, then each companion's,
+    /// each by name, with its targets' purposes read once (a will builds its targets afresh per read).
+    /// </summary>
+    private List<WillPickerBox.Entry> PartyWills()
+    {
+        var list = new List<WillPickerBox.Entry>();
+        if (_protagonist == null) return list;
+        void Add(PartyMember member, bool own)
+        {
+            foreach (var mm in member.LearnedModiMentis.Where(m => m.IsWill).OrderBy(m => m.DisplayName, StringComparer.Ordinal))
+                if (mm.Will is { } will)
+                    list.Add(new WillPickerBox.Entry(member, mm.ModusMentisId,
+                        own ? mm.DisplayName : $"{mm.DisplayName} · {member.DisplayName}",
+                        will.Select(t => t.Purpose).ToList()));
+        }
+        Add(_protagonist, own: true);
+        foreach (var companion in _protagonist.CompanionParty) Add(companion, own: false);
+        return list;
+    }
+
+    /// <summary>The ◎ pressed: the picker goes up over the map, its first will selected.</summary>
+    private void OpenWillPicker()
+    {
+        if (_core.Terminal == null) return;
+        _interface.HandleVertexUnhovered();
+        _willPicker = new WillPickerBox(_core.Terminal, PartyWills());
+        Console.WriteLine($"LocationTravelGameController: will picker opened ({_willPicker.Entries.Count} will(s))");
+    }
+
+    /// <summary>Takes the picker down, giving the world back its clicks.</summary>
+    private void CloseWillPicker()
+    {
+        if (_willPicker == null) return;
+        _willPicker.Erase();
+        _willPicker = null;
+        Console.WriteLine("LocationTravelGameController: will picker closed");
     }
 
     private bool MenuButtonShown => PausedPhaseName(_currentMode) != null && _companionDeathBox == null;
@@ -1400,7 +1462,11 @@ public class LocationTravelGameController : IDisposable
                 if (CameraPadActive) _cameraArrowPad!.Draw();
                 TickWillSearch();
             }
-            else RenderWorldViewUI();
+            else
+            {
+                RenderWorldViewUI();
+                _willPicker?.Draw();
+            }
         }
 
         // Render travel progress box and advance flash animation during Traveling.
@@ -1671,6 +1737,39 @@ public class LocationTravelGameController : IDisposable
         {
             _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
             PressMenuButton();
+            return;
+        }
+
+        // The ◎ beside it: the will picker, on the world map.
+        if (WillButtonShown && _willButton!.Contains(x, y))
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            OpenWillPicker();
+            return;
+        }
+
+        // The will picker is modal over the map: every click is its own, and one outside it does nothing.
+        if (_currentMode == GameMode.WorldView && _willPicker != null)
+        {
+            var click = _willPicker.OnClick(x, y);
+            switch (click.Kind)
+            {
+                case WillPickerBox.ClickKind.Close:
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                    CloseWillPicker();
+                    break;
+                case WillPickerBox.ClickKind.Selected:
+                case WillPickerBox.ClickKind.Scrolled:
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                    break;
+                case WillPickerBox.ClickKind.Seek when click.Entry is { } entry:
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                    CloseWillPicker();
+                    var mm = entry.Member.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == entry.ModusMentisId);
+                    if (mm?.Will is { } will && click.Want >= 0 && click.Want < will.Count)
+                        StartWillSearch(entry.Member, mm, will[click.Want]);
+                    break;
+            }
             return;
         }
 
@@ -2019,6 +2118,8 @@ public class LocationTravelGameController : IDisposable
         // Tracked ahead of the modal boxes below, which return early: the ☰ is drawn over them too.
         if (MenuButtonShown && _menuButton!.Contains(x, y) && !_menuButton.Contains(_mouseCellX, _mouseCellY))
             _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        if (WillButtonShown && _willButton!.Contains(x, y) && !_willButton.Contains(_mouseCellX, _mouseCellY))
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         _mouseCellX = x;
         _mouseCellY = y;
 
@@ -2049,6 +2150,7 @@ public class LocationTravelGameController : IDisposable
         // Track hover for the travel UI so the TRAVEL button highlights.
         _travelInfoRenderer?.SetHover(x, y);
         _willSearchRenderer?.SetHover(x, y);
+        _willPicker?.SetHover(x, y);
         _worldSelectionRenderer?.SetHover(x, y);
         if (CameraPadActive && _cameraArrowPad!.SetHover(x, y)
             && _cameraArrowPad.Hovered != CameraArrow.None)
@@ -2196,6 +2298,13 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // The will picker's list scrolls under the wheel, and the camera does not zoom behind it.
+        if (_currentMode == GameMode.WorldView && _willPicker != null)
+        {
+            if (_willPicker.OnWheel(delta)) _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            return;
+        }
+
         // Travel encounter fight scroll
         if (_inTravelEncounter && _currentMode == GameMode.Fighting && _fightAdapter != null)
         {
@@ -2276,6 +2385,7 @@ public class LocationTravelGameController : IDisposable
         // A will's search reads the world map from the world map; leaving it ends the search.
         if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView && _willSearch != null)
             CancelWillSearch($"left the world map for {newMode}");
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView) _willPicker = null;
 
         // The location name that follows the cursor on the world map lives in the mouse-following
         // popup, and only UpdatePopupTerminal clears it — which the narration branch of Update never
@@ -2418,9 +2528,9 @@ public class LocationTravelGameController : IDisposable
         }
 
         // A will's search is under way: the world is being read, not walked. Its CANCEL ends it.
-        if (_willSearch != null)
+        if (_willSearch != null || _willPicker != null)
         {
-            Console.WriteLine("LocationTravelGameController: Ignoring world map click during a will's search");
+            Console.WriteLine("LocationTravelGameController: Ignoring world map click under a will's search or its picker");
             return;
         }
 
@@ -2497,7 +2607,17 @@ public class LocationTravelGameController : IDisposable
         ResumeFromMenu();
         // The world map may have opened on something else first (a companion to dismiss).
         if (_currentMode != GameMode.WorldView || _travelRoutinesBox != null) return;
+        StartWillSearch(member, mm, target);
+    }
 
+    /// <summary>
+    /// Starts the search for <paramref name="target"/> over the world map, which must be up: from the
+    /// Memory tab's "Wants" rows (<see cref="BeginWillSearch"/>) or the will picker's.
+    /// </summary>
+    private void StartWillSearch(PartyMember member, ModusMentis mm, WillTarget target)
+    {
+        if (_currentMode != GameMode.WorldView) return;
+        Console.WriteLine($"LocationTravelGameController: {member.DisplayName}'s {mm.ModusMentisId} seeks \"{target.Purpose}\"");
         ClearTravelPlan();
         int avatar = _interface.GetAvatarVertex();
         var graph = _interface.GetTravelGraph();
@@ -2686,11 +2806,13 @@ public class LocationTravelGameController : IDisposable
         return new[] { "will-search state=none" };
     }
 
-    /// <summary>The selected modus mentis's n-th "Wants" row, pressed through the screen's own click path.</summary>
+    /// <summary>The n-th want on screen (the picker's, or the Memory tab's), pressed through the click path.</summary>
     public string? CliClickWant(int target)
     {
+        if (_currentMode == GameMode.WorldView && _willPicker != null)
+            return CliPress(_willPicker.WantCell(target), $"want {target} in the will picker");
         if (_currentMode != GameMode.ProtagonistManagement || _managementMenuRenderer == null)
-            return "the protagonist screen is not open (`manage Memory`, then `select mm <id>`)";
+            return "neither the will picker nor the protagonist screen is open (`click will-button`, or `manage Memory` then `select mm <id>`)";
         if (_managementMenuRenderer.CliWantCell(target) is not { } cell)
             return $"no clickable want {target} (select a will with `select mm <id>`; the rows are buttons only over the world map)";
         CliHoverCell(cell.X, cell.Y);
@@ -2698,16 +2820,67 @@ public class LocationTravelGameController : IDisposable
         return null;
     }
 
-    /// <summary>The cell of the selected will's n-th "Wants" row while it is a button, for <c>--record</c>.</summary>
-    public (int X, int Y)? CliWantCell(int target) => _currentMode == GameMode.ProtagonistManagement
-        ? _managementMenuRenderer?.CliWantCell(target) : null;
+    /// <summary>
+    /// The cell of the n-th want on screen, for <c>--cli</c> and <c>--record</c>: the will picker's
+    /// selected will on the world map, or the selected will's "Wants" row on the Memory tab.
+    /// </summary>
+    public (int X, int Y)? CliWantCell(int target)
+        => _currentMode == GameMode.WorldView ? _willPicker?.WantCell(target)
+         : _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliWantCell(target) : null;
+
+    /// <summary>The ◎'s cell while it is on screen.</summary>
+    public (int X, int Y)? CliWillButtonCell => WillButtonShown ? _willButton?.Cell : null;
+
+    /// <summary>A will's row in the open picker (scrolled into view first, as the wheel would), or null.</summary>
+    public (int X, int Y)? CliPickerWillCell(string modusMentisId)
+    {
+        if (_willPicker == null) return null;
+        if (_willPicker.WillCell(modusMentisId) is { } c) return c;
+        // Off the list's view: scroll to it, and redraw so the row is where the next click lands.
+        while (_willPicker.WillCell(modusMentisId) == null && _willPicker.DownCell != null && _willPicker.OnWheel(-1)) _willPicker.Draw();
+        while (_willPicker.WillCell(modusMentisId) == null && _willPicker.UpCell != null && _willPicker.OnWheel(1)) _willPicker.Draw();
+        return _willPicker.WillCell(modusMentisId);
+    }
+
+    /// <summary>The picker's ▲ / ▼ rows and CLOSE, while each is live.</summary>
+    public (int X, int Y)? CliPickerCell(string which) => _willPicker == null ? null : which switch
+    {
+        "down"  => _willPicker.DownCell,
+        "up"    => _willPicker.UpCell,
+        "close" => _willPicker.CloseCell,
+        _       => null,
+    };
+
+    /// <summary>The picker for <c>inspect will-picker</c>: open or not, what is listed, shown and selected.</summary>
+    public IReadOnlyList<string> CliWillPickerLines()
+    {
+        var lines = new List<string> { $"will-button {(WillButtonShown ? "shown" : "hidden")}" };
+        if (_willPicker is not { } p) { lines.Add("will-picker state=closed"); return lines; }
+        lines.Add($"will-picker state=open wills={p.Entries.Count} scroll={p.Scroll} selected={p.Selected?.ModusMentisId ?? "none"} "
+                + $"shown={string.Join(",", p.VisibleWills)}");
+        if (p.Selected is { } sel)
+            for (int i = 0; i < sel.Wants.Count; i++)
+                lines.Add($"will-picker want {i} purpose=\"{sel.Wants[i]}\"");
+        return lines;
+    }
+
+    /// <summary>Presses a cell through the player's click path (hover first), for the CLI's picker commands.</summary>
+    public string? CliPress((int X, int Y)? cell, string what)
+    {
+        if (cell is not { } c) return $"no {what} on screen";
+        CliHoverCell(c.X, c.Y);
+        CliClickCell(c.X, c.Y);
+        return null;
+    }
 
     /// <summary>The search box's CANCEL while a will's search runs, for <c>--record</c>.</summary>
     public (int X, int Y)? CliWillSearchCancelCell => _willSearch != null ? _willSearchRenderer?.CancelCell : null;
 
-    /// <summary>The "Wants" rows that are buttons on screen now, by index.</summary>
-    public IReadOnlyList<int> CliWantRows => _currentMode == GameMode.ProtagonistManagement
-        ? _managementMenuRenderer?.CliWantRows ?? Array.Empty<int>() : Array.Empty<int>();
+    /// <summary>The wants that are buttons on screen now, by index (the picker's, or the Memory tab's).</summary>
+    public IReadOnlyList<int> CliWantRows
+        => _currentMode == GameMode.WorldView && _willPicker?.Selected is { } sel ? Enumerable.Range(0, sel.Wants.Count).ToList()
+         : _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliWantRows ?? Array.Empty<int>()
+         : Array.Empty<int>();
 
     /// <summary>The search box's CANCEL, pressed through the click path. False when no search runs.</summary>
     public bool CliCancelWillSearch()
@@ -4177,6 +4350,7 @@ public class LocationTravelGameController : IDisposable
         // flight from an encounter on the last step fell back to where it came from.
         // A will's search from the Memory tab: under way, the journey it proposed, or none.
         if (subject == "will-search") return CliWillSearchLines().ToList();
+        if (subject == "will-picker") return CliWillPickerLines().ToList();
 
         if (subject == "avatar")
         {
@@ -5470,6 +5644,11 @@ public class LocationTravelGameController : IDisposable
             // the game from it. Nothing is lost by pausing — the allocation lives on the
             // protagonist, not in the renderer, so resuming rebuilds the same screen.
             // The world map backs out of a will's search first, as its CANCEL does.
+            case GameMode.WorldView when _willPicker != null:
+                Console.WriteLine("ESC pressed - closed the will picker");
+                CloseWillPicker();
+                return true;
+
             case GameMode.WorldView when _willSearch != null:
                 Console.WriteLine("ESC pressed - cancelled the will's search");
                 CancelWillSearch("cancelled");
