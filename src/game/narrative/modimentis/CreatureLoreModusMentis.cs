@@ -15,6 +15,7 @@ public class CreatureLoreModusMentis : ModusMentis
         "Knows the living things by kind: what nests where, what is in season, what a bird's presence says about the ground under it. Names the creature and everything that follows from the naming — its habits, its uses, its dangers.";
     public override string SkillMeans       => "the naming and knowing of living kinds";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

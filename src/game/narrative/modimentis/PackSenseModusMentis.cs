@@ -13,6 +13,7 @@ public class PackSenseModusMentis : ModusMentis
         "Reads the shape of a group: who leads, who defers, who is about to be driven out, and where the reader stands in it. Keeps its own rank current and moves with the body rather than against it.";
     public override string SkillMeans       => "the reading of rank and belonging within a group";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

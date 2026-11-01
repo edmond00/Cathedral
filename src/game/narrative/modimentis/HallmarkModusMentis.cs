@@ -13,6 +13,7 @@ public class HallmarkModusMentis : ModusMentis
         "Reads the marks a maker leaves: stamps, punches, the particular way a joint or a weld is finished. Tells a town's work from another's, a master's from an apprentice's, and a forgery from the thing it copies.";
     public override string SkillMeans       => "the reading of maker's marks and finishing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

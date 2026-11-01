@@ -15,6 +15,7 @@ public class AmbitionModusMentis : ModusMentis
         "Wants to rise, and measures every day by whether it rose. Gladdened by every new skill, every useful introduction, every step up a ladder.";
     public override string SkillMeans       => "the wanting to rise";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "heart", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

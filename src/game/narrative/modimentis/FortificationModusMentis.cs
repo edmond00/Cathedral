@@ -13,6 +13,7 @@ public class FortificationModusMentis : ModusMentis
         "Reads a defended place for its strength and weakness: the dead ground under the wall, the gate a ram could reach, the tower that covers nothing. Sees where it was built well and where somebody saved money.";
     public override string SkillMeans       => "the reading of walls and their weaknesses";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

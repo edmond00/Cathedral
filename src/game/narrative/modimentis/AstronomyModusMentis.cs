@@ -13,6 +13,7 @@ public class AstronomyModusMentis : ModusMentis
         "Knows the sky: the wandering embers and their returns, the eggmoons that name the worlds, the hour told by the turning heaven. Can find north on a clear night and the date from the embers.";
     public override string SkillMeans       => "the knowledge of the sky and its motions";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

@@ -14,6 +14,7 @@ public class TranshumanceModusMentis : ModusMentis
         "Reads high pasture as a herdsman does: where the grass will be sweet in thirty days, which hollow holds its water, where a herd can lie up for the night and when it must come down. Inclines toward moving with the season — up while the grazing is good, down before the first snow.";
     public override string SkillMeans       => "the leading of a herd up to summer grazing and down again";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

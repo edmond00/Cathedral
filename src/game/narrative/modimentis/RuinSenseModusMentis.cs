@@ -13,6 +13,7 @@ public class RuinSenseModusMentis : ModusMentis
         "Reads abandonment: how long since a place was kept, whether it was left in a hurry or given up slowly, and whether anyone intends to return. Fascinated by decay rather than saddened by it.";
     public override string SkillMeans       => "the reading of what has been left to fall down";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

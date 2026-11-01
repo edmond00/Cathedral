@@ -15,6 +15,7 @@ public class IntrospectionModusMentis : ModusMentis
         "Turns attention inward, watching moods, motives, and judgements as they form. Catches the fear disguised as prudence and the wish disguised as reason, and reads one's own weather before acting on it.";
     public override string SkillMeans       => "the examining of one's own thoughts and feelings";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

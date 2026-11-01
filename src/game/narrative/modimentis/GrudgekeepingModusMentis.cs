@@ -15,6 +15,7 @@ public class GrudgekeepingModusMentis : ModusMentis
         "Keeps a cold, exact archive of wrongs received: who, when, witnessed by whom, and what settlement would balance it. Inclines reasoning toward old debts of injury, and never mistakes forgiving for forgetting.";
     public override string SkillMeans       => "the long memory of wrongs and insults";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

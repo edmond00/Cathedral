@@ -13,6 +13,7 @@ public class HerdEyeModusMentis : ModusMentis
         "Counts a herd at a glance and knows when one is missing, which is lame, which is sick, which is about to calve. Keeps every beast's history in mind and remembers which ones are trouble.";
     public override string SkillMeans       => "the watching and reckoning of a herd";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

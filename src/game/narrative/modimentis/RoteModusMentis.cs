@@ -15,6 +15,7 @@ public class RoteModusMentis : ModusMentis
         "Recalls precept and doctrine learned by question and answer, word-perfect and without hesitation. Supplies the proper formula or citation for an occasion, and recognises when someone else is reciting rather than thinking.";
     public override string SkillMeans       => "the answers learned by heart through repetition";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

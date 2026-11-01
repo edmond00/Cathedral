@@ -14,6 +14,7 @@ public class CondolenceModusMentis : ModusMentis
         "Sits with grief and says the small right thing. Knows that the offering is presence rather than words, that most consolations are for the speaker, and that the useful sentence is nearly always the shortest one.";
     public override string SkillMeans       => "the small right thing said to the grieving";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "heart", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

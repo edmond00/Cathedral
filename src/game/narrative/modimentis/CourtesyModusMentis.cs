@@ -16,6 +16,7 @@ public class CourtesyModusMentis : ModusMentis
         "Observes the small forms: the greeting, who goes first, what is offered and to whom. Frictionless where it is present and immediately noticed where it is not, which is what makes it worth having.";
     public override string SkillMeans       => "the observing of the small forms between people";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

@@ -49,16 +49,17 @@ public class ThinkingExecutor
     ///
     /// <para><b>Iterative thinking.</b> When what the thinking modus mentis proposed comes to nothing —
     /// the action modus mentis refuses it, or the player doubts it — the thinking tries again, up to
-    /// <see cref="ThinkingIterationsStat"/> times (the pineal gland's score). A refused goal is tried
+    /// <see cref="DoubtLevel.Retries"/> times (the thinking modus mentis's own <see cref="ModusMentis.Doubt"/>:
+    /// none at Low, one at Medium, two at High). A refused goal is tried
     /// again only when another means is able to carry it out (no choice rule refuses it to that means),
     /// and then by one of those, with no refusal left to it: the next try is sure to end on a button.
     /// When no other means could, the goal is given up and the next try chooses another, or the chain
     /// stops when nothing is left. Only what is refused before the click is retried: the action rules
     /// (a witness in sight, an enemy in the room) are the click's, which keeps the final word on them.
-    /// The whole chain is one thinking and spends one noetic point. At a score of 0 nothing here runs:
-    /// one try, and the refusal is shown as it always was.</para>
+    /// The whole chain is one thinking and spends one noetic point. At Low nothing here runs: one try,
+    /// and the refusal is shown as it always was.</para>
     ///
-    /// <para><b>Doubt.</b> With <see cref="DoubtStat"/> and a retry left, the reasoning ends on a question
+    /// <para><b>Doubt.</b> At Medium or High (<see cref="DoubtLevel.MayDoubt"/>) and with a retry left, the reasoning ends on a question
     /// and the preview box asks YES or NO before the action modus mentis is asked or any rule probed. NO
     /// crosses the pair off like a refusal; either answer is then voiced by the thinking modus mentis.</para>
     /// </summary>
@@ -125,12 +126,13 @@ public class ThinkingExecutor
             : null;
 
         // An auto-success phase (reminescence, get-up) cannot be refused, so it has nothing to retry.
-        int retriesLeft = autoSuccess ? 0 : ThinkingIterationsStat.Of(actingMember);
-        bool mayDoubt   = !autoSuccess && preview != null && DoubtStat.Of(actingMember);
+        var doubtLevel  = thinkingModusMentis.EffectiveDoubt;
+        int retriesLeft = autoSuccess ? 0 : doubtLevel.Retries();
+        bool mayDoubt   = !autoSuccess && preview != null && doubtLevel.MayDoubt();
         var chain       = new ThinkingChain();
         var segments    = new List<ThinkingSegment>();
         if (retriesLeft > 0)
-            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] may try again {retriesLeft} time(s)"
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] ({doubtLevel} doubt) may try again {retriesLeft} time(s)"
                             + (mayDoubt ? ", and the player may doubt" : "") + ".");
 
         // What the thinking mind says ahead of its next reasoning: why it is trying again (a refusal),
@@ -1092,7 +1094,7 @@ public class ThinkingResponse
     /// <summary>
     /// Everything the thinking produced, in order: the thinking modus mentis's thoughts
     /// (<see cref="ThinkingSegment.IsThought"/>) and the refusals between them, one per try of
-    /// iterative thinking (<see cref="ThinkingIterationsStat"/>). Without a retry this is one thought,
+    /// iterative thinking (<see cref="ModusMentis.Doubt"/>). Without a retry this is one thought,
     /// or one thought and its refusal. The last thought is the one the <see cref="Actions"/> belong to.
     /// </summary>
     public List<ThinkingSegment> Segments { get; set; } = new();

@@ -14,6 +14,7 @@ public class OpenMindednessModusMentis : ModusMentis
         "Holds several possibilities open at once, weighing alternative views without settling early. Inclines toward reconsidering and adapting, and gives an unexpected answer a hearing.";
     public override string SkillMeans => "flexible, open-ended thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs => new[] { "hippocampus", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;

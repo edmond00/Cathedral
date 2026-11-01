@@ -17,6 +17,7 @@ public class SandCastlesModusMentis : ModusMentis
         "Sees castles in heaps: the tower a mound of wet sand could be, the wall in a bank, the moat a ditch would make, and builds them. Inclines toward making something out of what lies to hand, for the pleasure of the making.";
     public override string SkillMeans       => "building a castle of wet sand with towers and a moat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "hands", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

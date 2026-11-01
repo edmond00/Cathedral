@@ -13,6 +13,7 @@ public class AlchemyModusMentis : ModusMentis
         "Works with the hidden natures of matter: salts, sulphurs, quicksilver, the fire that changes one thing into another. Reads a reaction by smell and colour, and half believes the great work is possible.";
     public override string SkillMeans       => "the study of the hidden natures of matter";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "nose", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

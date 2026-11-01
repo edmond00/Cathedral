@@ -14,6 +14,7 @@ public class ArithmeticLogicModusMentis : ModusMentis
         "Tallies whatever passes through, in coin, weight, or paces, and fixes on the figure that fails to balance. Distrusts the round answer and the unshown column, and settles only once the numbers come out even.";
     public override string SkillMeans       => "the careful counting and calculating of numbers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

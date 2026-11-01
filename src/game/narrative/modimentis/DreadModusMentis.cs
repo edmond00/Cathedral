@@ -14,6 +14,7 @@ public class DreadModusMentis : ModusMentis
         "Feels the wrongness of a place before finding the cause. Frequently unfounded, occasionally the earliest warning available, and impossible to argue with from the inside. Reads dark, silence and enclosure as information.";
     public override string SkillMeans       => "the sense of wrongness that arrives before its reason";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

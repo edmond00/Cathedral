@@ -44,9 +44,7 @@ acquisition of dexterity under duress; it sizes procedural memory and the readin
 fighting skill in the midst of a fight. The *cerebrum* is the organ of the understanding, and sizes
 semantic memory. The *hippocampus* registers what the senses convey inward, and sizes sensory
 memory. The *pineal gland* is the organ of inward regard: it sets the price in experience of every
-advance in every modus mentis, the composure by which a fallen body regains its feet, and how often a
-deliberation may be taken up again when what it proposed comes to nothing
-([Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act)).
+advance in every modus mentis, and the composure by which a fallen body regains its feet.
 
 **Of the visage.** The *eyes* mediate perception at a distance, and set the reach of a ranged blow.
 The *ears* govern audition and the promptitude of answer, whence the order of a combat's turns. The
@@ -81,8 +79,8 @@ A second anatomy exists, of four regions, and the beasts are constituted upon it
 
 Three consequences are easy to overlook. The bestial trunk has **no genitories**, so every measure
 drawn from that organ is simply absent from a beast. The bestial encephalon has **no pineal gland**,
-the organ of inward regard: no modus mentis that names it can be learned by a beast, a beast never
-deliberates a second time nor doubts, every advance costs it the full twelve points of experience,
+the organ of inward regard: no modus mentis that names it can be learned by a beast, every advance costs it the full twelve
+points of experience,
 and it rises from the ground on a single die. And the identifiers are shared wherever the
 anatomy is shared: the bestial legs answer to *legs* exactly as the human legs do, and both trunks
 to *trunk*. A doctrine that reasons by the name of the organ is therefore correct across both
@@ -188,8 +186,6 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Sensory Memory | hippocampus | score × 4, bounded 1–20 |
 | Experience per Level | pineal gland | 12 − (score − 1) × 3, bounded 6–12. **Lower is better** |
 | Knockdown Recovery | pineal gland | score, in dice, never below 1 |
-| Iterative Thinking | pineal gland | score, in further deliberations within one thinking; nought takes none |
-| Doubt | pineal gland | present at a score of 2 or more, absent below |
 | Attack Range | eyes | score, in cells, never below 1 |
 | Initiative | ears | score, added to one die |
 | Encounter Avoidance | nose | score × 10 per cent |

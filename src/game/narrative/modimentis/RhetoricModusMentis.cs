@@ -16,6 +16,7 @@ public class RhetoricModusMentis : ModusMentis
         "Builds an argument from marshalled reasons and works to sway an audience. Attends to the structure of a case, and inclines toward winning a point by ordered, deliberate speech.";
     public override string SkillMeans => "persuasion and argumentation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

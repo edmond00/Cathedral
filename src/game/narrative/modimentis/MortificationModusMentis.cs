@@ -13,6 +13,7 @@ public class MortificationModusMentis : ModusMentis
         "Disciplines the body for the soul's sake: the hair shirt, the fast, the cold stone floor, the hours on the knees. Distrusts comfort as the first step toward every sin.";
     public override string SkillMeans       => "the disciplining of the body for the soul";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "backbone", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;

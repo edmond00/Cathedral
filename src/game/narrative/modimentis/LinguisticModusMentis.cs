@@ -14,6 +14,7 @@ public class LinguisticModusMentis : ModusMentis
         "Keeps a feel for how speech is built, catching pattern in foreign tongues and unfamiliar script. Inclines toward interpreting and puzzling out language rather than dismissing it as noise.";
     public override string SkillMeans       => "the understanding of foreign languages and writing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

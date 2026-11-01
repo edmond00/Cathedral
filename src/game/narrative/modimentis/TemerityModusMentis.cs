@@ -20,6 +20,7 @@ public class TemerityModusMentis : ModusMentis
     public override string SkillMeans       => "the thrill of the line already crossed";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "heart" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

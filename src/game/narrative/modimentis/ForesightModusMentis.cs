@@ -14,6 +14,7 @@ public class ForesightModusMentis : ModusMentis
         "Works forward from the present arrangement to its consequences: what will be needed, what will run out, and which small preparation now prevents a large problem later. Plans rather than reacts.";
     public override string SkillMeans       => "the working-forward from now to what it will require";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "cerebrum", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

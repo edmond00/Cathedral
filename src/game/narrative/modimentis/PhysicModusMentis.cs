@@ -15,6 +15,7 @@ public class PhysicModusMentis : ModusMentis
         "Treats illness with medicine: the balance of the humors, the purge, the bleeding, the right herb for the fever. Is pained by every hurt it sees and thinks first of the remedy.";
     public override string SkillMeans       => "the treating of illness by medicine";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

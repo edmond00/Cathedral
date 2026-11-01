@@ -16,6 +16,7 @@ public class LineageLoreModusMentis : ModusMentis
         "Holds the web of descent in mind: family lines, inherited traits, old marriages, and what a surname owes or is owed. Reads a face for its parentage and a quarrel for the generations behind it.";
     public override string SkillMeans       => "the knowledge of blood, descent and old family lines";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "genitories", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

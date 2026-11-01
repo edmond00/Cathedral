@@ -13,6 +13,7 @@ public class RankModusMentis : ModusMentis
         "Speaks to every man according to his place in the chain: up to a captain, across to a sergeant, down to a recruit. Knows precisely how much insolence each step will bear.";
     public override string SkillMeans       => "the speaking within a chain of command";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "tongue", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

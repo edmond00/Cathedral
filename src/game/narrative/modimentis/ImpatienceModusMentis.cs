@@ -19,6 +19,7 @@ public class ImpatienceModusMentis : ModusMentis
     public override string SkillMeans       => "the fret of an hour spent on nothing";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "backbone" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

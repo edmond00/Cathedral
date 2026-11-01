@@ -14,6 +14,7 @@ public class FloodwatchModusMentis : ModusMentis
         "Watches for the flood in dry country: a dark cloud over the hills upstream, flood-wrack jammed high on the walls, a smell of rain where no rain is falling, the stream turning brown. Inclines toward high ground, and toward getting out of any narrow place before the water comes down it.";
     public override string SkillMeans       => "reading the signs of a flash flood coming down a dry bed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

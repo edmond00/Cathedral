@@ -13,6 +13,7 @@ public class TaintSenseModusMentis : ModusMentis
         "Finds what has turned. Meat a day past, grain gone musty, water that has stood too long, the particular flatness of a room where somebody is ill. Answers before the eye does, and is almost never wrong about food.";
     public override string SkillMeans       => "the nose for what has gone bad";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "nose", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

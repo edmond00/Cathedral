@@ -13,6 +13,7 @@ public class WaterVoiceModusMentis : ModusMentis
         "Hears what water is doing: how deep, how fast, what it is running over, and whether the note has changed since yesterday. A river in spate says so from a long way off, in a voice quite unlike its own.";
     public override string SkillMeans       => "the reading of water by the sound it makes";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "ears", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

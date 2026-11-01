@@ -3863,7 +3863,7 @@ public class NarrativeController
             return;
         }
 
-        // Preview box YES / NO — the doubt of a thinking (DoubtStat): the answer goes to the waiting
+        // Preview box YES / NO — the doubt of a thinking (ModusMentis.Doubt): the answer goes to the waiting
         // thinking, and the part is committed as CONTINUE would.
         if (_previewAnswerRegions.Yes.Width > 0 && mouseY == _previewAnswerRegions.Yes.Y)
         {

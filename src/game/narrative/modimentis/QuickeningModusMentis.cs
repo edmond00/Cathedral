@@ -13,6 +13,7 @@ public class QuickeningModusMentis : ModusMentis
         "Sees what is coming on: which beast is in calf, which ground is about to break, which of a litter will do well. Reads potential rather than present condition, which is the difference between buying well and buying what looks best today.";
     public override string SkillMeans       => "the eye for what is about to come on";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "genitories", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

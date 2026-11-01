@@ -243,6 +243,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --doubt <low|medium|high>          DEBUG: every thinking modus mentis thinks at this level of doubt instead of its");
+    Console.WriteLine("                                     own: low takes no retry and never doubts, medium one, high two");
     Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
     Console.WriteLine("                                     wound, get_lost, waste_time or lose_focus. The draw is otherwise uniform,");
     Console.WriteLine("                                     so this is how a script reaches one. A table with none of it is a miss");
@@ -1041,6 +1043,15 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
+
+    if (args[i] == "--doubt" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Enum.TryParse<Cathedral.Game.Narrative.DoubtLevel>(args[i + 1], ignoreCase: true, out var doubt)
+            && Enum.IsDefined(doubt))
+            Cathedral.Config.Debug.DoubtOverride = doubt;
+        else
+            Console.Error.WriteLine($"--doubt: unknown level '{args[i + 1]}' (low, medium, high)");
+    }
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

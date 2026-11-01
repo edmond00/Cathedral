@@ -510,7 +510,7 @@ public sealed class CliDriver
           means <mm-id|none>        pin the playground's choice of means — the action modus mentis
                                     that carries the goal out — the way `goal` pins the goal
           doubt <yes|no>            queue the answer to the next doubt of a thinking (the preview box's
-                                    YES / NO, with a pineal gland of 2+). `advance` answers each doubt
+                                    YES / NO, for a mind of Medium or High doubt). `advance` answers each doubt
                                     with the next queued answer, YES when none is queued, so a script
                                     that never says `doubt` runs as if the question were not asked
           fight-end <victory|death|runaway>

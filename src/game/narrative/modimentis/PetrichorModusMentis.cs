@@ -13,6 +13,7 @@ public class PetrichorModusMentis : ModusMentis
         "Takes the weather and the ground off the air: rain some hours before it falls, the difference between soil that will crop and soil that will not, the smell of earth freshly turned. The countryman's forecast, and a fair one.";
     public override string SkillMeans       => "the smell of rain coming and of ground turned over";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "nose", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -368,7 +368,7 @@ public static class NeutralNarration
             : $"Nothing here draws my attention: what I want is to {WillStep(path.Goal, actor)}, "
             + $"and I must {WillStep(path.First, actor)} first.";
 
-    // ── Iterative thinking and doubt (ThinkingIterationsStat, DoubtStat) ──────────
+    // ── Iterative thinking and doubt (ModusMentis.Doubt) ──────────
 
     /// <summary>
     /// The reasoning of a retry within one thinking: the object was already named by the first

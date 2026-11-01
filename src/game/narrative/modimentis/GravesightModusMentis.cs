@@ -13,6 +13,7 @@ public class GravesightModusMentis : ModusMentis
         "Reads a corpse: how long dead, what killed it, whether it was moved afterwards and by whom. Unsqueamish and methodical, and the only knowledge that answers questions the dead were not able to.";
     public override string SkillMeans       => "the reading of a body for its manner and hour of death";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

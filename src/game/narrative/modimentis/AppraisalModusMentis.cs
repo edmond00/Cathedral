@@ -13,6 +13,7 @@ public class AppraisalModusMentis : ModusMentis
         "Prices things by look and feel: the weight of the cloth, the purity of the silver, the soundness of the horse, the age of the wine. Knows a bargain from a trick.";
     public override string SkillMeans       => "the pricing of goods by look and feel";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

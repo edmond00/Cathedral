@@ -16,6 +16,7 @@ public class ProsaicGrammarModusMentis : ModusMentis
         "Shapes speech into elaborate, clause-laden prose wound through with subordinate turns. Inclines toward the ornate construction, favouring intricate language over plain statement.";
     public override string SkillMeans       => "elaborate formal speech full of long, winding sentences";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

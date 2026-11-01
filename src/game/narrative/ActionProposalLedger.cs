@@ -121,7 +121,7 @@ public sealed class ActionProposalLedger
     /// </summary>
     /// <remarks><paramref name="reoffer"/> lets a goal back in despite that: iterative thinking re-offers,
     /// within one chain of retries, a goal refused by one means while another means has not been tried
-    /// (<c>ThinkingIterationsStat</c>).</remarks>
+    /// (<c>ModusMentis.Doubt</c>).</remarks>
     public List<NarrativeAnchor> NotRefusedFor(ModusMentis thinking, IEnumerable<NarrativeAnchor> goals,
                                                System.Func<VerbAction, bool>? reoffer = null)
     {

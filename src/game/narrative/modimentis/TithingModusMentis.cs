@@ -13,6 +13,7 @@ public class TithingModusMentis : ModusMentis
         "Reckons what is owed to the temple: a tenth of the grain, the lamb, the fleece, the first fruits. Knows every holding's due and every trick to underpay it.";
     public override string SkillMeans       => "the reckoning of what is owed to the temple";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

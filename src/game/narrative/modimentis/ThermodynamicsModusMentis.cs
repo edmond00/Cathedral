@@ -14,6 +14,7 @@ public class ThermodynamicsModusMentis : ModusMentis
         "Reads a physical process through heat, work, and entropy, following how energy moves and dissipates. Inclines reasoning toward the flow of warmth and power rather than surface appearance.";
     public override string SkillMeans => "energy and natural philosophy principles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

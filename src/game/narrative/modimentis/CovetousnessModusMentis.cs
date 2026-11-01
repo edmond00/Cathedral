@@ -15,6 +15,7 @@ public class CovetousnessModusMentis : ModusMentis
         "Wants what others have, and feels a sharp pleasure in getting it. Looks at every stall, every purse and every belt for something to desire.";
     public override string SkillMeans       => "the wanting of what others have";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

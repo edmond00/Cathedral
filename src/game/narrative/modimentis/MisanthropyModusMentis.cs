@@ -15,6 +15,7 @@ public class MisanthropyModusMentis : ModusMentis
         "Assumes the worse motive and is right often enough to keep assuming it. Prefers its own company, expects to be disappointed, and is consequently very hard to flatter, gull or recruit.";
     public override string SkillMeans       => "the assumption of the worse motive";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

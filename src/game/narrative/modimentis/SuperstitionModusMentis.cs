@@ -13,6 +13,7 @@ public class SuperstitionModusMentis : ModusMentis
         "Reads the world as a system of signs and takes them seriously: what must not be said, which way to go round, what a bird on the left means. Frequently absurd and occasionally, unnervingly, correct.";
     public override string SkillMeans       => "the reading of the world for signs and ill-luck";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "pineal_gland", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
