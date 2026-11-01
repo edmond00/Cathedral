@@ -392,12 +392,12 @@ times a case; `results/survey_critic_current.*`, read once — the read is deter
 What a player meets is not the side but whether their band clears the verdict
 (`critic_bands.py`): a sensible item labelled for band B or below, passed at a degree B clears.
 
-| usable at | before | after |
-|---|---|---|
-| Low | 37.3% | **40.9%** |
-| Medium | 39.7% | **46.7%** |
-| High | 69.5% | **81.3%** |
-| a wrong item, at Low / Medium / High | 1.7% / 1.7% / 5.0% | **0% / 0% / 5.0%** |
+| usable at | before | after | + degree questions (below) |
+|---|---|---|---|
+| Low | 37.3% | 40.9% | **68.2%** |
+| Medium | 39.7% | 46.7% | **55.0%** |
+| High | 69.5% | 81.3% | **81.3%** |
+| a wrong item, at Low / Medium / High | 1.7% / 1.7% / 5.0% | 0% / 0% / 5.0% | **0% / 0% / 5.0%** |
 
 The two halves agree — `tune`: Low 43 → 50%, Medium 37 → 43%, High 70 → 82%, wrong at High 5% → 3%;
 `check`: Low 30 → 30%, Medium 43 → 50%, High 69 → 80%, wrong at High 5% → 7% (28 cases) — so the
@@ -427,16 +427,68 @@ after a refusal, 4 CPU cores, warm server.
 | tokens generated | 13.6 | 9.0 |
 | user-message tokens | 218 | 445 over two requests, of which the second re-reads only its last lines from the prompt cache |
 
+With the substitution tree's degree questions (second pass, below; `results/survey_critic_timing2.txt`,
+both versions again in one run): before 3.52 s mean (2.72 median, 5.92 worst), now 4.29 s (4.19, 5.69),
+2.26 requests a tool use. The gap is +0.77 s against +0.72 s without them: they are asked only of a
+substitute that passed, and each re-reads one line.
+
 **It is not cheaper.** Dropping the reason saves ~60 generated tokens after a refusal; the second
 question costs a prompt read every time, and prompt reading dominates on CPU. A pass costs more than it
 did, a refusal less, and the worst case is shorter. The single-question alternatives cost one read
 (~2.6 s) but break the false-pass constraint.
 
+### The substitution tree's degree (second pass)
+
+The pass above left the required verbs' degrees almost all `serves_poorly` (23 of 36 passes): on the
+81 required-verb cases (`--set required`) a Low hand could use **none** of the 13 stand-ins labelled
+for it and a Medium hand **1** of 27. Two causes, found by recording each whole id's log-probability
+(`critic_bench.id_logprob`, one greedy reply's per-token lists — `serves_well` and `serves_poorly`
+part at "_w" against "_p"):
+
+1. **A rule of my own.** A pass the strict question refused and the counterweight carried took the
+   strict question's likeliest help id by its *first token* — a tie between `serves_well` and
+   `serves_poorly` ("s"), broken toward the better: a chisel and a hammer at an ore seam, a cleaver at
+   a log, a watering pot as a shovel all came out Medium. Such a pass is an improvisation and now takes
+   the clumsy degree outright (4 over-grants → 0).
+2. **The question.** Where the strict question accepts, it is near-certain of `serves_poorly` for
+   nearly everything — a dagger offered as a knife, a war axe as an axe, fish-hooks to fish (−0.0
+   each). It judges what the item *is* ("near enough to be the same thing"), not how it works.
+   Rewording the options to grade by performance — "about as well as the usual tool" / "properly, if
+   not quite as well" / "only clumsily, with real difficulty", with the question kept (`sub_w1`) or
+   asked as "how well…" (`sub_w2`) — moved Low 0 → 0–1 of 13 and Medium 1 → 4–5 of 27: the menu is
+   the wrong instrument.
+
+**Asked as yes/no instead** (`CriticNode.DegreeQuestions`, `critic_degree_yesno.py` for the prototype),
+on the same head, of a pass the strict question accepted: "Is X a kind of Y, or near enough the same
+tool?" — yes → `is_the_tool`; else "Would X do this work properly, the way Y does, if a little less
+well?" — yes → `serves_well`; else `serves_poorly`. Both read as the log-odds of yes against no at 0,
+nothing fitted. On the required verbs: Low **0 → 6 of 13**, Medium **1 → 9 of 27**, exact degree 4 → 10
+of 26, pass/refuse unchanged, no wrong item usable below High; both halves improve (Low 0 → 4 and
+0 → 2, Medium 0 → 5 and 1 → 4). The two items it grants a better degree than labelled are a war pick
+and a baker's peel given Low at an ore seam and a clay bank — and the peel's own description calls it
+"a long flat wooden shovel", so the label is the stricter of the two.
+
+Not kept: two rewordings of the second question ("a proper tool for this work, even though it is not
+Y?", "could a worker do this job properly with X instead of Y?") did no better on `tune` — the model
+says no to a machete for an axe, a cudgel or a chisel at a strongbox whatever the wording.
+
+A mistake caught on the way: the prototype read yes/no from a dict keyed by the stripped token, so a
+rare spelling (" Yes") overwrote a likely one ("Yes") and the dagger read −4 where the model says +8.
+The bench and the C# sum every spelling.
+
+**Not checked in the live game.** Two real-model runs aimed at `mine` with a mattock both reached
+the critic by another road (each will took its other want: gathering the ore, examining the stone).
+The substitution prompts are built by the same `CriticTrees.Head` the live check verified byte for
+byte, and the bench reads their last lines from the C#; the yes/no request itself has not been seen
+in a game log.
+
 ### What is left
 
-- **The substitution tree's degrees.** Of the stand-ins it passes, 23 of 36 come back `serves_poorly`
-  (High only), so Medium hands get fewer of them than they should. That is the shipped question's own
-  compression; a degree question for it is the next thing to try.
+- **The substitution tree's middle degree.** "Would X do this work properly" still says no to most
+  proper stand-ins, so Medium hands get about half of what they should (55%).
+- **The appropriateness tree errs the other way**: generous degrees (the dagger on the wall is
+  `clearly_helps`, usable by a Low hand; the survey labels it High). Over-granting a degree is not a
+  false pass, but it is the next thing to look at there.
 - **Still refused at every band** (18 of 65 improvisations): every small spike at a lock — lancet, awl,
   hoof pick, marlinspike, fish-hook (both questions sure of it, −14 to −1) — a flint to skin, a
   pitchfork or a basket to fish, a pruning hook or a rake for a pear, a razor at a purse, a shield to

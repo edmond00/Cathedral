@@ -262,9 +262,21 @@ public static class CriticTrees
     ///
     /// <para>It still refused a third of the improvised stand-ins of the survey (a flint to skin, a
     /// pitchfork to spear fish, a shield to scoop clay), so it carries the same counterweight as
-    /// <see cref="BuildItemAppropriatenessTree"/>, for the same reasons. Its degrees remain its own,
-    /// and they run low: most stand-ins it passes come back <c>serves_poorly</c>, so a Medium hand
-    /// is offered fewer of them than it might be. That is the next thing to look at.</para>
+    /// <see cref="BuildItemAppropriatenessTree"/>, for the same reasons.</para>
+    ///
+    /// <para><b>Its degree is asked, not read off its options.</b> As a five-option menu this question
+    /// put nearly all its weight on <c>serves_poorly</c> for every stand-in it accepted — a dagger
+    /// offered as a knife, a war axe as an axe, a heavy pick as a pick — so a Low hand could use none of
+    /// the required verbs' stand-ins and a Medium hand one in 27; rewording the options ("about as well
+    /// as the usual tool" / "properly, if not quite as well" / "only clumsily") moved nothing. Two plain
+    /// questions answered yes or no do separate them (<see cref="CriticNode.DegreeQuestions"/>): is it
+    /// a kind of the tool, or near enough (→ <c>is_the_tool</c>); would it do the work properly, if a
+    /// little less well (→ <c>serves_well</c>); neither → <c>serves_poorly</c>. They are asked only of
+    /// a pass this question itself accepted — one the counterweight carried is an improvisation, and
+    /// clumsy without asking. On the survey's required verbs: usable by a Low hand 0 → 6 of 13, by a
+    /// Medium hand 1 → 9 of 27, nothing new passing that should not. The second question still says no
+    /// to most proper stand-ins (a machete for an axe, a chisel at a strongbox); two rewordings of it
+    /// did no better.</para>
     /// </summary>
     public static CriticNode BuildToolSubstitutionTree(string goalText, string referenceToolPhrase,
                                                        string itemName, CriticContext context)
@@ -297,6 +309,15 @@ public static class CriticTrees
                     new("makes_no_sense", "no: it has nothing to do with this work",
                         isFailure: true, errorMessage: SenselessReason),
                 }),
+            // Asked as options, the degree came back serves_poorly for nearly every stand-in the strict
+            // question accepted — a dagger offered as a knife, a war axe as an axe, fish-hooks to fish —
+            // and no rewording of the options moved it. Asked as plain yes/no questions, the model
+            // separates them: see the summary above.
+            DegreeQuestions = new List<CriticDegreeQuestion>
+            {
+                new($"{head}\n\nIs {itemName} a kind of {referenceToolPhrase}, or near enough the same tool?", "is_the_tool"),
+                new($"{head}\n\nWould {itemName} do this work properly, the way {referenceToolPhrase} does, if a little less well?", "serves_well"),
+            },
         };
     }
 

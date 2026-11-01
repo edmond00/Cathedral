@@ -185,6 +185,8 @@ def cases(which):
         yield from _old_cases(True)
     if which in ("survey", "all"):
         yield from S.survey_cases()
+    if which == "required":
+        yield from (c for c in cases("all") if c.get("tool"))
     if which in ("tune", "check"):
         yield from (c for i, c in enumerate(S.survey_cases()) if i % 2 == (0 if which == "tune" else 1))
 
@@ -202,15 +204,30 @@ def ask(T, c, seed):
         # its answer when on that side, else its likeliest id on that side (ItemUseCritic.WeighAsync).
         s, l = ask(T["strict"], c, seed), ask(T["lenient"], c, seed)
         margin = s["margin"] + l["margin"] - T.get("threshold", 0.0)
+        _, _, choices = question(T["strict"], c)
         if s["help"] == (margin > 0):
             answer = s["answer"]
+        elif margin > 0:
+            # The strict question refused and the lenient one carried it: an improvisation, so the clumsy
+            # degree (the third help id). Reading the strict question's likeliest help id here instead
+            # gave serves_well on a first-token tie with serves_poorly, a chisel at a seam at Medium.
+            answer = [ch for ch in choices if not ch[2]][-1][0]
         else:
-            _, _, choices = question(T["strict"], c)
-            side = [i for i, ch in enumerate(choices) if ch[2] == (margin <= 0)]
+            side = [i for i, ch in enumerate(choices) if ch[2]]
             answer = choices[max(side, key=lambda i: s["lp"][i])][0]
-        return dict(tree=l["tree"], answer=answer, help=margin > 0, margin=margin, strict=s["margin"],
+        degrees = {}
+        dq = T.get("degree_questions", {}).get(s["tree"])
+        if dq and margin > 0 and s["help"]:
+            answer = [ch for ch in choices if not ch[2]][-1][0]
+            for ask_q, cid in dq:
+                degrees[cid] = yes_logodds(T["strict"], c, ask_q)
+                if degrees[cid] > 0:
+                    answer = cid
+                    break
+        return dict(tree=l["tree"], answer=answer, help=margin > 0, margin=margin, strict=s["margin"], degrees=degrees,
                     lenient=l["margin"], strict_lp=s["lp"], lenient_lp=l["lp"], strict_answer=s["answer"],
-                    lenient_answer=l["answer"], user_tokens=s["user_tokens"] + l["user_tokens"], calls=2,
+                    strict_seq=s.get("seq"), strict_text=s.get("text"),
+                    lenient_answer=l["answer"], user_tokens=s["user_tokens"] + l["user_tokens"], calls=2 + len(degrees),
                     generated=s.get("generated", 0) + l.get("generated", 0),
                     wall=s["wall"] + l["wall"], prompt_n=(s["prompt_n"] or 0) + (l["prompt_n"] or 0),
                     prompt_ms=(s["prompt_ms"] or 0) + (l["prompt_ms"] or 0))
@@ -248,8 +265,12 @@ def ask(T, c, seed):
         first = {cid: first_piece(cid) for cid, _, _ in choices}
         lp = [max([l for tok, l in top if tok and tok == first[cid]] or [-30.0]) for cid, _, _ in choices]
         answer, margin = decide_ids(choices, lp, text, T.get("threshold", 0.0))
+        steps = d["choices"][0]["logprobs"]["content"]
+        seq = [id_logprob(cid, steps) for cid, _, _ in choices]
+        if T.get("degree"):
+            answer = T["degree"](choices, seq, answer, margin)
         tm = d.get("timings", {})
-        return dict(tree=tree, answer=answer, help=answer not in fail, margin=margin, lp=lp, text=text,
+        return dict(tree=tree, answer=answer, help=answer not in fail, margin=margin, lp=lp, text=text, seq=seq,
                     user_tokens=P.tokens(msgs[-1]["content"]), calls=1, wall=wall,
                     prompt_n=tm.get("prompt_n"), prompt_ms=tm.get("prompt_ms"), generated=tm.get("predicted_n") or 0)
     gbnf = "root ::= response\nresponse ::= " + " | ".join(f'"{cid}"' for cid, _, _ in choices)
@@ -287,6 +308,55 @@ def first_piece(cid):
         toks = _post("/tokenize", {"content": cid, "with_pieces": True})["tokens"]
         _PIECES[cid] = toks[0]["piece"].strip()
     return _PIECES[cid]
+
+
+def yes_logodds(T, c, ask):
+    """ItemUseCritic.YesLogOddsAsync: `ask` on the tree's shared head, "Answer yes or no.", the log-odds
+    of "yes"/"Yes" against "no"/"No" as the reply's first token (every spelling summed)."""
+    tree, _, _ = question(T, c)
+    q, _ = T["trees"][tree]
+    head = q[:q.index("\n\n", q.index("They are holding")) + 2]
+    text = P._fill(head.replace("{context.BuildPreamble()}", "{pre}") + ask, pre=T["preamble"](T, c),
+                   goalText=goal_of(T, c), itemName=c["item"], itemContext=c.get("item_context") or c["item"],
+                   referenceToolPhrase=c.get("tool") or "") + "\n\nAnswer yes or no."
+    msgs = [{"role": "system", "content": P.system_prompt(T.get("templates") or P.T_NOW, T["system"])},
+            {"role": "user", "content": text}]
+    d = _post("/v1/chat/completions", dict(model="local", messages=msgs, max_tokens=1, stream=False,
+                                           cache_prompt=True, temperature=0, logprobs=True, top_logprobs=40))
+    top = d["choices"][0]["logprobs"]["content"][0]["top_logprobs"]
+    yes = [t["logprob"] for t in top if t["token"].strip() in ("yes", "Yes")] or [-30.0]
+    no = [t["logprob"] for t in top if t["token"].strip() in ("no", "No")] or [-30.0]
+    return lse(yes) - lse(no)
+
+
+_ALL_PIECES = {}
+
+
+def id_pieces(cid):
+    """Every token of an id as the model's tokenizer splits it ("s", "erves", "_p", "oor", "ly")."""
+    if cid not in _ALL_PIECES:
+        _ALL_PIECES[cid] = [t["piece"] for t in _post("/tokenize", {"content": cid, "with_pieces": True})["tokens"]]
+    return _ALL_PIECES[cid]
+
+
+def id_logprob(cid, steps):
+    """The log-probability of the reply being `cid`, from one greedy reply's per-token top lists: walked
+    along the greedy path, each of the id's tokens scored at its position, up to and including the
+    first where the id leaves the path (what follows its distinctive token is taken as certain). So
+    serves_well and serves_poorly, which share "s" and "erves", are told apart at "_w" against "_p"."""
+    total = 0.0
+    for k, piece in enumerate(id_pieces(cid)):
+        if k >= len(steps):
+            break
+        top = {t["token"]: t["logprob"] for t in steps[k]["top_logprobs"]}
+        if k == 0:
+            got = max([l for t, l in top.items() if t.strip() == piece.strip()] or [-30.0])
+        else:
+            got = top.get(piece, -30.0)
+        total += got
+        if steps[k]["token"] != piece and not (k == 0 and steps[k]["token"].strip() == piece.strip()):
+            break
+    return total
 
 
 def decide_ids(choices, lp, text, threshold=0.0):
@@ -365,7 +435,16 @@ def current():
         setting = re.search(r'"(Setting: [^"]*)"', crit).group(1)
         for T in (lenient, strict):
             T["system"], T["setting_line"], T["templates"] = system, setting, _templates(None)
-        return dict(score="pair", strict=strict, lenient=lenient, system=system, threshold=_cs_threshold())
+        degree_q = {}
+        for tree in ("ItemAppropriateness", "ToolSubstitution"):
+            body = crit[crit.index(f'name: "{tree}"'):]
+            body = body[:body.index("    public static")] if "    public static" in body else body
+            if "DegreeQuestions" in body:
+                block = body[body.index("DegreeQuestions"):]
+                degree_q[tree] = [(P._unescape(q), cid) for q, cid in
+                                  re.findall(r'new\(\$"\{head\}\\n\\n((?:[^"\\]|\\.)*)", "(\w+)"\)', block)]
+        return dict(score="pair", strict=strict, lenient=lenient, system=system, threshold=_cs_threshold(),
+                    degree_questions=degree_q)
     shows_target = "What they act on" in crit
     T = _from(None, preamble=preamble_target if shows_target else preamble)
     if shows_target:
@@ -502,6 +581,33 @@ def pair():
     return dict(score="pair", strict=strict_lean(), lenient=physical(), system=SYSTEM)
 
 
+W1_SUB = [
+    ("is_the_tool", "it would do this work about as well as the usual tool", False),
+    ("serves_well", "it would do this work properly, if not quite as well as the usual tool", False),
+    ("serves_poorly", "it could only be made to do this work clumsily, with real difficulty", False),
+    ("cannot_serve", "the item cannot do this work, however it is handled", True),
+    ("makes_no_sense", "using this item for this work makes no sense at all", True)]
+
+
+def _sub_strict(ask, opts):
+    T = current()
+    st = T["strict"]
+    q, _ = st["trees"]["ToolSubstitution"]
+    head = q[:q.index("\n\n", q.index("They are holding")) + 2]
+    st["trees"] = dict(st["trees"], ToolSubstitution=(head + ask, opts))
+    return T
+
+
+def sub_w1():
+    """The substitution degrees graded by how well the item does the work, not by what it is."""
+    return _sub_strict("Could {itemName} be used in place of {referenceToolPhrase} for this, even if less well?", W1_SUB)
+
+
+def sub_w2():
+    """sub_w1, and asked how well rather than whether."""
+    return _sub_strict("How well could {itemName} do this work in place of {referenceToolPhrase}?", W1_SUB)
+
+
 def _lp(T, threshold=0.0):
     T.update(score="logprob", decide=decide_logodds(threshold))
     return T
@@ -544,7 +650,8 @@ def in_its_place():
 VARIANTS = {f.__name__: f for f in (current, before, base, no_strict, in_its_place, target, reframe, one_refusal,
                                      before_lp, target_lp, reframe_lp, one_refusal_lp,
                                      before_idlp, target_idlp, reframe_idlp, one_refusal_idlp,
-                                     physical, physical_sys, physical_full, strict_lean, pair)}
+                                     physical, physical_sys, physical_full, strict_lean, pair,
+                                     sub_w1, sub_w2)}
 
 
 # ── the report ────────────────────────────────────────────────────────────────────────────────────────
@@ -639,7 +746,7 @@ def main():
         return
     ap = argparse.ArgumentParser()
     ap.add_argument("--variant", default="current")
-    ap.add_argument("--set", default="dev", choices=["dev", "held", "survey", "all", "tune", "check"])
+    ap.add_argument("--set", default="dev", choices=["dev", "held", "survey", "all", "tune", "check", "required"])
     ap.add_argument("--heldout", action="store_true", help="same as --set held")
     ap.add_argument("--seeds", default=None, help="default 1..5 when sampled, 1 when read by log-probability")
     ap.add_argument("--out")

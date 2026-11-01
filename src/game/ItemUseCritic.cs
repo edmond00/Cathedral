@@ -214,11 +214,46 @@ public class ItemUseCritic : IDisposable
 
         double margin = strict.Margin + lenient.Margin - HelpLogOdds;
         bool help = margin > 0;
-        string id = strict.Help == help ? strict.Answer : Likeliest(node.Choices, strict.LogProbs, failure: !help);
+        // On the side the strict question chose, its own answer. A pass it refused and the lenient
+        // question carried is an improvisation, so the clumsy degree (the last help choice): reading the
+        // strict question's likeliest help id there instead fell to serves_well on a first-token tie
+        // with serves_poorly, and gave a chisel at an ore seam to a Medium hand.
+        string id = strict.Help == help ? strict.Answer
+                  : help ? node.Choices.Last(c => !c.IsFailure).Id
+                  : Likeliest(node.Choices, strict.LogProbs, failure: true);
+
+        // The degree questions settle a pass the strict question accepted; one it refused is clumsy
+        // whatever they would say, and asking would only cost requests.
+        string degreeNote = "";
+        if (help && strict.Help && node.DegreeQuestions.Count > 0)
+        {
+            id = node.Choices.Last(c => !c.IsFailure).Id;
+            foreach (var dq in node.DegreeQuestions)
+            {
+                double yes = await YesLogOddsAsync(dq.Question);
+                degreeNote += $", '{dq.ChoiceId}'? {F(yes)}";
+                if (yes > 0) { id = dq.ChoiceId; break; }
+            }
+        }
 
         Console.WriteLine($"ItemUseCritic: {node.Name} -> {id} (strict {F(strict.Margin)} '{strict.Answer}', " +
-                          $"lenient {F(lenient.Margin)} '{lenient.Answer}', sum {F(margin)} vs {F(HelpLogOdds)})");
+                          $"lenient {F(lenient.Margin)} '{lenient.Answer}', sum {F(margin)} vs {F(HelpLogOdds)}{degreeNote})");
         return id;
+    }
+
+    /// <summary>
+    /// The log-odds of "yes" against "no" as the first token of the reply to a yes/no question — one
+    /// forward pass, as <c>ChoiceJudge</c> reads its letters. A spelling missing from the likeliest
+    /// tokens counts as <see cref="AbsentLogProb"/>.
+    /// </summary>
+    private async Task<double> YesLogOddsAsync(string question)
+    {
+        var top = await _llamaServer.GetFirstTokenLogProbsAsync(_criticSlotId, question + "\n\nAnswer yes or no.", 40);
+        var yes = top.Where(t => t.Token.Trim() is "yes" or "Yes").Select(t => t.LogProb).ToList();
+        var no  = top.Where(t => t.Token.Trim() is "no" or "No").Select(t => t.LogProb).ToList();
+        if (yes.Count == 0) yes.Add(AbsentLogProb);
+        if (no.Count == 0)  no.Add(AbsentLogProb);
+        return LogSumExp(yes) - LogSumExp(no);
     }
 
     private const double AbsentLogProb = -30.0;

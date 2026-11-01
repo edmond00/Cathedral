@@ -37,6 +37,14 @@ public class CriticNode
     /// </summary>
     public CriticNode? Counterweight { get; set; }
 
+    /// <summary>
+    /// Yes/no questions that settle the degree of a pass this node itself accepted, asked in order: the
+    /// first answered yes gives its choice id; none answered yes gives the last help choice (the clumsy
+    /// degree). Empty for a node whose own answer gives the degree. See
+    /// <c>CriticTrees.BuildToolSubstitutionTree</c> for why the substitution tree needs them.
+    /// </summary>
+    public List<CriticDegreeQuestion> DegreeQuestions { get; set; } = new();
+
     public CriticNode() { }
 
     public CriticNode(string name, string question, List<CriticChoice> choices)
@@ -53,3 +61,9 @@ public class CriticNode
         return this;
     }
 }
+
+/// <summary>
+/// One of a node's <see cref="CriticNode.DegreeQuestions"/>: a full question (the node's shared head
+/// and the question itself), answered yes or no, and the choice id a yes stands for.
+/// </summary>
+public record CriticDegreeQuestion(string Question, string ChoiceId);
