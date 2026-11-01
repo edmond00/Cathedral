@@ -34,6 +34,7 @@ CONST = {m.group(1): float(m.group(2))
 _setting = _read("src/game/narrative/SceneSetting.cs")
 SETTING = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"',
                              re.search(r'public const string Rule\s*=(.*?);', _setting, re.S).group(1)))
+EAGER_QUESTION = re.search(r'EagerQuestion\s*=\s*"((?:[^"\\]|\\.)*)"', _judge).group(1)
 ONLOOKER = re.search(r'OnlookerDescription\s*=\s*"((?:[^"\\]|\\.)*)"', _judge).group(1)
 BASELINE_KINDS = re.findall(r"ChoiceKind\.(\w+)",
                             re.search(r"BaselineKinds\s*=\s*new\(\)\s*\{([^}]*)\}", _judge).group(1))
@@ -150,9 +151,35 @@ def decide(kind, lp, decline_index=-1):
         return max((i for i in range(len(lp)) if i != decline_index), key=lp.__getitem__)
     return max(range(len(lp)), key=lp.__getitem__)
 
-def willingness(lp):
-    """'eager' | 'willing' | 'reluctant' | 'unwilling' from the four scale scores, as JudgeWillingnessAsync."""
-    assent = lse(lp[:2]) - lse(lp[2:])
-    if assent > CONST["AssentLogOdds"]:
-        return "eager" if lp[0] - lp[1] >= CONST["EagerLogOdds"] else "willing"
+def yes_logodds(kind, prompt, system=None):
+    """log-odds of "yes" against "no" as the reply's first token, every spelling summed
+    (ChoiceJudge.YesLogOddsAsync)."""
+    body = dict(messages=[dict(role="system", content=(system or SYSTEM[kind]).rstrip() + "\n\n" + SETTING),
+                          dict(role="user", content=prompt)],
+                max_tokens=1, temperature=0, logprobs=True, top_logprobs=40, cache_prompt=True)
+    req = urllib.request.Request(f"http://127.0.0.1:{PORT}/v1/chat/completions", json.dumps(body).encode(),
+                                 {"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=600) as r:
+        top = json.load(r)["choices"][0]["logprobs"]["content"][0]["top_logprobs"]
+    yes = [t["logprob"] for t in top if t["token"].strip() in ("yes", "Yes")] or [-40.0]
+    no = [t["logprob"] for t in top if t["token"].strip() in ("no", "No")] or [-40.0]
+    return lse(yes) - lse(no)
+
+def yes_no_prompt(mm, situation, question):
+    """ChoiceJudge.BuildYesNoPrompt."""
+    s = "The faculty: " + describe(mm) + "\n\n"
+    if situation and situation.strip():
+        s += "The situation: " + third_person(re.sub(r"\s+", " ", situation.strip())) + "\n\n"
+    return in_judge_words(s + question + "\n\nAnswer yes or no.")
+
+def willingness(lp, eager_yes=None):
+    """'eager' | 'willing' | 'reluctant' | 'unwilling', as JudgeWillingnessAsync: assent from the scale;
+    on assent, eager_yes (the yes/no log-odds of EAGER_QUESTION, asked only then) against
+    EagerYesLogOdds; on dissent, the scale's own lean against UnwillingLogOdds."""
+    if assents(lp):
+        if eager_yes is None: raise ValueError("an assenting willingness needs the eager question's answer")
+        return "eager" if eager_yes > CONST["EagerYesLogOdds"] else "willing"
     return "unwilling" if lp[3] - lp[2] >= CONST["UnwillingLogOdds"] else "reluctant"
+
+def assents(lp):
+    return lse(lp[:2]) - lse(lp[2:]) > CONST["AssentLogOdds"]

@@ -105,10 +105,17 @@ public static class ChoiceJudge
     /// unwilling) exceeds this. Right on 39 of 40 bench cases, against 38 for the likeliest letter.</summary>
     public const double AssentLogOdds = -1.8;
 
-    /// <summary>Willingness, once assenting: eager when log P(eager) − log P(willing) is at least this.
-    /// The bench median, so eager and willing split assent about evenly. The judge almost never answers
-    /// "eager" outright (1 case in 40), so its lean, not its answer, is what is read.</summary>
-    public const double EagerLogOdds = -6.4;
+    /// <summary>
+    /// Willingness, once assenting: eager when the yes/no answer to <see cref="EagerQuestion"/> has
+    /// log-odds of yes over no above this. Untuned (0, the even point), as the item critic's is: on 35
+    /// labelled degrees the answer was right for any value from 0 to 2. It replaced reading the scale's
+    /// own lean, log P(eager) − log P(willing) at the bench median: that lean did not separate the two at
+    /// all (eager acts −18…+8, willing ones −12…0), and right on 20 of 35 against 29.
+    /// </summary>
+    public const double EagerYesLogOdds = 0.0;
+
+    /// <summary>The question that tells eager from willing, asked yes or no once the scale assents.</summary>
+    public const string EagerQuestion = "Is this act this faculty's own work, what it is made for?";
 
     /// <summary>Willingness, once dissenting: unwilling (a refusal) when log P(unwilling) − log P(reluctant)
     /// is at least this. The bench median, so the two split dissent about evenly.</summary>
@@ -229,11 +236,17 @@ public static class ChoiceJudge
     /// is read from its scores in two steps:
     /// <list type="number">
     /// <item>assent or dissent: <see cref="AssentLogOdds"/> on (eager or willing) against (reluctant or unwilling);</item>
-    /// <item>how strongly, within that side: <see cref="EagerLogOdds"/> or <see cref="UnwillingLogOdds"/>.</item>
+    /// <item>how strongly, within that side: on assent, a second request asks <see cref="EagerQuestion"/>
+    ///       yes or no (<see cref="EagerYesLogOdds"/>); on dissent, the scale's own lean,
+    ///       <see cref="UnwillingLogOdds"/>. The dissent side stays on the scale because no yes/no wording
+    ///       could ask it: "does this act contradict / go against / betray this faculty's nature?" came
+    ///       back yes for the faculty's own work and no for its opposite, and a positive wording ("is this
+    ///       the opposite of…", "is it made to avoid…") never came back yes at all.</item>
     /// </list>
     /// Taking the likeliest letter instead gave 1 eager in 40 bench cases (17 willing, 13 reluctant,
-    /// 9 unwilling), so the −1 difficulty of an eager act almost never happened; read this way the four
-    /// degrees came out 10/9/10/11 and the assent was right one case more often. The caller narrows the
+    /// 9 unwilling), so the −1 difficulty of an eager act almost never happened, and the assent was
+    /// right one case less often. Against the 51 labelled degrees (tools/judge/cases.py), the degree is
+    /// right 35 times this way, 26 with the scale's lean on both sides, 18 with the likeliest letter. The caller narrows the
     /// answer to what the rules leave on offer: a mind with no refusal left answers Reluctant.
     /// </summary>
     public static async Task<Willingness> JudgeWillingnessAsync(
@@ -243,13 +256,20 @@ public static class ChoiceJudge
         string prompt = BuildPrompt(ChoiceKind.Willingness, Describe(faculty), situation, scale, null);
         var lp = await LetterLogProbsAsync(ChoiceKind.Willingness, prompt, scale.Count);
         double assent = LogSumExp(new[] { lp[0], lp[1] }) - LogSumExp(new[] { lp[2], lp[3] });
-        Willingness w = assent > AssentLogOdds
-            ? (lp[0] - lp[1] >= EagerLogOdds ? Willingness.Eager : Willingness.Willing)
-            : (lp[3] - lp[2] >= UnwillingLogOdds ? Willingness.Unwilling : Willingness.Reluctant);
+        double? eagerYes = null;
+        Willingness w;
+        if (assent > AssentLogOdds)
+        {
+            eagerYes = await YesLogOddsAsync(ChoiceKind.Willingness, BuildYesNoPrompt(Describe(faculty), situation, EagerQuestion));
+            w = eagerYes > EagerYesLogOdds ? Willingness.Eager : Willingness.Willing;
+        }
+        else
+            w = lp[3] - lp[2] >= UnwillingLogOdds ? Willingness.Unwilling : Willingness.Reluctant;
         Console.WriteLine($"ChoiceJudge: Willingness for {faculty.DisplayName} -> {w} " +
-                          $"(assent {F(assent)} vs {F(AssentLogOdds)}; eager-willing {F(lp[0] - lp[1])} vs {F(EagerLogOdds)}; " +
-                          $"unwilling-reluctant {F(lp[3] - lp[2])} vs {F(UnwillingLogOdds)})");
-        Record(new { kind = "Willingness", faculty = faculty.ModusMentisId, situation, prompt, lp, answer = w.ToString() });
+                          $"(assent {F(assent)} vs {F(AssentLogOdds)}; " +
+                          (eagerYes is double e ? $"its own work? yes {F(e)} vs {F(EagerYesLogOdds)}" :
+                                                  $"unwilling-reluctant {F(lp[3] - lp[2])} vs {F(UnwillingLogOdds)}") + ")");
+        Record(new { kind = "Willingness", faculty = faculty.ModusMentisId, situation, prompt, lp, eagerYes, answer = w.ToString() });
         return w;
     }
 
@@ -283,6 +303,29 @@ public static class ChoiceJudge
         for (int i = 0; i < count; i++)
             if (double.IsNegativeInfinity(lp[i])) lp[i] = AbsentLogProb;
         return lp;
+    }
+
+    /// <summary>
+    /// The log-odds of "yes" against "no" as the reply's first token, every spelling summed — one forward
+    /// pass, read like the letters (<c>ItemUseCritic</c> reads its yes/no questions the same way).
+    /// </summary>
+    private static async Task<double> YesLogOddsAsync(ChoiceKind kind, string prompt)
+    {
+        if (!IsReady || _llm == null || !_llm.IsServerReady)
+            throw new InvalidOperationException("ChoiceJudge is not ready.");
+        var top = await _llm.GetFirstTokenLogProbsAsync(_slots[kind], prompt, TopLogprobs);
+        var yes = top.Where(t => t.Token.Trim() is "yes" or "Yes").Select(t => t.LogProb).DefaultIfEmpty(AbsentLogProb);
+        var no  = top.Where(t => t.Token.Trim() is "no" or "No").Select(t => t.LogProb).DefaultIfEmpty(AbsentLogProb);
+        return LogSumExp(yes) - LogSumExp(no);
+    }
+
+    private static string BuildYesNoPrompt(string faculty, string situation, string question)
+    {
+        var sb = new StringBuilder("The faculty: ").Append(faculty).Append("\n\n");
+        if (!string.IsNullOrWhiteSpace(situation))
+            sb.Append("The situation: ").Append(ToThirdPerson(Regex.Replace(situation.Trim(), @"\s+", " "))).Append("\n\n");
+        sb.Append(question).Append("\n\nAnswer yes or no.");
+        return InJudgeWords(sb.ToString());
     }
 
     /// <summary>

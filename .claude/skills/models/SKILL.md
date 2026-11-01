@@ -129,7 +129,7 @@ timestamp. Note the sampling constants in `Config.LLM` were tuned on a 3B model 
 model-independent.
 
 **So are the choice judge's and the item critic's.** `ChoiceJudge`'s thresholds (`GoalDeclineLogOdds`,
-`AssentLogOdds`, `EagerLogOdds`, `UnwillingLogOdds`) and its `BaselineWeight` were all measured on the
+`AssentLogOdds`, `EagerYesLogOdds`, `UnwillingLogOdds`) and its `BaselineWeight` were all measured on the
 shipped 3B, and none of them carries over. Measured on Qwen2.5-7B-Instruct (Q4_K_M) with the same
 labelled cases: develop's prompts scored 362 of 386, but every Goal error was a missed decline (the
 decline threshold is too high for it) and the willingness reading never said "unwilling"; the onlooker

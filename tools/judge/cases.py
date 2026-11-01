@@ -48,6 +48,37 @@ WILLINGNESS = [  # place, area, object, act, made for it, foreign to it, crimina
     ("a jungle", "strangler figs", "the appeased triceratops", "tame the triceratops", "husbandry", "calligraphy", 0),
     ("a hot steppe", "thorn scrub", "the carnotaurus", "attack the carnotaurus", "ferocity", "midwifery", 1),
 ]
+# The willingness DEGREE, labelled (the WILLINGNESS pairs above say only assent or dissent; their
+# made-for-it half is labelled eager). Each act is chosen so its degree is plain from the scale's own
+# definitions (ChoiceJudge.StanceLabel): eager — the very thing the faculty exists to do; willing — in
+# its reach, a neighbour's craft; reluctant — foreign to it, nothing it is set against; unwilling — the
+# act contradicts what it is (the quiet mind made to shout, the bone-setter made to break a bone).
+WILLINGNESS_DEGREE = [  # place, area, object, act, modus mentis, degree
+    ("a village", "bakehouse", "a trough of risen dough", "bake a loaf of bread", "cookery", "willing"),
+    ("a coast", "slip", "a torn sail", "mend the torn sail", "tailoring", "willing"),
+    ("a forest", "ford", "a shallow ford", "wade across the shallow ford", "natation", "willing"),
+    ("a village", "green", "a feast", "sing a song at the feast", "lute_playing", "willing"),
+    ("a farm", "goat pen", "a nanny goat", "milk the goat", "shearing", "willing"),
+    ("a farm", "kitchen", "a farmer who cannot write", "write a letter for the farmer", "copying", "willing"),
+    ("a forest", "clearing", "a felled oak", "split the felled oak into firewood", "felling", "willing"),
+    ("a farm", "wet field", "a choked drainage ditch", "dig out the drainage ditch", "haulage", "willing"),
+    ("a forest", "riverbank", "a wide river", "swim across the wide river", "calligraphy", "reluctant"),
+    ("a village", "smithy", "a horse with a cast shoe", "shoe the horse", "lute_playing", "reluctant"),
+    ("a mountain", "foot of the cliff", "a sheer cliff", "climb up the sheer cliff", "cookery", "reluctant"),
+    ("a forest", "clearing", "a standing oak", "fell the oak", "copying", "reluctant"),
+    ("a town", "tannery", "a raw hide", "tan the raw hide", "dance", "reluctant"),
+    ("a village", "cottage", "a man with a broken arm", "set the man's broken arm", "anglery", "reluctant"),
+    ("a plain", "drove road", "a herd of cattle", "drive the herd to market", "tailoring", "reluctant"),
+    ("a farm", "wet field", "a choked drainage ditch", "dig out the drainage ditch", "incensing", "reluctant"),
+    ("a town", "market square", "a crowd", "shout to announce yourself across the market", "stealth", "unwilling"),
+    ("a village", "bell tower", "the great bell", "ring the bell to wake the whole village", "sneak_art", "unwilling"),
+    ("a castle", "dungeon", "a prisoner", "break the prisoner's arm", "bonesetting", "unwilling"),
+    ("a village", "green", "a crowd of children", "pull faces to make the children laugh", "stoneface", "unwilling"),
+    ("a village", "alehouse", "a cask of strong ale", "drink yourself senseless", "discipline", "unwilling"),
+    ("a village", "square", "the reeve giving orders", "defy the reeve's order openly", "obedience", "unwilling"),
+    ("a village", "inn door", "a starving traveller", "turn the starving traveller away from the door", "hospitality", "unwilling"),
+    ("a village", "half-built wall", "a wall half built", "abandon the half-built wall and wander off", "diligence", "unwilling"),
+]
 MEANS = [  # thinking, place, area, goal, action options, acceptable
     ("caution", "a town", "city gate", "get past the guard at the gate", ["sneak_art", "bribery", "brawling", "cookery", "dance"], ["sneak_art"]),
     ("cruelty", "a town", "city gate", "get past the guard at the gate", ["sneak_art", "bribery", "brawling", "cookery", "dance"], ["brawling"]),
@@ -174,7 +205,12 @@ def all_cases(MM):
     for place, area, obj, act, pos, neg, crim in WILLINGNESS:
         for mm, sign in ((pos, 1), (neg, -1)):
             out.append(dict(kind="Willingness", mm=mm, sign=sign, crim=crim, id=f"{act}|{mm}",
+                            degree="eager" if sign > 0 else None,
                             situation=_situation(place, area, obj) + f" You are considering whether to {act}."))
+    for place, area, obj, act, mm, degree in WILLINGNESS_DEGREE:
+        out.append(dict(kind="Willingness", mm=mm, sign=1 if degree in ("eager", "willing") else -1, crim=0,
+                        id=f"{act}|{mm}", degree=degree,
+                        situation=_situation(place, area, obj) + f" You are considering whether to {act}."))
     for th, place, area, goal, opts, ok in MEANS:
         labels = [f"{MM[a]['name']}: {MM[a]['means']}" for a in opts]
         out.append(dict(kind="Means", mm=th, id=f"{goal}|{th}", decline_index=-1, options=labels,

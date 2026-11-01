@@ -36,12 +36,16 @@ for c in todo:
     mm = MM[c["mm"]]
     if c["kind"] == "Willingness":
         lp = J.letter_logprobs("Willingness", J.build_prompt("Willingness", mm, c["situation"], J.SCALE), 4)
-        w = J.willingness(lp); stances[w] += 1
+        ey = J.yes_logodds("Willingness", J.yes_no_prompt(mm, c["situation"], J.EAGER_QUESTION)) if J.assents(lp) else None
+        w = J.willingness(lp, ey); stances[w] += 1
+        if c.get("degree"):
+            score["Willingness degree"][0] += w == c["degree"]; score["Willingness degree"][1] += 1
+            if w != c["degree"]: errors.append(f"Degree       {c['id']:55} -> {w} (labelled {c['degree']})")
         ok = (w in ("eager", "willing")) == (c["sign"] > 0)
         score["Willingness"][0] += ok; score["Willingness"][1] += 1
         if c["crim"]: score["Willingness (crimes)"][0] += ok; score["Willingness (crimes)"][1] += 1
         if not ok: errors.append(f"Willingness  {c['id']:55} -> {w}")
-        if out: out.write(json.dumps(dict(id=c["id"], kind=c["kind"], lp=lp, pick=w, ok=ok)) + "\n")
+        if out: out.write(json.dumps(dict(id=c["id"], kind=c["kind"], lp=lp, eager_yes=ey, pick=w, ok=ok)) + "\n")
         continue
     for order in rotations(c):
         shown = [c["options"][i] for i in order]

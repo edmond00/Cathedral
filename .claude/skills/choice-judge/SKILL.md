@@ -160,7 +160,39 @@ Both are checked twice:
 |---|---|---|
 | Focus, KeepFocus, Means, Reply | likeliest letter | thresholds measured no better |
 | Goal | decline only if its log-odds over all real goals > `GoalDeclineLogOdds` (10) | right declines scored +11…+22, wrong ones ≤ +4.4: 89% → 92% |
-| Willingness | assent if log P(eager∪willing) − log P(reluctant∪unwilling) > `AssentLogOdds` (−1.8); then eager vs willing at `EagerLogOdds` (−6.4), unwilling vs reluctant at `UnwillingLogOdds` (−0.6) | the likeliest letter gave 1 eager in 40; this gives ~10 each and one more right |
+| Willingness | assent if log P(eager∪willing) − log P(reluctant∪unwilling) > `AssentLogOdds` (−1.8); on assent, a second request asks `EagerQuestion` ("Is this act this faculty's own work, what it is made for?") yes or no — eager when yes beats no (`EagerYesLogOdds`, 0); on dissent, unwilling vs reluctant from the scale at `UnwillingLogOdds` (−0.6) | the likeliest letter gave 1 eager in 40; the threshold on assent was right one case more often; the eager question, below |
+
+**The willingness degree is asked, not read off the scale's lean** — the item critic's lesson
+(`CriticNode.DegreeQuestions`), applied here. `cases.py` labels the degree on 51 cases
+(`WILLINGNESS_DEGREE`, and the made-for-it half of the pairs as eager), where before only assent was
+labelled and the two splits were set at the bench medians. Against those labels:
+
+| eager vs willing from | degree right (of 51) | eager | willing | reluctant | unwilling |
+|---|---|---|---|---|---|
+| the scale's lean at `EagerLogOdds` (−6.4), as before | 26 | 15/27 | 5/8 | 2/8 | 4/8 |
+| the likeliest letter | 18 | 4/27 | 4/8 | 6/8 | 4/8 |
+| **`EagerQuestion`, yes over no** | **35** | 25/27 | 4/8 | 2/8 | 4/8 |
+
+The scale's lean does not separate the two at all (eager acts −18…+8, willing ones −12…0); the
+question does (eager median about +11, willing about −3), and is right for any cut from 0 to +2, so
+it is left at the even point, untuned. Assent is still the scale's and unchanged (72 of 78). The
+cost is one more request, on assent only — a short yes/no prompt on the willingness slot, about
+1.5 s on CPU. More assents come out eager than before (28 of 37 on the bench, against 17), since the
+old split was a median by construction; an eager act's difficulty falls by one.
+
+**The dissent side could not be asked.** Every wording of "is this act contrary to it?" failed:
+"does it contradict / go against / betray this faculty's nature?" answered *yes* for 16–25 of the 27
+acts a faculty is made for and *no* for 7–8 of the 8 contrary ones — the model reads "does this act
+bear on the faculty", negation and all — and the positive wordings ("is it the opposite of everything
+this faculty stands for?", "is this faculty made to avoid this kind of act?") never answered yes at
+all. So unwilling vs reluctant stays on the scale's lean, and it is weak: on the 13 labelled dissents
+it is right 6 times, calling 6 of 8 reluctant acts unwilling — a refusal. The lean barely separates
+them (reluctant −4.2…+1.9, most within 0.6 of the line; unwilling −1.1…+3.9): moving
+`UnwillingLogOdds` to 0 would make it 9 of 13, but by moving three cases sitting at −0.5…0, on 13
+cases, so it is left where it is until there are more labels. The scale's blind spot is upstream as
+well: three of the eight unwilling acts are judged *assent* — Stoneface "willing" to pull faces,
+Obedience to defy the reeve, Hospitality "eager" to turn a starving traveller away — the act sharing a
+word with the description, which is rule 1 above biting.
 
 **Focus, Goal, Means and Reply are scored net of an onlooker.** Each option's score is
 log P(letter | the faculty) − `BaselineWeight` (0.3) × log P(letter | the ONLOOKER), the same list in
@@ -238,9 +270,10 @@ offline.
   an NPC's state (an appeased triceratops's hint still "lowers its three horns toward you"). Worth
   measuring on the whole Focus set if a state-aware description is ever written.
 
-The eager/unwilling splits are **bench medians**; the game's real mix of acts differs (the means is
-usually chosen for fit), so the shares in play will differ too. Every decision logs its log-odds
-(`ChoiceJudge:` lines in the log), which is the data to re-tune them from.
+The unwilling/reluctant split is a **bench median**; the game's real mix of acts differs (the means
+is usually chosen for fit), so the shares in play will differ too. Every decision logs its log-odds
+and, on assent, the eager question's answer (`ChoiceJudge:` lines in the log), which is the data to
+re-tune them from.
 
 ## Measuring — `tools/judge/`
 

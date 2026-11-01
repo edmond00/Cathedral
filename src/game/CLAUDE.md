@@ -650,7 +650,11 @@ the goal's decline and the willingness scale use log-odds thresholds (`ChoiceJud
 which took the bench from 92.3% to 94.5% and spread the four willingness degrees evenly where the
 likeliest letter almost never said "eager". Willingness is therefore not a pick from a list at all:
 `JudgeWillingnessAsync` always reads the whole scale and the caller narrows the answer to what the
-rules leave on offer. The model is near-certain on ~90% of answers, wrong ones included, so a
+rules leave on offer. **Once the scale assents, eager or willing is a second request**, a yes/no
+question (`ChoiceJudge.EagerQuestion`, "Is this act this faculty's own work, what it is made for?"):
+the scale's own lean did not separate the two, the question does (degree right on 35 of 51 labelled
+cases, against 26). The dissent side is still read off the scale — no yes/no wording of "contrary to
+it" worked; see the skill. The model is near-certain on ~90% of answers, wrong ones included, so a
 confident mistake is fixed in the descriptions and the prompts, never by a threshold.
 
 **Focus, Goal, Means and Reply are read net of an ONLOOKER**: the same list is scored a second time
@@ -688,8 +692,8 @@ Things to know:
 
 - **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
   every other list is shuffled with the decline last.
-- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The willingness splits are bench
-  medians and the game's real mix of acts differs, so these lines are what to re-tune them from.
+- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The unwilling/reluctant split is a
+  bench median and the game's real mix of acts differs, so these lines are what to re-tune it from.
 - **How a question is put matters more than what it says.** Asked "keep it, or turn elsewhere?", the
   keep-focus judge turned away from 72% of everything; asked whether the thing "holds anything for
   this faculty", yes or no, it kept 51% and judged every labelled case right. Asked "how
