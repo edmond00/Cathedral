@@ -25,6 +25,8 @@ import argparse, json, math, os, re, sys, time
 sys.path.insert(0, os.path.dirname(__file__))
 import prompt_lib as P
 import critic_survey as S
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "judge"))
+from judge_lib import in_judge_words   # ChoiceJudge.InJudgeWords: the critic reads the same plain nouns
 
 BEFORE = "baef68e"   # the commit this work started from: the critic as it shipped
 
@@ -89,7 +91,7 @@ def question(T, c):
 def choice_prompt(question_text, choices):
     lines = [question_text, "", "Choose one of the following options. Respond with ONLY the option id, nothing else:"]
     lines += [f"- {cid}: {desc}" if desc else f"- {cid}" for cid, desc, _ in choices]
-    return "\n".join(lines).rstrip()
+    return in_judge_words("\n".join(lines).rstrip())
 
 
 def letter_prompt(question_text, choices):
@@ -319,6 +321,7 @@ def yes_logodds(T, c, ask):
     text = P._fill(head.replace("{context.BuildPreamble()}", "{pre}") + ask, pre=T["preamble"](T, c),
                    goalText=goal_of(T, c), itemName=c["item"], itemContext=c.get("item_context") or c["item"],
                    referenceToolPhrase=c.get("tool") or "") + "\n\nAnswer yes or no."
+    text = in_judge_words(text)
     msgs = [{"role": "system", "content": P.system_prompt(T.get("templates") or P.T_NOW, T["system"])},
             {"role": "user", "content": text}]
     d = _post("/v1/chat/completions", dict(model="local", messages=msgs, max_tokens=1, stream=False,

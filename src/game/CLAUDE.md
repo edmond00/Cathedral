@@ -1200,6 +1200,11 @@ refused at every band.
 Under `--playground` and `--debug` none of this runs: a choice is drawn or forced from the node's
 own list, as before.
 
+**The critic reads misread names in plain words too** (`ChoiceJudge.InJudgeWords`, applied to every
+critic request): its goal and its target description name the thing acted on, and the model knows
+"triceratops" as an extinct dinosaur — see "How a modus mentis chooses" above. One vocabulary
+(`Species.JudgeNoun`) for every judging prompt; `critic_bench.py` applies it too.
+
 **`Item.MadeForVerbIds` forbids as much as it permits, and that is the point.** A declaration means
 "accepted for these acts without argument, refused for every other, also without argument" — a glass
 ground to magnify cannot break ore out of a seam, and asking a critic whether it might is a request

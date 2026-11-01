@@ -248,7 +248,8 @@ public class ItemUseCritic : IDisposable
     /// </summary>
     private async Task<double> YesLogOddsAsync(string question)
     {
-        var top = await _llamaServer.GetFirstTokenLogProbsAsync(_criticSlotId, question + "\n\nAnswer yes or no.", 40);
+        var top = await _llamaServer.GetFirstTokenLogProbsAsync(
+            _criticSlotId, Narrative.ChoiceJudge.InJudgeWords(question + "\n\nAnswer yes or no."), 40);
         var yes = top.Where(t => t.Token.Trim() is "yes" or "Yes").Select(t => t.LogProb).ToList();
         var no  = top.Where(t => t.Token.Trim() is "no" or "No").Select(t => t.LogProb).ToList();
         if (yes.Count == 0) yes.Add(AbsentLogProb);
@@ -328,7 +329,9 @@ public class ItemUseCritic : IDisposable
             else
                 sb.AppendLine($"- {choice.Id}");
         }
-        return sb.ToString().TrimEnd();
+        // Names the model misreads in plain words, as the choice judge reads them (Species.JudgeNoun):
+        // a triceratops's carcass is a three-horned beast's to the critic too.
+        return Narrative.ChoiceJudge.InJudgeWords(sb.ToString().TrimEnd());
     }
 
     private static string BuildGrammar(List<CriticChoice> choices)

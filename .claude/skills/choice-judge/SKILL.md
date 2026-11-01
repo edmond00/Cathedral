@@ -205,6 +205,28 @@ triceratops investigation:
   its own tastes than an ordinary mind is. Same cost as the onlooker, so there is no reason to prefer it.
 - **The onlooker on KeepFocus and Willingness as well**: no case changed at 0.3 or 0.5, for a call
   each.
+
+**On a bigger model the onlooker stops paying** (Qwen2.5-7B-Instruct Q4_K_M, the same server build,
+the same 386 decisions):
+
+| | all | old cases | new cases |
+|---|---|---|---|
+| develop's prompts | 362 | 317 | 45 |
+| plain nouns only | 361 | 317 | 44 |
+| plain nouns + onlooker 0.3 | 358 | 313 | 45 |
+
+The sweep on the 7B: 361, 361, 360, 358, 359, 358, 327 at weights 0 to 1. The 7B no longer makes the
+errors the onlooker corrects (it gives Cruelty the fist unaided), and the onlooker costs it declines.
+The onlooker itself declines near-certainly (log P ≈ 0), so netting the decline changes nothing,
+while every real option, which the onlooker scores −6 to −17, is lifted by 2 to 5: the decline's
+log-odds fall under `GoalDeclineLogOdds`. And that threshold is the 3B's: all eight of the 7B's Goal
+errors on develop are missed declines. Re-tuned for the 7B (best near 2, against 10), Goal reads 99 of
+104 without the onlooker and 98 with it — so even with thresholds that fit, the onlooker buys the 7B
+nothing. The plain nouns are neutral there: the 7B already reads a triceratops as a beast, and
+"three-horned beast" does it no harm. **`BaselineWeight` is a property of the model, like the
+thresholds**: re-measure both on any swap (the `models` skill says so), from a `judge_bench.py --out`
+run, which records the faculty's and the onlooker's scores so every weight and threshold can be swept
+offline.
 - **Telling the judge what a misread name is**, a glossary line, kind tags, appositions — see "Names
   the judge misreads".
 - **A description on every Focus option** ("focus on hanging lianas: lianas dropping out of the dark
