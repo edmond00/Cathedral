@@ -652,8 +652,29 @@ the goal's decline and the willingness scale use log-odds thresholds (`ChoiceJud
 which took the bench from 92.3% to 94.5% and spread the four willingness degrees evenly where the
 likeliest letter almost never said "eager". Willingness is therefore not a pick from a list at all:
 `JudgeWillingnessAsync` always reads the whole scale and the caller narrows the answer to what the
-rules leave on offer. The model is near-certain on ~90% of answers, wrong ones included, so a
+rules leave on offer. **Once the scale assents, eager or willing is a second request**, a yes/no
+question (`ChoiceJudge.EagerQuestion`, "Is this act this faculty's own work, what it is made for?"):
+the scale's own lean did not separate the two, the question does (degree right on 35 of 51 labelled
+cases, against 26). The dissent side is still read off the scale — no yes/no wording of "contrary to
+it" worked; see the skill. The model is near-certain on ~90% of answers, wrong ones included, so a
 confident mistake is fixed in the descriptions and the prompts, never by a threshold.
+
+**Focus, Goal, Means and Reply are read net of an ONLOOKER**: the same list is scored a second time
+for a faculty with no bent of its own (`ChoiceJudge.OnlookerDescription`), and `BaselineWeight` (0.3)
+of its score is taken off each option's. The model has tastes of its own — it gave Cruelty bribery to
+make a prisoner talk — and the onlooker shares them, so they cancel and the faculty's own pull is left.
+It costs a second forward pass on those four kinds (~+1.4 s a decision on CPU); `BaselineWeight = 0`
+switches it off. The log records both scores.
+
+**A name the model misreads is put in plain words before the judge reads it.** The model knows
+"triceratops" as an extinct dinosaur, and in play no faculty — Beast Sense included — would look at an
+appeased one. A species that needs it declares `Species.JudgeNoun` ("three-horned beast"), and
+`ChoiceJudge.InJudgeWords` swaps the name for it, as a whole word, everywhere in the prompt; only the
+judge reads that. The four great reptiles have one. Telling the judge what the word means (a glossary,
+a kind tag) does not work — see the skill.
+
+A beast's tracks are named by its kind (`PlaceBeastSign`: "Triceratops Tracks"), never by its
+generated name: "Torntread Tracks" told the player a name nobody gave and the judge nothing.
 
 **Invoke the `choice-judge` skill before adding or editing a modus mentis or a judge.** It has the
 writing rules both must follow — the judge matches words before natures, so a description that says
@@ -673,8 +694,8 @@ Things to know:
 
 - **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
   every other list is shuffled with the decline last.
-- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The willingness splits are bench
-  medians and the game's real mix of acts differs, so these lines are what to re-tune them from.
+- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The unwilling/reluctant split is a
+  bench median and the game's real mix of acts differs, so these lines are what to re-tune it from.
 - **How a question is put matters more than what it says.** Asked "keep it, or turn elsewhere?", the
   keep-focus judge turned away from 72% of everything; asked whether the thing "holds anything for
   this faculty", yes or no, it kept 51% and judged every labelled case right. Asked "how
@@ -1173,8 +1194,63 @@ why the table is a lookup rather than a switch with a default.
 **Five refusals, five neutral sentences** (`ToolFailureKind`). Told only "it did not work", the
 acting modus mentis rewrites it as whichever near-miss flatters the character — so the wording
 distinguishes the wrong implement, the act that admits none, the implement made for other work, the
-hand with no craft in it, and the sound idea beyond an unpractised hand. Only `WrongTool` carries
-the critic's own reason, because it is the only one an LLM was asked about.
+hand with no craft in it, and the sound idea beyond an unpractised hand. Only `WrongTool` carries a
+reason after its sentence — the refusal's own fixed first-person line (`CriticTrees.CannotReason`,
+`SenselessReason`), because it is the only one an LLM decided. **The critic is not asked why.** It
+used to be, in a second request after every refusal, and the answer was a rationalisation of the
+verdict it had just given — "the dagger's blunt nature", of a double-edged tapered blade — shown to
+the player as the cause.
+
+**What the critic asks, and how its answer is read.** Each tree is two questions on one preamble
+(setting, scene, and the thing acted on as its factory describes it — `CriticTarget.Describe`; a
+person is not described, since a description may carry a name not yet given), and
+`ItemUseCritic.WeighAsync` reads both rather than sampling either:
+
+- **the node**, the question as it always was — "compared to bare hands, does X give a meaningful
+  advantage?", or for a required verb "could X be used in place of Y, even if less well?" — whose
+  reading gives the verdict's id: the degree, or the refusal;
+- **its `Counterweight`**, "could X do any real part of this, even clumsily?", each yes naming a
+  physical means (edge, point, weight, length, grip), which contributes only its weight.
+
+The side is the **sum of the two questions' log-odds** of help against refusal (`HelpLogOdds`, 0,
+deliberately untuned); the id is the node's on that side. Alone, the bare-hands question refused a
+third of the sensible improvisations of `tools/prompts/critic_survey.py` — a dagger driven into a
+stone wall's gaps, a staff over quicksand, a shield as a sled — so no band ever got to try them, the
+opposite of what the three degrees are for; alone, the lenient one passed a fifth of the wrong items
+(a tally stick through brambles), because a small model can always imagine a clumsy use. They err on
+different cases. The lenient question cannot give the degree: "even clumsily" drew nearly every
+answer to the clumsy one, a hammer to break a door included, which would have taken every tool away
+from a Low hand. Read, not sampled, because one sample at temperature 0.7 is one draw — a quarter of
+the survey changed side between draws — and read off the **ids' first tokens**, never letters: shown
+as A–E the options came back "D" for most cases whatever they were. Measured on 167 cases, against
+the old critic: sensible items usable at Low 37% → 68%, Medium 40% → 55%, High 70% → 81%; wrong items
+usable at Low and Medium 1.7% → 0, at High 5.0% → 5.0%. **It costs more, not less**: two requests a
+tool use (and one or two one-token yes/no reads after a substitute passes, below) and no generated
+reason, where it was one plus a ~60-token reason after every refusal — about +0.8 s a tool use on CPU
+(4.3 s against 3.5 s), the second prompt read outweighing the reason it replaced. `tools/prompts/NOTES.md`, "The item critic and
+improvised tools", has the rest; `critic_bench.py --variant current` measures the C# as it stands.
+
+**The substitution tree's degree is asked, not read** (`CriticNode.DegreeQuestions`). As options,
+it came back `serves_poorly` for nearly every stand-in its question accepted — a dagger offered as a
+knife, a war axe as an axe — so a Low hand could use none of the required verbs' stand-ins, and no
+rewording of the options moved it. Of a pass the strict question accepted, two yes/no questions are
+asked in order on the same preamble: "is X a kind of Y, or near enough the same tool?" (yes →
+`is_the_tool`), "would X do this work properly, the way Y does, if a little less well?" (yes →
+`serves_well`); neither → `serves_poorly`. A pass the strict question refused and the counterweight
+carried is an improvisation and takes the clumsy degree without asking — reading the strict
+question's likeliest help id there had handed a chisel at an ore seam to a Medium hand, through a
+first-token tie between `serves_well` and `serves_poorly`. On the survey's required verbs, usable by a
+Low hand 0 → 6 of 13 and by a Medium hand 1 → 9 of 27, with nothing passing that should not. The
+second question still says no to most proper stand-ins (a machete for an axe, a chisel at a
+strongbox), and a few true improvisations (a lancet or an awl at a lock, a flint to skin) are still
+refused at every band.
+Under `--playground` and `--debug` none of this runs: a choice is drawn or forced from the node's
+own list, as before.
+
+**The critic reads misread names in plain words too** (`ChoiceJudge.InJudgeWords`, applied to every
+critic request): its goal and its target description name the thing acted on, and the model knows
+"triceratops" as an extinct dinosaur — see "How a modus mentis chooses" above. One vocabulary
+(`Species.JudgeNoun`) for every judging prompt; `critic_bench.py` applies it too.
 
 **`Item.MadeForVerbIds` forbids as much as it permits, and that is the point.** A declaration means
 "accepted for these acts without argument, refused for every other, also without argument" — a glass

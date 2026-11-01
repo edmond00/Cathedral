@@ -1356,8 +1356,49 @@ public class LlamaServerManager : IDisposable
         return (await SendOneShotAsync(slotId, userMessage, null, maxTokens: 1, skipReset: false, topLogprobs: topN)).Top;
     }
 
+    /// <summary>
+    /// The reply the model would write at temperature 0 (greedy, no grammar), with the log-probabilities
+    /// of the <paramref name="topN"/> likeliest FIRST tokens as <see cref="GetFirstTokenLogProbsAsync"/>
+    /// reports them. One request: a caller choosing among a few ids reads which side of a decision the
+    /// first token's mass falls on, and the greedy text says which id on that side was meant — needed
+    /// when two ids share a first token (<c>serves_well</c>, <c>serves_poorly</c>). Resets the instance
+    /// afterwards. Used by <see cref="Cathedral.Game.ItemUseCritic"/>.
+    /// </summary>
+    public async Task<(string Text, IReadOnlyList<(string Token, double LogProb)> Top)> GetGreedyReplyWithLogProbsAsync(
+        int slotId, string userMessage, int maxTokens = 8, int topN = 40)
+    {
+        if (Cathedral.Game.PlaygroundMode.IsActive)
+            return (string.Empty, Array.Empty<(string, double)>());
+        var (text, top) = await SendOneShotAsync(slotId, userMessage, null, maxTokens, skipReset: false,
+                                                 topLogprobs: topN, temperature: 0);
+        return (text, top);
+    }
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> _firstPieces = new();
+
+    /// <summary>
+    /// The first token of <paramref name="text"/> as the loaded model's tokenizer splits it ("clear" for
+    /// "clearly_helps"), from the server's <c>/tokenize</c>. Cached per text, since a model is never
+    /// swapped under a running server.
+    /// </summary>
+    public async Task<string> FirstTokenPieceAsync(string text)
+    {
+        if (_firstPieces.TryGetValue(text, out var cached)) return cached;
+        using var response = await _httpClient.PostAsJsonAsync("tokenize",
+            new Dictionary<string, object> { ["content"] = text, ["with_pieces"] = true });
+        response.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var tokens = doc.RootElement.GetProperty("tokens");
+        string piece = tokens.GetArrayLength() > 0 && tokens[0].TryGetProperty("piece", out var p)
+            ? (p.GetString() ?? "").Trim()
+            : "";
+        _firstPieces[text] = piece;
+        return piece;
+    }
+
     private async Task<(string Text, List<(string Token, double LogProb)> Top)> SendOneShotAsync(
-        int slotId, string userMessage, string? gbnfGrammar, int maxTokens, bool skipReset, int topLogprobs)
+        int slotId, string userMessage, string? gbnfGrammar, int maxTokens, bool skipReset, int topLogprobs,
+        double? temperature = null)
     {
 
         if (!_instances.TryGetValue(slotId, out var instance))
@@ -1406,7 +1447,7 @@ public class LlamaServerManager : IDisposable
                 ["cache_prompt"] = true,
                 ["slot_id"] = slotId,
                 ["top_k"] = Config.LLM.TopK,
-                ["temperature"] = Config.LLM.Temperature,
+                ["temperature"] = temperature ?? Config.LLM.Temperature,
                 ["top_p"] = Config.LLM.TopP,
             };
             AddRequestSeed(requestData);

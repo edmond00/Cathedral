@@ -235,6 +235,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
     Console.WriteLine("                                     it --playground draws uniformly over every goal the observed object offers.");
+    Console.WriteLine("                                     Without --playground it narrows the goal judge's list the same way.");
     Console.WriteLine("                                     The CLI's `goal` command sets the same thing, for a script that needs to change it");
     Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");

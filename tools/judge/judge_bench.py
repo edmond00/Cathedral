@@ -6,8 +6,9 @@ modus mentis description that a case uses.
 
 Every multi-choice case is asked in every rotation of its real options (the decline stays last, as
 the game lists it), since the game shuffles them and a case that is right in one order only is not
-right. KeepFocus and Willingness are asked once, in their fixed order. About 300 forward passes;
-roughly ten minutes on CPU.
+right. KeepFocus and Willingness are asked once, in their fixed order. Focus, Goal, Means and Reply
+take two forward passes a decision (the faculty and the onlooker, as the game does: ChoiceJudge's
+BaselineWeight). About 650 forward passes; roughly a quarter of an hour on a 4-core CPU.
 """
 import argparse, collections as co, json, sys, os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -35,24 +36,29 @@ for c in todo:
     mm = MM[c["mm"]]
     if c["kind"] == "Willingness":
         lp = J.letter_logprobs("Willingness", J.build_prompt("Willingness", mm, c["situation"], J.SCALE), 4)
-        w = J.willingness(lp); stances[w] += 1
+        ey = J.yes_logodds("Willingness", J.yes_no_prompt(mm, c["situation"], J.EAGER_QUESTION)) if J.assents(lp) else None
+        w = J.willingness(lp, ey); stances[w] += 1
+        if c.get("degree"):
+            score["Willingness degree"][0] += w == c["degree"]; score["Willingness degree"][1] += 1
+            if w != c["degree"]: errors.append(f"Degree       {c['id']:55} -> {w} (labelled {c['degree']})")
         ok = (w in ("eager", "willing")) == (c["sign"] > 0)
         score["Willingness"][0] += ok; score["Willingness"][1] += 1
         if c["crim"]: score["Willingness (crimes)"][0] += ok; score["Willingness (crimes)"][1] += 1
         if not ok: errors.append(f"Willingness  {c['id']:55} -> {w}")
-        if out: out.write(json.dumps(dict(id=c["id"], kind=c["kind"], lp=lp, pick=w, ok=ok)) + "\n")
+        if out: out.write(json.dumps(dict(id=c["id"], kind=c["kind"], lp=lp, eager_yes=ey, pick=w, ok=ok)) + "\n")
         continue
     for order in rotations(c):
         shown = [c["options"][i] for i in order]
         d = order.index(c["decline_index"]) if c.get("decline_index", -1) >= 0 else -1
-        lp = J.letter_logprobs(c["kind"], J.build_prompt(c["kind"], mm, c["situation"], shown, c.get("question")), len(shown))
+        lp, raw, on = J.scores(c["kind"], mm, c["situation"], shown, c.get("question"), d)
         pick = shown[J.decide(c["kind"], lp, d)]
         ok = pick in c["ok"]
         score[c["kind"]][0] += ok; score[c["kind"]][1] += 1
         if not ok: errors.append(f"{c['kind']:12} {c['id']:55} -> {pick[:50]}")
-        if out: out.write(json.dumps(dict(id=c["id"], kind=c["kind"], order=order, lp=lp, pick=pick, ok=ok)) + "\n")
+        if out: out.write(json.dumps(dict(id=c["id"], kind=c["kind"], order=order, lp=lp, raw=raw, onlooker=on, pick=pick, ok=ok)) + "\n")
     print(".", end="", flush=True)
 
+if out: out.close()
 print("\n\naccuracy (game decision rules)")
 T = N = 0
 for k, (ok, n) in score.items():

@@ -258,8 +258,10 @@ public class OutcomeNarrator
     /// were not. Collapsing them into one "it did not work" leaves the rewrite to invent which, and
     /// it invents the flattering one.</para>
     ///
-    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries the critic's own reason, because it
-    /// is the only kind an LLM was asked about.</para>
+    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries a reason after the sentence: the
+    /// refusal's own fixed line ("I think nothing about it could do any of this work"), since it is the
+    /// only kind an LLM decided. The critic is no longer asked to explain itself — see
+    /// <c>CriticTrees.CannotReason</c>.</para>
     /// </summary>
     public async Task<string> NarrateItemCombinationFailureAsync(
         ParsedNarrativeAction action,

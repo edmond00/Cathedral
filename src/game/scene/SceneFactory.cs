@@ -494,10 +494,15 @@ public abstract class SceneFactory
             var visited = schedule.ActivePeriods.Select(p => p.Area).Distinct().ToList();
             if (visited.Count < 2) continue;
 
-            string species = npc.Entity.DisplayName.ToLowerInvariant();
+            // Named by the kind, never the individual: a beast is "the triceratops" to the player
+            // (NpcLabelResolver), and tracks named after its generated name ("Torntread Tracks") told
+            // the player a name nobody gave and told the choice judge nothing at all. Shallow
+            // wildlife is already named by its kind. Two of a kind in one area leave one sign.
+            string kind = npc.Entity is Npc.NpcEntity named ? named.SpeciesName : npc.Entity.DisplayName;
+            string species = kind.ToLowerInvariant();
             foreach (var area in visited)
             {
-                string name = $"{npc.Entity.DisplayName} Tracks";
+                string name = $"{kind} Tracks";
                 if (area.PointsOfInterest.Any(p => p.DisplayName == name)) continue;
 
                 var sign = new FootprintPointOfInterest(npc, name, new List<string>
