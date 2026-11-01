@@ -538,6 +538,10 @@ public static class Config
         /// draw over every goal the observed object offers, so a script that means to appease — and
         /// then to tame — a beast offering a dozen goals is not testing anything it can name. Ignored
         /// for a thinking phase where no goal matches, which then draws as usual.</para>
+        ///
+        /// <para>Without <c>--playground</c> it narrows the list the goal judge chooses from the same
+        /// way, so a script on the real model can reach the verb it is about — the item critic's
+        /// prompts, for one, are only sent for a verb that admits a tool.</para>
         /// </summary>
         public static string? GoalOnly { get; set; } = null;
 

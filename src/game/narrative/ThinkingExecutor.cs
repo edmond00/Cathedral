@@ -889,11 +889,12 @@ public class ThinkingExecutor
         // question put to it, because there is nothing to ask about.
         if (realOutcomes.Count == 0) return IgnoreVerb.MakeOutcome();
 
+        // --goal-only narrows the judge's list too, not only the playground's draw: a script on the real
+        // model (checking the item critic's prompts, say) otherwise cannot reach the verb it is about.
+        var goals = GoalOnlyFilter(realOutcomes);
         if (PlaygroundMode.IsActive)
-        {
-            var pool = GoalOnlyFilter(realOutcomes);
-            return pool[_rng.Next(pool.Count)];
-        }
+            return goals[_rng.Next(goals.Count)];
+        realOutcomes = goals;
 
         // The judge picks one goal for this Modus Mentis — or the decline option, which is the ignore
         // outcome. Each goal phrase ("grab a beechnut") is already the action; the selector lists them
@@ -942,8 +943,8 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// Narrows a playground goal draw to the verb <c>--goal-only</c> (or the CLI's <c>goal</c>
-    /// command) names. Returns the pool untouched at the flag's default, and again when no goal in it
+    /// Narrows a thinking's goals — the playground's draw, or the judge's list on the real model — to
+    /// the verb <c>--goal-only</c> (or the CLI's <c>goal</c> command) names. Returns the pool untouched at the flag's default, and again when no goal in it
     /// matches — a phase where the named verb does not apply then draws as usual rather than being
     /// unable to choose anything.
     /// </summary>
