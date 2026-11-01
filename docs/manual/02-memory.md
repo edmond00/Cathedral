@@ -66,7 +66,7 @@ nothing could honour.
 
 **Its readiness to doubt** — low, medium or high — declared by every modus mentis bearing the
 Thinking function, and suited to its temper: a mind that questions, weighs and checks is high, one
-that knows at a glance or acts upon appetite is low. It sets how often a thinking may be taken up
+that knows at a glance, trusts a sense or a feeling, or keeps to a fixed code is low. It sets how often a thinking may be taken up
 again when its proposal comes to nothing, and whether that proposal may be doubted; it is treated in
 [Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act). A will declares none, and is medium.
 

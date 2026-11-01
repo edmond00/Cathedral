@@ -989,7 +989,7 @@ Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R20, fatal): **L
 is never doubted, **Medium** may try again once, **High** twice — a try spent by a refusal or by the
 player's NO, never by a YES — and the player may doubt at Medium and High while a try remains. It is
 the mind's own, chosen for its persona (questioning, weighing, checking minds High; minds that know
-at a glance or act on appetite Low; 24 / 90 / 30 High / Medium / Low), not the body's: it was the
+at a glance, sense, feel or follow a code Low; 24 / 68 / 52 High / Medium / Low), not the body's: it was the
 pineal gland's score once (`ThinkingIterationsStat`, `DoubtStat`), and every mind of one body
 second-guessed itself alike. A will declares none and is Medium: it never doubts (its goal is set by
 its course) and keeps one more try of a step on its way. Both live in

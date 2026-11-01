@@ -13,7 +13,7 @@ public class PrecedenceModusMentis : ModusMentis
         "Knows who goes before whom: at table, in procession, in the order of address. Reads a room for its hierarchy at a glance, and notices the slight of a wrong place given.";
     public override string SkillMeans       => "the knowledge of who goes before whom";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

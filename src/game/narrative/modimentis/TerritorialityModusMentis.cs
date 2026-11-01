@@ -14,7 +14,7 @@ public class TerritorialityModusMentis : ModusMentis
         "Holds the shape of its own ground: the boundary, the trespass, the neighbour's edge and where it presses. Reads any place as territory belonging to something, and knows which parts of it are yours.";
     public override string SkillMeans       => "the keeping and reading of the boundaries of one's own ground";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

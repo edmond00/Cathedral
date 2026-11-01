@@ -13,7 +13,7 @@ public class WeatherEarModusMentis : ModusMentis
         "Hears weather arriving: the wind changing quarter, distance counted off a thunderclap, and the flat silence that comes before heavy weather. Puts hours between a body and the worst of it.";
     public override string SkillMeans       => "the hearing of wind, thunder and the quiet before them";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "ears", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

@@ -15,7 +15,7 @@ public class DungingModusMentis : ModusMentis
         "Knows the worth of muck: which dung is hot and which cold, how long a heap must rot, which field it will mend. Reads soil by smell and colour for what it lacks.";
     public override string SkillMeans       => "the knowledge of muck and what it does for the ground";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

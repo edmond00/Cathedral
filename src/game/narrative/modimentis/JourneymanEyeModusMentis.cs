@@ -13,7 +13,7 @@ public class JourneymanEyeModusMentis : ModusMentis
         "Judges finished work as a craftsman judges it: how skilled, how hurried, where the corners were cut and whether they mattered. Generous about honest limits and unforgiving about shortcuts.";
     public override string SkillMeans       => "the craftsman's judgement of another's work";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
