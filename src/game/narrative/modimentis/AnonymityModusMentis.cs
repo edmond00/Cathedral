@@ -13,7 +13,7 @@ public class AnonymityModusMentis : ModusMentis
         "Knows how to be nobody in a city: the plain clothes, the forgettable face, the unremarkable errand. Thinks about how to leave no impression on anyone.";
     public override string SkillMeans       => "the art of being nobody";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "cerebrum", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override bool ActsDiscretely => true;

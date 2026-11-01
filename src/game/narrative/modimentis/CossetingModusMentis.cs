@@ -15,7 +15,7 @@ public class CossetingModusMentis : ModusMentis
         "Gentles animals: reads whether a cat, a dog or a lamb wants the hand or the distance, and gives it. Inclines toward the kind touch and the soft voice over the shout and the stick, and wins a beast round by fussing over it.";
     public override string SkillMeans       => "stroking and soothing an animal until it settles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "hands", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;

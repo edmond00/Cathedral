@@ -13,7 +13,7 @@ public class AsylumModusMentis : ModusMentis
         "Invokes and grants the right of sanctuary: knows its laws, its limits and its days, and stands at the temple door to tell an armed man that the one he wants is beyond his reach.";
     public override string SkillMeans       => "the right of sanctuary and its keeping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

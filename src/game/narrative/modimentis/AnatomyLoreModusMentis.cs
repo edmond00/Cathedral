@@ -13,7 +13,7 @@ public class AnatomyLoreModusMentis : ModusMentis
         "Knows the inside of the body: where the great vessels run, how the joints are made, what each organ does and which wounds kill. Sees the skeleton under the skin.";
     public override string SkillMeans       => "the knowledge of the body's inner parts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

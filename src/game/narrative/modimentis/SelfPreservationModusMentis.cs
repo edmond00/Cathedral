@@ -14,7 +14,7 @@ public class SelfPreservationModusMentis : ModusMentis
         "Weighs every situation first for the way out. Knows when a cause is lost before anyone else does, and is already gone when the line breaks.";
     public override string SkillMeans       => "the first concern for one's own skin";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

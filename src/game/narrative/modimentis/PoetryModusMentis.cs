@@ -14,7 +14,7 @@ public class PoetryModusMentis : ModusMentis
         "Reaches for metaphor and image, shaping words for beauty and feeling. Inclines toward the lyrical turn, and treats language as a way to move others rather than merely inform them.";
     public override string SkillMeans => "metaphor and lyrical expression";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Observation };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs => new[] { "tongue", "hippocampus" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

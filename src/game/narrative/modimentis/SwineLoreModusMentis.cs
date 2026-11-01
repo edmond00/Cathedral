@@ -15,7 +15,7 @@ public class SwineLoreModusMentis : ModusMentis
         "Understands pigs: their cleverness, their tempers, what they will eat and what will kill them. Knows the season for fattening on mast and the signs a sow will turn on her own litter.";
     public override string SkillMeans       => "the knowledge of pigs and their keeping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
-    public override DoubtLevel? Doubt => DoubtLevel.Medium;
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
