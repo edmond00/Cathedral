@@ -238,6 +238,13 @@ Run `help` for the authoritative list. The essentials:
                             trip to the nearest. `wait` outlasts the search; `inspect will-search`
                             reads `state=running|proposed|none` (proposed carries vertex= name= text=)
   click search-cancel       the search box's CANCEL (Escape does the same while it runs)
+  click will-button         the ◎ beside the ☰ on the world map: the will picker, every will the
+                            party holds on the left (scrolling), the selected one's wants on the right
+  click will <mm-id>        select a will in the open picker (scrolled into view first)
+  click picker up|down|close  the picker's ▲ / ▼ rows and CLOSE (Escape closes it too). In the picker,
+                            `click want <n>` presses the selected will's n-th want and starts the
+                            search. `inspect will-picker` reads `will-button shown|hidden` and
+                            `will-picker state=open wills= scroll= selected= shown=…`, one line per want
   scroll up|down [n]        scroll the shared history buffer
 
   clock <days>              push the world clock forward, then run the wound-healing sweep and
