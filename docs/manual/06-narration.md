@@ -350,6 +350,17 @@ eager for it, and the difficulty falls by one; an act on its way is carried out 
 whichever means is chosen for it, as any goal is. A will cannot refuse an act that would be its candidate — though a rule
 of action, which judges circumstance and not character, still may.
 
+**A visit made for one want.** From the world a will may be sent to seek one of its wants among the
+places within range: they are examined in order of the cost of the road to each, the nearest first,
+and the first in which the course to that want exists from the place's way in, at the hour of
+arrival, is proposed as the journey's end. A visit reached by that journey is made for that want, and
+while it lasts the will reckons its course to that want alone, however long — the course it
+attends by, the object it opens a phase on, the one it keeps in attending. Deliberating, it takes
+first a course through the object to that want, whatever its length; only where the object affords
+none are its other wants candidates, and then only by a course of at most three acts. Where no
+course to the sought want remains in the place — the thing done, or gone — the will reckons by all
+its wants again. Any other visit, a later one to the same place among them, is reckoned as above.
+
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
 

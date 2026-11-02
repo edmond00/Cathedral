@@ -504,6 +504,15 @@ public class Scene
     /// <see cref="NarrativeController"/> after the action's reports apply.
     /// </summary>
     public int PendingFocusLoss { get; set; }
+
+    /// <summary>
+    /// The will this visit was made for: a trip a will's search on the world map proposed, and the
+    /// party walked. The will (by id) wants that target (by its description, since a will builds its
+    /// targets afresh on every read) first while the visit lasts — see
+    /// <see cref="Cathedral.Game.Narrative.Rules.Choice.WillPriority.TargetsOf"/>. Null for every
+    /// other visit. One visit's business, like everything set on a scene.
+    /// </summary>
+    public (string ModusMentisId, string TargetKey)? WillPursuit { get; set; }
 }
 
 /// <summary>

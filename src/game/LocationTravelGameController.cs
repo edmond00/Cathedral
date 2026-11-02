@@ -160,6 +160,11 @@ public class LocationTravelGameController : IDisposable
     private WillPickerBox? _willPicker;
     private string? _willProposal;
     private int _willProposalVertex = -1;
+
+    // Which will and target the proposed trip was found for; carried by the journey that walks it
+    // (_pendingPursuit, from TRAVEL) onto the scene of the visit it ends in (Scene.WillPursuit).
+    private (string ModusMentisId, string TargetKey)? _willProposalPursuit;
+    private (int Vertex, string ModusMentisId, string TargetKey)? _pendingPursuit;
     private Cathedral.Pathfinding.AStar? _travelAStar;
     // Latest planner state cached for rendering
     private List<int>? _plannedPath;
@@ -2643,7 +2648,7 @@ public class LocationTravelGameController : IDisposable
         var inReach = _interface.EnumerateReachableVertices().ToHashSet();
         var cost = RoadCosts(graph, avatar, inReach);
         var candidates = cost.Keys.OrderBy(v => cost[v]).ThenBy(v => v).ToList();
-        _willSearch = new WillSearch(member, mm.DisplayName, target, candidates);
+        _willSearch = new WillSearch(member, mm.ModusMentisId, mm.DisplayName, target, candidates);
         _willSearchRenderer ??= new WillSearchRenderer(_core.Terminal);
         _travelInfoRenderer?.Erase();
         _interface.HandleVertexUnhovered();
@@ -2775,6 +2780,7 @@ public class LocationTravelGameController : IDisposable
         if (_travelPlanner?.FinalDestination != search.Found) return;
         _willProposalVertex = search.Found;
         _willProposal = $"{search.ModusMentisName}: {search.Target.Purpose}";
+        _willProposalPursuit = (search.ModusMentisId, search.Target.Describe());
     }
 
     /// <summary>Ends a will's search without proposing anything.</summary>
@@ -2825,7 +2831,10 @@ public class LocationTravelGameController : IDisposable
     public string? CliClickWant(int target)
     {
         if (_currentMode == GameMode.WorldView && _willPicker != null)
+        {
+            _willPicker.Draw();   // the rows of the will selected since the last frame
             return CliPress(_willPicker.WantCell(target), $"want {target} in the will picker");
+        }
         if (_currentMode != GameMode.ProtagonistManagement || _managementMenuRenderer == null)
             return "neither the will picker nor the protagonist screen is open (`click will-button`, or `manage Memory` then `select mm <id>`)";
         if (_managementMenuRenderer.CliWantCell(target) is not { } cell)
@@ -2840,8 +2849,15 @@ public class LocationTravelGameController : IDisposable
     /// selected will on the world map, or the selected will's "Wants" row on the Memory tab.
     /// </summary>
     public (int X, int Y)? CliWantCell(int target)
-        => _currentMode == GameMode.WorldView ? _willPicker?.WantCell(target)
-         : _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliWantCell(target) : null;
+    {
+        if (_currentMode == GameMode.WorldView)
+        {
+            // Drawn first: a will selected since the last frame shows its own rows only once drawn.
+            _willPicker?.Draw();
+            return _willPicker?.WantCell(target);
+        }
+        return _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliWantCell(target) : null;
+    }
 
     /// <summary>The ◎'s cell while it is on screen.</summary>
     public (int X, int Y)? CliWillButtonCell => WillButtonShown ? _willButton?.Cell : null;
@@ -2850,6 +2866,7 @@ public class LocationTravelGameController : IDisposable
     public (int X, int Y)? CliPickerWillCell(string modusMentisId)
     {
         if (_willPicker == null) return null;
+        _willPicker.Draw();   // opened this frame: not drawn yet, so nothing to hit-test
         if (_willPicker.WillCell(modusMentisId) is { } c) return c;
         // Off the list's view: scroll to it, and redraw so the row is where the next click lands.
         while (_willPicker.WillCell(modusMentisId) == null && _willPicker.DownCell != null && _willPicker.OnWheel(-1)) _willPicker.Draw();
@@ -2858,13 +2875,18 @@ public class LocationTravelGameController : IDisposable
     }
 
     /// <summary>The picker's ▲ / ▼ rows and CLOSE, while each is live.</summary>
-    public (int X, int Y)? CliPickerCell(string which) => _willPicker == null ? null : which switch
+    public (int X, int Y)? CliPickerCell(string which)
     {
-        "down"  => _willPicker.DownCell,
-        "up"    => _willPicker.UpCell,
-        "close" => _willPicker.CloseCell,
-        _       => null,
-    };
+        if (_willPicker == null) return null;
+        _willPicker.Draw();   // opened this frame: not drawn yet, so nothing to hit-test
+        return which switch
+        {
+            "down"  => _willPicker.DownCell,
+            "up"    => _willPicker.UpCell,
+            "close" => _willPicker.CloseCell,
+            _       => null,
+        };
+    }
 
     /// <summary>The picker for <c>inspect will-picker</c>: open or not, what is listed, shown and selected.</summary>
     public IReadOnlyList<string> CliWillPickerLines()
@@ -3010,6 +3032,7 @@ public class LocationTravelGameController : IDisposable
         _plannedEstimate = null;
         _willProposal = null;
         _willProposalVertex = -1;
+        _willProposalPursuit = null;
 
         // Cancel any pending forbidden-cell flash.
         if (_forbiddenFlashVertex >= 0)
@@ -3061,6 +3084,12 @@ public class LocationTravelGameController : IDisposable
         var path = new Cathedral.Pathfinding.Path(pathVertices, positions, 0f);
 
         _destinationVertex = pathVertices[^1];
+
+        // A trip a will's search proposed, walked as proposed: the visit it ends in is made for that
+        // will's target. Any other journey carries no pursuit, and drops one not yet delivered.
+        _pendingPursuit = _destinationVertex == _willProposalVertex && _willProposalPursuit is { } pursuit
+            ? (_destinationVertex, pursuit.ModusMentisId, pursuit.TargetKey)
+            : null;
         _interface.ClearPlannedPath();
         _travelPlanner.Clear();
         _plannedPath = null;
@@ -6601,6 +6630,14 @@ public class LocationTravelGameController : IDisposable
         // writes into the memory and a place forgotten builds with nothing known.
         if (visit)
             _protagonist.EnterMentalMap(vertexIndex, Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location).DisplayName);
+        // The visit a will's search was walked for: that will wants its target first while it lasts.
+        // Delivered once, to the visit the journey ends in.
+        if (visit && _pendingPursuit is { } pending && pending.Vertex == vertexIndex)
+        {
+            scene.WillPursuit = (pending.ModusMentisId, pending.TargetKey);
+            _pendingPursuit = null;
+            Console.WriteLine($"LocationTravelGameController: this visit is made for {pending.ModusMentisId}'s \"{pending.TargetKey}\"");
+        }
         _protagonist.MentalMapOf(vertexIndex)?.AttachTo(scene);
         if (viewOnly) return scene;
         // A probe reads the place as an arrival would find it — what was taken is still gone — and
