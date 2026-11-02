@@ -93,6 +93,11 @@ public class PersonaRewriter
             return playgroundText;
         }
 
+        // --no-generate-ahead: a part queued behind the shown one is not written until its turn comes,
+        // so it streams in while it is read instead of appearing whole on CONTINUE.
+        if (Config.Debug.NoGenerateAhead && preview != null)
+            await preview.WhenShown.WaitAsync(ct);
+
         string footer = FooterFor(kind, personaReminder2, styleInstruction);
         string prompt = kind switch
         {

@@ -78,7 +78,7 @@ public sealed class LlmPreviewSession
             part.StartSegment();
             _active = true;
             _lastTitle = title;
-            if (_current == null) _current = part;
+            if (_current == null) { _current = part; part.MarkShown(); }
             else _pending.Enqueue(part);
             return part;
         }
@@ -98,7 +98,7 @@ public sealed class LlmPreviewSession
             var part = new PreviewPart(title, _lock, accumulate: true, linePrefix: linePrefix, transform: transform);
             _active = true;
             _lastTitle = title;
-            if (_current == null) _current = part;
+            if (_current == null) { _current = part; part.MarkShown(); }
             else _pending.Enqueue(part);
             return part;
         }
@@ -146,6 +146,7 @@ public sealed class LlmPreviewSession
             if (_pending.Count > 0)
             {
                 _current = _pending.Dequeue();
+                _current.MarkShown();
                 _lastTitle = _current.Title;
             }
             else
@@ -184,6 +185,9 @@ public sealed class LlmPreviewSession
             // told yes, the answer that changes nothing.
             _current?.Answer(true);
             foreach (var p in _pending) p.Answer(true);
+            // nor on a turn that will never come
+            _current?.MarkShown();
+            foreach (var p in _pending) p.MarkShown();
             _current = null;
             _pending.Clear();
             _productionEnded = false;
@@ -234,6 +238,12 @@ public sealed class PreviewPart
         string real = NameFaking.Real(text);
         return _transform != null ? _transform(real) : real;
     }
+
+    private readonly TaskCompletionSource _shown = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+    /// <summary>Completes when this part is the one shown (see <see cref="ILlmPreviewSink.WhenShown"/>).</summary>
+    public Task WhenShown => _shown.Task;
+    internal void MarkShown() => _shown.TrySetResult();
 
     public string Title { get { lock (_lock) return _title; } }
     public bool IsComplete { get { lock (_lock) return _complete; } }
@@ -405,5 +415,6 @@ internal sealed class PreviewSegmentSink : ILlmPreviewSink
     public void OnToken(string rawToken) => _part.FeedToken(rawToken);
     public void OnComplete(string finalText) => _part.FinalizeSegment(finalText);
     public void OnSourceVocabulary(IReadOnlySet<string>? vocabulary) => _part.SetSourceVocabulary(vocabulary);
+    public Task WhenShown => _part.WhenShown;
 }
 

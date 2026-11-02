@@ -27,4 +27,11 @@ public interface ILlmPreviewSink
     /// rewrite complete. This is the authoritative text; it supersedes anything shown incrementally.
     /// </summary>
     void OnComplete(string finalText);
+
+    /// <summary>
+    /// Completes when the part this sink feeds is the one the box shows, rather than queued behind it.
+    /// The rewriter waits on it under <c>--no-generate-ahead</c> (<see cref="Cathedral.Config.Debug.NoGenerateAhead"/>).
+    /// <para>Optional: a sink outside the preview queue is always shown.</para>
+    /// </summary>
+    System.Threading.Tasks.Task WhenShown => System.Threading.Tasks.Task.CompletedTask;
 }

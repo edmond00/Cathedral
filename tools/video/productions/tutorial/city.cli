@@ -20,7 +20,7 @@ clip travel_city
 travel 27788
 wait 900
 cursor rest
-hold 4
+hold 8
 travel-go
 wait mode EncounterPrompt 900
 clip end travel_city
@@ -30,11 +30,11 @@ clip end travel_city
 mark fight_2
 clip fight_2
 cursor rest
-hold 4
+hold 8
 click engage
 wait mode Fighting 900
 cursor rest
-hold 5
+hold 10
 regions
 # A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
 # blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
@@ -93,7 +93,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -167,7 +167,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -241,7 +241,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -315,7 +315,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -389,7 +389,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -463,7 +463,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -537,7 +537,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -611,7 +611,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -685,7 +685,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -759,7 +759,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -786,7 +786,7 @@ mark city
 clip city_arrival
 advance 12 900
 cursor rest
-hold 6
+hold 12
 clip end city_arrival
 
 mark buy_boots
@@ -797,7 +797,7 @@ hold 2
 choose provisioning
 advance 12 900
 cursor rest
-hold 4
+hold 8
 click action 0
 choose 0
 advance 12 900
@@ -817,7 +817,7 @@ hold 2
 click continue
 advance 20 900
 cursor rest
-hold 4
+hold 8
 click option 0 needed
 advance 12 900
 hold 2
@@ -845,7 +845,7 @@ hold 2
 click continue
 advance 20 900
 cursor rest
-hold 4
+hold 8
 click button
 wait mode Trading 900
 clip end buy_boots
@@ -854,13 +854,13 @@ clip end buy_boots
 mark trade
 clip trade
 cursor rest
-hold 6
+hold 12
 click element trade:plus:0
-hold 3
+hold 6
 click element trade:confirm
 wait mode LocationInteraction 900
 cursor rest
-hold 3
+hold 6
 clip end trade
 
 # ── Wear the boots ───────────────────────────────────────────────────────────────────────────────────
@@ -875,11 +875,11 @@ wait 900
 click tab inventory
 wait 900
 cursor rest
-hold 4
+hold 8
 click element leather_boots
 wait 900
 cursor rest
-hold 6
+hold 12
 clip end wear_boots
 
 # ── No coins left: the routine that brings us back ──────────────────────────────────────────────────
@@ -889,15 +889,15 @@ clip chorography
 click tab chorography
 wait 900
 cursor rest
-hold 5
+hold 10
 click element place:farm
 wait 900
 cursor rest
-hold 4
+hold 8
 click element routine-next
 wait 900
 cursor rest
-hold 6
+hold 12
 clip end chorography
 
 click back
@@ -913,15 +913,15 @@ clip routine_box
 travel 7011
 wait 900
 cursor rest
-hold 3
+hold 6
 click element travel-routines-button
 wait 900
 cursor rest
-hold 4
+hold 8
 click element routines-next
 wait 900
 cursor rest
-hold 6
+hold 12
 click element routines-return
 wait 900
 click element travel-clear-button
@@ -932,7 +932,7 @@ clip end routine_box
 mark closure
 clip closure
 cursor hide
-hold 15
+hold 14
 clip end closure
 state
 quit

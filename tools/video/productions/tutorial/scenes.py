@@ -154,9 +154,19 @@ class System(BrandScene):
         self.beat(0.15)
         for r in rows:
             self.play(FadeIn(r[0]), LaggedStart(*[FadeIn(q) for q in r[1]], lag_ratio=0.02), FadeIn(r[2]), run_time=0.7)
-        self.beat(0.1)
-        note = self.text("everything else is read from these scores", 24, GRAY60).next_to(rows, DOWN, buff=0.35)
-        self.play(FadeIn(note), run_time=0.5)
+        self.beat(0.05)
+        sum_note = self.text("a region scores the sum of its organs", 24, GRAY60).next_to(rows, DOWN, buff=0.3)
+        self.play(FadeIn(sum_note), run_time=0.5)
+        # but most rules read one organ on its own
+        self.wait_until(0.42)
+        organs = VGroup(*[VGroup(self.text(o, 24, GOLD), self.text("->", 22, GRAY50), self.text(w, 24, GRAY85))
+                          .arrange(RIGHT, buff=0.15)
+                          for o, w in (("ears", "initiative"), ("backbone", "movement"), ("heart", "lifespan"))])
+        organs.arrange(RIGHT, buff=0.7).next_to(sum_note, DOWN, buff=0.3)
+        organs.scale_to_fit_width(min(organs.width, config.frame_width - 1.4))
+        for o in organs:
+            self.play(FadeIn(o, shift=UP * 0.1), run_time=0.5)
+            self.beat(0.04, minimum=0.2)
 
     def step_measures(self, at):
         def row(src, score, top, arrow_label, value, what):
@@ -181,6 +191,23 @@ class System(BrandScene):
             self.play(FadeIn(r[4], shift=RIGHT * 0.2), run_time=0.5)
 
     def step_minds(self, at):
+        # like a classic skill, and unlike one
+        cols = []
+        for k, (head, color, lines) in enumerate((
+                ("like a skill", GOLD, ("a level", "experience from use", "its level in dice")),
+                ("unlike a skill", LIGHT_PURPLE, ("learned by living", "can be forgotten", "a voice of its own")))):
+            h = self.text(head, 30, color)
+            items = VGroup(*[self.text(l, 26, GRAY85) for l in lines]).arrange(DOWN, aligned_edge=LEFT, buff=0.22)
+            cols.append(VGroup(h, items.next_to(h, DOWN, aligned_edge=LEFT, buff=0.35)))
+        table = VGroup(*cols).arrange(RIGHT, aligned_edge=UP, buff=1.6).move_to(at + UP * 0.2)
+        for k, c in enumerate(cols):
+            self.wait_until(0.04 + k * 0.2)
+            self.play(FadeIn(c[0]), run_time=0.4)
+            for item in c[1]:
+                self.play(FadeIn(item, shift=RIGHT * 0.15), run_time=0.4)
+                self.beat(0.03, minimum=0.2)
+        self.wait_until(0.5)
+        self.play(FadeOut(table), run_time=0.5)
         title = self.text("SWORDSMANSHIP", 30, LIGHT_PURPLE).move_to(at + UP * 1.4)
         self.play(FadeIn(title), run_time=0.5)
         rows = []
@@ -194,13 +221,16 @@ class System(BrandScene):
             f.next_to(b, RIGHT, buff=0.4)
             pl.next_to(f, RIGHT, buff=0.6)
             rows.append(VGroup(n, b, f, pl))
-        self.beat(0.3)
+        self.beat(0.03)
         for r in rows:
             self.play(FadeIn(r[0]), LaggedStart(*[FadeIn(q) for q in r[1]], lag_ratio=0.08), FadeIn(r[2]), run_time=0.8)
             self.beat(0.06)
             self.play(FadeIn(r[3], scale=1.4), run_time=0.4)
         ceiling = self.text("ceiling  1 + 2 + 2 = 5", 32, LIGHT_PURPLE).move_to(at + DOWN * 1.35)
         self.play(TransformFromCopy(VGroup(rows[0][3], rows[1][3]), ceiling), run_time=0.9)
+        self.wait_until(0.86)
+        hint = self.text("hover an organ: it lists the ceilings it raises", 24, GRAY60).next_to(ceiling, DOWN, buff=0.3)
+        self.play(FadeIn(hint), run_time=0.5)
 
     def step_dice(self, at):
         lv = self.text("Swordsmanship, level 2", 30, LIGHT_PURPLE).move_to(at + UP * 1.3)

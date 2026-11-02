@@ -166,6 +166,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     it. A dozen verbs only OPEN a conversation; this lets their test assert");
     Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
     Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
+    Console.WriteLine("  --no-generate-ahead                DEBUG: write each narration passage only once it is on screen (for recorded footage).");
     Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
     Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
@@ -323,6 +324,7 @@ for (int i = 0; i < args.Length - 1; i++)
 if (args.Any(a => a == "--auto-dialogue")) Cathedral.Config.Debug.AutoDialogue = true;
 
 if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
+if (args.Any(a => a == "--no-generate-ahead")) Cathedral.Config.Debug.NoGenerateAhead = true;
 
 // --silent: open no audio device. The test suite passes this on every script.
 if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;

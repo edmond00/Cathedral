@@ -264,6 +264,16 @@ public static class Config
         public static bool NpcStatic { get; set; } = false;
 
         /// <summary>
+        /// Writes no narration ahead. The preview box normally generates the parts queued behind the one
+        /// on screen (an act's line while its reasoning waits for CONTINUE), so a part often appears whole
+        /// the moment CONTINUE is pressed. With this set, a queued part's request is not sent until the part
+        /// is shown, and every passage streams in on screen. Set by <c>--no-generate-ahead</c>; for recorded
+        /// footage, where a voice reads the text as it appears. The judges still run ahead: they show nothing.
+        /// <para>Inert at its default of false.</para>
+        /// </summary>
+        public static bool NoGenerateAhead { get; set; } = false;
+
+        /// <summary>
         /// Opens no audio device at all: no music, no sound effects, no loading wash.
         ///
         /// <para>For test runs. The suite launches the game a hundred-odd times, and every one of

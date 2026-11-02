@@ -80,6 +80,13 @@ class BrandScene(Scene):
         if remaining > 0.05:
             self.wait(remaining)
 
+    def wait_until(self, fraction: float):
+        """Waits until a share of the narration's length has gone by — for a build-up whose later steps
+        belong to a later sentence."""
+        left = self.target * fraction - self.elapsed
+        if left > 0.05:
+            self.wait(left)
+
     def beat(self, fraction: float, minimum: float = 0.4):
         """Waits a share of the narration's length — for spacing the steps of a build-up."""
         self.wait(max(minimum, self.target * fraction))

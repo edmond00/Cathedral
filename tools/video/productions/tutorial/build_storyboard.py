@@ -197,16 +197,24 @@ O.game(*O.clip("creation_overview"),
        "organ parts. Every part starts at one point, and you get twenty-five more to spend. That buys less than "
        "half of what the body could reach, so creating a character is really choosing what to give up.", fade=True)
 SYSTEM_STEPS = [
-    ("Before we spend them, here is how a character fits together, in four ideas. First, the body: five regions, "
-     "the head, the face, the trunk, the arms and the legs, each scoring the sum of its organs. Here they are for "
-     "the character we are about to build. Everything else in the game is read from these numbers."),
+    ("Before we spend them, here is how a character fits together, in four ideas. First, the body: twenty-two "
+     "organs, grouped in five regions, the head, the face, the trunk, the arms and the legs. A region scores the sum "
+     "of its organs, but the organs are not just parts of a total: most rules read one organ on its own, the ears "
+     "for initiative, the backbone for movement, the heart for your lifespan, and only some read a whole region. "
+     "Here are the regions for the character we are about to build."),
     ("Second, the measures. Each one is computed from a single organ or region, by a rule of its own. The "
      "backbone, doubled, gives the movement points you spend in a fight: four makes eight. The head, halved and "
      "plus one, gives your noetic points, the thoughts you can have in one scene: ten makes six."),
-    ("Third, the ways of thinking you learn as you play, called modi mentis. Each draws on two organs, or on one "
-     "region, and those set its ceiling, how far it can ever grow: one, plus up to three for each organ, or up to "
-     "six for a region, the stronger they are. Swordsmanship draws on the arms and the hands. The arms score two "
-     "out of four: plus two. The hands, four out of six: plus two. So its ceiling is five."),
+    ("Third, the ways of thinking, called modi mentis. Think of them as the skills of a classic role-playing game: "
+     "Swordsmanship, Bargaining, Archaeology. Like skills, they have levels, they gain experience when they are used, "
+     "and their level is what you roll. Unlike skills, you do not buy them on a sheet: you learn them by living, from "
+     "a memory, a job, a fight, and you can forget them. And each one is also a voice, a mind with its own manner, "
+     "that notices, thinks or acts for you, and writes in its own style.",
+     "The body sets how far each can grow. A way of thinking draws on two organs, or on one region, and those set "
+     "its ceiling: one, plus up to three for each organ, or up to six for a region, the stronger they are. "
+     "Swordsmanship draws on the arms and the hands. The arms score two out of four: plus two. The hands, four out of "
+     "six: plus two. So its ceiling is five. Hover any organ during creation, and the screen lists the ceilings it "
+     "raises."),
     ("Fourth, the dice. Almost everything you attempt, a blow, a question, a climb, is settled by a roll. You roll "
      "one die for each level of the ways of thinking involved, and only sixes count: the task says how many it "
      "needs. Swordsmanship is level two today, so it brings two dice. Raise it, and it brings more."),
@@ -215,7 +223,7 @@ SYSTEM_STEPS = [
      "meet each of them in this run."),
 ]
 for k, vo in enumerate(SYSTEM_STEPS, start=1):
-    manim("System", vo, params={"step": k})
+    manim("System", *(vo if isinstance(vo, tuple) else (vo,)), params={"step": k})
 MEMORY_STEPS = [
     ("Memory deserves a closer look, because this game makes you forget. Everything you learn arrives in working "
      "memory, at the front. Working memory is a queue: when it is full and something new arrives, the oldest way "
@@ -228,52 +236,58 @@ MEMORY_STEPS = [
      "oldest is forgotten for good. My advice: don't neglect memory. A character who learns a lot but has nowhere "
      "to file it keeps forgetting."),
 ]
-ORGAN_WALK = [  # (the organ hovered first, what is said while it is shown)
-    ("anamnesis", ["First, thinking and memory: the head. As a whole, the head sets your noetic points, how many "
-                   "times you can look and think in one scene, and it sizes working memory, where everything you "
-                   "learn arrives. The anamnesis sizes the residual memory, and how many places you remember: four "
-                   "per point. We raise it by one."]),
-    ("cerebrum", ["The cerebrum sizes the memory for knowledge, like bargaining or archaeology. Two points."]),
+ORGAN_WALK = [  # (the organ hovered first, what is said while it is shown), in the screen's own order
+    ("anamnesis", ["Now we spend the points, region by region, in the order the screen lists them. Hover an organ, "
+                   "and the panel below says what it does and every number it drives. Click its arrows to add or take "
+                   "back a point.",
+                   "The head first: thinking and memory. As a whole, it sets your noetic points, how many times you "
+                   "can look and think in one scene, and it sizes working memory, where everything you learn arrives. "
+                   "The anamnesis sizes the residual memory, and how many places you remember: four per point. We "
+                   "raise it by one."]),
     ("cerebellum", ["The cerebellum sizes the memory for practised skills, like swordsmanship or knotwork, and it "
                     "lets you learn a new move in the middle of a fight. Two points."]),
+    ("cerebrum", ["The cerebrum sizes the memory for knowledge, like bargaining or archaeology. Two points."]),
     ("hippocampus", ["The hippocampus sizes the memory for the ways of thinking that use the senses."]),
     ("pineal_gland", ["And the pineal gland sets how much experience a level costs, from twelve points down to six. "
                       "With two points or more, it also lets a mind doubt its own plan and think again."]),
-    ("left_eye", ["The senses. The eyes set the reach of a ranged blow, in cells."]),
-    ("left_ear", ["The ears add their score to your initiative, which decides who acts first in a fight. We raise both."]),
+    ("left_ear", ["The face: the senses and speech. The ears add their score to your initiative, which decides who acts "
+                  "first in a fight. We raise both."]),
+    ("left_eye", ["The eyes set the reach of a ranged blow, in cells."]),
     ("nose", ["The nose is underrated. Each point lowers the chance of meeting danger on the road by ten per cent, and it "
-     "tells you which humors are in a food before you eat it."]),
-    ("tongue", ["Speech. The tongue sets how many replies you are offered in a conversation, up to five. At nought, you "
-     "cannot hold a conversation at all. Two points here: conversation is how you get work, trade and friends.",
-     "And the face as a whole gives countenance: in every conversation, one die for each five points. This face "
-     "is worth two."]),
-    ("teeths", ["The teeth only decide whether you can eat hard food. We leave them."]),
-    ("paunch", ["The humors are this game's most unusual system. Four organs make them: the paunch, the hepar, the spleen "
-     "and the pulmones. Each keeps a queue of forty-nine humors. A sound organ makes mostly blood; a failing one, "
-     "mostly black bile.",
-     "Humors are your fuel: every step of a journey burns some of their warmth. And they are your luck: a humor "
-     "can change a die after it has been rolled."]),
-    ("viscera", ["The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four points "
-     "here, for five in all. I would always do this: it is the difference between a failed roll and a saved one."]),
-    ("heart", ["Life. The heart sets how long you live, how many companions you can lead, one per point, and how many "
-     "youthful humors you start with, which are warm and lucky. Four points: a long life, and room for a party "
-     "later."]),
+              "tells you which humors are in a food before you eat it."]),
+    ("tongue", ["The tongue sets how many replies you are offered in a conversation, up to five. At nought, you cannot "
+                "hold a conversation at all. Two points here: conversation is how you get work, trade and friends."]),
+    ("teeths", ["The teeth only decide whether you can eat hard food. We leave them.",
+                "And the face as a whole gives countenance: in every conversation, one die for each five points. This "
+                "face is worth two."]),
+    ("backbone", ["The trunk: strength, life and the humors. The backbone sets how much you can carry, and your movement "
+                  "points in a fight: twice its score. Three more points."]),
+    ("heart", ["The heart sets how long you live, how many companions you can lead, one per point, and how many youthful "
+               "humors you start with, which are warm and lucky. Four points: a long life, and room for a party later."]),
+    ("pulmones", ["The humors are this game's most unusual system. Four organs of the trunk make them: the pulmones, the "
+                  "paunch, the spleen and the hepar. Each keeps a queue of forty-nine humors. A sound organ makes mostly "
+                  "blood; a failing one, mostly black bile.",
+                  "Humors are your fuel: every step of a journey burns some of their warmth. And they are your luck: a "
+                  "humor can change a die after it has been rolled."]),
+    ("viscera", ["The viscera decide how many humors you may spend on a single roll, and how fast wounds close. Four "
+                 "points here, for five in all. I would always do this: it is the difference between a failed roll and "
+                 "a saved one."]),
+    ("paunch", []),
     ("genitories", ["The genitories add dice to every blow you strike. One point."]),
-    ("backbone", ["The body in a fight. The backbone sets how much you can carry, and your movement points in a fight: twice "
-     "its score. Three more points."]),
-    ("right_hand", ["The hands decide which tools you can use. A practised hand does not get more out of a tool; it can make "
-     "more things serve as tools. Two points for the right hand."]),
-    ("left_hand", ["In a fight, each hand and each foot strikes on its own, and the arms are the organs of brute force."]),
-    ("left_leg", ["The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how far "
-     "one journey can reach, and your natural defence."]),
-    ("left_foot", ["The feet keep you standing on bad ground, and roll the dice to run away. One last number: health. It "
-     "comes from the trunk as a whole, a third of its score plus one, and each wound costs a point of it until "
-     "it heals. Twenty-five points spent. That is the body."]),
+    ("hepar", ["One more number comes from the trunk as a whole: health, a third of its score plus one. Each wound costs "
+               "a point of it until it heals."]),
+    ("right_hand", ["The arms. The hands decide which tools you can use. A practised hand does not get more out of a "
+                    "tool; it can make more things serve as tools. Two points for the right hand."]),
+    ("left_hand", ["In a fight, each hand and each foot strikes on its own,"]),
+    ("right_arm", ["and the arms are the organs of brute force."]),
+    ("left_foot", ["The legs. The feet keep you standing on bad ground, and roll the dice to run away."]),
+    ("left_leg", ["The legs set how far one movement point takes you. With the feet, the lower body as a whole sets how "
+                  "far one journey can reach, and your natural defence. Twenty-five points spent. That is the body."]),
 ]
 for k, (organ, vo) in enumerate(ORGAN_WALK):
     t0 = O.at("move", "organ:" + organ)
     t1 = (O.at("move", "organ:" + ORGAN_WALK[k + 1][0]) if k + 1 < len(ORGAN_WALK)
-          else O.at("clip-end", "organs_fighting"))
+          else O.at("clip-end", "organs_lower"))
     O.game(t0, t1, *vo, fade=(k == 0))
     if organ == "pineal_gland":
         for j, mvo in enumerate(MEMORY_STEPS, start=1):
@@ -299,8 +313,8 @@ MEMORY = {
         "childhood: read the fragments, and pick what you want your character to be. The memories you choose are "
         "your starting kit."),
 }
-cut = O.click(O.at("clip-end", "organs_fighting"), 1e9, label="Continue") + 0.3
-prev_end = O.at("clip-end", "organs_fighting")
+cut = O.click(O.at("clip-end", "organs_lower"), 1e9, label="Continue") + 0.3
+prev_end = O.at("clip-end", "organs_lower")
 for m in range(1, 6):
     cb, ce = O.clip(f"childhood_{m}")
     ps = O.between(prev_end, ce)
@@ -381,7 +395,11 @@ manim("DiceHumors",
       "one per die, and only as many in one roll as the viscera allow. Blood adds one to a die. Yellow bile takes "
       "one away. Phlegm does nothing, but spending it clears the way to the humor behind it. Black bile does "
       "nothing, and never leaves. A queue full of black bile is spent, and when all four are, the body dies. So "
-      "humors are your luck, and also your life.")
+      "humors are your luck, and also your life.",
+      "One confession about this video. To show the humors at work, this run starts with every queue full of "
+      "voluptas, the humor of pleasure, which turns any die into a six. That is a debug setting, not the game. In "
+      "a real run the queues hold what your organs make, mostly blood when they are sound, and every humor you "
+      "spend is gone: you will have to choose which rolls deserve one.")
 O.game(dice_end, O.end(outcome), O.R(outcome),
        W("Success. Look at the lines below: every mind in the chain gained a point of experience, and the act "
          "taught a new one, Vigor. Doing things is how you learn."), *note("up_outcome"))
@@ -620,17 +638,24 @@ def act(t, keyword_word, mind_line, idx, roll_line):
 resumed = next(e["t"] for e in RS.events if e["type"] == "mode" and e["t"] > RS.at("mark", "resume")
                and e.get("to") == "WorldView")
 ab, ae = rs_clip("anatomy")
-RS.game(resumed + 0.5, ab, "Escape opens the menu, and Protagonist opens the character screen.", fade=True)
+RS.game(resumed + 0.5, ab, "Escape opens the menu, and Protagonist opens the character screen. The list on the left "
+        "is its pages: anatomy, inventory, journal, memory, humors, chorography and bellic. Click one to open it.",
+        fade=True)
 RS.game(ab, ae, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.")
 mb, me = rs_clip("memory")
 RS.game(ae, me,
-        "The memory tab: everything we learned, filed in the memory of its kind. There are also two wills here, "
-        "Diligence and Provisioning. A will is a mind that wants one thing; we'll see both at work.",
+        "The memory tab: everything we learned, filed in the memory of its kind. Each slot shows a way of thinking, "
+        "its level and its ceiling: Empathy, level one of six. Click a filled slot to inspect it and manage it: "
+        "that is where you consolidate, reject or archive.",
+        "There are also two wills here, Diligence and Provisioning. A will is a mind that wants one thing; we'll see "
+        "both at work.",
         "My advice: check this tab often, and file new ways of thinking before working memory pushes them out.")
 ib, ie = rs_clip("inventory")
 RS.game(me, ie,
         "The inventory. The sword is in hand, the townsman's clothes are worn, and so is the backpack, which holds "
-        "things. We open it, pick the bread, and eat it.")
+        "things. Click a container to open it, and an item to read it: its size, its price, what it is made of. "
+        "Under it are the buttons that act on it: eat, throw away, move to. We open the backpack, pick the bread, "
+        "and eat it.")
 hb, he = rs_clip("humors")
 RS.game(ie, he,
         "Eating pushed the bread's humors into the paunch, at the front of its queue. Hover a humor to see what it "
@@ -642,7 +667,10 @@ RS.game(he, tb)
 
 # 7. the road
 RS.game(tb, te,
-        "Back on the map, we pick the farm as our destination. A route goes cell by cell, and every cell costs days, "
+        "Back on the map, we click the farm. The travel plan box shows the trip before you commit to it: the days "
+        "it takes, the vital heat it burns, the risk of an encounter, and whether you could starve on the way. "
+        "Travel sets off, Clear forgets the plan.",
+        "A route goes cell by cell, and every cell costs days, "
         "and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, "
         "more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your "
         "humors will last it.", fade=True)

@@ -1,7 +1,7 @@
-# The rest of the tutorial: from the world map after getting up to the closing frame, recorded on its own
+# The middle of the tutorial: from the world map after getting up to the job menu, recorded on its own
 # and started from the opening take's checkpoint (its save from arriving on the world map,
-# build/rec_opening2/saves/01_get_up.json, copied to the --save-path before the take), so the opening is
-# not replayed. Continue loads it; everything after is tutorial.cli's own second half. The take keeps a
+# <opening take>/saves/01_get_up.json, copied to the --save-path before the take), so the opening is
+# not replayed. Continue loads it; it plays tutorial.cli's second half up to the job menu. The take keeps a
 # checkpoint at each arrival on the world map (saves/ in its folder), so any later part can be re-shot the
 # same way.
 #
@@ -28,7 +28,7 @@ clip anatomy
 click tab anatomy
 wait 900
 cursor rest
-hold 6
+hold 12
 clip end anatomy
 
 mark memory
@@ -36,7 +36,7 @@ clip memory
 click tab memory
 wait 900
 cursor rest
-hold 6
+hold 12
 clip end memory
 
 # The inventory: the sword in hand, the cloak and clothes, the backpack. Open the backpack and eat
@@ -46,17 +46,18 @@ clip inventory
 click tab inventory
 wait 900
 cursor rest
-hold 5
+hold 10
 click element backpack
 wait 900
-hold 3
+hold 6
 click element content:bread
 wait 900
-cursor rest
-hold 4
+hold 2
+point element consume
+hold 2
 click element consume
 wait 900
-hold 3
+hold 6
 clip end inventory
 
 # The humors: the bread's humors have entered the paunch at the spiral's mouth (index 0 is the
@@ -66,13 +67,13 @@ clip humors
 click tab humors
 wait 900
 cursor rest
-hold 5
+hold 10
 point element humor:paunch:0
-hold 6
+hold 12
 point element humor:paunch:1
-hold 4
+hold 8
 cursor rest
-hold 3
+hold 6
 clip end humors
 
 click back
@@ -86,7 +87,7 @@ clip travel_farm
 travel 7011
 wait 900
 cursor rest
-hold 4
+hold 8
 travel-go
 wait mode EncounterPrompt 900
 clip end travel_farm
@@ -100,11 +101,11 @@ clip end travel_farm
 mark fight_1
 clip fight_1
 cursor rest
-hold 4
+hold 8
 click engage
 wait mode Fighting 900
 cursor rest
-hold 5
+hold 10
 regions
 # Let the wolf come: two turns ended, each once it is ours (a blow it lands on the way is dismissed).
 wait turn 900
@@ -192,7 +193,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -266,7 +267,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -340,7 +341,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -414,7 +415,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -488,7 +489,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -562,7 +563,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -636,7 +637,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -710,7 +711,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -784,7 +785,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -858,7 +859,7 @@ click skill Short Sword
 click skill Snap Thrust
 click fighter enemy
 cursor rest
-hold 3
+hold 6
 dice
 click humor hepar needed
 click die needed
@@ -888,7 +889,7 @@ mark farm
 clip farm_arrival
 advance 12 900
 cursor rest
-hold 6
+hold 12
 clip end farm_arrival
 
 mark find_job
@@ -899,7 +900,7 @@ hold 2
 choose diligence
 advance 12 900
 cursor rest
-hold 4
+hold 8
 click action 0
 choose 0
 advance 12 900
@@ -919,7 +920,7 @@ hold 2
 click continue
 advance 20 900
 cursor rest
-hold 4
+hold 8
 # The conversation: answer while it asks. Which reply each mind voices is the model's choice and the
 # branches end at depth two or three, so `click option 0 needed` replies only while a reply is offered.
 click option 0 needed
@@ -949,7 +950,7 @@ hold 2
 click continue
 advance 20 900
 cursor rest
-hold 4
+hold 8
 click button
 wait mode Working 900
 clip end find_job
@@ -959,7 +960,7 @@ clip end find_job
 mark job_menu
 clip job_menu
 cursor rest
-hold 5
+hold 10
 click element work:days-plus
 click element work:days-plus
 click element work:days-plus
@@ -978,934 +979,15 @@ click element work:days-plus
 click element work:days-plus
 click element work:days-plus
 cursor rest
-hold 4
+hold 8
 click element work:confirm
 wait 900
 cursor rest
-hold 4
+hold 8
 click element work:continue
 wait mode WorldView 900
 clip end job_menu
 
-# ── Travel to the city ───────────────────────────────────────────────────────────────────────────────
-mark travel_city
-clip travel_city
-travel 27788
-wait 900
-cursor rest
-hold 4
-travel-go
-wait mode EncounterPrompt 900
-clip end travel_city
-
-# ── The second fight ─────────────────────────────────────────────────────────────────────────────────
-# Another wolf, already beside us and slower than we are: five snap thrusts, our turns ended between.
-mark fight_2
-clip fight_2
-cursor rest
-hold 4
-click engage
-wait mode Fighting 900
-cursor rest
-hold 5
-regions
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
+# The rest, from the journey to the city on, is city.cli's, started from this take's checkpoint on
+# returning to the world map after the job menu (saves/03_job_menu.json).
 hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-
-# A turn of ours, if the fight is still on: wait for the fight to need us; meet up to four of the enemy's
-# blows (each a dice box waiting for Continue), spending humors on our defence while the blow would land;
-# then thrust, spend humors only while the roll falls short, and end the turn.
-skip-unless fighting 69
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-skip-unless dice 10
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 1
-click continue
-wait turn 900
-click skill Short Sword
-click skill Snap Thrust
-click fighter enemy
-cursor rest
-hold 3
-dice
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-hold 2
-click continue
-cursor rest
-hold 2
-click end-turn
-wait 900
-# The wolf is dead; the journey goes on by itself.
-clip end fight_2
-
-# ── The city: buy boots ──────────────────────────────────────────────────────────────────────────────
-# The visit opens in the Cobbler's Shop (--start-area), on the cobbler (--observe-only). Provisioning
-# is a will to buy: one way, carried out by itself. The cobbler's shelf is seeded by his id and lists
-# Leather Boots first, at twenty copper.
-mark city
-clip city_arrival
-advance 12 900
-cursor rest
-hold 6
-clip end city_arrival
-
-mark buy_boots
-clip buy_boots
-click keyword @cobbler
-choose 0
-hold 2
-choose provisioning
-advance 12 900
-cursor rest
-hold 4
-click action 0
-choose 0
-advance 12 900
-dice
-hold 2
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-click humor hepar needed
-click die needed
-hold 2
-click continue
-advance 20 900
-cursor rest
-hold 4
-click option 0 needed
-advance 12 900
-hold 2
-click option 0 needed
-advance 12 900
-hold 2
-click option 0 needed
-advance 12 900
-hold 2
-click option 0 needed
-advance 12 900
-dice
-hold 2
-click humor hepar needed
-click die needed
-click humor spleen needed
-click die needed
-click humor pulmones needed
-click die needed
-click humor paunch needed
-click die needed
-click humor hepar needed
-click die needed
-hold 2
-click continue
-advance 20 900
-cursor rest
-hold 4
-click button
-wait mode Trading 900
-clip end buy_boots
-
-# ── The trade menu ───────────────────────────────────────────────────────────────────────────────────
-mark trade
-clip trade
-cursor rest
-hold 6
-click element trade:plus:0
-hold 3
-click element trade:confirm
-wait mode LocationInteraction 900
-cursor rest
-hold 3
-clip end trade
-
-# ── Wear the boots ───────────────────────────────────────────────────────────────────────────────────
-# A bought garment goes straight to its place when that place is free: the boots are on the feet
-# already. The inventory shows them there, and the purse empty.
-mark wear_boots
-clip wear_boots
-pause
-wait 900
-click menu Protagonist
-wait 900
-click tab inventory
-wait 900
-cursor rest
-hold 4
-click element leather_boots
-wait 900
-cursor rest
-hold 6
-clip end wear_boots
-
-# ── No coins left: the routine that brings us back ──────────────────────────────────────────────────
-# Each place visited is a mental map; the farm's holds the Work routine learned with the job.
-mark routines
-clip chorography
-click tab chorography
-wait 900
-cursor rest
-hold 5
-click element place:farm
-wait 900
-cursor rest
-hold 4
-click element routine-next
-wait 900
-cursor rest
-hold 6
-clip end chorography
-
-click back
-wait 900
-click menu Continue
-wait 900
-advance 12 900
-click button
-wait mode WorldView 900
-
-# From the world map, the farm's routines are one click from the travel plan.
-clip routine_box
-travel 7011
-wait 900
-cursor rest
-hold 3
-click element travel-routines-button
-wait 900
-cursor rest
-hold 4
-click element routines-next
-wait 900
-cursor rest
-hold 6
-click element routines-return
-wait 900
-click element travel-clear-button
-wait 900
-clip end routine_box
-
-# ── Closure ──────────────────────────────────────────────────────────────────────────────────────────
-mark closure
-clip closure
-cursor hide
-hold 15
-clip end closure
-state
-quit

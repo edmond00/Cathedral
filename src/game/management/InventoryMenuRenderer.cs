@@ -184,6 +184,7 @@ public sealed class InventoryMenuRenderer
 
     // Consume button hit region (row of the button label, or -1 if not shown)
     private int  _consumeButtonRow     = -1;
+    private int  _consumeButtonW;          // drawn width of "[ EAT ]": `click element consume` aims inside it
     private bool _consumeButtonHovered = false;
 
     // Throw-away / move-to action buttons (row of the button label, or -1 if not shown)
@@ -1599,7 +1600,10 @@ public sealed class InventoryMenuRenderer
                 }
 
                 if (canConsume)
+                {
                     _consumeButtonRow = y;
+                    _consumeButtonW   = btnLabel.Length + 4;
+                }
 
                 y += canConsume ? 1 : 2;
             }
@@ -1822,9 +1826,11 @@ public sealed class InventoryMenuRenderer
     {
         if (x >= RightContentX)
         {
-            if (_consumeButtonRow >= 0 && y == _consumeButtonRow) return "consume";
-            if (_throwButtonRow >= 0 && y == _throwButtonRow) return "throw-away";
-            if (_moveButtonRow >= 0 && _moveButtonEnabled && y == _moveButtonRow) return "move-to";
+            // the buttons answer the whole row, but are named only where they are drawn, so a script's
+            // pointer lands on the label rather than in the empty half of the row beside it
+            if (_consumeButtonRow >= 0 && y == _consumeButtonRow && x < RightContentX + _consumeButtonW) return "consume";
+            if (_throwButtonRow >= 0 && y == _throwButtonRow && x < RightContentX + "[ THROW AWAY ]".Length) return "throw-away";
+            if (_moveButtonRow >= 0 && _moveButtonEnabled && y == _moveButtonRow && x < RightContentX + "[ MOVE TO ]".Length) return "move-to";
             foreach (var (row, dest) in _moveDestHits)
                 if (row == y) return "move:" + CliSlug(dest.Label);
             if (_selectedContentPath.Count > 0 && y == InfoStartRow) return "content-back";
