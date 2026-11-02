@@ -1,0 +1,40 @@
+# A journey is a passage of the journal: setting out, the meeting on the road, the fight, the arrival.
+#
+# Travel and a roadside fight have no narration, so before this the journal kept only the fight's
+# milestone, in a group with nothing the chronicler could write from. The game now writes events of
+# its own (JournalRecorder.Event): where the party set out from and for, who barred the way, and on
+# arrival the lands crossed and how long it took — and the journey's group closes there, before the
+# visit opens, so it is written up as its own passage "on the road".
+#
+# --encounter-on-arrival puts the wolf on the last step; fight-end settles the fight without blows
+# (journal_fight_blows.cli covers those).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --encounter-on-arrival wolf --no-chronicler
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+travel neighbour
+travel-go
+
+wait mode EncounterPrompt 90
+inspect journal
+expect-state journal set out from the
+expect-state journal barred the way
+
+click engage
+wait mode Fighting 90
+fight-end victory
+wait mode LocationInteraction 90
+
+inspect journal
+expect-state journal kind=Event state=Pending
+expect-state journal Won a fight against
+expect-state journal reached the
+expect-state journal pending-groups=1
+save roundtrip
+
+quit

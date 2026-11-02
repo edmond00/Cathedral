@@ -199,6 +199,9 @@ public class LocationTravelGameController : IDisposable
     /// <summary>Where the latest journey set out from — for <c>inspect avatar</c>.</summary>
     private int _tripOriginVertex = -1;
 
+    /// <summary>The kinds of land the journey has crossed, in order, for the journal's account of it.</summary>
+    private readonly List<string> _tripLands = new();
+
     // Maps BiomeTravelDatabase creature names to the archetype that spawns them.
     // Creature names without a fight-capable archetype (e.g. "blizzard") are absent and skipped.
     private static readonly Dictionary<string, Func<Cathedral.Game.Npc.NamedNpcArchetype>> TravelEncounterArchetypes = new()
@@ -2590,6 +2593,11 @@ public class LocationTravelGameController : IDisposable
             _travelProgressRenderer = new TravelProgressRenderer(_core.Terminal);
         _travelProgressRenderer.StartTrip(_tripVhRequired);
 
+        // The journey is the journal's next passage: "on the road", from setting out to arrival.
+        _tripLands.Clear();
+        string from = JournalPlaceAt(pathVertices[0]), to = JournalPlaceAt(_destinationVertex);
+        JournalRecorder.Event($"{_protagonist?.DisplayName} set out from the {from} for {(to == from ? "another" : "the")} {to}.");
+
         SetMode(GameMode.Traveling);
         TravelStarted?.Invoke();
         _interface.BeginTravelAlongPath(path);
@@ -2619,6 +2627,8 @@ public class LocationTravelGameController : IDisposable
         var biomeInfo = Cathedral.Glyph.Microworld.BiomeTravelDatabase.GetFor(biomeName);
         _consumptionBiome  = biomeName;
         _tripVhDebt       += biomeInfo.VitalHeatPerCell;
+        string land = JournalLandAt(vertexIndex);
+        if (_tripLands.Count == 0 || _tripLands[^1] != land) _tripLands.Add(land);
 
         // If debt has reached a full unit, pause movement so Update() can drain it
         // one humor per frame before the protagonist takes the next step.
@@ -2701,6 +2711,10 @@ public class LocationTravelGameController : IDisposable
         }
 
         Console.WriteLine($"LocationTravelGameController: Protagonist arrived at vertex {vertexIndex}");
+
+        // The journey's passage ends here, before the visit's opens.
+        JournalRecorder.Event(JourneyEnd(vertexIndex, _committedTravelDays));
+        JournalRecorder.CloseGroup();
 
         // Travel done — any leftover planning state should be wiped before the player
         // re-enters WorldView.
@@ -4536,6 +4550,37 @@ public class LocationTravelGameController : IDisposable
     /// Gets the location name at the specified vertex index.
     /// Returns null if no location exists or if vertex is invalid.
     /// </summary>
+    /// <summary>
+    /// What the journal calls the place at a vertex: the location's kind, or the land it stands in,
+    /// lower-cased ("village", "forest") — the same words the first-visit milestone uses.
+    /// </summary>
+    private string JournalPlaceAt(int vertexIndex)
+    {
+        if (vertexIndex < 0) return "wilds";
+        var (biome, location, _) = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+        return Narrative.WorldContext.From(biome, location).DisplayName.ToLowerInvariant();
+    }
+
+    /// <summary>The land at a vertex, whatever stands on it ("forest", "coast"): what a journey crosses.</summary>
+    private string JournalLandAt(int vertexIndex) =>
+        vertexIndex < 0 ? "wilds" : _interface.GetDetailedBiomeInfoAt(vertexIndex).biome.Name.ToLowerInvariant();
+
+    /// <summary>The journey's closing line: the lands crossed, where it ended, and how long it took.</summary>
+    private string JourneyEnd(int arrivalVertex, float days)
+    {
+        string dest = JournalPlaceAt(arrivalVertex);
+        var crossed = _tripLands.Where(l => l != dest).Distinct().ToList();
+        string over = crossed.Count switch
+        {
+            0 => "",
+            1 => $"Crossing the {crossed[0]}, ",
+            _ => $"Crossing the {string.Join(", the ", crossed.Take(crossed.Count - 1))} and the {crossed[^1]}, ",
+        };
+        string time = days < 0.75f ? "within the day" : $"after {Math.Max(1, (int)Math.Round(days))} day{(Math.Round(days) > 1 ? "s" : "")} on the road";
+        string who = _protagonist?.DisplayName ?? "the traveller";
+        return $"{over}{who} reached the {dest} {time}.";
+    }
+
     public string? GetLocationNameAtVertex(int vertexIndex)
     {
         if (vertexIndex < 0)
@@ -5659,6 +5704,8 @@ public class LocationTravelGameController : IDisposable
         _pendingEncounterCreatureName = creatureName;
 
         Console.WriteLine($"LocationTravelGameController: Travel encounter — {npc.DisplayName} ({creatureName}) in {_consumptionBiome}");
+        JournalRecorder.Event($"On the road through the {JournalLandAt(_avatarVertexBeforeStep)}, "
+                            + $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc, _protagonist)} barred the way.");
         SetMode(GameMode.EncounterPrompt);
         return true;
     }
@@ -6252,6 +6299,7 @@ public class LocationTravelGameController : IDisposable
                 // not travel to — the map refuses a journey to the vertex underfoot.
                 if (_pendingArrivalVertex >= 0 && _stepOriginVertex >= 0)
                     _interface.ReturnAvatarTo(_stepOriginVertex);
+                JournalRecorder.Event($"{_protagonist.DisplayName} gave up the journey, short of the {JournalPlaceAt(_destinationVertex)}.");
                 _pendingArrivalVertex = -1;
                 _interface.MovementPaused = true;
                 _interface.CancelTravel();
