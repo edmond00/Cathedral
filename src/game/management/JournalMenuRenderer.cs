@@ -145,6 +145,7 @@ public sealed class JournalMenuRenderer
                     break;
 
                 case JournalEntryKind.Fact:
+                case JournalEntryKind.Event:
                     foreach (var w in Wrap($"· {e.Source}", TextW))
                         lines.Add(new Line(w, FactColor, comp));
                     break;

@@ -263,6 +263,22 @@ one conversation of two still quotes three lines; one paragraph in fourteen open
 when they are the act ("his fingers as quick as shadows" for listening to a goose). Half the prompt and
 half the generation also halve how long a preempted job can hold the server.
 
+#### Journeys and fights (follow-up)
+
+Travel and fights have no narration, so the journal kept only a fight's milestone, in a group with nothing
+the chronicler could write from. The game now writes its own plain sentences for them (`JournalEntryKind.Event`,
+given to the chronicler as `HAPPENED:`): setting out (from where, for where), who barred the way, every attack
+in a fight (hit with its wound, or miss), a fall, a bleed-out, an escape, a journey given up, and on arrival
+the lands crossed and the days taken. A journey is its own passage, "on the road", closed on arrival before the
+visit opens. Fights inside a visit gain the same blows, in the visit's passage. Enemies are named as the player
+knows them, never by the fighter's generated name. Written up by the shipped model from a journey with a
+roadside fight:
+
+> On the road through the coast, Kenryc Greygate set out from the coast. A wolf barred his way, but Kenryc
+> struck it with a knee strike, breaking its leg. Kenryc struck the wolf again with another knee strike, this
+> time crippling its leg. He won a fight against the wolf. After six days on the road, Kenryc Greygate reached
+> the coast.
+
 #### Six groups, raw input beside the paragraph (shipped configuration)
 
 #### hall_dialogue, visit 2

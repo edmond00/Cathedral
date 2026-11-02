@@ -15,6 +15,11 @@ public enum JournalEntryKind
     Fact,
     /// <summary>A turn in the run worth a line of its own: a lesson, a wound, a companion, a place, a fight.</summary>
     Milestone,
+    /// <summary>
+    /// Something that happened with no narration to tell it: a journey set out on and ended, a meeting
+    /// on the road, a blow struck in a fight. Written for the journal by the game, in plain words.
+    /// </summary>
+    Event,
 }
 
 /// <summary>

@@ -161,6 +161,7 @@ Rules:
         {
             JournalEntryKind.Milestone when marks && !e.Lesson => $"- MILESTONE: {e.Source}",
             JournalEntryKind.Fact when facts      => $"- CHANGED: {(e.Phrase.Length > 0 ? e.Phrase : e.Source)}",
+            JournalEntryKind.Event when facts     => $"- HAPPENED: {e.Source}",
             // Unquoted and cut to a sentence: quoted whole, the lines were copied out one after another
             // until the token cap fell mid-quote.
             JournalEntryKind.Dialogue when narration => $"- SAID by {e.Actor}: {FirstSentence(e.Source.Trim('"'))}",
