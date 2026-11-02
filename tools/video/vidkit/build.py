@@ -289,6 +289,8 @@ class Build:
             self.game_picture(seg, target)
         elif kind in ("manim", "title", "card"):
             self.manim_picture(seg, target)
+        elif kind == "montage":
+            self.montage_picture(seg, target)
         else:
             raise ValueError(f"segment {seg.index}: unknown type '{kind}'")
 
@@ -454,6 +456,36 @@ class Build:
             trimmed.unlink(missing_ok=True)
             timed.unlink(missing_ok=True)
         seg.picture, seg.seconds = dst, max(natural, target)
+
+    def montage_picture(self, seg: Segment, target: float) -> None:
+        """Short shots from any of the takes, cut hard one after the other, under one narration: a trailer
+        at the head of a video. `"shots": [{"recording", "from", "to", "speed"?}, ...]`; the shots share
+        the narration's length in proportion to their own (each slowed alike when the voice outruns them), so
+        the cuts keep their rhythm."""
+        s = seg.spec
+        shots = [(self.recordings[sh["recording"]], float(sh["from"]), float(sh["to"]), float(sh.get("speed", 1)))
+                 for sh in s["shots"]]
+        natural = sum((b - a) / sp for _, a, b, sp in shots)
+        stretch = max(target / natural, 1.0) if natural else 1.0
+        dst = self.out_dir / f"seg{seg.index:02d}_{self.seg_key(seg)}.mkv"
+        if not dst.exists():
+            self.log(f"segment {seg.index}: montage of {len(shots)} shots")
+            sw, sh_ = shots[0][0].manifest["width"], shots[0][0].manifest["height"]
+            parts = []
+            for i, (rec, a, b, sp) in enumerate(shots):
+                part = self.out_dir / f"seg{seg.index:02d}_shot{i:02d}.mkv"
+                ffmpeg.run("-ss", f"{rec.video_time(a):.3f}", "-to", f"{rec.video_time(b):.3f}", "-i", rec.video,
+                           "-vf", f"setpts=(PTS-STARTPTS)*{stretch / sp:g},scale={sw}:{sh_}:flags=neighbor,fps={self.fps}",
+                           "-an", *ffmpeg.INTERMEDIATE, part)
+                parts.append(part)
+            listing = self.out_dir / f"seg{seg.index:02d}_shots.txt"
+            listing.write_text("".join(f"file '{p_.resolve()}'\n" for p_ in parts))
+            joined = self.out_dir / f"seg{seg.index:02d}_joined.mkv"
+            ffmpeg.run("-f", "concat", "-safe", "0", "-i", listing, "-c", "copy", joined)
+            self.finish_picture(joined, dst, natural * stretch, target, [], (sw, sh_), s.get("fade", True), kind="game")
+            for p_ in parts + [listing, joined]:
+                p_.unlink(missing_ok=True)
+        seg.picture, seg.seconds = dst, max(natural * stretch, target)
 
     def retime(self, src: Path, dst: Path, pieces: list[tuple[float, float, float]], base_speed: float,
                label: bool = True) -> None:

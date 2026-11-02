@@ -79,7 +79,12 @@ public sealed class LlmPreviewSession
             _active = true;
             _lastTitle = title;
             if (_current == null) { _current = part; part.MarkShown(); }
-            else _pending.Enqueue(part);
+            else
+            {
+                _pending.Enqueue(part);
+                if (Config.Debug.NoGenerateAhead)
+                    Console.WriteLine($"LlmPreviewSession: '{title}' queued behind '{_current.Title}' (complete={_current.IsComplete}) +{_pending.Count - 1}");
+            }
             return part;
         }
     }
@@ -99,7 +104,12 @@ public sealed class LlmPreviewSession
             _active = true;
             _lastTitle = title;
             if (_current == null) { _current = part; part.MarkShown(); }
-            else _pending.Enqueue(part);
+            else
+            {
+                _pending.Enqueue(part);
+                if (Config.Debug.NoGenerateAhead)
+                    Console.WriteLine($"LlmPreviewSession: '{title}' queued behind '{_current.Title}' (complete={_current.IsComplete}) +{_pending.Count - 1}");
+            }
             return part;
         }
     }
@@ -131,6 +141,21 @@ public sealed class LlmPreviewSession
         {
             lock (_lock)
                 return (_current?.IsAsking ?? false) || _pending.Any(p => p.IsAsking);
+        }
+    }
+
+    /// <summary>
+    /// Under <c>--no-generate-ahead</c>: the shown part is done and the next one is queued behind it,
+    /// held until CONTINUE shows it. Its producer is loading, but nothing more happens until the player
+    /// presses on — the session waits on the player, as it does for a question.
+    /// </summary>
+    public bool WaitsOnContinue
+    {
+        get
+        {
+            lock (_lock)
+                return Config.Debug.NoGenerateAhead && _current is { IsComplete: true, IsAsking: false }
+                       && _pending.Count > 0;
         }
     }
 

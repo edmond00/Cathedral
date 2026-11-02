@@ -173,10 +173,14 @@ def note(key):
 
 
 # 1. the hook, the world
+# The hook opens on a montage of the whole run (its shots are picked once every take is loaded, at the end),
+# and the title lands on the main menu.
+HOOK = len(segments)
+segments.append({"type": "montage", "shots": [], "fade": True,
+                 "vo": ["Your character in this game is not a sheet of numbers. It is a body, built organ by organ, "
+                        "and a crowd of minds living in it: some notice, some think, some act, and some only feel. "
+                        "Each one speaks in its own voice, and nothing they say is written in advance."]})
 O.game(O.at("clip-begin", "new_run"), O.at("click", "New") - 0.2,
-       "Your character in this game is not a sheet of numbers. It is a body, built organ by organ, and a crowd of "
-       "minds living in it: some notice, some think, some act, and some only feel. Each one speaks in its own "
-       "voice, and nothing they say is written in advance.",
        "This is Proscribed Palimpsest. In the next hour of play, from the main menu to a pair of new boots, we'll "
        "see how all of it works. And along the way, I'll tell you what I would do as a player.", fade=True)
 O.game(O.at("click", "New") - 0.2, O.at("move", "Fenumoth") - 0.2,
@@ -466,7 +470,8 @@ def use(take, notes):
     EMOTIONS = [l for l in RS.log if "emotion —" in l]
 
 
-use(Take("tutorial", "build/rec_rest", "passages_rest.json"), "rest_notes.json")
+REST = Take("tutorial", "build/rec_rest", "passages_rest.json")
+use(REST, "rest_notes.json")
 
 
 def fight(name, intro, first_detail):
@@ -727,7 +732,8 @@ RS.game(t, jme - 1.0,
         "And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price "
         "of work.", fade=True)
 RS.game(jme - 1.0, jme)
-use(Take("city", "build/rec_city", "passages_city.json"), "city_notes.json")
+CITY = Take("city", "build/rec_city", "passages_city.json")
+use(CITY, "city_notes.json")
 cb_, ce_ = rs_clip("travel_city")
 RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True)
 
@@ -810,6 +816,28 @@ RS.game(re_, ke,
         "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
         "Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at "
         "edmond zero zero dot itch dot io, slash proscribed.", fade=True)
+
+# the hook's montage: a few seconds of each thing the hour holds, in the order the narration names them
+def shot(take, t, length, speed=1.0):
+    return {"recording": take.name, "from": round(t, 2), "to": round(t + length, 2), "speed": speed}
+
+
+_obs2 = O.between(O.at("clip-begin", "childhood_2"), O.at("clip-end", "childhood_2"))[0]
+_kw2 = O.click(*O.clip("childhood_2"), cmd="click keyword")
+_sword = REST.click(*REST.clip("fight_1"), label="Short Sword")
+_reply = next(i for i in REST.between(*REST.clip("find_job")) if not REST.P[i]["voice"].startswith("You are ")
+              and is_dialogue(REST.P[i]))
+segments[HOOK]["shots"] = [
+    shot(O, O.at("move", "organ:viscera") - 0.5, 2.5),                    # a body, built organ by organ
+    shot(O, O.at("move", "organ:heart") - 0.3, 2.0),
+    shot(O, O.shows(_obs2), 3.5),                                          # a mind noticing, in its own words
+    shot(O, _kw2 - 0.6, 3.0),                                              # a keyword clicked, a mind to think
+    shot(REST, REST.at("clip-begin", "travel_farm") + 1.0, 3.0),           # the world
+    shot(REST, _sword - 0.5, 4.0, speed=1.5),                              # a fight
+    shot(REST, REST.shows(_reply), 3.5),                                   # a conversation
+    shot(CITY, CITY.at("clip-begin", "trade") + 1.0, 2.5),                 # a trade
+    shot(O, O.at("clip-begin", "world_selection") + 1.0, 3.0),             # the moons
+]
 
 storyboard = {
     "title": "Proscribed Palimpsest: the first hour",

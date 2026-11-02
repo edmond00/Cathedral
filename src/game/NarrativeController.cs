@@ -4412,6 +4412,7 @@ public class NarrativeController
     /// to be continued past. The thinking is blocked on it, so the CLI counts it as idle.
     /// </summary>
     public bool CliPreviewAwaitsAnswer() => _previewSession.AwaitsAnswer;
+    public bool CliPreviewWaitsOnContinue() => _previewSession.WaitsOnContinue;
 
     /// <summary>The preview box's [ YES ] or [ NO ] region, when the shown part asks (the doubt of a thinking).</summary>
     public (bool Present, int X, int Y, int Width) CliPreviewAnswer(bool yes)
