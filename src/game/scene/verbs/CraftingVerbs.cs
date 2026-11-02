@@ -107,7 +107,7 @@ public sealed class UseStationVerb : Verb
     public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
         => target is PointOfInterest station
             ? CraftingModusMentis.All.Where(mm => mm.Station.IsInstanceOfType(station)).Select(mm => mm.ModusMentisId).ToList()
-            : System.Array.Empty<string>();
+            : CraftingModusMentis.All.Select(mm => mm.ModusMentisId).ToList();   // no station named: every trade it can teach
 
     /// <summary>A slip at a station: a scrape on the hands, the hour gone, or the work lost track of.</summary>
     public override IReadOnlyList<FailurePenalty> FailurePenalties(Element? target)

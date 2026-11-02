@@ -120,7 +120,7 @@ public static class WorkshopSubfactory
                 new ItemElement(new Hammer()),
             },
             moods: new[] { "long", "scored", "heavy", "lit" }
-        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "joinery", ["contemplate"] = "woodturning" } });
+        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "joinery" } });
 
         shop.PointsOfInterest.Add(new WoodPointOfInterest(
             displayName: "Wood Pile",
@@ -233,7 +233,17 @@ public static class WorkshopSubfactory
                 new ItemElement(new BoneNeedle()),
             },
             moods: new[] { "broad", "chalked", "orderly" }
-        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "needlework", ["contemplate"] = "plain_sewing" } });
+        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "plain_sewing" } });
+
+        shop.PointsOfInterest.Add(new ShelfPointOfInterest(
+            displayName: "Sewing Shelf",
+            descriptions: new() { "A shelf of needles, thread and half-finished garments pinned for fitting" },
+            items: new()
+            {
+                new ItemElement(new Cathedral.Game.Narrative.World.Items.Thread()),
+            },
+            moods: new[] { "neat", "pinned", "crowded" }
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "needlework" } });
 
         shop.PointsOfInterest.Add(new WoolPointOfInterest(
             displayName: "Wool Basket",

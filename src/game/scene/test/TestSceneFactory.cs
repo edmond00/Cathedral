@@ -112,13 +112,18 @@ public sealed class TestSceneFactory : SceneFactory
 
         var outdoors = new Section("Test Grounds", new List<string> { "the open ground of a test location" },
                                    seed => new NoisyGenerator { Seed = seed, Density = 0.5f });
-        foreach (var a in new[] { yard, field, wood, den, shore, rock, ledge, crown, ruin })
+        foreach (var a in new[] { yard, field, wood, den, shore, rock, ledge, crown })
             outdoors.Areas.Add(a);
 
         var building = new Section("Test Building", new List<string> { "a plain stone building" },
                                    seed => new RoomsGenerator { Seed = seed })
         { IsInterior = true };
         foreach (var a in new[] { hall, room, roof }) building.Areas.Add(a);
+
+        // The ruin is a section of its own, so the grounds' map keeps the shape the map scripts pin.
+        var ruins = new Section("Test Ruins", new List<string> { "the shell of an old smithy" },
+                                seed => new NoisyGenerator { Seed = seed, Density = 0.5f });
+        ruins.Areas.Add(ruin);
 
         var smithy = new Section("Test Smithy", new List<string> { "a smith's forge and its yard" },
                                  seed => new RoomsGenerator { Seed = seed })
@@ -127,6 +132,7 @@ public sealed class TestSceneFactory : SceneFactory
 
         scene.Sections.Add(outdoors);
         scene.Sections.Add(building);
+        scene.Sections.Add(ruins);
         scene.Sections.Add(smithy);
 
         // ── Ways between them ─────────────────────────────────────────────────
@@ -192,6 +198,7 @@ public sealed class TestSceneFactory : SceneFactory
 
         RegisterAll(scene, outdoors);
         RegisterAll(scene, building);
+        RegisterAll(scene, ruins);
         RegisterAll(scene, smithy);
 
         AddPeople(scene, yard, hall, room, wood, den, shore, roof);

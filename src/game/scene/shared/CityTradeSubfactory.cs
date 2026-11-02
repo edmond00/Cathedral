@@ -44,7 +44,7 @@ public static class CityTradeSubfactory
         shop.PointsOfInterest.Add(new LeatherBenchPointOfInterest("Leather Bench",
             new() { "A heavy bench under the window, its top cut all over by knives and stained by dubbin" },
             new() { I(new TannedLeather()), I(new Knife()) }, new[] { "scored", "dark", "heavy" })
-            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "shoemaking"), ("contemplate", "harness_making")) });
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "shoemaking")) });
 
         shop.PointsOfInterest.Add(new ShelfPointOfInterest("Shoe Shelf",
             new() { "A shelf of finished shoes and boots waiting to be fetched, mended heels uppermost" },
@@ -70,7 +70,7 @@ public static class CityTradeSubfactory
         shop.PointsOfInterest.Add(new CuttingTablePointOfInterest("Cutting Table",
             new() { "A long table chalked with patterns, shears and a thimble lying where they were put down" },
             new() { I(new Shears()), I(new Thimble()), I(new TailorsChalk()), I(new BoneNeedle()) }, new[] { "long", "chalked", "scarred" })
-            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "needlework"), ("contemplate", "plain_sewing")) });
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "needlework")) });
 
         shop.PointsOfInterest.Add(new ClothPointOfInterest("Bolts of Cloth",
             new() { "Bolts of wool, linen and dyed cloth stacked on their ends against the wall" },
@@ -158,7 +158,7 @@ public static class CityTradeSubfactory
         yard.PointsOfInterest.Add(new LeatherBenchPointOfInterest("Currier's Bench",
             new() { "A long bench where the finished leather is dressed, oiled and cut to order" },
             new() { I(new TannedLeather()) }, new[] { "oily", "long", "worn" })
-            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "harness_making"), ("contemplate", "shoemaking")) });
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "harness_making")) });
 
         yard.PointsOfInterest.Add(new RackPointOfInterest("Beam and Knives",
             new() { "A sloping log beam for fleshing, with the knives racked beside it" },
