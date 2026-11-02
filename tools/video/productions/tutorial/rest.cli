@@ -991,3 +991,5 @@ clip end job_menu
 # The rest, from the journey to the city on, is city.cli's, started from this take's checkpoint on
 # returning to the world map after the job menu (saves/03_job_menu.json).
 hold 2
+state
+quit
