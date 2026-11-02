@@ -20,6 +20,7 @@ namespace Cathedral.Game
     public sealed class WillSearch
     {
         public PartyMember Member { get; }
+        public string ModusMentisId { get; }
         public string ModusMentisName { get; }
         public WillTarget Target { get; }
 
@@ -43,9 +44,11 @@ namespace Cathedral.Game
         /// <summary>Nothing left to check: a place was found, or every candidate has been read.</summary>
         public bool IsDone => Found >= 0 || Checked >= Candidates.Count;
 
-        public WillSearch(PartyMember member, string modusMentisName, WillTarget target, IReadOnlyList<int> candidates)
+        public WillSearch(PartyMember member, string modusMentisId, string modusMentisName, WillTarget target,
+                          IReadOnlyList<int> candidates)
         {
             Member          = member;
+            ModusMentisId   = modusMentisId;
             ModusMentisName = modusMentisName;
             Target          = target;
             Candidates      = candidates;

@@ -41,7 +41,28 @@ public static class WillPriority
 
     /// <summary>The will's path from this standing, or null when it cannot be done in this place.</summary>
     public static ActionPath? PathOf(ModusMentis mm, Scene.Scene scene, PoV pov, PartyMember actor)
-        => mm.Will is { } will ? ActionPathPlanner.Plan(scene, pov, actor, will) : null;
+        => TargetsOf(mm, scene, pov, actor) is { } will ? ActionPathPlanner.Plan(scene, pov, actor, will) : null;
+
+    /// <summary>
+    /// The target this visit was made for (<see cref="Scene.Scene.WillPursuit"/>), when it is this
+    /// will's and can still be reached from here; null otherwise — no pursuit, another will's, or the
+    /// target met or gone, after which the will wants all its targets again as on any visit.
+    /// </summary>
+    public static WillTargets? PursuedOf(ModusMentis mm, Scene.Scene scene, PoV pov, PartyMember actor)
+    {
+        if (scene.WillPursuit is not { } p || p.ModusMentisId != mm.ModusMentisId || mm.Will is not { } will) return null;
+        if (will.FirstOrDefault(t => t.Describe() == p.TargetKey) is not { } target) return null;
+        WillTargets pursued = target;
+        return ActionPathPlanner.Plan(scene, pov, actor, pursued) != null ? pursued : null;
+    }
+
+    /// <summary>
+    /// What the will steers by here: the pursued target alone when this visit was made for one of its
+    /// targets (<see cref="PursuedOf"/>) — its main target, however far — else every target it has.
+    /// The plan, the phase opener and a focus all go by this.
+    /// </summary>
+    public static WillTargets? TargetsOf(ModusMentis mm, Scene.Scene scene, PoV pov, PartyMember actor)
+        => PursuedOf(mm, scene, pov, actor) ?? mm.Will;
 
     /// <summary>
     /// The shortest path to the will that begins with something <paramref name="anchor"/> — an observed
@@ -51,19 +72,38 @@ public static class WillPriority
     public static ActionPath? PathOn(NarrativeAnchor anchor, ModusMentis mm, Scene.Scene scene, PoV pov,
                                      PartyMember actor, ActionPath path)
         => anchor is ObservationObject o
-            ? ActionPathPlanner.PathThrough(scene, pov, actor, mm.Will!, path, o.SubOutcomes.OfType<VerbAction>())
+            ? ActionPathPlanner.PathThrough(scene, pov, actor, TargetsOf(mm, scene, pov, actor)!, path, o.SubOutcomes.OfType<VerbAction>())
             : null;
 
     /// <summary>
     /// The ways to the will a thinking mind may take through what an object offers — the shortest of
     /// those within reach, one per first action (<see cref="ActionPathPlanner.WaysThrough"/>). Empty when
     /// the object offers none, or the will cannot be done in this place at all.
+    ///
+    /// <para>On a visit made for one of its targets, that target comes first: a way to it through the
+    /// object is taken however long the place makes it, and only when the object offers none is a way
+    /// to the will's other targets looked for — and then only one of at most
+    /// <see cref="Config.Narrative.WillMaxPathSteps"/>, never "as short as the place's shortest".</para>
     /// </summary>
     public static IReadOnlyList<ActionPath> WaysOn(ModusMentis mm, Scene.Scene scene, PoV pov, PartyMember actor,
                                                    IEnumerable<VerbAction> offered)
-        => PathOf(mm, scene, pov, actor) is { } path
-            ? ActionPathPlanner.WaysThrough(scene, pov, actor, mm.Will!, path, offered)
+    {
+        var actions = offered.ToList();
+        if (PursuedOf(mm, scene, pov, actor) is { } pursued)
+        {
+            var main = ActionPathPlanner.Plan(scene, pov, actor, pursued)!;
+            var ways = ActionPathPlanner.WaysThrough(scene, pov, actor, pursued, main, actions);
+            if (ways.Count > 0) return ways;
+            var others = WillTargets.Of(mm.Will!.Where(t => t.Describe() != pursued[0].Describe()).ToArray());
+            if (others.Count == 0 || ActionPathPlanner.Plan(scene, pov, actor, others) is not { } rest)
+                return Array.Empty<ActionPath>();
+            return ActionPathPlanner.WaysThrough(scene, pov, actor, others, rest, actions,
+                                                 reachCap: Config.Narrative.WillMaxPathSteps);
+        }
+        return PathOf(mm, scene, pov, actor) is { } path
+            ? ActionPathPlanner.WaysThrough(scene, pov, actor, mm.Will!, path, actions)
             : Array.Empty<ActionPath>();
+    }
 
     /// <summary>Whether <paramref name="goal"/> is the act the will wants, or the first step of a way to it it would take.</summary>
     public static bool OnItsWay(ModusMentis mm, Scene.Scene scene, PoV pov, PartyMember actor, VerbAction goal)

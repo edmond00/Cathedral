@@ -900,6 +900,19 @@ the TRAVEL box says why; nowhere is a transient notice. The place being read bea
 leaving the map. `cli/system/will_search_world.cli` walks the proposed trip and asserts the will has a
 way there.
 
+**A visit walked for a search wants the searched target first** (`Scene.WillPursuit`). The proposed
+trip carries the will's id and the target's description (`_willProposalPursuit`); TRAVEL on that very
+trip makes it the journey's `_pendingPursuit`, any other journey drops it, and
+`BuildSceneForLocation(visit: true)` at its end puts it on the visit's scene, once. There
+`WillPriority.TargetsOf` answers the pursued target alone (`PursuedOf`, while it can still be reached —
+met or gone, the will reverts to all its targets), so the plan, the phase opener, a focus and `inspect
+will` (`pursuit=yes`) go by it however long its way. `WaysOn` (thinking) takes a way to it through the
+object first, at any length the place makes it, and only when the object offers none a way to the
+other targets, capped at `WillMaxPathSteps` (`WaysThrough(…, reachCap:)`), never "as short as the
+place's shortest". The next visit to the same place is an ordinary one. `cli/system/will_search_pursuit.cli`
+(Woodcraft's "buy seasoned wood": `aim=3/4` five steps on the pursued visit, `aim=1/4` one step on the
+next).
+
 **The ◎ beside the ☰ is the same search without the protagonist screen** (`WillPickerBox`, a second
 `MenuButton` offset four cells left). It is up on the interactive world map whenever the party holds a
 will, and not under any other modal box or a running search. Its box lists **every will the party

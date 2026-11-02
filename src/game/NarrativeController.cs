@@ -4676,14 +4676,18 @@ public class NarrativeController
         if (All("will") && _scene != null && _pov != null)
             foreach (var mm in actor.LearnedModiMentis.Where(m => m.Will != null).OrderBy(m => m.ModusMentisId))
             {
-                var path = ActionPathPlanner.Plan(_scene, _pov, actor, mm.Will!);
+                // What the will steers by here: the pursued target alone on a visit a will's search was
+                // walked for (WillPriority.TargetsOf), else every target.
+                var pursued = Cathedral.Game.Narrative.Rules.Choice.WillPriority.PursuedOf(mm, _scene, _pov, actor);
+                var path = ActionPathPlanner.Plan(_scene, _pov, actor, pursued ?? mm.Will!);
                 outp.Add(path == null
                     ? $"will {mm.ModusMentisId} steps=none"
                     : $"will {mm.ModusMentisId} steps={path.Steps.Count} first=\"{path.First.Verbatim}\" goal=\"{path.Goal.Verbatim}\""
                       + $" target={CliTargetId(path.First.Action.Target)}"
                       + (path.ToolStep >= 0 ? $" tool_step={path.ToolStep + 1}" : "")
                       // Which of the will's targets the path reaches, by declaration order (1 = first), and its purpose.
-                      + (path.Target is { } aim ? $" aim={AimOf(mm.Will!, aim)}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : ""));
+                      + (path.Target is { } aim ? $" aim={AimOf(mm.Will!, aim)}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : "")
+                      + (pursued != null ? " pursuit=yes" : ""));
             }
 
         // A will's targets are built afresh on every read, so the one a path reaches is found by what it is.

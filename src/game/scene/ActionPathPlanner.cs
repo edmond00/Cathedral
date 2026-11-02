@@ -337,9 +337,11 @@ public static class ActionPathPlanner
     /// further than another.</para>
     /// </summary>
     public static IReadOnlyList<ActionPath> WaysThrough(Scene scene, PoV pov, PartyMember actor, WillTargets will, ActionPath path,
-                                                        IEnumerable<VerbAction> offered)
+                                                        IEnumerable<VerbAction> offered, int? reachCap = null)
     {
-        int reach = Math.Max(Config.Narrative.WillMaxPathSteps, path.Steps.Count);
+        // reachCap: the most steps a way may take whatever the place's shortest — the will's other
+        // targets during a visit made for one of them (WillPriority.WaysOn).
+        int reach = reachCap ?? Math.Max(Config.Narrative.WillMaxPathSteps, path.Steps.Count);
         var ways  = new List<ActionPath>();
         foreach (var action in offered)
             if (!ways.Any(w => SameAction(action, w.First.Action))
