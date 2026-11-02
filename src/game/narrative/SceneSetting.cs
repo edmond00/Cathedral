@@ -64,10 +64,22 @@ public static class SceneSetting
     /// but on a 3B model a rule 1500 tokens up the context loses to the immediate wording of the
     /// request, so it is restated last — where instructions weigh most — and paired with the place, so
     /// the model does not furnish a forest with town streets.
+    /// <para>
+    /// It points back at the rule rather than restating its picture. The last words of a request are
+    /// the ones the model copies most, and "Remember: an old world of iron and hand labour, nothing from
+    /// the real world" came back as scenery — "pulling me toward sleep in this old world of iron and
+    /// myth, where hands did the work", "a distant echo from an old iron world". Replaying 15 recorded
+    /// childhood rewrites four times each (tools/prompts/setting_leak.py), the picture leaked into 16 of
+    /// 60 answers and the pointer into none; a ban in its place ("nothing from after engines and
+    /// gunpowder…") was itself copied, 3 of 60. Over 40 exploration rewrites, twice each: 2 of 80 against
+    /// 1, and answers with a Layer 1 forbidden word 5 against 4. Any noun put here is material the model
+    /// may narrate — with the picture gone, the place clause is the one left to copy, which is why the
+    /// childhood reminescence now has none (NarrativeController).
+    /// </para>
     /// </summary>
     public static string Reminder()
     {
-        const string setting = "Remember: an old world of iron and hand labour, nothing from the real world.";
+        const string setting = "Remember the setting rule.";
         return Place.Length == 0
             ? setting
             : $"{setting} You are in {Article(Place)} {Place} — write only what belongs there.";

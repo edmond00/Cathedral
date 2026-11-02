@@ -1,0 +1,72 @@
+# The childhood reminescence, played by the shipped model, for setting_leak.py. Plays the first REMEMBER.
+# bash tools/prompts/run_game.sh tools/prompts/data/childhood/childhood.cli <out> --seed <n> --no-embeddings --debug
+# The hold on the main menu lets the choice judge finish initialising on a slow CPU.
+wait
+wait mode MainMenu 900
+wait for 150
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode ChildhoodReminescence 900
+advance 12 1500
+click keyword 0
+choose 0
+choose 0
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose 0
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose 0
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose 0
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose 0
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+click keyword 0
+choose 0
+choose 0
+advance 12 1500
+click action 0
+choose 0
+advance 12 1500
+click continue
+advance 12 1500
+advance 12 1500
+quit
