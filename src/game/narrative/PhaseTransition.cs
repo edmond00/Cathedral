@@ -48,3 +48,10 @@ public sealed class StartDialogueTransition : PhaseTransition
         Tree   = tree;
     }
 }
+
+/// <summary>USE succeeded at a station: open the crafting menu there, for the trade the request names.</summary>
+public sealed class StartCraftingTransition : PhaseTransition
+{
+    public Crafting.CraftingRequest Request { get; }
+    public StartCraftingTransition(Crafting.CraftingRequest request) => Request = request;
+}

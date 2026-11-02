@@ -99,8 +99,12 @@ Each item is of exactly one category, and the category decides which systems loo
 | **Wearing** | Worn upon an anchor. May protect, may flatter, may hold. |
 | **Consumable** | Eaten, drunk or inhaled; pushes humors into an organ's queue. |
 | **Container** | Holds other items, not being itself worn. |
-| **Crafting** | Raw material — ore, timber, fibre, hide. |
+| **Crafting** | Stock and goods of no other office — ore, timber, cloth, a padlock, a ledger. Admitted to nothing of its own. |
 | **Other** | A keepsake, a curiosity, a part cut from a corpse. |
+
+What an item is **made of** is a separate matter from its category, and every category may hold
+materials: a knife, a tunic and a barrel are as much stock for a trade as a bar of iron (see
+[X §1](10-crafting.md)).
 
 Each category names its own subordinate kind rather than sharing one flat list, so that an
 impossible pairing cannot be stated. A liquid is precisely a drinkable consumable; nothing declares

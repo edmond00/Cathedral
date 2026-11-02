@@ -40,6 +40,12 @@ public static class CityTradeSubfactory
             new() { I(new Awl()), I(new Hobnails()), I(new Narrative.World.Items.Thread()) }, new[] { "worn", "cluttered", "low" })
             { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "cobbling"), ("smell", "keen_nose")) });
 
+        // The work station: what the bench above is to the cobbler's tools, this is to the leather itself.
+        shop.PointsOfInterest.Add(new LeatherBenchPointOfInterest("Leather Bench",
+            new() { "A heavy bench under the window, its top cut all over by knives and stained by dubbin" },
+            new() { I(new TannedLeather()), I(new Knife()) }, new[] { "scored", "dark", "heavy" })
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "shoemaking"), ("contemplate", "harness_making")) });
+
         shop.PointsOfInterest.Add(new ShelfPointOfInterest("Shoe Shelf",
             new() { "A shelf of finished shoes and boots waiting to be fetched, mended heels uppermost" },
             new() { I(new LeatherBoots()), I(new BespokeShoes()) }, new[] { "polished", "waiting", "ordered" })
@@ -61,10 +67,10 @@ public static class CityTradeSubfactory
             new() { I(new Waistcoat()) }, new[] { "headless", "pinned", "elegant" })
             { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "tailoring"), ("contemplate", "vanitas")) });
 
-        shop.PointsOfInterest.Add(new TablePointOfInterest("Cutting Table",
+        shop.PointsOfInterest.Add(new CuttingTablePointOfInterest("Cutting Table",
             new() { "A long table chalked with patterns, shears and a thimble lying where they were put down" },
-            new() { I(new Shears()), I(new Thimble()), I(new TailorsChalk()) }, new[] { "long", "chalked", "scarred" })
-            { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "tailoring")) });
+            new() { I(new Shears()), I(new Thimble()), I(new TailorsChalk()), I(new BoneNeedle()) }, new[] { "long", "chalked", "scarred" })
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "needlework"), ("contemplate", "plain_sewing")) });
 
         shop.PointsOfInterest.Add(new ClothPointOfInterest("Bolts of Cloth",
             new() { "Bolts of wool, linen and dyed cloth stacked on their ends against the wall" },
@@ -82,10 +88,10 @@ public static class CityTradeSubfactory
             new() { "A greasy, stuffy shop with a tallow vat steaming at the back and candles hanging in bunches" },
             new[] { "greasy", "stuffy", "rank", "warm" });
 
-        shop.PointsOfInterest.Add(new VatPointOfInterest("Tallow Vat",
+        shop.PointsOfInterest.Add(new TallowVatPointOfInterest("Tallow Vat",
             new() { "A copper vat of melted tallow over a low fire, a skin forming on its surface" },
             new() { I(new Tallow()), I(new Tallow()) }, new[] { "steaming", "greasy", "rank" })
-            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "chandlery"), ("smell", "taint_sense")) });
+            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "candlemaking"), ("smell", "taint_sense")) });
 
         shop.PointsOfInterest.Add(new RackPointOfInterest("Dipping Rack",
             new() { "A wheel-shaped rack hung with rows of half-dipped candles cooling on their wicks" },
@@ -144,6 +150,16 @@ public static class CityTradeSubfactory
             new() { I(new TannedLeather()), I(new Hide()) }, new[] { "taut", "pale", "drying" })
             { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "tanning"), ("contemplate", "dirty_labor")) });
 
+        yard.PointsOfInterest.Add(new TanningPitPointOfInterest("Soaking Pits",
+            new() { "Round pits of lime and water where the raw hides go first, a crust of hair on the surface" },
+            new() { I(new Hide()) }, new[] { "milky", "reeking", "crusted" })
+            { Senses = SensoryProfile.Odorous, VerbModiMentis = Teach(("examine", "hidecuring"), ("smell", "taint_sense")) });
+
+        yard.PointsOfInterest.Add(new LeatherBenchPointOfInterest("Currier's Bench",
+            new() { "A long bench where the finished leather is dressed, oiled and cut to order" },
+            new() { I(new TannedLeather()) }, new[] { "oily", "long", "worn" })
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "harness_making"), ("contemplate", "shoemaking")) });
+
         yard.PointsOfInterest.Add(new RackPointOfInterest("Beam and Knives",
             new() { "A sloping log beam for fleshing, with the knives racked beside it" },
             new() { I(new FleshingKnife()), I(new LeatherApron()) }, new[] { "slick", "sloping", "sharp" })
@@ -160,10 +176,10 @@ public static class CityTradeSubfactory
             new() { "A dusty workshop of shelves of drying pots, a wheel by the door and a kiln's heat at the back" },
             new[] { "dusty", "warm", "earthy", "quiet" });
 
-        shop.PointsOfInterest.Add(new WheelPointOfInterest("Potter's Wheel",
+        shop.PointsOfInterest.Add(new PottersWheelPointOfInterest("Potter's Wheel",
             new() { "A kick-wheel with a wet lump of clay still centred on its head" },
             new() { I(new Clay()), I(new PottersRib()) }, new[] { "wet", "spattered", "still" })
-            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "potcraft"), ("contemplate", "meditation")) });
+            { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "wheel_throwing"), ("contemplate", "meditation")) });
 
         shop.PointsOfInterest.Add(new KilnPointOfInterest("Kiln",
             new() { "A beehive kiln of blackened brick, ticking as it cools" },

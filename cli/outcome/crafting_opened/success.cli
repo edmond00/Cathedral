@@ -1,0 +1,52 @@
+# crafting_opened — the chip is the menu
+#
+# "At work: …" is followed, on the CONTINUE, by the crafting menu at that station for that trade, and
+# what the menu does is real: the hammer's own iron is not touched, a horseshoe broken down gives two
+# units of metal, and a nail made from them is in the pack afterwards.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --grant-item hammer,horseshoe --location-type test --location-id 0 --start-area "Test Ruin" --period dawn --observe-only "Test Old Anvil"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal use
+means blacksmithing
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect At work:
+expect-outcome crafting_opened
+state
+click button
+wait mode Crafting 30
+expect-state crafting trade=blacksmithing material=metal pool=0
+expect-state crafting make item=nail cost=1 can=no
+craft break horseshoe
+expect-state crafting pool=2
+expect-state crafting make item=nail cost=1 can=yes
+craft make nail
+craft make nail
+expect-state crafting pool=0
+craft leave
+wait mode LocationInteraction 30
+expect-state items nail
+expect-state items hammer
+expect-no-state items horseshoe
+quit

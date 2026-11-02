@@ -41,17 +41,30 @@ public static class WorkshopSubfactory
             moods: new[] { "leather-creased", "tall", "smoke-stained" }
         ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "metalcraft", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } });
 
+        // The hearth the bellows blow: where ore is brought to a bloom. The anvil works the iron that
+        // comes out of it, so a forge is two stations and a smith's trades are three.
+        forge.PointsOfInterest.Add(new ForgeHearthPointOfInterest(
+            displayName: "Forge Hearth",
+            descriptions: new() { "A waist-high hearth of brick with a deep fire-pot, the tuyere of the bellows running into its side" },
+            items: new()
+            {
+                new ItemElement(new CharcoalRake()),
+                new ItemElement(new Coal()),
+            },
+            moods: new[] { "glowing", "hot", "brick-built", "roaring" }
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "smelting" } });
+
         forge.PointsOfInterest.Add(new ToolPointOfInterest(
             displayName: "Tool Rack",
             descriptions: new() { "An iron-pegged rack of forge tools" },
             items: new()
             {
                 new ItemElement(new Hammer()),
-                new ItemElement(new Tongs()),
+                new ItemElement(new SmithTongs()),
                 new ItemElement(new Chisel()),
             },
             moods: new[] { "ordered", "soot-darkened", "iron-bright" }
-        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "metalcraft" } });
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "blacksmithing" } });
 
         forge.PointsOfInterest.Add(new ShelfPointOfInterest(
             displayName: "Stock Shelf",
@@ -79,7 +92,7 @@ public static class WorkshopSubfactory
                 new ItemElement(new Pick()),
             },
             moods: new[] { "ordered", "iron-bright", "ready" }
-        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "metalcraft", ["contemplate"] = "aesthetic" } });
+        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "bladesmithing", ["contemplate"] = "aesthetic" } });
 
         return forge;
     }
@@ -102,12 +115,12 @@ public static class WorkshopSubfactory
             items: new()
             {
                 new ItemElement(new Saw()),
-                new ItemElement(new Chisel()),
+                new ItemElement(new WoodChisel()),
                 new ItemElement(new Mallet()),
                 new ItemElement(new Hammer()),
             },
             moods: new[] { "long", "scored", "heavy", "lit" }
-        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft" } });
+        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "joinery", ["contemplate"] = "woodturning" } });
 
         shop.PointsOfInterest.Add(new WoodPointOfInterest(
             displayName: "Wood Pile",
@@ -129,7 +142,7 @@ public static class WorkshopSubfactory
                 new ItemElement(new Twig()),
             },
             moods: new[] { "soft", "fragrant", "dry", "loose" }
-        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "whittlecraft", ["smell"] = "keen_nose" } });
+        ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "woodturning", ["smell"] = "keen_nose" } });
 
         return shop;
     }
@@ -145,6 +158,16 @@ public static class WorkshopSubfactory
             descriptions: new() { "A workshop laid out with half-built barrels and stave-piles" },
             moods: new[] { "ordered", "wood-scented", "iron-banded", "dim", "tidy" }
         );
+
+        shop.PointsOfInterest.Add(new WorkbenchPointOfInterest(
+            displayName: "Shaving Bench",
+            descriptions: new() { "A low bench the cooper sits astride to shave staves, a drawknife hung on its peg" },
+            items: new()
+            {
+                new ItemElement(new Drawknife()),
+            },
+            moods: new[] { "low", "worn", "curled-shaving" }
+        ) { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "cooperage" } });
 
         shop.PointsOfInterest.Add(new StavePointOfInterest(
             displayName: "Stave Pile",
@@ -198,7 +221,19 @@ public static class WorkshopSubfactory
             displayName: "Loom",
             descriptions: new() { "A tall floor loom strung with warp threads, a half-finished bolt of cloth on the beam" },
             moods: new[] { "tall", "stretched", "threaded", "central" }
-        ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "threadwork", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } });
+        ) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "weaving", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } });
+
+        // A board to cut the web on, so a village has somewhere to make clothes as well as cloth.
+        shop.PointsOfInterest.Add(new CuttingTablePointOfInterest(
+            displayName: "Cutting Board",
+            descriptions: new() { "A broad board on trestles where finished cloth is measured, cut and sewn" },
+            items: new()
+            {
+                new ItemElement(new Shears()),
+                new ItemElement(new BoneNeedle()),
+            },
+            moods: new[] { "broad", "chalked", "orderly" }
+        ) { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "needlework", ["contemplate"] = "plain_sewing" } });
 
         shop.PointsOfInterest.Add(new WoolPointOfInterest(
             displayName: "Wool Basket",
@@ -208,6 +243,7 @@ public static class WorkshopSubfactory
                 new ItemElement(new Wool()),
                 new ItemElement(new Wool()),
                 new ItemElement(new Cathedral.Game.Narrative.World.Items.Thread()),
+                new ItemElement(new Spindle()),
             },
             moods: new[] { "soft", "white", "wide" }
         ) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "threadwork", ["smell"] = "keen_nose" } });

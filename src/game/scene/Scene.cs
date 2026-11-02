@@ -476,6 +476,24 @@ public class Scene
     /// </summary>
     public DialogueRequest? PendingDialogueRequest { get; set; }
 
+    // ── Crafting ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Set by <c>CraftingOpenedOutcome</c> when USE succeeds at a station; consumed by
+    /// <see cref="NarrativeController"/> on the next frame to open the crafting menu, as a
+    /// <see cref="PendingDialogueRequest"/> opens a conversation.
+    /// </summary>
+    public Narrative.Crafting.CraftingRequest? PendingCraftingRequest { get; set; }
+
+    /// <summary>
+    /// The workshops (sections, by display name) whose master has let the player use the equipment.
+    /// Shared by reference with <see cref="LocationInstanceState.AuthorizedWorkshops"/>, so a leave
+    /// given is kept for good, and it makes the player's presence in the workshop tolerated
+    /// (<see cref="PrivacyModel.IsTrespassing"/>). Keyed by name because a section's id is minted
+    /// afresh by every build; the name is a pure function of the location id.
+    /// </summary>
+    public HashSet<string> AuthorizedWorkshops { get; set; } = new();
+
     // ── Pending fight request (set by attack verb) ────────────────────────────
 
     /// <summary>

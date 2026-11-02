@@ -292,6 +292,7 @@ public sealed class CliDriver
                 case "routines":    CmdRoutines(rest);                break;
                 case "gather":      CmdGather(rest);                  break;
                 case "trade":       CmdTrade(rest);                   break;
+                case "craft":       CmdCraft(rest);                   break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
@@ -579,6 +580,7 @@ public sealed class CliDriver
             // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
             // pressing CONTINUE would sit out its whole timeout with nothing to say why.
             if (n.HasDeferredFight) sb.Append(" fight-held=yes");
+            if (n.HasDeferredCrafting) sb.Append(" crafting-held=yes");
             sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
             sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");
@@ -1509,6 +1511,43 @@ public sealed class CliDriver
         bool ok = sub == "leave" && _game.CliTradeLeave();
         CliMode.Emit(ok ? $"ok: trade leave (mode={_game.CurrentMode})"
                         : $"error: trade leave — no trade menu open (currently {_game.CurrentMode})");
+    }
+
+    /// <summary>
+    /// The crafting menu: <c>craft break &lt;item&gt;</c> destroys a carried item for the station's
+    /// material, <c>craft make &lt;item&gt;</c> makes one recipe from the pool, <c>craft leave</c> closes the
+    /// menu (what is left in hand is thrown away). Items are named by id or display name. A refusal
+    /// fails the run, since a script that asked to make something and could not is asserting it can.
+    /// </summary>
+    private void CmdCraft(string[] a)
+    {
+        var menu = _game.CliCrafting;
+        if (menu == null) { CliMode.Emit($"error: craft — no crafting menu open (currently {_game.CurrentMode})"); CliMode.HasFailedAssertion = true; return; }
+        string sub  = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        string name = string.Join(' ', a.Skip(1)).Trim();
+        bool Named(Cathedral.Game.Narrative.Item i) => string.Equals(i.ItemId, name, StringComparison.OrdinalIgnoreCase)
+                           || string.Equals(i.DisplayName, name, StringComparison.OrdinalIgnoreCase);
+        switch (sub)
+        {
+            case "leave":
+                menu.Leave();
+                CliMode.Emit($"ok: craft leave (pool {menu.Pool} thrown away)");
+                return;
+            case "break":
+                if (menu.Breakables().FirstOrDefault(Named) is { } item && menu.BreakDown(item))
+                { CliMode.Emit($"ok: craft break {item.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
+                break;
+            case "make":
+                if (menu.Recipes.FirstOrDefault(Named) is { } recipe && menu.Make(recipe))
+                { CliMode.Emit($"ok: craft make {recipe.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
+                break;
+            default:
+                CliMode.Emit("error: craft break|make <item> | craft leave");
+                CliMode.HasFailedAssertion = true;
+                return;
+        }
+        CliMode.Emit($"error: craft {sub} {name} — refused ({string.Join(" | ", menu.CliLines().Where(l => l.StartsWith("crafting message")))})");
+        CliMode.HasFailedAssertion = true;
     }
 
     /// <summary>

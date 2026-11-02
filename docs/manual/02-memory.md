@@ -12,7 +12,7 @@ Every modus mentis declares the following, and these declarations are the whole 
 **An identity.** A stable name, and the manner in which it operates — the phrase by which an act
 performed through it is described.
 
-**Its functions**, at least one and at most three, drawn from seven:
+**Its functions**, at least one and at most three, drawn from eight:
 
 | Function | Office |
 |---|---|
@@ -23,6 +23,7 @@ performed through it is described.
 | **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
 | **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
 | **Will** | It wants. It observes and deliberates, but only toward the few kinds of act it desires. |
+| **Craft** | It knows a trade: one station, one implement, the few things made there (see [X](10-crafting.md)). Borne always beside Will and Action. |
 
 **Action and emotion are exclusive**, as thinking and action already are. These are the three
 offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one

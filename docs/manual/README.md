@@ -45,8 +45,11 @@ goes, and what it does when it arrives.
    blow that opens a fight; the attack and defence pools; wounds, status, terrain and flight; the two
    ways to fall and what decides the field.
 9. [Mental Maps and Routines](09-routines.md) — what is remembered of a place and for how long, and
-   the ways into it the body already knows: the six kinds, where none is learned, what each
+   the ways into it the body already knows: the seven kinds, where none is learned, what each
    requires, and the gathering stay.
+10. [Crafting](10-crafting.md) — materials and their units; stations and the one material each works;
+    trades, their implements and their wants; a master's leave; setting to work, taking apart and
+    making.
 
 ## A note on numbers
 

@@ -91,6 +91,19 @@ public class NarrativeController
     private FightTriggerOutcome? _deferredFightOutcome = null;
     private DialogueTriggerOutcome? _pendingDialogueOutcome = null;
 
+    /// <summary>A crafting menu a successful USE asked for, handed to the game controller next frame.</summary>
+    private Cathedral.Game.Narrative.Crafting.CraftingRequest? _pendingCrafting = null;
+
+    /// <summary>
+    /// A crafting menu held for the CONTINUE, exactly as a first blow's fight is
+    /// (<see cref="_deferredFightOutcome"/>): the menu takes the whole screen the frame it opens, and the
+    /// chips — the roll, "At work: …", the lesson — are the only account of what USE did.
+    /// </summary>
+    private Cathedral.Game.Narrative.Crafting.CraftingRequest? _deferredCrafting = null;
+
+    /// <summary>Whether a crafting menu is waiting on the CONTINUE press — for the CLI's <c>state</c>.</summary>
+    public bool HasDeferredCrafting => _deferredCrafting != null;
+
     // What the next observation phase opens on, when something other than the persona has decided it,
     // and the observation modus mentis to narrate it with (null: pick one). Consumed by that phase.
     // Set by a conversation (the person just spoken to), an introduction (the person just presented)
@@ -2645,7 +2658,7 @@ public class NarrativeController
             // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
             // consequence of whatever the verb actually did, not as its headline.
             var lesson = ModusMentisGrantOutcome.For(
-                _activePartyMember, ChooseLesson(verb, verbTarget.Target)?.ModusMentisId);
+                _activePartyMember, ChooseLesson(verb, verbTarget.Target, verbTarget)?.ModusMentisId);
             if (lesson != null) reports.Add(lesson);
 
             return reports;
@@ -2659,7 +2672,7 @@ public class NarrativeController
     /// <see cref="Verb.ResolveLesson"/>, which asks the verb's own contextual answer first, then the
     /// target's declaration, then the verb's defaults, skipping whatever this body cannot hold.
     /// </summary>
-    private ModusMentis? ChooseLesson(Verb verb, Element target)
+    private ModusMentis? ChooseLesson(Verb verb, Element target, VerbAction? action = null)
     {
         var threat = ThreatLevel.None;
         if (_protagonist != null)
@@ -2670,6 +2683,7 @@ public class NarrativeController
         return verb.ResolveLesson(new LessonContext(_scene!, _pov!, _activePartyMember!, target)
         {
             Hostile = threat,
+            Action  = action,
         });
     }
 
@@ -2891,6 +2905,20 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
             SceneDebugManager.UpdatePoV(_pov);
+
+            // Check if the verb asked for the crafting menu (USE at a station)
+            if (_scene.PendingCraftingRequest != null)
+            {
+                _deferredCrafting = _scene.PendingCraftingRequest;
+                _scene.PendingCraftingRequest = null;
+                Console.WriteLine($"NarrativeController: USE opens the crafting menu at '{_deferredCrafting.Station.DisplayName}' as {_deferredCrafting.ModusMentisId} — held for CONTINUE");
+                _narrationState.PendingTransitionNode = null;
+                _narrationState.ShouldExitOnContinue  = false;
+                _narrationState.ShowContinueButton    = true;
+                _pendingSegmentLabel                  = SegmentLabelFor(result);
+                _pendingSegmentSucceeded              = result.Succeeded;
+                return;
+            }
 
             // Check if the verb requested a dialogue session
             if (_scene.PendingDialogueRequest != null)
@@ -4628,6 +4656,19 @@ public class NarrativeController
             foreach (var r in _protagonist.RecordedRoutines)
                 outp.Add(r.CliLine());
 
+        // Every workshop holding a crafting station: its master, and whether the leave is given.
+        if (All("workshops") && _scene != null)
+            foreach (var section in _scene.Sections)
+            {
+                var stations = section.Areas.SelectMany(ar => ar.PointsOfInterest)
+                                            .Where(Cathedral.Game.Scene.CraftingStations.IsStation).ToList();
+                if (stations.Count == 0) continue;
+                var master = Cathedral.Game.Narrative.Crafting.CraftingAccess.MasterOf(_scene, section);
+                outp.Add($"workshop \"{section.DisplayName}\" stations={string.Join(",", stations.Select(s => s.DisplayName.Replace(' ', '_')))} "
+                       + $"master={master?.Archetype.ArchetypeId ?? "none"} "
+                       + $"authorized={(Cathedral.Game.Narrative.Crafting.CraftingAccess.IsAuthorized(_scene, section) ? "yes" : "no")}");
+            }
+
         if (All("wounds"))
             foreach (var w in actor.Wounds)
                 outp.Add($"wound {w.WoundName} target={w.TargetId}");
@@ -4863,6 +4904,8 @@ public class NarrativeController
             if (_pendingDialogueOutcome != null)
                 return new StartDialogueTransition(_pendingDialogueOutcome.Target,
                     _pendingDialogueOutcome.TreeId, _pendingDialogueOutcome.Tree);
+            if (_pendingCrafting != null)
+                return new StartCraftingTransition(_pendingCrafting);
             return null;
         }
     }
@@ -4872,6 +4915,17 @@ public class NarrativeController
     {
         _pendingFightOutcome    = null;
         _pendingDialogueOutcome = null;
+        _pendingCrafting        = null;
+    }
+
+    /// <summary>The party member acting now — the protagonist, or a companion after a Speak-About hand-off.</summary>
+    public PartyMember ActingMember => _activePartyMember;
+
+    /// <summary>Learns the Craft routine for the station a successful USE opened, where the player may stand.</summary>
+    public void RecordCraftRoutine(Cathedral.Game.Narrative.Crafting.CraftingRequest request)
+    {
+        if (_recorder == null || _scene == null || _pov == null) return;
+        _recorder.OnCraftingOpened(request, _scene, _pov, _activePartyMember);
     }
 
     /// <summary>
@@ -5152,6 +5206,16 @@ public class NarrativeController
     {
         // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
         // because the segment it closes is the one the fight itself will grey into history.
+        if (_deferredCrafting != null)
+        {
+            Console.WriteLine($"NarrativeController: CONTINUE — opening the held crafting menu at {_deferredCrafting.Station.DisplayName}");
+            _pendingCrafting         = _deferredCrafting;
+            _deferredCrafting        = null;
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
+            return;
+        }
+
         if (_deferredFightOutcome != null)
         {
             Console.WriteLine($"NarrativeController: CONTINUE — entering the held fight with {_deferredFightOutcome.Target.DisplayName}");
@@ -5423,6 +5487,17 @@ public class NarrativeController
             }
         }
 
+        // A master who let you use their workshop: the leave goes into the scene's authorized set, which
+        // is the location's saved state by reference, so it holds on every later visit too.
+        if (_scene != null && npc.GrantedWorkshop is { } workshop)
+        {
+            npc.GrantedWorkshop = null;   // consume the flag
+            _scene.AuthorizedWorkshops.Add(workshop);
+            Cathedral.Game.Scene.ActionPathPlanner.Forget();
+            Console.WriteLine($"NarrativeController: {npc.DisplayName} gives the use of {workshop} — authorized for good");
+        }
+        npc.PendingWorkshop = null;
+
         // A witness who came for you has had their say: the confrontation is over.
         if (_scene != null) ConfrontationSelector.Release(_scene, npc, _protagonist);
         
@@ -5514,7 +5589,10 @@ public class NarrativeController
     {
         return _activePartyMember.GetAllItems()
             .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon
-                     || i.MadeForVerbIds.Count > 0)
+                     || i.MadeForVerbIds.Count > 0
+                     // A trade's implement is combinable whatever its category: the potter's rib and the
+                     // candle mould are stock on a shelf until somebody brings them to their station.
+                     || Cathedral.Game.Narrative.Crafting.CraftingModusMentis.IsCraftTool(i))
             .Where(i => i is not IContainer c || c.Contents.Count == 0)
             .ToList();
     }
@@ -5569,7 +5647,8 @@ public class NarrativeController
             var gatedVerb    = action.PreselectedOutcome?.Verb;
             var proficiency  = ToolUsageProficiencyStat.Of(_activePartyMember);
             var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency,
-                                   wieldable: _activePartyMember.CanWieldInSomeHand(item));
+                                   wieldable: _activePartyMember.CanWieldInSomeHand(item),
+                                   view: action.PreselectedOutcome);
             Console.WriteLine($"NarrativeController: Tool gate — proficiency={proficiency}, verb={gatedVerb?.VerbId ?? "none"} ({gatedVerb?.ToolUse.ToString() ?? "n/a"}), gate={gate}");
 
             // Three of the four gates settle it here, with no request made at all. The fourth is the
@@ -5592,7 +5671,7 @@ public class NarrativeController
                 // hands are not an option there) but "can this do the work of the tool this needs".
                 var appropriatenessTree = gatedVerb is { RequiresTool: true }
                     ? CriticTrees.BuildToolSubstitutionTree(
-                          goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
+                          goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIdsFor(action.PreselectedOutcome)),
                           NeutralNarration.ItemPhrase(item.DisplayName), criticContext)
                     : CriticTrees.BuildItemAppropriatenessTree(goalDescription, NeutralNarration.ItemPhrase(item.DisplayName), criticContext);
                 var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);

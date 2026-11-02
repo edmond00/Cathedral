@@ -30,7 +30,9 @@ public static class PrivacyModel
     /// or walked where it holds.
     /// </summary>
     public static bool IsTrespassing(Scene scene, Area area)
-        => area.IsPrivate && !(scene.SectionOf(area) is { } section && scene.ToleratedSections.Contains(section));
+        => area.IsPrivate && !(scene.SectionOf(area) is { } section
+                               && (scene.ToleratedSections.Contains(section)
+                                   || scene.AuthorizedWorkshops.Contains(section.DisplayName)));
 
     /// <summary>
     /// Whether striking at <paramref name="target"/> from <paramref name="pov"/> is hunting: the
