@@ -1,8 +1,10 @@
 {
- "_about": "What the opening take's model happened to write, remarked on where it is read (build_storyboard.py, OPENING_NOTES). Rewritten for each retake of the opening. Take: build/rec_opening2.",
- "m3_intent": "The acting mind reaches for a sharp taste rather than a blade. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds.",
- "m4_outcome": "And the dream ends the way dreams do: sleep pulls the child away before the arch is reached.",
- "m5_intent": "Here the acting mind reaches for warmth and a sheltered feeling, the very opposite of this memory. Read it as a child's wishful thinking: what comes back has no shelter at all.",
- "up_reason": "Tide Watching reads getting up as a tide: a window closing, a run still to come. That is what a persona does: the same question, put to a different mind, comes back in its own voice.",
- "up_intent": "Endurance, which will act, has one answer to everything: walk on."
+ "_about": "What the opening take's model happened to write, remarked on where it is read (build_storyboard.py, OPENING_NOTES). Rewritten for each retake of the opening. Take: build/rec_opening3.",
+ "m2_intent": "Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. Read it as this mind reminding itself not to invent.",
+ "m3_intent": "The acting mind reaches for a poignant flavour of summer rather than a blade. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds.",
+ "m4_intent": "Something comes back, yes, it was that: this mind is remembering already, while it says what it will try.",
+ "m5_intent": "Here the acting mind reaches for something soft and warm, the very opposite of this memory. Read it as a child's wishful thinking: what comes back has no shelter at all.",
+ "m5_outcome": "And notice that the text says it failed. It did not: in childhood remembering always succeeds, and the memory is given all the same. When the words and the rules disagree, the rules win.",
+ "up_reason": "Tide Watching reads getting up as a tide: the flats will hold for another hour, then comes the turn. That is what a persona does: the same question, put to a different mind, comes back in its own voice.",
+ "up_intent": "Endurance has an odd plan: rest here until its strength fails, then press on. A mind made for endurance plans to outlast itself."
 }

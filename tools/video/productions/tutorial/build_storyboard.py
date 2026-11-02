@@ -162,7 +162,7 @@ class Take:
         game(t0, t1, *vo, rec=self.name, **kw)
 
 
-O = Take("opening", "build/rec_opening2", "passages_opening.json")
+O = Take("opening", "build/rec_opening3", "passages_opening3.json")
 
 # what the model happened to write, said where it is read; the rest of the opening is generic
 OPENING_NOTES = json.loads((HERE / "opening_notes.json").read_text()) if (HERE / "opening_notes.json").exists() else {}
@@ -302,8 +302,8 @@ MEMORY = {
     1: ("The body has no past yet. The game gives it one through five childhood memories, and they are played "
         "exactly the way the whole game is played. So the first memory is our first lesson. Let's take it slowly.",
         "Look under the passage, at what this memory gave: three ways of thinking, Empathy, Nautical Jargon and "
-        "Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text said a port city. The code "
-        "decided what that means for your character. Every passage works like this: the words are the model's; "
+        "Knotwork, and a townsman's clothes: cap, cloak, tunic and breeches. The text only mentions docks. The "
+        "code had decided a port city, and what that means for your character. Every passage works like this: the words are the model's; "
         "what they give you is the game's."),
     2: ("The second memory. Look at the heading: the observer is now Empathy, one of the minds we just gained. A "
         "new mind notices different things.",
@@ -470,7 +470,7 @@ def use(take, notes):
     EMOTIONS = [l for l in RS.log if "emotion —" in l]
 
 
-REST = Take("tutorial", "build/rec_rest", "passages_rest.json")
+REST = Take("tutorial", "build/rec_rest3", "passages_rest3.json")
 use(REST, "rest_notes.json")
 
 
@@ -732,7 +732,7 @@ RS.game(t, jme - 1.0,
         "And the calendar moves on by every day worked. Your lifespan is counted in days, so time is the real price "
         "of work.", fade=True)
 RS.game(jme - 1.0, jme)
-CITY = Take("city", "build/rec_city", "passages_city.json")
+CITY = Take("city", "build/rec_city3", "passages_city3.json")
 use(CITY, "city_notes.json")
 cb_, ce_ = rs_clip("travel_city")
 RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True)
@@ -853,25 +853,25 @@ storyboard = {
     "music": {"take_audio": "tutorial", "level_db": -34, "duck": 0.65},
     "clicks": {"gain": 0.5},
     "recordings": {"opening": {
-        "script": "opening.cli", "dir": "build/rec_opening2", "timeout": 7200,
+        "script": "opening.cli", "dir": "build/rec_opening3", "timeout": 7200,
         "flags": "--childhood-path \"sobs,waves,sharp,golden arch,shelter\" --force-encounter wolf,wolf "
                  "--no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only "
                  "farmer,cobbler --npc-affinity DistantAcquaintance --grant-mm diligence,provisioning,swordsmanship:2 "
-                 "--job-only farmhand --humors all=voluptas --save-path build/rec_opening2/save.json"},
+                 "--job-only farmhand --humors all=voluptas --save-path build/rec_opening3_save.json --no-generate-ahead"},
                    "tutorial": {
-        "script": "rest.cli", "dir": "build/rec_rest", "timeout": 14400,
-        "note": "Resumed from the opening's checkpoint: copy build/rec_opening2/saves/01_get_up.json to "
-                "build/rec_rest_save.json before re-recording.",
+        "script": "rest.cli", "dir": "build/rec_rest3", "timeout": 14400,
+        "note": "Resumed from the opening's checkpoint: copy build/rec_opening3/saves/01_get_up.json to "
+                "build/rec_rest3_save.json before re-recording.",
         "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
                  "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
-                 "--save-path build/rec_rest_save.json"},
+                 "--save-path build/rec_rest3_save.json --no-generate-ahead"},
                    "city": {
-        "script": "city.cli", "dir": "build/rec_city", "timeout": 14400,
-        "note": "Resumed from rest.cli's checkpoint after the job menu: copy build/rec_rest/saves/03_job_menu.json to "
-                "build/rec_city_save.json before re-recording; re-record while the second fight is lost.",
+        "script": "city.cli", "dir": "build/rec_city3", "timeout": 14400,
+        "note": "Resumed from rest.cli's checkpoint after the job menu: copy build/rec_rest3/saves/03_job_menu.json to "
+                "build/rec_city3_save.json before re-recording; re-record while the second fight is lost.",
         "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
                  "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
-                 "--save-path build/rec_city_save.json"}},
+                 "--save-path build/rec_city3_save.json --no-generate-ahead"}},
     "manim_file": "scenes.py",
     "segments": segments,
 }
