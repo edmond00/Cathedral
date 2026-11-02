@@ -468,6 +468,15 @@ public class NarrativeController
         _scene = scene;
         _npcPlacement = new Cathedral.Game.Scene.SceneNpcPlacement(scene, _graph.AllNodes.Values);
 
+        // The childhood reminescence is narrated from the foot of a tree on a plain, but everything it
+        // narrates is a memory from somewhere else — so the place clause ("You are in a vast plain —
+        // write only what belongs there") had the memories dissolve "into the vastness of the plain":
+        // 5 of 15 recorded rewrites, 20 of 60 replays, 39 of 60 once the setting reminder stopped carrying a
+        // picture of its own; 0 of 60 without the clause (tools/prompts/setting_leak.py).
+        // The get-up phase that follows really is on the plain, and its own scene sets it again.
+        if (scene.Phase == NarrationPhase.ChildhoodReminescence)
+            SceneSetting.SetPlace(null);
+
         // Build initial PoV from the area the graph opened on — the first the factory built, or the
         // one --start-area names. Same helper, so PoV and entry node can never point at different rooms.
         var firstArea = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene);

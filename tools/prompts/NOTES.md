@@ -498,6 +498,53 @@ in a game log.
 - `critic_bench.py --variant current` reads the C# and runs this pair; `--set tune|check|survey`, and
   `--timing` for the cost.
 
+## The setting rule leaking into narration
+
+Reported in play: the closing reminder came back as scenery, most of all in the childhood
+reminescence ("pulling me toward sleep in this old world of iron and myth, where hands did the work").
+`setting_leak.py` replays recorded rewrites with the rule (system prompt) and the reminder (last
+sentence of the request) swapped for a variant's, the same seeds under every variant, and counts the
+rule's words written into an answer whose neutral line lacks them; it also counts the place's words
+(where the place is not where the narration happens) and Layer 1 forbidden words, so a variant cannot
+win by letting the real world in.
+
+Childhood: 15 rewrites recorded from three new runs (seeds 11, 23, 37, the first REMEMBER of each),
+four samples each. Exploration: 40 non-spoken rewrites from `runs/`, two samples each.
+
+In `setting_leak.py` the rows are `iron`, `iron-place`, `point_back`, `no_reminder`, `ban`, `ban+rule`, and
+the same with `-place`; the kept one is now `now`. In `results/setting_leak_*.jsonl`, written before the
+change, the variant called `now` is `iron`.
+
+| variant | childhood setting | childhood place | exploration setting | forbidden words (ch. / ex.) |
+|---|---|---|---|---|
+| shipped: "Remember: an old world of iron and hand labour, nothing from the real world." | **16/60** | **20/60** | 2/80 | 3 / 5 |
+| shipped, no place clause | 7/60 | 1/60 | | 6 / |
+| "Remember the setting rule." | 0/60 | 39/60 | 1/80 | 3 / 4 |
+| no world sentence at all | 0/60 | 17/60 | 1/80 | 1 / 4 |
+| a ban: "Remember: nothing from after engines and gunpowder, and no real place, person or date." | 3/60 | 16/60 | 0/80 | 1 / 7 |
+| the ban, and the rule's first sentence ("an old world of iron, myth…") replaced by the ban | 0/60 | 16/60 | 1/80 | 2 / 8 |
+| the ban, no place clause | 2/60 | 1/60 | | 2 / |
+| the ban and the rule, no place clause | 1/60 | 0/60 | | 3 / |
+| **"Remember the setting rule.", no place clause** (kept) | **0/60** | **0/60** | | 3 / |
+| no world sentence, no place clause | 0/60 | 0/60 | | 2 / |
+
+- **The reminder is what leaks, not the rule.** Whatever picture is in the last sentence is narrated;
+  a ban leaks its own words ("before engines and gunpowder"). Pointing back at the rule carries no
+  picture. The rule itself still leaks now and then (one "old world of iron and myth" in 80 exploration
+  answers under the pointer).
+- **Childhood was set on a plain it never narrates.** It runs on a `PlainBiomeContext`, so the
+  reminder said "You are in a vast plain — write only what belongs there", and the memories dissolved
+  "into the vastness of the plain". With the picture gone the place is the only noun left last, and the
+  leak doubled — so the two changes go together: `NarrativeController` clears the place for the
+  reminescence. The get-up phase really is on the plain and keeps it.
+- The pointer was kept over dropping the sentence: equal on every count here, and it keeps a reminder
+  at the end of the request, which the doc comment on `SceneSetting.Reminder` says is why it exists.
+  Its protection against anachronism is not measured by this — the forbidden-word counts are lore
+  words ("earth", "year") at the same rate under every variant.
+- Also seen: on a slow CPU the choice judge can finish initialising after the childhood reminescence
+  has begun, and the first observation throws `ChoiceJudge is not ready` (the scripts here hold 150 s on
+  the main menu, `wait for 150`).
+
 ## To check by hand on Windows
 
 1. Play an outcome that teaches something new and read the narration: the lesson now comes in its own
