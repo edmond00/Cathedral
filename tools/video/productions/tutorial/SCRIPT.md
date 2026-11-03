@@ -112,7 +112,7 @@ We click the word sweat.
 > *I half-remember the thunder's low rumble, sour and salt from below. I yearn to recall the waves' sound and sweat, childhood's essence. I'll let the memory slowly emerge, a faint echo in my worn mind.*
 
 > *I will try to remember the sound of waves and the smell of sweat from my childhood, wistful and faintly aching, let what is in front of me feel half-familiar without naming any memory it does not hold.*
-Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. Read it as this mind reminding itself not to invent.
+Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. The game ships with a small one so that it runs on an ordinary computer; with the hardware for it, you can swap in a larger model, which keeps to its instructions far better. Here, read it as this mind reminding itself not to invent.
 
 > *I tried to recall the waves' lullaby and the docks' scent, and it did come back. The sound of waves, sweat on hands, the docks, loading, unloading heavy bundles, the distant trade winds. It felt half-familiar, as if a distant echo from long ago.*
 This one gives two ways of thinking: Hard Labor and Tide Watching. The docks taught us to work, and to read the water.
@@ -179,7 +179,9 @@ Success. Look at the lines below: every mind in the chain gained a point of expe
 
 The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look at what we have.
 
-Escape opens the menu, and Protagonist opens the character screen. The list on the left is its pages: anatomy, inventory, journal, memory, humors, chorography and bellic. Click one to open it.
+Escape opens the menu, and Protagonist opens the character screen.
+
+The list on the left is its pages: anatomy, inventory, journal, memory, humors, chorography and bellic. Click one to open it.
 
 The anatomy tab: the body we built. Wounds will show here, on the organ they hit.
 
@@ -192,8 +194,8 @@ The inventory. The sword is in hand, the townsman's clothes are worn, and so is 
 Eating pushed the bread's humors into the paunch, at the front of its queue. Hover a humor to see what it is: its warmth, which pays for effort, and what it does to a die. New humors enter at the front and move back as older ones are used, and only the one at the very back can be spent on a roll.
 My advice: what you eat today is the luck you will have a few days from now.
 
-Back on the map, we click the farm. The travel plan box shows the trip before you commit to it: the days it takes, the vital heat it burns, the risk of an encounter, and whether you could starve on the way. Travel sets off, Clear forgets the plan.
-A route goes cell by cell, and every cell costs days, and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your humors will last it.
+Back on the map, we click the farm. The travel plan box shows the trip before you commit to it: the days it takes, the vital heat it burns from your humors, the risk of an encounter, and whether you could starve on the way. Travel sets off.
+My advice: before a long journey, check that your humors will last it.
 
 A wolf on the road. We choose to fight it.
 
@@ -284,28 +286,10 @@ And the calendar moves on by every day worked. Your lifespan is counted in days,
 
 With twenty copper in the purse, to the city.
 
-Another wolf, on the road to the city.
+Another wolf, on the road to the city. This fight goes the way the first one did, so we play it fast.
+One thing to watch: the first thrust breaks the wolf's backbone, and the backbone is where movement comes from. From then on the wolf has no points left to act with, and it never strikes back once. Where you hit matters.
 
-Again we end our turns, and let it come to us.
-
-Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice.
-
-It falls short, and one humor turns it: broken backbone. Every blow that lands leaves a wound with a name.
-
-The thrust lands: broken backbone.
-
-The thrust lands: pierced paunch.
-
-It falls short, and two humors turn it: tail amputee.
-
-The thrust lands: puncture.
-
-It falls short, and one humor turns it: broken ribs.
-
-Look at what the first thrust did. It broke the wolf's backbone, and the backbone is where movement comes from. From then on the wolf had no points left to act with, and it never struck back once. Where you hit matters.
 We reach the city, and the cobbler's shop.
-> *I find myself in the cobbler's shop, in the morning. This place is a low shop, smelling of leather and wax, boots hung by their laces from the beams. Around me is Publiosh Tommaezoth, the cobbler of the city.*
-
 > *I am drawn to Publiosh Tommaezoth, the cobbler, by the scene before me. His old boot, through thick with hammering, already asks something before I have finished approaching.*
 
 We think about him with Provisioning, our second will. Provisioning wants to buy.
@@ -368,5 +352,5 @@ The anamnesis decides how many maps you keep, four per point, and the oldest is 
 
 From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip.
 
-That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at edmond zero zero dot itch dot io, slash proscribed.
+That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played.
 

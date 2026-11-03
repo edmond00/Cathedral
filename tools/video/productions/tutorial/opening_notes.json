@@ -1,6 +1,6 @@
 {
  "_about": "What the opening take's model happened to write, remarked on where it is read (build_storyboard.py, OPENING_NOTES). Rewritten for each retake of the opening. Take: build/rec_opening3.",
- "m2_intent": "Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. Read it as this mind reminding itself not to invent.",
+ "m2_intent": "Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. The game ships with a small one so that it runs on an ordinary computer; with the hardware for it, you can swap in a larger model, which keeps to its instructions far better. Here, read it as this mind reminding itself not to invent.",
  "m3_intent": "The acting mind reaches for a poignant flavour of summer rather than a blade. It does not matter: the act is still remembering something sharp, and the code knows what that memory holds.",
  "m4_intent": "Something comes back, yes, it was that: this mind is remembering already, while it says what it will try.",
  "m5_intent": "Here the acting mind reaches for something soft and warm, the very opposite of this memory. Read it as a child's wishful thinking: what comes back has no shelter at all.",

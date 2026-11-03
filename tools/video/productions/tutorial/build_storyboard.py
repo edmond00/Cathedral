@@ -411,7 +411,7 @@ leave = O.click(O.end(outcome), ge + 1, label="footer button")
 O.game(O.end(outcome), leave - 0.2)
 O.game(leave - 0.2, O.at("clip-end", "run_start"),
        "The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look "
-       "at what we have.")
+       "at what we have.", min_speed=1.0)
 
 # ── the rest of the run: from its own take, resumed from the opening's checkpoint ─────────────
 # rec_rest plays rest.cli, which loads the opening take's save (Continue) and plays tutorial.cli's second
@@ -643,9 +643,12 @@ def act(t, keyword_word, mind_line, idx, roll_line):
 resumed = next(e["t"] for e in RS.events if e["type"] == "mode" and e["t"] > RS.at("mark", "resume")
                and e.get("to") == "WorldView")
 ab, ae = rs_clip("anatomy")
-RS.game(resumed + 0.5, ab, "Escape opens the menu, and Protagonist opens the character screen. The list on the left "
-        "is its pages: anatomy, inventory, journal, memory, humors, chorography and bellic. Click one to open it.",
-        fade=True)
+# straight to the menu: the map was the last thing the opening showed
+paused = next(e["t"] for e in RS.events if e["type"] == "cmd" and e.get("line") == "pause" and e["t"] > resumed)
+screen = RS.click(paused, ab, label="Protagonist") or paused + 2.0
+RS.game(paused - 0.8, screen + 0.4, "Escape opens the menu, and Protagonist opens the character screen.", fade=True)
+RS.game(screen + 0.4, ab, "The list on the left is its pages: anatomy, inventory, journal, memory, humors, "
+        "chorography and bellic. Click one to open it.")
 RS.game(ab, ae, "The anatomy tab: the body we built. Wounds will show here, on the organ they hit.")
 mb, me = rs_clip("memory")
 RS.game(ae, me,
@@ -668,17 +671,14 @@ RS.game(ie, he,
         "back as older ones are used, and only the one at the very back can be spent on a roll.",
         "My advice: what you eat today is the luck you will have a few days from now.")
 tb, te = rs_clip("travel_farm")
-RS.game(he, tb)
+RS.game(he, tb, min_speed=1.0)
 
-# 7. the road
+# 7. the road (the turning world is never slowed: slowed, it looks like the game stuttering)
 RS.game(tb, te,
         "Back on the map, we click the farm. The travel plan box shows the trip before you commit to it: the days "
-        "it takes, the vital heat it burns, the risk of an encounter, and whether you could starve on the way. "
-        "Travel sets off, Clear forgets the plan.",
-        "A route goes cell by cell, and every cell costs days, "
-        "and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, "
-        "more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your "
-        "humors will last it.", fade=True)
+        "it takes, the vital heat it burns from your humors, the risk of an encounter, and whether you could "
+        "starve on the way. Travel sets off.",
+        "My advice: before a long journey, check that your humors will last it.", fade=True, min_speed=1.0)
 
 # 8. the first fight, and the farm
 t, spent1 = fight("fight_1", "A wolf on the road. We choose to fight it.",
@@ -735,15 +735,17 @@ RS.game(jme - 1.0, jme)
 CITY = Take("city", "build/rec_city3", "passages_city3.json")
 use(CITY, "city_notes.json")
 cb_, ce_ = rs_clip("travel_city")
-RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True)
+RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True, min_speed=1.0)
 
-# 11. the second fight, and the city
-t, spent2 = fight("fight_2", "Another wolf, on the road to the city.",
-                  lambda waits, guard: ["Again we end our turns, and let it come to us."] if waits else [])
+# 11. the second fight, fast-forwarded under one remark, and the city
+f2b, f2e = rs_clip("fight_2")
+RS.game(f2b, f2e, "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it "
+        "fast.", *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []), speed=6.0, fade=True)
+t = f2e
 yb, ye = rs_clip("city_arrival")
 arrive = RS.between(t - 1, ye)
-RS.game(t, RS.end(arrive[0]), *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []),
-        "We reach the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]), fade=True)
+RS.game(t, RS.end(arrive[0]), "We reach the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]),
+        fade=True)
 for i in arrive[1:]:
     RS.game(RS.end(i - 1), RS.end(i), RS.R(i), *after(i))
 t = RS.end(arrive[-1])
@@ -808,14 +810,13 @@ RS.game(we, oe,
 rb, re_ = rs_clip("routine_box")
 RS.game(oe, re_,
         "From the world map, a place's routines are one click away. The work routine takes us straight back to "
-        "work at the farm, with no conversation at all. Earning more coin is now a single trip.")
+        "work at the farm, with no conversation at all. Earning more coin is now a single trip.", min_speed=1.0)
 
 # 16. closure
 kb, ke = rs_clip("closure")
 RS.game(re_, ke,
         "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
-        "Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at "
-        "edmond zero zero dot itch dot io, slash proscribed.", fade=True)
+        "Every word the game wrote, it wrote on this computer, while we played.", fade=True)
 
 # the hook's montage: a few seconds of each thing the hour holds, in the order the narration names them
 def shot(take, t, length, speed=1.0):

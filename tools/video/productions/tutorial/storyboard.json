@@ -630,7 +630,7 @@
      "at": 1055.6
     },
     {
-     "text": "Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. Read it as this mind reminding itself not to invent.",
+     "text": "Look at the end of that line: the mind repeats part of its own instructions, to let things feel half-familiar without naming a memory it does not hold. A small model sometimes echoes what it was told. The game ships with a small one so that it runs on an ordinary computer; with the hardware for it, you can swap in a larger model, which keeps to its instructions far better. Here, read it as this mind reminding itself not to invent.",
      "wait": true
     }
    ]
@@ -1005,16 +1005,27 @@
    "fade": false,
    "vo": [
     "The run has truly begun. This is the world map, where every journey starts. Before travelling, let's look at what we have."
+   ],
+   "min_speed": 1.0
+  },
+  {
+   "type": "game",
+   "recording": "tutorial",
+   "from": 24.21,
+   "to": 27.51,
+   "fade": true,
+   "vo": [
+    "Escape opens the menu, and Protagonist opens the character screen."
    ]
   },
   {
    "type": "game",
    "recording": "tutorial",
-   "from": 17.2,
+   "from": 27.51,
    "to": 29.3,
-   "fade": true,
+   "fade": false,
    "vo": [
-    "Escape opens the menu, and Protagonist opens the character screen. The list on the left is its pages: anatomy, inventory, journal, memory, humors, chorography and bellic. Click one to open it."
+    "The list on the left is its pages: anatomy, inventory, journal, memory, humors, chorography and bellic. Click one to open it."
    ]
   },
   {
@@ -1065,7 +1076,8 @@
    "recording": "tutorial",
    "from": 143.02,
    "to": 147.49,
-   "fade": false
+   "fade": false,
+   "min_speed": 1.0
   },
   {
    "type": "game",
@@ -1074,9 +1086,10 @@
    "to": 169.46,
    "fade": true,
    "vo": [
-    "Back on the map, we click the farm. The travel plan box shows the trip before you commit to it: the days it takes, the vital heat it burns, the risk of an encounter, and whether you could starve on the way. Travel sets off, Clear forgets the plan.",
-    "A route goes cell by cell, and every cell costs days, and warmth drawn from the humors as you walk. Each land has its dangers: wolves and bandits on a plain, more of both in a forest, and a keen nose avoids some of them. Before a long journey, check that your humors will last it."
-   ]
+    "Back on the map, we click the farm. The travel plan box shows the trip before you commit to it: the days it takes, the vital heat it burns from your humors, the risk of an encounter, and whether you could starve on the way. Travel sets off.",
+    "My advice: before a long journey, check that your humors will last it."
+   ],
+   "min_speed": 1.0
   },
   {
    "type": "game",
@@ -1548,133 +1561,32 @@
    "fade": true,
    "vo": [
     "With twenty copper in the purse, to the city."
-   ]
+   ],
+   "min_speed": 1.0
   },
   {
    "type": "game",
    "recording": "city",
    "from": 50.64,
-   "to": 61.06,
+   "to": 542.48,
    "fade": true,
    "vo": [
-    "Another wolf, on the road to the city."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 61.06,
-   "to": 148.17,
-   "fade": false,
-   "vo": [
-    "Again we end our turns, and let it come to us."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 148.17,
-   "to": 160.12,
-   "fade": false,
-   "vo": [
-    "Fighting skills come from two things: the ways of thinking you hold, and what you strike with. The short sword and Swordsmanship give Snap Thrust: five dice."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 160.12,
-   "to": 166.0,
-   "fade": false,
-   "vo": [
-    "It falls short, and one humor turns it: broken backbone. Every blow that lands leaves a wound with a name."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 166.0,
-   "to": 195.51,
-   "fade": false,
-   "vo": [
-    "The thrust lands: broken backbone."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 195.51,
-   "to": 224.39,
-   "fade": false,
-   "vo": [
-    "The thrust lands: pierced paunch."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 224.39,
-   "to": 258.92,
-   "fade": false,
-   "vo": [
-    "It falls short, and two humors turn it: tail amputee."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 258.92,
-   "to": 287.62,
-   "fade": false,
-   "vo": [
-    "The thrust lands: puncture."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 287.62,
-   "to": 317.82,
-   "fade": false,
-   "vo": [
-    "It falls short, and one humor turns it: broken ribs."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "city",
-   "from": 317.82,
-   "to": 452.3,
-   "fade": true,
-   "vo": [
+    "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it fast.",
     {
-     "text": "Look at what the first thrust did. It broke the wolf's backbone, and the backbone is where movement comes from. From then on the wolf had no points left to act with, and it never struck back once. Where you hit matters.",
+     "text": "One thing to watch: the first thrust breaks the wolf's backbone, and the backbone is where movement comes from. From then on the wolf has no points left to act with, and it never strikes back once. Where you hit matters.",
      "wait": true
-    },
-    "We reach the city, and the cobbler's shop.",
-    {
-     "text": "I find myself in the cobbler's shop, in the morning. This place is a low shop, smelling of leather and wax, boots hung by their laces from the beams. Around me is Publiosh Tommaezoth, the cobbler of the city.",
-     "style": "reading",
-     "at": 346.3
     }
-   ]
+   ],
+   "speed": 6.0
   },
   {
    "type": "game",
    "recording": "city",
-   "from": 452.3,
+   "from": 542.48,
    "to": 544.62,
-   "fade": false,
+   "fade": true,
    "vo": [
+    "We reach the city, and the cobbler's shop.",
     {
      "text": "I am drawn to Publiosh Tommaezoth, the cobbler, by the scene before me. His old boot, through thick with hammering, already asks something before I have finished approaching.",
      "style": "reading",
@@ -1998,7 +1910,8 @@
    "fade": false,
    "vo": [
     "From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip."
-   ]
+   ],
+   "min_speed": 1.0
   },
   {
    "type": "game",
@@ -2007,7 +1920,7 @@
    "to": 1835.16,
    "fade": true,
    "vo": [
-    "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played. Proscribed Palimpsest is at edmond zero zero dot itch dot io, slash proscribed."
+    "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played."
    ]
   }
  ]

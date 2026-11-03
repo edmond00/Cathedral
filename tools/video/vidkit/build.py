@@ -52,6 +52,32 @@ FADE = 0.35
 
 
 @dataclass
+
+def audio_lag(rec, wav: Path) -> float:
+    """How late a take's own sound (music.wav) runs behind its picture, in seconds. The game's audio is
+    captured through a buffer that delays it, so a sound a press made lands well after the press. Measured
+    from the take itself: the onsets in the sound against the moments its timeline logged a sound effect
+    as the shift that lines up the most of them. 0 when there are too few."""
+    import soundfile as sf
+    # The outcome chimes first: loud, distinct, and few, where the presses' ticks are many and faint enough
+    # that the music's own notes can outvote them (a two-hour take lined its ticks up 2 s the wrong way).
+    sfx = [e for e in rec.events if e.get("type") == "sfx"]
+    ts = [e["t"] for e in sfx if str(e.get("event", "")).endswith("Outcome")]
+    if len(ts) < 5:
+        ts = [e["t"] for e in sfx]
+    if len(ts) < 5:
+        return 0.0
+    x, sr = sf.read(str(wav), dtype="float32", always_2d=True)
+    x = x.mean(axis=1)
+    hop = int(sr * 0.005)
+    n = len(x) // hop
+    env = np.sqrt((x[:n * hop].reshape(n, hop) ** 2).mean(axis=1))
+    onset = np.maximum(np.diff(env, prepend=env[0]), 0)
+    marks = np.array([int(t / 0.005) for t in ts if int(t / 0.005) < n - 800])
+    lags = np.arange(-200, 600)                       # -1 s .. +3 s
+    score = [onset[np.clip(marks + l, 0, n - 1)].sum() for l in lags]
+    return float(lags[int(np.argmax(score))] * 0.005)
+
 class Segment:
     index: int
     spec: dict
@@ -186,7 +212,8 @@ class Build:
         no anchor drifts: an explanation that overruns the moment its reading is anchored to slows the
         footage before that moment (the text appears as the explanation ends); narration that outlasts the
         footage slows what comes after the last anchor. The model's waits slow first (down to their real
-        pace), then the rest (down to half speed); only what still does not fit is held."""
+        pace), then the rest (down to half speed, or to the segment's "min_speed": 1 for footage that looks
+        broken slowed, the turning world); only what still does not fit is held."""
         g = self.game_timing(seg)
         lead, tail = self.voice["lead_in"], self.voice["tail"]
         gap = float(self.voice.get("part_gap", 0.35))
@@ -208,7 +235,8 @@ class Build:
 
         def stretch(lo: float, hi: float, extra: float) -> None:
             """Adds up to `extra` seconds to the pieces lying within recording moments lo..hi."""
-            for floor_speed, pick in ((1.0, lambda sp: sp > 1.0), (0.5, lambda sp: 0 < sp <= 1.0)):
+            slowest = max(0.5, float(seg.spec.get("min_speed", 0.5)))   # 1.0: undo speed-ups, never slow
+            for floor_speed, pick in ((1.0, lambda sp: sp > 1.0), (slowest, lambda sp: 0 < sp <= 1.0)):
                 idx = [i for i, (a_, b_, sp) in enumerate(pieces) if a_ >= lo - 1e-6 and b_ <= hi + 1e-6 and pick(sp)]
                 cap = {i: (pieces[i][1] - pieces[i][0]) / floor_speed - durs[i] for i in idx}
                 total = sum(c for c in cap.values() if c > 0)
@@ -276,6 +304,16 @@ class Build:
         return max(need, float(seg.spec.get("min", 0)))
 
     # ── 3. pictures ───────────────────────────────────────────────────────────
+
+    def reuse(self, dst: Path) -> None:
+        """A segment rendered before under another position (a segment removed or added ahead of it shifts
+        every index after it) is picked up by its key, not rendered again."""
+        if dst.exists():
+            return
+        key = dst.stem.split("_", 1)[1]
+        for old in self.out_dir.glob(f"seg*_{key}.mkv"):
+            old.rename(dst)
+            return
 
     def seg_key(self, seg: Segment, *extra) -> str:
         blob = json.dumps([seg.spec, self.W, self.H, self.fps, round(self.target_seconds(seg), 2), *extra],
@@ -442,6 +480,7 @@ class Build:
             sw, sh = cw, ch
 
         dst = self.out_dir / f"seg{seg.index:02d}_{self.seg_key(seg, t0, t1, rec.manifest['duration'], pieces, rec.video_offset)}.mkv"
+        self.reuse(dst)
         if not dst.exists():
             self.log(f"segment {seg.index}: game '{s['recording']}' {t0:.2f}-{t1:.2f}s"
                      + (f" ({len(busy)} model wait(s) at x{ff:g})" if busy else ""))
@@ -468,6 +507,7 @@ class Build:
         natural = sum((b - a) / sp for _, a, b, sp in shots)
         stretch = max(target / natural, 1.0) if natural else 1.0
         dst = self.out_dir / f"seg{seg.index:02d}_{self.seg_key(seg)}.mkv"
+        self.reuse(dst)
         if not dst.exists():
             self.log(f"segment {seg.index}: montage of {len(shots)} shots")
             sw, sh_ = shots[0][0].manifest["width"], shots[0][0].manifest["height"]
@@ -527,6 +567,7 @@ class Build:
         key = self.seg_key(seg, scene_file.read_text(encoding="utf-8"), data_stamp,
                            (TOOLS / "vidkit" / "manimkit.py").read_text(encoding="utf-8"))
         dst = self.out_dir / f"seg{seg.index:02d}_{key}.mkv"
+        self.reuse(dst)
         if not dst.exists():
             self.log(f"segment {seg.index}: manim {scene} ({target:.1f}s of narration)")
             media = self.out_dir / "manim"
@@ -572,10 +613,19 @@ class Build:
         first = next((s.spec["recording"] for s in segs if s.src_t0 is not None), rec_name)
         path = wav_of(rec_name if rec_name in self.recordings else first)   # each game segment then reads its own
 
+        lags: dict[Path, float] = {}
+
+        def lag_of(where: Path) -> float:
+            if where not in lags:
+                rec = next(r for r in self.recordings.values() if r.path / r.manifest["files"]["music_audio"] == where)
+                lags[where] = audio_lag(rec, where)
+                self.log(f"{rec.path.name}: its sound runs {lags[where]:+.3f}s from its picture")
+            return lags[where]
+
         def read(a: float, length: float, where: Path | None = None) -> np.ndarray:
             where = where or path
             info = sf.info(str(where))
-            i = max(0, int(a * info.samplerate))
+            i = max(0, int((a + lag_of(where)) * info.samplerate))
             win, _ = sf.read(str(where), start=i, stop=i + max(1, int(length * info.samplerate)), dtype="float32",
                              always_2d=True)
             if win.shape[1] == 1:
@@ -594,12 +644,16 @@ class Build:
             return y
 
         xf = int(0.12 * audio.RATE)
+        jump_xf = int(1.2 * audio.RATE)    # where the sound skips ahead: long enough to read as a swell
 
-        def join(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-            if len(a) < xf or len(b) < xf:
+        def join(a: np.ndarray, b: np.ndarray, jump: bool = False) -> np.ndarray:
+            k = jump_xf if jump else xf
+            if len(a) < k or len(b) < k:
+                k = xf
+            if len(a) < k or len(b) < k:
                 return np.concatenate([a, b])
-            ramp = np.linspace(0, 1, xf)[:, None]
-            return np.concatenate([a[:-xf], a[-xf:] * (1 - ramp) + b[:xf] * ramp, b[xf:]])
+            ramp = np.sin(np.linspace(0, np.pi / 2, k))[:, None] ** 2
+            return np.concatenate([a[:-k], a[-k:] * (1 - ramp) + b[:k] * ramp, b[k:]])
 
         pool: list[list[float]] = []      # model waits the picture skipped: [start, end, next unheard]
 
@@ -622,11 +676,28 @@ class Build:
 
         bed = np.zeros((int((total + 1) * audio.RATE), 2), np.float32)
         src = 0.0
-        for seg in segs:
+
+        def ends_at(seg) -> tuple[str, float] | None:
+            """The take and moment a game segment's footage ends on, when it ends whole (nothing held)."""
+            if seg.src_t0 is None or not seg.pieces:
+                return None
+            played = sum((b_ - a_) / sp for a_, b_, sp in seg.pieces if sp > 0)
+            return (seg.spec["recording"], seg.pieces[-1][1]) if seg.seconds - played < 0.3 else None
+
+        def follows(prev, seg) -> bool:
+            """Whether seg's footage carries straight on from prev's: one stretch of the take, cut in two
+            only for the narration. The sound then carries on too, with no fade between them."""
+            e = ends_at(prev) if prev is not None else None
+            return (e is not None and seg.src_t0 is not None and seg.spec["recording"] == e[0]
+                    and abs(seg.src_t0 - e[1]) < 0.3)
+
+        prev = None
+        for k, seg in enumerate(segs):
             track = np.zeros((0, 2), np.float32)
             if seg.src_t0 is not None:
                 src = seg.src_t0
                 path = wav_of(seg.spec["recording"])
+                skipped = False
                 for a_, b_, sp in seg.pieces:
                     if sp <= 0:
                         continue
@@ -641,19 +712,29 @@ class Build:
                             pool.append([a_ + out, b_, a_ + out, path])
                     n = int(out * audio.RATE)
                     piece = np.pad(piece, ((0, max(0, n - len(piece))), (0, 0)))[:n]
-                    track = join(track, piece)
+                    track = join(track, piece, jump=skipped)
+                    skipped = sp > 2.5 and b_ - a_ - out > 0.5
                     src = b_
-            rest = seg.seconds - len(track) / audio.RATE + 0.75
+            nxt = segs[k + 1] if k + 1 < len(segs) else None
+            joined_in, joined_out = follows(prev, seg), nxt is not None and follows(seg, nxt)
+            rest = seg.seconds - len(track) / audio.RATE + (0.0 if joined_out else 0.75)
             if rest > 0:
                 track = join(track, filler(rest))
             n = int(0.75 * audio.RATE)
-            if seg.index and len(track) > n:
-                track[:n] *= np.linspace(0, 1, n)[:, None]
-            if len(track) > n:
-                track[-n:] *= np.linspace(1, 0, n)[:, None]
             at = int(seg.start * audio.RATE)
+            if joined_in:
+                # carry straight on from the segment before: a short overlap, not a fade out and in
+                k_ = min(xf, at, len(track))
+                ramp = np.linspace(0, 1, k_)[:, None]
+                track[:k_] *= ramp
+                bed[at - k_:at] *= (1 - ramp)
+            elif seg.index and len(track) > n:
+                track[:n] *= np.linspace(0, 1, n)[:, None]
+            if not joined_out and len(track) > n:
+                track[-n:] *= np.linspace(1, 0, n)[:, None]
             m = min(len(track), len(bed) - at)
             bed[at:at + m] += track[:m]
+            prev = seg
         return bed[: int(total * audio.RATE)]
 
     def music_bed(self, total: float, segs: list[Segment] | None = None) -> np.ndarray | None:
