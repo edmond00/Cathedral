@@ -53,16 +53,16 @@ public sealed class CraftingMenuRenderer
     private static readonly Vector4 Warning  = Config.Colors.OrangeYellow;
 
     // Dark bands. The box is black; these lift a section off it by a shade, each in the menu's own hue:
-    // gold for the title and the plain news, grey for the panel and the column heads, green and purple
-    // for a make that came off and one that was spoiled (purple being the game's colour of loss).
+    // gold for the title and for a make that came off, purple for one that was spoiled (the game's colour of
+    // loss), grey for the panel, the column heads and the plain news. Nothing outside those three hues.
     private static readonly Vector4 TitleBand = new(0.17f, 0.15f, 0.02f, 1f);
     private static readonly Vector4 PanelBand = new(0.11f, 0.11f, 0.12f, 1f);
     private static readonly Vector4 HeadBand  = new(0.16f, 0.16f, 0.17f, 1f);
     private static readonly Vector4 RowAlt    = new(0.055f, 0.055f, 0.06f, 1f);
-    private static readonly Vector4 GoodBand  = new(0.04f, 0.17f, 0.05f, 1f);
+    private static readonly Vector4 GoodBand  = new(0.22f, 0.19f, 0.02f, 1f);
     private static readonly Vector4 BadBand   = new(0.17f, 0.03f, 0.22f, 1f);
-    private static readonly Vector4 InfoBand  = new(0.14f, 0.12f, 0.02f, 1f);
-    private static readonly Vector4 Good      = Config.Colors.LightGreen;
+    private static readonly Vector4 InfoBand  = new(0.15f, 0.15f, 0.16f, 1f);
+    private static readonly Vector4 Good      = Config.Colors.BrightYellow;
     private static readonly Vector4 Bad       = Config.Colors.LightPurple;
 
     private enum Tone { Info, Good, Bad }
@@ -306,7 +306,7 @@ public sealed class CraftingMenuRenderer
         Separator(y++);
         // The news of the last thing done, on a band tinted by how it went.
         var (band, ink) = _message.Length == 0 ? (Bg, Warning)
-                        : _tone switch { Tone.Good => (GoodBand, Good), Tone.Bad => (BadBand, Bad), _ => (InfoBand, Warning) };
+                        : _tone switch { Tone.Good => (GoodBand, Good), Tone.Bad => (BadBand, Bad), _ => (InfoBand, Config.Colors.LightGray85) };
         Band(y, band);
         Centered(y++, Truncate(_message, BoxW - 4), ink, band);
         Centered(y++, Pool > 0 ? $"Leaving throws away the {Pool} {Material.Label()} still in hand." : "", Disabled);
