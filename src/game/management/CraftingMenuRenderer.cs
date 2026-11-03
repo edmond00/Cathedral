@@ -48,7 +48,6 @@ public sealed class CraftingMenuRenderer
     private static readonly Vector4 BtnHovFg = Config.TravelUI.ClearButtonHoverTextColor;
     private static readonly Vector4 BtnHovBg = Config.TravelUI.ClearButtonHoverBackgroundColor;
     private static readonly Vector4 OkFg     = Config.TravelUI.TravelButtonTextColor;
-    private static readonly Vector4 OkBg     = Config.TravelUI.TravelButtonBackgroundColor;
     private static readonly Vector4 OkHovBg  = Config.TravelUI.TravelButtonHoverBackgroundColor;
     private static readonly Vector4 Disabled = Config.Colors.DarkGray40;
     private static readonly Vector4 Warning  = Config.Colors.OrangeYellow;
@@ -303,7 +302,7 @@ public sealed class CraftingMenuRenderer
         _terminal.Text(_boxX + RightOff, y, Truncate(recipe.DisplayName, ColW - 24), can ? Value : Disabled, bg);
         _terminal.Text(_boxX + RightOff + ColW - 22, y, new string('◆', Difficulty(recipe)), can ? Title : Disabled, bg);
         _terminal.Text(_boxX + RightOff + ColW - 15, y, $"-{Cost(recipe)}", can ? Label : Disabled, bg);
-        _terminal.Text(_boxX + RightOff + ColW - 10, y, "[Make]", can ? (hov ? OkFg : Value) : Disabled, can ? (hov ? OkHovBg : OkBg) : bg);
+        _terminal.Text(_boxX + RightOff + ColW - 10, y, "[Make]", can ? (hov ? OkFg : Value) : Disabled, hov ? OkHovBg : bg);
     }
 
     private void DrawBox(int innerRows)
