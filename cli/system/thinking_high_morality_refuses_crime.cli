@@ -9,7 +9,7 @@
 # the RNG, so the button can only appear if that narrowing kept Discipline out.
 #
 # Buttons are asserted as "] <goal>" — the tail of "[Knack ●] steal …" — which the prose never
-# contains.
+# contains. Ripelore is chosen by id: the popup is sorted by name, so its first entry is not it.
 #
 # --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
 # this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
@@ -30,17 +30,18 @@ advance 12 180
 # Ripelore; Discipline refuses to steal, before any button exists.
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect against every principle I hold
 expect-not ] steal
 
-# Learned Research: still offered stealing, carried out by a means that would not refuse.
+# Learned Research: still offered stealing, carried out by a means that would not refuse. At seed 42
+# the draw lands on Stealth, a discreet means, whose button reads "[Stealth ⟐] discreetly steal …".
 means none
 click keyword 0
 choose 0
 choose scientific_research
 advance 12 180
-expect ] steal
+expect ] discreetly steal
 
 quit
