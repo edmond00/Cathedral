@@ -51,7 +51,6 @@ from . import ROOT, TOOLS, audio, dither, ffmpeg, recording, synth, tts
 FADE = 0.35
 
 
-@dataclass
 
 def audio_lag(rec, wav: Path) -> float:
     """How late a take's own sound (music.wav) runs behind its picture, in seconds. The game's audio is
@@ -78,6 +77,8 @@ def audio_lag(rec, wav: Path) -> float:
     score = [onset[np.clip(marks + l, 0, n - 1)].sum() for l in lags]
     return float(lags[int(np.argmax(score))] * 0.005)
 
+
+@dataclass
 class Segment:
     index: int
     spec: dict
