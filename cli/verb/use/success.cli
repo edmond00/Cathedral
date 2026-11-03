@@ -2,7 +2,7 @@
 #
 # USE carried through at a station nobody owns: the ruin's old anvil, worked as a blacksmith with the
 # trade's own hammer (accepted without a critic call). Success opens the crafting menu; an iron bar is
-# broken down for its fifteen units of metal and two horseshoes are made from them, and what is left is
+# broken down for its eight units of metal and two horseshoes are made from them, and what is left is
 # thrown away on leaving.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --grant-item hammer,iron_bar --location-type test --location-id 0 --start-area "Test Ruin" --period dawn --observe-only "Test Old Anvil"
@@ -49,12 +49,12 @@ click button
 wait mode Crafting 30
 
 expect-state crafting trade=blacksmithing material=metal pool=0
-expect-state crafting crafting break item=iron_bar units=15
+expect-state crafting crafting break item=iron_bar units=8
 craft break Iron Bar
-expect-state crafting pool=15
+expect-state crafting pool=8
 craft make horseshoe
 craft make horseshoe
-expect-state crafting pool=11
+expect-state crafting pool=4
 craft leave
 wait mode LocationInteraction 30
 

@@ -14,5 +14,4 @@ public sealed class Hatchet : Item
     public override WeightClass Weight       => WeightClass.Medium;
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 10;
 }

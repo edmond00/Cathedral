@@ -15,15 +15,15 @@ Every item is made of nought, one or several **materials**, of which there are e
 wood, fibre, cloth, hide, leather, clay, fat, bone and stone. A knife is of metal and wood, a tunic of
 cloth, a horseshoe of metal; a loaf of bread, a feather or a letter is of nothing a station can use.
 
-**An item holds as many units of each of its materials as its burden** (see [IV §1](04-items.md)),
-with the burden of nothing raised to one:
+**An item holds a number of units of each of its materials set by its burden** (see
+[IV §1](04-items.md)), doubling at each step:
 
 | Burden | Units of each material |
 |---|---|
 | Insignificant | 1 |
 | Light | 2 |
-| Medium | 5 |
-| Heavy | 15 |
+| Medium | 4 |
+| Heavy | 8 |
 
 The figure is the same for every material an item holds: a knife is two units of metal and two of
 wood. **Making a thing costs exactly what breaking it down returns**, so the two directions can never

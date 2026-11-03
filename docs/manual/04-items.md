@@ -325,16 +325,67 @@ A garment may be a container, as [§4](#4-vessels-and-storage) describes.
 
 ## 10. Coin
 
-Three denominations — copper, silver and gold. Each priced item is priced in **exactly one** of
-them, and **there is no conversion**: a purchase must be met with enough coins of the item's own
-denomination.
+Three denominations — copper, silver and gold — and **there is no conversion** between them: a
+purchase must be met with enough coins of the item's own denomination. Every thing offered for sale is
+priced in copper, a copper being about the price of an egg; silver and gold buy no goods.
 
-The scale, for orientation rather than enforcement: a copper is about the price of an egg, a silver
-about that of a sword and a hundred copper, a gold about that of a horse and a hundred silver.
+An item bears a **reference price**, from one to ninety, and it is not set at will: it is reckoned
+from what the thing is, by one rule for everything.
 
-An item bears a **reference price** in its own denomination, from one to ninety. A merchant's
-catalogue applies a small variation atop that and confines the result to the range one to a hundred,
-so the same thing is not worth precisely the same in two places.
+**Price = matter × craftsmanship + labour + function + rarity.**
+
+**Matter** is what the thing is made of. An item of crafting materials holds as many units of each as
+its burden gives (see [X §1](10-crafting.md)), and is valued at its dearest material:
+
+| Material | Copper per unit |
+|---|---|
+| Stone | ¼ |
+| Clay | ½ |
+| Wood, fibre, bone | 1 |
+| Ore, fat | 1½ |
+| Hide | 2 |
+| Metal | 2½ |
+| Cloth | 3 |
+| Leather | 4 |
+
+A refined material is always dearer than the raw one it is made from. A thing of no crafting material
+— food, drink, a feather, a letter — is valued by what it is: one copper for a plant, a flower, an egg,
+water or a page; two for a herb, fodder, seed, fuel or liquor; three for fruit, berries, nuts,
+vegetables, grain, mushrooms, dairy, bread or a remedy; four for fish, shellfish or honey; five for
+meat. That is one portion; a medium burden is two portions, a heavy one four.
+
+**Craftsmanship** is how much labour stands between the thing and the world it came from:
+
+| Craftsmanship | Matter × | Labour + | Of the sort |
+|---|---|---|---|
+| Raw | 1 | 0 | gathered, cut or dug: a log, an ore, a turnip |
+| Stock | 1½ | 1 | a material worked once: an iron bar, flour, ale |
+| Plain | 2 | 2 | a thing made for use: a knife, a tunic, a loaf |
+| Fine | 4 | 4 | a thing made well: a doublet, a censer, a ledger |
+| Masterwork | 5 | 5 | a master's piece |
+
+Whatever is eaten or drunk, whatever is of no crafting material, and loose raw material are reckoned
+Raw; a thing worked beyond that — flour, ale, spun thread, a thrown jug — is reckoned at its proper
+craftsmanship. A garment worn only by the aristocracy is Fine, one worn only by paupers Stock; every
+other made thing is Plain.
+
+**Function** is what the thing does: eight copper for each level a weapon stands above the best bare
+limb (see [VIII](08-fighting.md)), twelve for each die of armour, two for each level of use of
+an implement above the first (see §7), and a quarter of a copper for each slot of room in a container.
+
+**Rarity** is how hard the thing is to come by, whatever it is made of, and is added rather than
+multiplied: nothing for the common, five for the uncommon, twelve for the scarce, thirty for the rare,
+sixty for the precious. A few things are worth what no part of the rule can see — a promissory note is
+worth its debt — and bear a price of their own.
+
+Two consequences follow, and they are the reason for the rule. **Nothing is worth less than what it
+breaks down into** at a station, since craftsmanship never multiplies matter by less than one; and
+**everything a trade makes is worth more than the material it costs** (see [X](10-crafting.md)).
+
+A merchant's catalogue applies a variation of up to fifteen parts in a hundred either way atop the
+reference price, rounded and never less than one copper, and confines the result to the range one
+to a hundred, so the same thing is not worth precisely the same in two places. A drink is sold in the
+vessel that holds it, at the two prices together.
 
 ---
 

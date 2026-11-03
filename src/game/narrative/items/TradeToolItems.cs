@@ -24,7 +24,6 @@ public sealed class SmithTongs : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 5;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 20;
 }
 
 /// <summary>
@@ -40,7 +39,6 @@ public sealed class BlacksmithApron : WearableItem
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Outerwear;
     public override List<ItemTag> Tags      => new() { ItemTag.Clothing };
-    public override int PriceReference      => 20;
 
     // Heavy hide meant to stop sparks and scale — it stops a little more than that.
     public override int DefenseDice => 1;
@@ -61,7 +59,6 @@ public sealed class CarpentersPlane : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 5;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
-    public override int PriceReference => 20;
 }
 
 public sealed class WoodChisel : Item
@@ -76,7 +73,6 @@ public sealed class WoodChisel : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 8;
 }
 
 public sealed class Drawknife : Item
@@ -90,7 +86,6 @@ public sealed class Drawknife : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 5;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 10;
 }
 
 public sealed class WoodenMallet : Item
@@ -105,7 +100,6 @@ public sealed class WoodenMallet : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 5;
 }
 
 // ── Cloth and fleece ───────────────────────────────────────────────────────────
@@ -121,7 +115,6 @@ public sealed class Spindle : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Textile, ItemTag.Woollens };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 6;
 }
 
 public sealed class WoolShears : Item
@@ -135,7 +128,6 @@ public sealed class WoolShears : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 9;
 }
 
 public sealed class BoneNeedle : Item
@@ -150,7 +142,6 @@ public sealed class BoneNeedle : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
 }
 
 // ── Field and farm ─────────────────────────────────────────────────────────────
@@ -166,7 +157,6 @@ public sealed class ShepherdsCrook : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 7;
 }
 
 public sealed class TallyStick : Item
@@ -181,7 +171,6 @@ public sealed class TallyStick : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 1;
 }
 
 /// <summary>A pail's whole purpose is what is in it � a vessel, not a tool you swing.</summary>
@@ -196,7 +185,6 @@ public sealed class MilkPail : ContainerItem
     public override int ContentSlots   => 6;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware, ItemTag.Cooperage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 6;
 }
 
 public sealed class ChurnPaddle : Item
@@ -210,7 +198,6 @@ public sealed class ChurnPaddle : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 4;
 }
 
 public sealed class WickerBasket : ContainerItem
@@ -224,7 +211,6 @@ public sealed class WickerBasket : ContainerItem
     public override int ContentSlots   => 9;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 4;
 }
 
 public sealed class DroversSwitch : Item
@@ -238,7 +224,6 @@ public sealed class DroversSwitch : Item
     public override int   UsageLevel   => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 1;
 }
 
 public sealed class Flail : Item
@@ -253,7 +238,6 @@ public sealed class Flail : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 8;
 }
 
 public sealed class Hoe : Item
@@ -267,7 +251,6 @@ public sealed class Hoe : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 10;
 }
 
 // ── Mill, oven and mash ────────────────────────────────────────────────────────
@@ -283,7 +266,6 @@ public sealed class MillPick : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 5;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 20;
 }
 
 public sealed class BakersPeel : Item
@@ -297,7 +279,6 @@ public sealed class BakersPeel : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 7;
 }
 
 public sealed class MashPaddle : Item
@@ -311,7 +292,6 @@ public sealed class MashPaddle : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 6;
 }
 
 // ── Water, wood and rock ───────────────────────────────────────────────────────
@@ -327,7 +307,6 @@ public sealed class FishingNet : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 5;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware, ItemTag.FishingGear };
-    public override int PriceReference => 20;
 }
 
 public sealed class FishHooks : Item
@@ -342,7 +321,6 @@ public sealed class FishHooks : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware, ItemTag.FishingGear };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 3;
 }
 
 public sealed class CharcoalRake : Item
@@ -356,7 +334,6 @@ public sealed class CharcoalRake : Item
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 9;
 }
 
 public sealed class MinersLamp : Item
@@ -370,7 +347,6 @@ public sealed class MinersLamp : Item
     public override ItemCategory Category => ItemCategory.Tool;
     public override int   UsageLevel   => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 10;
 }
 
 public sealed class Whetstone : Item
@@ -385,5 +361,4 @@ public sealed class Whetstone : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Mineral, ItemTag.Surgery };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 3;
 }

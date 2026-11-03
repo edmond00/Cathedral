@@ -13,5 +13,4 @@ public sealed class ClayPot : ContainerItem
     public override ContainerKind Kind => ContainerKind.Vessel;
     public override int ContentSlots   => 6;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
-    public override int PriceReference => 8;
 }

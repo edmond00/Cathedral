@@ -58,9 +58,11 @@ public static class CraftMaterials
 /// of each (<see cref="Units"/>, the same for every material it holds).
 ///
 /// <para><b>Units come from the weight label</b>, not from a declaration: insignificant 1, light 2,
-/// medium 5, heavy 15 — the carrying scale with its zero lifted to one, so a nail still holds a unit of
-/// iron. Making a thing costs exactly what breaking it down gives back, so the two directions can never
-/// disagree.</para>
+/// medium 4, heavy 8 — doubling at each step, so a nail still holds a unit of iron and a saddle does not
+/// cost seven swords' worth of material. Flatter than the carrying scale (0/2/5/15) on purpose: a price
+/// is worked out from the same units (<see cref="ItemPricing"/>), and on the carrying scale weight alone
+/// priced every heavy thing above every precious one. Making a thing costs exactly what breaking it down
+/// gives back, so the two directions can never disagree.</para>
 ///
 /// <para>The table is keyed by <b>type</b>, never by name, like everything else that identifies content.
 /// An item absent from it holds nothing a station can use — a loaf, a feather, a letter. Coverage is
@@ -75,8 +77,8 @@ public static class ItemMaterials
     {
         WeightClass.Insignificant => 1,
         WeightClass.Light         => 2,
-        WeightClass.Medium        => 5,
-        _                         => 15,
+        WeightClass.Medium        => 4,
+        _                         => 8,
     };
 
     /// <summary>Units of each material <paramref name="item"/> holds.</summary>

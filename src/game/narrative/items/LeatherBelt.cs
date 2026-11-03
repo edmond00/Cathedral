@@ -16,7 +16,6 @@ public sealed class LeatherBelt : WearableContainerItem
     public override ContainerKind Kind      => ContainerKind.Storage;
     public override int ContentSlots        => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
-    public override int PriceReference => 10;
 
     // Creased and darkened with years of wear: a working man's belt, and nothing more than that.
     public override IReadOnlyList<Npc.SocialCategory> DialogueAppeal =>

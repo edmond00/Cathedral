@@ -11,5 +11,4 @@ public sealed class PineCone : Item
     public override string DisplayName => "Pine Cone";
     public override string Description => "A dry, open pine cone dropped from the tree";
     public override List<ItemTag> Tags => new() { ItemTag.Wood };
-    public override int PriceReference => 1;
 }
