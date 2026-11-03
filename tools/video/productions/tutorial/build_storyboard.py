@@ -181,7 +181,7 @@ segments.append({"type": "montage", "shots": [], "fade": True,
                         "and a crowd of minds living in it: some notice, some think, some act, and some only feel. "
                         "Each one speaks in its own voice, and nothing they say is written in advance."]})
 O.game(O.at("clip-begin", "new_run"), O.at("click", "New") - 0.2,
-       "This is Proscribed Palimpsest. In the next hour of play, from the main menu to a pair of new boots, we'll "
+       "This is Proscribed Palimpsest. In this video we play the start of a run, from the main menu to a pair of new boots, and we'll "
        "see how all of it works. And along the way, I'll tell you what I would do as a player.", fade=True)
 O.game(O.at("click", "New") - 0.2, O.at("move", "Fenumoth") - 0.2,
        "A run starts by choosing a world. Each moon in this sky is one: three hundred and eighty-three of them, "
@@ -815,10 +815,10 @@ RS.game(oe, re_,
 # 16. closure
 kb, ke = rs_clip("closure")
 RS.game(re_, ke,
-        "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
+        "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
         "Every word the game wrote, it wrote on this computer, while we played.", fade=True)
 
-# the hook's montage: a few seconds of each thing the hour holds, in the order the narration names them
+# the hook's montage: a few seconds of each thing the run holds, in the order the narration names them
 def shot(take, t, length, speed=1.0):
     return {"recording": take.name, "from": round(t, 2), "to": round(t + length, 2), "speed": speed}
 
@@ -841,7 +841,7 @@ segments[HOOK]["shots"] = [
 ]
 
 storyboard = {
-    "title": "Proscribed Palimpsest: the first hour",
+    "title": "Proscribed Palimpsest: a first run",
     "output": "build/tutorial.mp4",
     "size": [1920, 1080], "fps": 30,
     "dither": {"animation": {"levels": 4, "scale": 2}, "game": {"levels": 6, "scale": 1}},

@@ -1,5 +1,5 @@
 {
- "title": "Proscribed Palimpsest: the first hour",
+ "title": "Proscribed Palimpsest: a first run",
  "output": "build/tutorial.mp4",
  "size": [
   1920,
@@ -145,7 +145,7 @@
    "to": 21.76,
    "fade": true,
    "vo": [
-    "This is Proscribed Palimpsest. In the next hour of play, from the main menu to a pair of new boots, we'll see how all of it works. And along the way, I'll tell you what I would do as a player."
+    "This is Proscribed Palimpsest. In this video we play the start of a run, from the main menu to a pair of new boots, and we'll see how all of it works. And along the way, I'll tell you what I would do as a player."
    ]
   },
   {
@@ -1920,7 +1920,7 @@
    "to": 1835.16,
    "fade": true,
    "vo": [
-    "That was the first hour: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played."
+    "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played."
    ]
   }
  ]
