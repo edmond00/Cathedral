@@ -52,6 +52,22 @@ public sealed class CraftingMenuRenderer
     private static readonly Vector4 Disabled = Config.Colors.DarkGray40;
     private static readonly Vector4 Warning  = Config.Colors.OrangeYellow;
 
+    // Dark bands. The box is black; these lift a section off it by a shade, each in the menu's own hue:
+    // gold for the title and the plain news, grey for the panel and the column heads, green and purple
+    // for a make that came off and one that was spoiled (purple being the game's colour of loss).
+    private static readonly Vector4 TitleBand = new(0.17f, 0.15f, 0.02f, 1f);
+    private static readonly Vector4 PanelBand = new(0.11f, 0.11f, 0.12f, 1f);
+    private static readonly Vector4 HeadBand  = new(0.16f, 0.16f, 0.17f, 1f);
+    private static readonly Vector4 RowAlt    = new(0.055f, 0.055f, 0.06f, 1f);
+    private static readonly Vector4 GoodBand  = new(0.04f, 0.17f, 0.05f, 1f);
+    private static readonly Vector4 BadBand   = new(0.17f, 0.03f, 0.22f, 1f);
+    private static readonly Vector4 InfoBand  = new(0.14f, 0.12f, 0.02f, 1f);
+    private static readonly Vector4 Good      = Config.Colors.LightGreen;
+    private static readonly Vector4 Bad       = Config.Colors.LightPurple;
+
+    private enum Tone { Info, Good, Bad }
+    private Tone _tone = Tone.Info;
+
     private readonly TerminalHUD         _terminal;
     private readonly PartyMember         _member;
     private readonly PointOfInterest     _station;
@@ -129,6 +145,7 @@ public sealed class CraftingMenuRenderer
         Pool += units;
         BrokenDown.Add(item.DisplayName);
         _message = $"Broke down {item.WithArticle()}: +{units} {Material.Label()}.";
+        _tone = Tone.Info;
         Console.WriteLine($"CraftingMenu: broke down {item.ItemId} → +{units} {Material} (pool {Pool})");
         return true;
     }
@@ -143,9 +160,9 @@ public sealed class CraftingMenuRenderer
     public MakeResult Make(Item recipe)
     {
         int cost = Cost(recipe);
-        if (Pool < cost) { _message = $"Not enough {Material.Label()}: {recipe.DisplayName.ToLowerInvariant()} takes {cost}."; return MakeResult.Refused; }
+        if (Pool < cost) { _message = $"Not enough {Material.Label()}: {recipe.DisplayName.ToLowerInvariant()} takes {cost}."; _tone = Tone.Info; return MakeResult.Refused; }
         var made = ItemRegistry.NewInstance(recipe);
-        if (!_member.CanAcquireItem(made)) { _message = $"No room in your pack for {made.WithArticle()}."; return MakeResult.Refused; }
+        if (!_member.CanAcquireItem(made)) { _message = $"No room in your pack for {made.WithArticle()}."; _tone = Tone.Info; return MakeResult.Refused; }
 
         var roll = CraftRoll.Roll(Dice, Difficulty(recipe));
         LastRoll = roll;
@@ -155,6 +172,7 @@ public sealed class CraftingMenuRenderer
         {
             Spoiled.Add(made.DisplayName);
             _message = $"Spoiled {made.WithArticle()} ({dice}): -{cost} {Material.Label()} lost.";
+            _tone = Tone.Bad;
             Console.WriteLine($"CraftingMenu: spoiled {made.ItemId} ← -{cost} {Material} ({dice}; pool {Pool})");
             return MakeResult.Spoiled;
         }
@@ -166,6 +184,7 @@ public sealed class CraftingMenuRenderer
         }
         Made.Add(made.DisplayName);
         _message = $"Made {made.WithArticle()} ({dice}): -{cost} {Material.Label()}.";
+        _tone = Tone.Good;
         Console.WriteLine($"CraftingMenu: made {made.ItemId} ← -{cost} {Material} ({dice}; pool {Pool})");
         return MakeResult.Made;
     }
@@ -229,34 +248,47 @@ public sealed class CraftingMenuRenderer
         _page = Math.Min(_page, Pages() - 1);
         var shown = left.Skip(_page * PageRows).Take(PageRows).ToList();
 
-        int inner = 31;   // the dice line takes the blank row under the pool   // blank, 9 header rows, the page, 6 footer rows, blank
+        int inner = 30;   // title band 3, rule, panel 3, rule, heads, the page, pager, rule, news, note, blank, button, blank
         DrawBox(inner);
 
-        int y = _boxY + 2;
-        Centered(y++, Truncate($"{_trade.DisplayName} at the {_station.DisplayName}", BoxW - 4), Title);
-        Centered(y++, $"Works {Material.Label()} with the {_trade.ToolPrototype?.DisplayName.ToLowerInvariant() ?? "tool"}", Label);
-        y++;
+        int y = _boxY + 1;
+
+        // Title band: what is being worked, and with what.
+        Band(y, TitleBand); Band(y + 1, TitleBand); Band(y + 2, TitleBand);
+        Centered(y + 1, Truncate($"{_trade.DisplayName.ToUpperInvariant()}  ·  {_station.DisplayName}", BoxW - 4), Title, TitleBand);
+        Centered(y + 2, $"works {Material.Label()} with the {_trade.ToolPrototype?.DisplayName.ToLowerInvariant() ?? "tool"}", Config.Colors.DarkYellowGrey, TitleBand);
+        y += 3;
         Separator(y++);
-        y++;
 
-        // The pool, the one number everything here turns on — and the dice every make rolls, with whence they come.
-        Centered(y++, $"In hand: {Pool} {Material.Label()}", Pool > 0 ? Title : Value);
-        Centered(y++, Truncate($"Dice: {Dice}  ({string.Join(" · ", Contributions.Select(c => $"{c.Label} {c.Dice}"))})", BoxW - 4), Label);
+        // The panel: what is in hand, and the dice every make rolls with whence they come.
+        Band(y, PanelBand); Band(y + 1, PanelBand); Band(y + 2, PanelBand);
+        string poolLabel = "In hand  ", poolValue = $"{Pool} {Material.Label()}";
+        int px = _boxX + (BoxW - poolLabel.Length - poolValue.Length) / 2;
+        _terminal.Text(px, y, poolLabel, Label, PanelBand);
+        _terminal.Text(px + poolLabel.Length, y, poolValue, Pool > 0 ? Title : Value, PanelBand);
+        Centered(y + 1, Truncate($"Dice {Dice}  =  {string.Join("  +  ", Contributions.Select(c => $"{c.Label} {c.Dice}"))}", BoxW - 4), Value, PanelBand);
+        y += 3;
+        Separator(y++);
 
-        _terminal.Text(_boxX + LeftOff,  y, $"Break down ({left.Count})", Label, Bg);
-        _terminal.Text(_boxX + RightOff, y, "Make", Label, Bg);
-        _terminal.Text(_boxX + RightOff + ColW - 22, y, "sixes", Label, Bg);
-        y++;
-        for (int x = _boxX + 1; x < _boxX + BoxW - 1; x++) _terminal.SetCell(x, y, '─', Sep, Bg);
+        // Column heads on their own strip.
+        Band(y, HeadBand);
+        _terminal.Text(_boxX + LeftOff,  y, $"BREAK DOWN ({left.Count})", Label, HeadBand);
+        _terminal.Text(_boxX + LeftOff + ColW - 15, y, "gives", Label, HeadBand);
+        _terminal.Text(_boxX + RightOff, y, "MAKE", Label, HeadBand);
+        _terminal.Text(_boxX + RightOff + ColW - 22, y, "sixes", Label, HeadBand);
+        _terminal.Text(_boxX + RightOff + ColW - 15, y, "costs", Label, HeadBand);
+        _terminal.SetCell(_boxX + RightOff - 2, y, '│', Sep, HeadBand);
         y++;
 
         _rowY0 = y;
         for (int i = 0; i < PageRows; i++, y++)
         {
-            if (i < shown.Count)    RenderBreakRow(shown[i], y);
-            if (i < _recipes.Count) RenderMakeRow(_recipes[i], y);
+            var rowBg = i % 2 == 1 ? RowAlt : Bg;
+            Band(y, rowBg);
+            if (i < shown.Count)    RenderBreakRow(shown[i], y, rowBg);
+            if (i < _recipes.Count) RenderMakeRow(_recipes[i], y, rowBg);
+            _terminal.SetCell(_boxX + RightOff - 2, y, '│', Sep, rowBg);
         }
-        for (int r = _rowY0; r < _rowY0 + PageRows; r++) _terminal.SetCell(_boxX + RightOff - 2, r, '│', Sep, Bg);
 
         // Pager for a long pack.
         _pagerRow = y;
@@ -272,7 +304,11 @@ public sealed class CraftingMenuRenderer
         y++;
 
         Separator(y++);
-        Centered(y++, Truncate(_message, BoxW - 4), Warning);
+        // The news of the last thing done, on a band tinted by how it went.
+        var (band, ink) = _message.Length == 0 ? (Bg, Warning)
+                        : _tone switch { Tone.Good => (GoodBand, Good), Tone.Bad => (BadBand, Bad), _ => (InfoBand, Warning) };
+        Band(y, band);
+        Centered(y++, Truncate(_message, BoxW - 4), ink, band);
         Centered(y++, Pool > 0 ? $"Leaving throws away the {Pool} {Material.Label()} still in hand." : "", Disabled);
         y++;
 
@@ -283,21 +319,21 @@ public sealed class CraftingMenuRenderer
         _terminal.Text(_leaveX0, y, leave, hov ? BtnHovFg : BtnFg, hov ? BtnHovBg : BtnBg);
     }
 
-    private void RenderBreakRow(Item item, int y)
+    private void RenderBreakRow(Item item, int y, Vector4 rowBg)
     {
         bool hov = _hoverY == y && _hoverX >= _boxX + LeftOff && _hoverX < _boxX + LeftOff + ColW;
-        var bg = hov ? RowHovBg : Bg;
+        var bg = hov ? RowHovBg : rowBg;
         _terminal.FillRect(_boxX + LeftOff, y, ColW - 2, 1, ' ', Value, bg);
         _terminal.Text(_boxX + LeftOff, y, Truncate(item.DisplayName, ColW - 16), Value, bg);
         _terminal.Text(_boxX + LeftOff + ColW - 15, y, $"+{ItemMaterials.Units(item)}", Label, bg);
         _terminal.Text(_boxX + LeftOff + ColW - 10, y, "[Break]", hov ? OkFg : Value, hov ? OkHovBg : bg);
     }
 
-    private void RenderMakeRow(Item recipe, int y)
+    private void RenderMakeRow(Item recipe, int y, Vector4 rowBg)
     {
         bool can = CanMake(recipe);
         bool hov = can && _hoverY == y && _hoverX >= _boxX + RightOff && _hoverX < _boxX + RightOff + ColW;
-        var bg = hov ? RowHovBg : Bg;
+        var bg = hov ? RowHovBg : rowBg;
         _terminal.FillRect(_boxX + RightOff, y, ColW - 2, 1, ' ', Value, bg);
         _terminal.Text(_boxX + RightOff, y, Truncate(recipe.DisplayName, ColW - 24), can ? Value : Disabled, bg);
         _terminal.Text(_boxX + RightOff + ColW - 22, y, new string('◆', Difficulty(recipe)), can ? Title : Disabled, bg);
@@ -325,11 +361,14 @@ public sealed class CraftingMenuRenderer
         _terminal.SetCell(_boxX + BoxW - 1, y, '┤', Border, Bg);
     }
 
-    private void Centered(int y, string text, Vector4 fg)
+    private void Centered(int y, string text, Vector4 fg, Vector4? bg = null)
     {
         if (text.Length == 0) return;
-        _terminal.Text(_boxX + (BoxW - text.Length) / 2, y, text, fg, Bg);
+        _terminal.Text(_boxX + (BoxW - text.Length) / 2, y, text, fg, bg ?? Bg);
     }
+
+    /// <summary>Fills one row inside the frame with <paramref name="bg"/>.</summary>
+    private void Band(int y, Vector4 bg) => _terminal.FillRect(_boxX + 1, y, BoxW - 2, 1, ' ', Value, bg);
 
     private static string Truncate(string s, int max) =>
         s.Length <= max ? s : (max <= 1 ? s.Substring(0, Math.Max(0, max)) : s.Substring(0, max - 1) + "…");
