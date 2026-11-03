@@ -15,8 +15,8 @@ namespace Cathedral.Game.Narrative.Crafting;
 /// <list type="bullet">
 ///   <item><b>Dice</b> (<see cref="PoolFor"/>): the effective level of each held trade for the station
 ///     (a wounded or broken one gives what the wound leaves it), plus the usage level of each carried
-///     implement of any trade for the station — once per kind of implement, the best one carried. One
-///     die at the least.</item>
+///     implement of any trade for the station — once per kind of implement, the best one carried — plus
+///     the body's <see cref="HandiworkStat"/> (0–3, from the hands). One die at the least.</item>
 ///   <item><b>Difficulty</b> (<see cref="Difficulty"/>): one to four sixes, from the made thing's price,
 ///     the measure of how much skill a thing holds beside its matter.</item>
 ///   <item><b>Success</b>: sixes at least the difficulty, as every roll in the game. A failure spoils the
@@ -41,15 +41,18 @@ public static class CraftRoll
         return d;
     }
 
-    /// <summary>One source of dice: a trade by its level, or an implement by its usage.</summary>
-    public sealed record Contribution(string Label, int Dice, bool IsTool);
+    /// <summary>Where a contribution's dice come from.</summary>
+    public enum Source { Trade, Tool, Hands }
+
+    /// <summary>One source of dice: a trade by its level, an implement by its usage, or the hands by their handiwork.</summary>
+    public sealed record Contribution(string Label, int Dice, Source From);
 
     /// <summary>Every trade and implement that adds dice for <paramref name="member"/> at a station of <paramref name="station"/>'s kind.</summary>
     public static IReadOnlyList<Contribution> ContributionsFor(PartyMember member, Element station)
     {
         var list = new List<Contribution>();
         foreach (var trade in CraftingModusMentis.HeldFor(member, station))
-            list.Add(new Contribution(trade.DisplayName, Math.Max(0, member.GetEffectiveModusMentisLevel(trade)), false));
+            list.Add(new Contribution(trade.DisplayName, Math.Max(0, member.GetEffectiveModusMentisLevel(trade)), Source.Trade));
 
         var toolTypes = CraftingModusMentis.All.Where(t => t.Station.IsInstanceOfType(station))
                                                .Select(t => t.Tool).Distinct().ToList();
@@ -57,8 +60,11 @@ public static class CraftRoll
         foreach (var type in toolTypes)
         {
             var best = carried.Where(i => i.GetType() == type).OrderByDescending(i => i.UsageLevel).FirstOrDefault();
-            if (best != null) list.Add(new Contribution(best.DisplayName, best.UsageLevel, true));
+            if (best != null) list.Add(new Contribution(best.DisplayName, best.UsageLevel, Source.Tool));
         }
+
+        int hands = HandiworkStat.Of(member);
+        if (hands > 0) list.Add(new Contribution("Handiwork", hands, Source.Hands));
         return list;
     }
 

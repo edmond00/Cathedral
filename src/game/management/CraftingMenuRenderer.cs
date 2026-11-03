@@ -378,7 +378,7 @@ public sealed class CraftingMenuRenderer
     {
         yield return $"crafting trade={_trade.ModusMentisId} material={Material.Label()} pool={Pool} dice={Dice} station=\"{_station.DisplayName}\"";
         foreach (var c in Contributions)
-            yield return $"crafting dice-from {(c.IsTool ? "tool" : "trade")} dice={c.Dice} name=\"{c.Label}\"";
+            yield return $"crafting dice-from {c.From.ToString().ToLowerInvariant()} dice={c.Dice} name=\"{c.Label}\"";
         if (LastRoll is { } roll)
             yield return $"crafting last-roll dice={roll.Dice} sixes={roll.Sixes} needed={roll.Difficulty} result={(roll.Succeeded ? "made" : "spoiled")}";
         foreach (var i in Breakables())

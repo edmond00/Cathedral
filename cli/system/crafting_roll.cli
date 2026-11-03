@@ -1,11 +1,12 @@
 # Every thing made at a station is rolled
 #
 # A body holding both trades of the anvil (blacksmithing, bladesmithing) and carrying both their
-# implements (the hammer, the smith's tongs) rolls with all four: the trades' levels and the implements'
-# usage, summed (1 + 1 + 4 + 5 = 11 dice). A nail is cheap and needs one six; a forced miss spoils it —
+# implements (the hammer, the smith's tongs) rolls with all four, and its hands' handiwork besides: the
+# trades' levels, the implements' usage and the hands (both at 2, a score of 4: +2), summed
+# (1 + 1 + 4 + 5 + 2 = 13 dice). A nail is cheap and needs one six; a forced miss spoils it —
 # the metal is gone and no nail is made — and a forced hit makes it.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing,bladesmithing --grant-item hammer,smith_tongs,horseshoe --location-type test --location-id 0 --start-area "Test Ruin" --period dawn --observe-only "Test Old Anvil"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing,bladesmithing --grant-item hammer,smith_tongs,horseshoe --organs hands=2 --location-type test --location-id 0 --start-area "Test Ruin" --period dawn --observe-only "Test Old Anvil"
 
 wait
 click menu New
@@ -35,11 +36,12 @@ advance 12 180
 click button
 wait mode Crafting 30
 
-# Both trades and both implements put their dice in.
-expect-state crafting pool=0 dice=11
+# Both trades, both implements and the hands put their dice in.
+expect-state crafting pool=0 dice=13
 expect-state crafting dice-from trade dice=1
 expect-state crafting dice-from tool dice=4
 expect-state crafting dice-from tool dice=5
+expect-state crafting dice-from hands dice=2
 expect-state crafting make item=nail cost=1 difficulty=1
 expect-state crafting make item=hatchet cost=4 difficulty=4
 

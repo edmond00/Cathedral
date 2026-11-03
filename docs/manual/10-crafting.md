@@ -8,7 +8,8 @@ The work has two halves and they are settled separately. **Setting to work** at 
 like any other ([VI](06-narration.md)): it is rolled, by one modus mentis and one implement, it may
 fail, and it teaches. **The work itself** costs no time, and taking a thing apart is never rolled; but
 **every thing made is rolled for on its own**, and that roll is wider than the act's: every trade the
-body holds for the station, and every implement of the station it carries, puts its dice in.
+body holds for the station, every implement of the station it carries, and the hands themselves put
+their dice in.
 
 ## 1. Materials
 
@@ -147,13 +148,15 @@ thrown away. The quantity a body can bring to a station is therefore bounded by 
 **Each attempt is rolled**, and succeeds when its sixes are at least its difficulty, as every roll in
 the game ([VI](06-narration.md)). A failure spoils the work: its material is lost and nothing is made.
 
-**The dice** are the sum of two things, one die at the least:
+**The dice** are the sum of three things, one die at the least:
 
 - the level of **every trade the body holds for the station's kind** — not only the trade that set to
   work: a smith who knows both trades of the anvil works it with both — each at the level its wounds
   leave it ([II §3](02-memory.md));
 - the level of use of **every implement of the station's trades the body carries**, whichever trade it
-  belongs to and whether or not that trade is held; each kind of implement once, the best one carried.
+  belongs to and whether or not that trade is held; each kind of implement once, the best one carried;
+- the body's **handiwork**, from nought to three, read off the hands ([I](01-anatomy.md)): nought at a
+  score of nought, one at 1–2, two at 3–4, three at 5–6. Hands disabled by a wound give nothing.
 
 **The difficulty** is read from the made thing's reference price ([IV §10](04-items.md)), the measure of
 the skill a thing holds beside its matter:
@@ -166,7 +169,7 @@ the skill a thing holds beside its matter:
 | above 22 | 4 |
 
 None of it takes time. Setting to work (§5) is a separate roll, made by the one trade and the one
-implement that set to work.
+implement that set to work; handiwork does not enter it.
 
 ## 7. The routine of a station
 
