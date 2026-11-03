@@ -1538,8 +1538,14 @@ public sealed class CliDriver
                 { CliMode.Emit($"ok: craft break {item.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
                 break;
             case "make":
-                if (menu.Recipes.FirstOrDefault(Named) is { } recipe && menu.Make(recipe))
-                { CliMode.Emit($"ok: craft make {recipe.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
+                if (menu.Recipes.FirstOrDefault(Named) is { } recipe
+                    && menu.Make(recipe) is var made && made != Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Refused)
+                {
+                    var roll = menu.LastRoll!;
+                    CliMode.Emit($"ok: craft make {recipe.ItemId} → {(made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Made ? "made" : "spoiled")} "
+                               + $"({roll.Sixes}/{roll.Difficulty} sixes on {roll.Dice} dice) pool {menu.Pool} {menu.Material}");
+                    return;
+                }
                 break;
             default:
                 CliMode.Emit("error: craft break|make <item> | craft leave");

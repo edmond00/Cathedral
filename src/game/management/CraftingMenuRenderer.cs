@@ -65,6 +65,10 @@ public sealed class CraftingMenuRenderer
     /// <summary>What was broken down and what was made, in order — for the narration note on leaving.</summary>
     public List<string> BrokenDown { get; } = new();
     public List<string> Made { get; } = new();
+    public List<string> Spoiled { get; } = new();
+
+    /// <summary>The last roll made here, for the message line and the CLI.</summary>
+    public CraftRoll.Result? LastRoll { get; private set; }
 
     private string _message = string.Empty;
     private int _hoverX = -1, _hoverY = -1;
@@ -106,6 +110,14 @@ public sealed class CraftingMenuRenderer
 
     public bool CanMake(Item recipe) => Pool >= Cost(recipe);
 
+    /// <summary>Sixes needed to make <paramref name="recipe"/>.</summary>
+    public static int Difficulty(Item recipe) => CraftRoll.Difficulty(recipe);
+
+    /// <summary>The dice every make here rolls: every held trade for this station and every carried implement of one.</summary>
+    public int Dice => CraftRoll.PoolFor(_member, _station);
+
+    public IReadOnlyList<CraftRoll.Contribution> Contributions => CraftRoll.ContributionsFor(_member, _station);
+
     // ── Actions (mouse and CLI alike) ────────────────────────────────────────
 
     /// <summary>Destroys <paramref name="item"/> and adds its units of the station's material to the pool.</summary>
@@ -122,19 +134,41 @@ public sealed class CraftingMenuRenderer
         return true;
     }
 
-    /// <summary>Pays for and makes one <paramref name="recipe"/>, which goes into the pack.</summary>
-    public bool Make(Item recipe)
+    public enum MakeResult { Refused, Spoiled, Made }
+
+    /// <summary>
+    /// Pays for one <paramref name="recipe"/> and rolls for it (<see cref="CraftRoll"/>). Made, it goes into
+    /// the pack; spoiled, the material is gone and nothing is made. Refused — not enough in hand, or no room
+    /// for the thing — nothing is paid and nothing rolled.
+    /// </summary>
+    public MakeResult Make(Item recipe)
     {
         int cost = Cost(recipe);
-        if (Pool < cost) { _message = $"Not enough {Material.Label()}: {recipe.DisplayName.ToLowerInvariant()} takes {cost}."; return false; }
+        if (Pool < cost) { _message = $"Not enough {Material.Label()}: {recipe.DisplayName.ToLowerInvariant()} takes {cost}."; return MakeResult.Refused; }
         var made = ItemRegistry.NewInstance(recipe);
-        if (!_member.CanAcquireItem(made)) { _message = $"No room in your pack for {made.WithArticle()}."; return false; }
-        if (!_member.AcquireItem(made)) { _message = $"No room in your pack for {made.WithArticle()}."; return false; }
+        if (!_member.CanAcquireItem(made)) { _message = $"No room in your pack for {made.WithArticle()}."; return MakeResult.Refused; }
+
+        var roll = CraftRoll.Roll(Dice, Difficulty(recipe));
+        LastRoll = roll;
         Pool -= cost;
+        string dice = $"{roll.Sixes} {(roll.Sixes == 1 ? "six" : "sixes")} on {roll.Dice} {(roll.Dice == 1 ? "die" : "dice")}, {roll.Difficulty} needed";
+        if (!roll.Succeeded)
+        {
+            Spoiled.Add(made.DisplayName);
+            _message = $"Spoiled {made.WithArticle()} ({dice}): -{cost} {Material.Label()} lost.";
+            Console.WriteLine($"CraftingMenu: spoiled {made.ItemId} ← -{cost} {Material} ({dice}; pool {Pool})");
+            return MakeResult.Spoiled;
+        }
+        if (!_member.AcquireItem(made))
+        {
+            Pool += cost;   // the room was there a moment ago; nothing is lost to a placement that changed under us
+            _message = $"No room in your pack for {made.WithArticle()}.";
+            return MakeResult.Refused;
+        }
         Made.Add(made.DisplayName);
-        _message = $"Made {made.WithArticle()}: -{cost} {Material.Label()}.";
-        Console.WriteLine($"CraftingMenu: made {made.ItemId} ← -{cost} {Material} (pool {Pool})");
-        return true;
+        _message = $"Made {made.WithArticle()} ({dice}): -{cost} {Material.Label()}.";
+        Console.WriteLine($"CraftingMenu: made {made.ItemId} ← -{cost} {Material} ({dice}; pool {Pool})");
+        return MakeResult.Made;
     }
 
     public void Leave()
@@ -196,7 +230,7 @@ public sealed class CraftingMenuRenderer
         _page = Math.Min(_page, Pages() - 1);
         var shown = left.Skip(_page * PageRows).Take(PageRows).ToList();
 
-        int inner = 31;   // blank, 9 header rows, the page, 6 footer rows, blank
+        int inner = 31;   // the dice line takes the blank row under the pool   // blank, 9 header rows, the page, 6 footer rows, blank
         DrawBox(inner);
 
         int y = _boxY + 2;
@@ -206,12 +240,13 @@ public sealed class CraftingMenuRenderer
         Separator(y++);
         y++;
 
-        // The pool, the one number everything here turns on.
+        // The pool, the one number everything here turns on — and the dice every make rolls, with whence they come.
         Centered(y++, $"In hand: {Pool} {Material.Label()}", Pool > 0 ? Title : Value);
-        y++;
+        Centered(y++, Truncate($"Dice: {Dice}  ({string.Join(" · ", Contributions.Select(c => $"{c.Label} {c.Dice}"))})", BoxW - 4), Label);
 
         _terminal.Text(_boxX + LeftOff,  y, $"Break down ({left.Count})", Label, Bg);
         _terminal.Text(_boxX + RightOff, y, "Make", Label, Bg);
+        _terminal.Text(_boxX + RightOff + ColW - 22, y, "sixes", Label, Bg);
         y++;
         for (int x = _boxX + 1; x < _boxX + BoxW - 1; x++) _terminal.SetCell(x, y, '─', Sep, Bg);
         y++;
@@ -265,7 +300,8 @@ public sealed class CraftingMenuRenderer
         bool hov = can && _hoverY == y && _hoverX >= _boxX + RightOff && _hoverX < _boxX + RightOff + ColW;
         var bg = hov ? RowHovBg : Bg;
         _terminal.FillRect(_boxX + RightOff, y, ColW - 2, 1, ' ', Value, bg);
-        _terminal.Text(_boxX + RightOff, y, Truncate(recipe.DisplayName, ColW - 16), can ? Value : Disabled, bg);
+        _terminal.Text(_boxX + RightOff, y, Truncate(recipe.DisplayName, ColW - 24), can ? Value : Disabled, bg);
+        _terminal.Text(_boxX + RightOff + ColW - 22, y, new string('◆', Difficulty(recipe)), can ? Title : Disabled, bg);
         _terminal.Text(_boxX + RightOff + ColW - 15, y, $"-{Cost(recipe)}", can ? Label : Disabled, bg);
         _terminal.Text(_boxX + RightOff + ColW - 10, y, "[Make]", can ? (hov ? OkFg : Value) : Disabled, can ? (hov ? OkHovBg : OkBg) : bg);
     }
@@ -302,11 +338,15 @@ public sealed class CraftingMenuRenderer
     /// <summary>The menu as text lines, for <c>inspect crafting</c>.</summary>
     public IEnumerable<string> CliLines()
     {
-        yield return $"crafting trade={_trade.ModusMentisId} material={Material.Label()} pool={Pool} station=\"{_station.DisplayName}\"";
+        yield return $"crafting trade={_trade.ModusMentisId} material={Material.Label()} pool={Pool} dice={Dice} station=\"{_station.DisplayName}\"";
+        foreach (var c in Contributions)
+            yield return $"crafting dice-from {(c.IsTool ? "tool" : "trade")} dice={c.Dice} name=\"{c.Label}\"";
+        if (LastRoll is { } roll)
+            yield return $"crafting last-roll dice={roll.Dice} sixes={roll.Sixes} needed={roll.Difficulty} result={(roll.Succeeded ? "made" : "spoiled")}";
         foreach (var i in Breakables())
             yield return $"crafting break item={i.ItemId} units={ItemMaterials.Units(i)} name=\"{i.DisplayName}\"";
         foreach (var r in _recipes)
-            yield return $"crafting make item={r.ItemId} cost={Cost(r)} can={(CanMake(r) ? "yes" : "no")} name=\"{r.DisplayName}\"";
+            yield return $"crafting make item={r.ItemId} cost={Cost(r)} difficulty={Difficulty(r)} price={r.PriceReference} can={(CanMake(r) ? "yes" : "no")} name=\"{r.DisplayName}\"";
         if (_message.Length > 0) yield return $"crafting message=\"{_message}\"";
     }
 }

@@ -5,9 +5,10 @@ Crafting is the knowledge of a **trade**: one manner of working, practised at on
 [II](02-memory.md)), and everything a body may make it makes through one.
 
 The work has two halves and they are settled separately. **Setting to work** at a station is an act
-like any other ([VI](06-narration.md)): it is rolled, it may fail, and it teaches. **The work itself**
-is rolled for nothing and costs no time: whatever is taken apart and whatever is made at the station
-is decided by what the body carries and what the trade knows, and by nothing else.
+like any other ([VI](06-narration.md)): it is rolled, by one modus mentis and one implement, it may
+fail, and it teaches. **The work itself** costs no time, and taking a thing apart is never rolled; but
+**every thing made is rolled for on its own**, and that roll is wider than the act's: every trade the
+body holds for the station, and every implement of the station it carries, puts its dice in.
 
 ## 1. Materials
 
@@ -134,15 +135,38 @@ Two operations are open, as often as the body likes.
   of that material are added to what is in hand. **Only the station's material is kept**; whatever else
   the item held is lost with it — a knife broken down at the anvil gives up its metal, and its handle is
   gone. A container must be empty to be broken down.
-- **Making.** Any thing the trade makes may be made, at the cost in the station's material of the units
-  the made thing holds (§1). It goes into the pack, and is not made where it could not be placed there.
+- **Making.** Any thing the trade makes may be attempted, at the cost in the station's material of the
+  units the made thing holds (§1). The material is spent whether the attempt succeeds or not; the thing
+  goes into the pack only if it does. Nothing is attempted, and nothing spent, where too little is in
+  hand or where the thing could not be placed in the pack.
 
 **What is in hand is not kept.** There is no store of material: what remains when the work ends is
 thrown away. The quantity a body can bring to a station is therefore bounded by what it can carry
 (see [IV](04-items.md)), and the work is best brought to the station whole.
 
-Nothing in the work is rolled, and none of it takes time. The trade's level and the implement's count
-once, in setting to work (§5).
+**Each attempt is rolled**, and succeeds when its sixes are at least its difficulty, as every roll in
+the game ([VI](06-narration.md)). A failure spoils the work: its material is lost and nothing is made.
+
+**The dice** are the sum of two things, one die at the least:
+
+- the level of **every trade the body holds for the station's kind** — not only the trade that set to
+  work: a smith who knows both trades of the anvil works it with both — each at the level its wounds
+  leave it ([II §3](02-memory.md));
+- the level of use of **every implement of the station's trades the body carries**, whichever trade it
+  belongs to and whether or not that trade is held; each kind of implement once, the best one carried.
+
+**The difficulty** is read from the made thing's reference price ([IV §10](04-items.md)), the measure of
+the skill a thing holds beside its matter:
+
+| Price | Sixes needed |
+|---|---|
+| up to 7 | 1 |
+| 8 to 13 | 2 |
+| 14 to 22 | 3 |
+| above 22 | 4 |
+
+None of it takes time. Setting to work (§5) is a separate roll, made by the one trade and the one
+implement that set to work.
 
 ## 7. The routine of a station
 

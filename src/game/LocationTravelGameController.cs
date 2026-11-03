@@ -6704,6 +6704,7 @@ public class LocationTravelGameController : IDisposable
         var parts = new List<string>();
         if (menu.BrokenDown.Count > 0) parts.Add($"broke down {menu.BrokenDown.Count} thing{(menu.BrokenDown.Count == 1 ? "" : "s")}");
         if (menu.Made.Count > 0) parts.Add($"made {string.Join(", ", menu.Made.Select(n => n.ToLowerInvariant()))}");
+        if (menu.Spoiled.Count > 0) parts.Add($"spoiled {menu.Spoiled.Count} piece{(menu.Spoiled.Count == 1 ? "" : "s")} of work");
         if (menu.Pool > 0) parts.Add($"left {menu.Pool} {Cathedral.Game.Narrative.Crafting.CraftMaterials.Label(menu.Material)} unused");
         string note = parts.Count == 0
             ? $"You left the {station} without working."
