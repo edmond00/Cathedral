@@ -72,6 +72,7 @@ step 8 onward is where a mistake costs a rewritten history or a bad build on the
 | no modified **tracked** files (`git status --porcelain` shows only `??` lines) | they would be swept into the release commit, or lost in the merge |
 | `git rev-list --count develop..main` is `0` | main must be an ancestor of develop; anything else means somebody committed to main directly, and the merge below is no longer the fast, safe shape it assumes |
 | no `Cathedral.exe` running | `run_tests.sh` refuses to start beside another run, and a leftover process from an interrupted suite races the new one |
+| a Linux machine or WSL2 distro at hand, with pwsh, butler, and `models/llama-linux/` at the build `LlamaInstallCheck.ExpectedBuild` names | the Linux build is packaged and published from Linux (step 9). `bash tools/linux/cloud-setup.sh --vulkan` fetches the toolchain at that build; `package.ps1` fails without it |
 
 Untracked files are none of this skill's business — the repository root collects `log-crash-*.txt`,
 scratch images and one-off scripts under `tools/`, and a release neither commits nor deletes them.
@@ -287,7 +288,10 @@ in the working tree fails with "could not read file" (harmlessly — nothing is 
 ### 9. Package and publish
 
 From `main`, with `main` checked out — the artifact must come from the branch that was merged, not
-from develop:
+from develop. **Four products, two machines**: the full game and the demo, each for Windows and for
+Linux.
+
+On **Windows**:
 
 ```powershell
 ./package.ps1                 # rebuilds the manual, stages, zips. Minutes.
@@ -299,10 +303,43 @@ from develop:
 ./publish.ps1 -Demo -Yes
 ```
 
-**Every release ships both.** The demo is the same commit compiled with one more constant, so a
-release that updates only the paid channel leaves the free download a Volume behind — the build
-most new players meet first. See "The demo" below for what differs and why the order does not
-matter. One `-Yes` question to the user may cover both pushes, if it names both channels.
+On **Linux** — a Linux machine or a WSL2 distro, with pwsh, at the same `main` commit:
+
+```bash
+pwsh ./package.ps1 -Runtime linux-x64 -SkipManual          # dist-linux/, plus a .tar.gz
+pwsh ./publish.ps1 -Runtime linux-x64 -Status
+pwsh ./publish.ps1 -Runtime linux-x64 -Yes
+
+pwsh ./package.ps1 -Runtime linux-x64 -Demo -SkipManual    # dist-demo-linux/
+pwsh ./publish.ps1 -Runtime linux-x64 -Demo -Status
+pwsh ./publish.ps1 -Runtime linux-x64 -Demo -Yes
+```
+
+**Why the Linux build is not made on Windows.** `package.ps1 -Runtime linux-x64` *can* run there,
+but two things go wrong: an NTFS folder has no executable bits, and butler pushes the staged folder
+with the modes it finds, so the game and `llama-server` would reach players unable to start; and the
+smoke test starts the staged build, which a Linux executable cannot do on Windows — `publish.ps1`
+refuses (and the reverse, a Windows build from Linux). Package inside the Linux filesystem (in WSL2,
+under `~`, not `/mnt/c`), so the modes `dotnet publish` sets are the ones that ship. The Linux
+`models/` needs `model.gguf`, `embeddings/` and `en_scowl_40.txt` copied across, and
+`llama-linux/` from `cloud-setup.sh`. `-SkipManual` ships `docs/manual/`'s PDF, so copy the one the
+Windows `package.ps1` just built, or drop the flag where Chrome and `pypdf`/`reportlab` exist.
+
+The Linux smoke test needs a display: a desktop session, WSLg, or a virtual one —
+`xvfb-run -a pwsh ./publish.ps1 -Runtime linux-x64 -Yes`. It watches stdout for the window's own
+"Location Travel Mode Ready" line, since .NET reads no window titles on Linux, and otherwise asks
+what it asks on Windows.
+
+**Every release ships all four.** The demo is the same commit compiled with one more constant, so a
+release that updates only the paid channels leaves the free download a Volume behind — the build
+most new players meet first; and a release that updates only Windows leaves Linux players on the
+last Volume, with a changelog on the page describing a game they do not have. See "The demo" below
+for what differs and why the order does not matter. One `-Yes` question to the user may cover all
+four pushes, if it names all four channels.
+
+**`-CheckOnly` first.** `publish.ps1 -CheckOnly` runs the pre-flight and the smoke test and stops,
+with no butler and no login needed. Run it on all four staged folders before asking the user
+anything, so the yes is asked about builds already known to start.
 
 **`-Yes` is not optional here, and the reason is a trap.** `publish.ps1` prompts for confirmation and
 *cancels rather than throwing* when nothing can answer it — which is what a non-interactive session
@@ -317,7 +354,8 @@ and for nothing else.
 
 When butler finishes, **remind the user to upload the manual PDF by hand**. `publish.ps1` cannot:
 butler only replaces builds in channels it owns and the PDF on the page has no channel. The script
-closes with a reminder naming the freshly built file; repeat it, with the full path.
+closes with a reminder naming the freshly built file; repeat it, with the full path. One PDF serves
+both platforms.
 
 ### The demo
 
@@ -329,8 +367,10 @@ the main menu. Content is identical, so nothing in steps 2–6 needs doing twice
 
 | | full game | demo |
 |---|---|---|
-| package | `./package.ps1` → `dist/ProscribedPalimpsest/` | `./package.ps1 -Demo` → `dist-demo/ProscribedPalimpsest-Demo/` |
-| channel | `edmond00/proscribed:windows` | `edmond00/proscribed:windows-demo` |
+| package, Windows | `./package.ps1` → `dist/ProscribedPalimpsest/` | `./package.ps1 -Demo` → `dist-demo/ProscribedPalimpsest-Demo/` |
+| package, Linux | `./package.ps1 -Runtime linux-x64` → `dist-linux/ProscribedPalimpsest/` | `… -Runtime linux-x64 -Demo` → `dist-demo-linux/ProscribedPalimpsest-Demo/` |
+| channel, Windows | `edmond00/proscribed:windows` | `edmond00/proscribed:windows-demo` |
+| channel, Linux | `edmond00/proscribed:linux` | `edmond00/proscribed:linux-demo` |
 | on itch | paid | marked as a demo, so it downloads free |
 | startup line | `Build: full` | `Build: demo, <n> run(s)` |
 
@@ -362,8 +402,20 @@ or reinstalling, which is what a casual player would try.
 2. After the first `publish.ps1 -Demo` lands: on *Edit game → Uploads*, open the `windows-demo`
    upload and tick **"This file is a demo and can be downloaded for free"**. Without it the demo is
    behind the same price as the game. Give it a display name ("Demo") so the page reads clearly.
+3. After the first Linux pushes land: the same for the `linux-demo` upload, and check both new
+   uploads show the Linux (penguin) icon — itch reads it from the channel name. Give them display
+   names that say which is which ("Linux", "Linux demo").
+4. On the page, under the downloads, say what a Linux player needs that the package does not carry:
+   **OpenAL Soft** (`libopenal1` on Debian/Ubuntu, `openal` on Arch/Fedora) for sound — without it
+   the game runs silent and says so in `log.txt` — an x64 distribution about as recent as
+   Ubuntu 22.04 (the bundled llama.cpp is upstream's Ubuntu build), and, for the GPU, a Vulkan
+   driver; without one it runs on the CPU. The archive itch makes keeps the executable bits butler
+   pushed, and the itch app installs it the same way.
+5. The first time, install the Linux download on a real Linux desktop (the itch app, or the
+   browser's archive) and play to the first narration. The smoke test has only ever run under a
+   virtual display: real GPU drivers, Wayland and a sound device have not been tried.
 
-The first push to `windows-demo` uploads the whole folder, model included (~2.2 GB): butler diffs
+The first push to each new channel uploads the whole folder, model included (~2.2 GB): butler diffs
 within a channel, not across them. Later pushes send only what changed. The demo and the full game
 share `%APPDATA%\ProscribedPalimpsest\`, so a player who buys the game keeps their save; the full
 game never reads `demo.state`.
@@ -572,9 +624,25 @@ push is one `butler push <pdf> user/game:manual` away.
 ```powershell
 ./publish.ps1 -Status     # read-only: what is on the channel now
 ./publish.ps1             # publishes to edmond00/proscribed:windows
+./publish.ps1 -CheckOnly  # the pre-flight and the smoke test only; no butler, no upload
+pwsh ./publish.ps1 -Runtime linux-x64   # from Linux: edmond00/proscribed:linux
 ```
 
-The target is `edmond00/proscribed:windows`, from the page at edmond00.itch.io/proscribed.
+The targets are `edmond00/proscribed:windows` and `:linux`, and their `-demo` twins, from the page
+at edmond00.itch.io/proscribed. A channel naming the other platform's word is refused: it would offer
+a build to players who cannot run it.
+
+**The Linux package** is the same game self-contained for `linux-x64`: no `.exe`, `models/llama-linux/`
+in place of the two Windows toolchains (pre-flight checks the server, the bench, BUILD.txt, the CPU
+backends by `libggml-cpu-*.so` and any GPU pack), every `.dll` the SDK copies removed (DryWetMidi's
+natives are Windows-only), and a `.tar.gz` (`tools/linux/make_tarball.py`, modes set by name) instead
+of a zip, for manual distribution. Music on Linux goes through OpenAL Soft, a system library the
+package does not ship, and needs no SoundFont: the default engine synthesises its own instruments.
+`ShipArguments`, `Ship` and the naming apply unchanged; the data folder is `~/.config/ProscribedPalimpsest/`
+(.NET's `ApplicationData` on Linux), the demo's second copy under `~/.local/share/`.
+
+Pre-flight on Linux checks for an ELF executable and, on a Linux disk, the executable bit on the game
+and `llama-server`, in place of the PE subsystem byte.
 
 ### Naming
 
