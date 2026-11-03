@@ -125,6 +125,26 @@ public static class ToolCombinationRules
     }
 
     /// <summary>
+    /// Whether a carried item may be offered for combination with an action at all: a tool, a weapon,
+    /// or anything declaring what it was made for — and never a container holding something, since
+    /// combining it would mean putting its contents down. The narration's "Use Tool" row offers
+    /// exactly these.
+    /// </summary>
+    public static bool IsCombinable(Item item)
+        => (item.Category is ItemCategory.Tool or ItemCategory.Weapon || item.MadeForVerbIds.Count > 0)
+           && (item is not IContainer c || c.Contents.Count == 0);
+
+    /// <summary>
+    /// Whether combining this carried item with <paramref name="verb"/> could go through: it is
+    /// combinable, and the ladder before the critic does not already refuse it for this act (not a
+    /// weapon for a blow, made for other work). The hand is not judged — that is the click's to say.
+    /// What the will planner asks before planning a tool-required goal bare-handed.
+    /// </summary>
+    public static bool CouldServe(Verb verb, Item item)
+        => IsCombinable(item)
+           && Resolve(verb, item, ToolProficiency.High) is ToolCombinationGate.MadeForIt or ToolCombinationGate.AskTheCritic;
+
+    /// <summary>
     /// Whether this implement is one this act is done with — either named by the verb as a reference
     /// tool, or naming the verb among the acts it was made for. Both are matched by id, never by
     /// display name, which is content and free to change.

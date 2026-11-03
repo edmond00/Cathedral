@@ -5815,9 +5815,7 @@ public class NarrativeController
     private List<Item> GetCombinableItems()
     {
         return _activePartyMember.GetAllItems()
-            .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon
-                     || i.MadeForVerbIds.Count > 0)
-            .Where(i => i is not IContainer c || c.Contents.Count == 0)
+            .Where(ToolCombinationRules.IsCombinable)
             .ToList();
     }
 

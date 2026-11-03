@@ -150,7 +150,7 @@ public static class ActionPathPlanner
         if (_cache.TryGetValue(key, out var cached)) return cached;
 
         var path = Search(scene, pov, actor, will, held, obtained, unarmed: false);
-        if (path == null && scene.Verbs.Any(v => will.Wants(v) && v.RequiresTool))
+        if (path == null && scene.Verbs.Any(v => will.Wants(v) && v.RequiresTool && CouldServeBareHanded(v, held)))
             path = Search(scene, pov, actor, will, held, obtained, unarmed: true);
         _cache[key] = path;
         Console.WriteLine(path == null
@@ -160,6 +160,16 @@ public static class ActionPathPlanner
         return path;
     }
 
+    /// <summary>
+    /// Whether a goal of <paramref name="verb"/> may be planned with no implement the planner
+    /// recognises: it needs none, or something carried could still be handed to the critic for it.
+    /// With nothing that could serve, <c>RequiredToolRule</c> refuses the click for certain — a hairpin
+    /// is made for a lock and never for a slaughter — and planning it is planning a refusal. Planning
+    /// it anyway made every digging and unlocking will reach nearly every place (--will-audit breadth).
+    /// </summary>
+    private static bool CouldServeBareHanded(Verb verb, List<Item> held)
+        => !verb.RequiresTool || held.Any(i => Cathedral.Game.Narrative.Rules.ToolCombinationRules.CouldServe(verb, i));
+
     private static ActionPath? Search(Scene scene, PoV pov, PartyMember actor, WillTargets will, List<Item> held, string? obtained,
                                       bool unarmed)
     {
@@ -168,7 +178,7 @@ public static class ActionPathPlanner
 
         // Unarmed, a goal counts as in hand: nothing is fetched for it, and the click asks for the tool.
         bool Holds(Verb verb, string? acquired)
-            => unarmed && will.Wants(verb)
+            => unarmed && will.Wants(verb) && CouldServeBareHanded(verb, held)
                || verb.ReferenceToolIds.Any(id => id == acquired || held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
@@ -304,7 +314,7 @@ public static class ActionPathPlanner
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         if (path.Steps.Count == 1
-            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb) || path.Unarmed)) is { } goal)
+            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb) || path.Unarmed && CouldServeBareHanded(a.Verb, held))) is { } goal)
             return new ActionPath(new[] { new PathStep(goal) }, -1, will.TargetOf(goal), path.Unarmed);
 
         if (path.ToolStep == 0)
@@ -367,7 +377,7 @@ public static class ActionPathPlanner
             => verb.ReferenceToolIds.Any(id => held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
-        if (unarmed && will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action), Unarmed: true);
+        if (unarmed && will.Matches(action) && CouldServeBareHanded(action.Verb, held)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action), Unarmed: true);
         if (action.Verb.RequiresTool && !Holds(action.Verb)) return null;
         if (will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action));
 

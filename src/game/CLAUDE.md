@@ -776,7 +776,7 @@ a will to open a lock goes for the keys on the gatehouse pegs. **When no such im
 the place, the goal is planned bare-handed** (`ActionPath.Unarmed`, a second search) rather than refused:
 the planner knows only reference tools and made-for items, while the click takes anything carried to
 the critic (a short sword cutting a carcass) and `RequiredToolRule` asks for a tool when nothing is
-combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. Nothing else is modelled, so a path never passes a conversation,
+combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. **Only while the body carries something that could serve the act** (`ToolCombinationRules.CouldServe`: combinable, and not refused before the critic — a hairpin is made for a lock, never a slaughter): otherwise the click is refused for certain, and planning it anyway made every digging and unlocking will reach nearly every place — seven failed `--will-audit` on breadth. Nothing else is modelled, so a path never passes a conversation,
 a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
