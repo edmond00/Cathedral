@@ -156,7 +156,7 @@ the game ([VI](06-narration.md)). A failure spoils the work: its material is los
 - the level of use of **every implement of the station's trades the body carries**, whichever trade it
   belongs to and whether or not that trade is held; each kind of implement once, the best one carried;
 - the body's **handiwork**, from nought to three, read off the hands ([I](01-anatomy.md)): nought at a
-  score of nought, one at 1–2, two at 3–4, three at 5–6. Hands disabled by a wound give nothing.
+  score of 0–1, one at 2–3, two at 4–5, three at 6 alone. Hands disabled by a wound give nothing.
 
 **The difficulty** is read from the made thing's reference price ([IV §10](04-items.md)), the measure of
 the skill a thing holds beside its matter:

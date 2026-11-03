@@ -7,8 +7,8 @@ namespace Cathedral.Game.Narrative;
 /// (<see cref="Crafting.CraftRoll"/>), beside the trades it holds and the implements it carries.
 /// Setting to work (USE) is not affected: that roll is the act's, settled by one trade and one tool.
 ///
-/// <para>Source: hands organ (upper_limbs, 0–6). Formula: <c>(score + 1) / 2</c>, so 0 → 0, 1–2 → 1,
-/// 3–4 → 2, 5–6 → 3 — the same bands <see cref="ToolUsageProficiencyStat"/> reads off the same organ.
+/// <para>Source: hands organ (upper_limbs, 0–6). Formula: <c>score / 2</c>, so 0–1 → 0, 2–3 → 1,
+/// 4–5 → 2, and only a perfect 6 → 3.
 /// A disabled organ (a High-handicap wound) or an anatomy with no hands gives 0.</para>
 /// </summary>
 public class HandiworkStat : DerivedStat
@@ -19,7 +19,7 @@ public class HandiworkStat : DerivedStat
 
     public override int? BestValue => 3;
 
-    protected override int CalculateValue(int sourceScore) => sourceScore <= 0 ? 0 : (sourceScore + 1) / 2;
+    protected override int CalculateValue(int sourceScore) => sourceScore <= 0 ? 0 : sourceScore / 2;
 
     public override string FormatValue(int value) => value == 1 ? "+1 craft die" : $"+{value} craft dice";
 

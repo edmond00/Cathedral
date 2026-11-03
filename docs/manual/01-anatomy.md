@@ -206,7 +206,7 @@ value** — which for most is a floor, and for a duration or a price is a ceilin
 | Gender | genitories | as stamped at generation; else derived from the score |
 | Natural Attack | genitories | score, in dice |
 | Tool Usage Proficiency | hands | four bands — None at nought, Low at 1–2, Medium at 3–4, High at 5–6 |
-| Handiwork | hands | dice added to every thing made at a station — none at nought, 1 at 1–2, 2 at 3–4, 3 at 5–6 (see [Chapter X §6](10-crafting.md#6-at-the-station)) |
+| Handiwork | hands | dice added to every thing made at a station — none at 0–1, 1 at 2–3, 2 at 4–5, 3 at 6 only (see [Chapter X §6](10-crafting.md#6-at-the-station)) |
 | Hand Load | each arm, for the hand on its side | the heaviest burden that hand may hold — light at nought, medium at 1, heavy at 2 (see [Chapter IV §3](04-items.md#3-anchors)) |
 | Move Speed | legs | by table — 1, 2, 4, 6, 8 cells per cinetic point at scores 0 to 4 |
 | Runaway Dice | feet | score, never below 1 |
