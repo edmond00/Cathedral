@@ -205,8 +205,10 @@ public sealed class CraftingMenuRenderer
         if (y == _pagerRow && (Near(x, _prevX) || Near(x, _nextX))) return Near(x, _prevX) ? "craft:prev" : "craft:next";
         if (RowAt(y) is { } row)
         {
-            if (row.Left != null && x >= _boxX + LeftOff && x < _boxX + LeftOff + ColW) return $"craft:break:{row.Index}";
-            if (row.Right != null && x >= _boxX + RightOff && x < _boxX + RightOff + ColW) return $"craft:make:{row.Index}";
+            // named by the item, not the row: what a row holds depends on what is carried, and a script
+            // names what it means to break or make
+            if (row.Left != null && x >= _boxX + LeftOff && x < _boxX + LeftOff + ColW) return $"craft:break:{row.Left.ItemId}";
+            if (row.Right != null && x >= _boxX + RightOff && x < _boxX + RightOff + ColW) return $"craft:make:{row.Right.ItemId}";
         }
         return null;
     }

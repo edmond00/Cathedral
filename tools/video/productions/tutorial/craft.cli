@@ -1,0 +1,104 @@
+# The tutorial's last scene: crafting, later in the run. Started from make_craft_save.py's save (the city
+# take's last checkpoint, given Shoemaking at level 4, an awl, a piece of tanned leather and the cobbler's
+# leave), copied to the --save-path before the take. Back to the city, to the cobbler's leather bench:
+# Shoemaking sets to work there, the leather is broken down, and a belt made and sandals spoiled (the rolls are seeded: see make_craft_save.py). Then the
+# closing frame.
+#
+# FLAGS: as city.cli's, without --force-encounter (the journey back meets nothing), --observe-only naming
+#        the bench, plus --accept-history-mismatch.
+allow-flag-miss --start-area
+
+wait mode MainMenu 900
+mark resume_craft
+click menu Continue
+wait mode WorldView 900
+cursor rest
+hold 3
+
+# ── Back to the city ─────────────────────────────────────────────────────────────────────────────────
+mark craft_travel
+clip craft_travel
+travel 27788
+wait 900
+cursor rest
+hold 4
+travel-go
+wait mode LocationInteraction 900
+advance 12 900
+cursor rest
+hold 8
+clip end craft_travel
+
+# ── Setting to work ──────────────────────────────────────────────────────────────────────────────────
+mark craft_work
+clip craft_work
+click keyword @leather_bench
+choose 0
+hold 2
+choose shoemaking
+advance 12 900
+cursor rest
+hold 8
+click action 0
+# setting to work requires the implement combined with the act: "use an item", then the awl (the item
+# popup is sorted by name, and the awl comes first)
+choose 1
+hold 2
+choose 0
+advance 12 900
+cursor rest
+hold 6
+# the act with the awl combined is written as a new line: that one is executed
+click action 1
+choose 0
+advance 12 900
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 2
+click continue
+advance 20 900
+cursor rest
+hold 8
+clip end craft_work
+
+# ── At the bench ─────────────────────────────────────────────────────────────────────────────────────
+mark craft_menu
+clip craft_menu
+click button
+wait mode Crafting 900
+cursor rest
+hold 12
+click element craft:break:tanned_leather
+wait 900
+cursor rest
+hold 10
+click element craft:make:leather_belt
+wait 900
+cursor rest
+hold 12
+click element craft:make:sandals
+wait 900
+cursor rest
+hold 12
+click element craft:leave
+wait 900
+cursor rest
+hold 4
+clip end craft_menu
+
+# ── Closure ──────────────────────────────────────────────────────────────────────────────────────────
+mark closure
+clip closure
+cursor hide
+hold 14
+clip end closure
+state
+quit
