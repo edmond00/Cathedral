@@ -1,0 +1,47 @@
+# will_no_duplicate — a will offers no act twice in a phase, and a second thought goes another way
+#
+# A will's goal is not chosen, so it never passed the proposal ledger: Bargaining asked about a trader
+# twice put the same button on screen twice (a playtest, on a blacksmith's apprentice). Now its ways are
+# read through what the ledger leaves. The poultry keeper trades from the coop and stands in the
+# Courtyard (see cli/verb/ask_to_be_led/), so two ways of two steps run through this one person: being
+# led to the premises, and following at a distance. Which comes first is the will's own pick; both
+# reach the screen, and the third thought has nothing left and says so without proposing. Not "that
+# does nothing for it", which is the refusal of an object that was never on the way.
+#
+# --organs for the noetic points: three thoughts and the opening observation on the kit's own pool
+# would not always fit.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --start-area "Courtyard" --period afternoon --observe-only "poultry_keeper" --grant-mm bargaining --organs all=5
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+advance 12 180
+expect-state will "will bargaining steps=2 first="
+
+click keyword 0
+choose 0
+choose bargaining
+advance 12 180
+expect I must first
+
+click keyword 0
+choose 0
+choose bargaining
+advance 12 180
+expect ask him to take me to the coop
+expect follow him at a distance
+expect-not nothing else comes to mind
+
+click keyword 0
+choose 0
+choose bargaining
+advance 12 180
+expect nothing else comes to mind
+expect-not that does nothing for it
+quit

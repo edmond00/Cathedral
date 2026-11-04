@@ -343,7 +343,10 @@ Deliberating, it is less strict than in attending. Of the acts the object afford
 course to what it wants of at most three acts, the wanted act included — or of one no longer than the
 shortest course the place offers, however long that is — are its candidates; it is offered only the
 candidate whose course is shortest, and where several courses are equally short it chooses among
-their first acts itself. On an object that affords no candidate it proposes nothing, saying only
+their first acts itself. An act already offered within the phase is no candidate
+([§4](#4-the-two-ledgers)), so a second deliberation upon the same object takes the next course through
+it, within the same bounds, and with none left the will proposes nothing and lets the object go. On an
+object that affords no candidate it proposes nothing, saying only
 what it wants; it admits no doubt, its goal being set by its course, and
 tries again — once, a will being of medium readiness — only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
 within the place, it declines in both and says that only leaving offers what it wants. Bearing the
