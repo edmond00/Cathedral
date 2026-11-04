@@ -144,16 +144,12 @@ class Take:
         return min([t1 + 2.5] + following)
 
     def shows(self, i):
-        """When passage i starts appearing on screen. Its first word comes SHOWS after the model's; but
-        a part chained straight after another (the acting mind's line after the thinking mind's) is
-        written while the box still shows the one before, and appears only when that one is pressed on."""
-        t = self.P[i]["ts"] + SHOWS
-        if i and not is_dialogue(self.P[i]) and self.P[i]["t0"] - self.P[i - 1]["t1"] < 1.0:
-            press = self.click(self.P[i - 1]["t1"] - 0.2, 1e9, cmd="click continue") or \
-                    self.click(self.P[i - 1]["t1"] - 0.2, 1e9)
-            if press is not None:
-                t = max(t, press + 0.4)
-        return round(t, 2)
+        """When passage i starts appearing on screen: SHOWS after the model's first word. Every take is
+        recorded under --no-generate-ahead, so a passage is written only while it is on screen: one that
+        starts the moment the last ended (a will's act after its own reasoning, in the same box) streams in
+        there and then. (Takes recorded without it hid such a part until the next press, and this once
+        waited for that press: in a --no-generate-ahead take it made the reading a whole passage late.)"""
+        return round(self.P[i]["ts"] + SHOWS, 2)
 
     def R(self, i):
         return {"text": self.P[i]["text"], "style": "reading", "at": self.shows(i)}
