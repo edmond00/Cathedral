@@ -26,10 +26,11 @@ namespace Cathedral.Game.Narrative.Sanitizer;
 /// </para>
 ///
 /// <para>
-/// This covers Layers 2 and 3 (the detection that triggers the LLM rewrite). Layer 1
-/// (<see cref="ForbiddenWordsDictionary"/>) is a flat deterministic replacement applied before any
-/// detection and is deliberately left alone: it cannot truncate or reword a sentence, so it has none
-/// of the failure mode this guard exists for.
+/// This covers Layers 2 and 3 (the detection that triggers the LLM rewrite) in full. Layer 1
+/// (<see cref="ForbiddenWordsDictionary"/>) consults it only for names: a listed word capitalised in
+/// mid-sentence and supplied by the request ("the Ashen Star", an order the history generator named)
+/// is part of a name and is kept, while the same word in lower case is still replaced — a common word
+/// the game's own text let slip gets no licence from this.
 /// </para>
 /// </summary>
 public static class SourceVocabulary

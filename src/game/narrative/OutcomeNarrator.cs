@@ -56,7 +56,7 @@ public class OutcomeNarrator
         // sink is supplied, the outcome streams into the preview box like every other narration.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>
@@ -91,7 +91,7 @@ public class OutcomeNarrator
         {
             return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
                 felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(felt.ModusMentis));
         }
         finally
         {
@@ -192,7 +192,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>The neutral sentence a refusal is re-voiced from — also the fallback shown when it cannot be.</summary>
@@ -246,7 +246,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(modusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
     }
 
     /// <summary>
@@ -258,8 +258,10 @@ public class OutcomeNarrator
     /// were not. Collapsing them into one "it did not work" leaves the rewrite to invent which, and
     /// it invents the flattering one.</para>
     ///
-    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries the critic's own reason, because it
-    /// is the only kind an LLM was asked about.</para>
+    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries a reason after the sentence: the
+    /// refusal's own fixed line ("I think nothing about it could do any of this work"), since it is the
+    /// only kind an LLM decided. The critic is no longer asked to explain itself — see
+    /// <c>CriticTrees.CannotReason</c>.</para>
     /// </summary>
     public async Task<string> NarrateItemCombinationFailureAsync(
         ParsedNarrativeAction action,
@@ -278,6 +280,7 @@ public class OutcomeNarrator
             ToolFailureKind.NoProficiency => NeutralNarration.ItemCombinationNoProficiency(item.WithArticle()),
             ToolFailureKind.BeyondSkill   => NeutralNarration.ItemCombinationBeyondSkill(display, item.WithArticle()),
             ToolFailureKind.NotAWeapon    => NeutralNarration.ItemCombinationNotAWeapon(item.WithArticle()),
+            ToolFailureKind.TooHeavy      => NeutralNarration.ItemCombinationTooHeavy(item.WithArticle()),
             _                             => NeutralNarration.ItemCombinationFailure(display, item.WithArticle()),
         };
         if (kind == ToolFailureKind.WrongTool && !string.IsNullOrWhiteSpace(criticReason))
@@ -286,7 +289,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
@@ -307,7 +310,7 @@ public class OutcomeNarrator
     /// so the "I tried to …" framing embeds the plain phrasing rather than the already-styled label;
     /// falls back to DisplayText, then to ActionText with any leading "try to " stripped.
     /// </summary>
-    private static string ActionDisplay(ParsedNarrativeAction action)
+    internal static string ActionDisplay(ParsedNarrativeAction action)
     {
         if (!string.IsNullOrWhiteSpace(action.NeutralActionText)) return action.NeutralActionText;
         if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;

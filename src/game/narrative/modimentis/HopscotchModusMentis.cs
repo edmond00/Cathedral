@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class HopscotchModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "hopscotch";
     public override string DisplayName      => "Hopscotch";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Hops: one foot, then two, square to square along a chalked line and back, never touching a line. Keeps count and balance at once, and inclines toward the quick precise hop over the long stride.";
     public override string SkillMeans       => "hopping square to square on one foot without touching a line";

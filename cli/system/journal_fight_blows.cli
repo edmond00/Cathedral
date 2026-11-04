@@ -1,0 +1,31 @@
+# Every blow of a fight reaches the journal: who struck whom, with what, and what it left.
+#
+# A fight has a log, but it is the board's — dice, Cinetic Points, "HIT!" — and nothing of it reached
+# the journal but the fight's milestone. FightModeAdapter now records each attack as an event, hit or
+# miss, a fall and an escape, naming the enemy as the player knows it ("the wolf"), never by the
+# generated name on the board. The same blows as fight_victory_companion.cli.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm pugilitas:5,brawling:5 --start-fight wolf --no-chronicler
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode Fighting 90
+
+strategy succeed
+
+click skill "Lacerate"
+click skill "Knee Strike"
+wait 25
+click fighter Redhorn
+wait 25
+click continue
+wait 25
+
+inspect journal
+expect-state journal kind=Event
+expect-state journal the wolf
+expect-no-state journal Redhorn
+
+quit

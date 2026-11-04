@@ -75,16 +75,17 @@ public sealed class Chronicler : IDisposable
         // Snapshot on this thread; the task sees copies only.
         var config = ChroniclerPrompt.Shipped;
         string message = ChroniclerPrompt.UserMessage(entries, config, memory);
-        _job = Task.Run(() => Write(llm, group, message, config));
+        int tokens = ChroniclerPrompt.TokensFor(entries, config);
+        _job = Task.Run(() => Write(llm, group, message, tokens, config));
     }
 
-    private async Task<(int, string?)> Write(LlamaServerManager llm, int group, string message, ChronicleConfig config)
+    private async Task<(int, string?)> Write(LlamaServerManager llm, int group, string message, int tokens, ChronicleConfig config)
     {
         try
         {
             if (_slot < 0)
                 _slot = await llm.CreateInstanceAsync(ChroniclerPrompt.System[config.Voice], precache: false);
-            string? reply = await llm.GenerateBackgroundAsync(_slot, message, config.MaxTokens, _stop.Token);
+            string? reply = await llm.GenerateBackgroundAsync(_slot, message, tokens, _stop.Token);
             return (group, reply == null ? null : ChroniclerPrompt.Clean(reply));
         }
         catch (OperationCanceledException) { return (group, null); }

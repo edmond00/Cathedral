@@ -61,14 +61,18 @@ public static class JournalRecorder
         {
             string text = block.Text;
             // The outcome block opens on its verdict for the screen; the chips say what came of it.
-            foreach (var prefix in new[] { "[SUCCESS] ", "[FAILURE] " })
+            foreach (var prefix in new[] { "[SUCCESS] ", "[FAILURE] ", "[IMPOSSIBLE] " })
                 if (text.StartsWith(prefix, StringComparison.Ordinal)) text = text[prefix.Length..];
             // A bracketed line is a hand-written system note ("[The conversation has ended.]").
             bool systemNote = text.Length >= 2 && text[0] == '[' && text[^1] == ']';
             if (!systemNote)
             {
                 var e = Add(JournalEntryKind.Narration, text, actor);
-                if (e != null) e.Block = block.Type;
+                if (e != null)
+                {
+                    e.Block = block.Type;
+                    if (block.Attempt != null) { e.Attempt = block.Attempt.Act; e.Succeeded = block.Attempt.Succeeded; }
+                }
             }
         }
 
@@ -90,6 +94,12 @@ public static class JournalRecorder
     private static bool IsStory(Outcome chip) => chip is not (ModusMentisPracticeOutcome or ModusMentisGrantOutcome
                                                               or SkillAcquisitionOutcome
                                                               or Cathedral.Game.Scene.FocusLostOutcome or WoundInflictionOutcome);
+
+    /// <summary>
+    /// Something no narration tells: the journey, a meeting on the road, a blow in a fight. The text is
+    /// the journal's own plain sentence, shown as it is and given as it is to the chronicler.
+    /// </summary>
+    public static void Event(string text, PartyMember? who = null) => Add(JournalEntryKind.Event, text, who);
 
     /// <summary>A line spoken in a conversation: an NPC's, or the reply the player picked.</summary>
     public static void Line(string speaker, string text)

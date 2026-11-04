@@ -55,7 +55,7 @@ public static class ChroniclerBench
                             ["variant"] = grouping == "visit" ? name : grouping,
                             ["voice"] = config.Voice.ToString(),
                             ["memory"] = config.Memory.ToString(),
-                            ["max_tokens"] = config.MaxTokens,
+                            ["max_tokens"] = ChroniclerPrompt.TokensFor(entries, config),
                             ["system"] = $"{ChroniclerPrompt.System[config.Voice].TrimEnd()}\n\n{SceneSetting.Rule}",
                             ["summary_system"] = $"{ChroniclerPrompt.SummarySystem.TrimEnd()}\n\n{SceneSetting.Rule}",
                             ["user"] = ChroniclerPrompt.UserMessage(entries, config, ChroniclerPrompt.MemoryPlaceholder),

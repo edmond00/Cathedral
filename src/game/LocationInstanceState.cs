@@ -92,6 +92,12 @@ public sealed class LocationInstanceState
     /// </summary>
     public HashSet<string> DepartedNpcs { get; init; } = new();
 
+    /// <summary>
+    /// Workshops (section display names) whose master has let the player use the equipment. Given
+    /// once and kept: a leave asked for on one visit holds on every later one.
+    /// </summary>
+    public HashSet<string> AuthorizedWorkshops { get; init; } = new();
+
     // ── Wiring ────────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -106,6 +112,7 @@ public sealed class LocationInstanceState
     {
         scene.ItemDepletions = ItemDepletions;
         scene.DepartedNpcs   = DepartedNpcs;
+        scene.AuthorizedWorkshops = AuthorizedWorkshops;
     }
 
     /// <summary>

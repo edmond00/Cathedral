@@ -41,7 +41,7 @@ public sealed class Hammer : ToolItem
 {
     public override string ItemId      => "hammer";
     public override string DisplayName => "Hammer";
-    public override string Description => "A blacksmith's hammer, head dulled and gleaming from years of strikes";
+    public override string Description => "A blacksmith's hammer, head dulled and gleaming from rounds of strikes";
     public override WeightClass Weight => WeightClass.Medium;
 }
 

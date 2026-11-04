@@ -316,6 +316,20 @@ public class BodyArtViewer
         return changed;
     }
 
+    /// <summary>
+    /// The terminal cell of the first art glyph belonging to an organ part (by part id), or null when
+    /// the art draws no such part. What the CLI's <c>point organ</c> hovers, so a script reaches the
+    /// stats the panel shows for one part through the same hover a player makes.
+    /// </summary>
+    public (int X, int Y)? CliCellOfOrganPart(string organPartId)
+    {
+        for (int ay = 0; ay < _artData.Height; ay++)
+            for (int ax = 0; ax < _artData.Width; ax++)
+                if (_artData.GetOrganPartInfoAt(ax, ay)?.OrganPartName == organPartId)
+                    return (ax + ArtOffsetX, ay + ArtOffsetY);
+        return null;
+    }
+
     /// <summary>Clears all hover state.</summary>
     public void ClearHover()
     {

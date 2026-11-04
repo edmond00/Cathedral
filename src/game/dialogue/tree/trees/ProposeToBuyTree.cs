@@ -89,8 +89,8 @@ public class ProposeToBuyTree : DialogueTree
             WaresBest()),
 
         new PlayerOption("wares_ask_lasting", "ask which of it will actually last",
-            "Which of it will still be sound in five years? That is what I would buy.",
-            "I ask {npc:name} which of it will still be sound in five years.",
+            "Which of it will still be sound in five rounds? That is what I would buy.",
+            "I ask {npc:name} which of it will still be sound in five rounds.",
             WaresLasting()));
 
     private static NpcLineNode WaresBest() => new(
@@ -224,9 +224,9 @@ public class ProposeToBuyTree : DialogueTree
 
     private static NpcLineNode FlatterLearn() => new(
         nodeId:          "flatter_learn",
-        replica:         "Years of doing it badly where nobody could see. {npc:labour}. You get good at it or you take another trade.",
-        replicaIndirect: "I tell {you:name} I learned it over years of doing it badly where nobody could see, and that my day is {npc:labour}.",
-        replicaHeard:    "{npc:name} says they learned it over years of doing it badly where nobody could see, and describes their working day.",
+        replica:         "Rounds of doing it badly where nobody could see. {npc:labour}. You get good at it or you take another trade.",
+        replicaIndirect: "I tell {you:name} I learned it over rounds of doing it badly where nobody could see, and that my day is {npc:labour}.",
+        replicaHeard:    "{npc:name} says they learned it over rounds of doing it badly where nobody could see, and describes their working day.",
 
         new PlayerOption("learn_respect", "say that sounds like a hard road",
             "That was a hard way to learn it. It shows in the work.",

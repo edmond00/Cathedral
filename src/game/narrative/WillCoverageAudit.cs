@@ -183,7 +183,13 @@ public static class WillCoverageAudit
             bool noPlaces = row.Places.Length == 0;
             bool narrow   = row.RelatedStarts > 0 && row.Related < MinRelated;
             bool broad    = row.Breadth > MaxBreadth;
-            bool grown    = row.OwnBreadth > MaxBreadth && row.DesireCount > 1;
+            // A crafting will is broad by design, not by drift: its targets are its station, its material and
+            // its tool, and wood, fibre and clay lie in most places. The breadth that makes another will a
+            // general mind is here the point — a joiner who passes a log should want it — so it is noted (~)
+            // and not failed. Its act, USE, is still bound to one station kind.
+            bool crafting = ModusMentisRegistry.Instance.GetModusMentis(row.Id) is Crafting.CraftingModusMentis;
+            bool grown    = row.OwnBreadth > MaxBreadth && row.DesireCount > 1 && !crafting;
+            broad        |= crafting && row.OwnBreadth > MaxBreadth;
             string mark   = noPlaces || grown ? "✗" : narrow ? "!" : broad ? "~" : "✓";
             sb.AppendLine($"  {mark} {row.Id,-22} {row.TargetCount,4} {100 * row.Coverage,5:0}% {row.MeanSteps,5:0.0} "
                         + $"{(row.RelatedStarts == 0 ? "  none" : $"{100 * row.Related,6:0}%")} {100 * row.Breadth,6:0}%  "

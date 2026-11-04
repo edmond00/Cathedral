@@ -1,0 +1,31 @@
+# ask_to_use_workshop — not offered to a body with no trade there
+#
+# Without a crafting modus mentis that works a station of the smithy, nobody has a reason to ask for it:
+# the verb is withheld, and the pinned goal falls back to another.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Forge" --period dawn --observe-only blacksmith
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+allow-flag-miss --goal-only
+strategy succeed
+goal ask_to_use_workshop
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-no-verb ask_to_use_workshop
+quit

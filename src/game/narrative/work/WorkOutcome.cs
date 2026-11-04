@@ -103,7 +103,7 @@ public sealed class WorkOutcome
 
             // Unknown skill: learnable only if the stint's XP reaches the threshold in one go.
             var template = ModusMentisRegistry.Instance.GetModusMentis(mmId);
-            bool willLearn = template != null && xp >= threshold;
+            bool willLearn = template != null && xp >= threshold && !member.IsModusMentisRejected(mmId);
             ModusMentis? dropped = null;
 
             if (apply && willLearn && template != null)

@@ -105,7 +105,7 @@ public class DialogueOptionGenerator
                     slot, expanded, NarrationKind.DialogueReplica,
                     mm.PersonaReminder2, addressee: addressee, keepHistory: true,
                     styleInstruction: mm.StyleInstruction, dialogueContext: subject,
-                    speakerName: ctx.Names.Placeholder("you"), preview: sink, ct: ct);
+                    speakerName: ctx.Names.Placeholder("you"), preview: sink, ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
                 // Same structural parse as the NPC side: unwrap the grammar's delimiter quotes.
                 text = ctx.Names.ToReal(DialogueReplicaWriter.NormalizeReply(text));
 

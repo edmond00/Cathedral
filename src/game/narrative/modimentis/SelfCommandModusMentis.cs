@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class SelfCommandModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "self_command";
     public override string DisplayName      => "Self-Command";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Terse };
     public override string MenuDescription =>
         "Overrides the body: keeps the face level under provocation, the hands steady under fear, and the voice ordinary when it is not. Not the absence of the impulse but the refusal to be governed by it.";
     public override string SkillMeans       => "the holding of a body against what it wants to do";

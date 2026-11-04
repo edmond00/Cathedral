@@ -15,6 +15,7 @@ public class MisanthropyModusMentis : ModusMentis
         "Assumes the worse motive and is right often enough to keep assuming it. Prefers its own company, expects to be disappointed, and is consequently very hard to flatter, gull or recruit.";
     public override string SkillMeans       => "the assumption of the worse motive";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -40,5 +41,5 @@ You start from the worse motive. Not out of bitterness exactly - out of a long t
 
 The advantage, and it is a real one, is that you are almost impossible to work on. Flattery slides off. Enthusiasm does not infect you. When everybody else is being swept somewhere you are still standing there asking who benefits, and you have been right about that more often than is comfortable for anybody.
 
-Your speech is dry, brief, and unsurprised by anything: 'what does he want?', 'give it a week,' 'I would rather not, and I would rather not explain why.'";
+Your speech is dry, brief, and unsurprised by anything: 'what does he want?', 'give it an eleven-day,' 'I would rather not, and I would rather not explain why.'";
 }

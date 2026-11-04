@@ -22,7 +22,17 @@
     project's own page (edmond00.itch.io/proscribed). Override only to push somewhere else.
 
     The channel name is not cosmetic: itch reads the platform from it, so it must contain
-    "windows" for players to be offered this build on Windows.
+    "windows" for players to be offered this build on Windows, and "linux" on Linux.
+
+.PARAMETER Runtime
+    Which platform's build to publish, as package.ps1 -Runtime named it: win-x64 (the default) or
+    linux-x64. It picks the staged folder (dist/ or dist-linux/, and their -demo twins), the
+    channels (windows / windows-demo, or linux / linux-demo), the files the pre-flight requires and
+    how the executable is checked.
+
+    A Linux build is published FROM LINUX — a Linux machine or a WSL2 distro, with pwsh — because
+    the smoke test starts the staged build, and a Linux executable does not start on Windows. It
+    needs a display: a desktop session, WSLg, or `xvfb-run pwsh ./publish.ps1 -Runtime linux-x64`.
 
 .PARAMETER Status
     Report the channel's current builds and exit. Uploads nothing. Good first run.
@@ -40,6 +50,10 @@
     as a demo, and without -Demo it insists on the full game — so neither can reach the other's
     channel by a mixed-up folder.
 
+.PARAMETER CheckOnly
+    Run the pre-flight and the smoke test, then stop. Uploads nothing and needs neither butler nor
+    a login — the way to prove a staged build is publishable before anyone is asked to say yes.
+
 .PARAMETER SkipSmokeTest
     Do not launch the staged build before uploading. The smoke test costs about a minute and is
     the only check that the artifact actually runs, so skip it only when re-pushing something you
@@ -51,6 +65,8 @@
     ./publish.ps1 -UserVersion 0.1.0
     ./publish.ps1 -Demo -Status
     ./publish.ps1 -Demo
+    ./publish.ps1 -Runtime linux-x64 -Status
+    ./publish.ps1 -Runtime linux-x64 -Demo
 #>
 param(
     [string]$Target,
@@ -59,14 +75,26 @@ param(
     [switch]$Status,
     [switch]$Yes,
     [switch]$SkipSmokeTest,
-    [switch]$Demo
+    [switch]$Demo,
+    [string]$Runtime = "win-x64",
+    [switch]$CheckOnly
 )
 
 $ErrorActionPreference = "Stop"
 $root = $PSScriptRoot
 
-# Must match $ShipName in package.ps1 and the AssemblyName in the csproj.
-$ShipExe   = "ProscribedPalimpsest.exe"
+if ($Runtime -notin @("win-x64", "linux-x64")) {
+    Write-Host "`nFAILED: -Runtime must be win-x64 or linux-x64 (got '$Runtime')." -ForegroundColor Red; exit 1
+}
+# Everything Linux-specific below hangs off this one test, as in package.ps1.
+$LinuxTarget = $Runtime -like "linux-*"
+# Which machine this script runs on, which is not the same question: a Windows build can be
+# published from Linux (nothing about it is started there but the smoke test, which then refuses),
+# and the reverse is what the Linux smoke test cannot do.
+$OnLinuxHost = $IsLinux -eq $true
+
+# Must match $ShipName in package.ps1 and the AssemblyName in the csproj. No extension on Linux.
+$ShipExe   = if ($LinuxTarget) { "ProscribedPalimpsest" } else { "ProscribedPalimpsest.exe" }
 $ManualPdf = "ProscribedPalimpsest-Manual.pdf"
 
 # Named here only so the closing reminder can point at the staged copy. The manual is NOT
@@ -86,8 +114,18 @@ $DefaultTarget = "edmond00/proscribed:windows"
 # butler cannot make; see "The demo" in the release skill.
 $DemoTarget = "edmond00/proscribed:windows-demo"
 
+# Linux: the same page, two more channels, named so itch offers them on Linux. Each diffs only
+# against itself, so the first push to each sends the whole folder, model included.
+if ($LinuxTarget) {
+    $DefaultTarget = "edmond00/proscribed:linux"
+    $DemoTarget    = "edmond00/proscribed:linux-demo"
+}
+# The word itch reads the platform from, checked against the target below.
+$PlatformWord = if ($LinuxTarget) { "linux" } else { "windows" }
+
 if ([string]::IsNullOrWhiteSpace($StageDir)) {
-    $StageDir = if ($Demo) { "dist-demo/ProscribedPalimpsest-Demo" } else { "dist/ProscribedPalimpsest" }
+    $suffix   = if ($LinuxTarget) { "-linux" } else { "" }
+    $StageDir = if ($Demo) { "dist-demo$suffix/ProscribedPalimpsest-Demo" } else { "dist$suffix/ProscribedPalimpsest" }
 }
 
 function Step($text) { Write-Host "`n== $text" -ForegroundColor Cyan }
@@ -103,16 +141,23 @@ function Find-Butler {
     $onPath = Get-Command butler -ErrorAction SilentlyContinue
     if ($onPath) { return $onPath.Source }
 
-    $brothRoots = @("$env:APPDATA\itch\broth\butler", "$env:LOCALAPPDATA\itch\broth\butler")
+    $brothRoots = if ($OnLinuxHost) { @("$HOME/.config/itch/broth/butler") }
+                  else { @("$env:APPDATA\itch\broth\butler", "$env:LOCALAPPDATA\itch\broth\butler") }
+    $butlerName = if ($OnLinuxHost) { "butler" } else { "butler.exe" }
     foreach ($broth in $brothRoots) {
         if (-not (Test-Path $broth)) { continue }
         # Several versions can be installed side by side; take the newest.
-        $exe = Get-ChildItem $broth -Recurse -Filter "butler.exe" -ErrorAction SilentlyContinue |
+        $exe = Get-ChildItem $broth -Recurse -Filter $butlerName -File -ErrorAction SilentlyContinue |
                Sort-Object LastWriteTime -Descending | Select-Object -First 1
         if ($exe) { return $exe.FullName }
     }
     return $null
 }
+
+# -CheckOnly uploads nothing, so it needs neither butler nor a login: the pre-flight and the smoke
+# test below are the whole of it.
+if ($CheckOnly -and $Status) { Fail "-CheckOnly and -Status are two different questions; pass one." }
+if (-not $CheckOnly) {
 
 Step "Locating butler"
 $butler = Find-Butler
@@ -138,10 +183,10 @@ Note $butler
 # Presence of the credentials file is not proof the token is still valid — only a real request
 # tells you that, which is what -Status is for.
 
-$credsPaths = @(
+$credsPaths = if ($OnLinuxHost) { @("$HOME/.config/itch/butler_creds") } else { @(
     "$env:USERPROFILE\.config\itch\butler_creds",
     "$env:APPDATA\itch\butler_creds"
-)
+) }
 $haveCreds = $credsPaths | Where-Object { Test-Path $_ }
 $haveApiKey = -not [string]::IsNullOrWhiteSpace($env:BUTLER_API_KEY)
 
@@ -161,6 +206,8 @@ it in the environment as BUTLER_API_KEY. Do not pass it as an argument to anythi
 }
 Note $(if ($haveApiKey) { "using BUTLER_API_KEY from the environment" } else { "using stored login ($($haveCreds | Select-Object -First 1))" })
 
+}  # -not $CheckOnly
+
 # ── 3. Resolve the target ────────────────────────────────────────────────────
 
 if ([string]::IsNullOrWhiteSpace($Target)) { $Target = if ($Demo) { $DemoTarget } else { $DefaultTarget } }
@@ -170,7 +217,7 @@ No target. Pass -Target user/game:channel, or set `$DefaultTarget at the top of 
 
     user     your itch.io account name (as it appears in your page URL)
     game     the project slug
-    channel  must contain "windows" - itch reads the platform from the channel name
+    channel  must contain "windows" or "linux" - itch reads the platform from the channel name
 
 e.g.  ./publish.ps1 -Target edmond00/proscribed:windows
 "@
@@ -178,9 +225,14 @@ e.g.  ./publish.ps1 -Target edmond00/proscribed:windows
 if ($Target -notmatch '^[^/]+/[^:]+:.+$') {
     Fail "Target '$Target' is not in user/game:channel form."
 }
-if ($Target -notmatch 'win') {
-    Write-Host "   WARNING: channel name has no 'windows' in it. itch infers the platform from" -ForegroundColor Yellow
+if ($Target -notmatch $PlatformWord) {
+    Write-Host "   WARNING: channel name has no '$PlatformWord' in it. itch infers the platform from" -ForegroundColor Yellow
     Write-Host "            the channel, so players may not be offered this build." -ForegroundColor Yellow
+}
+# The other platform's word in the channel would offer a build to players who cannot run it.
+$otherWord = if ($LinuxTarget) { "windows" } else { "linux" }
+if ($Target -match $otherWord) {
+    Fail "target '$Target' names $otherWord, but this is the $Runtime build. Pass -Runtime $(if ($LinuxTarget) { 'win-x64' } else { 'linux-x64' }), or fix -Target."
 }
 Note "target: $Target"
 
@@ -206,7 +258,7 @@ $required = @(
     $ShipExe,
     "assets/fonts/FreeMono.ttf",
     "models/model.gguf",
-    "models/llama/llama-server.exe",
+    $(if ($LinuxTarget) { "models/llama-linux/llama-server" } else { "models/llama/llama-server.exe" }),
     "models/embeddings/glove.6B.100d.txt"
 )
 $missing = $required | Where-Object { -not (Test-Path (Join-Path $stage $_)) }
@@ -214,15 +266,36 @@ if ($missing) {
     Fail ("the staged build is incomplete - re-run ./package.ps1:`n     " + ($missing -join "`n     "))
 }
 
-# A console-subsystem exe means package.ps1 was bypassed or -p:Ship=true was lost, and players
-# would get a black diagnostic window behind the game. Cheap to check, embarrassing to ship.
-$bytes = [System.IO.File]::ReadAllBytes((Join-Path $stage $ShipExe))
-$peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
-$subsystem = [BitConverter]::ToUInt16($bytes, $peOffset + 92)
-if ($subsystem -ne 2) {
-    Fail "$ShipExe is a console build (subsystem $subsystem, expected 2/GUI). Build it with ./package.ps1, which passes -p:Ship=true."
+if ($LinuxTarget) {
+    # Linux has no console subsystem to lose; what can be wrong instead is the wrong kind of file
+    # (a Windows exe staged under the Linux name) or, on a Linux disk, an executable bit missing —
+    # a game, or a llama-server, that the player's machine will refuse to start.
+    $head = [byte[]]::new(4)
+    $fs = [System.IO.File]::OpenRead((Join-Path $stage $ShipExe))
+    try { [void]$fs.Read($head, 0, 4) } finally { $fs.Dispose() }
+    if ($head[0] -ne 0x7F -or $head[1] -ne 0x45 -or $head[2] -ne 0x4C -or $head[3] -ne 0x46) {
+        Fail "$ShipExe is not a Linux (ELF) executable. Re-run ./package.ps1 -Runtime linux-x64."
+    }
+    if ($OnLinuxHost) {
+        foreach ($exe in @($ShipExe, "models/llama-linux/llama-server")) {
+            $mode = (Get-Item (Join-Path $stage $exe)).UnixFileMode
+            if (-not ($mode -band [System.IO.UnixFileMode]::UserExecute)) {
+                Fail "$exe is not executable (mode $mode). Re-run ./package.ps1 -Runtime linux-x64 on this machine."
+            }
+        }
+    }
+    Note "ELF executable, all required files present"
+} else {
+    # A console-subsystem exe means package.ps1 was bypassed or -p:Ship=true was lost, and players
+    # would get a black diagnostic window behind the game. Cheap to check, embarrassing to ship.
+    $bytes = [System.IO.File]::ReadAllBytes((Join-Path $stage $ShipExe))
+    $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+    $subsystem = [BitConverter]::ToUInt16($bytes, $peOffset + 92)
+    if ($subsystem -ne 2) {
+        Fail "$ShipExe is a console build (subsystem $subsystem, expected 2/GUI). Build it with ./package.ps1, which passes -p:Ship=true."
+    }
+    Note "GUI subsystem, all required files present"
 }
-Note "GUI subsystem, all required files present"
 
 $files = Get-ChildItem $stage -Recurse -File
 Note ("{0:N0} files, {1:N2} GB" -f $files.Count, (($files | Measure-Object Length -Sum).Sum / 1GB))
@@ -244,12 +317,32 @@ Note ("{0:N0} files, {1:N2} GB" -f $files.Count, (($files | Measure-Object Lengt
 # directory, the GGUF loads, a backend is chosen, llama-server answers, and an OpenGL window opens
 # with the fonts loaded. That is every packaging failure mode there is.
 
+if (-not $SkipSmokeTest -and $LinuxTarget -and -not $OnLinuxHost) {
+    Fail @"
+a Linux build cannot be smoke-tested from Windows, and the smoke test is also what keeps the demo
+and the full game on their own channels. Publish it from Linux: a WSL2 distro with pwsh is enough
+(WSLg gives it a display), e.g.
+
+    pwsh ./publish.ps1 -Runtime linux-x64$(if ($Demo) { ' -Demo' })
+
+Nothing has been uploaded.
+"@
+}
+if (-not $SkipSmokeTest -and -not $LinuxTarget -and $OnLinuxHost) {
+    Fail "a Windows build cannot be smoke-tested from Linux. Publish it from Windows. Nothing has been uploaded."
+}
+if (-not $SkipSmokeTest -and $LinuxTarget -and
+    [string]::IsNullOrWhiteSpace($env:DISPLAY) -and [string]::IsNullOrWhiteSpace($env:WAYLAND_DISPLAY)) {
+    Fail "no display to open the game's window on (neither DISPLAY nor WAYLAND_DISPLAY is set). Run from a desktop session, or under a virtual one: xvfb-run -a pwsh ./publish.ps1 -Runtime linux-x64$(if ($Demo) { ' -Demo' }). Nothing has been uploaded."
+}
+
 if (-not $SkipSmokeTest) {
     Step "Smoke-testing the staged build"
     Note "launching with --cpu (packaging check; the GPU path is exercised by playing)"
 
-    $outFile = Join-Path $env:TEMP "pp_smoke_out.txt"
-    $errFile = Join-Path $env:TEMP "pp_smoke_err.txt"
+    $tmp     = [System.IO.Path]::GetTempPath()
+    $outFile = Join-Path $tmp "pp_smoke_out.txt"
+    $errFile = Join-Path $tmp "pp_smoke_err.txt"
     Remove-Item $outFile, $errFile -ErrorAction SilentlyContinue
 
     # --cpu, deliberately. The smoke test's job is to prove the PACKAGE works — that the runtime
@@ -272,8 +365,17 @@ if (-not $SkipSmokeTest) {
         Start-Sleep -Seconds 2
 
         if (-not $sawWindow) {
-            $proc.Refresh()
-            if (-not $proc.HasExited -and $proc.MainWindowTitle) { $sawWindow = $true }
+            if ($LinuxTarget) {
+                # .NET reads no window titles on Linux. The game says so itself once the window is
+                # up and its renderers are built — the line comes from the window's load handler.
+                if ((Test-Path $outFile) -and
+                    (Select-String -Path $outFile -Pattern "Location Travel Mode Ready" -SimpleMatch -Quiet -ErrorAction SilentlyContinue)) {
+                    $sawWindow = $true
+                }
+            } else {
+                $proc.Refresh()
+                if (-not $proc.HasExited -and $proc.MainWindowTitle) { $sawWindow = $true }
+            }
         }
         if (-not $sawServer -and (Test-Path $outFile)) {
             if (Select-String -Path $outFile -Pattern "LLM Server is ready" -Quiet -ErrorAction SilentlyContinue) {
@@ -345,6 +447,12 @@ foreach ($generated in @("logs", "catalyst-models", "log.txt")) {
 Get-ChildItem -Path $stage -Filter "log-crash-*.txt" -File -ErrorAction SilentlyContinue | ForEach-Object {
     Remove-Item $_.FullName -Force
     Note "removed $($_.Name) (a crash report from running the game)"
+}
+
+if ($CheckOnly) {
+    Step "Checked (-CheckOnly: nothing uploaded)"
+    Write-Host "   $stage is ready to publish to $Target." -ForegroundColor Green
+    exit 0
 }
 
 # ── 6. Version label ─────────────────────────────────────────────────────────

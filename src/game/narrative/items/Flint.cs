@@ -12,5 +12,4 @@ public sealed class Flint : Item
     public override string Description => "A sharp-edged flint nodule, one face knapped flat for striking fire";
     public override int    UsageLevel  => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
-    public override int PriceReference => 4;
 }

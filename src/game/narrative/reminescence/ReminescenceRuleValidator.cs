@@ -16,7 +16,8 @@ namespace Cathedral.Game.Narrative.Reminescence;
 ///   3. every terminal fragment grants at least one Procedural MM                  → [C2]
 ///
 /// And one more, on the offices rather than the memory types: every path grants a general thinker,
-/// a Thinking modus mentis that is not a will → [C3].
+/// a Thinking modus mentis that is not a will → [C3]; and every path grants a speaker, a modus mentis
+/// with the Speaking function, will or not → [C4].
 ///
 /// Since every playthrough remembers exactly one entry fragment and exactly one terminal
 /// fragment, C1 + C2 hold for every possible path through the catalog, whatever the player picks.
@@ -76,6 +77,18 @@ public static class ReminescenceRuleValidator
             violations.Add($"[C3] the childhood path {string.Join(" → ", path.Select(f => $"'{f.Name}'"))} grants no "
                          + $"general thinker (Thinking, not a will) — has [{string.Join("; ", path.Select(Describe))}]"
                          + (bare.Count > 3 ? $" (and {bare.Count - 3} more paths)" : ""));
+
+        // C4 — every path leaves a speaker: a modus mentis with the Speaking function. Without one the
+        // protagonist has no replies in any conversation. A will counts: one that bears Speaking replies
+        // in every conversation, whatever its target.
+        var mute = Paths(ReminescenceRegistry.EntryReminescenceId, new List<FragmentData>())
+            .Where(path => !path.Any(f => f.Outcome.SkillTypes.Select(t => ModusMentisRegistry.Instance.GetModusMentis(t))
+                                         .Any(mm => mm != null && mm.Functions.Contains(ModusMentisFunction.Speaking))))
+            .ToList();
+        foreach (var path in mute.Take(3))
+            violations.Add($"[C4] the childhood path {string.Join(" → ", path.Select(f => $"'{f.Name}'"))} grants no "
+                         + $"speaking modus mentis — has [{string.Join("; ", path.Select(Describe))}]"
+                         + (mute.Count > 3 ? $" (and {mute.Count - 3} more paths)" : ""));
 
         return violations;
     }

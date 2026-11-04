@@ -13,6 +13,7 @@ public class PedagogyModusMentis : ModusMentis
         "Teaches: breaks a hard thing into steps, finds the example a pupil already understands, asks the question that makes them see it for themselves. Knows a blank face from a thinking one.";
     public override string SkillMeans       => "the teaching of what one knows";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

@@ -185,8 +185,8 @@ public class ProposeToSellTree : DialogueTree
         replicaHeard:    "{npc:name} says what they could use is a season where nobody tries that on them, and asks what I have.",
 
         new PlayerOption("flatter_press", "press the pitch anyway",
-            "Goods you will be glad of by the week's end, whether you say so now or not.",
-            "I tell {npc:name} they will be glad of these goods by the week's end.",
+            "Goods you will be glad of by the eleven-day's end, whether you say so now or not.",
+            "I tell {npc:name} they will be glad of these goods by the eleven-day's end.",
             End("flatter_press_end", 2,
                 "That earns you a look, at least. Show me.",
                 "I tell {you:name} that earns them a look, and ask to be shown.",
@@ -354,11 +354,11 @@ public class ProposeToSellTree : DialogueTree
 
     private static NpcLineNode NeedsWhen() => new(
         nodeId:          "needs_when",
-        replica:         "Late in the year, mostly, when everyone has sold theirs elsewhere and I am asking favours. {npc:opinion_seasons}",
-        replicaIndirect: "I tell {you:name} it is late in the year, when everyone has sold theirs elsewhere, and that of the seasons I think {npc:opinion_seasons}.",
-        replicaHeard:    "{npc:name} says it is late in the year, when everyone has sold theirs elsewhere, and tells me what they think of the seasons.",
+        replica:         "Late in the round, mostly, when everyone has sold theirs elsewhere and I am asking favours. {npc:opinion_seasons}",
+        replicaIndirect: "I tell {you:name} it is late in the round, when everyone has sold theirs elsewhere, and that of the seasons I think {npc:opinion_seasons}.",
+        replicaHeard:    "{npc:name} says it is late in the round, when everyone has sold theirs elsewhere, and tells me what they think of the seasons.",
 
-        new PlayerOption("when_promise_return", "say you will come back at that time of year",
+        new PlayerOption("when_promise_return", "say you will come back at that time of round",
             "Then that is when I will come. It costs me nothing to time it right.",
             "I tell {npc:name} that is when I will come, since it costs nothing to time it right.",
             End("when_return_end", 3,

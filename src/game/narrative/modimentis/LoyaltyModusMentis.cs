@@ -15,6 +15,7 @@ public class LoyaltyModusMentis : ModusMentis
         "Holds fast to the ones it has chosen: reads their state at a glance, remembers every kindness and every desertion, and measures a stranger by what they are to those already loved.";
     public override string SkillMeans       => "the keeping of a bond to one's own, over any distance of time";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

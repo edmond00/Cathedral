@@ -16,6 +16,21 @@ dotnet run                  # main game
 dotnet run -- --help        # all options
 ```
 
+**In a Linux cloud container** there is no SDK and no screen. Install the SDK from Ubuntu's archive
+(`dotnet-install.sh` is blocked by the network policy) and give the game a virtual display before
+launching it, or every run dies with `GLFWException: Failed to detect any supported platform`:
+
+```bash
+apt-get update && apt-get install -y dotnet-sdk-8.0
+Xvfb :99 -screen 0 1280x1024x24 &
+mkdir -p /tmp/xdg && chmod 700 /tmp/xdg
+export DISPLAY=:99 XDG_RUNTIME_DIR=/tmp/xdg
+export CLI_EXTRA_FLAGS=--no-embeddings   # models/embeddings/ (GloVe) is gitignored, so absent
+```
+
+The exports do not outlive one shell command, so repeat them in the command that runs the game or
+`run_tests.sh`. The audits need none of the display setup.
+
 ## The player manual
 
 `docs/` holds the player manual and nothing else. `design/` (formerly `docs/`) is drafts, location
@@ -39,7 +54,7 @@ or styling in the chapters.
 
 ## Rules that always apply
 
-Six prohibitions that hold everywhere in the codebase. Every one of them fails *silently* —
+Seven prohibitions that hold everywhere in the codebase. Every one of them fails *silently* —
 nothing throws, nothing warns, and the symptom surfaces far from the cause. They are kept here,
 always loaded, rather than in the skills and nested files that carry the rest of their chapters.
 
@@ -94,6 +109,26 @@ because cell size is the window divided by `MainWidth`/`MainHeight`, and every r
 its rows against that 100x100 — the grid is layout. Fullscreen is the player's lever on cell size.
 The scale ceiling is where the quad's overflow shows on box-drawing glyphs (side rails, popup
 frames, the solid volume bars), which fill their cell to the edge where letters do not.
+
+**Three hues only: purplish, yellowish, greyscale.** Nothing a player sees is red, green, blue, cyan
+or orange — not an error, not a success, not a warning. The meaning is carried within the three:
+
+| hue | means | from `Config.Colors` |
+|---|---|---|
+| yellow / gold | what can be clicked and what is hovered, titles, gain and success, coin; `Ochre` for a warm secondary accent (vital heat, running, knockdown) | `BrightYellow`, `GoldYellow`, `OrangeYellow`, `MediumYellow`, `DarkYellow`, `DarkYellowGrey`, `Ochre`, `Coin*` |
+| purple | wounds, loss, danger, warnings and refusals, enemies, a failed or spoiled attempt, trespass | `BrightPurple`, `Purple`, `LightPurple`, `DarkPurple` |
+| grey | text, the neutral and the plain, what is disabled | `White`, `LightGray*`, `MediumGray*`, `DarkGray*`, `Black` |
+
+The world sphere enforces it in its shaders — a vertex's alpha picks a tone (grey nature, purple
+water, ochre building and field) and its colour is read only as a luminance, so a biome declared
+"green" draws grey; only the developer region overlay (R) opts out. **The terminal does not**: every
+renderer draws exactly the colour it passes, so the rule there is a choice made at each call. Write a
+dark band as a shade of one of the three (a near-black with a gold, grey or purple cast), and reach for
+a named palette colour before a literal. `Red`, `Green`, `Blue`, `Magenta`, `Cyan` and the ANSI
+`Colors.Terminal` table survive for the developer tools only (the image-to-text mode, the terminal's
+test palette, the sphere's debug shaders). To find a stray, grep `src/game` and `src/fight` for those
+names, and read every `new Vector4(r, g, b, …)` literal against the three shapes: grey has r, g and b
+near equal, yellow has r and g together above b, purple has r and b above g. Anything else is a stray.
 
 ## Verifying a change (read this before testing anything)
 

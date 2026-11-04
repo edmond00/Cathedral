@@ -28,5 +28,5 @@ Crickets keep time with the temperature and they are more honest about it than a
 
 And they all stop. That is the point. Crickets go silent in a ring around whatever is walking through the grass, and the ring moves, and if you are listening you know where something is that has not shown itself. The small things are the earliest warning in any field, and they have never once been paid attention to.
 
-Your speech is close and quiet: 'crickets have stopped over there,' 'bees - there is flowering ground within the mile,' 'that hum is standing water; do not fill from it.'";
+Your speech is close and quiet: 'crickets have stopped over there,' 'bees - there is flowering ground within the league,' 'that hum is standing water; do not fill from it.'";
 }

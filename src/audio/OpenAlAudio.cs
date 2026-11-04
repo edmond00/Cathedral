@@ -86,14 +86,14 @@ internal static class OpenAlAudio
     }
 }
 
-/// <summary>The hover and click ticks through OpenAL: the very samples WinMM plays.</summary>
+/// <summary>The hover and click ticks and the transition swish through OpenAL: the very samples WinMM plays.</summary>
 internal sealed class OpenAlUiSfx : IUiSfx
 {
     // A few sources in rotation, so a click does not cut off the hover that came a frame before it.
     private const int Voices = 4;
 
     private readonly object _lock = new();
-    private int _hover, _click;
+    private int _hover, _click, _transition;
     private int[]? _sources;
     private int _next;
     private float _volume = 1f;
@@ -109,10 +109,12 @@ internal sealed class OpenAlUiSfx : IUiSfx
         }
     }
 
-    public void PlayHover() => Play(hover: true);
-    public void PlayClick() => Play(hover: false);
+    public void PlayHover() => Play(() => _hover);
+    public void PlayClick() => Play(() => _click);
+    public void PlayTransition() => Play(() => _transition);
 
-    private void Play(bool hover)
+    // The buffer is read inside the lock, after EnsureBuffers has made it.
+    private void Play(Func<int> buffer)
     {
         if (Cathedral.Config.Debug.Silent) return;
         lock (_lock)
@@ -121,7 +123,7 @@ internal sealed class OpenAlUiSfx : IUiSfx
             int source = _sources![_next];
             _next = (_next + 1) % Voices;
             AL.SourceStop(source);
-            AL.Source(source, ALSourcei.Buffer, hover ? _hover : _click);
+            AL.Source(source, ALSourcei.Buffer, buffer());
             AL.SourcePlay(source);
         }
     }
@@ -133,6 +135,7 @@ internal sealed class OpenAlUiSfx : IUiSfx
         if (!OpenAlAudio.EnsureOpen()) return false;
         _hover = OpenAlAudio.MonoBuffer(UiSfxPlayer.HoverSamples(), UiSfxPlayer.SfxSampleRate);
         _click = OpenAlAudio.MonoBuffer(UiSfxPlayer.ClickSamples(), UiSfxPlayer.SfxSampleRate);
+        _transition = OpenAlAudio.MonoBuffer(UiSfxPlayer.TransitionSamples(), UiSfxPlayer.SfxSampleRate);
         _sources = new int[Voices];
         for (int i = 0; i < Voices; i++)
         {
@@ -154,6 +157,7 @@ internal sealed class OpenAlUiSfx : IUiSfx
                 foreach (var s in _sources) { AL.SourceStop(s); AL.DeleteSource(s); }
                 AL.DeleteBuffer(_hover);
                 AL.DeleteBuffer(_click);
+                AL.DeleteBuffer(_transition);
             }
             catch { /* context already gone at shutdown */ }
         }

@@ -97,7 +97,7 @@ namespace Cathedral.Game
         /// </summary>
         public void Draw(int waypointCount, int maxWaypoints, TravelEstimate? estimate,
             string? destinationName, bool routinesAvailable = false, string? overloadWarning = null,
-            string? destinationRegion = null, string? destinationRealm = null)
+            string? destinationRegion = null, string? destinationRealm = null, string? proposal = null)
         {
             _routinesEnabled = routinesAvailable;
             _blockReason     = overloadWarning;
@@ -172,6 +172,11 @@ namespace Cathedral.Game
             // Row contentY + 9 is normally padding above the buttons; an overload warning takes it,
             // directly above the two buttons it has just disabled.
             DrawOverloadWarning(innerLeft, contentY + 9);
+            // A journey a will's search proposed says why it was proposed, on the same row; the
+            // warning wins it, since it is the reason the journey cannot be taken yet.
+            if (_blockReason == null && proposal != null)
+                _terminal.Text(innerLeft, contentY + 9, Truncate(proposal, _boxW - 4),
+                    Config.TravelUI.WarningColor, Config.TravelUI.BackgroundColor);
 
             // Empty row (contentY + 11) — visual padding below the buttons.
             DrawButtons(estimate);

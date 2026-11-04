@@ -204,14 +204,14 @@ public class DesertSceneFactory : WildSceneFactory
         displayName: "Acacia Scrub",
         contextDescription: "in the acacia scrub",
         transitionDescription: "push into the acacia scrub",
-        descriptions: new() { "Flat-topped acacias and thorn along the watercourse, the only shade for miles, grey with dust" },
+        descriptions: new() { "Flat-topped acacias and thorn along the watercourse, the only shade for leagues, grey with dust" },
         moods: new[] { "thorny", "dusty", "flat-topped", "shaded" });
 
     private static Area BuildBuriedRuin() => new RuinArea(
         displayName: "Buried Ruin",
         contextDescription: "among the buried ruin",
         transitionDescription: "walk in among the buried walls",
-        descriptions: new() { "The tops of walls and a broken arch standing out of the sand, a town or a fort the dunes have been swallowing for a thousand years" },
+        descriptions: new() { "The tops of walls and a broken arch standing out of the sand, a town or a fort the dunes have been swallowing for a thousand rounds" },
         moods: new[] { "swallowed", "broken-arched", "silent", "sand-drifted" });
 
     private static Area BuildPalmGrove() => new GroveArea(

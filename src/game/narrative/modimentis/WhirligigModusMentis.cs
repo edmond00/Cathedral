@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
@@ -12,6 +13,7 @@ public class WhirligigModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "whirligig";
     public override string DisplayName      => "Whirligig";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Wants a toy in the hands and keeps it going: the top whipped spinning, the ball caught in its cup, the hoop bowled along with a stick. Inclines toward the small trick done again and better, for the satisfaction of the knack.";
     public override string SkillMeans       => "keeping a spinning top or a cup and ball going by the knack of the hand";

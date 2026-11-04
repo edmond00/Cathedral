@@ -232,7 +232,7 @@ public sealed class PrunilProfile : LoreWorldProfile
         PlaceBeat(sim, 1722, PlaceKind.Palace, "Rosena's Stair", MostHabitable, L.RedBrickHouse);
         At(sim, 2390, s =>
         {
-            s.Chronicle("The death of the queen", "Rosena Ban-Balnus dies after six centuries on the throne of Prunil. Governors come after her.", L.Rosena);
+            s.Chronicle("The death of the queen", "Rosena Ban-Balnus dies after six hundred rounds on the throne of Prunil. Governors come after her.", L.Rosena);
             ReplaceProvince(s, "the Province of Prunil", Government.ImperialProvince, null);
             if (s.History.Province is { } p) s.Sow(new GovernorRotationSeed(s.Later(8, 35), p));
         });
@@ -299,7 +299,7 @@ public sealed class AvoriaProfile : LoreWorldProfile
                     _household = s.FoundOrganisation(OrganisationKind.SecretSociety, LeastHabitable(s), null, "the Household of the Pyramid",
                         description: "The hundreds who feed and tend the heiress inside the pyramid, and tell no one what they see.",
                         clandestine: true);
-                    s.Chronicle("The exile of the heiress", "Vesifia III, twenty-five metres tall, is brought to Golden Avoria; the tallest of the Red Pyramids rises around her.", L.VesifiaIII);
+                    s.Chronicle("The exile of the heiress", "Vesifia III, twenty-five paces tall, is brought to Golden Avoria; the tallest of the Red Pyramids rises around her.", L.VesifiaIII);
                 });
                 At(sim, HistoryCalendar.HatchingRound + 30, s =>
                 {

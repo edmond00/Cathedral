@@ -30,5 +30,5 @@ public class WeaveReadingModusMentis : ModusMentis
 
 Cloth is a household's whole account written out. Homespun has an unevenness no bought cloth has; you can count the threads and see the day the weaver was tired. Fulled wool is warm and expensive and takes an age. A dye that has gone uneven was done at home; one that has not was paid for. And an expensive garment being worn past its life says more about a family than any amount of talk - somebody was well off once and is not now.
 
-Your speech is appraising and largely internal: 'that is bought cloth on a smallholder,' 'this was fine, ten years ago,' 'she wove this herself and she is very good.'";
+Your speech is appraising and largely internal: 'that is bought cloth on a smallholder,' 'this was fine, ten rounds ago,' 'she wove this herself and she is very good.'";
 }

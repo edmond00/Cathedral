@@ -299,6 +299,7 @@ internal sealed class LegacyAmbianceEngine : IMusicEngine
         // Hover sound is PCM-only — return immediately so no melody signal, no interrupt,
         // and no 400 ms cooldown is consumed. MIDI device doesn't even need to be open.
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
+        if (evt == GameEventType.Transition) { _uiSfx.PlayTransition(); return; }
 
         if (!CanSend) return;
 
@@ -1422,6 +1423,21 @@ internal sealed class LegacyAmbianceEngine : IMusicEngine
                     SendNoteOff(ch, 62);
                     SendNoteOff(ch, 69);
                     SendNoteOff(ch, 74);
+                });
+                break;
+            }
+
+            case GameEventType.Hit:
+            {
+                // A blow lands: a low sawtooth power chord (A1+E2+A2) at full velocity, cut short.
+                SendProgramChange(ch, ProceduralMidiComposer.PatchLeadSawtooth);
+                SendNoteOn(ch, 33, 127);
+                SendNoteOn(ch, 40, 127);
+                SendNoteOn(ch, 45, 127);
+                _ = Task.Run(() =>
+                {
+                    Thread.Sleep(160);
+                    SendNoteOff(ch, 33); SendNoteOff(ch, 40); SendNoteOff(ch, 45);
                 });
                 break;
             }

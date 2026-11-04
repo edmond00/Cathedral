@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class SnarlingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "snarling";
     public override string DisplayName      => "Snarling";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Bares teeth first and negotiates second, meeting pressure with a show of menace pitched to end the contest early. Reads how much threat a moment needs, and spends exactly that much before anyone bleeds.";
     public override string SkillMeans       => "the bared-teeth warning that ends fights before they start";

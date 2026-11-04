@@ -32,7 +32,7 @@ public sealed partial class PersonalityTraitRegistry
             Items       = new Func<Item>[] { () => new EyePatch() },
             ModiMentis  = new[] { "vigilance" },
             Appearance  = "the left eye is gone — a leather patch on a greasy cord covers the socket",
-            Persona     = "You lost your left eye years ago. You turn your head further than most people do to look at things, and you have stopped being embarrassed about it.",
+            Persona     = "You lost your left eye rounds ago. You turn your head further than most people do to look at things, and you have stopped being embarrassed about it.",
             Opinions    = new[] { (DialogueTopic.Health, "I manage. You'd be surprised how little you need two of them for") },
         });
 
@@ -55,7 +55,7 @@ public sealed partial class PersonalityTraitRegistry
             Items       = new Func<Item>[] { () => new WoodenCrutch() },
             ModiMentis  = new[] { "patience" },
             Appearance  = "moves with a heavy, rolling limp, leaning on a rag-padded crutch",
-            Persona     = "Your right knee was broken years ago and set badly. Standing hurts, walking hurts more, and you do not want it remarked on.",
+            Persona     = "Your right knee was broken rounds ago and set badly. Standing hurts, walking hurts more, and you do not want it remarked on.",
             Opinions    = new[]
             {
                 (DialogueTopic.Health, "It aches before rain and it aches after. I've stopped keeping score"),
@@ -71,7 +71,7 @@ public sealed partial class PersonalityTraitRegistry
             ModiMentis  = new[] { "stoneface" },
             Appearance  = "a pale seam of old scar runs from the cheekbone down into the jaw",
             Persona     = "A long scar crosses your face. Strangers look at it and then look away, and you have learned to let the pause happen without filling it.",
-            Opinions    = new[] { (DialogueTopic.Neighbours, "People here stopped seeing it years ago. It's strangers who make it a thing") },
+            Opinions    = new[] { (DialogueTopic.Neighbours, "People here stopped seeing it rounds ago. It's strangers who make it a thing") },
         });
 
         Add(new PersonalityTrait
@@ -140,7 +140,7 @@ public sealed partial class PersonalityTraitRegistry
             Opinions    = new[]
             {
                 (DialogueTopic.Health,  "My chest. It's been my chest since I was a child and it'll be my chest at the end"),
-                (DialogueTopic.Weather, "Cold damp air is the enemy. I can feel a bad winter coming a week before it arrives"),
+                (DialogueTopic.Weather, "Cold damp air is the enemy. I can feel a bad winter coming an eleven-day before it arrives"),
             },
         });
 

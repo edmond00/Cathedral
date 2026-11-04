@@ -142,6 +142,13 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
 
+Once something has been attended to within the phase, an observing modus mentis choosing what to
+attend to next may instead decline to attend to anything further, and its account closes on that
+declaration. **The declining is spent once taken.** It is open to one modus mentis in a phase, and
+every modus mentis that observes after it must attend to something present: were each free to decline
+in turn, a thing in plain view could go unattended for the whole phase. A will's turning from what
+does not begin its course (§6) is a rule of its nature, not this declining, and is not spent.
+
 Attention may also be directed: a thing already rendered may be given to an observing modus mentis
 to attend to closely. That modus mentis may decline it, and if so turns to another thing of its own
 choosing among those not yet attended to — the refusal and the new observation rendered as one
@@ -195,8 +202,9 @@ level may settle the answer before it is asked: a high one refuses a crime, a lo
 one (see §7); and one that speaks may not refuse a conversation (§6).
 
 **Second thoughts.** A thinking whose proposal comes to nothing may be taken up again by the same
-thinking modus mentis, as many times as the measure of *Iterative Thinking* allows — the pineal
-gland's score, from nought to three ([Chapter I](01-anatomy.md)). A proposal comes to nothing when the
+thinking modus mentis, as many times as its readiness to doubt allows
+([Chapter II §1](02-memory.md#1-what-a-modus-mentis-is)): never at low, once at medium, twice at
+high. A proposal comes to nothing when the
 acting modus mentis refuses it, or when it is doubted, as below. Each refusal is rendered, and the
 mind acknowledges it before deliberating anew. A refused goal is taken up again at once if another
 acting modus mentis not yet tried for it — for a conversation, a speaking one, where any is held — is
@@ -207,12 +215,13 @@ so. Only a refusal given before an act is offered is deliberated anew: the coded
 act when it is attempted, and a witness in sight or an enemy in the room is not a reason to think
 again but a reason the attempt fails. The whole chain is one thinking, and costs one noetic point.
 
-**Doubt.** A body whose pineal gland scores two or more may doubt. While a further deliberation
-remains, the reasoning ends upon a question, and is answered — to hold to the proposal or not —
+**Doubt.** A thinking modus mentis of medium or high readiness may be doubted; one of low readiness
+never is. While a further deliberation remains, the reasoning ends upon a question, and is answered — to hold to the proposal or not —
 before the acting modus mentis is asked. Not to hold to it strikes off the goal
 itself, with every acting modus mentis at once — the doubt is of the end, not of the means — and the
 mind deliberates again upon another. Either answer is voiced by the thinking
-modus mentis. No doubt is offered on the last deliberation, which would otherwise end the thinking
+modus mentis. Not to hold to it spends a further deliberation, as a refusal does; to hold to it
+spends none. No doubt is offered on the last deliberation, which would otherwise end the thinking
 upon nothing.
 
 **Reconsideration.** An act already offered may be thought over again by a thinking modus mentis of
@@ -336,12 +345,23 @@ shortest course the place offers, however long that is — are its candidates; i
 candidate whose course is shortest, and where several courses are equally short it chooses among
 their first acts itself. On an object that affords no candidate it proposes nothing, saying only
 what it wants; it admits no doubt, its goal being set by its course, and
-tries again only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
+tries again — once, a will being of medium readiness — only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
 within the place, it declines in both and says that only leaving offers what it wants. Bearing the
 Action function, it is its own means for the act it wants, and is not asked how willingly: it is
 eager for it, and the difficulty falls by one; an act on its way is carried out by
 whichever means is chosen for it, as any goal is. A will cannot refuse an act that would be its candidate — though a rule
 of action, which judges circumstance and not character, still may.
+
+**A visit made for one want.** From the world a will may be sent to seek one of its wants among the
+places within range: they are examined in order of the cost of the road to each, the nearest first,
+and the first in which the course to that want exists from the place's way in, at the hour of
+arrival, is proposed as the journey's end. A visit reached by that journey is made for that want, and
+while it lasts the will reckons its course to that want alone, however long — the course it
+attends by, the object it opens a phase on, the one it keeps in attending. Deliberating, it takes
+first a course through the object to that want, whatever its length; only where the object affords
+none are its other wants candidates, and then only by a course of at most three acts. Where no
+course to the sought want remains in the place — the thing done, or gone — the will reckons by all
+its wants again. Any other visit, a later one to the same place among them, is reckoned as above.
 
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
@@ -428,12 +448,23 @@ Fumbling the approach is itself a slip before the witness, and one is collared a
 for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
 discreet act that fails in the same room is seen.
 
+**Departure.** A place is left as it was entered, by its one way in, which lies beyond the area the
+place was entered by. To leave is to walk there: from the area stood in, back along the ways already
+known, to that area and out. A free departure is not stopped on the way.
+
 **Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
 roll of as many dice as the feet's runaway score, needing a single six, which the humors may bend
-as they bend any other roll. Success leaves the place.
-Failure begins the fight with an enemy, or the confrontation with a witness. A confrontation ends
-with the conversation it opens: a witness who came on the body's account then returns to the day
-they were drawn from, unless the conversation has made an enemy of them.
+as they bend any other roll. Failure begins the fight with an enemy, or the confrontation with a
+witness. Success sets the body walking for the way in, and the walk is checked the rest of the way
+out: every further area it passes through — the areas a path runs past among them — is weighed as
+though the body stood in it, and wherever an enemy or a witness would confront it there, it is
+stopped and rolls again on the same terms. Each success carries it on to the next such area, or out
+of the place when none is left. A failure at such a stop forces nothing: the body stays in the area
+where it was stopped, the noetic points are not restored, and the next phase opens on whoever
+stopped it — who now stands in the area with it, so that leaving is a runaway once more.
+
+A confrontation ends with the conversation it opens: a witness who came on the body's account then
+returns to the day they were drawn from, unless the conversation has made an enemy of them.
 
 **Found waiting.** The householder who comes in at nightfall to find the body waiting in their house
 (see [Chapter V §8](05-travel.md#8-the-periods-of-the-day)) confronts it as any witness does, and

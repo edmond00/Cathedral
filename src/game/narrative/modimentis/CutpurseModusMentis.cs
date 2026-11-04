@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,6 +11,7 @@ public class CutpurseModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "cutpurse";
     public override string DisplayName      => "Cutpurse";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Takes from a body that has not noticed: reads where a purse hangs, works in the press of a crowd, and cuts or lifts without the touch registering. Distinct from ordinary thieving in that the owner is holding it.";
     public override string SkillMeans       => "the unfelt hand at another body's belt";

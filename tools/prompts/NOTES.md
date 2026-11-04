@@ -280,7 +280,270 @@ desert"). The harness's field reader did not skip such comments and asked them w
   wording.
 - **Sampling.** Out of scope, but worth knowing: the critic samples its verdict at temperature 0.7.
   The choice judge reads the scores of every letter instead and is far steadier; the critic could do the
-  same.
+  same. *(Since done — read off the ids, not letters; see "The item critic and improvised tools".)*
+
+## The item critic and improvised tools
+
+A later pass, on one complaint from a playtest (2026-11-01): a character with Medium tool proficiency
+tried to scale the grove house wall with an iron dagger, then a short sword, and was refused both —
+`cannot_help`, which no band clears — with the reason "I think the dagger's blunt nature prevents
+effective climbing". The design says an improvised tool is allowed to a practised hand and punished by
+the dice; in practice the critic refused it before any hand was consulted. Same model, same server
+(`serve.sh`, llama.cpp b11515 CPU build, `models/model.gguf` checked against its SHA-256), 4 cores.
+
+### The survey
+
+`critic_survey.py`: 119 cases, every one a real pairing — the 21 verbs that reach the critic (13
+Optional, 8 Required) against the 75 Tools and 23 Weapons, the only items `GetCombinableItems` offers
+(containers, food and the rest never reach it; a pot as a scoop or a loaf at a seam are unreachable in
+play). Item names and descriptions are copied from the item classes, goals are the verbs' own
+verbatims, targets carry their factory's description. Each case is labelled help / no help and, where
+clear, the band its verdict should demand. 65 are **improvised** (should help, not the obvious tool: a
+blade into a wall, a staff over quicksand, a tower shield as a sled on a snow bridge, a torch at a bees'
+nest, a razor at a purse string, a pitchfork to spear fish), 17 **obvious**, 34 **refuse** (a real tool
+or weapon that cannot do it: bone dice up a wall, a candle across thin ice, a warhammer at a lock) and 3
+**anchors** (the brief's loaf, feather and lute, unreachable, reported apart). The playtest prompt is
+case `survey000`, and the bench rebuilds it byte-for-byte from the C#.
+
+The shipped critic on it (5 samples a case, as the game samples; final measurement, see below):
+
+| | |
+|---|---|
+| improvised uses passed | **57.8%** — the failure, exactly where the brief put it |
+| obvious tools passed / refusals refused | 95.3% / 91.2% |
+| the band asked for, exactly / within one | 15.7% / 46.3% |
+| cases whose side changes between samples | 43 of 167 |
+| dagger and short sword on the wall | `cannot_help` in 5 of 5, both |
+
+**A harness fault, found late and fixed.** `critic_bench.py` closed every system prompt with the setting
+rule of `prompt_lib.T0` — the wording from *before* the earlier prompt overhaul — while the game sends
+the newer rule. The live check below caught it (the game's logged system prompt differed). Every critic
+number in this file before this section, and the exploration in "What was tried" below, carries the
+old rule; the before/after tables are both measured under the rule the game sends. The old rule made
+the shipped critic look stricter than it is (35.9% false refusals, 1.7% false passes under it, against
+30.5% and 5.0% under the real one); it did not change which wording won.
+
+It is not that weapons are read as weapons (hypothesis 2): weapons and tools were refused at the same
+rate, 42% and 40% of their sensible uses. It is not the sampling (hypothesis 4): read
+deterministically the same question is no better (35.7% false refusals against 34.6% sampled, tune
+half) — sampling costs stability, not accuracy. Describing the target (hypothesis 3) does not help
+that question either: told the wall is coursed stone with gaps for fingers, it refused *more* (44.6%).
+**The question is the cause** (hypothesis 1): asked whether X beats bare hands, the model answers for
+the obvious tool and nothing else. The substitution tree has the same flaw in its degrees: a spade to
+dig ("normally done with a shovel") came back `serves_poorly` five times out of five.
+
+### What was tried
+
+The survey was split in two (`--set tune` = the old dev set + even-numbered survey cases, `--set check`
+= the held-out set + odd-numbered ones); every wording below was iterated on `tune` only, and under the
+old setting rule (above).
+
+| variant | result | |
+|---|---|---|
+| any question read as **letters** (A–E), as ChoiceJudge does | 61–68% right | the model answers "D" in 112–126 of 167 cases, a hammer to break a door and a knife at a sleeper among them; the ids carry the meaning, the letters do not |
+| the shipped question read off the **ids' first tokens** | tune: 35.7% false refusals, 0 false passes | deterministic, same accuracy as sampled |
+| the same, target described | tune: 44.6% false refusals | stricter, not better |
+| **"could X be used to help, even clumsily or in a way it was not made for?"** (all sets) | 7.5% false refusals, **36.7% false passes** | the improvisations pass; so do bone dice up a wall and a tally stick through brambles (log-odds up to +15). "Unusual use" lets anything through |
+| each yes tied to a physical means ("its edge, point, weight, length or grip would do part of the work, badly") | tune: 16.1% / 21.9% | better, still a fifth of the wrong items |
+| the same, with "a trick you have to imagine does not count" in the system prompt | tune: 14.3% / 34.4% | worse: a small model reads a system-prompt rule as a lean, as "be strict" was read |
+| a threshold on any single question's log-odds | — | the right and wrong items overlap; a cut that keeps every wrong item out refuses 46% of the right ones |
+| **the two questions together, log-odds summed** | tune: 21.4% / 0 of 32; check: 17.6% / 1 of 28 | kept |
+| the same, degree from the lenient question | Low band 0%, Medium 3% usable | the lenient question puts nearly all its mass on the clumsy degree, the hammer at a door included |
+
+The two questions err on different cases. The strict one ("compared to bare hands…") almost never
+passes a wrong item and refuses improvisations; the lenient one ("could X do any real part of this,
+even clumsily?") passes improvisations and imagines uses for wrong items. Summing their log-odds —
+an item passes when the lenient question is surer of it than the strict one is against it — keeps
+what each is right about. The threshold is 0 and was not fitted; fitting a weight and a threshold on
+`tune` bought one case and was not kept. The degree is the strict question's: the lenient one cannot
+give it.
+
+### The change
+
+- **Two questions per tree on one preamble** (`CriticTrees`, `CriticNode.Counterweight`): the shipped
+  question word for word gives the verdict's id; the lenient one adds its weight to the side.
+- **Read, not sampled** (`ItemUseCritic.WeighAsync`): one request per question at temperature 0, no
+  grammar, the first token's 40 likeliest log-probabilities. Side = the log-odds of the help ids' first
+  tokens against the refusals', summed over the two questions; id = the strict question's greedy reply
+  when on that side, else its likeliest id there. `serves_well` and `serves_poorly` share a first token
+  ("s"), which is why the greedy reply is read too.
+- **The preamble describes the target** (`CriticTarget.Describe`: the factory's description; an item
+  lying in the scene with what holds it, "a speckled green pear …, from a pear tree …"; never a
+  person), states the goal and the item once each, and puts the goal in the third person ("make their
+  way across", not "make my way"; "catch the frog in their hands").
+- **No "why" request.** A refusal's reason is a fixed first-person sentence per refusal id.
+- `Threshold`, the gates before the critic, the bands and the cost of a refusal are unchanged.
+
+### Before and after
+
+All 167 cases, both under the setting rule the game sends (`results/survey_critic_before.*`, sampled 5
+times a case; `results/survey_critic_current.*`, read once — the read is deterministic):
+
+| | before | after |
+|---|---|---|
+| right side | 78.7% | **86.2%** |
+| old bench, dev / held out (28 / 20 cases) | 94.3% / 86.0% | **100% / 90.0%** |
+| false refusals (107 help cases) | 30.5% | **18.7%** |
+| false passes (60 no-help cases) | 5.0% (15 of 300 samples) | 5.0% (3 of 60) |
+| improvised / obvious / refuse | 57.8% / 95.3% / 91.2% | **72.3% / 100% / 91.2%** |
+| appropriateness / substitution tree | 80.7% / 76.5% | **91.9% / 80.2%** |
+| stability | 43 of 167 cases change side between samples | deterministic; 6 of 167 within 1 log-odds of the line |
+
+What a player meets is not the side but whether their band clears the verdict
+(`critic_bands.py`): a sensible item labelled for band B or below, passed at a degree B clears.
+
+| usable at | before | after | + degree questions (below) |
+|---|---|---|---|
+| Low | 37.3% | 40.9% | **68.2%** |
+| Medium | 39.7% | 46.7% | **55.0%** |
+| High | 69.5% | 81.3% | **81.3%** |
+| a wrong item, at Low / Medium / High | 1.7% / 1.7% / 5.0% | 0% / 0% / 5.0% | **0% / 0% / 5.0%** |
+
+The two halves agree — `tune`: Low 43 → 50%, Medium 37 → 43%, High 70 → 82%, wrong at High 5% → 3%;
+`check`: Low 30 → 30%, Medium 43 → 50%, High 69 → 80%, wrong at High 5% → 7% (28 cases) — so the
+wording was not fitted to the cases it was tuned on. The three wrong items that pass do so at the
+clumsy degree only, for a High hand: a whetstone up the toe-hold trail (strict −1.7, lenient +10.1), a
+tally stick through brambles (−1.9, +2.3) and a heavy crossbow through lianas (−3.9, +5.9). No
+threshold was fitted to remove them.
+
+**The live check.** The game itself, on the real model (`--goal-only scale_up` — which now narrows the
+real goal judge as well as the playground's draw — `--grant-item iron_dagger_weapon`, the test yard's
+coursed-stone wall, a Rooftops will as the thinker): `ItemAppropriateness -> clearly_helps (strict
++6.2, lenient +10.9)`, cleared at High. Its two logged requests are byte-identical to what the bench
+builds for the same inputs, system prompt included, and the bench reads the same verdict (strict +5.9,
+lenient +9.7). The margins differ by up to ~1.2 between the game's server and the bench's; the cause
+was not pinned down (the launch arguments are the same but for `--verbose` and `-t`), and it matters only
+for the few cases near the line.
+
+**Cost** (`critic_bench.py --timing survey`, `results/survey_critic_timing.txt`): one tool use per
+survey case, the two versions alternating which goes first, the old one including its "why" request
+after a refusal, 4 CPU cores, warm server.
+
+| per tool use | before | after |
+|---|---|---|
+| mean wall time | 3.92 s | 4.64 s (+0.7 s, +18%) |
+| median / worst | 3.02 s / 7.03 s | 4.58 s / 5.82 s |
+| requests | 1.46 | 2.00 |
+| tokens generated | 13.6 | 9.0 |
+| user-message tokens | 218 | 445 over two requests, of which the second re-reads only its last lines from the prompt cache |
+
+With the substitution tree's degree questions (second pass, below; `results/survey_critic_timing2.txt`,
+both versions again in one run): before 3.52 s mean (2.72 median, 5.92 worst), now 4.29 s (4.19, 5.69),
+2.26 requests a tool use. The gap is +0.77 s against +0.72 s without them: they are asked only of a
+substitute that passed, and each re-reads one line.
+
+**It is not cheaper.** Dropping the reason saves ~60 generated tokens after a refusal; the second
+question costs a prompt read every time, and prompt reading dominates on CPU. A pass costs more than it
+did, a refusal less, and the worst case is shorter. The single-question alternatives cost one read
+(~2.6 s) but break the false-pass constraint.
+
+### The substitution tree's degree (second pass)
+
+The pass above left the required verbs' degrees almost all `serves_poorly` (23 of 36 passes): on the
+81 required-verb cases (`--set required`) a Low hand could use **none** of the 13 stand-ins labelled
+for it and a Medium hand **1** of 27. Two causes, found by recording each whole id's log-probability
+(`critic_bench.id_logprob`, one greedy reply's per-token lists — `serves_well` and `serves_poorly`
+part at "_w" against "_p"):
+
+1. **A rule of my own.** A pass the strict question refused and the counterweight carried took the
+   strict question's likeliest help id by its *first token* — a tie between `serves_well` and
+   `serves_poorly` ("s"), broken toward the better: a chisel and a hammer at an ore seam, a cleaver at
+   a log, a watering pot as a shovel all came out Medium. Such a pass is an improvisation and now takes
+   the clumsy degree outright (4 over-grants → 0).
+2. **The question.** Where the strict question accepts, it is near-certain of `serves_poorly` for
+   nearly everything — a dagger offered as a knife, a war axe as an axe, fish-hooks to fish (−0.0
+   each). It judges what the item *is* ("near enough to be the same thing"), not how it works.
+   Rewording the options to grade by performance — "about as well as the usual tool" / "properly, if
+   not quite as well" / "only clumsily, with real difficulty", with the question kept (`sub_w1`) or
+   asked as "how well…" (`sub_w2`) — moved Low 0 → 0–1 of 13 and Medium 1 → 4–5 of 27: the menu is
+   the wrong instrument.
+
+**Asked as yes/no instead** (`CriticNode.DegreeQuestions`, `critic_degree_yesno.py` for the prototype),
+on the same head, of a pass the strict question accepted: "Is X a kind of Y, or near enough the same
+tool?" — yes → `is_the_tool`; else "Would X do this work properly, the way Y does, if a little less
+well?" — yes → `serves_well`; else `serves_poorly`. Both read as the log-odds of yes against no at 0,
+nothing fitted. On the required verbs: Low **0 → 6 of 13**, Medium **1 → 9 of 27**, exact degree 4 → 10
+of 26, pass/refuse unchanged, no wrong item usable below High; both halves improve (Low 0 → 4 and
+0 → 2, Medium 0 → 5 and 1 → 4). The two items it grants a better degree than labelled are a war pick
+and a baker's peel given Low at an ore seam and a clay bank — and the peel's own description calls it
+"a long flat wooden shovel", so the label is the stricter of the two.
+
+Not kept: two rewordings of the second question ("a proper tool for this work, even though it is not
+Y?", "could a worker do this job properly with X instead of Y?") did no better on `tune` — the model
+says no to a machete for an axe, a cudgel or a chisel at a strongbox whatever the wording.
+
+A mistake caught on the way: the prototype read yes/no from a dict keyed by the stripped token, so a
+rare spelling (" Yes") overwrote a likely one ("Yes") and the dagger read −4 where the model says +8.
+The bench and the C# sum every spelling.
+
+**Not checked in the live game.** Two real-model runs aimed at `mine` with a mattock both reached
+the critic by another road (each will took its other want: gathering the ore, examining the stone).
+The substitution prompts are built by the same `CriticTrees.Head` the live check verified byte for
+byte, and the bench reads their last lines from the C#; the yes/no request itself has not been seen
+in a game log.
+
+### What is left
+
+- **The substitution tree's middle degree.** "Would X do this work properly" still says no to most
+  proper stand-ins, so Medium hands get about half of what they should (55%).
+- **The appropriateness tree errs the other way**: generous degrees (the dagger on the wall is
+  `clearly_helps`, usable by a Low hand; the survey labels it High). Over-granting a degree is not a
+  false pass, but it is the next thing to look at there.
+- **Still refused at every band** (18 of 65 improvisations): every small spike at a lock — lancet, awl,
+  hoof pick, marlinspike, fish-hook (both questions sure of it, −14 to −1) — a flint to skin, a
+  pitchfork or a basket to fish, a pruning hook or a rake for a pear, a razor at a purse, a shield to
+  crush a scorpion or scoop clay. These are where the model's picture of the object is thinnest.
+- **Hypothesis 6** (one refusal option instead of two) was only tried under the letter read, where
+  everything was swamped by the D bias; it is untested on ids.
+- `critic_bench.py --variant current` reads the C# and runs this pair; `--set tune|check|survey`, and
+  `--timing` for the cost.
+
+## The setting rule leaking into narration
+
+Reported in play: the closing reminder came back as scenery, most of all in the childhood
+reminescence ("pulling me toward sleep in this old world of iron and myth, where hands did the work").
+`setting_leak.py` replays recorded rewrites with the rule (system prompt) and the reminder (last
+sentence of the request) swapped for a variant's, the same seeds under every variant, and counts the
+rule's words written into an answer whose neutral line lacks them; it also counts the place's words
+(where the place is not where the narration happens) and Layer 1 forbidden words, so a variant cannot
+win by letting the real world in.
+
+Childhood: 15 rewrites recorded from three new runs (seeds 11, 23, 37, the first REMEMBER of each),
+four samples each. Exploration: 40 non-spoken rewrites from `runs/`, two samples each.
+
+In `setting_leak.py` the rows are `iron`, `iron-place`, `point_back`, `no_reminder`, `ban`, `ban+rule`, and
+the same with `-place`; the kept one is now `now`. In `results/setting_leak_*.jsonl`, written before the
+change, the variant called `now` is `iron`.
+
+| variant | childhood setting | childhood place | exploration setting | forbidden words (ch. / ex.) |
+|---|---|---|---|---|
+| shipped: "Remember: an old world of iron and hand labour, nothing from the real world." | **16/60** | **20/60** | 2/80 | 3 / 5 |
+| shipped, no place clause | 7/60 | 1/60 | | 6 / |
+| "Remember the setting rule." | 0/60 | 39/60 | 1/80 | 3 / 4 |
+| no world sentence at all | 0/60 | 17/60 | 1/80 | 1 / 4 |
+| a ban: "Remember: nothing from after engines and gunpowder, and no real place, person or date." | 3/60 | 16/60 | 0/80 | 1 / 7 |
+| the ban, and the rule's first sentence ("an old world of iron, myth…") replaced by the ban | 0/60 | 16/60 | 1/80 | 2 / 8 |
+| the ban, no place clause | 2/60 | 1/60 | | 2 / |
+| the ban and the rule, no place clause | 1/60 | 0/60 | | 3 / |
+| **"Remember the setting rule.", no place clause** (kept) | **0/60** | **0/60** | | 3 / |
+| no world sentence, no place clause | 0/60 | 0/60 | | 2 / |
+
+- **The reminder is what leaks, not the rule.** Whatever picture is in the last sentence is narrated;
+  a ban leaks its own words ("before engines and gunpowder"). Pointing back at the rule carries no
+  picture. The rule itself still leaks now and then (one "old world of iron and myth" in 80 exploration
+  answers under the pointer).
+- **Childhood was set on a plain it never narrates.** It runs on a `PlainBiomeContext`, so the
+  reminder said "You are in a vast plain — write only what belongs there", and the memories dissolved
+  "into the vastness of the plain". With the picture gone the place is the only noun left last, and the
+  leak doubled — so the two changes go together: `NarrativeController` clears the place for the
+  reminescence. The get-up phase really is on the plain and keeps it.
+- The pointer was kept over dropping the sentence: equal on every count here, and it keeps a reminder
+  at the end of the request, which the doc comment on `SceneSetting.Reminder` says is why it exists.
+  Its protection against anachronism is not measured by this — the forbidden-word counts are lore
+  words ("earth", "year") at the same rate under every variant.
+- Also seen: on a slow CPU the choice judge can finish initialising after the childhood reminescence
+  has begun, and the first observation throws `ChoiceJudge is not ready` (the scripts here hold 150 s on
+  the main menu, `wait for 150`).
 
 ## To check by hand on Windows
 
@@ -292,3 +555,10 @@ desert"). The harness's field reader did not skip such comments and asked them w
    `cut_wood`): it should now pass where it was always refused, while a feather or a loaf still fails.
 4. A stealthy means: the action button reads "discreetly".
 5. Nothing visual changed; no rule a player is subject to changed, so the manual is untouched.
+6. *(The item critic pass.)* Take up "scale" on a house wall with a short sword: it should now be
+   accepted at High (the clumsy degree), and refused at Low/Medium with the "beyond an unpractised
+   hand" sentence rather than "wrong tool". The dagger is accepted at every band (`clearly_helps`, in
+   the survey and in the live check) — more generous than the survey's label, which asks for High. A
+   refusal now ends on a fixed line ("I think nothing about it could do any of this work") instead of a
+   generated reason. The critic's log line reads `ItemUseCritic: ItemAppropriateness -> … (strict …,
+   lenient …, sum …)`; each tool use is two requests in `logs/llm_session_*/slot_0/`.

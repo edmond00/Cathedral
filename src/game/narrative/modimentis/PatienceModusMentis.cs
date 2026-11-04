@@ -15,6 +15,7 @@ public class PatienceModusMentis : ModusMentis
         "Holds out calmly through delay and tedium, enduring the long wait without strain. Keeps effort steady over slow spans, and treats time itself as something to be outlasted.";
     public override string SkillMeans => "waiting and endurance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs => new[] { "pineal_gland", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;

@@ -147,6 +147,26 @@ public class ManagementMenuRenderer
     public Action? OnMapsPortholeClosed { get; set; }
 
     /// <summary>
+    /// A will's "Wants" row pressed on the Memory tab: the member, the modus mentis id and the target
+    /// index. Set only when the screen is open over the world map — the rows are buttons only then.
+    /// The handler leaves the screen, so nothing is drawn after it.
+    /// </summary>
+    public Action<PartyMember, string, int>? OnSeekWillTarget
+    {
+        get => _onSeekWillTarget;
+        set { _onSeekWillTarget = value; _memoryPanel.CanSeekWillTargets = value != null; }
+    }
+    private Action<PartyMember, string, int>? _onSeekWillTarget;
+
+    /// <summary>The cell of the selected modus mentis's n-th "Wants" row, while it is a button.</summary>
+    public (int X, int Y)? CliWantCell(int target)
+        => _activeTab == ManagementTab.Memory ? _memoryPanel.CliWantCell(target) : null;
+
+    /// <summary>The "Wants" rows that are buttons right now, by target index.</summary>
+    public IReadOnlyList<int> CliWantRows
+        => _activeTab == ManagementTab.Memory ? _memoryPanel.CliWantRows : Array.Empty<int>();
+
+    /// <summary>
     /// The screen cell of a card on the Chorography tab's map, by its area's name, panned into view first;
     /// null off the Chorography tab or when no card has that name.
     /// </summary>
@@ -157,6 +177,13 @@ public class ManagementMenuRenderer
         Render();
         return cell;
     }
+
+    /// <summary>
+    /// The screen cell of an organ part on the Anatomy tab's body art, by part id; null off that tab
+    /// or when the art draws no such part.
+    /// </summary>
+    public (int X, int Y)? CliOrganPartCell(string organPartId)
+        => _activeTab == ManagementTab.Anatomy ? _bodyViewer.CliCellOfOrganPart(organPartId) : null;
 
     /// <summary>Takes the Chorography tab's pointer label down (the menu is being left).</summary>
     public void HideMapLabel() => _mapsPanel.HideLabel();
@@ -628,6 +655,10 @@ public class ManagementMenuRenderer
         return true;
     }
 
+    /// <summary>The cell of a Memory-tab detail button, for <c>--cli</c>; null when it is not drawn.</summary>
+    public (int X, int Y, bool Enabled)? CliMemoryButtonCell(string id)
+        => _activeTab == ManagementTab.Memory ? _memoryPanel.CliButtonCell(id) : null;
+
     /// <summary>Expands a skill on the Bellic tab by name, for <c>--cli</c>.</summary>
     public bool CliSelectBellicSkill(string skillName)
     {
@@ -699,6 +730,11 @@ public class ManagementMenuRenderer
         // press, which is exactly the answer this method owes its caller.
         if (_activeTab == ManagementTab.Memory && _memoryPanel.ProcessClick(x, y))
         {
+            if (_memoryPanel.TakeSeekRequest() is { } seek && _onSeekWillTarget != null)
+            {
+                _onSeekWillTarget(seek.Member, seek.ModusMentisId, seek.Target);
+                return true;
+            }
             Render();
             return true;
         }

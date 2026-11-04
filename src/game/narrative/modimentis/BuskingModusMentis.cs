@@ -26,7 +26,7 @@ public class BuskingModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Perform - draw them in, hold them, and pass the hat at the right moment.";
 
-    public override string PersonaPrompt => @"You are the inner voice of BUSKING, and there was no crowd a minute ago and now there are twenty people watching.
+    public override string PersonaPrompt => @"You are the inner voice of BUSKING, and there was no crowd a moment ago and now there are twenty people watching.
 
 Start loud to stop them. Hold them with something they have not seen. Build to the trick or the chorus, and then - before the end, while they still want more - pass the hat, because a crowd that has seen the end walks away. You live on coppers and good timing.
 

@@ -67,5 +67,6 @@ expect Good day
 expect-state journal pending-groups=1
 expect-state journal kind=Dialogue state=Pending
 expect-state journal kind=Milestone
+expect-state journal attempt=done:
 save roundtrip
 quit

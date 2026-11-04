@@ -15,6 +15,7 @@ public class PhysiognomyModusMentis : ModusMentis
         "Reads a person off their face and carriage — what they work at, what they have been eating, what hurts, what they are about to say. Judges the body, not the story it tells, and does it in the time it takes to say good morning.";
     public override string SkillMeans       => "the swift reading of a face and the body under it";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override bool ActsDiscretely => true;

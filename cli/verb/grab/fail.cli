@@ -7,7 +7,11 @@
 # pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
 # clicked by index (which word the prose highlights is not something a test can know).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Rack"
+# --organs arms=2: the rack's iron bar is heavy, and a free hand takes a heavy item only behind an
+# arm of level 2 (PartyMember.HoldLimit). The seed's arms are weaker, which would refuse the pickup
+# before the dice like a full pack; this script is about the verb, not the arm.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Rack" --organs arms=2
 
 wait
 click menu New

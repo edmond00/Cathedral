@@ -32,6 +32,13 @@ public class PoV
     /// </summary>
     public Element? Focus { get; set; }
 
+    /// <summary>
+    /// The workshop (section name) whose leave the path planner is supposing granted: a hypothetical
+    /// standing it searches from after an ask-to-use-workshop step, so USE there reads as offered.
+    /// Never set on the live point of view.
+    /// </summary>
+    public string? PlannedLeave { get; set; }
+
 
     public PoV(Area where, TimePeriod when, Element? focus = null)
     {

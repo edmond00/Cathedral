@@ -169,6 +169,8 @@ public static class MusicModeLauncher
                     engine.TriggerGameEvent(GameEventType.NegativeOutcome);   break;
                 case ConsoleKey.O:
                     engine.TriggerGameEvent(GameEventType.NeutralOutcome);    break;
+                case ConsoleKey.D5:
+                    engine.TriggerGameEvent(GameEventType.Hit);               break;
 
                 case ConsoleKey.H:
                     ShowHelp(); break;
@@ -291,7 +293,7 @@ public static class MusicModeLauncher
 
         SetCursor(0, top + 14); ClearLine();
         Console.ForegroundColor = ConsoleColor.DarkGray;
-        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  Y/y=Festivity  9/(=Sacred  8/*=Far  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  Space=Break  A/K/G/J/O=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
+        Console.Write("  S/s=Coldness  F/f=Fear  M/m=Mystery  I/i=Intensity  Y/y=Festivity  9/(=Sacred  8/*=Far  0=Noise solo  1-4=Tracks  T/L/X/B/W=Preset  Z=Random  Space=Break  A/K/G/J/O/5=Events  P=Loading  V=DiceRoll  H=Help  Q=Quit");
         Console.ResetColor();
     }
 
@@ -392,6 +394,7 @@ public static class MusicModeLauncher
         Console.WriteLine("  G                PositiveOutcome   — ascending flourish + brighten mood 5 s");
         Console.WriteLine("  J                NegativeOutcome   — tritone thud + darken mood 5 s, break phrase");
         Console.WriteLine("  O                NeutralOutcome    — bell tone + triple inter-phrase pause");
+        Console.WriteLine("  5                Hit               — a blow lands: drums, crash and power chord at once");
         Console.WriteLine();
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine("  Postprocess Filters (toggle on/off):");

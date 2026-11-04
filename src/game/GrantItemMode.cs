@@ -48,7 +48,11 @@ public static class GrantItemMode
             // A fresh instance per grant: the registry hands out catalogue prototypes, and putting
             // the shared one in an inventory would be the same object in every holder that asked.
             var copy = ItemRegistry.NewInstance(item);
-            protagonist.AcquireItem(copy);
+            if (!protagonist.AcquireItem(copy) && !ForceIntoAHand(protagonist, copy))
+            {
+                Console.Error.WriteLine($"[debug] --grant-item: no room anywhere for '{id}' — skipped.");
+                continue;
+            }
             granted.Add(copy.DisplayName);
         }
 
@@ -56,5 +60,25 @@ public static class GrantItemMode
         Console.ForegroundColor = ConsoleColor.Yellow;
         Console.WriteLine($"*** --grant-item: protagonist starts with {string.Join(", ", granted)} ***");
         Console.ResetColor();
+    }
+
+    /// <summary>
+    /// The grant runs before creation settles the organ scores, against the random ones the
+    /// protagonist was built with — so an arm of level 0 there would refuse a medium axe
+    /// (<see cref="PartyMember.HoldLimit"/>) and a tool-gated script would pass or fail on the seed.
+    /// A debug grant is handed over regardless: into a hand with room, past the arm's limit. The hold
+    /// rule still governs everything the player then does with it, and a weapon placed this way is
+    /// wielded only once the arm can bear it.
+    /// </summary>
+    private static bool ForceIntoAHand(Protagonist protagonist, Item item)
+    {
+        foreach (var hold in new[] { EquipmentAnchor.RightHold, EquipmentAnchor.LeftHold })
+            if (hold.CanAccept(item) && protagonist.AvailableSlots(hold) >= item.SlotCount)
+            {
+                protagonist.Equip(hold, item);
+                Console.Error.WriteLine($"[debug] --grant-item: '{item.ItemId}' placed in the {hold.Label()} past the arm's limit.");
+                return true;
+            }
+        return false;
     }
 }

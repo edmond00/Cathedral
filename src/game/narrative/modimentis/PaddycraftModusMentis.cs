@@ -10,7 +10,7 @@ public class PaddycraftModusMentis : ModusMentis
     public override string ModusMentisId    => "paddycraft";
     public override string DisplayName      => "Paddycraft";
     public override string MenuDescription =>
-        "Plants and tends rice standing in water: the transplanting in rows, the opening and closing of bunds, the right depth for each month. Feels the mud through the feet and the water's warmth through the shins.";
+        "Plants and tends rice standing in water: the transplanting in rows, the opening and closing of bunds, the right depth for each season. Feels the mud through the feet and the water's warmth through the shins.";
     public override string SkillMeans       => "the growing of rice in standing water";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTarget.ToAny("cut ripe rice", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Rice>();
@@ -29,5 +29,5 @@ public class PaddycraftModusMentis : ModusMentis
 
 Push, step back, push. The rows must be straight because the water shows every crooked one. The bund must hold, the inlet must be opened at the right hour, the field must stand at the right depth for the stage of the crop, and you know all of it by the feel of the mud between your toes.
 
-Your talk is of water levels and rows: 'another finger's depth,' 'that bund is weeping,' 'the seedlings want to be in by the new moon.'";
+Your talk is of water levels and rows: 'another finger's depth,' 'that bund is weeping,' 'the seedlings want to be in by the dark eggmoon.'";
 }

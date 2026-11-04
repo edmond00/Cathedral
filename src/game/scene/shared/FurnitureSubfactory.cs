@@ -311,7 +311,7 @@ public static class FurnitureSubfactory
         (string Name, string Desc, string[] Moods) spec = kind switch
         {
             WaterKind.River    => ("River Reach", "The water runs wide and steady here, with a pull to it that shows in the weed",  new[] { "brown", "steady", "deep-running" }),
-            WaterKind.Creek    => ("Creek",       "A fast narrow watercourse cut down into its own bed, cold the whole year",       new[] { "fast", "cold", "narrow" }),
+            WaterKind.Creek    => ("Creek",       "A fast narrow watercourse cut down into its own bed, cold the whole round",       new[] { "fast", "cold", "narrow" }),
             WaterKind.Pond     => ("Pond",        "Still water gone green at the edges, deeper in the middle than it looks",        new[] { "still", "green", "flat" }),
             WaterKind.Cove     => ("Cove",        "A bite of sea between two arms of rock, swelling and dropping against them",     new[] { "swelling", "cold", "green-black" }),
             WaterKind.Lead     => ("Open Lead",   "A lane of black sea open between two floes, steaming in the cold",              new[] { "black", "steaming", "still" }),
@@ -424,7 +424,7 @@ public static class FurnitureSubfactory
             {
                 Setting.Water => ("Sand Flat", "sand", "A wide flat of coarse sand left bare by the tide",
                     new Func<Narrative.Item>[] { () => new Narrative.World.Items.Sand() }),
-                Setting.Woodland => ("Leaf Mould", "mould", "Years of leaf fall gone down to black crumbling earth",
+                Setting.Woodland => ("Leaf Mould", "mould", "Rounds of leaf fall gone down to black crumbling earth",
                     new Func<Narrative.Item>[] { () => new Narrative.World.Items.Loam() }),
                 Setting.Highland or Setting.Underground => ("Clay Bank", "clay", "A cut bank of grey clay, slick where water has run down it",
                     new Func<Narrative.Item>[] { () => new Narrative.World.Items.Clay() }),
@@ -479,7 +479,7 @@ public static class FurnitureSubfactory
                     "House Wall", "A wall of coursed stone with gaps enough for fingers and boot-toes, going up to the eaves"),
                 Setting.Farmland => (ScaleKind.Stack, "Barn Loft", "loft",
                     (n, c, t, d, m) => new LoftArea(n, c, t, d, m),
-                    "The open floor above the threshing bay, half-filled with last year's straw",
+                    "The open floor above the threshing bay, half-filled with last round's straw",
                     "Loft Ladder", "A ladder of pegged rungs going up into the dark under the roof"),
                 Setting.Woodland => (ScaleKind.Tree, "Canopy", "canopy",
                     (n, c, t, d, m) => new CanopyArea(n, c, t, d, m),

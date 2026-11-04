@@ -17,7 +17,6 @@ public abstract class FruitItem : ConsumableItem
 
     public override List<ItemTag> Tags    => new() { ItemTag.Crop };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 3;
 }
 
 /// <summary>Edible root vegetable or pod. Small, light, edible raw.</summary>
@@ -32,7 +31,6 @@ public abstract class VegetableItem : ConsumableItem
 
     public override List<ItemTag> Tags    => new() { ItemTag.Crop };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 4;
 }
 
 /// <summary>Foraged herb sprig. Very light, used for flavour/medicine.</summary>
@@ -47,7 +45,6 @@ public abstract class HerbItem : ConsumableItem
 
     public override List<ItemTag> Tags    => new() { ItemTag.Herb };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 2;
 }
 
 // ── Raw materials ───────────────────────────────────────────────────────────
@@ -62,7 +59,6 @@ public abstract class WoodRawItem : Item
 
     public override List<ItemTag> Tags    => new() { ItemTag.Wood };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 5;
 }
 
 /// <summary>Stone, clay and other earthy raw material.</summary>
@@ -75,7 +71,6 @@ public abstract class StoneRawItem : Item
 
     public override List<ItemTag> Tags    => new() { ItemTag.Mineral };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 6;
 }
 
 /// <summary>Smelted or raw metal goods. Heavy for their volume.</summary>
@@ -88,7 +83,6 @@ public abstract class MetalItem : Item
 
     public override List<ItemTag> Tags    => new() { ItemTag.Mineral };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 10;
 }
 
 /// <summary>Forged iron tool. Medium, heavy-ish, gives a usage bonus when wielded.</summary>
@@ -101,7 +95,6 @@ public abstract class ToolItem : Item
 
     // Forged tools are also part of the blacksmith's Ironwork.
     public override List<ItemTag> Tags    => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int           PriceReference => 20;
 }
 
 /// <summary>Spun or woven textile, thread, raw fibre — the material, not the finished garment.</summary>
@@ -114,7 +107,6 @@ public abstract class TextileItem : Item
 
     public override List<ItemTag> Tags    => new() { ItemTag.Textile };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 12;
 }
 
 // Hides, pelts, feathers and horns are no longer a base of their own: they are one shared body-part
@@ -133,5 +125,4 @@ public abstract class SeaFoodItem : ConsumableItem
 
     public override List<ItemTag> Tags    => new() { ItemTag.Fish };
     public override CoinType      PriceCoin    => CoinType.Copper;
-    public override int           PriceReference => 4;
 }

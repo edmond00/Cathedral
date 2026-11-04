@@ -49,6 +49,19 @@ public abstract class PartyMember
     /// <summary>Alias for ModiMentis — kept for call-site compatibility.</summary>
     public List<ModusMentis> LearnedModiMentis { get; set; }
 
+    /// <summary>
+    /// Modi mentis this member has refused for good, by id — the memory panel's ALWAYS REJECT. A lesson
+    /// naming one of these teaches nothing: no chip, no slot, no experience. It is an ignore list, not
+    /// a forgetting: whatever is already held is unaffected, and only the play-time lessons consult it
+    /// (verbs, conversations, fights, work); the childhood grants and NPC generation never see it.
+    /// Persisted in the save.
+    /// </summary>
+    public HashSet<string> RejectedModiMentisIds { get; } = new(StringComparer.Ordinal);
+
+    /// <summary>True when <paramref name="modusMentisId"/> is on <see cref="RejectedModiMentisIds"/>.</summary>
+    public bool IsModusMentisRejected(string? modusMentisId)
+        => modusMentisId != null && RejectedModiMentisIds.Contains(modusMentisId);
+
     // ── Inventory ────────────────────────────────────────────────
     /// <summary>
     /// Items that could not be placed in any anchor slot or container.
@@ -222,6 +235,54 @@ public abstract class PartyMember
     /// </summary>
     public void Equip(EquipmentAnchor anchor, Item item) => EquippedItems[anchor].Add(item);
 
+    // ── What a hand can bear ──────────────────────────────────────
+
+    /// <summary>
+    /// The heaviest thing the arm behind a hold can bear, or null when this anatomy has no arm for
+    /// that hand (a beast's holds are its mouth, and no organ governs them). The arm's effective score
+    /// after wounds, one weight class a level — 0 light, 1 medium, 2 heavy — read through the Hand
+    /// Load stats (<see cref="HandLoadStat"/>), so the figure the anatomy panel shows is the one
+    /// enforced. <see cref="WeightClass.Insignificant"/> is under every bar.
+    ///
+    /// <para>Only what sits <em>in</em> the hand is weighed. A bag is held by its handle, so a heavy
+    /// item in a medium bag is the bag's weight to the hand; the contents are carried, not wielded —
+    /// see <see cref="WieldedWeapons(EquipmentAnchor)"/>.</para>
+    /// </summary>
+    public WeightClass? HoldLimit(EquipmentAnchor hold) => HandLoadStat.Of(this, hold);
+
+    /// <summary>
+    /// Whether <paramref name="item"/> may sit directly in <paramref name="anchor"/> on this body:
+    /// the anchor's own rule (<see cref="EquipmentAnchorExtensions.CanAccept"/>) and, for a hand,
+    /// the arm's <see cref="HoldLimit"/>. Capacity is not asked here. Every placement on a body goes
+    /// through this rather than <c>CanAccept</c> alone, or a weak arm is handed a war axe by
+    /// whichever path forgot.
+    /// </summary>
+    public bool CanPlace(EquipmentAnchor anchor, Item item) =>
+        anchor.CanAccept(item)
+        && (HoldLimit(anchor) is not { } limit || item.Weight <= limit);
+
+    /// <summary>
+    /// The weapons a fight can use in this hand: held directly in it (a sword in a bag is luggage)
+    /// and no heavier than the arm can bear. A weapon placed while the arm was sound stays in the
+    /// hand when a wound weakens it, and simply stops being one — the fight reads this, never the
+    /// raw anchor list.
+    /// </summary>
+    public IEnumerable<Cathedral.Fight.IWeaponItem> WieldedWeapons(EquipmentAnchor hold) =>
+        EquippedItems.TryGetValue(hold, out var held)
+            ? held.Where(i => CanPlace(hold, i)).OfType<Cathedral.Fight.IWeaponItem>()
+            : Enumerable.Empty<Cathedral.Fight.IWeaponItem>();
+
+    /// <summary>Wielded weapons in both hands, right before left — the order the fight reads them in.</summary>
+    public IEnumerable<Cathedral.Fight.IWeaponItem> WieldedWeapons() =>
+        WieldedWeapons(EquipmentAnchor.RightHold).Concat(WieldedWeapons(EquipmentAnchor.LeftHold));
+
+    /// <summary>
+    /// Whether some hand of this body could wield <paramref name="item"/> — the question a weapon
+    /// combined from the pack has to answer before it can strike a first blow.
+    /// </summary>
+    public bool CanWieldInSomeHand(Item item) =>
+        CanPlace(EquipmentAnchor.RightHold, item) || CanPlace(EquipmentAnchor.LeftHold, item);
+
     // ── Carrying weight ───────────────────────────────────────────
 
     /// <summary>
@@ -343,7 +404,7 @@ public abstract class PartyMember
         if (item.PreferredAnchor.HasValue)
         {
             var preferred = item.PreferredAnchor.Value;
-            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+            if (CanPlace(preferred, item) && AvailableSlots(preferred) >= item.SlotCount)
             {
                 EquippedItems[preferred].Add(item);
                 return true;
@@ -353,7 +414,7 @@ public abstract class PartyMember
         // 2. Any free compatible anchor with capacity
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
         {
-            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+            if (CanPlace(anchor, item) && AvailableSlots(anchor) >= item.SlotCount)
             {
                 EquippedItems[anchor].Add(item);
                 return true;
@@ -401,17 +462,23 @@ public abstract class PartyMember
         if (item.PreferredAnchor.HasValue)
         {
             var preferred = item.PreferredAnchor.Value;
-            if (preferred.CanAccept(item) && AvailableSlots(preferred) >= item.SlotCount)
+            if (CanPlace(preferred, item) && AvailableSlots(preferred) >= item.SlotCount)
                 return AcquireCheck.Allow;
         }
 
         foreach (EquipmentAnchor anchor in Enum.GetValues<EquipmentAnchor>())
-            if (anchor.CanAccept(item) && AvailableSlots(anchor) >= item.SlotCount)
+            if (CanPlace(anchor, item) && AvailableSlots(anchor) >= item.SlotCount)
                 return AcquireCheck.Allow;
 
         foreach (var container in GetAllItems().OfType<IContainer>())
             if (container.CanContain(item) && item.SlotCount <= container.AvailableSlots)
                 return AcquireCheck.Allow;
+
+        // Refused the same way as a full pack, but worded for what actually stopped it: a free hand
+        // too weak to bear the thing, with no bag that would take it instead.
+        foreach (var hold in new[] { EquipmentAnchor.RightHold, EquipmentAnchor.LeftHold })
+            if (hold.CanAccept(item) && AvailableSlots(hold) >= item.SlotCount && !CanPlace(hold, item))
+                return AcquireCheck.Deny($"{item.WithArticle()} is too heavy for my arms to hold, and I have nowhere else to put it");
 
         return AcquireCheck.Deny($"I have nowhere left to put {item.WithArticle()}");
     }
@@ -645,6 +712,14 @@ public abstract class PartyMember
 
     public ModusMentis? LearnModusMentis(ModusMentis modusMentis)
     {
+        // Backstop for ALWAYS REJECT. Every lesson path checks the list before it gets here so that
+        // nothing is reported, but a path that forgets must still learn nothing.
+        if (IsModusMentisRejected(modusMentis.ModusMentisId))
+        {
+            Console.WriteLine($"PartyMember: {DisplayName} has rejected '{modusMentis.ModusMentisId}' for good — not learned.");
+            return null;
+        }
+
         if (MemoryModules.Count == 0) InitializeMemory();
         var working = GetMemoryModule(MemoryModuleType.Working)
             ?? throw new InvalidOperationException("Working memory module is missing.");
@@ -793,6 +868,18 @@ public abstract class PartyMember
 
         working.Compact();
         ModiMentis.Remove(modusMentis);
+        return true;
+    }
+
+    /// <summary>
+    /// <see cref="RejectModusMentis"/>, and the modus mentis's id onto
+    /// <see cref="RejectedModiMentisIds"/> so no later lesson teaches it again. Returns false, and
+    /// records nothing, if the modus mentis is not in working memory.
+    /// </summary>
+    public bool RejectModusMentisForever(ModusMentis modusMentis)
+    {
+        if (!RejectModusMentis(modusMentis)) return false;
+        RejectedModiMentisIds.Add(modusMentis.ModusMentisId);
         return true;
     }
 

@@ -30,7 +30,8 @@ namespace Cathedral.Game.Management;
 ///   ProcessHover   (mouse-move) updates the hovered drop target; the right panel
 ///                  shows info about whatever item/anchor is currently hovered.
 ///   ProcessMouseUp (mouse-up) completes the drag (moves item) or cancels it when the
-///                  pointer is still over the same source anchor.
+///                  pointer is still over the same source anchor. Released over another
+///                  item where a plain drop finds no room, the two exchange places.
 /// </summary>
 public sealed class InventoryMenuRenderer
 {
@@ -711,6 +712,18 @@ public sealed class InventoryMenuRenderer
             return true;
         }
 
+        // ── Exchange with the item under the cursor. ──
+        // Only when a plain drop cannot happen: an exchange needs no free slot on either side,
+        // which is the case it exists for (a sword in the hand, a warhammer in a full pack).
+        bool anchorDropFits = _hoveredAnchor.HasValue && _hoveredAnchor.Value != _dragSourceAnchor
+                              && _member.CanPlace(_hoveredAnchor.Value, _dragItem)
+                              && _member.AvailableSlots(_hoveredAnchor.Value) >= _dragItem.SlotCount;
+        if (!anchorDropFits && TrySwapWithItemAt(x, y, hit))
+        {
+            ResetDragState();
+            return true;
+        }
+
         // ── Anchor-level drop (different anchor). ──
         if (_hoveredAnchor.HasValue && _hoveredAnchor.Value != _dragSourceAnchor)
             CompleteOrCancelDrag(_hoveredAnchor.Value);
@@ -719,6 +732,77 @@ public sealed class InventoryMenuRenderer
 
         return true;
     }
+
+    /// <summary>
+    /// Exchange the dragged item with the one under the cursor: a content row of the container
+    /// viewed in the right panel, or an item box on the body art. Each takes the other's place,
+    /// at the other's position, when the place accepts it once its own occupant has left.
+    /// A body-art container that could hold the dragged item is not exchanged with — the drop
+    /// meant "into", and failed for want of room.
+    /// </summary>
+    private bool TrySwapWithItemAt(int x, int y, ItemHit? hit)
+    {
+        if (_dragItem == null || _member == null || !_dragSourceAnchor.HasValue) return false;
+
+        Item? other = null;
+        IContainer? otherContainer = null;
+        EquipmentAnchor otherAnchor = default;
+
+        int contentIdx = x >= RightPanelX ? HitTestContent(x, y) : -1;
+        if (contentIdx >= 0)
+        {
+            var viewed = ResolveViewedContainer();
+            if (viewed == null || contentIdx >= viewed.Contents.Count) return false;
+            other          = viewed.Contents[contentIdx];
+            otherContainer = viewed;
+        }
+        else if (hit.HasValue && hit.Value.ItemIdx >= 0)
+        {
+            var items = _member.EquippedItems[hit.Value.Anchor];
+            if (hit.Value.ItemIdx >= items.Count) return false;
+            other       = items[hit.Value.ItemIdx];
+            otherAnchor = hit.Value.Anchor;
+            if (other is IContainer into && into.CanContain(_dragItem)) return false;
+        }
+        if (other == null || ReferenceEquals(other, _dragItem)) return false;
+
+        var dragList  = _dragSourceContainer?.Contents ?? _member.EquippedItems[_dragSourceAnchor.Value];
+        var otherList = otherContainer?.Contents ?? _member.EquippedItems[otherAnchor];
+        // Within one list an exchange is only a reordering; and neither item may end up inside itself.
+        if (ReferenceEquals(dragList, otherList)) return false;
+        if (Holds(_dragItem, other) || Holds(other, _dragItem)) return false;
+
+        int dragIdx  = dragList.IndexOf(_dragItem);
+        int otherIdx = otherList.IndexOf(other);
+        if (dragIdx < 0 || otherIdx < 0) return false;
+
+        dragList.RemoveAt(dragIdx);
+        otherList.RemoveAt(otherIdx);
+
+        bool fits = Accepts(_dragSourceContainer, _dragSourceAnchor.Value, other)
+                    && Accepts(otherContainer, otherAnchor, _dragItem);
+        if (fits)
+        {
+            dragList.Insert(dragIdx, other);
+            otherList.Insert(otherIdx, _dragItem);
+        }
+        else
+        {
+            dragList.Insert(dragIdx, _dragItem);
+            otherList.Insert(otherIdx, other);
+        }
+        return fits;
+    }
+
+    /// <summary>Whether a place, already emptied of its occupant, would take <paramref name="item"/>.</summary>
+    private bool Accepts(IContainer? container, EquipmentAnchor anchor, Item item) =>
+        container != null
+            ? container.CanContain(item) && item.SlotCount <= container.AvailableSlots
+            : _member != null && _member.CanPlace(anchor, item) && _member.AvailableSlots(anchor) >= item.SlotCount;
+
+    /// <summary>Whether <paramref name="inner"/> lies somewhere inside <paramref name="outer"/>.</summary>
+    private static bool Holds(Item outer, Item inner) =>
+        outer is IContainer c && c.Contents.Any(i => ReferenceEquals(i, inner) || Holds(i, inner));
 
     /// <summary>Clear all hover / selection state (called when switching away from this tab).</summary>
     /// <summary>
@@ -797,7 +881,7 @@ public sealed class InventoryMenuRenderer
         if (_isDragging && _dragItem != null && _member != null && _dragSourceAnchor.HasValue)
         {
             int avail = _member.AvailableSlots(target);
-            if (avail >= _dragItem.SlotCount && target.CanAccept(_dragItem))
+            if (avail >= _dragItem.SlotCount && _member.CanPlace(target, _dragItem))
             {
                 RemoveDragItemFromSource();
                 _member.EquippedItems[target].Add(_dragItem);
@@ -953,7 +1037,7 @@ public sealed class InventoryMenuRenderer
         {
             // A move onto the anchor the item already sits directly on is a no-op.
             if (currentParent == null && anchor == currentAnchor) continue;
-            if (anchor.CanAccept(item) && _member.AvailableSlots(anchor) >= item.SlotCount)
+            if (_member.CanPlace(anchor, item) && _member.AvailableSlots(anchor) >= item.SlotCount)
                 dests.Add(new MoveDest(MoveDestKind.Anchor, anchor, null, anchor.Label().ToUpperInvariant()));
         }
 
@@ -1021,7 +1105,7 @@ public sealed class InventoryMenuRenderer
     private bool TryPlaceOnAnchor(EquipmentAnchor anchor, Item item)
     {
         if (_member == null) return false;
-        if (!anchor.CanAccept(item) || _member.AvailableSlots(anchor) < item.SlotCount) return false;
+        if (!_member.CanPlace(anchor, item) || _member.AvailableSlots(anchor) < item.SlotCount) return false;
         _member.EquippedItems[anchor].Add(item);
         return true;
     }
@@ -1093,7 +1177,8 @@ public sealed class InventoryMenuRenderer
         bool isDropTarget = _isDragging && _hoveredAnchor == anchor && anchor != _dragSourceAnchor;
 
         // Gray out anchors that cannot accept the dragged item.
-        bool isGrayedOut = _isDragging && _dragItem != null && !anchor.CanAccept(_dragItem)
+        bool isGrayedOut = _isDragging && _dragItem != null
+                           && !(_member?.CanPlace(anchor, _dragItem) ?? anchor.CanAccept(_dragItem))
                            && anchor != _dragSourceAnchor;
 
         // ── Header row ────────────────────────────────────────────
@@ -1770,7 +1855,7 @@ public sealed class InventoryMenuRenderer
         }
         else if (!canDrop && _dragItem != null && y <= InfoEndRow)
         {
-            var noFitFg = new Vector4(0.90f, 0.30f, 0.30f, 1f);
+            var noFitFg = Config.Colors.LightPurple;
             string reason = !container.CanContain(_dragItem) ? "\u2717 Type not accepted"
                           : _dragItem.SlotCount > container.AvailableSlots ? "\u2717 No room"
                           : "\u2717 Cannot drop";

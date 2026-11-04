@@ -1,0 +1,25 @@
+# A crafting will plans through the master's leave
+#
+# The smelter's will, standing in the smith's forge with a charcoal rake, wants to work a forge hearth —
+# and the only one is the smith's, which waits on his leave. The planner takes the conversation as a step
+# on the way (its outcome, the leave, is known in advance), so the plan is two steps: ask the smith for
+# the smithy, then set to work at the hearth.
+#
+# (Not the blacksmith: his will has the ruin's ownerless anvil two steps away as well — out of the door
+# and to work — and between two equally short ways the plan keeps the one it met first.)
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm smelting --grant-item charcoal_rake --location-type test --location-id 0 --start-area "Test Forge" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+expect-state will will smelting steps=2
+expect-state will for the use of the test smithy
+expect-state will set to work at the test forge hearth
+expect-state will aim=1/5
+quit

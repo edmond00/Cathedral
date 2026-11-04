@@ -12,7 +12,7 @@ Every modus mentis declares the following, and these declarations are the whole 
 **An identity.** A stable name, and the manner in which it operates — the phrase by which an act
 performed through it is described.
 
-**Its functions**, at least one and at most three, drawn from seven:
+**Its functions**, at least one and at most three, drawn from eight:
 
 | Function | Office |
 |---|---|
@@ -23,6 +23,7 @@ performed through it is described.
 | **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
 | **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
 | **Will** | It wants. It observes and deliberates, but only toward the few kinds of act it desires. |
+| **Craft** | It knows a trade: one station, one implement, the few things made there (see [X](10-crafting.md)). Borne always beside Will and Action. |
 
 **Action and emotion are exclusive**, as thinking and action already are. These are the three
 offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one
@@ -63,6 +64,12 @@ ones require abstraction. The common case requires nothing.
 high ones resist them. This is read **only** off the two that deliberate and act; one bearing
 neither of those functions is always medium, since a principled organ of perception is a claim
 nothing could honour.
+
+**Its readiness to doubt** — low, medium or high — declared by every modus mentis bearing the
+Thinking function, and suited to its temper: a mind that questions, weighs and checks is high, one
+that knows at a glance, trusts a sense, a feeling or an instinct, or keeps to a fixed code is low. It sets how often a thinking may be taken up
+again when its proposal comes to nothing, and whether that proposal may be doubted; it is treated in
+[Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act). A will declares none, and is medium.
 
 **Whether it acts discreetly** — quietly, out of sight. A discreet modus mentis is one degree harder
 to notice, which is treated in [Chapter VI](06-narration.md).
@@ -166,7 +173,7 @@ modus mentis at the far end is pushed out and **lost outright** — struck from 
 altogether. It does not fall back into any other module. Whatever has not been filed by the time the
 next thing is learned is what stands to be lost.
 
-Filing is done deliberately, and there are three moves.
+Filing is done deliberately, and there are four moves.
 
 **Consolidate** takes a modus mentis out of working memory and lodges it in the long-term module of
 its own kind — procedural, semantic or sensory. It requires a free slot in that module, and there is
@@ -182,6 +189,12 @@ better.
 **Reject** discards a modus mentis from working memory on the spot. It exists so that room can be
 banked *before* the queue takes the choice away — the slot freed goes to the back of the queue, so
 the next thing learned has somewhere to sit.
+
+**Reject for good** discards it in the same manner and further sets it on the character's list of
+refusals, which is kept with the character for the rest of the run. A modus mentis on that list is
+never learned again: an act, a conversation or a stint of work that would teach it teaches nothing
+in its place, and a fighting skill that it unlocks is no longer offered to be taken up in a fight. The list governs learning only; it takes nothing from what is
+already held, and nothing removes a modus mentis from it once set there.
 
 The **residual** queue is the last holding, and it is a reprieve rather than a store: what enters it
 has been put out of active use, and enough archiving after it will push it out of memory for good.

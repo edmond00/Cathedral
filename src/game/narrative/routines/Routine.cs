@@ -15,7 +15,7 @@ namespace Cathedral.Game.Narrative.Routines;
 /// <b>type</b> (see the subclasses of <see cref="Routine"/>); this enum only names it for the menus,
 /// the map icons and the CLI.
 /// </summary>
-public enum RoutineCategory { GoTo, Meet, Gather, Buy, Sell, Work }
+public enum RoutineCategory { GoTo, Meet, Gather, Buy, Sell, Work, Craft }
 
 public static class RoutineCategories
 {
@@ -24,6 +24,7 @@ public static class RoutineCategories
     {
         RoutineCategory.GoTo, RoutineCategory.Meet, RoutineCategory.Gather,
         RoutineCategory.Buy,  RoutineCategory.Sell, RoutineCategory.Work,
+        RoutineCategory.Craft,
     };
 
     public static string Label(this RoutineCategory c) => c switch
@@ -33,6 +34,7 @@ public static class RoutineCategories
         RoutineCategory.Gather => "Gather",
         RoutineCategory.Buy    => "Buy",
         RoutineCategory.Sell   => "Sell",
+        RoutineCategory.Craft  => "Craft",
         _                      => "Work",
     };
 
@@ -44,6 +46,7 @@ public static class RoutineCategories
         RoutineCategory.Gather => "gather",
         RoutineCategory.Buy    => "buy",
         RoutineCategory.Sell   => "sell",
+        RoutineCategory.Craft  => "craft",
         _                      => "work",
     };
 
@@ -55,6 +58,7 @@ public static class RoutineCategories
         RoutineCategory.Gather => 'H',
         RoutineCategory.Buy    => 'B',
         RoutineCategory.Sell   => 'S',
+        RoutineCategory.Craft  => 'C',
         _                      => 'W',
     };
 
@@ -66,6 +70,7 @@ public static class RoutineCategories
         RoutineCategory.Gather => "Gather, dig, mine, fish or cut wood in the open.",
         RoutineCategory.Buy    => "Agree to buy from a merchant.",
         RoutineCategory.Sell   => "Agree to sell to a merchant.",
+        RoutineCategory.Craft  => "Set to work at a station you may use.",
         _                      => "Be taken on for work.",
     };
 }
@@ -104,6 +109,7 @@ public sealed record RoutineCheckContext(Scene.Scene Scene, Protagonist Protagon
 [JsonDerivedType(typeof(TradeRoutine),  "trade")]
 [JsonDerivedType(typeof(WorkRoutine),   "work")]
 [JsonDerivedType(typeof(GatherRoutine), "gather")]
+[JsonDerivedType(typeof(CraftRoutine),  "craft")]
 public abstract class Routine
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -157,7 +163,7 @@ public abstract class Routine
     {
         var area = FindArea(ctx.Scene);
         if (area == null) return $"{AreaName} is no longer there";
-        if (!RoutineRecorder.IsRecordable(area)) return $"{AreaName} is not yours to enter";
+        if (!RoutineRecorder.IsRecordable(ctx.Scene, area)) return $"{AreaName} is not yours to enter";
         return TargetUnavailability(ctx, area);
     }
 
@@ -337,6 +343,48 @@ public sealed class GatherRoutine : Routine
         var source = GatherYield.FindSource(this, area);
         if (source == null) return $"{SourceName} is no longer there";
         if (GatherYield.Slots(this, verb, source, ctx.Scene, ctx.Now).Count == 0) return $"nothing of it grows there now";
+        if (EnemyThere(ctx, area) is { } enemy) return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(enemy)} is there";
+        return null;
+    }
+}
+
+/// <summary>
+/// Craft — straight back to a station's crafting menu, as a Buy routine goes straight back to the trade
+/// menu. Learned when USE succeeds somewhere the player may stand: a public workshop, a workshop whose
+/// master has given leave (kept for good), or a station nobody owns.
+///
+/// <para>Walkable while the station is still there, the trade is still held, its implement (or the one
+/// it was learned with) is still carried, the station may still be used and no enemy is standing by it.
+/// Nothing is rolled on the way in: the routine is the USE already won.</para>
+/// </summary>
+public sealed class CraftRoutine : Routine
+{
+    public string StationName { get; set; } = "";
+    public string TradeId { get; set; } = "";
+    public string TradeName { get; set; } = "";
+    /// <summary>The implement USE was won with, or "" when it was the trade's own.</summary>
+    public string ToolItemId { get; set; } = "";
+    public string ToolItemName { get; set; } = "";
+
+    [JsonIgnore] public override RoutineCategory Category => RoutineCategory.Craft;
+    [JsonIgnore] protected override string TargetKey => $"{StationName}:{TradeId}";
+    [JsonIgnore] protected override string CliTarget => $"trade={TradeId} tool={(ToolItemId.Length > 0 ? ToolItemId : "-")} station=\"{StationName}\"";
+
+    /// <summary>The station in <paramref name="area"/>, by its name and its being a station.</summary>
+    public PointOfInterest? FindStation(Area area)
+        => area.PointsOfInterest.FirstOrDefault(p => CraftingStations.IsStation(p)
+                                                  && string.Equals(p.DisplayName, StationName, StringComparison.OrdinalIgnoreCase));
+
+    protected override string? TargetUnavailability(RoutineCheckContext ctx, Area area)
+    {
+        var station = FindStation(area);
+        if (station == null) return $"{StationName} is no longer there";
+        var trade = ctx.Protagonist.ModiMentis.OfType<Crafting.CraftingModusMentis>().FirstOrDefault(m => m.ModusMentisId == TradeId);
+        if (trade == null) return $"you no longer know {TradeName.ToLowerInvariant()}";
+        string toolId = ToolItemId.Length > 0 ? ToolItemId : trade.ToolItemId;
+        if (!ctx.Protagonist.GetAllItems().Any(i => i.ItemId == toolId))
+            return $"needs {(ToolItemName.Length > 0 ? ToolItemName : trade.ToolPrototype?.DisplayName ?? toolId).ToLowerInvariant()}";
+        if (!Crafting.CraftingAccess.MayUse(ctx.Scene, new PoV(area, Time), station)) return $"the {StationName.ToLowerInvariant()} is not yours to use";
         if (EnemyThere(ctx, area) is { } enemy) return $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(enemy)} is there";
         return null;
     }

@@ -230,8 +230,8 @@ public sealed partial class EmpireLore
     private void BuildWorlds()
     {
         Pyr = World("Pyr", ImperialStatus.Hatched, "The Ban world: the crescent of Vahyr and the Yellow Island. Hatched 3579.");
-        Varam = World("Varam", ImperialStatus.Hatched, "The brightest moon of Pyr, a world of ice; a prison. Hatched 1703.");
-        Belune = World("Belune", ImperialStatus.Held, "The nearest moon of Pyr: hills and hot springs. A kingdom of the empire from 1321.");
+        Varam = World("Varam", ImperialStatus.Hatched, "The brightest eggmoon of Pyr, a world of ice; a prison. Hatched 1703.");
+        Belune = World("Belune", ImperialStatus.Held, "The nearest eggmoon of Pyr: hills and hot springs. A kingdom of the empire from 1321.");
         Prunil = World("Prunil", ImperialStatus.Held, "Mountains, gorges, salt and gold; conquered by Rosena, 1705 to 1722.");
         GreenAvoria = World("Green Avoria", ImperialStatus.Held, "Forests and jungles; conquered by Dosh Avory, 1731 to 1740.");
         BlueAvoria = World("Blue Avoria", ImperialStatus.Held, "One ocean and a thousand islands; conquered by Dosh Avory, 1744 to 1756.");
@@ -253,8 +253,8 @@ public sealed partial class EmpireLore
         Hethra = World("Hethra", ImperialStatus.Held, "A dark world of mushrooms as tall as trees.");
         Mirelle = World("Mirelle", ImperialStatus.Held, "A farming world; the first written account of goblins comes from here.");
         Ysthane = World("Ysthane", ImperialStatus.Held, "The world of the speaking stones, source of the Far Lore.");
-        Nadirine = World("Nadirine", ImperialStatus.Held, "The Low Moon, near the sand-floor; base of the Deep Expeditions.");
-        Emberlee = World("Emberlee", ImperialStatus.Held, "The High Moon, so bright its nights are twilit; astronomers' world.");
+        Nadirine = World("Nadirine", ImperialStatus.Held, "The Low Eggmoon, near the sand-floor; base of the Deep Expeditions.");
+        Emberlee = World("Emberlee", ImperialStatus.Held, "The High Eggmoon, so bright its nights are twilit; astronomers' world.");
         Perpetua = World("Perpetua", ImperialStatus.Held, "A penal colony-world of the Plebeian Tribunal.");
         Gorgomanth = World("Gorgomanth", ImperialStatus.Held, "A world of giant beasts, hunted for the imperial menageries.");
         GeoantsMark = World("Geoant's Mark", ImperialStatus.Unvisited, "The dim world Arneviz Geoant sailed for in 2871 and never reached.");
@@ -300,7 +300,7 @@ public sealed partial class EmpireLore
         BlindCells = PyrPlace("the Blind Cells", PlaceKind.Fortress, none, hatching, "Lightless dungeons under Perorigak's citadel.");
         FoundlingHouse = PyrPlace("the Foundling House of Perorigak", PlaceKind.Monastery, none, hatching, "Burnt by Grizx in 211 and rebuilt.");
         LuskChapel = PyrPlace("the Plain Chapel of Lusk", PlaceKind.Temple, At(1009), hatching, "The see of the Plain Church: no altar, no image, no bell.");
-        RedPyramidsOfPyr = PyrPlace("the five Red Pyramids of Pyr", PlaceKind.Pyramid, Circa(2700), hatching, "Where the giant Balnus lived out their centuries.");
+        RedPyramidsOfPyr = PyrPlace("the five Red Pyramids of Pyr", PlaceKind.Pyramid, Circa(2700), hatching, "Where the giant Balnus lived out their hundreds of rounds.");
         Vaur = new Place("Vaur", PlaceKind.Fortress, E) { Founded = Circa(1400), Ruined = At(1703), World = Varam,
                                                            Description = "The ice dungeon of Varam." };
         Places.Add(Vaur);

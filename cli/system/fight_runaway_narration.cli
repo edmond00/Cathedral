@@ -1,0 +1,45 @@
+# Fleeing a fight started from narration makes for the location's way out, on the map.
+#
+# Out of the fight is not yet out of the location: the party walks from where it fought to the way
+# out (the exit glyph on the location map), and anybody standing in an area on the way could still
+# stop it there (cli/system/runaway_route.cli covers that). With nobody in the way the walk ends the
+# visit, as fleeing always did.
+#
+# The fight is entered by the attack verb (see cli/verb/attack/success.cli for the flag reasoning).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period dawn --observe-only brewer
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal attack
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+# The landed attack HOLDS the fight so its first blow can be read (see "Opening a fight: the first
+# blow"). The fight opens on the press that closes the segment, not on the swing.
+click button
+wait mode Fighting 90
+fight-end runaway
+
+# Back on the world map: the walk out played (instantly under --cli) and asked for the exit.
+wait mode WorldView 90
+expect-no-state pois Corpse
+
+quit

@@ -3,17 +3,17 @@
 # Ripelore chooses to steal from the chest and Discipline, a high-morality action modus mentis, is
 # pinned as the means. HighMoralityRefusesCrimeRule refuses it during the think, unasked: the
 # refusal is narrated and no button is produced — the act is never offered, so no point can be
-# spent attempting it. The refusal reaches the proposal ledger like any other: Scientific Research,
+# spent attempting it. The refusal reaches the proposal ledger like any other: Learned Research,
 # a different mind, is still offered stealing, and since it was refused once already this phase the
 # means is narrowed to those the willingness rules let through. `means none` hands the draw back to
 # the RNG, so the button can only appear if that narrowing kept Discipline out.
 #
 # Buttons are asserted as "] <goal>" — the tail of "[Knack ●] steal …" — which the prose never
-# contains.
+# contains. Ripelore is chosen by id: the popup is sorted by name, so its first entry is not it.
 #
-# --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
+# --doubt low: one try, no iterative thinking — a retry would step around the refusal
 # this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,knack,scientific_research --means-only discipline --organs pineal_gland=0
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,knack,scientific_research --means-only discipline --doubt low
 
 wait
 click menu New
@@ -30,17 +30,18 @@ advance 12 180
 # Ripelore; Discipline refuses to steal, before any button exists.
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect against every principle I hold
 expect-not ] steal
 
-# Scientific Research: still offered stealing, carried out by a means that would not refuse.
+# Learned Research: still offered stealing, carried out by a means that would not refuse. At seed 42
+# the draw lands on Stealth, a discreet means, whose button reads "[Stealth ⟐] discreetly steal …".
 means none
 click keyword 0
 choose 0
 choose scientific_research
 advance 12 180
-expect ] steal
+expect ] discreetly steal
 
 quit

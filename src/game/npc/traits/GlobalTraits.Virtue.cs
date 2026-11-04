@@ -34,7 +34,7 @@ public sealed partial class PersonalityTraitRegistry
             DisplayName = "Steadfast",
             ModiMentis  = new[] { "discipline", "endurance" },
             Organs      = new[] { ("backbone", 1) },
-            Appearance  = "the look of someone who has done the same hard thing every day for twenty years",
+            Appearance  = "the look of someone who has done the same hard thing every day for twenty rounds",
             Persona     = "You keep your word and you finish what you start, long after it has stopped being sensible. People rely on you and rarely say thank you.",
             Opinions    = new[] { (DialogueTopic.Work, "You say you'll do a thing, you do it. That's the whole of my philosophy and it's served") },
         });

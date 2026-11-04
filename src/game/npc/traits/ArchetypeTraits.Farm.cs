@@ -14,11 +14,11 @@ public sealed partial class PersonalityTraitRegistry
             new PersonalityTrait
             {
                 TraitId     = "farmer_one_bad_year_from_ruin",
-                DisplayName = "One Bad Year from Ruin",
+                DisplayName = "One Bad Round from Ruin",
                 ModiMentis  = new[] { "tallycraft", "vigilance", "enterprise" },
                 Organs      = new[] { ("paunch", -1) },
                 Appearance  = "thinner than a landholder ought to be, and watching the sky more than the visitor",
-                Persona     = "You borrowed against this year's crop and it is not standing well. You are outwardly solid and privately terrified.",
+                Persona     = "You borrowed against this round's crop and it is not standing well. You are outwardly solid and privately terrified.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Harvest, "It needs to come in heavy. I'll not tell you what's riding on it, but it needs to come in heavy"),
@@ -48,7 +48,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Kin,     "There's nobody after me. It goes to a cousin I've no time for. That's the whole shape of it"),
-                    (DialogueTopic.Seasons, "You work a place for forty years for whoever comes next. When there's nobody, the years read differently"),
+                    (DialogueTopic.Seasons, "You work a place for forty rounds for whoever comes next. When there's nobody, the rounds read differently"),
                 },
             },
             new PersonalityTrait
@@ -79,10 +79,10 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Lost the Herd to Murrain",
                 ModiMentis  = new[] { "husbandry", "herblore", "grudgekeeping" },
                 Appearance  = "a wariness that comes out whenever livestock are mentioned",
-                Persona     = "A cattle sickness took nearly all your beasts three years ago. You are still rebuilding and you are savage about anyone bringing an unchecked animal onto your land.",
+                Persona     = "A cattle sickness took nearly all your beasts three rounds ago. You are still rebuilding and you are savage about anyone bringing an unchecked animal onto your land.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Beasts, "I lost nine in one month. Nine. You do not bring a strange beast onto my ground, not for any reason"),
+                    (DialogueTopic.Beasts, "I lost nine in thirty days. Nine. You do not bring a strange beast onto my ground, not for any reason"),
                     (DialogueTopic.Health, "It goes through a herd like fire through straw and there's not a thing you can do but burn what's left"),
                 },
             });
@@ -135,7 +135,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new Apple() },
                 Appearance  = "eating an apple that did not obviously come from anywhere legitimate",
                 Persona     = "You steal fruit constantly and consider it a right rather than a theft. You are cheerfully unrepentant if caught.",
-                Opinions    = new[] { (DialogueTopic.Food, "There's an apple in my hand most of the year. Where from? Trees. Next question") },
+                Opinions    = new[] { (DialogueTopic.Food, "There's an apple in my hand most of the round. Where from? Trees. Next question") },
             },
             new PersonalityTrait
             {
@@ -178,7 +178,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Wilds,  "I've had one at close quarters. It's not like the stories. It's fast and it's quiet and then it's on you"),
-                    (DialogueTopic.Beasts, "I lost four before I got it. Four. That's a family's year in wool") ,
+                    (DialogueTopic.Beasts, "I lost four before I got it. Four. That's a family's round in wool") ,
                 },
             },
             new PersonalityTrait
@@ -201,7 +201,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "wayfaring", "cartography", "clairvoyance" },
                 Organs      = new[] { ("left_eye", 1), ("right_eye", 1) },
                 Appearance  = "glances up at the sky mid-sentence, and appears to get something from it",
-                Persona     = "You have spent thousands of nights under an open sky and you know the stars and the weather better than anyone here. You are quietly certain about the future weather and usually right.",
+                Persona     = "You have spent thousands of nights under an open sky and you know the embers and the weather better than anyone here. You are quietly certain about the future weather and usually right.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Weather, "Three days out I'll tell you, and I'll be right four times in five. It's not a gift, it's ten thousand nights of looking"),
@@ -213,7 +213,7 @@ public sealed partial class PersonalityTraitRegistry
                 TraitId     = "shepherd_half_wild",
                 DisplayName = "Half Gone Wild",
                 ModiMentis  = new[] { "survivalism", "bushcraft", "stoneface" },
-                Appearance  = "unkempt to a degree that suggests months without seeing anyone",
+                Appearance  = "unkempt to a degree that suggests seasons without seeing anyone",
                 Persona     = "You spend so long alone on the high grazing that you have half forgotten how to talk to people. You are not unfriendly, just badly out of practice.",
                 Opinions    = new[]
                 {
@@ -230,7 +230,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "Your working dog died recently and you have not replaced it. You still whistle for it without meaning to and it undoes you every time.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Beasts, "I had a dog fifteen years. I still whistle for her. Every day I still whistle for her"),
+                    (DialogueTopic.Beasts, "I had a dog fifteen rounds. I still whistle for her. Every day I still whistle for her"),
                     (DialogueTopic.Work,   "It takes me twice as long now. That's not the part I mind") ,
                 },
             },
@@ -253,11 +253,11 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Knows Every Oak",
                 ModiMentis  = new[] { "forage_lore", "topographia", "bushcraft" },
                 Appearance  = "burrs and leaf-litter well up the legs, from somewhere further out than the pens",
-                Persona     = "You take the drove deep into the wood for acorns every autumn and you know which oaks bear well years in advance.",
+                Persona     = "You take the drove deep into the wood for acorns every autumn and you know which oaks bear well rounds in advance.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Wilds,   "I know every oak within a half-day and which of them will drop. That's my whole autumn"),
-                    (DialogueTopic.Seasons, "Mast-time. Six weeks in the wood with the drove. Best of the year and nobody believes me"),
+                    (DialogueTopic.Seasons, "Mast-time. Six eleven-days in the wood with the drove. Best of the round and nobody believes me"),
                 },
             },
             new PersonalityTrait
@@ -293,7 +293,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "People stand upwind of you and always have. You have made it into a joke you tell first, which is its own kind of armour.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Neighbours, "Nobody sits by me at a feast and they all eat my bacon in February. I find that funnier than they do"),
+                    (DialogueTopic.Neighbours, "Nobody sits by me at a feast and they all eat my bacon in the Stillness. I find that funnier than they do"),
                     (DialogueTopic.Rest,       "I've plenty of room around me wherever I sit. There's worse arrangements") ,
                 },
             },
@@ -303,8 +303,8 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Cannot Kill That One",
                 ModiMentis  = new[] { "husbandry", "empathy", "mythomania" },
                 Appearance  = "one particular pig is following them about with obvious familiarity",
-                Persona     = "There is one animal you cannot bring yourself to slaughter and you have been inventing reasons to spare it for two years. You know how absurd it is.",
-                Opinions    = new[] { (DialogueTopic.Beasts, "There's one I've a soft spot for. I've a fresh reason every year for why she's not for the block. Don't tell the farmer") },
+                Persona     = "There is one animal you cannot bring yourself to slaughter and you have been inventing reasons to spare it for two rounds. You know how absurd it is.",
+                Opinions    = new[] { (DialogueTopic.Beasts, "There's one I've a soft spot for. I've a fresh reason every round for why she's not for the block. Don't tell the farmer") },
             },
             new PersonalityTrait
             {
@@ -341,7 +341,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "clenched_grit", "patience" },
                 Appearance  = "hands swollen, red-raw and cracked, held slightly curled",
                 Persona     = "Cold water and endless milking have wrecked your hands. They ache constantly and you can no longer straighten the right one fully.",
-                Opinions    = new[] { (DialogueTopic.Health, "My hands. Cold water twice a day for twenty years. Nobody warns you about the hands") },
+                Opinions    = new[] { (DialogueTopic.Health, "My hands. Cold water twice a day for twenty rounds. Nobody warns you about the hands") },
             },
             new PersonalityTrait
             {
@@ -387,7 +387,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "dreamlore", "clairvoyance", "gut_feeling" },
                 Items       = new Func<Item>[] { () => new LuckCharm() },
                 Appearance  = "a holed pebble on a thong knotted to the wrist, near where the churn would be gripped",
-                Persona     = "You believe a quarrel in the house stops the butter coming and you have seen it hold true too often to laugh at. You police the mood of the dairy carefully.",
+                Persona     = "You believe a quarrel in the house stops the butter coming and you have seen it hold true too often to laugh at. You watch the mood of the dairy carefully.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Omens, "The butter won't come if there's bad feeling in the house. Laugh. I've watched it happen and I've stopped laughing"),
@@ -404,7 +404,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "hunt", "vigilance", "stalking" },
                 Items       = new Func<Item>[] { () => new Rope() },
                 Appearance  = "hollow-eyed, and glances toward the treeline mid-conversation",
-                Persona     = "A fox is taking your birds and you have not slept properly in weeks. It has become intensely personal.",
+                Persona     = "A fox is taking your birds and you have not slept properly in eleven-days. It has become intensely personal.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Wilds,  "There's one particular fox. Don't tell me they're all alike — I know this one and this one knows me"),
@@ -427,11 +427,11 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "tallycraft", "scrutiny", "grudgekeeping" },
                 Items       = new Func<Item>[] { () => new TallyStick(), () => new Egg() },
                 Appearance  = "counting something under their breath while you talk",
-                Persona     = "You know exactly how many eggs the flock produced every day for years back. You notice a single one missing and you will pursue it.",
+                Persona     = "You know exactly how many eggs the flock produced every day for rounds back. You notice a single one missing and you will pursue it.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Neighbours, "Three went last month. Not the fox — a fox doesn't take three neatly and leave the birds. I know what I know"),
-                    (DialogueTopic.Trade,      "I can tell you what this flock laid any week these four years. Try me") ,
+                    (DialogueTopic.Neighbours, "Three went last season. Not the fox — a fox doesn't take three neatly and leave the birds. I know what I know"),
+                    (DialogueTopic.Trade,      "I can tell you what this flock laid any eleven-day these four rounds. Try me") ,
                 },
             },
             new PersonalityTrait

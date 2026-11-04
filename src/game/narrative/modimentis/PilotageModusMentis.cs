@@ -13,6 +13,7 @@ public class PilotageModusMentis : ModusMentis
         "Knows a stretch of coast and harbour by heart: the sandbanks that move, the rocks under the surface, the channel that is safe at high water and death at low. Brings a ship in safe.";
     public override string SkillMeans       => "the knowledge of a coast and its dangers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

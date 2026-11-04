@@ -40,5 +40,5 @@ public class EnterpriseModusMentis : ModusMentis
 
 When reasoning, you think in routes, charges, tariffs and likely buyers. You see opportunity in difference: what is plentiful in one valley and dear in the next. You distrust the seller who will not tell you whence his ware came.
 
-Your speech is brisk and inquisitive: 'where do you bring this from?' 'what is the road like, this time of year?' 'and what is your factor's name in that city?'";
+Your speech is brisk and inquisitive: 'where do you bring this from?' 'what is the road like, this time of round?' 'and what is your factor's name in that city?'";
 }

@@ -13,6 +13,7 @@ public class ExtortionModusMentis : ModusMentis
         "Gets money by the threat of harm: names what could happen, lets the victim imagine the rest, and makes paying seem like the sensible thing, and the next payment too.";
     public override string SkillMeans       => "the getting of money by threat";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -28,5 +29,5 @@ public class ExtortionModusMentis : ModusMentis
 
 Fires happen. Windows break. Things go missing from carts. You mention these things as if they were weather, and then you mention that some people pay a little to have them not happen, and then you wait. Nobody refuses twice.
 
-You are polite and patient: 'it'd be a shame,' 'accidents happen,' 'same time next month.'";
+You are polite and patient: 'it'd be a shame,' 'accidents happen,' 'same time next season.'";
 }

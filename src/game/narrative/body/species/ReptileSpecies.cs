@@ -139,6 +139,7 @@ public sealed class CarnotaurusSpecies : Species
 {
     public override AnatomyType AnatomyType => AnatomyType.Reptile;
     public override string DisplayName => "Carnotaurus";
+    public override string? JudgeNoun => "horned hunting beast";
     public override string ArtFolderPath => "assets/art/body/reptile";
 
     public override IReadOnlyDictionary<string, int> OrganPartMaxScores { get; } =
@@ -168,6 +169,7 @@ public sealed class StegosaurusSpecies : Species
 {
     public override AnatomyType AnatomyType => AnatomyType.Reptile;
     public override string DisplayName => "Stegosaurus";
+    public override string? JudgeNoun => "plated beast";
     public override string ArtFolderPath => "assets/art/body/reptile";
 
     public override IReadOnlyDictionary<string, int> OrganPartMaxScores { get; } =
@@ -197,6 +199,7 @@ public sealed class TriceratopsSpecies : Species
 {
     public override AnatomyType AnatomyType => AnatomyType.Reptile;
     public override string DisplayName => "Triceratops";
+    public override string? JudgeNoun => "three-horned beast";
     public override string ArtFolderPath => "assets/art/body/reptile";
 
     public override IReadOnlyDictionary<string, int> OrganPartMaxScores { get; } =
@@ -226,6 +229,7 @@ public sealed class AnkylosaurusSpecies : Species
 {
     public override AnatomyType AnatomyType => AnatomyType.Reptile;
     public override string DisplayName => "Ankylosaurus";
+    public override string? JudgeNoun => "armoured beast";
     public override string ArtFolderPath => "assets/art/body/reptile";
 
     public override IReadOnlyDictionary<string, int> OrganPartMaxScores { get; } =

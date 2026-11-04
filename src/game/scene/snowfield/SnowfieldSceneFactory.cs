@@ -257,7 +257,7 @@ public class SnowfieldSceneFactory : WildSceneFactory
                 break;
             case IceArea:
                 area.PointsOfInterest.Add(ClimateTerrainSubfactory.BuildIceSculpture("Wind-Polished Ice",
-                    "Ice polished by the wind until it shines, bubbles frozen deep in it like stars"));
+                    "Ice polished by the wind until it shines, bubbles frozen deep in it like embers"));
                 break;
             case CragArea:
                 area.PointsOfInterest.Add(TerrainSubfactory.BuildLichenCrust());

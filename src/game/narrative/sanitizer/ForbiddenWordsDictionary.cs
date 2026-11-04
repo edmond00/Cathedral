@@ -1,214 +1,32 @@
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Cathedral.Game.Narrative.Sanitizer;
 
 /// <summary>
-/// Layer 1 of the text sanitization pipeline.
-/// Direct word replacement with lowercase normalization and basic plural/stem handling.
-/// Replaces forbidden modern/informal tokens in-place, preserving surrounding capitalisation.
+/// Layer 1 of the text sanitization pipeline: direct word replacement, with no request made.
+/// Every word or phrase in <see cref="ForbiddenWords"/> is replaced in place by a word of the world —
+/// "a mile" → "a league", "last week" → "last eleven-day", "the Moon" → "the eggmoon". The rewrite
+/// itself, and what keeps it grammatical, is <see cref="Lexicon"/>.
 /// </summary>
 public static class ForbiddenWordsDictionary
 {
-    // ── Replacement map (stem → medieval equivalent) ───────────────────────────
-    // Keys are lowercase stems; values are the replacement phrase.
-    // Plural and conjugated forms are reduced to their stem before lookup.
-    private static readonly Dictionary<string, string> _map = new(StringComparer.OrdinalIgnoreCase)
-    {
-        // Informalisms
-        { "okay",    "very well" },
-        { "ok",      "very well" },
-        { "alright", "very well" },
-        { "hi",      "hail" },
-        { "hey",     "hail" },
-        { "yeah",    "aye" },
-        { "yep",     "aye" },
-        { "yup",     "aye" },
-        { "nope",    "nay" },
-        { "gonna",   "going to" },
-        { "wanna",   "wish to" },
-        { "kinda",   "somewhat" },
-        { "sorta",   "somewhat" },
-        { "gotta",   "must" },
-        { "dunno",   "know not" },
+    private static readonly Lexicon _lexicon = new(new ForbiddenWords().Build());
 
-        // Modern technology
-        { "computer",     "arcane device" },
-        { "electricity",  "lightning force" },
-        { "internet",     "messenger web" },
-        { "telephone",    "speaking stone" },
-        { "phone",        "speaking stone" },
-        { "television",   "vision glass" },
-        { "photograph",   "painting" },
-        { "photography",  "painting" },
-        { "camera",       "painter's easel" },
-        { "factory",      "manufactory" },
-        { "laboratory",   "alchemist workshop" },
-        { "lab",          "workshop" },
-
-        // Modern science terms
-        { "chemistry",    "alchemy" },
-        { "chemist",      "alchemist" },
-        { "scientist",    "scholar" },
-        { "experiment",   "trial" },
-
-        // Modern political/social
-        { "capitalism",   "merchant rule" },
-        { "communism",    "commune law" },
-        { "fascism",      "iron rule" },
-        { "democracy",    "council rule" },
-        { "parliament",   "high council" },
-        { "president",    "high ruler" },
-        { "senator",      "councillor" },
-        { "congress",     "council" },
-
-        // Modern education
-        { "university",   "academy" },
-        { "professor",    "master scholar" },
-
-        // A word nobody inside the age would use of it: the prompts say "a medieval world", and the
-        // model echoes it back ("this vast, medieval plain"). Within the world it is simply old.
-        { "medieval",     "old" },
-
-        // Anachronistic weapons
-        { "pistol",       "hand crossbow" },
-        { "rifle",        "long crossbow" },
-        { "grenade",      "fire flask" },
-        { "missile",      "bolt" },
-        { "bomb",         "fire cask" },
-    };
-
-    // Matches individual word tokens (letters and apostrophes for contractions)
-    private static readonly Regex _wordPattern =
-        new(@"[a-zA-Z']+", RegexOptions.Compiled);
-
-    // ── Public API ─────────────────────────────────────────────────────────────
+    /// <summary>Every form the list replaces, for audits and tests.</summary>
+    public static IReadOnlyCollection<Lexicon.Entry> Entries => _lexicon.Entries;
 
     /// <summary>
-    /// Scans <paramref name="text"/> for forbidden tokens and replaces them.
-    /// Capitalisation of the first letter is preserved when the original token started with a capital.
+    /// Replaces every forbidden form in <paramref name="text"/>; a name the request supplied
+    /// (<paramref name="sourceVocabulary"/>) is kept. See <see cref="Lexicon.Rewrite"/>.
     /// </summary>
-    public static string Apply(string text)
+    public static string Apply(string text, IReadOnlySet<string>? sourceVocabulary = null)
+        => _lexicon.Rewrite(text, sourceVocabulary);
+
+    /// <summary>The forms of <paramref name="text"/> that <see cref="Apply"/> would replace.</summary>
+    public static IReadOnlyList<string> FindForms(string text, IReadOnlySet<string>? sourceVocabulary = null)
     {
-        if (string.IsNullOrWhiteSpace(text))
-            return text;
-
-        var sb = new StringBuilder(text.Length);
-        int lastIndex = 0;
-
-        foreach (Match match in _wordPattern.Matches(text))
-        {
-            // Copy everything between the previous match and this one unchanged
-            sb.Append(text, lastIndex, match.Index - lastIndex);
-
-            string token = match.Value;
-            string stem  = Stem(token.ToLowerInvariant());
-
-            if (_map.TryGetValue(stem, out string? replacement))
-            {
-                FixArticle(sb, replacement);
-                sb.Append(ApplyCasing(replacement, token));
-            }
-            else
-            {
-                sb.Append(token);
-            }
-
-            lastIndex = match.Index + match.Length;
-        }
-
-        sb.Append(text, lastIndex, text.Length - lastIndex);
-        return sb.ToString();
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    // "a" or "an" just before the word being replaced, with the space after it
-    private static readonly Regex _articleBefore = new(@"\b([Aa])(n?)(\s+)$", RegexOptions.Compiled);
-
-    /// <summary>
-    /// Makes the article in front of a replaced word agree with what replaces it: "a medieval plain"
-    /// becomes "an old plain", not "a old plain", and "an alright" becomes "a very well". Only the
-    /// article written just before the word is touched.
-    /// </summary>
-    private static void FixArticle(StringBuilder sb, string replacement)
-    {
-        int look = Math.Min(sb.Length, 8);
-        string tail = sb.ToString(sb.Length - look, look);
-        var m = _articleBefore.Match(tail);
-        if (!m.Success) return;
-        bool vowel = "aeiouAEIOU".IndexOf(replacement[0]) >= 0;
-        string article = m.Groups[1].Value + (vowel ? "n" : "");
-        sb.Length -= m.Length;
-        sb.Append(article).Append(m.Groups[3].Value);
-    }
-
-    /// <summary>
-    /// Very lightweight stemmer: strips common English plural/verb suffixes
-    /// so that "computers", "okay'd", "labs" all map to their dictionary stems.
-    /// </summary>
-    private static string Stem(string lower)
-    {
-        // Contractions: strip trailing 's or 't
-        if (lower.EndsWith("'s", StringComparison.Ordinal) || lower.EndsWith("'t", StringComparison.Ordinal))
-            lower = lower[..^2];
-
-        // ies → y  (factories → factory)
-        if (lower.Length > 4 && lower.EndsWith("ies", StringComparison.Ordinal))
-            return lower[..^3] + "y";
-
-        // es → (remove)  (factories handled above; boxes → box)
-        if (lower.Length > 4 && lower.EndsWith("es", StringComparison.Ordinal))
-        {
-            string candidate = lower[..^2];
-            if (_map.ContainsKey(candidate)) return candidate;
-        }
-
-        // s → (remove)  (phones → phone, labs → lab)
-        if (lower.Length > 3 && lower.EndsWith("s", StringComparison.Ordinal))
-        {
-            string candidate = lower[..^1];
-            if (_map.ContainsKey(candidate)) return candidate;
-        }
-
-        // ed → (remove)  (experimented → experiment)
-        if (lower.Length > 4 && lower.EndsWith("ed", StringComparison.Ordinal))
-        {
-            string candidate = lower[..^2];
-            if (_map.ContainsKey(candidate)) return candidate;
-        }
-
-        // ing → (remove)  (computing → compute)
-        if (lower.Length > 5 && lower.EndsWith("ing", StringComparison.Ordinal))
-        {
-            string candidate = lower[..^3];
-            if (_map.ContainsKey(candidate)) return candidate;
-        }
-
-        return lower;
-    }
-
-    /// <summary>
-    /// Applies the capitalisation pattern of <paramref name="original"/> to <paramref name="replacement"/>.
-    /// ALL_CAPS → REPLACEMENT, Title → Replacement, lower → replacement.
-    /// </summary>
-    private static string ApplyCasing(string replacement, string original)
-    {
-        if (original.Length == 0) return replacement;
-
-        // All-caps original
-        if (original == original.ToUpperInvariant() && original.Length > 1)
-            return replacement.ToUpperInvariant();
-
-        // Title-case original (first letter upper)
-        if (char.IsUpper(original[0]))
-        {
-            if (replacement.Length == 0) return replacement;
-            return char.ToUpperInvariant(replacement[0]) + replacement[1..];
-        }
-
-        return replacement;
+        var swaps = new List<Lexicon.Swap>();
+        _lexicon.Rewrite(text, sourceVocabulary, swaps);
+        return swaps.ConvertAll(s => s.Original);
     }
 }

@@ -41,14 +41,22 @@ public sealed class WillTarget
     /// </summary>
     public string? Teaches { get; }
 
+    /// <summary>
+    /// A test on the action's variant, or null for any. Only <see cref="ForVariant"/> sets it: a crafting
+    /// will wants the use of its station <b>as itself</b>, and one station is offered once per crafting
+    /// modus mentis held for it, the modus mentis being the variant.
+    /// </summary>
+    private readonly Func<object?, bool>? _variant;
+
     private WillTarget(IReadOnlyList<Type> verbTypes, IReadOnlyList<(Func<Element, bool>, string)> conditions, string purpose,
-                       IReadOnlyList<Type>? onTypes = null, string? teaches = null)
+                       IReadOnlyList<Type>? onTypes = null, string? teaches = null, Func<object?, bool>? variant = null)
     {
         VerbTypes   = verbTypes;
         _conditions = conditions;
         Purpose     = purpose;
         OnTypes     = onTypes ?? Array.Empty<Type>();
         Teaches     = teaches;
+        _variant    = variant;
     }
 
     /// <summary>The will to perform <typeparamref name="TVerb"/> on anything it can be performed on.</summary>
@@ -65,9 +73,38 @@ public sealed class WillTarget
     }
 
     /// <summary>Narrows the target to elements of type <typeparamref name="TElement"/> (a point of interest, an area…).</summary>
-    public WillTarget On<TElement>() where TElement : Element
-        => new(VerbTypes, _conditions.Append(((Func<Element, bool>)(e => e is TElement), $"on {typeof(TElement).Name}")).ToList(),
-               Purpose, OnTypes.Append(typeof(TElement)).ToList(), Teaches);
+    public WillTarget On<TElement>() where TElement : Element => OnType(typeof(TElement));
+
+    /// <summary><see cref="On{TElement}"/> with the type as a value, for a base class that reads it off its subclass.</summary>
+    public WillTarget OnType(Type elementType)
+    {
+        if (!typeof(Element).IsAssignableFrom(elementType))
+            throw new ArgumentException($"WillTarget: {elementType.Name} is not an Element");
+        return new(VerbTypes, _conditions.Append(((Func<Element, bool>)(e => elementType.IsInstanceOfType(e)), $"on {elementType.Name}")).ToList(),
+                   Purpose, OnTypes.Append(elementType).ToList(), Teaches, _variant);
+    }
+
+    /// <summary>Narrowed to the actions whose variant passes <paramref name="test"/>.</summary>
+    public WillTarget ForVariant(Func<object?, bool> test, string label)
+        => new(VerbTypes, _conditions.Append(((Func<Element, bool>)(_ => true), label)).ToList(), Purpose, OnTypes, Teaches, test);
+
+    /// <summary>
+    /// Narrowed to a point of interest (or an item) holding something made of <paramref name="material"/> —
+    /// what a crafting will gathers, grabs, digs or cuts to have something to work.
+    /// </summary>
+    public WillTarget YieldingMaterial(Crafting.CraftMaterial material)
+        => With(e => e switch
+            {
+                ItemElement ie      => Crafting.ItemMaterials.Holds(ie.Item, material),
+                PointOfInterest poi => poi.Items.Any(i => Crafting.ItemMaterials.Holds(i.Item, material)),
+                _                   => false,
+            }, $"yielding {material}");
+
+    /// <summary>Narrowed to a trader whose wares hold something made of <paramref name="material"/>.</summary>
+    public WillTarget SellingMaterial(Crafting.CraftMaterial material)
+        => With(e => e is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc }
+                     && npc.BuyCatalog?.Offers.Any(o => Crafting.ItemMaterials.Holds(o.Prototype, material)) == true,
+                $"selling {material}");
 
     /// <summary>
     /// Narrows the target to what holds or is an item of type <typeparamref name="TItem"/>: an item
@@ -123,23 +160,35 @@ public sealed class WillTarget
     /// Narrows the target to what holds or is an item of <paramref name="kind"/> — a family that cuts
     /// across classes (<see cref="ItemKind"/>): every mushroom, every blade, every holy thing.
     /// </summary>
-    public WillTarget YieldingKind(ItemKind kind)
-        => With(e => e switch
+    public WillTarget YieldingKind(ItemKind kind) => YieldingKind(kind, kind.ToString(), _ => true);
+
+    /// <summary>
+    /// <see cref="YieldingKind(ItemKind)"/> narrowed again by <paramref name="such"/>: a judge of arms
+    /// wants a weapon, and not a branch. <paramref name="label"/> names the narrowed set in the audit.
+    /// </summary>
+    public WillTarget YieldingKind(ItemKind kind, string label, Func<Item, bool> such)
+    {
+        bool Is(Item item) => item.Kinds.Contains(kind) && such(item);
+        return With(e => e switch
             {
-                ItemElement ie      => ie.Item.Kinds.Contains(kind),
-                PointOfInterest poi => poi.Items.Any(i => i.Item.Kinds.Contains(kind)),
+                ItemElement ie      => Is(ie.Item),
+                PointOfInterest poi => poi.Items.Any(i => Is(i.Item)),
                 _                   => false,
-            }, $"yielding {kind}");
+            }, $"yielding {label}");
+    }
 
     /// <summary>
     /// Narrows the target to somebody whose wares include an item of <paramref name="kind"/> — a will
     /// to buy a blade is a proposal to buy made to a trader who sells one. Read off the trader's
     /// <c>BuyCatalog</c>, which is what the purchase would offer.
     /// </summary>
-    public WillTarget Selling(ItemKind kind)
+    public WillTarget Selling(ItemKind kind) => Selling(kind, kind.ToString(), _ => true);
+
+    /// <summary><see cref="Selling(ItemKind)"/> narrowed again by <paramref name="such"/>, as <see cref="YieldingKind(ItemKind, string, Func{Item, bool})"/>.</summary>
+    public WillTarget Selling(ItemKind kind, string label, Func<Item, bool> such)
         => With(e => e is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc }
-                     && npc.BuyCatalog?.Offers.Any(o => o.Prototype.Kinds.Contains(kind)) == true,
-                $"selling {kind}");
+                     && npc.BuyCatalog?.Offers.Any(o => o.Prototype.Kinds.Contains(kind) && such(o.Prototype)) == true,
+                $"selling {label}");
 
     /// <summary>
     /// Narrows a will to PLAY to one or more kinds of play (<see cref="PlayActivity"/> subclasses): a
@@ -163,15 +212,18 @@ public sealed class WillTarget
     /// that teaches a will which refuses it.
     /// </summary>
     public WillTarget Teaching<TModusMentis>() where TModusMentis : ModusMentis, new()
+        => TeachingOf(new TModusMentis().ModusMentisId);
+
+    /// <summary><see cref="Teaching{TModusMentis}"/> by id, for a base class declaring its subclass's lesson.</summary>
+    public WillTarget TeachingOf(string id)
     {
-        var id = new TModusMentis().ModusMentisId;
         var verbTypes = VerbTypes;
         var verbIds = new Lazy<string[]>(() => VerbRegistry.Instance.GetAll()
             .Where(v => verbTypes.Any(t => t.IsInstanceOfType(v))).Select(v => v.VerbId).ToArray());
         return new(VerbTypes, _conditions.Append(((Func<Element, bool>)(e => e is IVerbModusMentisSource source
                                                                             && verbIds.Value.Any(v => source.ModusMentisFor(v) == id)),
                                                   $"teaching {id}")).ToList(),
-                   Purpose, OnTypes, id);
+                   Purpose, OnTypes, id, _variant);
     }
 
     /// <summary>
@@ -181,14 +233,15 @@ public sealed class WillTarget
     public WillTarget Where(Func<Element, bool> test, string label) => With(test, label);
 
     private WillTarget With(Func<Element, bool> test, string label)
-        => new(VerbTypes, _conditions.Append((test, label)).ToList(), Purpose, OnTypes, Teaches);
+        => new(VerbTypes, _conditions.Append((test, label)).ToList(), Purpose, OnTypes, Teaches, _variant);
 
     /// <summary>Whether <paramref name="verb"/> is one of this will's verbs, whatever it is aimed at.</summary>
     public bool Wants(Verb verb) => VerbTypes.Any(t => t.IsInstanceOfType(verb));
 
     /// <summary>Whether this concrete action is what the will wants.</summary>
     public bool Matches(VerbAction action)
-        => Wants(action.Verb) && _conditions.All(c => c.Test(action.Target));
+        => Wants(action.Verb) && _conditions.All(c => c.Test(action.Target))
+           && (_variant == null || _variant(action.Variant));
 
     /// <summary>
     /// Whether the will wants a conversation: any of its verbs opens a dialogue. Read by the audit,

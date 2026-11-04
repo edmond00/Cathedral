@@ -49,16 +49,17 @@ public class ThinkingExecutor
     ///
     /// <para><b>Iterative thinking.</b> When what the thinking modus mentis proposed comes to nothing —
     /// the action modus mentis refuses it, or the player doubts it — the thinking tries again, up to
-    /// <see cref="ThinkingIterationsStat"/> times (the pineal gland's score). A refused goal is tried
+    /// <see cref="DoubtLevel.Retries"/> times (the thinking modus mentis's own <see cref="ModusMentis.Doubt"/>:
+    /// none at Low, one at Medium, two at High). A refused goal is tried
     /// again only when another means is able to carry it out (no choice rule refuses it to that means),
     /// and then by one of those, with no refusal left to it: the next try is sure to end on a button.
     /// When no other means could, the goal is given up and the next try chooses another, or the chain
     /// stops when nothing is left. Only what is refused before the click is retried: the action rules
     /// (a witness in sight, an enemy in the room) are the click's, which keeps the final word on them.
-    /// The whole chain is one thinking and spends one noetic point. At a score of 0 nothing here runs:
-    /// one try, and the refusal is shown as it always was.</para>
+    /// The whole chain is one thinking and spends one noetic point. At Low nothing here runs: one try,
+    /// and the refusal is shown as it always was.</para>
     ///
-    /// <para><b>Doubt.</b> With <see cref="DoubtStat"/> and a retry left, the reasoning ends on a question
+    /// <para><b>Doubt.</b> At Medium or High (<see cref="DoubtLevel.MayDoubt"/>) and with a retry left, the reasoning ends on a question
     /// and the preview box asks YES or NO before the action modus mentis is asked or any rule probed. NO
     /// crosses the pair off like a refusal; either answer is then voiced by the thinking modus mentis.</para>
     /// </summary>
@@ -125,12 +126,13 @@ public class ThinkingExecutor
             : null;
 
         // An auto-success phase (reminescence, get-up) cannot be refused, so it has nothing to retry.
-        int retriesLeft = autoSuccess ? 0 : ThinkingIterationsStat.Of(actingMember);
-        bool mayDoubt   = !autoSuccess && preview != null && DoubtStat.Of(actingMember);
+        var doubtLevel  = thinkingModusMentis.EffectiveDoubt;
+        int retriesLeft = autoSuccess ? 0 : doubtLevel.Retries();
+        bool mayDoubt   = !autoSuccess && preview != null && doubtLevel.MayDoubt();
         var chain       = new ThinkingChain();
         var segments    = new List<ThinkingSegment>();
         if (retriesLeft > 0)
-            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] may try again {retriesLeft} time(s)"
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] ({doubtLevel} doubt) may try again {retriesLeft} time(s)"
                             + (mayDoubt ? ", and the player may doubt" : "") + ".");
 
         // What the thinking mind says ahead of its next reasoning: why it is trying again (a refusal),
@@ -372,7 +374,7 @@ public class ThinkingExecutor
             // guarantees the prefix can be stripped cleanly to form the button label (DisplayText);
             // ActionText keeps the canonical "try to …" form the item critic expects.
             string styledAction = await _rewriter.RewriteAsync(
-                actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
+                actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(skill));
             if (string.IsNullOrWhiteSpace(styledAction))
                 styledAction = ActionPrefix + (skill.ActsDiscretely ? "discreetly " : "") + goalPhrase;
             string bareAction = StripPrefix(styledAction, ActionPrefix);
@@ -587,7 +589,7 @@ public class ThinkingExecutor
 
         string styledAction = await _rewriter.RewriteAsync(
             actionSlot, NeutralNarration.ActionIntent(goalPhrase, skill.ActsDiscretely), NarrationKind.Action, skill.PersonaReminder2,
-            forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken);
+            forcedPrefix: ActionPrefix, styleInstruction: skill.StyleInstruction, preview: actionPart?.NextSegment(), ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(skill));
         if (string.IsNullOrWhiteSpace(styledAction))
             styledAction = ActionPrefix + (skill.ActsDiscretely ? "discreetly " : "") + goalPhrase;
         string bareAction = StripPrefix(styledAction, ActionPrefix);
@@ -610,7 +612,7 @@ public class ThinkingExecutor
     private async Task<string> VoiceAsync(int slot, ModusMentis mm, string neutral, NarrationKind kind, PreviewPart? part, CancellationToken ct)
     {
         string text = await _rewriter.RewriteAsync(
-            slot, neutral, kind, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+            slot, neutral, kind, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: part?.NextSegment(), ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
         return string.IsNullOrWhiteSpace(text) ? neutral : text;
     }
 
@@ -889,11 +891,12 @@ public class ThinkingExecutor
         // question put to it, because there is nothing to ask about.
         if (realOutcomes.Count == 0) return IgnoreVerb.MakeOutcome();
 
+        // --goal-only narrows the judge's list too, not only the playground's draw: a script on the real
+        // model (checking the item critic's prompts, say) otherwise cannot reach the verb it is about.
+        var goals = GoalOnlyFilter(realOutcomes);
         if (PlaygroundMode.IsActive)
-        {
-            var pool = GoalOnlyFilter(realOutcomes);
-            return pool[_rng.Next(pool.Count)];
-        }
+            return goals[_rng.Next(goals.Count)];
+        realOutcomes = goals;
 
         // The judge picks one goal for this Modus Mentis — or the decline option, which is the ignore
         // outcome. Each goal phrase ("grab a beechnut") is already the action; the selector lists them
@@ -942,8 +945,8 @@ public class ThinkingExecutor
     }
 
     /// <summary>
-    /// Narrows a playground goal draw to the verb <c>--goal-only</c> (or the CLI's <c>goal</c>
-    /// command) names. Returns the pool untouched at the flag's default, and again when no goal in it
+    /// Narrows a thinking's goals — the playground's draw, or the judge's list on the real model — to
+    /// the verb <c>--goal-only</c> (or the CLI's <c>goal</c> command) names. Returns the pool untouched at the flag's default, and again when no goal in it
     /// matches — a phase where the named verb does not apply then draws as usual rather than being
     /// unable to choose anything.
     /// </summary>
@@ -1029,7 +1032,7 @@ public class ThinkingExecutor
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
         string neutral = $"I could use {item.WithArticle()} to help me {ActionDisplay(originalAction)}.";
-        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
+        return await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Reasoning, mm.PersonaReminder2, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
     }
 
     /// <summary>
@@ -1059,7 +1062,7 @@ public class ThinkingExecutor
         int slot = await _slotManager.GetOrCreateSlotForModusMentisAsync(mm);
         _llmManager.ResetInstance(slot);
         string neutral = NeutralNarration.ActionIntent($"{ActionDisplay(originalAction)} using {item.WithArticle()}");
-        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken);
+        string styled = await _rewriter.RewriteAsync(slot, neutral, NarrationKind.Action, mm.PersonaReminder2, forcedPrefix: ActionPrefix, styleInstruction: mm.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(mm));
         if (string.IsNullOrWhiteSpace(styled)) return null;
         return StripPrefix(styled, ActionPrefix);
     }
@@ -1092,7 +1095,7 @@ public class ThinkingResponse
     /// <summary>
     /// Everything the thinking produced, in order: the thinking modus mentis's thoughts
     /// (<see cref="ThinkingSegment.IsThought"/>) and the refusals between them, one per try of
-    /// iterative thinking (<see cref="ThinkingIterationsStat"/>). Without a retry this is one thought,
+    /// iterative thinking (<see cref="ModusMentis.Doubt"/>). Without a retry this is one thought,
     /// or one thought and its refusal. The last thought is the one the <see cref="Actions"/> belong to.
     /// </summary>
     public List<ThinkingSegment> Segments { get; set; } = new();

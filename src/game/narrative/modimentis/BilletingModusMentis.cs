@@ -13,6 +13,7 @@ public class BilletingModusMentis : ModusMentis
         "Gets a roof for the night from people who do not want to give it: the official request, the polite insistence, the hint of the alternative. Leaves a house sullen rather than burning.";
     public override string SkillMeans       => "the getting of quarters from unwilling hosts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

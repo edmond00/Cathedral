@@ -16,9 +16,12 @@ public class ArmouryLoreModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge of arms and armour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
-        WillTarget.ToAny("take up a fine weapon", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Weapon),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a fine weapon").Selling(ItemKind.Weapon),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look a weapon over").YieldingKind(ItemKind.Weapon));
+        WillTarget.ToAny("take up a fine weapon", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Weapon, "a real weapon", Fine),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a fine weapon").Selling(ItemKind.Weapon, "a real weapon", Fine),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look a weapon over").YieldingKind(ItemKind.Weapon, "a real weapon", Fine));
+
+    /// <summary>A weapon made as one: a branch or a stick swung in a fight is no work to judge.</summary>
+    private static bool Fine(Item item) => item is not WeaponItem { IsImprovised: true };
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Shops);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

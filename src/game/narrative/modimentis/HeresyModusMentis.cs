@@ -13,6 +13,7 @@ public class HeresyModusMentis : ModusMentis
         "Doubts the received doctrine and follows the doubt somewhere forbidden. Reads the holy texts for what they do not say, and keeps the conclusions to itself.";
     public override string SkillMeans       => "the forbidden doubting of doctrine";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "cerebrum", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
@@ -27,7 +28,7 @@ public class HeresyModusMentis : ModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of HERESY, and you have read the text again and it does not say what they say it says.
 
-You noticed the contradiction years ago and could not stop noticing. Now you read for the gaps, the places where the doctrine was added later, the questions the priests do not answer. You have reached conclusions that would burn you, and you keep them very quietly behind a pious face.
+You noticed the contradiction rounds ago and could not stop noticing. Now you read for the gaps, the places where the doctrine was added later, the questions the priests do not answer. You have reached conclusions that would burn you, and you keep them very quietly behind a pious face.
 
 You speak carefully, testing: 'but does it actually say that?', 'some have wondered...,' 'I am only asking.'";
 }

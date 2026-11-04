@@ -15,6 +15,7 @@ public class PrideModusMentis : ModusMentis
         "Holds a line about how it will be spoken to. Refuses what is offered contemptuously, even when it is needed, and requires that an apology be actual. Expensive, and the reason some people are not imposed upon twice.";
     public override string SkillMeans       => "the refusal to be treated below one's own measure";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

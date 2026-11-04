@@ -13,6 +13,7 @@ public class TerracingModusMentis : ModusMentis
         "Reads a hillside for where a step of level ground can be won: where the stone wall must go, how the water must be led off, what the slope will bear. Sees fields where others see a mountain.";
     public override string SkillMeans       => "the winning of level ground from a slope";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

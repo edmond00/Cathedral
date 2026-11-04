@@ -185,7 +185,11 @@ internal sealed class SynthMusicEngine : IMusicEngine
         // Hover and click are PCM ticks, outside the music entirely.
         if (evt == GameEventType.SmallInteraction) { _uiSfx.PlayHover(); return; }
         if (evt == GameEventType.StrongInteraction) { _uiSfx.PlayClick(); return; }
+        if (evt == GameEventType.Transition) { _uiSfx.PlayTransition(); return; }
         if (_core == null) return;
+
+        // A hit is a sting and nothing more: the fight's music is answer enough.
+        if (evt == GameEventType.Hit) { Sting(evt); return; }
 
         // The sting always plays; the music's answer is held back within 400 ms of the last one, so a
         // burst of outcomes does not stack timpani strokes.
@@ -224,6 +228,14 @@ internal sealed class SynthMusicEngine : IMusicEngine
             GameEventType.NeutralOutcome => new()
             {
                 (0.0, Instrument.Bell, 62, 0.9, 0.6f), (0.0, Instrument.Bell, 69, 0.9, 0.5f), (0.0, Instrument.Bell, 74, 0.9, 0.4f),
+            },
+            // Everything struck at once, at full velocity, and over in a fraction of a second: the
+            // only sting meant to be loud. A low power chord gives the crash a body without a key.
+            GameEventType.Hit => new()
+            {
+                (0.0, Instrument.Kick, 36, 0.25, 1.0f), (0.0, Instrument.WarDrum, 38, 0.35, 1.0f),
+                (0.0, Instrument.Snare, 38, 0.18, 1.0f), (0.0, Instrument.Cymbal, 49, 0.6, 1.0f),
+                (0.0, Instrument.PowerChord, 33, 0.16, 1.0f),
             },
             _ => null,
         };

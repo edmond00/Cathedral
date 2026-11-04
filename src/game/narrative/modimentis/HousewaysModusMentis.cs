@@ -14,6 +14,7 @@ public class HousewaysModusMentis : ModusMentis
         "Holds the plan of a house once walked through: which door gives on the yard, which stair runs to the loft, which room lies behind the kitchen. Inclines toward going back through rooms already known rather than trying a door nobody has opened.";
     public override string SkillMeans       => "knowing the rooms and passages of a house already walked";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "hippocampus", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

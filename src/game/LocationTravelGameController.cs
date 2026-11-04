@@ -53,6 +53,13 @@ public class LocationTravelGameController : IDisposable
     private FightModeAdapter? _fightAdapter = null;
     private DialogueTreeAdapter? _dialogueAdapter = null;
     private TradeMenuAdapter? _tradeAdapter = null;
+    private CraftingMenuAdapter? _craftingAdapter = null;
+
+    /// <summary>The crafting menu was opened by a Craft routine, so closing it returns to the world map.</summary>
+    private bool _craftingFromRoutine;
+
+    /// <summary>The crafting menu's renderer, for the CLI (<c>craft</c>, <c>inspect crafting</c>). Null when closed.</summary>
+    public Cathedral.Game.Management.CraftingMenuRenderer? CliCrafting => _craftingAdapter?.Renderer;
 
     /// <summary>
     /// True while the open trade menu was entered from a Buy or Sell routine rather than from a
@@ -148,6 +155,23 @@ public class LocationTravelGameController : IDisposable
     // Travel planning (waypoints + bottom UI)
     private TravelPlanner? _travelPlanner;
     private TravelInfoRenderer? _travelInfoRenderer;
+
+    // A will's target sought across the world map (the Memory tab's "Wants" rows): the search under
+    // way, its box, and the journey it proposed with the line that says why.
+    private WillSearch? _willSearch;
+    private WillSearchRenderer? _willSearchRenderer;
+
+    // The world map's shortcut to the same search: the corner button beside the ☰, and the box it
+    // opens, listing every will the party holds and what each wants.
+    private MenuButton? _willButton;
+    private WillPickerBox? _willPicker;
+    private string? _willProposal;
+    private int _willProposalVertex = -1;
+
+    // Which will and target the proposed trip was found for; carried by the journey that walks it
+    // (_pendingPursuit, from TRAVEL) onto the scene of the visit it ends in (Scene.WillPursuit).
+    private (string ModusMentisId, string TargetKey)? _willProposalPursuit;
+    private (int Vertex, string ModusMentisId, string TargetKey)? _pendingPursuit;
     private Cathedral.Pathfinding.AStar? _travelAStar;
     // Latest planner state cached for rendering
     private List<int>? _plannedPath;
@@ -198,6 +222,9 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>Where the latest journey set out from — for <c>inspect avatar</c>.</summary>
     private int _tripOriginVertex = -1;
+
+    /// <summary>The kinds of land the journey has crossed, in order, for the journal's account of it.</summary>
+    private readonly List<string> _tripLands = new();
 
     // Maps BiomeTravelDatabase creature names to the archetype that spawns them.
     // Creature names without a fight-capable archetype (e.g. "blizzard") are absent and skipped.
@@ -289,6 +316,7 @@ public class LocationTravelGameController : IDisposable
         : _workAdapter != null   ? GameMode.Working
         : _gatherAdapter != null ? GameMode.Gathering
         : _tradeAdapter != null  ? GameMode.Trading
+        : _craftingAdapter != null ? GameMode.Crafting
         // Narration covers THREE phases — exploration, childhood and get-up — all of which run on
         // one _narrativeController with _isInNarrativeMode set. Returning a flat LocationInteraction
         // for all three is what made the pause menu unusable before the world opens: resuming from
@@ -640,6 +668,20 @@ public class LocationTravelGameController : IDisposable
         return null;
     }
 
+    /// <summary>
+    /// Hover an organ part on the Anatomy tab's body art — what a player does to read that part's
+    /// stats in the panel (Hand Load under each arm, and the rest).
+    /// </summary>
+    public string? CliPointAtOrganPart(string organPartId)
+    {
+        var cell = _currentMode == GameMode.ProtagonistManagement
+            ? _managementMenuRenderer?.CliOrganPartCell(organPartId) : null;
+        if (cell is not { } c)
+            return $"no organ part \"{organPartId}\" drawn on the Anatomy tab (open it with `manage Anatomy`)";
+        CliHoverCell(c.X, c.Y);
+        return null;
+    }
+
     /// <summary>Inject a hover at a terminal cell (some UI only reacts once hovered).</summary>
     public void CliHoverCell(int x, int y) => OnTerminalCellHovered(x, y);
 
@@ -840,6 +882,10 @@ public class LocationTravelGameController : IDisposable
     public bool CliSelectModusMentis(string modusMentisId) =>
         _managementMenuRenderer?.CliSelectModusMentis(modusMentisId) == true;
 
+    /// <summary>The cell of a Memory-tab detail button (consolidate, reject, always-reject, archive).</summary>
+    public (int X, int Y, bool Enabled)? CliMemoryButtonCell(string id) =>
+        _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliMemoryButtonCell(id) : null;
+
     /// <summary>Everything carried, for <c>--cli</c> discovery of selectable item names.</summary>
     public IReadOnlyList<string> CliCarriedItemNames =>
         _managementMenuRenderer?.CliCarriedItemNames ?? Array.Empty<string>();
@@ -887,6 +933,9 @@ public class LocationTravelGameController : IDisposable
     {
         if (_currentMode == GameMode.Traveling) return false;
 
+        // A will's search checks its places a few a frame: `wait` outlasts it.
+        if (_willSearch != null) return false;
+
         // A moon's history being built for the viewer is work in flight: `wait` must outlast it, or
         // `inspect world-preview` reads state=building.
         if (_currentMode == GameMode.WorldSelection && _previewTask is { IsCompleted: false }) return false;
@@ -926,6 +975,8 @@ public class LocationTravelGameController : IDisposable
             if (_narrativeController.CliTimeBoxState() == "passing") return false;
             // And the party walking on the map after a move.
             if (_narrativeController.CliWalkState() == "walking") return false;
+            // A walk in or out of the location goes on by itself: busy until it has.
+            if (_narrativeController.CliWalkGoesOn) return false;
         }
         return true;
     }
@@ -1057,6 +1108,7 @@ public class LocationTravelGameController : IDisposable
             _travelInfoRenderer = new TravelInfoRenderer(_core.Terminal);
             _cameraArrowPad     = new CameraArrowPad(_core.Terminal);
             _menuButton         = new MenuButton(_core.Terminal);
+            _willButton         = new MenuButton(_core.Terminal, " ◎ ", rightOffset: 4);
         }
 
         // Show main menu on startup
@@ -1109,6 +1161,62 @@ public class LocationTravelGameController : IDisposable
             _menuButton.Draw(hovered: _menuButton.Contains(_mouseCellX, _mouseCellY));
         else
             _menuButton.Hide();
+
+        if (_willButton == null) return;
+        if (WillButtonShown)
+            _willButton.Draw(hovered: _willButton.Contains(_mouseCellX, _mouseCellY));
+        else
+            _willButton.Hide();
+    }
+
+    /// <summary>
+    /// The ◎ beside the ☰: on the interactive world map, with nothing modal over it and no search
+    /// already running, while somebody in the party holds a will.
+    /// </summary>
+    private bool WillButtonShown =>
+        _currentMode == GameMode.WorldView && _companionDeathBox == null && _companionRemovalRenderer == null
+        && _travelRoutinesBox == null && _willSearch == null && _willPicker == null
+        && _protagonist != null
+        && (_protagonist.LearnedModiMentis.Any(m => m.IsWill)
+            || _protagonist.CompanionParty.Any(c => c.LearnedModiMentis.Any(m => m.IsWill)));
+
+    /// <summary>
+    /// Every will the party holds, for the picker: the protagonist's first, then each companion's,
+    /// each by name, with its targets' purposes read once (a will builds its targets afresh per read).
+    /// </summary>
+    private List<WillPickerBox.Entry> PartyWills()
+    {
+        var list = new List<WillPickerBox.Entry>();
+        if (_protagonist == null) return list;
+        void Add(PartyMember member, bool own)
+        {
+            foreach (var mm in member.LearnedModiMentis.Where(m => m.IsWill).OrderBy(m => m.DisplayName, StringComparer.Ordinal))
+                if (mm.Will is { } will)
+                    list.Add(new WillPickerBox.Entry(member, mm.ModusMentisId,
+                        own ? mm.DisplayName : $"{mm.DisplayName} · {member.DisplayName}",
+                        will.Select(t => t.Purpose).ToList()));
+        }
+        Add(_protagonist, own: true);
+        foreach (var companion in _protagonist.CompanionParty) Add(companion, own: false);
+        return list;
+    }
+
+    /// <summary>The ◎ pressed: the picker goes up over the map, its first will selected.</summary>
+    private void OpenWillPicker()
+    {
+        if (_core.Terminal == null) return;
+        _interface.HandleVertexUnhovered();
+        _willPicker = new WillPickerBox(_core.Terminal, PartyWills());
+        Console.WriteLine($"LocationTravelGameController: will picker opened ({_willPicker.Entries.Count} will(s))");
+    }
+
+    /// <summary>Takes the picker down, giving the world back its clicks.</summary>
+    private void CloseWillPicker()
+    {
+        if (_willPicker == null) return;
+        _willPicker.Erase();
+        _willPicker = null;
+        Console.WriteLine("LocationTravelGameController: will picker closed");
     }
 
     private bool MenuButtonShown => PausedPhaseName(_currentMode) != null && _companionDeathBox == null;
@@ -1254,6 +1362,17 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+            {
+                _craftingAdapter.Update();
+
+                if (_craftingAdapter.HasRequestedExit)
+                {
+                    OnCraftingCompleted();
+                }
+                return;
+            }
+
             if (_currentMode == GameMode.Trading && _tradeAdapter != null)
             {
                 _tradeAdapter.Update();
@@ -1390,7 +1509,17 @@ public class LocationTravelGameController : IDisposable
                     _forbiddenFlashVertex = -1;
                 }
             }
-            RenderWorldViewUI();
+            if (_willSearch != null)
+            {
+                // The arrow pad stays usable: the world can be turned to watch the search.
+                if (CameraPadActive) _cameraArrowPad!.Draw();
+                TickWillSearch();
+            }
+            else
+            {
+                RenderWorldViewUI();
+                _willPicker?.Draw();
+            }
         }
 
         // Render travel progress box and advance flash animation during Traveling.
@@ -1495,7 +1624,10 @@ public class LocationTravelGameController : IDisposable
             destinationRealm: destinationRealm,
             routinesAvailable: routinesAvailable,
             // An overloaded member grounds the whole party until something is put down.
-            overloadWarning: _protagonist?.TravelWeightBlocker);
+            overloadWarning: _protagonist?.TravelWeightBlocker,
+            // Said only while the plan still ends where the will's search proposed.
+            proposal: _travelPlanner.HasWaypoints && _travelPlanner.FinalDestination == _willProposalVertex
+                ? _willProposal : null);
     }
 
     /// <summary>
@@ -1661,6 +1793,39 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
+        // The ◎ beside it: the will picker, on the world map.
+        if (WillButtonShown && _willButton!.Contains(x, y))
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+            OpenWillPicker();
+            return;
+        }
+
+        // The will picker is modal over the map: every click is its own, and one outside it does nothing.
+        if (_currentMode == GameMode.WorldView && _willPicker != null)
+        {
+            var click = _willPicker.OnClick(x, y);
+            switch (click.Kind)
+            {
+                case WillPickerBox.ClickKind.Close:
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                    CloseWillPicker();
+                    break;
+                case WillPickerBox.ClickKind.Selected:
+                case WillPickerBox.ClickKind.Scrolled:
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                    break;
+                case WillPickerBox.ClickKind.Seek when click.Entry is { } entry:
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                    CloseWillPicker();
+                    var mm = entry.Member.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == entry.ModusMentisId);
+                    if (mm?.Will is { } will && click.Want >= 0 && click.Want < will.Count)
+                        StartWillSearch(entry.Member, mm, will[click.Want]);
+                    break;
+            }
+            return;
+        }
+
         // Companion-removal overlay is modal: it captures every click while shown.
         if (_currentMode == GameMode.WorldView && _companionRemovalRenderer != null)
         {
@@ -1769,6 +1934,15 @@ public class LocationTravelGameController : IDisposable
         // WorldView: only the TRAVEL and CLEAR buttons on the bottom travel info box
         // are clickable (everything else is transparent and falls through to the world
         // sphere via TerminalHUD.TransparentClickPassthrough).
+        if (_currentMode == GameMode.WorldView && _willSearch != null)
+        {
+            if (_willSearchRenderer?.IsOverCancelButton(x, y) == true)
+            {
+                _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                CancelWillSearch("cancelled");
+            }
+            return;
+        }
         if (_currentMode == GameMode.WorldView && _travelInfoRenderer != null)
         {
             if (_travelInfoRenderer.IsOverTravelButton(x, y))
@@ -1848,6 +2022,14 @@ public class LocationTravelGameController : IDisposable
             {
                 _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
                 _dialogueAdapter.OnMouseClick(x, y);
+                return;
+            }
+
+            if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+            {
+                if (_craftingAdapter.GetHoveredControlId(x, y) != null)
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _craftingAdapter.OnMouseClick(x, y);
                 return;
             }
 
@@ -1968,6 +2150,7 @@ public class LocationTravelGameController : IDisposable
         // with the ones above is why neither ever ticked: every button on both screens highlighted
         // in silence, which reads as an unresponsive screen next to the menus either side of it.
         GameMode.Trading => _tradeAdapter?.GetHoveredControlId(x, y),
+        GameMode.Crafting => _craftingAdapter?.GetHoveredControlId(x, y),
         GameMode.Working => _workAdapter?.GetHoveredControlId(x, y),
         GameMode.Gathering => _gatherAdapter?.GetHoveredControlId(x, y),
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
@@ -1999,6 +2182,8 @@ public class LocationTravelGameController : IDisposable
         // Tracked ahead of the modal boxes below, which return early: the ☰ is drawn over them too.
         if (MenuButtonShown && _menuButton!.Contains(x, y) && !_menuButton.Contains(_mouseCellX, _mouseCellY))
             _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+        if (WillButtonShown && _willButton!.Contains(x, y) && !_willButton.Contains(_mouseCellX, _mouseCellY))
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         _mouseCellX = x;
         _mouseCellY = y;
 
@@ -2028,6 +2213,8 @@ public class LocationTravelGameController : IDisposable
 
         // Track hover for the travel UI so the TRAVEL button highlights.
         _travelInfoRenderer?.SetHover(x, y);
+        _willSearchRenderer?.SetHover(x, y);
+        _willPicker?.SetHover(x, y);
         _worldSelectionRenderer?.SetHover(x, y);
         if (CameraPadActive && _cameraArrowPad!.SetHover(x, y)
             && _cameraArrowPad.Hovered != CameraArrow.None)
@@ -2130,6 +2317,12 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+            {
+                _craftingAdapter.OnMouseMove(x, y);
+                return;
+            }
+
             // Route to work adapter if in working mode
             if (_currentMode == GameMode.Working && _workAdapter != null)
             {
@@ -2172,6 +2365,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode == GameMode.ProtagonistManagement)
         {
             _managementMenuRenderer?.OnMouseWheel(delta);
+            return;
+        }
+
+        // The will picker's list scrolls under the wheel, and the camera does not zoom behind it.
+        if (_currentMode == GameMode.WorldView && _willPicker != null)
+        {
+            if (_willPicker.OnWheel(delta)) _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
             return;
         }
 
@@ -2252,6 +2452,10 @@ public class LocationTravelGameController : IDisposable
         {
             ClearTravelPlan();
         }
+        // A will's search reads the world map from the world map; leaving it ends the search.
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView && _willSearch != null)
+            CancelWillSearch($"left the world map for {newMode}");
+        if (oldMode == GameMode.WorldView && newMode != GameMode.WorldView) _willPicker = null;
 
         // The location name that follows the cursor on the world map lives in the mouse-following
         // popup, and only UpdatePopupTerminal clears it — which the narration branch of Update never
@@ -2271,6 +2475,12 @@ public class LocationTravelGameController : IDisposable
             _core.SetCloudSpeedMultiplier(1.0f);
 
         Console.WriteLine($"LocationTravelGameController: Mode changed: {oldMode} ↁE{newMode}");
+
+        // Every phase and screen change is marked the same way: a dither dissolve and a short sweep.
+        // Here, in the one funnel, so a transition added later is marked without anyone remembering
+        // to. RedrawCurrentMode (an overlay dismissed over a live phase) does not pass through here,
+        // which is right: nothing changed.
+        _ambianceEngine?.TriggerGameEvent(GameEventType.Transition);
 
         RunModeEnter(newMode);
         if (Cathedral.Game.Cli.CliMode.IsActive) _cliOverlayOnEntry[newMode] = CliOverlayReading();
@@ -2348,6 +2558,7 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case GameMode.Trading:
+            case GameMode.Crafting:
                 OnEnterTrading();
                 break;
 
@@ -2390,6 +2601,13 @@ public class LocationTravelGameController : IDisposable
         if (_currentMode != GameMode.WorldView)
         {
             Console.WriteLine($"LocationTravelGameController: Ignoring click in {_currentMode} mode");
+            return;
+        }
+
+        // A will's search is under way: the world is being read, not walked. Its CANCEL ends it.
+        if (_willSearch != null || _willPicker != null)
+        {
+            Console.WriteLine("LocationTravelGameController: Ignoring world map click under a will's search or its picker");
             return;
         }
 
@@ -2443,6 +2661,327 @@ public class LocationTravelGameController : IDisposable
             // Clicked on a different vertex - toggle it as a travel waypoint.
             ToggleWaypoint(vertexIndex);
         }
+    }
+
+    // ── A will's search (the Memory tab's "Wants" rows) ─────────────────────────────────────────
+
+    /// <summary>
+    /// A will's target pressed on the Memory tab: back to the world map, and check every place
+    /// within reach for it, a few a frame behind a progress box (<see cref="TickWillSearch"/>).
+    /// </summary>
+    private void BeginWillSearch(PartyMember member, string modusMentisId, int targetIndex)
+    {
+        var mm = member.LearnedModiMentis.FirstOrDefault(m => m.ModusMentisId == modusMentisId);
+        // A modus mentis builds its targets afresh on every read, so the target is read once, here.
+        if (mm?.Will is not { } will || targetIndex < 0 || targetIndex >= will.Count) return;
+        var target = will[targetIndex];
+
+        Console.WriteLine($"LocationTravelGameController: {member.DisplayName}'s {modusMentisId} seeks "
+                        + $"\"{target.Purpose}\" across the world map");
+        _core.SetNarrationMode(true);
+        _managementMenuRenderer = null;
+        _managementBackToMenu = true;
+        ResumeFromMenu();
+        // The world map may have opened on something else first (a companion to dismiss).
+        if (_currentMode != GameMode.WorldView || _travelRoutinesBox != null) return;
+        StartWillSearch(member, mm, target);
+    }
+
+    /// <summary>
+    /// Starts the search for <paramref name="target"/> over the world map, which must be up: from the
+    /// Memory tab's "Wants" rows (<see cref="BeginWillSearch"/>) or the will picker's.
+    /// </summary>
+    private void StartWillSearch(PartyMember member, ModusMentis mm, WillTarget target)
+    {
+        if (_currentMode != GameMode.WorldView) return;
+        Console.WriteLine($"LocationTravelGameController: {member.DisplayName}'s {mm.ModusMentisId} seeks \"{target.Purpose}\"");
+        ClearTravelPlan();
+        int avatar = _interface.GetAvatarVertex();
+        var graph = _interface.GetTravelGraph();
+        if (avatar < 0 || graph == null || _core.Terminal == null) return;
+
+        // Nearest by road, not by eye: one Dijkstra over the travel graph from the avatar, on the
+        // costs the trip itself will be planned on. A place with no road is never checked at all.
+        var inReach = _interface.EnumerateReachableVertices().ToHashSet();
+        var cost = RoadCosts(graph, avatar, inReach);
+        var candidates = cost.Keys.OrderBy(v => cost[v]).ThenBy(v => v).ToList();
+        _willSearch = new WillSearch(member, mm.ModusMentisId, mm.DisplayName, target, candidates);
+        _willSearchRenderer ??= new WillSearchRenderer(_core.Terminal);
+        _travelInfoRenderer?.Erase();
+        _interface.HandleVertexUnhovered();
+        Console.WriteLine($"LocationTravelGameController: will search over {candidates.Count} place(s) with a road, "
+                        + $"of {inReach.Count} within reach");
+    }
+
+    /// <summary>
+    /// The cost of the cheapest road from <paramref name="from"/> to each of <paramref name="wanted"/>
+    /// that has one: Dijkstra over the travel graph's own move costs (the ones A* plans the trip on),
+    /// stopped once every wanted vertex is settled. Unreached vertices are absent.
+    /// </summary>
+    private static Dictionary<int, float> RoadCosts(Cathedral.Pathfinding.IPathGraph graph, int from, HashSet<int> wanted)
+    {
+        var settled = new Dictionary<int, float>();
+        var best = new Dictionary<int, float> { [from] = 0f };
+        var queue = new PriorityQueue<int, float>();
+        queue.Enqueue(from, 0f);
+        int left = wanted.Count;
+        while (left > 0 && queue.TryDequeue(out int v, out float d))
+        {
+            if (settled.ContainsKey(v)) continue;
+            settled[v] = d;
+            if (wanted.Contains(v)) left--;
+            foreach (int n in graph.GetConnectedNodes(v))
+            {
+                if (settled.ContainsKey(n)) continue;
+                float nd = d + graph.GetMoveCost(v, n);
+                if (best.TryGetValue(n, out float old) && old <= nd) continue;
+                best[n] = nd;
+                queue.Enqueue(n, nd);
+            }
+        }
+        return settled.Where(kv => wanted.Contains(kv.Key)).ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    /// <summary>
+    /// One frame of the search: checks places, nearest first, until the frame's budget is spent —
+    /// never faster than one place per <see cref="Config.TravelUI.WillSearchMinSecondsPerPlace"/>
+    /// (nothing under <c>--playground</c>) — and stops at the first that will do. The box then holds on
+    /// it for <see cref="Config.TravelUI.WillSearchFoundHoldSeconds"/> before the trip is planned.
+    /// </summary>
+    private void TickWillSearch()
+    {
+        var search = _willSearch!;
+        bool instant = Config.AnimationsAreInstant;
+
+        if (!search.IsDone)
+        {
+            double perPlace = instant ? 0 : Config.TravelUI.WillSearchMinSecondsPerPlace;
+            double elapsed = (DateTime.UtcNow - search.StartedAt).TotalSeconds;
+            int allowed = perPlace <= 0 ? search.Candidates.Count : (int)(elapsed / perPlace) + 1;
+            var budget = System.Diagnostics.Stopwatch.StartNew();
+            bool first = true;
+            while (!search.IsDone && search.Checked < allowed
+                   && (first || budget.ElapsedMilliseconds < Config.TravelUI.WillSearchFrameBudgetMs))
+            {
+                first = false;
+                int v = search.Next();
+                search.Record(v, WillTargetMetAt(search, v));
+            }
+        }
+        MarkSearchedCell(search.Current);
+
+        // Over: nothing found, or the place found has been shown long enough.
+        double hold = instant ? 0 : Config.TravelUI.WillSearchFoundHoldSeconds;
+        if (search.IsDone && (search.Found < 0 || (DateTime.UtcNow - search.FoundAt).TotalSeconds >= hold))
+        {
+            FinishWillSearch();
+            return;
+        }
+        _willSearchRenderer?.Draw(search, search.Current >= 0 ? GetLocationNameAtVertex(search.Current) : null);
+    }
+
+    /// <summary>
+    /// Whether the search's target would be met at <paramref name="vertex"/> on arrival — planned from
+    /// the entry area, at the place's own arrival hour, by the member whose will it is. The road to it
+    /// was settled when the candidates were ordered.
+    /// </summary>
+    private bool WillTargetMetAt(WillSearch search, int vertex)
+    {
+        try
+        {
+            var scene = BuildSceneForLocation(vertex, out _, applyDepletion: true, probe: true);
+            if (scene == null) return false;
+            var entry = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene) ?? scene.AllAreas.FirstOrDefault();
+            if (entry == null) return false;
+            var period = Config.Debug.ForcedPeriod ?? scene.ArrivalPeriod;
+            return Cathedral.Game.Scene.ActionPathPlanner.Plan(scene, new PoV(entry, period), search.Member,
+                                                               WillTargets.Of(search.Target)) != null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LocationTravelGameController: will search could not read vertex {vertex}: {ex.Message}");
+            return false;
+        }
+        finally
+        {
+            // Every probe is a scene of its own, and the planner's caches are keyed on the scene.
+            Cathedral.Game.Scene.ActionPathPlanner.Forget();
+        }
+    }
+
+    /// <summary>
+    /// The search is over: propose the journey to the place found — the first, so the nearest by road —
+    /// planned as though it had been clicked, with the TRAVEL box saying why; or say that nowhere
+    /// within reach will do.
+    /// </summary>
+    private void FinishWillSearch()
+    {
+        var search = _willSearch!;
+        _willSearch = null;
+        MarkSearchedCell(-1);
+        _willSearchRenderer?.Erase();
+        Console.WriteLine($"LocationTravelGameController: will search done — \"{search.Target.Purpose}\" "
+                        + (search.Found >= 0 ? $"met at vertex {search.Found}, place {search.Checked} of {search.Candidates.Count}"
+                                             : $"met nowhere in {search.Candidates.Count} place(s)")
+                        + $", in {(DateTime.UtcNow - search.StartedAt).TotalSeconds:0.00}s");
+
+        if (search.Found < 0)
+        {
+            _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
+            _travelInfoRenderer?.ShowTransientMessage($"Nowhere within reach to {search.Target.Purpose}.");
+            return;
+        }
+
+        ClearTravelPlan();
+        ToggleWaypoint(search.Found);
+        if (_travelPlanner?.FinalDestination != search.Found) return;
+        _willProposalVertex = search.Found;
+        _willProposal = $"{search.ModusMentisName}: {search.Target.Purpose}";
+        _willProposalPursuit = (search.ModusMentisId, search.Target.Describe());
+    }
+
+    /// <summary>Ends a will's search without proposing anything.</summary>
+    private void CancelWillSearch(string why)
+    {
+        if (_willSearch == null) return;
+        Console.WriteLine($"LocationTravelGameController: will search {why} after "
+                        + $"{_willSearch.Checked}/{_willSearch.Candidates.Count} place(s)");
+        _willSearch = null;
+        MarkSearchedCell(-1);
+        _willSearchRenderer?.Erase();
+        Cathedral.Game.Scene.ActionPathPlanner.Forget();
+    }
+
+    /// <summary>The cell the search last read, drawn highlighted on the sphere; -1 for none.</summary>
+    private int _searchedCell = -1;
+
+    /// <summary>
+    /// Moves the sphere's highlight to <paramref name="vertex"/> (the place just read), restoring the
+    /// one before, and beats it; -1 clears it. The avatar's own cell is never repainted.
+    /// </summary>
+    private void MarkSearchedCell(int vertex)
+    {
+        if (vertex != _searchedCell && _searchedCell >= 0) _interface.RestoreCellGlyph(_searchedCell);
+        _searchedCell = vertex;
+        if (vertex < 0) return;
+        // Repainted every frame so it beats, wall-clock paced like the bar's sweeping head.
+        const float lo = Config.GlyphSphere.SearchedCellPulseMin, hi = Config.GlyphSphere.SearchedCellPulseMax;
+        double phase = (DateTime.UtcNow - DateTime.UnixEpoch).TotalSeconds * Config.GlyphSphere.SearchedCellPulseHz * 2 * Math.PI;
+        float pulse = lo + (hi - lo) * (0.5f + 0.5f * (float)Math.Sin(phase));
+        _interface.HighlightSearchedCell(vertex, pulse);
+    }
+
+    /// <summary>
+    /// The search for <c>inspect will-search</c>: under way (how far, what), or the journey it last
+    /// proposed (`proposal vertex=… text=…`), or none.
+    /// </summary>
+    public IReadOnlyList<string> CliWillSearchLines()
+    {
+        if (_willSearch is { } w)
+            return new[] { $"will-search state=running checked={w.Checked}/{w.Candidates.Count} found={w.Found} highlighted={_searchedCell} purpose=\"{w.Target.Purpose}\"" };
+        if (_willProposal != null && _travelPlanner?.HasWaypoints == true && _travelPlanner.FinalDestination == _willProposalVertex)
+            return new[] { $"will-search state=proposed vertex={_willProposalVertex} name={GetLocationNameAtVertex(_willProposalVertex)} text={_willProposal}" };
+        return new[] { "will-search state=none" };
+    }
+
+    /// <summary>The n-th want on screen (the picker's, or the Memory tab's), pressed through the click path.</summary>
+    public string? CliClickWant(int target)
+    {
+        if (_currentMode == GameMode.WorldView && _willPicker != null)
+        {
+            _willPicker.Draw();   // the rows of the will selected since the last frame
+            return CliPress(_willPicker.WantCell(target), $"want {target} in the will picker");
+        }
+        if (_currentMode != GameMode.ProtagonistManagement || _managementMenuRenderer == null)
+            return "neither the will picker nor the protagonist screen is open (`click will-button`, or `manage Memory` then `select mm <id>`)";
+        if (_managementMenuRenderer.CliWantCell(target) is not { } cell)
+            return $"no clickable want {target} (select a will with `select mm <id>`; the rows are buttons only over the world map)";
+        CliHoverCell(cell.X, cell.Y);
+        CliClickCell(cell.X, cell.Y);
+        return null;
+    }
+
+    /// <summary>
+    /// The cell of the n-th want on screen, for <c>--cli</c> and <c>--record</c>: the will picker's
+    /// selected will on the world map, or the selected will's "Wants" row on the Memory tab.
+    /// </summary>
+    public (int X, int Y)? CliWantCell(int target)
+    {
+        if (_currentMode == GameMode.WorldView)
+        {
+            // Drawn first: a will selected since the last frame shows its own rows only once drawn.
+            _willPicker?.Draw();
+            return _willPicker?.WantCell(target);
+        }
+        return _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliWantCell(target) : null;
+    }
+
+    /// <summary>The ◎'s cell while it is on screen.</summary>
+    public (int X, int Y)? CliWillButtonCell => WillButtonShown ? _willButton?.Cell : null;
+
+    /// <summary>A will's row in the open picker (scrolled into view first, as the wheel would), or null.</summary>
+    public (int X, int Y)? CliPickerWillCell(string modusMentisId)
+    {
+        if (_willPicker == null) return null;
+        _willPicker.Draw();   // opened this frame: not drawn yet, so nothing to hit-test
+        if (_willPicker.WillCell(modusMentisId) is { } c) return c;
+        // Off the list's view: scroll to it, and redraw so the row is where the next click lands.
+        while (_willPicker.WillCell(modusMentisId) == null && _willPicker.DownCell != null && _willPicker.OnWheel(-1)) _willPicker.Draw();
+        while (_willPicker.WillCell(modusMentisId) == null && _willPicker.UpCell != null && _willPicker.OnWheel(1)) _willPicker.Draw();
+        return _willPicker.WillCell(modusMentisId);
+    }
+
+    /// <summary>The picker's ▲ / ▼ rows and CLOSE, while each is live.</summary>
+    public (int X, int Y)? CliPickerCell(string which)
+    {
+        if (_willPicker == null) return null;
+        _willPicker.Draw();   // opened this frame: not drawn yet, so nothing to hit-test
+        return which switch
+        {
+            "down"  => _willPicker.DownCell,
+            "up"    => _willPicker.UpCell,
+            "close" => _willPicker.CloseCell,
+            _       => null,
+        };
+    }
+
+    /// <summary>The picker for <c>inspect will-picker</c>: open or not, what is listed, shown and selected.</summary>
+    public IReadOnlyList<string> CliWillPickerLines()
+    {
+        var lines = new List<string> { $"will-button {(WillButtonShown ? "shown" : "hidden")}" };
+        if (_willPicker is not { } p) { lines.Add("will-picker state=closed"); return lines; }
+        lines.Add($"will-picker state=open wills={p.Entries.Count} scroll={p.Scroll} selected={p.Selected?.ModusMentisId ?? "none"} "
+                + $"shown={string.Join(",", p.VisibleWills)}");
+        if (p.Selected is { } sel)
+            for (int i = 0; i < sel.Wants.Count; i++)
+                lines.Add($"will-picker want {i} purpose=\"{sel.Wants[i]}\"");
+        return lines;
+    }
+
+    /// <summary>Presses a cell through the player's click path (hover first), for the CLI's picker commands.</summary>
+    public string? CliPress((int X, int Y)? cell, string what)
+    {
+        if (cell is not { } c) return $"no {what} on screen";
+        CliHoverCell(c.X, c.Y);
+        CliClickCell(c.X, c.Y);
+        return null;
+    }
+
+    /// <summary>The search box's CANCEL while a will's search runs, for <c>--record</c>.</summary>
+    public (int X, int Y)? CliWillSearchCancelCell => _willSearch != null ? _willSearchRenderer?.CancelCell : null;
+
+    /// <summary>The wants that are buttons on screen now, by index (the picker's, or the Memory tab's).</summary>
+    public IReadOnlyList<int> CliWantRows
+        => _currentMode == GameMode.WorldView && _willPicker?.Selected is { } sel ? Enumerable.Range(0, sel.Wants.Count).ToList()
+         : _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliWantRows ?? Array.Empty<int>()
+         : Array.Empty<int>();
+
+    /// <summary>The search box's CANCEL, pressed through the click path. False when no search runs.</summary>
+    public bool CliCancelWillSearch()
+    {
+        if (_willSearch == null || _willSearchRenderer?.CancelCell is not { } cell) return false;
+        CliClickCell(cell.X, cell.Y);
+        return true;
     }
 
     /// <summary>
@@ -2548,6 +3087,9 @@ public class LocationTravelGameController : IDisposable
         _interface.SetHoverPathOrigin(-1);
         _plannedPath = null;
         _plannedEstimate = null;
+        _willProposal = null;
+        _willProposalVertex = -1;
+        _willProposalPursuit = null;
 
         // Cancel any pending forbidden-cell flash.
         if (_forbiddenFlashVertex >= 0)
@@ -2599,6 +3141,12 @@ public class LocationTravelGameController : IDisposable
         var path = new Cathedral.Pathfinding.Path(pathVertices, positions, 0f);
 
         _destinationVertex = pathVertices[^1];
+
+        // A trip a will's search proposed, walked as proposed: the visit it ends in is made for that
+        // will's target. Any other journey carries no pursuit, and drops one not yet delivered.
+        _pendingPursuit = _destinationVertex == _willProposalVertex && _willProposalPursuit is { } pursuit
+            ? (_destinationVertex, pursuit.ModusMentisId, pursuit.TargetKey)
+            : null;
         _interface.ClearPlannedPath();
         _travelPlanner.Clear();
         _plannedPath = null;
@@ -2625,6 +3173,11 @@ public class LocationTravelGameController : IDisposable
         if (_travelProgressRenderer == null)
             _travelProgressRenderer = new TravelProgressRenderer(_core.Terminal);
         _travelProgressRenderer.StartTrip(_tripVhRequired);
+
+        // The journey is the journal's next passage: "on the road", from setting out to arrival.
+        _tripLands.Clear();
+        string from = JournalPlaceAt(pathVertices[0]), to = JournalPlaceAt(_destinationVertex);
+        JournalRecorder.Event($"{_protagonist?.DisplayName} set out from the {from} for {(to == from ? "another" : "the")} {to}.");
 
         SetMode(GameMode.Traveling);
         TravelStarted?.Invoke();
@@ -2658,6 +3211,8 @@ public class LocationTravelGameController : IDisposable
         var biomeInfo = Cathedral.Glyph.Microworld.BiomeTravelDatabase.GetFor(biomeName);
         _consumptionBiome  = biomeName;
         _tripVhDebt       += biomeInfo.VitalHeatPerCell;
+        string land = JournalLandAt(vertexIndex);
+        if (_tripLands.Count == 0 || _tripLands[^1] != land) _tripLands.Add(land);
 
         // If debt has reached a full unit, pause movement so Update() can drain it
         // one humor per frame before the protagonist takes the next step.
@@ -2762,6 +3317,10 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Protagonist arrived at vertex {vertexIndex}");
 
+        // The journey's passage ends here, before the visit's opens.
+        JournalRecorder.Event(JourneyEnd(vertexIndex, _committedTravelDays));
+        JournalRecorder.CloseGroup();
+
         // Travel done — any leftover planning state should be wiped before the player
         // re-enters WorldView.
         ClearTravelPlan();
@@ -2849,9 +3408,7 @@ public class LocationTravelGameController : IDisposable
     private void StartLocationInteraction(int vertexIndex, Cathedral.Glyph.Microworld.LocationType locationType)
     {
         Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for location '{locationType.Name}'");
-        // Sample a deterministic mood for this specific location and play full music
-        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(locationType.Name, vertexIndex));
-        _ambianceEngine?.SetActiveTrackCount(4);
+        PlayPlaceMusic(vertexIndex);
         StartNarrativeInteraction(vertexIndex);
     }
 
@@ -2862,10 +3419,22 @@ public class LocationTravelGameController : IDisposable
     private void StartBiomeInteraction(int vertexIndex, Cathedral.Glyph.Microworld.BiomeType biomeType)
     {
         Console.WriteLine($"LocationTravelGameController: Starting Phase 6 interaction for biome '{biomeType.Name}'");
-        // Sample a deterministic mood for this biome tile and play full music
-        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(biomeType.Name, vertexIndex));
-        _ambianceEngine?.SetActiveTrackCount(4);
+        PlayPlaceMusic(vertexIndex);
         StartNarrativeInteraction(vertexIndex);
+    }
+
+    /// <summary>
+    /// The place's own music at full band: a deterministic mood sampled from the location at
+    /// <paramref name="vertexIndex"/>, or from its biome where there is none. The journey left the
+    /// music thinned to one track, so every way into a place — an ordinary arrival and every
+    /// routine — must come through here, or the place plays the road's drone.
+    /// </summary>
+    private void PlayPlaceMusic(int vertexIndex)
+    {
+        var info = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+        var name = info.location.HasValue ? info.location.Value.Name : info.biome.Name;
+        _ambianceEngine?.SetMood(LocationMoodProfiles.SampleMood(name, vertexIndex));
+        _ambianceEngine?.SetActiveTrackCount(4);
     }
 
     /// <summary>
@@ -3557,6 +4126,8 @@ public class LocationTravelGameController : IDisposable
                 // ResetGameState called InitializeMemory earlier with initial random scores;
                 // now we rebuild modules to reflect the final configured values.
                 // --organs first: memory size and the humor queues are both derived from the scores.
+                // --weapons ahead of it, so an explicit --organs arms=… still has the last word.
+                WeaponsMode.StrengthenArmsIfActive(protagonist);
                 StartingBodyMode.ApplyOrgans(protagonist);
                 protagonist.InitializeMemory();
                 protagonist.ReinitializeHumorQueues();
@@ -3661,6 +4232,11 @@ public class LocationTravelGameController : IDisposable
 
             // A Meet/Buy/Sell/Work routine's detail shows how its person stands with you today, read
             // from the location's memory (keyed by persistent id) without building the scene.
+            // Memory tab: a will's "Wants" row seeks that target in every place within reach — only
+            // over the world map, where the search can end by planning the journey there.
+            if (MenuReturnMode == GameMode.WorldView && _interface.IsWorldGenerated)
+                _managementMenuRenderer.OnSeekWillTarget = BeginWillSearch;
+
             _managementMenuRenderer.RoutineRelationLookup = (locId, npcId) =>
             {
                 if (!_locationStates.TryGetValue(locId, out var state)) return null;
@@ -3857,6 +4433,10 @@ public class LocationTravelGameController : IDisposable
         // They differ exactly when the autosave has not fired since the last change.
         if (subject == "save")     return CliSaveDump();
 
+        // The crafting menu, while it is open: station, trade, pool, what can be broken down, what made.
+        if (subject == "crafting")
+            return _craftingAdapter?.Renderer.CliLines().ToList() ?? new List<string> { "crafting menu=closed" };
+
         // The journal by numbers, and one line per entry: what `expect` cannot see once a group is
         // written over, and the queue the chronicler works through.
         if (subject == "journal" && _protagonist != null)
@@ -3872,6 +4452,7 @@ public class LocationTravelGameController : IDisposable
             foreach (var e in j.Entries)
                 lines.Add($"journal-entry seq={e.Seq} group={e.Group} kind={e.Kind} state={e.State} day={e.Day} "
                         + $"place={e.Place} actor={e.Actor} companion={(e.ByCompanion ? "yes" : "no")} "
+                        + (e.Attempt.Length > 0 ? $"attempt={(e.Succeeded ? "done" : "failed")}:{e.Attempt} " : "")
                         + $"text={(e.Written.Length > 0 ? e.Written : e.Source).Replace('\n', ' ')}");
             return lines;
         }
@@ -3899,6 +4480,10 @@ public class LocationTravelGameController : IDisposable
 
         // Where the avatar stands against the last journey's two ends — how a script tells that a
         // flight from an encounter on the last step fell back to where it came from.
+        // A will's search from the Memory tab: under way, the journey it proposed, or none.
+        if (subject == "will-search") return CliWillSearchLines().ToList();
+        if (subject == "will-picker") return CliWillPickerLines().ToList();
+
         if (subject == "avatar")
         {
             int v = _interface.GetAvatarVertex();
@@ -4623,6 +5208,37 @@ public class LocationTravelGameController : IDisposable
     /// Gets the location name at the specified vertex index.
     /// Returns null if no location exists or if vertex is invalid.
     /// </summary>
+    /// <summary>
+    /// What the journal calls the place at a vertex: the location's kind, or the land it stands in,
+    /// lower-cased ("village", "forest") — the same words the first-visit milestone uses.
+    /// </summary>
+    private string JournalPlaceAt(int vertexIndex)
+    {
+        if (vertexIndex < 0) return "wilds";
+        var (biome, location, _) = _interface.GetDetailedBiomeInfoAt(vertexIndex);
+        return Narrative.WorldContext.From(biome, location).DisplayName.ToLowerInvariant();
+    }
+
+    /// <summary>The land at a vertex, whatever stands on it ("forest", "coast"): what a journey crosses.</summary>
+    private string JournalLandAt(int vertexIndex) =>
+        vertexIndex < 0 ? "wilds" : _interface.GetDetailedBiomeInfoAt(vertexIndex).biome.Name.ToLowerInvariant();
+
+    /// <summary>The journey's closing line: the lands crossed, where it ended, and how long it took.</summary>
+    private string JourneyEnd(int arrivalVertex, float days)
+    {
+        string dest = JournalPlaceAt(arrivalVertex);
+        var crossed = _tripLands.Where(l => l != dest).Distinct().ToList();
+        string over = crossed.Count switch
+        {
+            0 => "",
+            1 => $"Crossing the {crossed[0]}, ",
+            _ => $"Crossing the {string.Join(", the ", crossed.Take(crossed.Count - 1))} and the {crossed[^1]}, ",
+        };
+        string time = days < 0.75f ? "within the day" : $"after {Math.Max(1, (int)Math.Round(days))} day{(Math.Round(days) > 1 ? "s" : "")} on the road";
+        string who = _protagonist?.DisplayName ?? "the traveller";
+        return $"{over}{who} reached the {dest} {time}.";
+    }
+
     public string? GetLocationNameAtVertex(int vertexIndex)
     {
         if (vertexIndex < 0)
@@ -5190,10 +5806,22 @@ public class LocationTravelGameController : IDisposable
             // menu is the only place with an Exit button, so without this there is no way to quit
             // the game from it. Nothing is lost by pausing — the allocation lives on the
             // protagonist, not in the renderer, so resuming rebuilds the same screen.
+            // The world map backs out of a will's search first, as its CANCEL does.
+            case GameMode.WorldView when _willPicker != null:
+                Console.WriteLine("ESC pressed - closed the will picker");
+                CloseWillPicker();
+                return true;
+
+            case GameMode.WorldView when _willSearch != null:
+                Console.WriteLine("ESC pressed - cancelled the will's search");
+                CancelWillSearch("cancelled");
+                return true;
+
             case GameMode.Dialogue:
             case GameMode.Working:
             case GameMode.Gathering:
             case GameMode.Trading:
+            case GameMode.Crafting:
             case GameMode.EncounterPrompt:
             case GameMode.WorldView:
             case GameMode.ProtagonistCreation:
@@ -5331,6 +5959,7 @@ public class LocationTravelGameController : IDisposable
         GameMode.Working                                    => "work menu",
         GameMode.Gathering                                  => "gathering",
         GameMode.Trading                                    => "trade menu",
+        GameMode.Crafting                                   => "crafting menu",
         GameMode.EncounterPrompt                            => "encounter",
         GameMode.WorldView                                  => "world",
         GameMode.ProtagonistCreation                        => "protagonist creation",
@@ -5746,6 +6375,8 @@ public class LocationTravelGameController : IDisposable
         _pendingEncounterCreatureName = creatureName;
 
         Console.WriteLine($"LocationTravelGameController: Travel encounter — {npc.DisplayName} ({creatureName}) in {_consumptionBiome}");
+        JournalRecorder.Event($"On the road through the {JournalLandAt(_avatarVertexBeforeStep)}, "
+                            + $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc, _protagonist)} barred the way.");
         SetMode(GameMode.EncounterPrompt);
         return true;
     }
@@ -5766,6 +6397,11 @@ public class LocationTravelGameController : IDisposable
                     Console.Error.WriteLine("ApplyPhaseTransition: fight requested with no narrative context — returning to travel");
                     ReturnToWorldView();
                 }
+                break;
+
+            case StartCraftingTransition c:
+                if (_narrativeController != null) StartCraftingMode(c.Request);
+                else ReturnToWorldView();
                 break;
 
             case StartDialogueTransition d:
@@ -5820,6 +6456,32 @@ public class LocationTravelGameController : IDisposable
 
         // The menu opens once the walk in from the location's entry has been shown.
         _narrativeController.WalkTheApproach(() => open(npc));
+    }
+
+    /// <summary>
+    /// Enters a Craft routine: narrative context at the routine's area and hour, the walk in from the
+    /// entry, then the crafting menu at its station — no USE rolled, the routine being the USE once won.
+    /// </summary>
+    private void StartCraftRoutine(int vertex, Cathedral.Game.Narrative.Routines.CraftRoutine routine)
+    {
+        if (!EstablishNarrativeContext(vertex))
+        {
+            Console.Error.WriteLine("StartCraftRoutine: could not establish narrative context — returning to travel");
+            ReturnToWorldView();
+            return;
+        }
+        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
+        var area    = _narrativeController.Scene is { } scene ? routine.FindArea(scene) : null;
+        var station = area != null ? routine.FindStation(area) : null;
+        if (station == null)
+        {
+            Console.Error.WriteLine($"StartCraftRoutine: '{routine.StationName}' not found in the rebuilt scene — exiting to travel");
+            ExitNarrativeMode();
+            return;
+        }
+        var request = new Cathedral.Game.Narrative.Crafting.CraftingRequest(
+            station, routine.TradeId, routine.ToolItemId.Length > 0 ? routine.ToolItemId : null);
+        _narrativeController.WalkTheApproach(() => StartCraftingMode(request, fromRoutine: true));
     }
 
     /// <summary>Tears down any narrative context and returns to the world-travel view.</summary>
@@ -5898,6 +6560,8 @@ public class LocationTravelGameController : IDisposable
     {
         if (_core.Terminal == null || _protagonist == null) { ReturnToWorldView(); return; }
 
+        PlayPlaceMusic(vertex);
+
         var ctx = RoutineCheckContextFor(vertex);
         var why = ctx == null ? "the place cannot be reached" : routine.Unavailability(ctx);
         if (why != null)
@@ -5936,6 +6600,10 @@ public class LocationTravelGameController : IDisposable
 
             case Cathedral.Game.Narrative.Routines.GatherRoutine gather:
                 StartGatherMode(vertex, gather);
+                break;
+
+            case Cathedral.Game.Narrative.Routines.CraftRoutine craft:
+                StartCraftRoutine(vertex, craft);
                 break;
         }
     }
@@ -6008,7 +6676,7 @@ public class LocationTravelGameController : IDisposable
     /// generator), no first-contact enmity, no name faking (which is global, and may belong to a
     /// visit the menu was opened over).</param>
     private Cathedral.Game.Scene.Scene? BuildSceneForLocation(int vertexIndex, out LocationInstanceState? lis,
-        bool applyDepletion = true, bool visit = false, bool viewOnly = false)
+        bool applyDepletion = true, bool visit = false, bool viewOnly = false, bool probe = false)
     {
         lis = null;
         if (_llamaServer == null || _protagonist == null) return null;
@@ -6058,7 +6726,9 @@ public class LocationTravelGameController : IDisposable
         if (!_locationStates.TryGetValue(vertexIndex, out var state))
         {
             state = LocationInstanceState.ForScene(vertexIndex, locationName ?? biomeName);
-            _locationStates[vertexIndex] = state;
+            // A probe (a will's search reading a place it has not been to) keeps no state of its
+            // own: a place is remembered by being visited, not by being thought about.
+            if (!probe) _locationStates[vertexIndex] = state;
         }
         lis = state;
 
@@ -6074,8 +6744,23 @@ public class LocationTravelGameController : IDisposable
         // writes into the memory and a place forgotten builds with nothing known.
         if (visit)
             _protagonist.EnterMentalMap(vertexIndex, Narrative.WorldContext.From(biomeInfo.biome, biomeInfo.location).DisplayName);
+        // The visit a will's search was walked for: that will wants its target first while it lasts.
+        // Delivered once, to the visit the journey ends in.
+        if (visit && _pendingPursuit is { } pending && pending.Vertex == vertexIndex)
+        {
+            scene.WillPursuit = (pending.ModusMentisId, pending.TargetKey);
+            _pendingPursuit = null;
+            Console.WriteLine($"LocationTravelGameController: this visit is made for {pending.ModusMentisId}'s \"{pending.TargetKey}\"");
+        }
         _protagonist.MentalMapOf(vertexIndex)?.AttachTo(scene);
         if (viewOnly) return scene;
+        // A probe reads the place as an arrival would find it — what was taken is still gone — and
+        // touches nothing else: no beasts flagged, no names faked.
+        if (probe)
+        {
+            if (applyDepletion) ApplyDepletion(scene, Cathedral.Game.Narrative.GameClock.Days);
+            return scene;
+        }
 
         // Debug: --spawn-beast puts one where the script opens. Before the first-contact pass below,
         // so it is flagged an enemy exactly like a beast the factory rolled.
@@ -6346,6 +7031,7 @@ public class LocationTravelGameController : IDisposable
                 // not travel to — the map refuses a journey to the vertex underfoot.
                 if (_pendingArrivalVertex >= 0 && _stepOriginVertex >= 0)
                     _interface.ReturnAvatarTo(_stepOriginVertex);
+                JournalRecorder.Event($"{_protagonist.DisplayName} gave up the journey, short of the {JournalPlaceAt(_destinationVertex)}.");
                 _pendingArrivalVertex = -1;
                 _interface.MovementPaused = true;
                 _interface.CancelTravel();
@@ -6411,8 +7097,12 @@ public class LocationTravelGameController : IDisposable
 
         if (result == FightAdapterResult.Runaway)
         {
-            Console.WriteLine("LocationTravelGameController: Player ran away, exiting to world view");
-            ExitNarrativeMode();
+            // Out of the fight is not yet out of the location: the party makes for the way out on
+            // the map, and anybody standing in the way further on can still stop it there. The
+            // escape asks for the exit itself once it is past them all.
+            Console.WriteLine("LocationTravelGameController: Player ran away, making for the way out");
+            SetMode(GameMode.LocationInteraction);
+            _narrativeController.FleeAfterFight();
             return;
         }
 
@@ -6594,6 +7284,66 @@ public class LocationTravelGameController : IDisposable
             _narrativeController.RecordTradeRoutine(npc, npc.TradeRequest);
         if (npc.JobRequest is { } job)
             _narrativeController.RecordWorkRoutine(npc, job);
+    }
+
+    /// <summary>
+    /// Opens the crafting menu at <paramref name="request"/>'s station for its trade — after a successful
+    /// USE, or on arriving by a Craft routine (<paramref name="fromRoutine"/>, which returns to the world
+    /// map on leaving, as a routine's trade does).
+    /// </summary>
+    private void StartCraftingMode(Cathedral.Game.Narrative.Crafting.CraftingRequest request, bool fromRoutine = false)
+    {
+        if (_core.Terminal == null || _narrativeController == null) return;
+        var member = _narrativeController.ActingMember;
+        var trade  = member.ModiMentis.OfType<Cathedral.Game.Narrative.Crafting.CraftingModusMentis>()
+                           .FirstOrDefault(m => m.ModusMentisId == request.ModusMentisId);
+        if (trade == null)
+        {
+            Console.Error.WriteLine($"StartCraftingMode: {request.ModusMentisId} is not held — no menu");
+            if (fromRoutine) ExitNarrativeMode();
+            return;
+        }
+
+        _craftingFromRoutine = fromRoutine;
+        _craftingAdapter = new CraftingMenuAdapter(member, request.Station, trade, _core.Terminal);
+        _narrativeController.CloseNarrationSegment($"working at the {request.Station.DisplayName.ToLowerInvariant()}");
+        if (!fromRoutine)
+            _narrativeController.RecordCraftRoutine(request);
+        SetMode(GameMode.Crafting);
+    }
+
+    /// <summary>
+    /// The crafting menu closed: what was left in hand is thrown away, a one-line trace goes into the
+    /// narration, and a fresh segment begins — or, for a routine's menu, the world map.
+    /// </summary>
+    private void OnCraftingCompleted()
+    {
+        if (_craftingAdapter == null) return;
+        var menu = _craftingAdapter.Renderer;
+        _craftingAdapter = null;
+        _core.Terminal?.Clear();
+
+        string station = menu.Station.DisplayName.ToLowerInvariant();
+        var parts = new List<string>();
+        if (menu.BrokenDown.Count > 0) parts.Add($"broke down {menu.BrokenDown.Count} thing{(menu.BrokenDown.Count == 1 ? "" : "s")}");
+        if (menu.Made.Count > 0) parts.Add($"made {string.Join(", ", menu.Made.Select(n => n.ToLowerInvariant()))}");
+        if (menu.Spoiled.Count > 0) parts.Add($"spoiled {menu.Spoiled.Count} piece{(menu.Spoiled.Count == 1 ? "" : "s")} of work");
+        if (menu.Pool > 0) parts.Add($"left {menu.Pool} {Cathedral.Game.Narrative.Crafting.CraftMaterials.Label(menu.Material)} unused");
+        string note = parts.Count == 0
+            ? $"You left the {station} without working."
+            : $"At the {station} you {string.Join(", and ", parts)}.";
+        Console.WriteLine($"LocationTravelGameController: crafting finished — {note}");
+
+        if (_craftingFromRoutine)
+        {
+            _craftingFromRoutine = false;
+            ExitNarrativeMode();
+            return;
+        }
+
+        SetMode(GameMode.LocationInteraction);
+        _narrativeController?.AppendPhaseNote(note);
+        _narrativeController?.BeginNarrationSegment($"after working at the {station}");
     }
 
     private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode,
@@ -6810,6 +7560,10 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Trading && _tradeAdapter != null)
         {
             _tradeAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+        {
+            _craftingAdapter.OnKeyPress(key);
         }
         else if (_currentMode == GameMode.Working && _workAdapter != null)
         {

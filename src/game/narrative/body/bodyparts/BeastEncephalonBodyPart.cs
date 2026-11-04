@@ -9,9 +9,8 @@ namespace Cathedral.Game.Narrative;
 /// <para>The pineal gland is the organ of inward regard — self-awareness, the contemplative and
 /// intuitive arts — and a beast has none. Leaving it out is the whole of what bars a beast from the
 /// modi mentis that name it (<see cref="ModusMentisAnatomy"/>'s structural test: every organ a modus
-/// mentis names must exist on the body), and it also puts the pineal measures out of reach:
-/// iterative thinking and doubt are absent, the experience a level costs is the full 12, and a fallen
-/// beast regains its feet on a single die. Same id as the human's, so the zone map, the wounds and
+/// mentis names must exist on the body), and it also puts the pineal measures out of reach: the
+/// experience a level costs is the full 12, and a fallen beast regains its feet on a single die. Same id as the human's, so the zone map, the wounds and
 /// everything that reads the region by id are unchanged.</para>
 /// </summary>
 public class BeastEncephalonBodyPart : BodyPart

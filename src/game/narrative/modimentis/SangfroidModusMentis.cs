@@ -21,6 +21,7 @@ public class SangfroidModusMentis : ModusMentis
     public override string SkillMeans       => "the cold that settles when the trouble begins";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "spleen", "pineal_gland" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

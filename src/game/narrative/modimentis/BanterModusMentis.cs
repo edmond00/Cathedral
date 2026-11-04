@@ -29,5 +29,5 @@ It is not charm exactly. It is finding the thing everybody at the bench already 
 
 And you listen while you do it, because the point is not to be liked, or not only. People talk to a person who is easy to be around, and they say things they would not say to somebody asking questions.
 
-Your speech is quick and warm and a bit rude: 'that is the worst thing I have heard all week - go on,' 'no, no, mine was worse,' 'another one, and then I want to hear the rest of that.'";
+Your speech is quick and warm and a bit rude: 'that is the worst thing I have heard all eleven-day - go on,' 'no, no, mine was worse,' 'another one, and then I want to hear the rest of that.'";
 }

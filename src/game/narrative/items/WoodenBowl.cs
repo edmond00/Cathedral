@@ -7,9 +7,8 @@ public sealed class WoodenBowl : ContainerItem
 {
     public override string ItemId      => "wooden_bowl";
     public override string DisplayName => "Wooden Bowl";
-    public override string Description => "A turned wooden bowl, smooth inside and darkened with years of use";
+    public override string Description => "A turned wooden bowl, smooth inside and darkened with rounds of use";
     public override ContainerKind Kind => ContainerKind.Vessel;
     public override int ContentSlots   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Woodwork };
-    public override int PriceReference => 6;
 }

@@ -13,6 +13,7 @@ public class MarchstoneModusMentis : ModusMentis
         "Holds a district in the head: whose land is whose, which mill grinds for whom, what the customs are and where the boundaries run. Local knowledge, worth more than any map inside its bounds and nothing at all outside them.";
     public override string SkillMeans       => "the holding of a district and its arrangements in the head";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

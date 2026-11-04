@@ -50,10 +50,10 @@ public class BlacksmithArchetype : CraftsmanArchetype
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
         [DialogueTopic.Weather]    = "rain I can work in — it's the damp that gets into the charcoal and makes a liar of the fire",
-        [DialogueTopic.Seasons]    = "before ploughing and before harvest, everyone remembers the smith; the rest of the year they forget I eat",
+        [DialogueTopic.Seasons]    = "before ploughing and before harvest, everyone remembers the smith; the rest of the round they forget I eat",
         [DialogueTopic.Harvest]    = "a good harvest means blunt sickles and full purses, and I'll take both",
-        [DialogueTopic.Beasts]     = "an ox that's badly shod goes lame, and a lame ox costs a family its year",
-        [DialogueTopic.Work]       = "iron tells you the truth. Heat it wrong and it splits; work it right and it holds for thirty years",
+        [DialogueTopic.Beasts]     = "an ox that's badly shod goes lame, and a lame ox costs a family its round",
+        [DialogueTopic.Work]       = "iron tells you the truth. Heat it wrong and it splits; work it right and it holds for thirty rounds",
         [DialogueTopic.Health]     = "my hands are half scar and my ears are half deaf, and that's the price of the trade",
         [DialogueTopic.Trade]      = "I charge what the iron and the charcoal cost me, plus my arm. Anyone who calls that dear can mend their own share",
         [DialogueTopic.Rest]       = "a cold forge is a wasted day, but a man who never lets the fire die burns himself out first",

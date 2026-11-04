@@ -11,7 +11,6 @@ public sealed class LeatherBoots : WearableItem
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Footwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Footwear };
-    public override int PriceReference => 20;
 
     // Thick calf leather over the ankle — the one piece of ordinary dress that genuinely turns a blow.
     public override int DefenseDice => 1;

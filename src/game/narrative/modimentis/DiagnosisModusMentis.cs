@@ -13,6 +13,7 @@ public class DiagnosisModusMentis : ModusMentis
         "Reads illness from the signs: the colour of the skin, the smell of the breath, the pulse, the urine held to the light. Names what is wrong before the patient has finished describing it.";
     public override string SkillMeans       => "the reading of illness from its signs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "nose" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

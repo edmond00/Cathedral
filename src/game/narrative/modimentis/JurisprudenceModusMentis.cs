@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,6 +11,7 @@ public class JurisprudenceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "jurisprudence";
     public override string DisplayName      => "Jurisprudence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Knows the law: its codes, its customs, its precedents, its loopholes. Can say what a case turns on and what a court will probably decide, and which old ruling the other side has forgotten.";
     public override string SkillMeans       => "the knowledge of law and how it is applied";

@@ -1,7 +1,8 @@
 # will_memory_targets — the memory panel lists every target of a will
 #
 # A will's detail box names what it wants under "Wants", one row per target, in the words each target
-# is voiced with — as the functions are listed above it. Metalcraft has three.
+# is voiced with — as the functions are listed above it. Metalcraft has three. Opened over the world
+# map, as here, each row is a button that seeks its target (▸; `will_search_world.cli`).
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm metalcraft --location-type test --location-id 0
 
@@ -15,7 +16,7 @@ wait
 select mm metalcraft
 wait
 expect Wants
-expect • take up ore
-expect • take up iron to work
-expect • buy iron
+expect ▸ take up ore
+expect ▸ take up iron to work
+expect ▸ buy iron
 quit

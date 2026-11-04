@@ -91,6 +91,19 @@ public class NarrativeController
     private FightTriggerOutcome? _deferredFightOutcome = null;
     private DialogueTriggerOutcome? _pendingDialogueOutcome = null;
 
+    /// <summary>A crafting menu a successful USE asked for, handed to the game controller next frame.</summary>
+    private Cathedral.Game.Narrative.Crafting.CraftingRequest? _pendingCrafting = null;
+
+    /// <summary>
+    /// A crafting menu held for the CONTINUE, exactly as a first blow's fight is
+    /// (<see cref="_deferredFightOutcome"/>): the menu takes the whole screen the frame it opens, and the
+    /// chips — the roll, "At work: …", the lesson — are the only account of what USE did.
+    /// </summary>
+    private Cathedral.Game.Narrative.Crafting.CraftingRequest? _deferredCrafting = null;
+
+    /// <summary>Whether a crafting menu is waiting on the CONTINUE press — for the CLI's <c>state</c>.</summary>
+    public bool HasDeferredCrafting => _deferredCrafting != null;
+
     // What the next observation phase opens on, when something other than the persona has decided it,
     // and the observation modus mentis to narrate it with (null: pick one). Consumed by that phase.
     // Set by a conversation (the person just spoken to), an introduction (the person just presented)
@@ -142,6 +155,36 @@ public class NarrativeController
     /// <summary>Whether the view has been centred on the party since it arrived; after that it is the arrows'.</summary>
     private bool _walkArrivalCentred;
     private string? _lastWalk;
+
+    /// <summary>
+    /// A walk that goes on by itself once the party has arrived, after <see cref="WalkAutoDwellMs"/>,
+    /// with no Continue: coming into the location from its way in, and leaving it by its way out.
+    /// Nothing is decided on its arrival, so nothing is asked of the player there.
+    /// </summary>
+    private bool _walkAuto;
+    private DateTime? _walkSettledAt;
+    private string? _walkStatus;
+    private const int WalkAutoDwellMs = 650;
+
+    /// <summary>
+    /// The party on its way out of the location (LEAVE, RUNAWAY, or after fleeing a fight): the known
+    /// way from where it stood to the area the location is entered by, then the map's way out. A
+    /// checked escape — RUNAWAY, or fleeing a fight — stops at every area on the way where somebody
+    /// confronts the party (<see cref="ConfrontationSelector.Current"/>, read for that area) and rolls
+    /// to get past them; a failed roll there ends it and the narration resumes in that area. The area the
+    /// escape starts from is not one of its stops: a RUNAWAY's own roll (whose failure is a fight or a
+    /// confrontation) or a fled fight has already got the party away from it. LEAVE walks out unchecked.
+    /// </summary>
+    private sealed class EscapeRoute
+    {
+        public required IReadOnlyList<(Area To, string? Link)> Hops;
+        /// <summary>How many of <see cref="Hops"/> have been walked.</summary>
+        public int Done;
+        /// <summary>Where the party stands on the way.</summary>
+        public required Area At;
+        public required bool Checked;
+    }
+    private EscapeRoute? _escape;
 
     /// <summary>
     /// A successful backtrack asking where to: the areas known ways reach, lit on the location map for
@@ -438,6 +481,15 @@ public class NarrativeController
         _scene = scene;
         _npcPlacement = new Cathedral.Game.Scene.SceneNpcPlacement(scene, _graph.AllNodes.Values);
 
+        // The childhood reminescence is narrated from the foot of a tree on a plain, but everything it
+        // narrates is a memory from somewhere else — so the place clause ("You are in a vast plain —
+        // write only what belongs there") had the memories dissolve "into the vastness of the plain":
+        // 5 of 15 recorded rewrites, 20 of 60 replays, 39 of 60 once the setting reminder stopped carrying a
+        // picture of its own; 0 of 60 without the clause (tools/prompts/setting_leak.py).
+        // The get-up phase that follows really is on the plain, and its own scene sets it again.
+        if (scene.Phase == NarrationPhase.ChildhoodReminescence)
+            SceneSetting.SetPlace(null);
+
         // Build initial PoV from the area the graph opened on — the first the factory built, or the
         // one --start-area names. Same helper, so PoV and entry node can never point at different rooms.
         var firstArea = Cathedral.Game.Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene);
@@ -576,6 +628,10 @@ public class NarrativeController
 
         // Fire-and-forget async task
         _ = GenerateObservationsAsync();
+
+        // An arrival is shown coming in by the location's way in, while the opening is written.
+        if (arrivalPeriod != null && _scene?.Phase == NarrationPhase.Exploration)
+            ShowEntryWalk();
 
         Console.WriteLine("NarrativeController: Started observation phase");
     }
@@ -1583,7 +1639,7 @@ public class NarrativeController
                     ModusMentis: refusalMm ?? action.ThinkingModusMentis,
                     Text: refusalText,
                     Keywords: null,
-                    Actions: null);
+                    Actions: null) { Attempt = new ActionAttempt(OutcomeNarrator.ActionDisplay(action), Succeeded: false) };
                 void CommitRuleFailure()
                 {
                     _scrollBuffer.AddBlock(ruleBlock);
@@ -1658,7 +1714,7 @@ public class NarrativeController
                     Text: $"[IMPOSSIBLE] {plausibilityResult.Narration}",
                     Keywords: null,
                     Actions: null
-                );
+                ) { Attempt = evalResult.Action == null ? null : new ActionAttempt(OutcomeNarrator.ActionDisplay(evalResult.Action), Succeeded: false) };
                 void CommitPlausibility()
                 {
                     _scrollBuffer.AddBlock(plausibilityBlock);
@@ -2418,11 +2474,14 @@ public class NarrativeController
     /// <see cref="AreaVisits.Move"/> recorded) on the location map. Waits for the time box when one is
     /// up, and takes over what its Continue would have resumed.
     /// </summary>
-    private void ShowWalk(Area from, IReadOnlyList<(Area To, string? Link)> hops, HashSet<string> fresh)
+    private void ShowWalk(Area from, IReadOnlyList<(Area To, string? Link)> hops, HashSet<string> fresh,
+                          List<DebugLocationMap.WalkStep>? entering = null)
     {
         if (_scene == null || hops.Count == 0) return;
         var steps = _debugMap.Walk(_scene, from, hops);
         if (steps.Count < 2) return;
+        // A routine's approach starts outside, at the way in, and comes in to the card it walks from.
+        if (entering is { Count: > 1 }) steps = entering.Concat(steps.Skip(1)).ToList();
         _lastWalk = $"walk from {from.DisplayName} to {hops[^1].To.DisplayName} steps={steps.Count} "
                   + $"via={string.Join(",", hops.Select(h => h.Link == null ? "jump" : "line"))}";
         Console.WriteLine($"NarrativeController: {_lastWalk}");
@@ -2437,9 +2496,12 @@ public class NarrativeController
     }
 
     private void StartWalk(List<DebugLocationMap.WalkStep> steps, IReadOnlyList<(Area To, string? Link)> hops,
-                           HashSet<string> fresh)
+                           HashSet<string> fresh, bool auto = false, string? status = null)
     {
         _walk = steps;
+        _walkAuto = auto;
+        _walkSettledAt = null;
+        _walkStatus = status;
         _walkHops = hops;
         _walkFresh = fresh;
         DebugLocationMap.WalkPannable = false;
@@ -2487,10 +2549,13 @@ public class NarrativeController
         _walkShown = at;
     }
 
-    private void OnWalkContinue()
+    private void OnWalkContinue(bool clicked = true)
     {
-        PlayClickSound();
+        if (clicked) PlayClickSound();
         _walk = null;
+        _walkAuto = false;
+        _walkSettledAt = null;
+        _walkStatus = null;
         DebugLocationMap.WalkPannable = false;
         _walkContinueRegion = default;
         _walkContinueHovered = false;
@@ -2645,7 +2710,7 @@ public class NarrativeController
             // Doing a thing is how the thing is learned. Appended last so the lesson reads as the
             // consequence of whatever the verb actually did, not as its headline.
             var lesson = ModusMentisGrantOutcome.For(
-                _activePartyMember, ChooseLesson(verb, verbTarget.Target)?.ModusMentisId);
+                _activePartyMember, ChooseLesson(verb, verbTarget.Target, verbTarget)?.ModusMentisId);
             if (lesson != null) reports.Add(lesson);
 
             return reports;
@@ -2659,7 +2724,7 @@ public class NarrativeController
     /// <see cref="Verb.ResolveLesson"/>, which asks the verb's own contextual answer first, then the
     /// target's declaration, then the verb's defaults, skipping whatever this body cannot hold.
     /// </summary>
-    private ModusMentis? ChooseLesson(Verb verb, Element target)
+    private ModusMentis? ChooseLesson(Verb verb, Element target, VerbAction? action = null)
     {
         var threat = ThreatLevel.None;
         if (_protagonist != null)
@@ -2670,6 +2735,7 @@ public class NarrativeController
         return verb.ResolveLesson(new LessonContext(_scene!, _pov!, _activePartyMember!, target)
         {
             Hostile = threat,
+            Action  = action,
         });
     }
 
@@ -2811,7 +2877,7 @@ public class NarrativeController
             Keywords: null,
             Actions: null,
             OutcomeReports: uiReports.Count > 0 ? uiReports : null
-        );
+        ) { Attempt = result.Action == null ? null : new ActionAttempt(OutcomeNarrator.ActionDisplay(result.Action), result.Succeeded) };
         _scrollBuffer.AddBlock(outcomeBlock);
         _narrationState.AddBlock(outcomeBlock);
         _ambianceEngine?.TriggerGameEvent(result.Succeeded ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
@@ -2891,6 +2957,20 @@ public class NarrativeController
         {
             Console.WriteLine($"NarrativeController: Verb outcome '{verbOutcome.Verb.VerbId}' on '{verbOutcome.Target?.DisplayName}', reports already applied");
             SceneDebugManager.UpdatePoV(_pov);
+
+            // Check if the verb asked for the crafting menu (USE at a station)
+            if (_scene.PendingCraftingRequest != null)
+            {
+                _deferredCrafting = _scene.PendingCraftingRequest;
+                _scene.PendingCraftingRequest = null;
+                Console.WriteLine($"NarrativeController: USE opens the crafting menu at '{_deferredCrafting.Station.DisplayName}' as {_deferredCrafting.ModusMentisId} — held for CONTINUE");
+                _narrationState.PendingTransitionNode = null;
+                _narrationState.ShouldExitOnContinue  = false;
+                _narrationState.ShowContinueButton    = true;
+                _pendingSegmentLabel                  = SegmentLabelFor(result);
+                _pendingSegmentSucceeded              = result.Succeeded;
+                return;
+            }
 
             // Check if the verb requested a dialogue session
             if (_scene.PendingDialogueRequest != null)
@@ -3151,6 +3231,9 @@ public class NarrativeController
     /// <summary>An arrow key with the map up: pans it. False when the map is hidden or the key is another.</summary>
     public bool PanDebugMap(OpenTK.Windowing.GraphicsLibraryFramework.Keys key) => _debugMap.HandleKey(key);
 
+    /// <summary>Whether the last frame drew the map rather than the narration — the edge <see cref="Update"/> marks.</summary>
+    private bool _mapWasDrawn;
+
     /// <summary>A modal popup (modus mentis / item / choice) is open over the panel.</summary>
     private bool IsAnyPopupVisible =>
         _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
@@ -3161,6 +3244,14 @@ public class NarrativeController
     public void Update()
     {
         RenderPanel();
+
+        // The map standing in for the text, or the text coming back, is a change of screen like a
+        // change of mode, whatever put it there: the ↹ or Tab, RETURN, a walk, a backtrack.
+        if (_ui.MapDrawn != _mapWasDrawn)
+        {
+            _mapWasDrawn = _ui.MapDrawn;
+            _ambianceEngine?.TriggerGameEvent(GameEventType.Transition);
+        }
 
         // A popup is a modal choice, so the panel behind it is greyed out the same way
         // the generation preview box greys it: recolouring the text rather than darkening
@@ -3226,6 +3317,20 @@ public class NarrativeController
         // click region each frame so stale zones don't linger during dice/loading/error states.
         _exitButtonRegion = default;
 
+        // A walk that goes on by itself (into the location, or out of it) ends here once the party
+        // has stood a moment where it arrived, and whatever follows is drawn this same frame.
+        if (_walk != null && _walkAuto)
+        {
+            AdvanceWalk();
+            if (WalkSettled)
+            {
+                _walkSettledAt ??= DateTime.UtcNow;
+                bool instant = Cli.CliMode.IsActive && !Record.RecordMode.IsActive;
+                if (instant || (DateTime.UtcNow - _walkSettledAt.Value).TotalMilliseconds >= WalkAutoDwellMs)
+                    OnWalkContinue(clicked: false);
+            }
+        }
+
         // Footer scene info — shown as the default footer in every state
         string sceneInfo = BuildSceneInfoLine();
 
@@ -3242,7 +3347,12 @@ public class NarrativeController
         if (_narrationState.IsDiceRollActive)
         {
             _dice.Advance();
-            RenderNarrationContent();
+            // An escape's roll is made where the party was stopped, on the map it is crossing.
+            if (_escape != null && _scene != null && _pov != null)
+                _ui.RenderDebugMap(_debugMap, _scene, _pov.Where, _graph.CurrentPeriod,
+                                   _debugMap.CardMiddle(_scene, _pov.Where));
+            else
+                RenderNarrationContent();
             _ui.RenderDiceComponent(_dice, _narrationState.IsDiceRollButtonHovered);
 
             string diceStatus = _narrationState.IsDiceRolling
@@ -3283,12 +3393,12 @@ public class NarrativeController
         {
             AdvanceWalk();
             var step = _walk[_walkShown];
-            DebugLocationMap.WalkPannable = WalkSettled;
+            DebugLocationMap.WalkPannable = WalkSettled && !_walkAuto;
             _ui.RenderDebugMap(_debugMap, _scene, step.Here, _graph.CurrentPeriod, (step.X, step.Y),
                                follow: !_walkArrivalCentred, withheld: WalkWithheld());
-            if (WalkSettled) _walkArrivalCentred = true;
-            _walkContinueRegion = WalkSettled ? _ui.RenderExitButton("CONTINUE", _walkContinueHovered) : default;
-            _ui.RenderStatusBar(WalkSettled ? "Click Continue" : "Walking...");
+            if (WalkSettled && !_walkAuto) _walkArrivalCentred = true;
+            _walkContinueRegion = WalkSettled && !_walkAuto ? _ui.RenderExitButton("CONTINUE", _walkContinueHovered) : default;
+            _ui.RenderStatusBar(_walkAuto ? _walkStatus ?? "Walking..." : WalkSettled ? "Click Continue" : "Walking...");
             return;
         }
 
@@ -3718,6 +3828,7 @@ public class NarrativeController
         {
             var r = _walkContinueRegion;
             if (!WalkSettled) _walkStepMs = 0;
+            else if (_walkAuto) OnWalkContinue(clicked: false);
             else if (_debugMap.HandleClick(mouseX, mouseY)) PlayClickSound();   // the pad, once arrived
             else if (r.Width > 0 && mouseY == r.Y && mouseX >= r.X && mouseX < r.X + r.Width) OnWalkContinue();
             return;
@@ -3789,7 +3900,7 @@ public class NarrativeController
             return;
         }
 
-        // Preview box YES / NO — the doubt of a thinking (DoubtStat): the answer goes to the waiting
+        // Preview box YES / NO — the doubt of a thinking (ModusMentis.Doubt): the answer goes to the waiting
         // thinking, and the part is committed as CONTINUE would.
         if (_previewAnswerRegions.Yes.Width > 0 && mouseY == _previewAnswerRegions.Yes.Y)
         {
@@ -4377,8 +4488,31 @@ public class NarrativeController
         return true;
     }
 
+    /// <summary>
+    /// The CLI's <c>hostile</c>: puts a person of this scene in <paramref name="areaName"/> for the rest
+    /// of the visit (<see cref="Scene.Scene.DisplacedNpcs"/>, as a drawn-in witness is) and makes them
+    /// count the protagonist an enemy. Returns an error, or null.
+    /// </summary>
+    public string? CliMakeHostile(string who, string areaName)
+    {
+        if (_scene == null || _protagonist == null) return "no scene";
+        var area = _scene.AllAreas.FirstOrDefault(a => a.DisplayName.Equals(areaName, StringComparison.OrdinalIgnoreCase));
+        if (area == null) return $"no area '{areaName}'";
+        var sceneNpc = _scene.Npcs.FirstOrDefault(n => n.IsAlive && n.Entity is NpcEntity e
+                           && (e.Archetype.ArchetypeId.Equals(who, StringComparison.OrdinalIgnoreCase)
+                               || e.DisplayName.Equals(who, StringComparison.OrdinalIgnoreCase)));
+        if (sceneNpc?.Entity is not NpcEntity npc) return $"no person '{who}' in this scene";
+        _scene.DisplacedNpcs[sceneNpc.Id] = area;
+        npc.AffinityTable.SetEnemy(_protagonist.AffinityKey);
+        _npcPlacement?.PlaceForPeriod(_graph.CurrentPeriod);
+        return null;
+    }
+
     /// <summary>The walk on the map: none, walking (animating) or settled.</summary>
     public string CliWalkState() => _walk == null ? "none" : WalkSettled ? "settled" : "walking";
+
+    /// <summary>Whether a walk that ends by itself (into or out of the location) is still up.</summary>
+    public bool CliWalkGoesOn => _walk != null && _walkAuto;
 
     /// <summary>The walk's [ CONTINUE ] region, once the party has arrived.</summary>
     public (bool Present, int X, int Y, int Width) CliWalkContinue()
@@ -4571,14 +4705,18 @@ public class NarrativeController
         if (All("will") && _scene != null && _pov != null)
             foreach (var mm in actor.LearnedModiMentis.Where(m => m.Will != null).OrderBy(m => m.ModusMentisId))
             {
-                var path = ActionPathPlanner.Plan(_scene, _pov, actor, mm.Will!);
+                // What the will steers by here: the pursued target alone on a visit a will's search was
+                // walked for (WillPriority.TargetsOf), else every target.
+                var pursued = Cathedral.Game.Narrative.Rules.Choice.WillPriority.PursuedOf(mm, _scene, _pov, actor);
+                var path = ActionPathPlanner.Plan(_scene, _pov, actor, pursued ?? mm.Will!);
                 outp.Add(path == null
                     ? $"will {mm.ModusMentisId} steps=none"
                     : $"will {mm.ModusMentisId} steps={path.Steps.Count} first=\"{path.First.Verbatim}\" goal=\"{path.Goal.Verbatim}\""
                       + $" target={CliTargetId(path.First.Action.Target)}"
                       + (path.ToolStep >= 0 ? $" tool_step={path.ToolStep + 1}" : "")
                       // Which of the will's targets the path reaches, by declaration order (1 = first), and its purpose.
-                      + (path.Target is { } aim ? $" aim={AimOf(mm.Will!, aim)}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : ""));
+                      + (path.Target is { } aim ? $" aim={AimOf(mm.Will!, aim)}/{mm.Will!.Count} purpose=\"{aim.Purpose}\"" : "")
+                      + (pursued != null ? " pursuit=yes" : ""));
             }
 
         // A will's targets are built afresh on every read, so the one a path reaches is found by what it is.
@@ -4629,6 +4767,19 @@ public class NarrativeController
             foreach (var r in _protagonist.RecordedRoutines)
                 outp.Add(r.CliLine());
 
+        // Every workshop holding a crafting station: its master, and whether the leave is given.
+        if (All("workshops") && _scene != null)
+            foreach (var section in _scene.Sections)
+            {
+                var stations = section.Areas.SelectMany(ar => ar.PointsOfInterest)
+                                            .Where(Cathedral.Game.Scene.CraftingStations.IsStation).ToList();
+                if (stations.Count == 0) continue;
+                var master = Cathedral.Game.Narrative.Crafting.CraftingAccess.MasterOf(_scene, section);
+                outp.Add($"workshop \"{section.DisplayName}\" stations={string.Join(",", stations.Select(s => s.DisplayName.Replace(' ', '_')))} "
+                       + $"master={master?.Archetype.ArchetypeId ?? "none"} "
+                       + $"authorized={(Cathedral.Game.Narrative.Crafting.CraftingAccess.IsAuthorized(_scene, section) ? "yes" : "no")}");
+            }
+
         if (All("wounds"))
             foreach (var w in actor.Wounds)
                 outp.Add($"wound {w.WoundName} target={w.TargetId}");
@@ -4666,6 +4817,10 @@ public class NarrativeController
                        + $" effective={actor.GetEffectiveModusMentisLevel(m)}"
                        + $" max={actor.GetMaxLevelForModusMentis(m)}"
                        + $" broken={actor.IsModusMentisBroken(m)}");
+        // ALWAYS REJECT's ignore list: refused for good, never learned again.
+        if (All("skills"))
+            foreach (var id in actor.RejectedModiMentisIds.OrderBy(i => i, System.StringComparer.Ordinal))
+                outp.Add($"skill-rejected {id}");
 
         if (All("npcs") && _scene != null && _pov != null)
             foreach (var npc in _scene.Npcs)
@@ -4908,6 +5063,8 @@ public class NarrativeController
             if (_pendingDialogueOutcome != null)
                 return new StartDialogueTransition(_pendingDialogueOutcome.Target,
                     _pendingDialogueOutcome.TreeId, _pendingDialogueOutcome.Tree);
+            if (_pendingCrafting != null)
+                return new StartCraftingTransition(_pendingCrafting);
             return null;
         }
     }
@@ -4917,6 +5074,17 @@ public class NarrativeController
     {
         _pendingFightOutcome    = null;
         _pendingDialogueOutcome = null;
+        _pendingCrafting        = null;
+    }
+
+    /// <summary>The party member acting now — the protagonist, or a companion after a Speak-About hand-off.</summary>
+    public PartyMember ActingMember => _activePartyMember;
+
+    /// <summary>Learns the Craft routine for the station a successful USE opened, where the player may stand.</summary>
+    public void RecordCraftRoutine(Cathedral.Game.Narrative.Crafting.CraftingRequest request)
+    {
+        if (_recorder == null || _scene == null || _pov == null) return;
+        _recorder.OnCraftingOpened(request, _scene, _pov, _activePartyMember);
     }
 
     /// <summary>
@@ -4973,11 +5141,38 @@ public class NarrativeController
     {
         var from = _approachFrom;
         _approachFrom = null;
-        if (from == null || _scene == null || _pov == null || from.Id == _pov.Where.Id) { then?.Invoke(); return; }
+        if (from == null || _scene == null || _pov == null) { then?.Invoke(); return; }
 
-        ShowWalk(from, AreaVisits.MoveBack(_scene, from, _pov.Where, _pov.When), fresh: new());
+        // In by the location's way in, first; then on by the known ways to the routine's area. With
+        // nothing to walk past the entry, the walk goes on by itself, as any arrival's does.
+        var entering = _debugMap.WalkIn(_scene, from);
+        if (from.Id == _pov.Where.Id)
+        {
+            if (entering.Count < 2) { then?.Invoke(); return; }
+            _lastWalk = $"walk in to {from.DisplayName} steps={entering.Count}";
+            Console.WriteLine($"NarrativeController: {_lastWalk}");
+            StartWalk(entering, Array.Empty<(Area, string?)>(), new(), auto: true, status: "Entering...");
+            _afterWalk = then;
+            return;
+        }
+
+        ShowWalk(from, AreaVisits.MoveBack(_scene, from, _pov.Where, _pov.When), fresh: new(), entering: entering);
         if (_walk == null) { then?.Invoke(); return; }
         _afterWalk = then;
+    }
+
+    /// <summary>
+    /// The party coming into the location, on the map: from the way in (the exit glyph) to the card of
+    /// the area it is entered by. Goes on by itself once there.
+    /// </summary>
+    private void ShowEntryWalk()
+    {
+        if (_scene == null || _pov == null) return;
+        var steps = _debugMap.WalkIn(_scene, _pov.Where);
+        if (steps.Count < 2) return;
+        _lastWalk = $"walk in to {_pov.Where.DisplayName} steps={steps.Count}";
+        Console.WriteLine($"NarrativeController: {_lastWalk}");
+        StartWalk(steps, Array.Empty<(Area, string?)>(), new(), auto: true, status: "Entering...");
     }
 
     /// <summary>
@@ -5167,15 +5362,18 @@ public class NarrativeController
         switch (kind)
         {
             case ExitButtonKind.Leave:
-                Console.WriteLine("NarrativeController: LEAVE clicked — exiting narration");
-                _narrationState.RequestedExit = true;
+                Console.WriteLine("NarrativeController: LEAVE clicked — walking out of the location");
+                BeginEscape(check: false);
+                ContinueEscape();
                 break;
             case ExitButtonKind.RunawayEnemy when target != null:
                 Console.WriteLine($"NarrativeController: RUNAWAY clicked — enemy '{target.DisplayName}' present");
+                BeginEscape(check: true);
                 _ = BeginExitRunawayAsync(target, isEnemy: true);
                 break;
             case ExitButtonKind.RunawayWitness when target != null:
                 Console.WriteLine($"NarrativeController: RUNAWAY clicked — witness '{target.DisplayName}' present");
+                BeginEscape(check: true);
                 _ = BeginExitRunawayAsync(target, isEnemy: false);
                 break;
         }
@@ -5197,6 +5395,16 @@ public class NarrativeController
     {
         // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
         // because the segment it closes is the one the fight itself will grey into history.
+        if (_deferredCrafting != null)
+        {
+            Console.WriteLine($"NarrativeController: CONTINUE — opening the held crafting menu at {_deferredCrafting.Station.DisplayName}");
+            _pendingCrafting         = _deferredCrafting;
+            _deferredCrafting        = null;
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
+            return;
+        }
+
         if (_deferredFightOutcome != null)
         {
             Console.WriteLine($"NarrativeController: CONTINUE — entering the held fight with {_deferredFightOutcome.Target.DisplayName}");
@@ -5292,14 +5500,24 @@ public class NarrativeController
 
     /// <summary>
     /// Resolves an exit-runaway roll after the player clicks Continue on the dice overlay.
-    /// Success → exit narration. Failure → start a fight (enemy) or the caught-red-handed
-    /// trespass dialogue (witness). Enemy precedence is already baked into <c>isEnemy</c>.
+    /// Success → the escape goes on along the way out (to the next area where somebody stands in the
+    /// way, or out of the location). Failure depends on where the roll was made:
+    /// <list type="bullet">
+    /// <item>in the area RUNAWAY was pressed in — the narration's own runaway — a fight starts with the
+    /// enemy, or the caught-red-handed conversation with the witness (enemy precedence is already
+    /// baked into the kind);</item>
+    /// <item>at a stop further along the walk out — the escape ends there and the narration resumes in
+    /// that area, opening on whoever stopped the party.</item>
+    /// </list>
     /// </summary>
     private void FinishExitRunaway()
     {
         bool success   = _dice.IsCurrentlySuccess;
         var  target    = _exitRunawayTarget;
         bool isEnemy   = _exitRunawayIsEnemy;
+        // A stop on the walk out has walked at least one step of the way; the narration's own roll
+        // is made before any.
+        bool onTheWay  = _escape is { Done: > 0 };
 
         _exitRunawayPending = false;
         _exitRunawayTarget  = null;
@@ -5307,11 +5525,20 @@ public class NarrativeController
 
         if (success)
         {
-            Console.WriteLine("NarrativeController: RUNAWAY succeeded — exiting narration");
-            _narrationState.RequestedExit = true;
+            Console.WriteLine($"NarrativeController: RUNAWAY succeeded at '{_pov?.Where.DisplayName}' — going on");
+            if (_escape == null) BeginEscape(check: true);
+            ContinueEscape();
             return;
         }
 
+        if (onTheWay)
+        {
+            Console.WriteLine($"NarrativeController: RUNAWAY failed on the way out at '{_pov?.Where.DisplayName}' — stopped by '{target?.DisplayName}'");
+            StopEscape(target);
+            return;
+        }
+
+        _escape = null;
         if (target == null)
         {
             // Defensive: nothing to escalate to, just leave.
@@ -5334,7 +5561,146 @@ public class NarrativeController
             SetPendingDialogue(new DialogueTriggerOutcome(target, tree: catchTree), null);
         }
     }
-    
+
+    // ── The way out ──────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Sets the party on its way out: the known way from where it stands to the area the location is
+    /// entered by (<see cref="AreaVisits.BackReach"/>, a backtrack's route — a jump, card to card, when
+    /// none is known). <paramref name="check"/> makes each area on the way ask a roll of whoever
+    /// confronts the party there.
+    /// </summary>
+    private void BeginEscape(bool check)
+    {
+        if (_scene == null || _pov == null) return;
+        var here  = _pov.Where;
+        var entry = _debugMap.EntryAreaOf(_scene) ?? here;
+        IReadOnlyList<(Area To, string? Link)> hops =
+              here.Id == entry.Id ? Array.Empty<(Area, string?)>()
+            : AreaVisits.BackReach(_scene, here, _pov.When).TryGetValue(entry, out var route) ? route
+            : new[] { (entry, (string?)null) };
+        _escape = new EscapeRoute { Hops = ThroughPaths(here, hops), At = here, Checked = check };
+        Console.WriteLine($"NarrativeController: way out from '{here.DisplayName}' by "
+                        + (hops.Count == 0 ? "the way in" : string.Join(" → ", hops.Select(h => h.To.DisplayName)))
+                        + (check ? " (checked)" : ""));
+    }
+
+    /// <summary>
+    /// The way out with every path opened up into the areas it runs past, each one step along the
+    /// neighbour way the path follows: a path is a walk past those areas, and anybody standing in one
+    /// of them is standing in the way.
+    /// </summary>
+    private IReadOnlyList<(Area To, string? Link)> ThroughPaths(Area from, IReadOnlyList<(Area To, string? Link)> hops)
+    {
+        var opened = new List<(Area To, string? Link)>();
+        var at = from;
+        foreach (var (to, link) in hops)
+        {
+            var path = link == null ? null
+                     : at.PointsOfInterest.Concat(to.PointsOfInterest).OfType<Cathedral.Game.Scene.Building.PathPointOfInterest>()
+                         .FirstOrDefault(p => p.StableKey == link);
+            if (path != null && path.Via.Count > 0)
+            {
+                var via = path.AreaA.Id == at.Id ? path.Via : path.Via.Reverse().ToList();
+                foreach (var v in via) { opened.Add((v, AreaVisits.LinkKey(at, v))); at = v; }
+                opened.Add((to, AreaVisits.LinkKey(at, to)));
+            }
+            else opened.Add((to, link));
+            at = to;
+        }
+        return opened;
+    }
+
+    /// <summary>Who confronts the party in <paramref name="area"/> at this hour, read as if it stood there.</summary>
+    private Confrontation? ConfrontationAt(Area area)
+        => _scene == null || _pov == null ? null
+         : ConfrontationSelector.Current(_scene, new PoV(area, _pov.When), _protagonist);
+
+    /// <summary>
+    /// Walks the escape on: to the next area on the way where somebody confronts the party (a checked
+    /// escape only), and the roll there; or, with nobody in the way, out of the location by the map's
+    /// way out, which ends the visit.
+    /// </summary>
+    private void ContinueEscape()
+    {
+        var e = _escape;
+        if (e == null || _scene == null || _pov == null) { _narrationState.RequestedExit = true; return; }
+
+        for (int j = e.Done; e.Checked && j < e.Hops.Count; j++)
+        {
+            var area = e.Hops[j].To;
+            if (ConfrontationAt(area) is not { } c) continue;
+
+            var leg = e.Hops.Skip(e.Done).Take(j - e.Done + 1).ToList();
+            var steps = _debugMap.Walk(_scene, e.At, leg);
+            e.Done = j + 1;
+            void Stopped()
+            {
+                StandAt(area);
+                Console.WriteLine($"NarrativeController: way out stopped at '{area.DisplayName}' by '{c.Npc.DisplayName}' ({c.Kind})");
+                _ = BeginExitRunawayAsync(c.Npc, isEnemy: c.Kind == ConfrontationKind.Enemy);
+            }
+            if (steps.Count < 2) { Stopped(); return; }
+            _lastWalk = $"walk from {e.At.DisplayName} to {area.DisplayName} steps={steps.Count} stopped";
+            Console.WriteLine($"NarrativeController: {_lastWalk}");
+            StartWalk(steps, leg, new(), auto: true, status: "Running away...");
+            _afterWalk = Stopped;
+            return;
+        }
+
+        var rest = e.Hops.Skip(e.Done).ToList();
+        var from = e.At;
+        var outSteps = _debugMap.WalkOut(_scene, from, rest);
+        string status = e.Checked ? "Running away..." : "Leaving...";
+        _escape = null;
+        foreach (var (to, _) in rest) AreaVisits.Arrive(_scene, to);
+        if (outSteps.Count < 2) { _narrationState.RequestedExit = true; return; }
+        _lastWalk = $"walk out from {from.DisplayName} steps={outSteps.Count}";
+        Console.WriteLine($"NarrativeController: {_lastWalk}");
+        StartWalk(outSteps, rest, new(), auto: true, status: status);
+        _afterWalk = () => _narrationState.RequestedExit = true;
+    }
+
+    /// <summary>The party stands in <paramref name="area"/> on its way out: point of view, node and map follow.</summary>
+    private void StandAt(Area area)
+    {
+        if (_scene == null || _pov == null || _escape == null) return;
+        _escape.At = area;
+        if (area.Id == _pov.Where.Id) return;
+        _pov.Where = area;
+        if (NodeForArea(area) is { } node) _currentNode = node;
+        AreaVisits.Arrive(_scene, area);
+        _recorder?.OnAreaEntered(_pov);
+        SceneDebugManager.UpdatePoV(_pov);
+    }
+
+    /// <summary>
+    /// The escape is over where the party was stopped: the narration resumes in that area, opening on
+    /// whoever stopped them. A failure, so the noetic points are not refilled.
+    /// </summary>
+    private void StopEscape(NpcEntity? stoppedBy)
+    {
+        _escape = null;
+        _narrationState.ShowContinueButton = false;
+        _narrationState.PendingTransitionNode = null;
+        _openingFocus = stoppedBy == null ? null
+                      : _scene?.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, stoppedBy));
+        BeginNarrationSegment("after trying to run away", refillNoetic: false);
+    }
+
+    /// <summary>
+    /// The party has fled a fight in this location: it makes for the way out, checked in every area
+    /// past this one (the fight itself was the getting away from here). Called by the game controller
+    /// on the fight's return, in place of leaving straight for the world.
+    /// </summary>
+    public void FleeAfterFight()
+    {
+        _narrationState.ShowContinueButton = false;
+        _narrationState.PendingTransitionNode = null;
+        BeginEscape(check: true);
+        ContinueEscape();
+    }
+
     /// <summary>
     /// Called by the game controller when returning from fight mode.
     /// Handles corpse spawning (victory), enemy affinity (runaway), and narration resumption.
@@ -5468,6 +5834,17 @@ public class NarrativeController
             }
         }
 
+        // A master who let you use their workshop: the leave goes into the scene's authorized set, which
+        // is the location's saved state by reference, so it holds on every later visit too.
+        if (_scene != null && npc.GrantedWorkshop is { } workshop)
+        {
+            npc.GrantedWorkshop = null;   // consume the flag
+            _scene.AuthorizedWorkshops.Add(workshop);
+            Cathedral.Game.Scene.ActionPathPlanner.Forget();
+            Console.WriteLine($"NarrativeController: {npc.DisplayName} gives the use of {workshop} — authorized for good");
+        }
+        npc.PendingWorkshop = null;
+
         // A witness who came for you has had their say: the confrontation is over.
         if (_scene != null) ConfrontationSelector.Release(_scene, npc, _protagonist);
         
@@ -5558,9 +5935,7 @@ public class NarrativeController
     private List<Item> GetCombinableItems()
     {
         return _activePartyMember.GetAllItems()
-            .Where(i => i.Category is ItemCategory.Tool or ItemCategory.Weapon
-                     || i.MadeForVerbIds.Count > 0)
-            .Where(i => i is not IContainer c || c.Contents.Count == 0)
+            .Where(ToolCombinationRules.IsCombinable)
             .ToList();
     }
 
@@ -5606,14 +5981,16 @@ public class NarrativeController
                 return;
             }
 
-            // Lower-cased with an article, never the bare display name: the critic repeats whatever it is
-            // shown, and its reason is read into the refusal ("I think Hairpin is too narrow").
+            // Lower-cased with an article, never the bare display name, which reads to the critic as a
+            // proper name ("Hairpin").
             string itemContext = $"{item.WithArticle()} ({item.Description})";
             Console.WriteLine($"NarrativeController: Item combination — action='{action.DisplayText}', item='{itemContext}'");
 
             var gatedVerb    = action.PreselectedOutcome?.Verb;
             var proficiency  = ToolUsageProficiencyStat.Of(_activePartyMember);
-            var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency);
+            var gate         = ToolCombinationRules.Resolve(gatedVerb, item, proficiency,
+                                   wieldable: _activePartyMember.CanWieldInSomeHand(item),
+                                   view: action.PreselectedOutcome);
             Console.WriteLine($"NarrativeController: Tool gate — proficiency={proficiency}, verb={gatedVerb?.VerbId ?? "none"} ({gatedVerb?.ToolUse.ToString() ?? "n/a"}), gate={gate}");
 
             // Three of the four gates settle it here, with no request made at all. The fourth is the
@@ -5631,12 +6008,13 @@ public class NarrativeController
                 var goalDescription = action.PreselectedOutcome?.ToNaturalLanguageString() ?? "";
                 var criticContext = new CriticContext(_currentNode, _worldContext, _locationId, goalDescription);
                 criticContext.CombinedItemContext = itemContext;
+                criticContext.TargetDescription   = CriticTarget.Describe(_scene, action.PreselectedOutcome?.Target);
 
                 // A required verb asks a different question: not "does this beat bare hands" (bare
                 // hands are not an option there) but "can this do the work of the tool this needs".
                 var appropriatenessTree = gatedVerb is { RequiresTool: true }
                     ? CriticTrees.BuildToolSubstitutionTree(
-                          goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIds),
+                          goalDescription, CriticTrees.ToolPhrase(gatedVerb.ReferenceToolIdsFor(action.PreselectedOutcome)),
                           NeutralNarration.ItemPhrase(item.DisplayName), criticContext)
                     : CriticTrees.BuildItemAppropriatenessTree(goalDescription, NeutralNarration.ItemPhrase(item.DisplayName), criticContext);
                 var appropriatenessResult = await _actionExecutor.ItemUseCritic.EvaluateTreeAsync(appropriatenessTree);
@@ -5673,6 +6051,7 @@ public class NarrativeController
                     ToolCombinationGate.NotItsPurpose => ToolFailureKind.NotItsPurpose,
                     ToolCombinationGate.ExcludedVerb  => ToolFailureKind.Senseless,
                     ToolCombinationGate.NotAWeapon    => ToolFailureKind.NotAWeapon,
+                    ToolCombinationGate.TooHeavy      => ToolFailureKind.TooHeavy,
                     _                                 => ToolFailureKind.None,
                 };
                 Console.WriteLine($"NarrativeController: Settled without a critic call — {gate}.");

@@ -17,6 +17,16 @@ public abstract class Species
     public abstract string DisplayName { get; }
 
     /// <summary>
+    /// What the choice judge reads in place of <see cref="DisplayName"/>, for a species whose name the
+    /// shipped model knows as something no one could meet: it knows "triceratops" as a dinosaur extinct
+    /// for ages, and every faculty — Beast Sense included — passed an appeased triceratops over for a
+    /// tapir, a strangler fig or nothing at all. A plain noun ("three-horned beast") makes it a beast
+    /// like any other. Judge-side only; the player and the narration keep the name. Null (the default)
+    /// for every name the model reads as a living animal. See <see cref="ChoiceJudge"/>.
+    /// </summary>
+    public virtual string? JudgeNoun => null;
+
+    /// <summary>
     /// Relative path (from the working directory) to the body art folder for this species.
     /// e.g. "assets/art/body/human"  or  "assets/art/body/beast"
     /// </summary>

@@ -13,6 +13,7 @@ public class QuickeningModusMentis : ModusMentis
         "Sees what is coming on: which beast is in calf, which ground is about to break, which of a litter will do well. Reads potential rather than present condition, which is the difference between buying well and buying what looks best today.";
     public override string SkillMeans       => "the eye for what is about to come on";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "genitories", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -24,9 +25,9 @@ public class QuickeningModusMentis : ModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of QUICKENING, which never buys what looks best today.
 
-Everything living is on its way somewhere and the trick is to see where. A beast in calf shows it in the flank a fortnight before anyone announces it. Ground about to break has a colour, not a growth, and you can be a week ahead of the first shoot. And in a litter, the biggest at three weeks is very often not the best at a year - what you want is the one that is busy, that goes for things, that has an idea about the world.
+Everything living is on its way somewhere and the trick is to see where. A beast in calf shows it in the flank fourteen days before anyone announces it. Ground about to break has a colour, not a growth, and you can be an eleven-day ahead of the first shoot. And in a litter, the biggest at three eleven-days is very often not the best at a round - what you want is the one that is busy, that goes for things, that has an idea about the world.
 
 You are wrong sometimes and you are right much more often than the people who buy on appearance, and you have stopped explaining yourself.
 
-Your speech is a season ahead of the conversation: 'she is carrying,' 'that ground will break within the week,' 'no - the small one. Watch him.'";
+Your speech is a season ahead of the conversation: 'she is carrying,' 'that ground will break within the eleven-day,' 'no - the small one. Watch him.'";
 }

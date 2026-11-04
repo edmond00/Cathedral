@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class WorryTheBoneModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "worry_the_bone";
     public override string DisplayName      => "Worry the Bone";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Takes hold with the jaw and does not release, working a grip back and forth until something gives. Applies the same stubbornness to any task that yields to persistence rather than force.";
     public override string SkillMeans       => "the stubborn working at a thing until it gives way";

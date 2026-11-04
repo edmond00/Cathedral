@@ -452,9 +452,7 @@ public abstract class FightingSkill
     /// <summary>Returns true when at least one of <see cref="Mediums"/> is usable by this fighter.</summary>
     public bool IsAnyMediumAvailable(Fighter f)
     {
-        var equippedWeapons = f.Member.EquippedItems[EquipmentAnchor.RightHold]
-            .Concat(f.Member.EquippedItems[EquipmentAnchor.LeftHold])
-            .OfType<IWeaponItem>();
+        var equippedWeapons = f.Member.WieldedWeapons();
 
         foreach (var m in Mediums)
         {

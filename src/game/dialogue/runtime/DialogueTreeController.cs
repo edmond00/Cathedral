@@ -506,7 +506,7 @@ public class DialogueTreeController
         {
             string text = await _replicaWriter.WriteAsync(
                 _npcSlotId, _currentNode.Replica, _context, addresseeRole: "you", subject: _tree.NpcDescription,
-                preview: part.Sink);
+                preview: part.Sink, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(_npc));
 
             _state.IsLoadingNpcReplica = false;
 
@@ -739,7 +739,7 @@ public class DialogueTreeController
             {
                 reaction = await _replicaWriter.WriteAsync(
                     _npcSlotId, neutral, _context, addresseeRole: "you", subject: _tree.NpcDescription,
-                    preview: part.Sink);
+                    preview: part.Sink, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(_npc));
             }
             catch (Exception ex)
             {

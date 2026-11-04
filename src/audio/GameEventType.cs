@@ -45,6 +45,25 @@ public enum GameEventType
     /// Music: extra-long inter-phrase pause (contemplative breath ×3).
     /// </summary>
     NeutralOutcome,
+
+    /// <summary>
+    /// A blow lands in a fight: the Continue that confirms a successful attack, the player's or an
+    /// enemy's. Louder and shorter than any other event, so the moment a wound is dealt is felt.
+    /// SFX: a struck crash, kick, war drum, snare, cymbal and a low power chord all at once.
+    /// Music: none (the fight already carries the tension). Visual: the hardest dither pulse.
+    /// </summary>
+    Hit,
+
+    /// <summary>
+    /// A phase or UI transition: the game changed mode (world map to narration, narration to the
+    /// trade menu, the pause menu opening...) or the narration panel swapped its text for the
+    /// location map and back. Fired from <c>LocationTravelGameController.SetMode</c>, the one funnel
+    /// every mode change goes through, and from the narration panel's map edge.
+    /// SFX: a soft swish of air, PCM outside the music like the hover and click ticks.
+    /// Music: none - a transition is too frequent to colour the phrase.
+    /// Visual: a pulse of a click's weight with a noise grain in place of the click's Bayer.
+    /// </summary>
+    Transition,
 }
 
 /// <summary>

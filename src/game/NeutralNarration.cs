@@ -368,7 +368,7 @@ public static class NeutralNarration
             : $"Nothing here draws my attention: what I want is to {WillStep(path.Goal, actor)}, "
             + $"and I must {WillStep(path.First, actor)} first.";
 
-    // ── Iterative thinking and doubt (ThinkingIterationsStat, DoubtStat) ──────────
+    // ── Iterative thinking and doubt (ModusMentis.Doubt) ──────────
 
     /// <summary>
     /// The reasoning of a retry within one thinking: the object was already named by the first
@@ -676,6 +676,14 @@ public static class NeutralNarration
          + "This is settled with a weapon or with the body, and that is neither.";
 
     /// <summary>
+    /// Neutral sentence for a weapon neither arm can bear. The weapon is right for the blow; the arm
+    /// is what fails it, so the wording names the weight and not the implement.
+    /// </summary>
+    public static string ItemCombinationTooHeavy(string itemWithArticle)
+        => $"I tried to swing {FirstPerson(itemWithArticle)} and could not. "
+         + "It is heavier than my arms can wield, and it dragged at my grip instead of striking.";
+
+    /// <summary>
     /// Neutral sentence for the middle case: the implement could be made to serve, and this body is
     /// not the one to make it. The critic passed a verdict the hands could not reach, so the
     /// wording must credit the idea and refuse the execution.
@@ -777,12 +785,6 @@ public static class NeutralNarration
     // Dialogue neutral text now lives on the dialogue tree nodes themselves (direct speech with
     // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
     // + DialogueReplicaWriter — not through this class.
-
-    // ── Critic ─────────────────────────────────────────────────────────────────
-
-    /// <summary>First-person critic verdict ("I think …"), matching the LLM reason's voice.</summary>
-    public static string CriticFailureReason()
-        => "I think this cannot be done as intended.";
 
     // ── Keyword helper ─────────────────────────────────────────────────────────
 

@@ -26,7 +26,7 @@ public class BargainingModusMentis : ModusMentis
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a market-tongued haggler who never pays one penny over the proper figure";
+    public override string PersonaTone     => "a market-tongued haggler who never pays one pellet over the proper figure";
     public override string PersonaReminder  => "market-tongued haggler";
     public override string PersonaReminder2 => "someone who always hears the lower price beneath the asking one";
     public override string StyleInstruction =>
@@ -41,5 +41,5 @@ public class BargainingModusMentis : ModusMentis
 
 When reasoning, you keep two figures in mind: the price asked and the price they would settle for. You walk the long way around. You sigh, you shake your head, you make as if to leave. You allow the deal to be pulled out of the seller, never offered.
 
-Your language is theatrical and patient: 'too dear, friend,' 'I have only this,' 'one penny more and I am gone.' You smile only after the price has dropped.";
+Your language is theatrical and patient: 'too dear, friend,' 'I have only this,' 'one pellet more and I am gone.' You smile only after the price has dropped.";
 }

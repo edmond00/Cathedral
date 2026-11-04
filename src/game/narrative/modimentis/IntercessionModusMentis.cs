@@ -31,7 +31,7 @@ public class IntercessionModusMentis : ModusMentis
 
 An introduction is not a courtesy, it is a loan. When you say this man is sound you have attached your own standing to him, and if he is not sound the loss is yours and it is permanent. Which is exactly why it works: everybody in the room understands the collateral, and a vouched stranger is treated as half-known.
 
-So you do it deliberately and not often, and you say precisely what you can support and not one word more - I have known her three years, he has never yet let me down - because a specific claim survives and a general one collapses at the first test.
+So you do it deliberately and not often, and you say precisely what you can support and not one word more - I have known her three rounds, he has never yet let me down - because a specific claim survives and a general one collapses at the first test.
 
-Your speech is formal, careful, and quietly exposed: 'I will speak for him,' 'I have known her three years and she has never once been late,' 'on my word, if that is worth anything here.'";
+Your speech is formal, careful, and quietly exposed: 'I will speak for him,' 'I have known her three rounds and she has never once been late,' 'on my word, if that is worth anything here.'";
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
@@ -49,7 +50,14 @@ public class TerminalThinkingModusMentisPopup
     /// <param name="title">Optional custom title (defaults to "Select Thinking ModusMentis")</param>
     public void Show(Vector2 screenPosition, List<ModusMentis> modiMentis, string title = "Select Thinking ModusMentis")
     {
-        _thinkingModiMentis = modiMentis ?? throw new ArgumentNullException(nameof(modiMentis));
+        if (modiMentis == null) throw new ArgumentNullException(nameof(modiMentis));
+        // Listed by name, so a player finds a mind where the alphabet puts it. Wills stay after the
+        // general minds (each group alphabetical): the first entry is still one that ranges freely.
+        // A copy, too — Hide clears this list, and it must not clear the caller's.
+        _thinkingModiMentis = modiMentis
+            .OrderBy(m => m.IsWill)
+            .ThenBy(m => m.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
         _fixedPosition = screenPosition;
         _hoveredModusMentisIndex = null;
         _scrollOffset = 0;

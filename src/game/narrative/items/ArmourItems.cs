@@ -26,7 +26,6 @@ public sealed class LinenBraies : WearableItem
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 6;
 
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
 }
@@ -40,7 +39,6 @@ public sealed class WoolUndershirt : WearableItem
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Woollens };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 9;
 
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
@@ -62,7 +60,6 @@ public sealed class PaddedGambeson : WearableItem
     public override WearSlot Slot      => WearSlot.Underwear;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Arms };
-    public override int PriceReference => 40;
 
     public override int DefenseDice => 2;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };
@@ -79,7 +76,6 @@ public sealed class MailMittens : WearableItem
     public override WearSlot Slot      => WearSlot.Handwear;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
-    public override int PriceReference => 50;
 
     public override int DefenseDice => 2;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };
@@ -94,7 +90,6 @@ public sealed class WorkMitts : WearableItem
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Textile };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 3;
 
     // Sacking and twine — not bought, made. Nobody above the poorest mistakes them for anything else.
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
@@ -110,12 +105,13 @@ public sealed class WorkMitts : WearableItem
 public sealed class ReadingLenses : WearableItem
 {
     public override string ItemId      => "reading_lenses";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
+    public override Rarity Rarity => Rarity.Rare;
     public override string DisplayName => "Reading Lenses";
     public override string Description => "Two ground glass discs in a riveted bone frame, folded shut and carried in a scrap of felt";
     public override WearSlot Slot      => WearSlot.Eyewear;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override int PriceReference => 60;
 
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
         new[] { SocialCategory.Bourgeois, SocialCategory.Religious, SocialCategory.Aristocrat };
@@ -145,7 +141,6 @@ public sealed class LinenBlindfold : WearableItem
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
 
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
 }
@@ -167,7 +162,6 @@ public sealed class IronKettleHelm : WearableItem
     public override WearSlot Slot      => WearSlot.Headgear;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
-    public override int PriceReference => 50;
 
     public override int DefenseDice => 2;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };
@@ -184,7 +178,6 @@ public sealed class Gorget : WearableItem
     public override WearSlot Slot      => WearSlot.Neckwear;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Arms };
-    public override int PriceReference => 60;
 
     public override int DefenseDice => 2;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };

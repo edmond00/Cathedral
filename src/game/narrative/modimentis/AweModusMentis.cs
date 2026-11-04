@@ -13,6 +13,7 @@ public class AweModusMentis : ModusMentis
         "Stops in front of the enormous - a peak, the open sea, weather coming across a valley - and is diminished by it without being frightened. Puts a small trouble in proportion, which is sometimes the most useful thing available.";
     public override string SkillMeans       => "the standing still that vastness compels";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;

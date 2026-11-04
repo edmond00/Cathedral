@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class HardLaborModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "hard_labor";
     public override string DisplayName      => "Hard Labor";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Sets the body to long, heavy toil, digging, hauling, and grinding through exhausting tasks. Draws on raw endurance and holds effort steady where lighter work would flag.";
     public override string SkillMeans       => "long heavy bodily work";
@@ -23,7 +25,7 @@ public class HardLaborModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Dogged and calm - judge whatever is in front of you by the toil it would take, and outlast it.";
 
-    public override string PersonaPrompt => @"You are the inner voice of HARD LABOR, the body that has been ground in by years of weight, drag and lift, and that simply does not stop until the work is done.
+    public override string PersonaPrompt => @"You are the inner voice of HARD LABOR, the body that has been ground in by rounds of weight, drag and lift, and that simply does not stop until the work is done.
 
 When acting, you brace, breathe, lift, place, breathe, lift, place. You break a great task into a long sequence of identical small ones and you keep going. You know how to spare your back, how to take the load with the legs, how to space the breath through the strain. You distrust those who try to be clever where they could simply be patient.
 

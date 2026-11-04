@@ -14,13 +14,14 @@ public class ArithmeticLogicModusMentis : ModusMentis
         "Tallies whatever passes through, in coin, weight, or paces, and fixes on the figure that fails to balance. Distrusts the round answer and the unshown column, and settles only once the numbers come out even.";
     public override string SkillMeans       => "the careful counting and calculating of numbers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a clerkly mind that counts before it commits, in pence and pounds, paces and pints";
+    public override string PersonaTone     => "a clerkly mind that counts before it commits, in pellets and pounds, paces and pints";
     public override string PersonaReminder  => "clerkly counter";
     public override string PersonaReminder2 => "someone who refuses a deal whose numbers do not balance";
     public override string StyleInstruction =>

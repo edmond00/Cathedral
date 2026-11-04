@@ -15,6 +15,11 @@ public enum JournalEntryKind
     Fact,
     /// <summary>A turn in the run worth a line of its own: a lesson, a wound, a companion, a place, a fight.</summary>
     Milestone,
+    /// <summary>
+    /// Something that happened with no narration to tell it: a journey set out on and ended, a meeting
+    /// on the road, a blow struck in a fight. Written for the journal by the game, in plain words.
+    /// </summary>
+    Event,
 }
 
 /// <summary>
@@ -71,6 +76,13 @@ public sealed class JournalEntry
     /// interaction" in the prose.
     /// </summary>
     public bool Lesson { get; set; }
+    /// <summary>
+    /// For an action's outcome: the act in plain words ("catch the crab"), or empty. With
+    /// <see cref="Succeeded"/>, what the chronicler is told happened — the narration beside it is the
+    /// acting mind's musing on it.
+    /// </summary>
+    public string Attempt { get; set; } = "";
+    public bool Succeeded { get; set; }
 }
 
 /// <summary>
@@ -190,6 +202,7 @@ public sealed class Journal
             Seq = e.Seq, Kind = e.Kind, Day = e.Day, Place = e.Place, Area = e.Area, LocationId = e.LocationId,
             Actor = e.Actor, ByCompanion = e.ByCompanion, Source = e.Source, Written = e.Written,
             State = e.State, Group = e.Group, Block = e.Block, Key = e.Key, Phrase = e.Phrase, Lesson = e.Lesson,
+            Attempt = e.Attempt, Succeeded = e.Succeeded,
         }).ToList(),
     };
 }

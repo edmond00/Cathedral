@@ -232,7 +232,7 @@ public class FarmSceneFactory : SceneFactory
         {
             var archetype = _roster[i];
             var bed       = beds[i];
-            var entity    = SpawnNamed(rng, archetype, "a medieval farm");
+            var entity    = SpawnNamed(rng, archetype, "an old farm");
 
             // The farmer holds the farm: both buildings are theirs, which makes them the authority
             // any witness or threat check defers to anywhere indoors.

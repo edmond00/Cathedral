@@ -64,7 +64,8 @@ public record FightingMedium
     /// For an organ medium, this is the organ's current score — or, when
     /// <paramref name="organPartId"/> is supplied and matches one of the organ's parts,
     /// that single part's score (so a left-hand attack uses only the left hand's level).
-    /// For a weapon medium, this is the <see cref="IWeaponItem.Level"/> of the first equipped weapon.
+    /// For a weapon medium, this is the <see cref="IWeaponItem.Level"/> of the first wielded weapon
+    /// (<see cref="PartyMember.WieldedWeapons()"/>: in hand, and no heavier than the arm can bear).
     /// </summary>
     public int GetLevel(Fighter f, string? organPartId = null)
     {
@@ -89,10 +90,7 @@ public record FightingMedium
         }
         else // WeaponMedium
         {
-            var weapon = f.Member.EquippedItems[EquipmentAnchor.RightHold]
-                .Concat(f.Member.EquippedItems[EquipmentAnchor.LeftHold])
-                .OfType<IWeaponItem>()
-                .FirstOrDefault();
+            var weapon = f.Member.WieldedWeapons().FirstOrDefault();
             return weapon?.Level ?? 0;
         }
     }

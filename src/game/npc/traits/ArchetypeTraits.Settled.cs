@@ -88,7 +88,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "bouquet", "tea_lore", "apothecary_nose" },
                 Organs      = new[] { ("nose", 1) },
                 Appearance  = "sniffs at everything - food, people, the air - before engaging with it",
-                Persona     = "Your nose is famous for three valleys and you know it. You can tell a vintage, a row and a week from a single sniff, and you never let anyone forget it.",
+                Persona     = "Your nose is famous for three valleys and you know it. You can tell a vintage, a row and an eleven-day from a single sniff, and you never let anyone forget it.",
                 Opinions    = new[] { (DialogueTopic.Food, "smell it first. Always. The tongue only confirms what the nose already knows") },
             },
             new PersonalityTrait
@@ -98,7 +98,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "grudgekeeping", "almanac", "vigilance" },
                 Appearance  = "glances at the sky constantly, as if expecting it to betray them",
                 Persona     = "Hail took one whole vintage in a single afternoon and the debts are not paid yet. You watch every cloud like an enemy.",
-                Opinions    = new[] { (DialogueTopic.Weather, "twenty minutes. That is how long it took. Twenty minutes and a year of work was mud on the ground") },
+                Opinions    = new[] { (DialogueTopic.Weather, "twenty moments. That is how long it took. Twenty moments and a round of work was mud on the ground") },
             },
             new PersonalityTrait
             {
@@ -126,11 +126,11 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "carousal", "gluttony" },
                 Organs      = new[] { ("hepar", -1) },
                 Appearance  = "a broken-veined face and an easy, too-loud laugh",
-                Persona     = "You drink more of your own wine than you sell, and the accounts show it. You are excellent company and a disastrous businessman.",
+                Persona     = "You drink more of your own wine than you sell, and the accounts show it. You are excellent company and a disastrous merchant.",
                 Opinions    = new[]
                 {
                     (DialogueTopic.Rest, "a vintner who does not drink his own wine is a vintner who does not trust it"),
-                    (DialogueTopic.Trade, "the accounts are... the accounts are complicated this year"),
+                    (DialogueTopic.Trade, "the accounts are... the accounts are complicated this round"),
                 },
             },
             new PersonalityTrait
@@ -140,7 +140,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "pruning", "severity", "discipline" },
                 Items       = new Func<Item>[] { () => new PruningHook() },
                 Appearance  = "looks at overgrown things - hedges, beards, people - with visible disapproval",
-                Persona     = "You prune harder than anyone in the valley and your yields are low and your wine is the best for miles. You apply the same principle to everything, including your children.",
+                Persona     = "You prune harder than anyone in the valley and your yields are low and your wine is the best for leagues. You apply the same principle to everything, including your children.",
                 Opinions    = new[] { (DialogueTopic.Work, "cut it back to almost nothing. It will hate you for a season and thank you for twenty") },
             });
 
@@ -162,8 +162,8 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "endurance", "second_wind" },
                 Organs      = new[] { ("hepar", -1) },
                 Appearance  = "yellowed eyes and a slight tremor in the hands",
-                Persona     = "The fever nearly killed you your first year in the hot country, and it comes back every wet season. You drink quinine bark and pretend it does not.",
-                Opinions    = new[] { (DialogueTopic.Health, "it comes back every year. One year it will win. Not this one") },
+                Persona     = "The fever nearly killed you your first round in the hot country, and it comes back every wet season. You drink fever bark bark and pretend it does not.",
+                Opinions    = new[] { (DialogueTopic.Health, "it comes back every round. One round it will win. Not this one") },
             },
             new PersonalityTrait
             {
@@ -171,7 +171,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Deep in Debt",
                 ModiMentis  = new[] { "bookkeeping", "dread", "masquerade" },
                 Appearance  = "good clothes going thin at the elbows",
-                Persona     = "The plantation is mortgaged to a coast merchant and a bad year will take it. Nobody knows. Everyone suspects.",
+                Persona     = "The plantation is mortgaged to a coast merchant and a bad round will take it. Nobody knows. Everyone suspects.",
                 Opinions    = new[] { (DialogueTopic.Trade, "business is excellent. Excellent. Why do you ask?") },
             },
             new PersonalityTrait
@@ -201,7 +201,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "You came out to the hot country to make a fortune and you have, nearly, and you hate every day of the heat. You will go home rich or not at all.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Weather, "I would give a year of profit for one grey drizzling morning"),
+                    (DialogueTopic.Weather, "I would give a round of profit for one grey drizzling morning"),
                     (DialogueTopic.Kin, "they are all back home. I write. They write less"),
                 },
             });
@@ -243,7 +243,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "thrift", "tallycraft", "patience" },
                 Items       = new Func<Item>[] { () => new CoinPurse() },
                 Appearance  = "a small purse hidden somewhere about the clothing, touched often",
-                Persona     = "You have been saving coppers for eleven years to buy your way out. You are a little over halfway.",
+                Persona     = "You have been saving coppers for eleven rounds to buy your way out. You are a little over halfway.",
                 Opinions    = new[] { (DialogueTopic.Trade, "every copper goes in the purse. Every single one. I know to the coin how far I have to go") },
             },
             new PersonalityTrait
@@ -253,7 +253,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "caution", "creature_lore" },
                 Organs      = new[] { ("right_hand", -1) },
                 Appearance  = "a withered patch on one hand and a sharp eye on the undergrowth",
-                Persona     = "A snake in the rows bit you three years ago and you nearly died of it. You check every step now and you will not reach into shade.",
+                Persona     = "A snake in the rows bit you three rounds ago and you nearly died of it. You check every step now and you will not reach into shade.",
                 Opinions    = new[] { (DialogueTopic.Wilds, "they lie in the cool under the leaves at noon. Never reach in where you cannot see") },
             },
             new PersonalityTrait
@@ -284,7 +284,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "caution", "clenched_grit" },
                 Wounds      = new Func<Wound>[] { () => new ConcussionsWound() },
                 Appearance  = "a dent in the forehead under the hair, and a habit of standing to the side",
-                Persona     = "A frightened mare caught you full in the head and you were a week waking up. You still love them. You stand differently now.",
+                Persona     = "A frightened mare caught you full in the head and you were an eleven-day waking up. You still love them. You stand differently now.",
                 Opinions    = new[] { (DialogueTopic.Beasts, "never stand behind one you do not know. I learned that the hard way and I nearly did not learn anything again") },
             },
             new PersonalityTrait
@@ -295,7 +295,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new Bread() },
                 Appearance  = "keeps a crust of bread in a pocket for one particular horse",
                 Persona     = "There is one old horse in the stable you love more than any person. You know you will grieve him like a brother when he goes.",
-                Opinions    = new[] { (DialogueTopic.Beasts, "the grey in the end stall. He is older than me in horse years. He knows everything") },
+                Opinions    = new[] { (DialogueTopic.Beasts, "the grey in the end stall. He is older than me in horse rounds. He knows everything") },
             },
             new PersonalityTrait
             {
@@ -323,7 +323,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "horsemanship", "night_ear", "wanderlust" },
                 Appearance  = "tired-eyed and windburned, as if from long rides",
                 Persona     = "When everyone is asleep you take the best horse out and ride as far as you can and back before dawn. The master does not know.",
-                Opinions    = new[] { (DialogueTopic.Roads, "the roads are empty at night. Just me and the horse and the moon. That is the only freedom I have") },
+                Opinions    = new[] { (DialogueTopic.Roads, "the roads are empty at night. Just me and the horse and the eggmoon. That is the only freedom I have") },
             });
 
         // ── Drover ────────────────────────────────────────────────────────────────
@@ -362,17 +362,17 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "endurance", "balance" },
                 Wounds      = new Func<Wound>[] { () => new BrokenRibsWound() },
                 Appearance  = "walks with a pronounced roll and a cracked laugh",
-                Persona     = "You went under a running herd once and came out with half your ribs broken. You were back in the saddle in a month and you are proud of it.",
+                Persona     = "You went under a running herd once and came out with half your ribs broken. You were back in the saddle in thirty days and you are proud of it.",
                 Opinions    = new[] { (DialogueTopic.Health, "my ribs grew back crooked. I can tell rain is coming from how they ache") },
             },
             new PersonalityTrait
             {
                 TraitId     = "drover_star_reader",
-                DisplayName = "Steers by the Stars",
+                DisplayName = "Steers by the Embers",
                 ModiMentis  = new[] { "astronomy", "sky_reading", "homing" },
                 Appearance  = "looks up often, even in daylight",
-                Persona     = "You find your way across open country at night by the stars, and you know their names - your own names, not the scholars'.",
-                Opinions    = new[] { (DialogueTopic.Omens, "the herdsman's star rose late this year. That means a hard winter, mark me") },
+                Persona     = "You find your way across open country at night by the embers, and you know their names - your own names, not the scholars'.",
+                Opinions    = new[] { (DialogueTopic.Omens, "the herdsman's ember rose late this round. That means a hard winter, mark me") },
             },
             new PersonalityTrait
             {
@@ -425,7 +425,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Keeps the Register",
                 ModiMentis  = new[] { "clerkship", "recollection", "lineage_lore" },
                 Appearance  = "ink-stained fingers to go with the dirt",
-                Persona     = "You keep a perfect register of every burial for forty years, with notes. Families come to you to settle inheritances.",
+                Persona     = "You keep a perfect register of every burial for forty rounds, with notes. Families come to you to settle inheritances.",
                 Opinions    = new[] { (DialogueTopic.Kin, "I can tell you who your great-grandmother married and who she should have married. It is all in the book") },
             },
             new PersonalityTrait
@@ -435,7 +435,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "hard_labor", "endurance" },
                 Wounds      = new Func<Wound>[] { () => new BrokenBackboneWound() },
                 Appearance  = "bent nearly double even when standing still",
-                Persona     = "Thirty years of digging have bent your back for good. You cannot stand straight and you dig anyway.",
+                Persona     = "Thirty rounds of digging have bent your back for good. You cannot stand straight and you dig anyway.",
                 Opinions    = new[] { (DialogueTopic.Health, "every grave takes a little more out of the back. I will dig my own one day, if I can still bend") },
             },
             new PersonalityTrait
@@ -554,7 +554,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "iron_nerves", "endurance" },
                 Wounds      = new Func<Wound>[] { () => new TibiaFractureLeftWound() },
                 Appearance  = "favours one leg and hides it badly",
-                Persona     = "A spear through the thigh at a siege years ago never healed right. You refuse to sit down in front of your men.",
+                Persona     = "A spear through the thigh at a siege rounds ago never healed right. You refuse to sit down in front of your men.",
                 Opinions    = new[] { (DialogueTopic.Health, "it aches in the cold. I do not sit. A captain who sits is a captain who is old") },
             },
             new PersonalityTrait
@@ -577,7 +577,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "zeal", "homily", "severity" },
                 Appearance  = "a voice that does not drop below a pulpit's volume",
                 Persona     = "Your sermons are terrifying and the temple is full every holy day. You are not sure if they come for the faith or the spectacle.",
-                Opinions    = new[] { (DialogueTopic.Omens, "the end is closer than they think. I tell them every week") },
+                Opinions    = new[] { (DialogueTopic.Omens, "the end is closer than they think. I tell them every eleven-day") },
             },
             new PersonalityTrait
             {
@@ -585,7 +585,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Has Lost the Faith",
                 ModiMentis  = new[] { "heresy", "philosophy", "masquerade" },
                 Appearance  = "says the prayers perfectly and does not seem to listen to them",
-                Persona     = "You stopped believing years ago and go on saying the offices because the people need them and you need the stipend.",
+                Persona     = "You stopped believing rounds ago and go on saying the offices because the people need them and you need the stipend.",
                 Opinions    = new[] { (DialogueTopic.Stories, "the old stories are beautiful. Whether they are true is another matter. I am told") },
             },
             new PersonalityTrait
@@ -637,8 +637,8 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Paints the Books",
                 ModiMentis  = new[] { "illumination", "aesthetic", "patience" },
                 Appearance  = "gold dust in the creases of the fingers",
-                Persona     = "You paint the capitals of the great books and have spent three years on one page. You believe it is the best thing you will ever do.",
-                Opinions    = new[] { (DialogueTopic.Work, "a hare in the margin, chasing a snail. It took me a month. Nobody will notice it for a hundred years") },
+                Persona     = "You paint the capitals of the great books and have spent three rounds on one page. You believe it is the best thing you will ever do.",
+                Opinions    = new[] { (DialogueTopic.Work, "a hare in the margin, chasing a snail. It took me thirty days. Nobody will notice it for a hundred rounds") },
             },
             new PersonalityTrait
             {
@@ -694,11 +694,11 @@ public sealed partial class PersonalityTraitRegistry
             new PersonalityTrait
             {
                 TraitId     = "scholar_stargazer",
-                DisplayName = "Watches the Stars",
+                DisplayName = "Watches the Embers",
                 ModiMentis  = new[] { "astronomy", "geometric_scheme", "algebraic_analysis" },
                 Items       = new Func<Item>[] { () => new Astrolabe() },
                 Appearance  = "red-eyed from nights on the roof",
-                Persona     = "You spend every clear night on the roof with your instruments and are certain you have found a new moon.",
+                Persona     = "You spend every clear night on the roof with your instruments and are certain you have found a dark eggmoon.",
                 Opinions    = new[] { (DialogueTopic.Omens, "the sky is not an omen. It is a clock. A very large, very precise clock") },
             },
             new PersonalityTrait
@@ -727,7 +727,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "jurisprudence", "rhetoric", "rote" },
                 Appearance  = "quotes the codes in ordinary conversation",
                 Persona     = "You are the foremost authority on the empire's law in the province and you are consulted by judges. You are insufferable about it.",
-                Opinions    = new[] { (DialogueTopic.Neighbours, "every quarrel in this town is a lawsuit that has not yet found its lawyer") },
+                Opinions    = new[] { (DialogueTopic.Neighbours, "every quarrel in this town is a suit at law that has not yet found its lawyer") },
             },
             new PersonalityTrait
             {
@@ -756,7 +756,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Skims the Accounts",
                 ModiMentis  = new[] { "bookkeeping", "sharp_practice", "masquerade" },
                 Appearance  = "a better coat than a steward's wages should buy",
-                Persona     = "You have been skimming from the household accounts for years and keep two sets of books. Your lord has never looked.",
+                Persona     = "You have been skimming from the household accounts for rounds and keep two sets of books. Your lord has never looked.",
                 Opinions    = new[] { (DialogueTopic.Trade, "the accounts are in perfect order. I keep them myself") },
             },
             new PersonalityTrait
@@ -906,7 +906,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "usury", "avarice", "coin_eye" },
                 Items       = new Func<Item>[] { () => new PromissoryNote() },
                 Appearance  = "half the town looks away when they pass",
-                Persona     = "You lend to everyone, at a tenth a month, and half the town owes you money. It makes you powerful and very lonely.",
+                Persona     = "You lend to everyone, at a tenth in thirty days, and half the town owes you money. It makes you powerful and very lonely.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "they all owe me. Nobody invites me to dinner. Funny, that") },
             },
             new PersonalityTrait
@@ -947,8 +947,8 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Was Pressed",
                 ModiMentis  = new[] { "grudgekeeping", "seamanship", "vagabondage" },
                 Appearance  = "flinches at the sight of an officer",
-                Persona     = "You were taken drunk from a tavern and woke at sea, and you served six years before you could leave. You hate officers and love the sea.",
-                Opinions    = new[] { (DialogueTopic.Kin, "they took me from a tavern at nineteen. My mother thought I was dead for six years") },
+                Persona     = "You were taken drunk from a tavern and woke at sea, and you served six rounds before you could leave. You hate officers and love the sea.",
+                Opinions    = new[] { (DialogueTopic.Kin, "they took me from a tavern at nineteen. My mother thought I was dead for six rounds") },
             },
             new PersonalityTrait
             {
@@ -956,7 +956,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Runs Contraband",
                 ModiMentis  = new[] { "smuggling", "pilotage", "stealth" },
                 Appearance  = "knows a great deal about quiet coves",
-                Persona     = "Between honest voyages you run brandy and silk into quiet beaches by night. You know every cove on this coast.",
+                Persona     = "Between honest voyages you run spirits and silk into quiet beaches by night. You know every cove on this coast.",
                 Opinions    = new[] { (DialogueTopic.Trade, "the tax men watch the harbour. They do not watch the beaches. Not all of them") },
             },
             new PersonalityTrait
@@ -1007,7 +1007,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new Cudgel() },
                 Wounds      = new Func<Wound>[] { () => new BrokenNoseWound() },
                 Appearance  = "a cudgel under the counter and a nose broken more than once",
-                Persona     = "You fought for pay for fifteen years and bought the inn with what was left. No one starts a fight in your house twice.",
+                Persona     = "You fought for pay for fifteen rounds and bought the inn with what was left. No one starts a fight in your house twice.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "trouble in my house goes out the door or out the window. Its choice") },
             },
             new PersonalityTrait
@@ -1026,7 +1026,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "hospitality", "empathy", "cookery" },
                 Items       = new Func<Item>[] { () => new Pottage() },
                 Appearance  = "presses food on everyone, paid for or not",
-                Persona     = "You feed anyone who looks hungry, whether they can pay or not, and your accounts are a disaster. Travellers remember you for years.",
+                Persona     = "You feed anyone who looks hungry, whether they can pay or not, and your accounts are a disaster. Travellers remember you for rounds.",
                 Opinions    = new[] { (DialogueTopic.Food, "you look starved. Sit down. Eat. We will talk about money later, or not at all") },
             },
             new PersonalityTrait
@@ -1096,7 +1096,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "endurance", "copying" },
                 Organs      = new[] { ("hepar", -1) },
                 Appearance  = "a grey tint to the lips and trembling hands",
-                Persona     = "Years of licking the quill have made you ill and you cough and tremble. You still write the best hand in the office.",
+                Persona     = "Rounds of licking the quill have made you ill and you cough and tremble. You still write the best hand in the office.",
                 Opinions    = new[] { (DialogueTopic.Health, "the ink gets into you. Every clerk ends up like this. I do not mind") },
             },
             new PersonalityTrait
@@ -1105,7 +1105,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Lives in the Archive",
                 ModiMentis  = new[] { "recollection", "lineage_lore", "archeology" },
                 Appearance  = "smells of dust and old parchment",
-                Persona     = "You know where every document in the archive is, back three hundred years, and you are often the only one who can find anything.",
+                Persona     = "You know where every document in the archive is, back three hundred rounds, and you are often the only one who can find anything.",
                 Opinions    = new[] { (DialogueTopic.Stories, "the old records tell a different history from the one in the books") },
             });
 
@@ -1129,7 +1129,7 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new KneeFractureRightWound() },
                 Appearance  = "walks with a stiff leg and keeps every blade in the stores oiled",
                 Persona     = "A bad knee took you off the wall and put you in the stores. You know arms better than anyone in the garrison and you resent not using them.",
-                Opinions    = new[] { (DialogueTopic.Work, "I stood on that wall for twenty years. Now I count what the young ones drop off it") },
+                Opinions    = new[] { (DialogueTopic.Work, "I stood on that wall for twenty rounds. Now I count what the young ones drop off it") },
             },
             new PersonalityTrait
             {
@@ -1166,7 +1166,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "gossip", "watchkeeping", "eavesdropping" },
                 Appearance  = "always somehow near the gate when a cart comes in",
                 Persona     = "Every carter, pedlar and farmer passes your table at the gate and you collect what they say as carefully as what they bring. You know the country's news before the captain does.",
-                Opinions    = new[] { (DialogueTopic.Roads, "the carters talk while I count. I hear about the roads a week before anyone else") },
+                Opinions    = new[] { (DialogueTopic.Roads, "the carters talk while I count. I hear about the roads an eleven-day before anyone else") },
             });
 
         // ── Sacristan ─────────────────────────────────────────────────────────────
@@ -1197,7 +1197,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "bell_ringing", "endurance" },
                 Organs      = new[] { ("left_ear", -1), ("right_ear", -1) },
                 Appearance  = "turns the head to listen, and speaks a little too loud",
-                Persona     = "Thirty years of ringing the great bell have taken half your hearing. You read lips now, and you hear the bell better than anyone.",
+                Persona     = "Thirty rounds of ringing the great bell have taken half your hearing. You read lips now, and you hear the bell better than anyone.",
                 Opinions    = new[] { (DialogueTopic.Omens, "the bell rang itself once, in a storm. Nobody believes me. I was standing under it") },
             },
             new PersonalityTrait
@@ -1207,7 +1207,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "sharp_practice", "pilgrimage", "masquerade" },
                 Appearance  = "a small drawer under the candle tray that is kept locked",
                 Persona     = "You sell pilgrims a splinter of the saint's staff for a silver piece and you have sold a forest of them. You tell yourself the faith is real even if the splinter is not.",
-                Opinions    = new[] { (DialogueTopic.Trade, "a pilgrim who walks a hundred miles wants to carry something home. Who am I to send them away empty") },
+                Opinions    = new[] { (DialogueTopic.Trade, "a pilgrim who walks a hundred leagues wants to carry something home. Who am I to send them away empty") },
             },
             new PersonalityTrait
             {
@@ -1225,7 +1225,7 @@ public sealed partial class PersonalityTraitRegistry
                 DisplayName = "Never Took Orders",
                 ModiMentis  = new[] { "humility", "devotion", "almsgiving" },
                 Appearance  = "plain undyed robe, and stands aside for everyone",
-                Persona     = "You were never thought clever enough to be ordained and you have served the temple forty years as a layman. You give half of what the candles bring to the beggars on the steps.",
+                Persona     = "You were never thought clever enough to be ordained and you have served the temple forty rounds as a layman. You give half of what the candles bring to the beggars on the steps.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "the beggars on the steps are as much the temple's as the priests are. More, some days") },
             });
 
@@ -1249,7 +1249,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new Cheese() },
                 Appearance  = "salt-cracked hands and a knife always at the belt for a taste",
                 Persona     = "You turn every cheese in the cellar by hand each morning and you know each one by name. You think most of the brothers do not deserve them.",
-                Opinions    = new[] { (DialogueTopic.Seasons, "a cheese made in spring is eaten at midwinter. I live half a year ahead") },
+                Opinions    = new[] { (DialogueTopic.Seasons, "a cheese made in spring is eaten at midwinter. I live half a round ahead") },
             },
             new PersonalityTrait
             {
@@ -1267,8 +1267,8 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "thrift", "bookkeeping", "avarice" },
                 Items       = new Func<Item>[] { () => new Ledgerbook() },
                 Appearance  = "a key on a cord round the neck that never comes off",
-                Persona     = "You account for every loaf and every cup, and the brothers grumble that the abbey is rich and the table is poor. You are saving for a lean year that has not come yet.",
-                Opinions    = new[] { (DialogueTopic.Harvest, "seven fat years and seven lean. Everyone forgets the second half") },
+                Persona     = "You account for every loaf and every cup, and the brothers grumble that the abbey is rich and the table is poor. You are saving for a lean round that has not come yet.",
+                Opinions    = new[] { (DialogueTopic.Harvest, "seven fat rounds and seven lean. Everyone forgets the second half") },
             },
             new PersonalityTrait
             {
@@ -1287,7 +1287,7 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new ScarWound() },
                 Appearance  = "a shiny scar down one forearm from wrist to elbow",
                 Persona     = "A boiling copper split and scalded you badly when you were a novice. You still brew, and you never stand downwind of a mash tun now.",
-                Opinions    = new[] { (DialogueTopic.Health, "a burn heals slow and it itches for a year. Mind the copper and keep your sleeves down") },
+                Opinions    = new[] { (DialogueTopic.Health, "a burn heals slow and it itches for a round. Mind the copper and keep your sleeves down") },
             });
     }
 }

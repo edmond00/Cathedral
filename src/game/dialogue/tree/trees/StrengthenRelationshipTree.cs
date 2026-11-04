@@ -113,19 +113,19 @@ public partial class StrengthenRelationshipTree : DialogueTree
             "I tell {npc:name} the weather has been fine.",
             WeatherTopic()),
 
-        new PlayerOption("talk_seasons", "remark on how far the year has turned",
-            "The year is getting on.",
-            "I tell {npc:name} the year is getting on.",
+        new PlayerOption("talk_seasons", "remark on how far the round has turned",
+            "The round is getting on.",
+            "I tell {npc:name} the round is getting on.",
             SeasonsTopic()),
 
         new PlayerOption("talk_harvest", "ask how the crop is standing",
-            "How is the crop looking this year?",
-            "I ask {npc:name} how the crop is looking this year.",
+            "How is the crop looking this round?",
+            "I ask {npc:name} how the crop is looking this round.",
             HarvestTopic()),
 
         new PlayerOption("talk_water", "mention the river and the rain",
-            "The water has been strange this month.",
-            "I tell {npc:name} the water has been strange this month.",
+            "The water has been strange this season.",
+            "I tell {npc:name} the water has been strange this season.",
             WaterTopic()),
 
         // ── the household (.Hearth) ─────────────────────────────────────────

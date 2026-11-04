@@ -22,7 +22,7 @@ public sealed partial class PersonalityTraitRegistry
             Wounds           = new Func<Wound>[] { () => new ScarWound() },
             Organs           = new[] { ("right_arm", 1) },
             Appearance       = "stands like someone who was drilled young, with an old blade-scar on the forearm",
-            Persona          = "You soldiered for years before you came to this. You do not tell war stories and you change the subject when others do, but it is in how you stand and how you watch a room.",
+            Persona          = "You soldiered for rounds before you came to this. You do not tell war stories and you change the subject when others do, but it is in how you stand and how you watch a room.",
             SelfIntroduction = "nobody much now — I carried a spear for a lord once, and I'd not go back to it",
             Opinions         = new[]
             {
@@ -37,7 +37,7 @@ public sealed partial class PersonalityTraitRegistry
             DisplayName      = "Widowed",
             ModiMentis       = new[] { "elegy", "endurance" },
             Appearance       = "wearing something that plainly belonged to somebody else, and mended carefully",
-            Persona          = "You lost your husband or wife some years ago. You are not broken by it now, but it is the fact underneath everything else about you.",
+            Persona          = "You lost your husband or wife some rounds ago. You are not broken by it now, but it is the fact underneath everything else about you.",
             Opinions         = new[]
             {
                 (DialogueTopic.Kin,  "There was two of us doing this. Now there's one, and the work didn't halve"),
@@ -52,11 +52,11 @@ public sealed partial class PersonalityTraitRegistry
             ModiMentis       = new[] { "wayfaring", "linguistic" },
             Items            = new Func<Item>[] { () => new WalkingStaff() },
             Appearance       = "dressed subtly wrong for here, in a way that is hard to name",
-            Persona          = "You were not born in this place and after all these years you are still not quite of it. You speak a little differently and you notice that people notice.",
+            Persona          = "You were not born in this place and after all these rounds you are still not quite of it. You speak a little differently and you notice that people notice.",
             SelfIntroduction = "not from here, as you'll have gathered — I came a long way and I stayed",
             Opinions         = new[]
             {
-                (DialogueTopic.Neighbours, "Twenty years and I'm still the one who came from away. They're not unkind about it. They just never stop"),
+                (DialogueTopic.Neighbours, "Twenty rounds and I'm still the one who came from away. They're not unkind about it. They just never stop"),
                 (DialogueTopic.Roads,      "I came down one of those. I remember exactly what it felt like to arrive"),
             },
         });
@@ -73,7 +73,7 @@ public sealed partial class PersonalityTraitRegistry
             Opinions    = new[]
             {
                 (DialogueTopic.Food,    "I've eaten grass. Actual grass. So no, I'll not be complaining about pottage"),
-                (DialogueTopic.Harvest, "A bad year isn't a story to me. I know exactly what month it starts to hurt"),
+                (DialogueTopic.Harvest, "A bad round isn't a story to me. I know exactly what season it starts to hurt"),
             },
         });
 
@@ -88,7 +88,7 @@ public sealed partial class PersonalityTraitRegistry
             Opinions         = new[]
             {
                 (DialogueTopic.Neighbours, "Folk here think the gentry are another species. I've emptied their chamber pots. They're not"),
-                (DialogueTopic.Food,       "I've served dishes at one table that would feed this village for a week. It teaches you something, and not a comfortable something"),
+                (DialogueTopic.Food,       "I've served dishes at one table that would feed this village for an eleven-day. It teaches you something, and not a comfortable something"),
             },
         });
 
@@ -142,7 +142,7 @@ public sealed partial class PersonalityTraitRegistry
             Opinions    = new[]
             {
                 (DialogueTopic.Health, "I had it. I'm still here. I don't know why me and not the others and I've stopped asking"),
-                (DialogueTopic.Omens,  "I stopped believing in deserving anything the year of the fever"),
+                (DialogueTopic.Omens,  "I stopped believing in deserving anything the round of the fever"),
             },
         });
 
@@ -158,7 +158,7 @@ public sealed partial class PersonalityTraitRegistry
             Opinions         = new[]
             {
                 (DialogueTopic.Roads, "I've walked a road that took a season. You learn what your own feet are for"),
-                (DialogueTopic.Rest,  "I slept in ditches for months. I've never once complained about a bed since"),
+                (DialogueTopic.Rest,  "I slept in ditches for seasons. I've never once complained about a bed since"),
             },
         });
 
@@ -167,7 +167,7 @@ public sealed partial class PersonalityTraitRegistry
             TraitId     = "shipwrecked",
             DisplayName = "Came Off the Water",
             ModiMentis  = new[] { "natation", "nautical_jargon", "wayfaring" },
-            Appearance  = "the weathering of someone who spent years in salt air and has not lost it",
+            Appearance  = "the weathering of someone who spent rounds in salt air and has not lost it",
             Persona     = "You worked the water once and something bad happened out there. You will talk about the sea readily and about that day not at all.",
             Opinions    = new[]
             {

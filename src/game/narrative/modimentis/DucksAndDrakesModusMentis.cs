@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class DucksAndDrakesModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "ducks_and_drakes";
     public override string DisplayName      => "Ducks and Drakes";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Skips stones: picks the flat one, judges the water, and sends it bouncing low across the surface. Reads calm water, the flick of a wrist and the angle of a throw, and inclines toward the low, flat, spinning throw over the hard one.";
     public override string SkillMeans       => "skipping a flat stone low across water";

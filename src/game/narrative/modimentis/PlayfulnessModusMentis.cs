@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,6 +12,7 @@ public class PlayfulnessModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "playfulness";
     public override string DisplayName      => "Playfulness";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Plays: rolls down the bank, skips the stone, chases the hen, jumps in the puddle — whatever can be done for the fun of it. Inclines toward the game over the errand, and turns any idle corner into somewhere to play.";
     public override string SkillMeans       => "playing at it for the fun of it";

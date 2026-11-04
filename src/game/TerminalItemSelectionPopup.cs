@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
@@ -44,7 +45,9 @@ public class TerminalItemSelectionPopup
     /// </summary>
     public void Show(Vector2 screenPosition, List<Item> items, string title = "Use with this action")
     {
-        _items = items ?? throw new ArgumentNullException(nameof(items));
+        if (items == null) throw new ArgumentNullException(nameof(items));
+        // Listed by name; a copy, since Hide clears this list and must not clear the caller's.
+        _items = items.OrderBy(i => i.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
         _fixedPosition = screenPosition;
         _hoveredItemIndex = null;
         _scrollOffset = 0;

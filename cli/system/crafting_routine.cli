@@ -1,0 +1,39 @@
+# Crafting is routinable
+#
+# A successful USE at a station the player may use teaches a Craft routine: the ruin's anvil, as a
+# blacksmith. Learned as the menu opens, read once the visit is over.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --grant-item hammer --location-type test --location-id 0 --start-area "Test Ruin" --period dawn --observe-only "Test Old Anvil"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal use
+means blacksmithing
+advance 12 180
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+click button
+wait mode Crafting 30
+craft leave
+wait mode LocationInteraction 30
+expect-state routines category=craft
+expect-state routines trade=blacksmithing tool=-
+quit

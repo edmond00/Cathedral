@@ -584,6 +584,10 @@ public static class Config
         /// draw over every goal the observed object offers, so a script that means to appease — and
         /// then to tame — a beast offering a dozen goals is not testing anything it can name. Ignored
         /// for a thinking phase where no goal matches, which then draws as usual.</para>
+        ///
+        /// <para>Without <c>--playground</c> it narrows the list the goal judge chooses from the same
+        /// way, so a script on the real model can reach the verb it is about — the item critic's
+        /// prompts, for one, are only sent for a verb that admits a tool.</para>
         /// </summary>
         public static string? GoalOnly { get; set; } = null;
 
@@ -615,11 +619,19 @@ public static class Config
         /// Zero (the default) leaves the playground answering "willing" every time.
         ///
         /// <para>The playground never refuses, so without this an action modus mentis's refusal — and the
-        /// retries of iterative thinking that follow one (<c>ThinkingIterationsStat</c>) — cannot be
+        /// retries of iterative thinking that follow one (<c>ModusMentis.Doubt</c>) — cannot be
         /// reached by a script at all. A count rather than a switch, because a retry of the same goal is
         /// not asked whether it would rather not, and a test wants to see the chain end.</para>
         /// </summary>
         public static int RefuseMeans { get; set; } = 0;
+
+        /// <summary>
+        /// Every thinking modus mentis's <see cref="Cathedral.Game.Narrative.DoubtLevel"/>, in place of
+        /// the one it declares. Set by <c>--doubt &lt;low|medium|high&gt;</c>. Null (the default) leaves
+        /// each mind its own. A script about iterative thinking or doubt pins it, so that which mind the
+        /// player happens to pick does not decide how many tries there are.
+        /// </summary>
+        public static Cathedral.Game.Narrative.DoubtLevel? DoubtOverride { get; set; } = null;
 
         /// <summary>
         /// The kind of failure penalty a failed act must draw: <c>wound</c>, <c>get_lost</c>,
@@ -1008,6 +1020,12 @@ public static class Config
         public const char PathDestinationChar = '+'; // Plus for destination
         public const char ForbiddenDestinationChar = '⨯'; // Cross for impassable tiles (sea/ocean on foot)
 
+        /// <summary>How much larger the place a will's search is reading is drawn than its own glyph.</summary>
+        public const float SearchedCellScale = 2.2f;
+
+        /// <summary>The searched place's glyph beats between these multiples of its size, this many times a second.</summary>
+        public const float SearchedCellPulseMin = 0.8f, SearchedCellPulseMax = 1.25f, SearchedCellPulseHz = 3f;
+
         // Numbered glyphs used to mark waypoints in click-order on the world map.
         // Falls back to PathDestinationChar past the array length.
         public static readonly char[] WaypointNumberChars = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨' };
@@ -1333,6 +1351,12 @@ public static class Config
     
     #region Base Colors
     
+    /// <summary>
+    /// The game's colours. <b>Everything a player sees is purplish, yellowish or greyscale</b> — see
+    /// "Colours" in CLAUDE.md. Red, Green, Blue, Magenta and Cyan below, and the ANSI <see cref="Terminal"/>
+    /// table, exist for the developer tools only (the image-to-text mode, the terminal's test palette, the
+    /// sphere's debug shaders); no screen of the game uses them.
+    /// </summary>
     public static class Colors
     {
         // Basic colors
@@ -1350,13 +1374,8 @@ public static class Config
         public static readonly Vector4 Transparent = new(0.0f, 0.0f, 0.0f, 0.0f);
         
         // Extended colors
-        public static readonly Vector4 LightCyan = new(0.5f, 0.9f, 1.0f, 1.0f);
-        public static readonly Vector4 LightGreen = new(0.5f, 1.0f, 0.5f, 1.0f);
-        public static readonly Vector4 BrightGreen = new(0.4f, 1.0f, 0.4f, 1.0f);
-        public static readonly Vector4 BrightRed = new(1.0f, 0.4f, 0.4f, 1.0f);
         public static readonly Vector4 OrangeYellow = new(1.0f, 0.8f, 0.0f, 1.0f);
-        public static readonly Vector4 Orange = new(1.0f, 0.5f, 0.0f, 1.0f);
-        public static readonly Vector4 DarkOrange = new(0.6f, 0.25f, 0.0f, 1.0f);
+        public static readonly Vector4 Ochre = new(0.85f, 0.65f, 0.15f, 1.0f);       // Warm dark gold: the palette's secondary yellow (vital heat, running, knockdown) — where orange used to be
         public static readonly Vector4 LightPurpleGray = new(0.8f, 0.8f, 0.9f, 1.0f);
         public static readonly Vector4 Gray70 = new(0.7f, 0.7f, 0.7f, 1.0f);
         public static readonly Vector4 Gray90 = new(0.9f, 0.9f, 0.9f, 1.0f);
@@ -1626,6 +1645,19 @@ public static class Config
 
         /// <summary>How long a transient world-map notice stays on screen.</summary>
         public const double NoticeSeconds = 4.0;
+
+        /// <summary>
+        /// A will's search (the Memory tab's "Wants" rows) reads at most one place per this many
+        /// seconds, however quickly the places are read, so the place under check can be seen beating
+        /// on the sphere. Nothing under <c>--playground</c> (<see cref="AnimationsAreInstant"/>).
+        /// </summary>
+        public const double WillSearchMinSecondsPerPlace = 0.08;
+
+        /// <summary>How long the box holds on the place found before the trip to it is planned.</summary>
+        public const double WillSearchFoundHoldSeconds = 0.8;
+
+        /// <summary>Milliseconds a frame may spend reading places for a will's search (at least one a frame).</summary>
+        public const int WillSearchFrameBudgetMs = 12;
 
         // Colors
         public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;

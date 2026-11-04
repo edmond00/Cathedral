@@ -57,7 +57,7 @@ public class PoultryKeeperArchetype : PeasantArchetype
         [DialogueTopic.Seasons]    = "they lay well in the long light and hardly at all in the dark half. There's no arguing with a hen about it",
         [DialogueTopic.Weather]    = "cold snaps stop them laying dead. You can put straw down and coax them, but they decide",
         [DialogueTopic.Kin]        = "I like the birds better than most company, and I don't think that's a fault",
-        [DialogueTopic.Omens]      = "a hen that crows is meant to be ill luck. Ours did it for a year and nothing happened at all",
+        [DialogueTopic.Omens]      = "a hen that crows is meant to be ill luck. Ours did it for a round and nothing happened at all",
         [DialogueTopic.Neighbours] = "if a bird goes missing I know whether it was the fox or a person. They leave it different",
     };
 

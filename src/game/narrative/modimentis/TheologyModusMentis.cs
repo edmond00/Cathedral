@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,6 +11,7 @@ public class TheologyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "theology";
     public override string DisplayName      => "Theology";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Reasons about the divine: the nature of the gods, the problem of evil, the meaning of the texts, the disputed points of doctrine. Can argue either side and knows who argued it first.";
     public override string SkillMeans       => "the reasoning about the divine";

@@ -36,6 +36,7 @@ public static class SaveAudit
             "MemoryModules",      // slot placement by index
             "ModiMentis",
             "LearnedModiMentis",  // the same list object, re-aliased on load
+            "RejectedModiMentisIds", // ALWAYS REJECT's ignore list, as plain ids
             "Inventory",
             "EquippedItems",
             "Wounds",

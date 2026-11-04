@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The seventeen headless audits that check content rather than code: --outcome-audit, --play-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --will-lesson-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit and --biome-audit. Use after adding or editing a verb, an outcome, a kind of play or where plays are placed, a modus mentis, a will's targets or places, an object's lesson (VerbModiMentis), an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The eighteen headless audits that check content rather than code: --outcome-audit, --play-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --will-lesson-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit, --biome-audit and --forbidden-words-audit. Use after adding or editing a verb, an outcome, a kind of play or where plays are placed, a modus mentis, a will's targets or places, an object's lesson (VerbModiMentis), an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, the Layer 1 forbidden-word list, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -302,11 +302,35 @@ distribution and what it means at each backbone tier. Then it warns about:
   line is the only thing standing between layered garments and an unhittable torso, so read it
   after touching any `DefenseDice`.
 
+**The weapon rules fail the suite** (✗ lines, unlike the warnings above), and the weapons table
+prints each weapon's size, weight, level and the arm level that holds it:
+
+- a weapon smaller than medium — two would share a nine-slot hand. `WeaponItem` seals `Size` behind
+  `WeaponSize`, which has no small value, so this only fires for an `IWeaponItem` written outside it;
+- a weapon not `IsImprovised` whose `Level` does not exceed the best human striking limb (read off the
+  anatomy, 3 today) — no better than a fist. `WeaponItem.StrikingLimbCeiling` must agree with it;
+- the real weapons unbalanced across the three hold tiers — fewer than a fifth of them light, medium
+  or heavy (an arm of level 0/1/2 holds up to that weight), or any insignificant weapon.
+
+**The price rules fail the suite too.** No item writes its price: `ItemPricing` works it out as
+`matter × craftsmanship + labour + function + rarity` (see "What a price is made of" in
+`src/game/CLAUDE.md`), and the Prices section prints the per-material unit values, how many items sit
+at each `Craftsmanship` and `Rarity` (and how many declare it rather than take the default), the
+overrides, and min/median/max per category. It fails (✗):
+
+- a price whose sum runs past `ItemPricing.MaxPrice` (90) — clamped, so it would read like every
+  other capped thing;
+- an item worth less than the material it breaks down into at a station;
+- a refined material (metal, cloth, leather) no dearer by the unit than its raw one;
+- a crafting recipe that sells for no more than the material it costs at its station — making it
+  would lose money. Fix it with the output's `Craftsmanship`, not a price.
+
 It also samples `FightResolver.PreRollHitLocation` 60k times and compares the result against each
 body part's share of the wound pool. Armour needs the hit location *before* the dice, so unaimed
 attacks now pre-roll one; that check is the proof the pre-roll did not change where blows land.
 
-Run it after touching any item, `WearableItem`, `ArmorSections`, or the weight tiers.
+Run it after touching any item, `WearableItem`, `ArmorSections`, the weight tiers, `ItemPricing` or a
+crafting recipe.
 
 ### Checking what there is to DO in a location
 
@@ -487,6 +511,38 @@ Run it after touching a variant's numbers, `WorldShape`, the biome thresholds, `
 `SettlementSprawl` or `SettlementTable`, `WorldVariant.SettlementDensity`, a settled glyph, or anything
 in `WorldRegions`. Walk what it
 reports with `--world-variant <id>`.
+
+### Checking the forbidden-word list (Layer 1 of the sanitizer)
+
+```bash
+dotnet run -- --forbidden-words-audit
+dotnet run -- --forbidden-words-scan <file>    # apply the list to each line of a text file, print what changed
+```
+
+`ForbiddenWords.cs` is the list of real-world and modern words every LLM text is rewritten without
+(`ForbiddenWordsDictionary.Apply`, no request made): *mile* → *league*, *week* → *eleven-day*, *moon*
+→ *eggmoon*, *Napoleon* → *Aqilon*. It replaces by exact surface form — every plural and verb form is
+listed, never stemmed — and re-agrees the sentence around the replacement (a/an, a replacement's own
+article dropped after a determiner, a count rewritten with its unit: *two months* → *sixty days*).
+
+The audit fails on three silent faults and on any known rewrite going wrong:
+
+- a form that is a `NameFaking` placeholder name — those are swapped back to characters' real names
+  after Layer 1, so replacing one renames a character;
+- a replacement holding a listed form ("throwing star"), which the next text would fix and this one not;
+- an empty replacement;
+- a sentence in its table rewritten differently from the expected line. The table also holds lines
+  that must come back **unchanged** — the period's own words with a second sense (*second*, *a pen of
+  sheep*, *March onward!*, *Minute and devoted*, *the Fallen God*). Add one there whenever an entry
+  turns out to bite an ordinary sentence.
+
+Before adding a word: grep the game's own text for it. A word the lore uses (*Imperial Senate*,
+*tide-opera*, *salt magazine*, *the Fallen God*), a content word with an ordinary second sense
+(*runway* in the moss, *vintage* of a vine) or a species name (*Arctic Fox*) stays out of the list.
+Run `--forbidden-words-scan` over the game's string literals after a large addition; every hit there is
+either text to change or an entry to drop.
+
+Run it after editing `ForbiddenWords.cs` or `ForbiddenWordsDictionary.cs`.
 
 ### Checking the world histories
 

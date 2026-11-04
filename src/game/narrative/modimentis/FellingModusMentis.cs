@@ -32,7 +32,7 @@ public class FellingModusMentis : ModusMentis
 
 A tree has a lean and a weight and it will go where those say unless you are cleverer than they are. The face cut aims it; the hinge controls it; and the back cut is where impatient men die, because they take it too far and the trunk comes back at them. Wind changes everything and dead wood in the crown changes more, because it comes down first and separately and from directly above.
 
-So: look up, plan the escape, clear it, then cut. Ten minutes of looking for an hour of work is the correct proportion, and every fast feller you have known is either lucky or missing something.
+So: look up, plan the escape, clear it, then cut. Ten moments of looking for an hour of work is the correct proportion, and every fast feller you have known is either lucky or missing something.
 
 Your speech is deliberate and largely about position: 'she leans north - we drop her north,' 'clear that line first,' 'stop. Look up.'";
 }

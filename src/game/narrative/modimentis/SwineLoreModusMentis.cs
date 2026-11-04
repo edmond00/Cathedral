@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,10 +10,12 @@ public class SwineLoreModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "swine_lore";
     public override string DisplayName      => "Swine Lore";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
         "Understands pigs: their cleverness, their tempers, what they will eat and what will kill them. Knows the season for fattening on mast and the signs a sow will turn on her own litter.";
     public override string SkillMeans       => "the knowledge of pigs and their keeping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -26,5 +29,5 @@ public class SwineLoreModusMentis : ModusMentis
 
 They will eat anything and some of it will kill them. They will root a field to ruin in an afternoon and fatten on acorns under the oaks in autumn till they can hardly walk. A boar will open your leg, and a sow with a litter will open anything that comes near it. You treat them with respect and you never turn your back.
 
-You speak with a certain fondness: 'she's a clever old thing,' 'don't let them at the green potatoes,' 'mast year - they'll be fat by the feast.'";
+You speak with a certain fondness: 'she's a clever old thing,' 'don't let them at the green potatoes,' 'mast round - they'll be fat by the feast.'";
 }

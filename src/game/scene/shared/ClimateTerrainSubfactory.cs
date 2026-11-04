@@ -112,7 +112,7 @@ public static class ClimateTerrainSubfactory
 
     public static PointOfInterest BuildStuntedFir() => new TreePointOfInterest(
         displayName: "Stunted Fir",
-        descriptions: new() { "A fir no taller than a child, all its growth on the lee side, flattened by a century of wind into a crouch" },
+        descriptions: new() { "A fir no taller than a child, all its growth on the lee side, flattened by a hundred rounds of wind into a crouch" },
         items: new() { I(new Twig()), I(new PineNeedle()), I(new PineSap()) },
         moods: new[] { "crouched", "wind-shorn", "dark", "ancient" },
         isNatural: true

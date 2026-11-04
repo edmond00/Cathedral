@@ -1,0 +1,55 @@
+# will_picker — the world map's ◎ opens every will the party holds, and a want in it starts the search
+#
+# Beside the ☰ on the world map, the ◎ opens the will picker: the party's wills listed on the left (the
+# protagonist's first, by name), the selected one's wants on the right as buttons. Twenty-odd wills are
+# granted so the list runs past its eighteen rows and has to scroll (▲ / ▼ rows, the wheel). Pressing a
+# want closes the picker and runs the same search as the Memory tab's "Wants" rows. Escape closes the
+# picker before it would pause, and the ◎ is not offered while a search runs.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm absolution,aesthetic,almsgiving,ambuscade,anglery,archeology,armoury_lore,arms_care,bargaining,barrack_wit,beachcombing,beggary,berrying,blanching,bouquet,brawling,brewcraft,bribery,brokerage,busking,butchery,calligraphy,woodcraft
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+wait for 0.2
+
+expect-state will-picker "will-button shown"
+expect-state will-picker "will-picker state=closed"
+click will-button
+wait for 0.2
+expect-state will-picker "will-picker state=open"
+expect "WHAT DO YOU SEEK?"
+expect-state will-picker "scroll=0"
+expect "▼"
+expect-state will-picker "will-button hidden"
+
+# The list scrolls: the ▼ row, then back with the ▲ row.
+click picker down
+wait for 0.1
+expect-state will-picker "scroll=1"
+click picker up
+wait for 0.1
+expect-state will-picker "scroll=0"
+
+# Escape closes the picker and stays on the map.
+pause
+expect-state will-picker "will-picker state=closed"
+state
+wait for 0.2
+
+# Woodcraft is past the first eighteen rows: selecting it scrolls it into view.
+click will-button
+wait for 0.2
+click will woodcraft
+wait for 0.1
+expect-state will-picker "selected=woodcraft"
+expect-state will-picker "want 0 purpose="
+expect "▸ take up sound timber"
+click want 0
+wait 120
+expect-state will-picker "will-picker state=closed"
+expect-state will-search "will-search state=proposed"
+expect "Woodcraft: take up sound timber"
+quit

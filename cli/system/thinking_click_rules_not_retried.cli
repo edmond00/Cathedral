@@ -3,12 +3,12 @@
 # The wolf in the Test Den is an enemy in the same area, so UnderThreatImpossibleRule refuses any act
 # that is not about facing it (unless the means is discreet). That is an action rule, the click's: a
 # thinking retries only what is refused before the click (the willingness and choice rules), so even
-# with a retry left (pineal_gland=1) "examine the wolf" is offered as a button, and clicking it gives
+# with a retry left (--doubt medium) "examine the wolf" is offered as a button, and clicking it gives
 # the threat's refusal.
 #
 # Woodcraft is pinned as the means (it observes, and is not discreet).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf --grant-mm woodcraft --means-only woodcraft --organs pineal_gland=1
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf --grant-mm woodcraft --means-only woodcraft --doubt medium
 
 wait
 click menu New

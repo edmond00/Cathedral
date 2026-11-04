@@ -1,0 +1,25 @@
+# A hand bears what its arm can: a weapon too heavy for it is held, not wielded.
+#
+# --weapons puts an arming sword (medium) in the right hand and a round shield (medium) in the left,
+# and lifts each arm to level 1 so the loadout can be fought with. --organs arms=0 is applied after
+# that and wins, so both arms are left at 0 — which bears light things only (PartyMember.HoldLimit).
+# The sword stays in the right hand, and the Bellic tab, which reads exactly what the fight reads
+# (PartyMember.WieldedWeapons), calls it too heavy and offers no long blade block. The hunting bow
+# is light, so the weak left arm that ended up with it still wields it: the bar is the weight.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --weapons --organs arms=0 --location-type test --location-id 0 --npc-static --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+manage Bellic
+wait 1
+expect too heavy
+expect-not long blade
+expect bow, left hand, lv 4
+dump
+
+quit

@@ -13,6 +13,7 @@ public class AuguryModusMentis : ModusMentis
         "Reads signs in the flight of birds, the turn of the weather and the entrails of a sacrifice, and draws from them what is coming. Half believes it and half knows it is reading people.";
     public override string SkillMeans       => "the reading of signs for what is coming";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
