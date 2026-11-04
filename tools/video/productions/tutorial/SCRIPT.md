@@ -366,6 +366,7 @@ Back in the shop, a new look at the cobbler.
 > *I notice Publiosh Tommaezoth, the city cobbler, his old army boot hammered with hobnails without looking up. It's thick and untroubled, already asking me something before I have even arrived.*
 
 In the inventory, the boots are already on our feet: a garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds dice in conversation with them.
+These boots give one die of defence on the feet, and they please peasants and soldiers: one more reason to wear them on the road.
 
 The purse is empty again, and that is fine. Every place you visit is kept as a mental map, and each map holds routines: ways back in. Asking for work taught one at the farm.
 The anamnesis decides how many maps you keep, four per point, and the oldest is forgotten first. You can lock the ones you care about.

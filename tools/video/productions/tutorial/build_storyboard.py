@@ -838,10 +838,14 @@ for i in after_trade:
 
 # 14. the boots
 wb, we = rs_clip("wear_boots")
+boots = RS.click(wb, we, label="item:leather_boots")
 RS.game(t, we,
         "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place "
         "is free. Garments can protect, carry things, and please people of a given standing, which adds dice in "
-        "conversation with them.", fade=True)
+        "conversation with them.",
+        # said as the boots' details open (LeatherBoots: DefenseDice 1, DialogueAppeal Peasant, Military)
+        {"text": "These boots give one die of defence on the feet, and they please peasants and soldiers: one more "
+                 "reason to wear them on the road.", "at": round(boots + 0.6, 2)}, fade=True)
 
 # 15. routines
 ob, oe = rs_clip("chorography")

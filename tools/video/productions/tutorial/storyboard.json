@@ -1993,7 +1993,11 @@
    "to": 1720.76,
    "fade": true,
    "vo": [
-    "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds dice in conversation with them."
+    "In the inventory, the boots are already on our feet: a garment goes straight to its place when that place is free. Garments can protect, carry things, and please people of a given standing, which adds dice in conversation with them.",
+    {
+     "text": "These boots give one die of defence on the feet, and they please peasants and soldiers: one more reason to wear them on the road.",
+     "at": 1706.21
+    }
    ]
   },
   {
