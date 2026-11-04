@@ -12,7 +12,6 @@ public sealed class Clay : ConsumableItem
     public override string Description => "A wet lump of grey-brown clay, cool and dense in the hand";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 6;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;
@@ -28,7 +27,6 @@ public sealed class Lichen : ConsumableItem
     public override string Description => "A papery crust of grey-green lichen prised from rock";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 4;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Sparse;

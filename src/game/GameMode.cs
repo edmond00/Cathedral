@@ -99,6 +99,7 @@ public enum GameMode
     /// when the menu is closed.
     /// </summary>
     Trading,
+    Crafting,
 
     /// <summary>
     /// Protagonist is in a work menu with a master or reeve, reached by succeeding a request-job

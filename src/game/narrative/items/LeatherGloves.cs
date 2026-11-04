@@ -10,7 +10,6 @@ public sealed class LeatherGloves : WearableItem
     public override string Description      => "A pair of stiff work gloves in thick undyed leather, cracked at the knuckles";
     public override WearSlot Slot           => WearSlot.Handwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
-    public override int PriceReference => 10;
 
     // Stiff enough to save a knuckle, and unmistakably the hands of someone who works.
     public override int DefenseDice => 1;

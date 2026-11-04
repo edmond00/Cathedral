@@ -1305,6 +1305,12 @@ public static class Config
     
     #region Base Colors
     
+    /// <summary>
+    /// The game's colours. <b>Everything a player sees is purplish, yellowish or greyscale</b> — see
+    /// "Colours" in CLAUDE.md. Red, Green, Blue, Magenta and Cyan below, and the ANSI <see cref="Terminal"/>
+    /// table, exist for the developer tools only (the image-to-text mode, the terminal's test palette, the
+    /// sphere's debug shaders); no screen of the game uses them.
+    /// </summary>
     public static class Colors
     {
         // Basic colors
@@ -1322,13 +1328,8 @@ public static class Config
         public static readonly Vector4 Transparent = new(0.0f, 0.0f, 0.0f, 0.0f);
         
         // Extended colors
-        public static readonly Vector4 LightCyan = new(0.5f, 0.9f, 1.0f, 1.0f);
-        public static readonly Vector4 LightGreen = new(0.5f, 1.0f, 0.5f, 1.0f);
-        public static readonly Vector4 BrightGreen = new(0.4f, 1.0f, 0.4f, 1.0f);
-        public static readonly Vector4 BrightRed = new(1.0f, 0.4f, 0.4f, 1.0f);
         public static readonly Vector4 OrangeYellow = new(1.0f, 0.8f, 0.0f, 1.0f);
-        public static readonly Vector4 Orange = new(1.0f, 0.5f, 0.0f, 1.0f);
-        public static readonly Vector4 DarkOrange = new(0.6f, 0.25f, 0.0f, 1.0f);
+        public static readonly Vector4 Ochre = new(0.85f, 0.65f, 0.15f, 1.0f);       // Warm dark gold: the palette's secondary yellow (vital heat, running, knockdown) — where orange used to be
         public static readonly Vector4 LightPurpleGray = new(0.8f, 0.8f, 0.9f, 1.0f);
         public static readonly Vector4 Gray70 = new(0.7f, 0.7f, 0.7f, 1.0f);
         public static readonly Vector4 Gray90 = new(0.9f, 0.9f, 0.9f, 1.0f);

@@ -58,7 +58,7 @@ public static class FightModeUI
     public const int RunButtonRow      = TopRows - 2;   // row 18
 
     // ── Highlight \u2014 dim color for out-of-range tiles ─────────────────────
-    private static readonly Vector4 ActiveFighterBg = new(0.35f, 0.22f, 0f, 1f); // dark amber
+    private static readonly Vector4 ActiveFighterBg = new(0.30f, 0.24f, 0.02f, 1f); // dark gold
 
     // ── Left pan — vertical fighter detail (cols 0..LeftEnd, rows TopRows..BotStart) ──
 
@@ -525,7 +525,7 @@ public static class FightModeUI
             bool hov    = !runUsed && hoveredButtonRow == RunButtonRow;
             Vector4 runFg = runUsed || !onExit ? Config.Colors.DarkGray35
                           : hov                ? Config.Colors.Yellow
-                          : Config.Colors.Orange;
+                          : Config.Colors.Ochre;
             terminal.Text(x, RunButtonRow,
                 "  RUN AWAY".PadRight(innerW),
                 runFg, Config.Colors.Black);
@@ -637,7 +637,7 @@ public static class FightModeUI
                 break;
 
             case LeftInfoKind.Run:
-                TextLine("RUN", Config.Colors.Orange);
+                TextLine("RUN", Config.Colors.Ochre);
                 y++;
                 WrapText("Flee combat. Requires standing on the exit tile. Need at least one six.", Config.Colors.White);
                 if (fighter != null)
@@ -669,7 +669,7 @@ public static class FightModeUI
                     // A buff has no target and rolls nothing — vital heat IS its cost model, and
                     // level makes it cheaper rather than stronger. A dice line here would be a lie.
                     TextLine($"VH    : {skill.VitalHeatCostFor(fighter, organPartId, activeMedium)}",
-                             Config.Colors.Orange);
+                             Config.Colors.Ochre);
                 }
                 else
                 {
@@ -730,7 +730,7 @@ public static class FightModeUI
                 if (!isLearn && !isBuff && skill.VitalHeatCost > 0)
                 {
                     y++;
-                    TextLine($"VH cost: {skill.VitalHeatCost}", Config.Colors.Orange);
+                    TextLine($"VH cost: {skill.VitalHeatCost}", Config.Colors.Ochre);
                 }
                 break;
 
@@ -960,7 +960,7 @@ public static class FightModeUI
         LogEntryType.Attack        => new Vector4(1.0f, 0.8f, 0.0f, 1.0f), // OrangeYellow
         LogEntryType.Miss          => Config.Colors.DarkGray,
         LogEntryType.Wound         => Config.Colors.BrightPurple,
-        LogEntryType.SpecialEffect => new Vector4(1.0f, 0.5f, 0.0f, 1.0f),  // Orange
+        LogEntryType.SpecialEffect => Config.Colors.Ochre,
         LogEntryType.Learning      => Config.Colors.LightPurple,
         LogEntryType.Defense       => Config.Colors.LightPurpleGray,
         _                          => Config.Colors.White,
@@ -1253,12 +1253,12 @@ public static class FightModeUI
         terminal.DimRect(0, 0, terminal.Width, terminal.Height,
             Config.Colors.DarkGray35, Config.Colors.Black);
         terminal.FillRect(boxX, boxY, boxW, boxH, ' ', Config.Colors.White, Config.Colors.Black);
-        terminal.DrawBox(boxX, boxY, boxW, boxH, BoxStyle.Double, Config.Colors.Orange, Config.Colors.Black);
+        terminal.DrawBox(boxX, boxY, boxW, boxH, BoxStyle.Double, Config.Colors.Ochre, Config.Colors.Black);
 
         int tx = boxX + 2;
         const string title = "── VITAL HEAT ──";
         terminal.Text(boxX + (boxW - title.Length) / 2, boxY + 1, title,
-            Config.Colors.Orange, Config.Colors.Black);
+            Config.Colors.Ochre, Config.Colors.Black);
         terminal.Text(tx, boxY + 2, Truncate($"{fighterName} — {skillName}", boxW - 4),
             Config.Colors.Yellow, Config.Colors.Black);
 
@@ -1271,7 +1271,7 @@ public static class FightModeUI
         {
             bool on = i < filled;
             terminal.SetCell(tx + LabelW + i, boxY + 4, on ? '═' : '─',
-                on ? Config.Colors.Orange : Config.Colors.DarkGray35, Config.Colors.Black);
+                on ? Config.Colors.Ochre : Config.Colors.DarkGray35, Config.Colors.Black);
         }
         terminal.Text(tx + LabelW + BarW + 1, boxY + 4, $"{drawn.Count}/{required}",
             Config.Colors.LightGray, Config.Colors.Black);
@@ -1335,7 +1335,7 @@ public static class FightModeUI
         };
         Vector4 color = result == FightResult.PartyWon ? Config.Colors.GoldYellow
                       : result == FightResult.EnemyWon ? Config.Colors.BrightPurple
-                      : Config.Colors.Orange;
+                      : Config.Colors.Ochre;
 
         int cx = 50 - msg.Length / 2;
         int cy = 50;

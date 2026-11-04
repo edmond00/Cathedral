@@ -1032,7 +1032,7 @@ budget reaches, and they were designed together — changing one alone re-breaks
     action modus mentis and no flag removes one.
 
 **Iterative thinking and doubt: a thinking mind's second thoughts.** Every modus mentis with the
-Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R20, fatal): **Low** thinks once and
+Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R23, fatal): **Low** thinks once and
 is never doubted, **Medium** may try again once, **High** twice — a try spent by a refusal or by the
 player's NO, never by a YES — and the player may doubt at Medium and High while a try remains. It is
 the mind's own, chosen for its persona (questioning, weighing, checking minds High; minds that know
@@ -1959,8 +1959,9 @@ share one. A new weapon declares `Bulk`, not `Size`; there is no way to author a
 **A real weapon out-strikes a bare limb.** `Level` is the weapon medium's level, multiplied into dice
 exactly as a hand's score is, and a hand or foot tops out at 3 (`WeaponItem.StrikingLimbCeiling`). So
 every weapon is levelled 4–6, and only an `IsImprovised` one (branch, wooden stick — level 0, opens the
-category's skills and lends nothing) may sit at or under the ceiling. The price is ten copper per level
-above the ceiling. A new weapon picks a level above 3 or declares itself improvised.
+category's skills and lends nothing) may sit at or under the ceiling. Each level above the ceiling adds
+eight copper to the price (`ItemPricing.PerWeaponLevel`). A new weapon picks a level above 3 or declares
+itself improvised.
 
 **The arm behind a hand decides what it can hold** (`PartyMember.HoldLimit`, which reads the Hand Load
 stats — `RightHandLoadStat` / `LeftHandLoadStat`, shown under each arm on the Anatomy tab, so the figure
@@ -2229,6 +2230,34 @@ items. `--item-audit` prints each tag's sellers, buyers and items, and marks a t
 The test location is the exception: there a person trades wherever their schedule takes them, because
 it is a fixture and the trade scripts meet the farmer in the wood. `cli/verb/propose_to_buy/on_premises.cli`
 and `off_premises.cli` exercise the real rule on the farm, whose area names are written out.
+
+### What a price is made of
+
+**No item writes its price.** `Item.PriceReference` is not virtual: `ItemPricing` works it out from what
+the item already is, and caches it per class.
+
+```
+price = matter × craftsmanship + labour + function + rarity       (or PriceOverride)
+```
+
+| term | read from |
+|---|---|
+| matter | crafting materials: `ItemMaterials.Units` × the dearest material's `UnitValue` (a refined one dearer than its raw one). No material: the dearest `ItemKind`'s `KindValue`, one portion per light, two when medium, four when heavy |
+| craftsmanship, labour | `Item.Craftsmanship` (Raw ×1 / Stock ×1.5+1 / Plain ×2+2 / Fine ×4+4 / Masterwork ×5+5). Defaulted by `DefaultCraftsmanship`: eaten, drunk, of no material, or raw stuff in `Crafting`/`Other` is Raw; an Aristocrat-only garment is Fine, a Pauper-only one Stock; everything else Plain |
+| function | weapon level above the fist × 8, armour dice × 12, a tool's usage above 1 × 2, a container's slots × ¼ |
+| rarity | `Item.Rarity`, **added** (Uncommon 5, Scarce 12, Rare 30, Precious 60), so a heavy rare thing does not run away |
+
+Why it is a formula: crafting pays for a recipe in material units and breaking an item down gives
+them back, so a price written by hand turned the smithy into a money machine (an iron bar at 10 copper
+made seven daggers at 20) and the saddler into a loss. Built on the same units, an item is never worth
+less than what it breaks down into, and a recipe always sells for more than it costs — `--item-audit`
+fails if either stops being true, and if a price runs past the cap of 90.
+
+**To move a price, move a property, never add a number.** An item that is stock (an iron bar, flour,
+ale), made by hand of raw materials (an amphora, an abacus) or finer than its kind declares
+`Craftsmanship`; a spice, a gem or a relic declares `Rarity`; a diamond would be `Rarity.Precious`.
+`PriceOverride` is for a worth the formula cannot see at all — a promissory note is worth its debt —
+and is used once. Weight sets matter, so a price that reads wrong is often a weight label that is wrong.
 
 ### A lesson from the circumstances, not only from the act
 

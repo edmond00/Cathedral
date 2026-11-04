@@ -110,10 +110,30 @@ public abstract class Item
     public virtual CoinType PriceCoin => CoinType.Copper;
 
     /// <summary>
-    /// Reference price of one unit, expressed in <see cref="PriceCoin"/>. Must be in the
-    /// range 1..90 — NPC catalogues apply a small variation on top, clamped to [1, 100].
+    /// Reference price of one unit, expressed in <see cref="PriceCoin"/>, in the range 1..90 — NPC
+    /// catalogues apply a small variation on top, clamped to [1, 100]. <b>Never written by hand</b>:
+    /// it is worked out from what the item is made of, the work in it, what it does and how rare it is
+    /// (<see cref="ItemPricing"/>). To move a price, move one of those — <see cref="Craftsmanship"/>,
+    /// <see cref="Rarity"/>, or as a last resort <see cref="PriceOverride"/>.
     /// </summary>
-    public virtual int PriceReference => 1;
+    public int PriceReference => ItemPricing.Price(this);
+
+    /// <summary>
+    /// How much work stands between this item and the world it came from. Worked out from the item's
+    /// category and materials (<see cref="ItemPricing.DefaultCraftsmanship"/>); an item that is stock
+    /// (an iron bar, flour, ale), made by hand of raw materials (an amphora, an abacus), or finer than
+    /// its kind says so here.
+    /// </summary>
+    public virtual Craftsmanship Craftsmanship => ItemPricing.DefaultCraftsmanship(this);
+
+    /// <summary>How hard this item is to come by, whatever it is made of. A spice, a gem, a relic.</summary>
+    public virtual Rarity Rarity => Rarity.Common;
+
+    /// <summary>
+    /// A price the formula cannot reach because the item's worth is not in it at all — a promissory
+    /// note is worth the debt it records. Null for everything else, which is nearly everything.
+    /// </summary>
+    public virtual int? PriceOverride => null;
 
     /// <summary>
     /// Extra lines shown in the inventory info panel, <em>below</em> the description.

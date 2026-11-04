@@ -31,7 +31,10 @@ namespace Cathedral.Game.Narrative;
 ///   R17 MM has Will ⇔ it declares 1–5 will targets; a Will MM has neither Observation nor Thinking
 ///   R18 every anatomy that can learn a Will MM can perform at least one verb of each of its targets
 ///   R19 a Will MM declares the places it belongs in (WillPlaces), area kinds only
-///   R20 MM has Thinking ⇔ it declares a DoubtLevel; a Will MM is Medium (it does not declare one)
+///   R20 MM has Craft ⇔ it is a CraftingModusMentis, whose station, tool and 1–5 recipes are real
+///   R21 no two crafting MMs share a station and a tool
+///   R22 every crafting station kind is worked by at least one crafting MM
+///   R23 MM has Thinking ⇔ it declares a DoubtLevel; a Will MM is Medium (it does not declare one)
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -255,17 +258,36 @@ public static class ModusMentisRuleValidator
             if (!mm.IsWill && mm.WillPlaces.Count > 0)
                 violations.Add($"[R19] {mm.ModusMentisId}: declares WillPlaces but is not a will");
 
-            // R20 — a thinking mind says how readily it thinks again (iterative thinking and doubt), as
+            // R20 — the Craft function and the crafting declaration imply each other, and the declaration
+            // names real things: a station kind, a registered implement, one to five registered items.
+            // Every one of them fails silently otherwise — USE offered nowhere, a tool nobody can carry,
+            // a recipe the menu cannot instantiate.
+            bool craftFn = fns.Contains(ModusMentisFunction.Craft);
+            if (craftFn != mm is Crafting.CraftingModusMentis)
+                violations.Add($"[R20] {mm.ModusMentisId}: the Craft function and CraftingModusMentis must go together");
+            if (mm is Crafting.CraftingModusMentis craft)
+            {
+                if (Scene.CraftingStations.MaterialOf(craft.Station) == null)
+                    violations.Add($"[R20] {mm.ModusMentisId}: station {craft.Station.Name} carries no [CraftingStation]");
+                if (craft.ToolItemId.Length == 0)
+                    violations.Add($"[R20] {mm.ModusMentisId}: tool {craft.Tool.Name} is not a registered item");
+                if (craft.Recipes.Count is 0 or > Crafting.CraftingModusMentis.MaxRecipes)
+                    violations.Add($"[R20] {mm.ModusMentisId}: declares {craft.Recipes.Count} recipes — a trade makes 1 to {Crafting.CraftingModusMentis.MaxRecipes} things");
+                foreach (var r in craft.Recipes.Where(r => !ItemRegistry.Instance.All.Any(i => i.GetType() == r)))
+                    violations.Add($"[R20] {mm.ModusMentisId}: recipe {r.Name} is not a registered item");
+            }
+
+            // R23 — a thinking mind says how readily it thinks again (iterative thinking and doubt), as
             // R15 makes the Emotion function and its triggers imply each other. A will is Medium by the
             // base class and may not change it: its goal is set by its course, and nothing reads a level
             // off a mind that cannot think.
             bool thinks = fns.Contains(ModusMentisFunction.Thinking);
             if (thinks && mm.Doubt == null)
-                violations.Add($"[R20] {mm.ModusMentisId}: has the Thinking function but declares no Doubt level");
+                violations.Add($"[R23] {mm.ModusMentisId}: has the Thinking function but declares no Doubt level");
             else if (!thinks && !mm.IsWill && mm.Doubt != null)
-                violations.Add($"[R20] {mm.ModusMentisId}: declares a Doubt level ({mm.Doubt}) but cannot think");
+                violations.Add($"[R23] {mm.ModusMentisId}: declares a Doubt level ({mm.Doubt}) but cannot think");
             else if (mm.IsWill && mm.Doubt != DoubtLevel.Medium)
-                violations.Add($"[R20] {mm.ModusMentisId}: a will is Medium doubt; it declares {mm.Doubt}");
+                violations.Add($"[R23] {mm.ModusMentisId}: a will is Medium doubt; it declares {mm.Doubt}");
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;
@@ -339,6 +361,19 @@ public static class ModusMentisRuleValidator
 
         // R11 / R12 — anatomy reach
         violations.AddRange(CollectAnatomyViolations(all));
+
+        // R21 — no two trades share a station and a tool. The implement combined with USE is what says
+        // which trade is at work, and two trades on one pair would leave that to chance.
+        foreach (var clash in all.OfType<Crafting.CraftingModusMentis>()
+                                 .GroupBy(c => (c.Station, c.Tool)).Where(g => g.Count() > 1))
+            violations.Add($"[R21] {string.Join(", ", clash.Select(c => c.ModusMentisId))}: share the station "
+                           + $"{clash.Key.Station.Name} and the tool {clash.Key.Tool.Name}");
+
+        // R22 — every station kind is worked by some trade. A station nobody can use is furniture that
+        // promises a USE never offered.
+        foreach (var station in Scene.CraftingStations.All
+                     .Where(s => !all.OfType<Crafting.CraftingModusMentis>().Any(c => c.Station == s)))
+            violations.Add($"[R22] station {station.Name} is worked by no crafting modus mentis");
 
         return violations;
     }

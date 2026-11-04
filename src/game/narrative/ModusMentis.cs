@@ -126,7 +126,7 @@ public abstract class ModusMentis
     /// thinking and doubt (<see cref="DoubtLevel"/>). Every modus mentis with the
     /// <see cref="ModusMentisFunction.Thinking"/> function declares one, chosen for its persona: a mind
     /// that questions itself, weighs and checks is <see cref="DoubtLevel.High"/>, a mind that knows at a
-    /// glance or acts on appetite is <see cref="DoubtLevel.Low"/>. Rule R20 makes the function and the
+    /// glance or acts on appetite is <see cref="DoubtLevel.Low"/>. Rule R23 makes the function and the
     /// declaration imply each other.
     ///
     /// <para>A will is not asked: its goal is set by its course, so it never doubts, and it is
@@ -316,5 +316,6 @@ public enum ModusMentisFunction
     Speaking,      // Generates player dialogue replicas in conversation
     Fighting,      // Declarative: this modusMentis unlocks fighting skills (main or secondary)
     Emotion,       // Reacts to what an action produced: declares outcome types that move the spleen
-    Will           // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Will,          // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Craft          // Works one station with one tool: unlocks USE on it and its recipes (CraftingModusMentis)
 }

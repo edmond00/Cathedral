@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.Rules;
 
@@ -102,7 +103,7 @@ public static class ToolCombinationRules
     /// combined from the pack is struck with, not carried.
     /// </summary>
     public static ToolCombinationGate Resolve(Verb? verb, Item item, ToolProficiency proficiency,
-                                              bool wieldable = true)
+                                              bool wieldable = true, VerbAction? view = null)
     {
         if (proficiency == ToolProficiency.None) return ToolCombinationGate.NoProficiency;
 
@@ -117,7 +118,7 @@ public static class ToolCombinationRules
                  : !wieldable                              ? ToolCombinationGate.TooHeavy
                  :                                           ToolCombinationGate.MadeForIt;
 
-        if (IsMadeFor(verb, item))               return ToolCombinationGate.MadeForIt;
+        if (IsMadeFor(verb, item, view))         return ToolCombinationGate.MadeForIt;
         if (IsMadeForOtherWork(verb, item))      return ToolCombinationGate.NotItsPurpose;
         if (verb?.ToolUse == ToolUsage.Excluded) return ToolCombinationGate.ExcludedVerb;
 
@@ -131,7 +132,10 @@ public static class ToolCombinationRules
     /// exactly these.
     /// </summary>
     public static bool IsCombinable(Item item)
-        => (item.Category is ItemCategory.Tool or ItemCategory.Weapon || item.MadeForVerbIds.Count > 0)
+        => (item.Category is ItemCategory.Tool or ItemCategory.Weapon || item.MadeForVerbIds.Count > 0
+            // A trade's implement is combinable whatever its category: the potter's rib and the
+            // candle mould are stock on a shelf until somebody brings them to their station.
+            || Cathedral.Game.Narrative.Crafting.CraftingModusMentis.IsCraftTool(item))
            && (item is not IContainer c || c.Contents.Count == 0);
 
     /// <summary>
@@ -149,11 +153,11 @@ public static class ToolCombinationRules
     /// tool, or naming the verb among the acts it was made for. Both are matched by id, never by
     /// display name, which is content and free to change.
     /// </summary>
-    public static bool IsMadeFor(Verb? verb, Item item)
+    public static bool IsMadeFor(Verb? verb, Item item, VerbAction? view = null)
     {
         if (verb == null) return false;
 
-        return verb.ReferenceToolIds.Contains(item.ItemId)
+        return verb.ReferenceToolIdsFor(view).Contains(item.ItemId)
             || item.MadeForVerbIds.Contains(verb.VerbId);
     }
 

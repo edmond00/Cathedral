@@ -312,11 +312,25 @@ prints each weapon's size, weight, level and the arm level that holds it:
 - the real weapons unbalanced across the three hold tiers — fewer than a fifth of them light, medium
   or heavy (an arm of level 0/1/2 holds up to that weight), or any insignificant weapon.
 
+**The price rules fail the suite too.** No item writes its price: `ItemPricing` works it out as
+`matter × craftsmanship + labour + function + rarity` (see "What a price is made of" in
+`src/game/CLAUDE.md`), and the Prices section prints the per-material unit values, how many items sit
+at each `Craftsmanship` and `Rarity` (and how many declare it rather than take the default), the
+overrides, and min/median/max per category. It fails (✗):
+
+- a price whose sum runs past `ItemPricing.MaxPrice` (90) — clamped, so it would read like every
+  other capped thing;
+- an item worth less than the material it breaks down into at a station;
+- a refined material (metal, cloth, leather) no dearer by the unit than its raw one;
+- a crafting recipe that sells for no more than the material it costs at its station — making it
+  would lose money. Fix it with the output's `Craftsmanship`, not a price.
+
 It also samples `FightResolver.PreRollHitLocation` 60k times and compares the result against each
 body part's share of the wound pool. Armour needs the hit location *before* the dice, so unaimed
 attacks now pre-roll one; that check is the proof the pre-roll did not change where blows land.
 
-Run it after touching any item, `WearableItem`, `ArmorSections`, or the weight tiers.
+Run it after touching any item, `WearableItem`, `ArmorSections`, the weight tiers, `ItemPricing` or a
+crafting recipe.
 
 ### Checking what there is to DO in a location
 

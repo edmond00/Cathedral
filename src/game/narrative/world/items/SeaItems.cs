@@ -71,7 +71,6 @@ public sealed class Shell : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
-    public override int PriceReference => 2;
 }
 
 public sealed class Seaweed : ConsumableItem
@@ -82,7 +81,6 @@ public sealed class Seaweed : ConsumableItem
     public override string Description => "A heavy strand of brown seaweed, cool and slick";
     public override List<ItemTag> Tags => new() { ItemTag.Fish };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -100,7 +98,6 @@ public sealed class Driftwood : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Medium;
-    public override int PriceReference => 2;
 }
 
 public sealed class RopeFragment : Item
@@ -112,5 +109,4 @@ public sealed class RopeFragment : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Light;
-    public override int PriceReference => 2;
 }

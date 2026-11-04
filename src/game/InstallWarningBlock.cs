@@ -23,7 +23,7 @@ public static class InstallWarningBlock
 
         int width = terminal.Width - 8;
         terminal.CenteredText(row++, "The language model install does not match this build:",
-            Config.Colors.BrightRed, Config.Colors.Black);
+            Config.Colors.BrightPurple, Config.Colors.Black);
         row++;
 
         int shown = 0;

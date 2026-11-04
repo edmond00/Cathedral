@@ -502,10 +502,10 @@ public static class BuildingRooms
         items: new() { new ItemElement(new Candle()) },
         moods: new[] { "dim", "waxy", "quiet", "old" }) { Senses = SensoryProfile.Odorous, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "firecraft", ["smell"] = "smoke_reading" } };
 
-    private static PointOfInterest BuildSpinningWheel() => new WheelPointOfInterest(
+    private static PointOfInterest BuildSpinningWheel() => new SpinningWheelPointOfInterest(
         displayName: "Spinning Wheel",
         descriptions: new() { "A worn wooden spinning wheel in the corner, the spindle dusty from disuse" },
-        moods: new[] { "quiet", "worn", "still", "dusty", "old" }) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "threadwork", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } };
+        moods: new[] { "quiet", "worn", "still", "dusty", "old" }) { Senses = new SensoryProfile(Examine: true, Contemplate: true, Listen: true), VerbModiMentis = new Dictionary<string, string> { ["examine"] = "spinning", ["listen"] = "forge_ear", ["contemplate"] = "journeyman_eye" } };
 
     private static PointOfInterest BuildRushMat() => new MatPointOfInterest(
         displayName: "Rush Mat",

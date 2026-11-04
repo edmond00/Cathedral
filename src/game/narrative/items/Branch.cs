@@ -24,5 +24,4 @@ public sealed class Branch : WeaponItem
     public override int    UsageLevel     => 1;
     // Timber, not the blacksmith's Ironwork, and priced as the wood it is.
     public override List<ItemTag> Tags    => new() { ItemTag.Wood, ItemTag.Timber };
-    public override int PriceReference    => 3;
 }

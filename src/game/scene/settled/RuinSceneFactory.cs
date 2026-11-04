@@ -74,6 +74,22 @@ public sealed class RuinSceneFactory : SettledSceneFactory
                 Items(() => new Inscription(), () => new OldCoin()), new[] { "cut", "worn" })
             { Senses = SensoryProfile.Beautiful, VerbModiMentis = Teach(("examine", "decipher"), ("contemplate", "elegy")) }));
 
+        // Where the place had a forge — a garrison, a settlement, a mine — its anvil outlived the roof.
+        // Nobody owns a ruin, so whoever finds the anvil may work it without asking anyone's leave.
+        if (what is "fortress" or "settlement" or "mine")
+        {
+            var smithy = Ruin("Old Smithy", "in the old smithy", "Three walls of a forge, the hearth still standing and an anvil rusting by it",
+                new[] { "rusted", "roofless", "sooty" },
+                new AnvilPointOfInterest("Old Anvil", new() { "A pitted anvil on a rotting stump, its face still true under the rust" },
+                    Items(() => new Horseshoe()), new[] { "rusted", "pitted", "heavy" })
+                { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "blacksmithing")) });
+            smithy.PointsOfInterest.Add(new ForgeHearthPointOfInterest("Cold Forge Hearth",
+                new() { "A brick hearth black with old fires, the bellows long rotted away from its side" },
+                Items(() => new Coal()), new[] { "cold", "blackened", "cracked" })
+                { Senses = SensoryProfile.Examinable, VerbModiMentis = Teach(("examine", "smelting")) });
+            _areas.Add(smithy);
+        }
+
         var section = new Section(Title, new() { $"What is left of a {what}, given back to the weather" },
             seed => new NoisyGenerator { Seed = seed, Density = 0.80f });
         foreach (var a in _areas) section.Areas.Add(a);
