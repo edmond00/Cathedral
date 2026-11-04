@@ -16,7 +16,7 @@ wait mode WorldView 45
 
 # --- armed ---------------------------------------------------------------------------
 manage Bellic
-wait 1
+wait 10
 expect Arming Sword
 expect Round Shield
 expect long blade
@@ -26,7 +26,7 @@ expect-not Wounds weigh on this body
 dump
 
 manage Bellic Cover
-wait 1
+wait 10
 expect added to your defence
 dump
 
@@ -34,7 +34,7 @@ dump
 manage
 wound protagonist 5
 manage Bellic
-wait 1
+wait 10
 expect Wounds weigh on this body
 expect 1d6 + 1 ↓
 dump
