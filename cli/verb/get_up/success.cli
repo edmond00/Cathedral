@@ -37,7 +37,7 @@ advance 12 180
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose beast_sense
 advance 12 180
 click action 0
 choose 0
@@ -50,7 +50,7 @@ advance 12 180
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose beast_sense
 advance 12 180
 click action 0
 choose 0
@@ -76,7 +76,7 @@ advance 12 180
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose beast_sense
 advance 12 180
 click action 0
 choose 0
@@ -95,7 +95,7 @@ regions
 
 click keyword 0
 choose 0
-choose 0
+choose beast_sense
 advance 12 180
 regions
 

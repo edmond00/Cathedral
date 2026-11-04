@@ -25,7 +25,7 @@ advance 12 180
 doubt no
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 # Expected text is matched line by line on the wrapped screen, hence the short fragments.
 expect But is it truly wise to

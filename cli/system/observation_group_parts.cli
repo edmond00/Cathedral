@@ -20,7 +20,7 @@ expect surrounding buildings
 
 click keyword buildings
 choose 1
-choose 0
+choose bushcraft
 advance 12 180
 expect My attention is drawn to a merchant house
 expect My attention shifts to a counting house
@@ -28,7 +28,7 @@ expect My attention shifts to a counting house
 goal scale_up
 click keyword house
 choose 0
-choose 0
+choose avarice
 advance 12 180
 expect scale the merchant house wall
 quit

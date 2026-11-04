@@ -35,7 +35,7 @@ goal move
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0
@@ -60,7 +60,7 @@ expect-state where trespass=no
 # --- the trade, which teaches the Meet and the Buy routines -------------------
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0

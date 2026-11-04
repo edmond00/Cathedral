@@ -35,7 +35,7 @@ goal gather
 # spelled. Index means "whatever this phase opened on".
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect gather
 
@@ -44,7 +44,7 @@ expect gather
 # not taken, the phase is idle and that button reads LEAVE, which walks out of the location.
 click keyword 0
 choose 2
-choose 0
+choose friendship
 choose 0
 advance 12 180
 expect [BRINDLETAIL]
@@ -56,7 +56,7 @@ expect [BRINDLETAIL]
 goal gather
 click keyword 0
 choose 0
-choose 0
+choose birdsong
 advance 12 180
 click action 0
 choose 0

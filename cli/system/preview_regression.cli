@@ -28,7 +28,7 @@ expect attention
 strategy succeed
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 wait 45
 
 # Thinking preview: reasoning part first, gated by CONTINUE.

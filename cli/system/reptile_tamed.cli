@@ -21,7 +21,7 @@ strategy succeed
 goal appease
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0
@@ -37,7 +37,7 @@ advance 12 180
 goal tame
 click keyword 0
 choose 0
-choose 0
+choose beast_sense
 advance 12 180
 click action 0
 choose 0

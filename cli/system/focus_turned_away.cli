@@ -36,7 +36,7 @@ expect I am not interested in a test bench. My attention shifts to a butterfly
 # focuses on it (and, under --refuse-focus, turns away from it in turn).
 click keyword butterfly
 choose 1
-choose 1
+choose esprit_de_corps
 advance 12 180
 expect I am not interested in a butterfly
 
