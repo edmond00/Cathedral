@@ -526,11 +526,11 @@ public class RoughCarpentryModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "rough_carpentry";
     public override string DisplayName      => "Rough Carpentry";
     public override string MenuDescription =>
-        "Splits and hews wood with the axe into torches, wicker baskets and wax tablets. Sets the arms to the axe and inclines toward quick, rough work.";
+        "Splits and hews wood with the axe into torches, wicker baskets, wax tablets, caskets and carrying frames. Sets the arms to the axe and inclines toward quick, rough work.";
     public override string SkillMeans       => "the hewing of rough woodwork";
     public override Type Station => typeof(Cathedral.Game.Scene.WorkbenchPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Axe);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.Torch), typeof(Cathedral.Game.Narrative.Items.WickerBasket), typeof(Cathedral.Game.Narrative.World.Items.WaxTablet) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.Torch), typeof(Cathedral.Game.Narrative.Items.WickerBasket), typeof(Cathedral.Game.Narrative.World.Items.WaxTablet), typeof(Cathedral.Game.Narrative.Items.Casket), typeof(Cathedral.Game.Narrative.Items.FramePack) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "arms", "hands" };
 
@@ -557,7 +557,7 @@ public class NettingModusMentis : CraftingModusMentis
     public override string SkillMeans       => "the knotting of nets and cords";
     public override Type Station => typeof(Cathedral.Game.Scene.LoomPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.Items.BoneNeedle);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Net), typeof(Cathedral.Game.Narrative.Items.FishingNet), typeof(Cathedral.Game.Narrative.World.Items.Lariat), typeof(Cathedral.Game.Narrative.World.Items.Tumpline) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Net), typeof(Cathedral.Game.Narrative.Items.FishingNet), typeof(Cathedral.Game.Narrative.World.Items.Lariat), typeof(Cathedral.Game.Narrative.World.Items.Tumpline), typeof(Cathedral.Game.Narrative.Items.NetBag) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "hands", "eyes" };
 
@@ -584,7 +584,7 @@ public class BasketryModusMentis : CraftingModusMentis
     public override string SkillMeans       => "the weaving of baskets and straw";
     public override Type Station => typeof(Cathedral.Game.Scene.LoomPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.Items.Knife);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Basket), typeof(Cathedral.Game.Narrative.World.Items.PickingBasket), typeof(Cathedral.Game.Narrative.World.Items.PlanterHat), typeof(Cathedral.Game.Narrative.Items.FarmerStrawHat) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Basket), typeof(Cathedral.Game.Narrative.World.Items.PickingBasket), typeof(Cathedral.Game.Narrative.World.Items.PlanterHat), typeof(Cathedral.Game.Narrative.Items.FarmerStrawHat), typeof(Cathedral.Game.Narrative.Items.BackBasket) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "hands", "eyes" };
 
@@ -796,11 +796,11 @@ public class LeatherGoodsModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "leather_goods";
     public override string DisplayName      => "Leather Goods";
     public override string MenuDescription =>
-        "Cuts heavy leather and works it with the mallet into jerkins, buckets and made-to-measure shoes. Sets the arms to thick hide and inclines toward the tough and the lasting.";
+        "Cuts heavy leather and works it with the mallet into jerkins, buckets, made-to-measure shoes, game bags and saddlebags. Sets the arms to thick hide and inclines toward the tough and the lasting.";
     public override string SkillMeans       => "the working of heavy leather";
     public override Type Station => typeof(Cathedral.Game.Scene.LeatherBenchPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Mallet);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Jerkin), typeof(Cathedral.Game.Narrative.World.Items.LeatherBucket), typeof(Cathedral.Game.Narrative.World.Items.BespokeShoes) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Jerkin), typeof(Cathedral.Game.Narrative.World.Items.LeatherBucket), typeof(Cathedral.Game.Narrative.World.Items.BespokeShoes), typeof(Cathedral.Game.Narrative.Items.GameBag), typeof(Cathedral.Game.Narrative.Items.Saddlebags) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.CobbleryArea), typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "arms", "hands" };
 
@@ -977,4 +977,166 @@ public class StonecuttingModusMentis : CraftingModusMentis
 When acting, you find the stone's bed, set the chisel, and take it down a blow at a time, never forcing, until the shape was always there.
 
 Your language is slow and certain: 'find the bed,' 'one blow at a time,' 'stone forgives nothing.'";
+}
+
+/// <summary>Pursemaking — the cutting and sewing of pouches and purses. Works the LeatherBench with the Shears.</summary>
+public class PursemakingModusMentis : CraftingModusMentis
+{
+    public override string ModusMentisId    => "pursemaking";
+    public override string DisplayName      => "Pursemaking";
+    public override string MenuDescription =>
+        "Cuts soft leather with shears and sews it into pouches, scrips, purses, waterskins and baldrics. Sets the hands to small leather and inclines toward what is carried close.";
+    public override string SkillMeans       => "the cutting and sewing of pouches and purses";
+    public override Type Station => typeof(Cathedral.Game.Scene.LeatherBenchPointOfInterest);
+    public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Shears);
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.BeltPouch), typeof(Cathedral.Game.Narrative.Items.Scrip), typeof(Cathedral.Game.Narrative.Items.NeckPurse), typeof(Cathedral.Game.Narrative.Items.Waterskin), typeof(Cathedral.Game.Narrative.Items.BaldricPouch) };
+    public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.CobbleryArea), typeof(Cathedral.Game.Scene.WorkshopArea) };
+    public override string[] Organs        => new[] { "hands", "eyes" };
+
+    public override string PersonaTone     => "a pursemaker who has sewn a hidden pocket into every purse she ever sold";
+    public override string PersonaReminder  => "pursemaker";
+    public override string PersonaReminder2 => "someone who knows where everybody keeps their money";
+    public override string StyleInstruction =>
+        "Neat and canny - attend to flaps, toggles and what a purse must keep safe.";
+
+    public override string PersonaPrompt => @"You are the inner voice of PURSEMAKING, the shears of the pouch.
+
+When acting, you cut the leather with the shears, fold the gusset, sew the seams inside out, turn it, and set a toggle no thief can lift in a crowd.
+
+Your language is neat and canny: 'a flap over everything,' 'sew it inside out,' 'a purse is only as good as its knot.'";
+}
+
+/// <summary>Bagmaking — the cutting and sewing of cloth bags. Works the CuttingTable with the WoolShears.</summary>
+public class BagmakingModusMentis : CraftingModusMentis
+{
+    public override string ModusMentisId    => "bagmaking";
+    public override string DisplayName      => "Bagmaking";
+    public override string MenuDescription =>
+        "Cuts canvas and linen with the big shears and sews them into pouches, satchels, bundles, purses and knapsacks. Sets the hands to stout cloth and inclines toward what is carried on the road.";
+    public override string SkillMeans       => "the cutting and sewing of cloth bags";
+    public override Type Station => typeof(Cathedral.Game.Scene.CuttingTablePointOfInterest);
+    public override Type Tool    => typeof(Cathedral.Game.Narrative.Items.WoolShears);
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.HerbPouch), typeof(Cathedral.Game.Narrative.Items.Satchel), typeof(Cathedral.Game.Narrative.Items.Bundle), typeof(Cathedral.Game.Narrative.Items.GarterPurse), typeof(Cathedral.Game.Narrative.Items.Knapsack) };
+    public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.TailoryArea), typeof(Cathedral.Game.Scene.WorkshopArea) };
+    public override string[] Organs        => new[] { "hands", "arms" };
+
+    public override string PersonaTone     => "a bagmaker by the town gate who sews for every traveller who passes it";
+    public override string PersonaReminder  => "bagmaker";
+    public override string PersonaReminder2 => "someone who looks at a load and sees the bag it needs";
+    public override string StyleInstruction =>
+        "Brisk and roomy - think in straps, gussets and what a load weighs.";
+
+    public override string PersonaPrompt => @"You are the inner voice of BAGMAKING, the shears of the road.
+
+When acting, you cut the canvas with the shears, double the bottom, sew the straps on with a cross of stitches, and test it with a sack of stones.
+
+Your language is brisk and roomy: 'double the bottom,' 'cross-stitch the straps,' 'a bag that splits on the road splits at the worst place.'";
+}
+
+/// <summary>Daggersmithing — the forging and burnishing of daggers and curved blades. Works the Anvil with the Burnisher.</summary>
+public class DaggersmithingModusMentis : CraftingModusMentis
+{
+    public override string ModusMentisId    => "daggersmithing";
+    public override string DisplayName      => "Daggersmithing";
+    public override string MenuDescription =>
+        "Forges daggers, seaxes, stilettos and curved swords and burnishes them bright. Sets the hands to the burnisher and inclines toward quick, close blades.";
+    public override string SkillMeans       => "the forging and burnishing of daggers and curved blades";
+    public override Type Station => typeof(Cathedral.Game.Scene.AnvilPointOfInterest);
+    public override Type Tool    => typeof(Cathedral.Game.Narrative.Items.Burnisher);
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.Seax), typeof(Cathedral.Game.Narrative.Items.RondelDagger), typeof(Cathedral.Game.Narrative.Items.Stiletto), typeof(Cathedral.Game.Narrative.Items.Falchion), typeof(Cathedral.Game.Narrative.Items.Scimitar) };
+    public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.ForgeArea), typeof(Cathedral.Game.Scene.StreetArea) };
+    public override string[] Organs        => new[] { "hands", "eyes" };
+
+    public override string PersonaTone     => "a daggersmith whose stilettos are carried by people who never say what they do";
+    public override string PersonaReminder  => "daggersmith";
+    public override string PersonaReminder2 => "someone who prefers a short blade and a quiet word";
+    public override string StyleInstruction =>
+        "Sly and polished - attend to points, curves and the gleam of a finished blade.";
+
+    public override string PersonaPrompt => @"You are the inner voice of DAGGERSMITHING, the burnisher of short blades.
+
+When acting, you draw the blade, grind the point needle-fine or the curve sweet, and burnish it until your own eye looks back at you from the steel.
+
+Your language is sly and polished: 'the point is the whole of it,' 'burnish until it reflects,' 'a short blade is a long argument ended.'";
+}
+
+/// <summary>Macesmithing — the forging of maces and socketed heads. Works the Anvil with the Mandrel.</summary>
+public class MacesmithingModusMentis : CraftingModusMentis
+{
+    public override string ModusMentisId    => "macesmithing";
+    public override string DisplayName      => "Macesmithing";
+    public override string MenuDescription =>
+        "Forms sockets over the mandrel and forges the heads of maces, spiked maces, horseman's picks and bearded axes. Sets the arms to the mandrel and inclines toward the crushing blow.";
+    public override string SkillMeans       => "the forging of maces and socketed heads";
+    public override Type Station => typeof(Cathedral.Game.Scene.AnvilPointOfInterest);
+    public override Type Tool    => typeof(Cathedral.Game.Narrative.Items.Mandrel);
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.Mace), typeof(Cathedral.Game.Narrative.Items.FlangedMace), typeof(Cathedral.Game.Narrative.Items.MorningStar), typeof(Cathedral.Game.Narrative.Items.HorsemansPick), typeof(Cathedral.Game.Narrative.Items.BeardedAxe) };
+    public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.ForgeArea) };
+    public override string[] Organs        => new[] { "arms", "hands" };
+
+    public override string PersonaTone     => "a macesmith who has heard his work ring on a helm and grinned";
+    public override string PersonaReminder  => "macesmith";
+    public override string PersonaReminder2 => "someone who believes an edge is a luxury";
+    public override string StyleInstruction =>
+        "Blunt and cheerful - think in flanges, sockets and weight at the head.";
+
+    public override string PersonaPrompt => @"You are the inner voice of MACESMITHING, the mandrel of the crushing head.
+
+When acting, you wrap the hot iron round the mandrel to form the socket, weld on the flanges or the spikes, and fit it to the haft so it never turns.
+
+Your language is blunt and cheerful: 'weight at the head,' 'a socket that turns is a weapon that fails,' 'armour bends; that is the point.'";
+}
+
+/// <summary>Polearm-making — the shaving and hafting of long shafts. Works the Workbench with the Spokeshave.</summary>
+public class PolearmMakingModusMentis : CraftingModusMentis
+{
+    public override string ModusMentisId    => "polearm_making";
+    public override string DisplayName      => "Polearm-making";
+    public override string MenuDescription =>
+        "Shaves long ash shafts round with the spokeshave and hafts spear heads, glaives and axes on them: javelins, long pikes, glaives, Dane axes and throwing axes. Sets the arms to the long shaft and inclines toward reach.";
+    public override string SkillMeans       => "the shaving and hafting of long shafts";
+    public override Type Station => typeof(Cathedral.Game.Scene.WorkbenchPointOfInterest);
+    public override Type Tool    => typeof(Cathedral.Game.Narrative.Items.Spokeshave);
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.Javelin), typeof(Cathedral.Game.Narrative.Items.LongPike), typeof(Cathedral.Game.Narrative.Items.Glaive), typeof(Cathedral.Game.Narrative.Items.DaneAxe), typeof(Cathedral.Game.Narrative.Items.ThrowingAxe) };
+    public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
+    public override string[] Organs        => new[] { "arms", "hands" };
+
+    public override string PersonaTone     => "a polearm maker whose pikes stood in the front rank of the last war";
+    public override string PersonaReminder  => "polearm maker";
+    public override string PersonaReminder2 => "someone who measures safety in arm's lengths";
+    public override string StyleInstruction =>
+        "Steady and long - think in shafts, balance and reach.";
+
+    public override string PersonaPrompt => @"You are the inner voice of POLEARM-MAKING, the spokeshave of the long shaft.
+
+When acting, you choose straight ash, shave it round and true with the spokeshave, wedge the head on, and balance a javelin so it flies point first.
+
+Your language is steady and long: 'straight grain, all the way,' 'wedge the head tight,' 'reach is the first armour.'";
+}
+
+/// <summary>Arms Joinery — the joining of bows, crossbows and shields. Works the Workbench with the Mallet.</summary>
+public class ArmsJoineryModusMentis : CraftingModusMentis
+{
+    public override string ModusMentisId    => "arms_joinery";
+    public override string DisplayName      => "Arms Joinery";
+    public override string MenuDescription =>
+        "Joins and glues wood, horn and sinew into short and composite bows, hand crossbows, bucklers and kite shields, working them with the mallet. Sets the hands to glued work and inclines toward light arms.";
+    public override string SkillMeans       => "the joining of bows, crossbows and shields";
+    public override Type Station => typeof(Cathedral.Game.Scene.WorkbenchPointOfInterest);
+    public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Mallet);
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.Items.ShortBow), typeof(Cathedral.Game.Narrative.Items.CompositeBow), typeof(Cathedral.Game.Narrative.Items.HandCrossbow), typeof(Cathedral.Game.Narrative.Items.Buckler), typeof(Cathedral.Game.Narrative.Items.KiteShield) };
+    public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
+    public override string[] Organs        => new[] { "hands", "arms" };
+
+    public override string PersonaTone     => "an arms-joiner who glues horn to wood in a warm shop all winter";
+    public override string PersonaReminder  => "arms-joiner";
+    public override string PersonaReminder2 => "someone who knows that patience makes the strongest bow";
+    public override string StyleInstruction =>
+        "Patient and careful - think in glue, layers and curing time.";
+
+    public override string PersonaPrompt => @"You are the inner voice of ARMS JOINERY, the mallet of glued work.
+
+When acting, you glue horn to the belly and sinew to the back, bind it, leave it to cure through the winter, then tap the shield boards home with the mallet and rim them.
+
+Your language is patient and careful: 'let the glue cure,' 'horn in front, sinew behind,' 'rush a bow and it breaks in the hand.'";
 }

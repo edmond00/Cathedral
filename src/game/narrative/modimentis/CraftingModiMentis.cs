@@ -175,11 +175,11 @@ public class WeavingModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "weaving";
     public override string DisplayName      => "Weaving";
     public override string MenuDescription =>
-        "Weaves fibre into cloth at the loom - plain cloth, linen, sailcloth and heavy blankets - and cuts the web free with the shears. Sets the hands to the shuttle and the eye to the weave.";
+        "Weaves fibre into cloth at the loom - plain cloth, linen, sailcloth and heavy blankets, and wicker hampers - and cuts the web free with the shears. Sets the hands to the shuttle and the eye to the weave.";
     public override string SkillMeans       => "the weaving of fibre into cloth";
     public override Type Station => typeof(Cathedral.Game.Scene.LoomPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Shears);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Cloth), typeof(Cathedral.Game.Narrative.World.Items.Linen), typeof(Cathedral.Game.Narrative.World.Items.Sailcloth), typeof(Cathedral.Game.Narrative.World.Items.HorseBlanket) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Cloth), typeof(Cathedral.Game.Narrative.World.Items.Linen), typeof(Cathedral.Game.Narrative.World.Items.Sailcloth), typeof(Cathedral.Game.Narrative.World.Items.HorseBlanket), typeof(Cathedral.Game.Narrative.Items.Hamper) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "hands", "eyes" };
 
