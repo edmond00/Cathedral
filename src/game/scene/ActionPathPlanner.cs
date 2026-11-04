@@ -299,15 +299,21 @@ public static class ActionPathPlanner
             Console.Error.WriteLine($"ActionPathPlanner: {action.Verb.VerbId} could not be read ({ex.Message}) — skipped.");
             yield break;
         }
+        // One success has one ending: a stalk passes the hour AND moves the body. Read apart they were two
+        // ends, and one was a place the follower never stands: still where they began, at the later hour.
+        Area? reached = null;
+        TimePeriod? until = null;
         foreach (var report in reports)
         {
             switch (report)
             {
-                case AreaMoveOutcome m:   yield return (m.Destination, here.When); break;
-                case DoorUnlockOutcome u: yield return (u.Destination, here.When); break;
-                case TimeShiftOutcome t:  yield return (here.Where, t.Destination); break;
+                case AreaMoveOutcome m:   reached = m.Destination; break;
+                case DoorUnlockOutcome u: reached = u.Destination; break;
+                case TimeShiftOutcome t:  until = t.Destination; break;
             }
         }
+        if (reached != null || until != null)
+            yield return (reached ?? here.Where, until ?? here.When);
     }
 
     /// <summary>

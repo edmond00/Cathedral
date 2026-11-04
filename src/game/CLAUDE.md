@@ -767,7 +767,9 @@ plus what the category implies; `--item-audit` prints each kind's items and the 
 **`ActionPathPlanner.Plan` is the whole mechanism**: one BFS for all the targets, over (area, period, implement obtained),
 successors from `Scene.View(pov, actor, verbs)` — the live gates — and from the outcomes a success
 *would* apply, read and never applied: `AreaMoveOutcome` / `DoorUnlockOutcome` move,
-`TimeShiftOutcome` passes the hour, and `sit_and_wait` is every other period. Only
+`TimeShiftOutcome` passes the hour, and `sit_and_wait` is every other period. **One success has one
+ending**: `stalk` reports the hour and the move together, and read apart they planned on standing still
+at the later hour, a place the follower never is. `cli/system/will_follow_one_ending.cli`. Only
 `TransitVerbTypes` plus the goal verbs are expanded, except while a missing reference tool is sought,
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
 opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
