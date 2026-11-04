@@ -327,6 +327,8 @@ public sealed class Grub : BodyPartItem
     public override string DisplayName => "Grub";
     public override string Description => "A pale soft grub that will not stop moving, kept in a twist of leaf";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "fish" };
+    public override int UsageLevel => 1;
 }
 
 public sealed class Wax : BodyPartItem

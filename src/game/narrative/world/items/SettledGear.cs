@@ -59,6 +59,8 @@ public sealed class Whistle : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "wake_up", "provoke" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class KeyRing : Item

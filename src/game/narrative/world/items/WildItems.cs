@@ -115,17 +115,18 @@ public sealed class BogMyrtle : HerbItem
 // ── Old ground ──────────────────────────────────────────────────────────────
 
 /// <summary>A flint arrowhead of the old people, turned up where barrows stand. Country folk call it elf-shot.</summary>
-public sealed class ElfShot : Item
+public sealed class ElfShot : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Relic, ItemKind.Stone });
     public override string ItemId      => "elf_shot";
     public override Rarity Rarity => Rarity.Uncommon;
     public override string DisplayName => "Elf-Shot";
     public override string Description => "A leaf-shaped arrowhead of knapped flint, finer than any smith could make, turned up from old ground";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
+    public override WearSlot Slot => WearSlot.Neckwear;
+    public override IReadOnlyList<Cathedral.Game.Npc.SocialCategory> DialogueAppeal => new[] { Cathedral.Game.Npc.SocialCategory.Peasant, Cathedral.Game.Npc.SocialCategory.Outlaw };
 }
 
 // ── Dry country ─────────────────────────────────────────────────────────────

@@ -64,6 +64,10 @@ public static class CraftingStations
         nameof(TallowVatPointOfInterest)    => "tallow vat",
         nameof(CuttingTablePointOfInterest) => "cutting table",
         nameof(LeatherBenchPointOfInterest) => "leather bench",
+        nameof(GoldsmithsBenchPointOfInterest) => "goldsmith's bench",
+        nameof(WritingDeskPointOfInterest)  => "writing desk",
+        nameof(CarvingBenchPointOfInterest) => "carving bench",
+        nameof(MasonsBankerPointOfInterest) => "mason's banker",
         _                                   => stationType.Name.Replace("PointOfInterest", "").ToLowerInvariant(),
     };
 }
@@ -131,6 +135,50 @@ public class LeatherBenchPointOfInterest : PointOfInterest
     public const string Lemma = "bench";
 
     public LeatherBenchPointOfInterest(string displayName, List<string> descriptions, List<ItemElement>? items = null,
+                                       string[]? moods = null, bool isNatural = false)
+        : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
+}
+
+/// <summary>A goldsmith's bench: fine metal cast, chased, engraved and set — rings, vessels, instruments.</summary>
+[CraftingStation(CraftMaterial.Metal)]
+public class GoldsmithsBenchPointOfInterest : PointOfInterest
+{
+    public const string Lemma = "bench";
+
+    public GoldsmithsBenchPointOfInterest(string displayName, List<string> descriptions, List<ItemElement>? items = null,
+                                       string[]? moods = null, bool isNatural = false)
+        : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
+}
+
+/// <summary>A writing desk: parchment written on, folded and bound — letters, writs, books.</summary>
+[CraftingStation(CraftMaterial.Leather)]
+public class WritingDeskPointOfInterest : PointOfInterest
+{
+    public const string Lemma = "desk";
+
+    public WritingDeskPointOfInterest(string displayName, List<string> descriptions, List<ItemElement>? items = null,
+                                       string[]? moods = null, bool isNatural = false)
+        : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
+}
+
+/// <summary>A carving bench: bone and horn sawn, carved and polished.</summary>
+[CraftingStation(CraftMaterial.Bone)]
+public class CarvingBenchPointOfInterest : PointOfInterest
+{
+    public const string Lemma = "bench";
+
+    public CarvingBenchPointOfInterest(string displayName, List<string> descriptions, List<ItemElement>? items = null,
+                                       string[]? moods = null, bool isNatural = false)
+        : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
+}
+
+/// <summary>A mason's banker: the stone bench a mason dresses and carves stone on.</summary>
+[CraftingStation(CraftMaterial.Stone)]
+public class MasonsBankerPointOfInterest : PointOfInterest
+{
+    public const string Lemma = "banker";
+
+    public MasonsBankerPointOfInterest(string displayName, List<string> descriptions, List<ItemElement>? items = null,
                                        string[]? moods = null, bool isNatural = false)
         : base(displayName, Lemma, descriptions, items, moods, isNatural) { }
 }

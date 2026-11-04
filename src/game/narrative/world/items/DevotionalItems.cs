@@ -22,6 +22,8 @@ public sealed class Censer : Item
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "ask_blessing", "confess" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class HolyWater : ConsumableItem
@@ -51,6 +53,8 @@ public sealed class Relic : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "ask_blessing", "confess" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Icon : Item
@@ -65,6 +69,8 @@ public sealed class Icon : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "ask_blessing", "confess" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class PrayerBook : Item
@@ -78,6 +84,8 @@ public sealed class PrayerBook : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "ask_blessing", "confess" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class VotiveCandle : Item
@@ -91,6 +99,8 @@ public sealed class VotiveCandle : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery, ItemTag.Devotional };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "ask_blessing", "confess" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Aspergillum : Item
@@ -104,31 +114,35 @@ public sealed class Aspergillum : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "ask_blessing", "confess" };
+    public override int UsageLevel => 2;
 }
 
-public sealed class Offering : Item
+public sealed class Offering : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "offering";
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Offering Bowl";
     public override string Description => "A shallow clay bowl holding grain and a copper coin";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override ContainerKind Kind => ContainerKind.Vessel;
+    public override int ContentSlots => 3;
 }
 
-public sealed class Ampulla : Item
+public sealed class Ampulla : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy, ItemKind.Vessel });
     public override string ItemId      => "ampulla";
     public override string DisplayName => "Pilgrim's Ampulla";
     public override string Description => "A small lead flask stamped with a shrine's image, worn on a cord";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
+    public override ContainerKind Kind => ContainerKind.Vessel;
+    public override int ContentSlots => 3;
 }
 
 // ── the schools ─────────────────────────────────────────────────────────────
@@ -143,6 +157,8 @@ public sealed class Primer : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching", "examine" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Astrolabe : Item
@@ -157,6 +173,8 @@ public sealed class Astrolabe : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path", "backtrack" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Pen : Item
@@ -169,6 +187,8 @@ public sealed class Pen : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching" };
+    public override int UsageLevel => 1;
 }
 
 public sealed class Rod : Item
@@ -177,10 +197,11 @@ public sealed class Rod : Item
     public override string ItemId      => "rod";
     public override string DisplayName => "Master's Rod";
     public override string Description => "A thin birch rod, worn smooth at the grip";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Diagram : Item
@@ -194,6 +215,8 @@ public sealed class Diagram : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching", "examine" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Seal : Item
@@ -208,6 +231,8 @@ public sealed class Seal : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "petition", "explain_myself", "introduce_me" };
+    public override int UsageLevel => 2;
 }
 
 // ── the dead and the ruined ─────────────────────────────────────────────────
@@ -270,7 +295,7 @@ public sealed class DeathMask : Item
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
 }
 
-public sealed class GraveRing : Item
+public sealed class GraveRing : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Relic, ItemKind.Valuable });
     public override string ItemId      => "grave_ring";
@@ -278,36 +303,39 @@ public sealed class GraveRing : Item
     public override Rarity Rarity => Rarity.Rare;
     public override string DisplayName => "Grave Ring";
     public override string Description => "A plain gold ring dull with soil";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override WearSlot Slot => WearSlot.Handwear;
+    public override IReadOnlyList<Cathedral.Game.Npc.SocialCategory> DialogueAppeal => new[] { Cathedral.Game.Npc.SocialCategory.Aristocrat, Cathedral.Game.Npc.SocialCategory.Religious };
 }
 
-public sealed class Scarab : Item
+public sealed class Scarab : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Relic, ItemKind.Valuable });
     public override string ItemId      => "scarab";
     public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Scarab Amulet";
     public override string Description => "A carved stone beetle with signs cut into its flat underside";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override WearSlot Slot => WearSlot.Neckwear;
+    public override IReadOnlyList<Cathedral.Game.Npc.SocialCategory> DialogueAppeal => new[] { Cathedral.Game.Npc.SocialCategory.Religious, Cathedral.Game.Npc.SocialCategory.Aristocrat };
 }
 
-public sealed class BurialUrn : Item
+public sealed class BurialUrn : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Relic, ItemKind.Vessel });
     public override string ItemId      => "burial_urn";
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Burial Urn";
     public override string Description => "A lidded urn of black clay, ash still inside it";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
+    public override ContainerKind Kind => ContainerKind.Storage;
+    public override int ContentSlots => 6;
 }
 
 public sealed class Shroud : Item

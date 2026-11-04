@@ -165,7 +165,7 @@ public sealed class MendingKit : Item
 /// to it. Hence <see cref="ItemCategory.Crafting"/>, while its Foodstuff tag keeps it on the
 /// victualler's shelf: category and trade tag answer different questions.
 /// </summary>
-public sealed class SaltPouch : Item
+public sealed class SaltPouch : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Food });
     public override string ItemId      => "salt_pouch";
@@ -174,7 +174,9 @@ public sealed class SaltPouch : Item
     public override string Description => "A tight little leather pouch of grey salt, hoarded like coin";
     public override ItemSize Size      => ItemSize.Small;
     public override WeightClass Weight       => WeightClass.Light;
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
     public override CoinType PriceCoin => CoinType.Copper;
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe().Add<SaltHumor>(100);
 }
