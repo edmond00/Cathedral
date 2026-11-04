@@ -407,5 +407,6 @@ The belt needs three sixes. The roll shows fewer, so, as in every roll of the ga
 
 The sandals: the same, one humor short, and made. Whatever leather is left when you stand up is thrown away, so bring the work whole. The belt and the sandals are in the pack.
 
-That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, the next place to go, and a craft. Every word the game wrote, it wrote on this computer, while we played.
+That was the start of a run: a body built, a past remembered, two wolves, a job, a pair of boots, and a craft. A run can go anywhere from here. A hunter tracks animals and tames the ones worth keeping. A thief slips in through chimneys and empties pockets, and a town remembers. A pilgrim confesses and asks for blessings. A leader asks others to come along, and keeps them alive.
+Which of them your character becomes is up to you, and to the minds it carries. Every word the game wrote here, it wrote on this computer, while we played. Thank you for watching.
 

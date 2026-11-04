@@ -2200,13 +2200,63 @@
    ]
   },
   {
-   "type": "game",
-   "recording": "craft",
-   "from": 931.37,
-   "to": 945.5,
+   "type": "montage",
+   "shots": [
+    {
+     "recording": "opening",
+     "from": 121.48,
+     "to": 124.08,
+     "speed": 1.0
+    },
+    {
+     "recording": "opening",
+     "from": 1780.6,
+     "to": 1784.2,
+     "speed": 1.0
+    },
+    {
+     "recording": "tutorial",
+     "from": 338.63,
+     "to": 342.63,
+     "speed": 1.5
+    },
+    {
+     "recording": "tutorial",
+     "from": 1557.5,
+     "to": 1561.1,
+     "speed": 1.0
+    },
+    {
+     "recording": "city",
+     "from": 1564.43,
+     "to": 1567.43,
+     "speed": 1.0
+    },
+    {
+     "recording": "will",
+     "from": 74.69,
+     "to": 78.09,
+     "speed": 1.0
+    },
+    {
+     "recording": "craft",
+     "from": 762.72,
+     "to": 766.72,
+     "speed": 1.0
+    },
+    {
+     "recording": "opening",
+     "from": 27.02,
+     "to": 33.02,
+     "speed": 1.0
+    }
+   ],
    "fade": true,
+   "bed": "build/city_loop.wav",
+   "min": 34.0,
    "vo": [
-    "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, the next place to go, and a craft. Every word the game wrote, it wrote on this computer, while we played."
+    "That was the start of a run: a body built, a past remembered, two wolves, a job, a pair of boots, and a craft. A run can go anywhere from here. A hunter tracks animals and tames the ones worth keeping. A thief slips in through chimneys and empties pockets, and a town remembers. A pilgrim confesses and asks for blessings. A leader asks others to come along, and keeps them alive.",
+    "Which of them your character becomes is up to you, and to the minds it carries. Every word the game wrote here, it wrote on this computer, while we played. Thank you for watching."
    ]
   }
  ]
