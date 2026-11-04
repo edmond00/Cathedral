@@ -372,5 +372,10 @@ The anamnesis decides how many maps you keep, four per point, and the oldest is 
 
 From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip.
 
-That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, and a way back. Every word the game wrote, it wrote on this computer, while we played.
+One last tool, and a new one. A will does not have to wait for its target to turn up. Beside the menu button on the world map, this sign opens every will the party holds, and what each one wants. Our purse is still empty, so: Diligence, and its first want, find work.
+
+Press a want, and the will searches the world for it. Every place within reach, nearest by road first: the game builds each one as you would find it on arrival, at its own hour, and asks whether the will could reach its target there. It stops at the first that will do.
+Here the very first place does: a hop field, five days away, where someone is hiring. The trip is planned, and the travel plan says which will asked for it. Arrive, and the will goes straight for the target it searched for. Routines take you back to what you know; a will's search finds what you have never seen.
+
+That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, and the next place to go. Every word the game wrote, it wrote on this computer, while we played.
 

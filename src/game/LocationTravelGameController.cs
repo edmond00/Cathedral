@@ -6121,11 +6121,20 @@ public class LocationTravelGameController : IDisposable
         // the save means the save predates histories, which the version bump already refuses.
         if (_interface.History is { } history && save.HistoryHash != history.Hash)
         {
-            Console.Error.WriteLine(
-                $"Continue: the save's world history hashed to {save.HistoryHash:X8}, this build regenerates "
-                + $"{history.Hash:X8} — the history generator is not deterministic. Refusing.");
-            if (!_hasGameStarted) _core.WorldRenderEnabled = false;
-            return false;
+            if (Config.Debug.AcceptHistoryMismatch)
+            {
+                Console.Error.WriteLine(
+                    $"Continue: the save's world history hashed to {save.HistoryHash:X8}, this build regenerates "
+                    + $"{history.Hash:X8} — played on anyway (--accept-history-mismatch): the past may read differently.");
+            }
+            else
+            {
+                Console.Error.WriteLine(
+                    $"Continue: the save's world history hashed to {save.HistoryHash:X8}, this build regenerates "
+                    + $"{history.Hash:X8} — the history generator is not deterministic. Refusing.");
+                if (!_hasGameStarted) _core.WorldRenderEnabled = false;
+                return false;
+            }
         }
 
         if (Cathedral.Debug.WorldHistoryViewerManager.IsOpen && _interface.History != null)

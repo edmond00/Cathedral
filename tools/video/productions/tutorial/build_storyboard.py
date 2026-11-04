@@ -855,11 +855,28 @@ RS.game(oe, re_,
         "From the world map, a place's routines are one click away. The work routine takes us straight back to "
         "work at the farm, with no conversation at all. Earning more coin is now a single trip.", min_speed=1.0)
 
+# 15b. a will's search: re-shot on its own from the city take's last checkpoint (will.cli, rec_will)
+WILL = Take("will", "build/rec_will", "passages_will.json")
+pb, pe = WILL.clip("will_picker")
+WILL.game(pb, pe,
+          "One last tool, and a new one. A will does not have to wait for its target to turn up. Beside the menu "
+          "button on the world map, this sign opens every will the party holds, and what each one wants. Our purse "
+          "is still empty, so: Diligence, and its first want, find work.", fade=True, min_speed=1.0)
+sb_, se_ = WILL.clip("will_search")
+WILL.game(sb_, se_,
+          "Press a want, and the will searches the world for it. Every place within reach, nearest by road first: "
+          "the game builds each one as you would find it on arrival, at its own hour, and asks whether the will "
+          "could reach its target there. It stops at the first that will do.",
+          "Here the very first place does: a hop field, five days away, where someone is hiring. The trip is planned, "
+          "and the travel plan says which will asked for it. Arrive, and the will goes straight for the target it "
+          "searched for. Routines take you back to what you know; a will's search finds what you have never seen.",
+          min_speed=1.0)
+
 # 16. closure
-kb, ke = rs_clip("closure")
-RS.game(re_, ke,
-        "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, and a way back. "
-        "Every word the game wrote, it wrote on this computer, while we played.", fade=True)
+kb, ke = WILL.clip("closure")
+WILL.game(kb, ke,
+          "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, and "
+          "the next place to go. Every word the game wrote, it wrote on this computer, while we played.", fade=True)
 
 # the hook's montage: a few seconds of each thing the run holds, in the order the narration names them
 def shot(take, t, length, speed=1.0):
@@ -915,7 +932,15 @@ storyboard = {
                 "build/rec_city3_save.json before re-recording; re-record while the second fight is lost.",
         "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
                  "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
-                 "--save-path build/rec_city3_save.json --no-generate-ahead"}},
+                 "--save-path build/rec_city3_save.json --no-generate-ahead"},
+                   "will": {
+        "script": "will.cli", "dir": "build/rec_will", "timeout": 3600,
+        "note": "Resumed from city.cli's last checkpoint: copy build/rec_city3/saves/02_routines.json to "
+                "build/rec_will_save.json before re-recording. Recorded after develop was merged, whose history "
+                "generator differs from the build that wrote the save: hence --accept-history-mismatch.",
+        "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
+                 "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
+                 "--no-generate-ahead --accept-history-mismatch --save-path build/rec_will_save.json"}},
     "prepare": [{"python": "make_city_loop.py", "creates": "build/city_loop.wav"}],
     "manim_file": "scenes.py",
     "segments": segments,

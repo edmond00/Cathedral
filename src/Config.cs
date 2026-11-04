@@ -274,6 +274,15 @@ public static class Config
         public static bool NoGenerateAhead { get; set; } = false;
 
         /// <summary>
+        /// Continues a save whose world history this build regenerates differently, instead of refusing
+        /// it. Set by <c>--accept-history-mismatch</c>. A save is confined to the build that wrote it; this
+        /// lets a recording go on from an older build's checkpoint when only the history generator changed
+        /// (the map is the seed's either way). The past may then read differently from the run's.
+        /// <para>Inert at its default of false.</para>
+        /// </summary>
+        public static bool AcceptHistoryMismatch { get; set; } = false;
+
+        /// <summary>
         /// Opens no audio device at all: no music, no sound effects, no loading wash.
         ///
         /// <para>For test runs. The suite launches the game a hundred-odd times, and every one of

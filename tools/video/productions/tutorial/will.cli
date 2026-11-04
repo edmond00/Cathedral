@@ -1,0 +1,44 @@
+# The tutorial's ending: a will's search across the world map, re-shot on its own from city.cli's last
+# checkpoint (build/rec_city3/saves/02_routines.json, copied to the --save-path before the take): the world
+# map just outside the city, boots on and the purse empty. Diligence wants work; the ◎ beside the ☰ opens
+# the party's wills, and pressing "find work" reads every place within reach, nearest by road first, and
+# plans the trip to the first where the will would be met. Then the closing frame.
+#
+# FLAGS: as city.cli's.
+allow-flag-miss --start-area
+allow-flag-miss --observe-only
+
+wait mode MainMenu 900
+mark resume_will
+click menu Continue
+wait mode WorldView 900
+cursor rest
+hold 4
+
+# ── The will search ──────────────────────────────────────────────────────────────────────────────────
+mark will_search
+clip will_picker
+click will-button
+wait for 0.3
+cursor rest
+hold 12
+click will diligence
+wait for 0.3
+cursor rest
+hold 16
+clip end will_picker
+clip will_search
+click want 0
+wait 300
+cursor rest
+hold 42
+clip end will_search
+
+# ── Closure ──────────────────────────────────────────────────────────────────────────────────────────
+mark closure
+clip closure
+cursor hide
+hold 14
+clip end closure
+state
+quit
