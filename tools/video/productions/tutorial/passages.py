@@ -83,8 +83,15 @@ def replacements():
     """The game's layer-1 word replacements (ForbiddenWordsDictionary), which every passage goes through
     before it is shown, streaming included: the logs hold the model's raw words, the screen the replaced
     ones."""
-    src = Path(__file__).resolve().parents[4] / "src/game/narrative/sanitizer/ForbiddenWordsDictionary.cs"
-    return dict(re.findall(r'\{\s*"([^"]+)",\s*"([^"]+)"\s*\}', src.read_text())) if src.exists() else {}
+    root = Path(__file__).resolve().parents[4] / "src/game/narrative/sanitizer"
+    table = {}
+    old = root / "ForbiddenWordsDictionary.cs"            # the table as it was: { "word", "replacement" }
+    if old.exists():
+        table.update(re.findall(r'\{\s*"([^"]+)",\s*"([^"]+)"\s*\}', old.read_text()))
+    new = root / "ForbiddenWords.cs"                      # and as develop keeps it now: W("word", "replacement")
+    if new.exists():
+        table.update(re.findall(r'\bW\(\s*"([^"]+)",\s*"([^"]+)"', new.read_text()))
+    return table
 
 
 def replace_words(text: str, table: dict) -> str:

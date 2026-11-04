@@ -377,5 +377,33 @@ One last tool, and a new one. A will does not have to wait for its target to tur
 Press a want, and the will searches the world for it. Every place within reach, nearest by road first: the game builds each one as you would find it on arrival, at its own hour, and asks whether the will could reach its target there. It stops at the first that will do.
 Here the very first place does: a hop field, five days away, where someone is hiring. The trip is planned, and the travel plan says which will asked for it. Arrive, and the will goes straight for the target it searched for. Routines take you back to what you know; a will's search finds what you have never seen.
 
-That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, and the next place to go. Every word the game wrote, it wrote on this computer, while we played.
+And one look further ahead. This last scene is from later in the run, and we set it up by hand for the video: the character has learned a trade, Shoemaking, at level four, carries an awl and a piece of tanned leather, and the cobbler has given us the use of his bench. In a real run, every one of those is earned.
+A trade is a way of thinking tied to one station, one implement and one material. Shoemaking works the leather bench, with the awl, in leather. Back to the cobbler's shop.
+
+> *I find myself in the cobbler's shop, in the morning, a low shop with the smell of leather and wax, boots hung by their laces from the beams around me on a leather bench.*
+> *I notice a leather bench under the window, dark and heavy, its top marred by knives and stained by dubbin. This draws me in, the rough, lived-in feel resonating with the stories it holds.*
+
+We click the bench, and think with Shoemaking. A trade is also a will: what it wants first is to set to work at its own station.
+> *I see the dark, heavy bench by the window, its top lined with knife marks and seasoned with dubbin. I yearn to take up my tools and start making shoes, boots, and belts here in this old city.*
+
+> *I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads.*
+
+Setting to work requires the trade's implement, and carrying it is not enough: it must be combined with the act. Use Tool, then the awl, and the act is written again with it.
+> *I need an awl to begin, crafting leather for shoes that walk on wet cobblestones, the heel guides every step.*
+> *I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads, using an awl.*
+
+It is an act like any other, difficulty two. Ten dice, and four sixes.
+
+> *I got to the bench, set to work, an awl in hand. Success felt like the welt for wet roads, tight and true.*
+Success felt like the welt for wet roads, tight and true: a shoemaker praises in its own terms.
+
+The bench. Two things can be done here, as often as you like. On the left, what you carry that is made of the bench's material. Breaking it down destroys it for its units: a piece of tanned leather, of medium burden, gives four units of leather.
+
+On the right, what the trade makes. A thing costs exactly what breaking it down would give back: a belt, two units. And every thing made is rolled on its own, with dice of its own: every trade you hold for this bench, every implement of the bench you carry, and your hands' handiwork. The difficulty comes from the thing's price.
+
+The belt needs three sixes. The roll shows fewer, so, as in every roll of the game, a humor of pleasure turns a die, and the belt is made. A roll that stays short spoils the work: its leather is lost, and nothing is made.
+
+The sandals: the same, one humor short, and made. Whatever leather is left when you stand up is thrown away, so bring the work whole. The belt and the sandals are in the pack.
+
+That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, the next place to go, and a craft. Every word the game wrote, it wrote on this computer, while we played.
 

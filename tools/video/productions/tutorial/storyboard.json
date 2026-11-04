@@ -78,6 +78,13 @@
    "timeout": 3600,
    "note": "Resumed from city.cli's last checkpoint: copy build/rec_city3/saves/02_routines.json to build/rec_will_save.json before re-recording. Recorded after develop was merged, whose history generator differs from the build that wrote the save: hence --accept-history-mismatch.",
    "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand --no-generate-ahead --accept-history-mismatch --save-path build/rec_will_save.json"
+  },
+  "craft": {
+   "script": "craft.cli",
+   "dir": "build/rec_craft",
+   "timeout": 7200,
+   "note": "Started from make_craft_save.py's save (the city take's last checkpoint moved on by hand): run it, then copy build/rec_craft_save.json to build/rec_craft_run.json before re-recording.",
+   "flags": "--no-encounters --npc-static --start-area \"Cobbler's Shop\" --observe-only \"Leather Bench\" --npc-affinity DistantAcquaintance --job-only farmhand --no-generate-ahead --accept-history-mismatch --save-path build/rec_craft_run.json"
   }
  },
  "prepare": [
@@ -2036,12 +2043,159 @@
   },
   {
    "type": "game",
-   "recording": "will",
-   "from": 127.5,
-   "to": 141.55,
+   "recording": "craft",
+   "from": 26.11,
+   "to": 88.4,
    "fade": true,
    "vo": [
-    "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, and the next place to go. Every word the game wrote, it wrote on this computer, while we played."
+    "And one look further ahead. This last scene is from later in the run, and we set it up by hand for the video: the character has learned a trade, Shoemaking, at level four, carries an awl and a piece of tanned leather, and the cobbler has given us the use of his bench. In a real run, every one of those is earned.",
+    "A trade is a way of thinking tied to one station, one implement and one material. Shoemaking works the leather bench, with the awl, in leather. Back to the cobbler's shop."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 88.4,
+   "to": 289.18,
+   "fade": false,
+   "vo": [
+    {
+     "text": "I find myself in the cobbler's shop, in the morning, a low shop with the smell of leather and wax, boots hung by their laces from the beams around me on a leather bench.",
+     "style": "reading",
+     "at": 88.4
+    },
+    {
+     "text": "I notice a leather bench under the window, dark and heavy, its top marred by knives and stained by dubbin. This draws me in, the rough, lived-in feel resonating with the stories it holds.",
+     "style": "reading",
+     "at": 200.7
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 289.18,
+   "to": 427.03,
+   "fade": false,
+   "vo": [
+    "We click the bench, and think with Shoemaking. A trade is also a will: what it wants first is to set to work at its own station.",
+    {
+     "text": "I see the dark, heavy bench by the window, its top lined with knife marks and seasoned with dubbin. I yearn to take up my tools and start making shoes, boots, and belts here in this old city.",
+     "style": "reading",
+     "at": 338.5
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 427.03,
+   "to": 487.5,
+   "fade": false,
+   "vo": [
+    {
+     "text": "I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads.",
+     "style": "reading",
+     "at": 435.5
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 487.5,
+   "to": 636.42,
+   "fade": false,
+   "vo": [
+    "Setting to work requires the trade's implement, and carrying it is not enough: it must be combined with the act. Use Tool, then the awl, and the act is written again with it.",
+    {
+     "text": "I need an awl to begin, crafting leather for shoes that walk on wet cobblestones, the heel guides every step.",
+     "style": "reading",
+     "at": 514.8
+    },
+    {
+     "text": "I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads, using an awl.",
+     "style": "reading",
+     "at": 636.02
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 636.42,
+   "to": 653.71,
+   "fade": false,
+   "vo": [
+    "It is an act like any other, difficulty two. Ten dice, and four sixes."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 653.71,
+   "to": 731.43,
+   "fade": false,
+   "vo": [
+    {
+     "text": "I got to the bench, set to work, an awl in hand. Success felt like the welt for wet roads, tight and true.",
+     "style": "reading",
+     "at": 662.8
+    },
+    {
+     "text": "Success felt like the welt for wet roads, tight and true: a shoemaker praises in its own terms.",
+     "wait": true
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 731.43,
+   "to": 749.41,
+   "fade": true,
+   "vo": [
+    "The bench. Two things can be done here, as often as you like. On the left, what you carry that is made of the bench's material. Breaking it down destroys it for its units: a piece of tanned leather, of medium burden, gives four units of leather."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 749.41,
+   "to": 762.12,
+   "fade": false,
+   "vo": [
+    "On the right, what the trade makes. A thing costs exactly what breaking it down would give back: a belt, two units. And every thing made is rolled on its own, with dice of its own: every trade you hold for this bench, every implement of the bench you carry, and your hands' handiwork. The difficulty comes from the thing's price."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 762.12,
+   "to": 790.67,
+   "fade": false,
+   "vo": [
+    "The belt needs three sixes. The roll shows fewer, so, as in every roll of the game, a humor of pleasure turns a die, and the belt is made. A roll that stays short spoils the work: its leather is lost, and nothing is made."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 790.67,
+   "to": 931.37,
+   "fade": false,
+   "vo": [
+    "The sandals: the same, one humor short, and made. Whatever leather is left when you stand up is thrown away, so bring the work whole. The belt and the sandals are in the pack."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "craft",
+   "from": 931.37,
+   "to": 945.5,
+   "fade": true,
+   "vo": [
+    "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, the next place to go, and a craft. Every word the game wrote, it wrote on this computer, while we played."
    ]
   }
  ]

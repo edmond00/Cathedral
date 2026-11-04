@@ -872,11 +872,68 @@ WILL.game(sb_, se_,
           "searched for. Routines take you back to what you know; a will's search finds what you have never seen.",
           min_speed=1.0)
 
+# 15c. crafting, later in the run: recorded from a save moved on by hand (make_craft_save.py, craft.cli)
+CRAFT = Take("craft", "build/rec_craft", "passages_craft.json")
+use(CRAFT, "craft_notes.json")
+tb_, te_ = CRAFT.clip("craft_travel")
+arr = CRAFT.between(tb_, te_)
+CRAFT.game(tb_, CRAFT.shows(arr[0]),
+           "And one look further ahead. This last scene is from later in the run, and we set it up by hand for the "
+           "video: the character has learned a trade, Shoemaking, at level four, carries an awl and a piece of tanned "
+           "leather, and the cobbler has given us the use of his bench. In a real run, every one of those is earned.",
+           "A trade is a way of thinking tied to one station, one implement and one material. Shoemaking works the "
+           "leather bench, with the awl, in leather. Back to the cobbler's shop.", fade=True)
+CRAFT.game(CRAFT.shows(arr[0]), CRAFT.end(arr[-1]), CRAFT.R(arr[0]), *[CRAFT.R(i) for i in arr[1:]])
+wb_, we_ = CRAFT.clip("craft_work")
+ps = CRAFT.between(CRAFT.end(arr[-1]), we_)
+reason, intent, need, intent2, outcome = ps[:5]
+CRAFT.game(CRAFT.end(arr[-1]), CRAFT.end(reason),
+           "We click the bench, and think with Shoemaking. A trade is also a will: what it wants first is to set to "
+           "work at its own station.", CRAFT.R(reason))
+CRAFT.game(CRAFT.end(reason), CRAFT.end(intent), CRAFT.R(intent))
+CRAFT.game(CRAFT.end(intent), CRAFT.end(intent2),
+           "Setting to work requires the trade's implement, and carrying it is not enough: it must be combined with "
+           "the act. Use Tool, then the awl, and the act is written again with it.", CRAFT.R(need), CRAFT.R(intent2))
+roll = rolls(CRAFT.end(intent2), CRAFT.P[outcome]["t1"])[0]
+dice_end = next(c["t"] for c in CRAFT.clicks if c["t"] > roll["t"] and c.get("label") == "Continue") - 0.2
+CRAFT.game(CRAFT.end(intent2), dice_end,
+           f"It is an act like any other, difficulty two. {num(len(roll['faces'])).capitalize()} dice, and "
+           f"{num(roll['faces'].count('6'))} sixes.")
+CRAFT.game(dice_end, we_, CRAFT.R(outcome), *after(outcome))
+mb_, me_ = CRAFT.clip("craft_menu")
+made = [l for l in CRAFT.log if l.startswith("CraftingMenu: made") or l.startswith("CraftingMenu: spoiled")]
+makes = [c["t"] for c in CRAFT.clicks if mb_ <= c["t"] <= me_ and str(c.get("label", "")).startswith("craft:make:")]
+broke = CRAFT.click(mb_, me_, label="craft:break:tanned_leather")
+CRAFT.game(mb_, broke + 0.6,
+           "The bench. Two things can be done here, as often as you like. On the left, what you carry that is made "
+           "of the bench's material. Breaking it down destroys it for its units: a piece of tanned leather, of "
+           "medium burden, gives four units of leather.", fade=True)
+CRAFT.game(broke + 0.6, makes[0] - 0.3,
+           "On the right, what the trade makes. A thing costs exactly what breaking it down would give back: a belt, "
+           "two units. And every thing made is rolled on its own, with dice of its own: every trade you hold "
+           "for this bench, every implement of the bench you carry, and your hands' handiwork. The difficulty comes "
+           "from the thing's price.")
+def make_line(k):
+    line = made[k] if k < len(made) else ""
+    sixes = int(line.split("(", 1)[1].split(" sixes")[0]) if "(" in line else 0
+    need_ = int(line.split(", ", 1)[1].split(" needed")[0]) if "needed" in line else 0
+    what = "The belt" if "leather_belt" in line else "The sandals"
+    return what, sixes, need_, "made" in line.split(":")[1][:6]
+what, sixes, need_, ok = make_line(0)
+CRAFT.game(makes[0] - 0.3, makes[1] - 0.3,
+           f"{what} needs {num(need_)} sixes. The roll shows fewer, so, as in every roll of the game, a humor of "
+           f"pleasure turns a die, and the belt is made. A roll that stays short spoils the work: its leather is "
+           f"lost, and nothing is made.")
+CRAFT.game(makes[1] - 0.3, me_,
+           "The sandals: the same, one humor short, and made. Whatever leather is left when you stand up is thrown "
+           "away, so bring the work whole. The belt and the sandals are in the pack.")
+
 # 16. closure
-kb, ke = WILL.clip("closure")
-WILL.game(kb, ke,
-          "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, and "
-          "the next place to go. Every word the game wrote, it wrote on this computer, while we played.", fade=True)
+kb, ke = CRAFT.clip("closure")
+CRAFT.game(kb, ke,
+           "That was the start of a run: a body built, a past remembered, two wolves, a job, a trade, a way back, the "
+           "next place to go, and a craft. Every word the game wrote, it wrote on this computer, while we played.",
+           fade=True)
 
 # the hook's montage: a few seconds of each thing the run holds, in the order the narration names them
 def shot(take, t, length, speed=1.0):
@@ -940,7 +997,14 @@ storyboard = {
                 "generator differs from the build that wrote the save: hence --accept-history-mismatch.",
         "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
                  "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
-                 "--no-generate-ahead --accept-history-mismatch --save-path build/rec_will_save.json"}},
+                 "--no-generate-ahead --accept-history-mismatch --save-path build/rec_will_save.json"},
+                   "craft": {
+        "script": "craft.cli", "dir": "build/rec_craft", "timeout": 7200,
+        "note": "Started from make_craft_save.py's save (the city take's last checkpoint moved on by hand): run "
+                "it, then copy build/rec_craft_save.json to build/rec_craft_run.json before re-recording.",
+        "flags": "--no-encounters --npc-static --start-area \"Cobbler's Shop\" --observe-only \"Leather Bench\" "
+                 "--npc-affinity DistantAcquaintance --job-only farmhand --no-generate-ahead --accept-history-mismatch "
+                 "--save-path build/rec_craft_run.json"}},
     "prepare": [{"python": "make_city_loop.py", "creates": "build/city_loop.wav"}],
     "manim_file": "scenes.py",
     "segments": segments,

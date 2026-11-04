@@ -1,7 +1,7 @@
 # The tutorial's last scene: crafting, later in the run. Started from make_craft_save.py's save (the city
 # take's last checkpoint, given Shoemaking at level 4, an awl, a piece of tanned leather and the cobbler's
 # leave), copied to the --save-path before the take. Back to the city, to the cobbler's leather bench:
-# Shoemaking sets to work there, the leather is broken down, and a belt made and sandals spoiled (the rolls are seeded: see make_craft_save.py). Then the
+# Shoemaking sets to work there, the leather is broken down, and a belt and sandals are made, each roll turned by the humors where it falls short. Then the
 # closing frame.
 #
 # FLAGS: as city.cli's, without --force-encounter (the journey back meets nothing), --observe-only naming
@@ -80,11 +80,42 @@ click element craft:break:tanned_leather
 wait 900
 cursor rest
 hold 10
+# each make is rolled in the dice box; a roll short of its sixes is turned with the humors, then settled
 click element craft:make:leather_belt
 wait 900
 cursor rest
-hold 12
+hold 4
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 3
+click element craft:dice-continue
+wait 900
+cursor rest
+hold 10
 click element craft:make:sandals
+wait 900
+cursor rest
+hold 4
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+click humor pulmones needed
+click die needed
+click humor paunch needed
+click die needed
+hold 3
+click element craft:dice-continue
 wait 900
 cursor rest
 hold 12

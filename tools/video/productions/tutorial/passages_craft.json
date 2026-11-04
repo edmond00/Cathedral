@@ -1,0 +1,112 @@
+[
+ {
+  "t0": 66.4,
+  "ts": 86.9,
+  "t1": 180.3,
+  "section": "craft_travel",
+  "voice": "EMPATHY",
+  "slot": "slot_6",
+  "request": "request_001_12-51-20-425",
+  "prompt": "Re-express the following sentence in your own voice: \"I find myself in the cobbler's shop, in the morning. This place is a low shop smelling of leather and wax,",
+  "text": "I find myself in the cobbler's shop, in the morning, a low shop with the smell of leather and wax, boots hung by their laces from the beams around me on a leather bench."
+ },
+ {
+  "t0": 191.6,
+  "ts": 199.2,
+  "t1": 287.9,
+  "section": "craft_travel",
+  "voice": "EMPATHY",
+  "slot": "slot_6",
+  "request": "request_002_12-53-25-639",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to a leather bench. This is a dark heavy bench under the window, its top cut all ove",
+  "text": "I notice a leather bench under the window, dark and heavy, its top marred by knives and stained by dubbin. This draws me in, the rough, lived-in feel resonating with the stories it holds."
+ },
+ {
+  "t0": 316.4,
+  "ts": 323.0,
+  "t1": 323.0,
+  "section": "craft_work",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_5",
+  "request": "request_001_12-55-30-352",
+  "prompt": "The faculty: SHOEMAKING - Cuts leather at the bench and stitches it through awl holes into boots, shoes, sandals and belts. Sets the hands to the awl and the ey",
+  "text": "A"
+ },
+ {
+  "t0": 323.0,
+  "ts": 328.9,
+  "t1": 328.9,
+  "section": "craft_work",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_5",
+  "request": "request_002_12-55-37-049",
+  "prompt": "The faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unr",
+  "text": "C"
+ },
+ {
+  "t0": 328.9,
+  "ts": 337.0,
+  "t1": 425.7,
+  "section": "craft_work",
+  "voice": "SHOEMAKING",
+  "slot": "slot_10",
+  "request": "request_001_12-55-42-882",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice a dark heavy bench under the window, its top cut all over by knives and stained by dubbin. I want",
+  "text": "I see the dark, heavy bench by the window, its top lined with knife marks and seasoned with dubbin. I yearn to take up my tools and start making shoes, boots, and belts here in this old city."
+ },
+ {
+  "t0": 427.0,
+  "ts": 434.0,
+  "t1": 486.5,
+  "section": "craft_work",
+  "voice": "SHOEMAKING",
+  "slot": "slot_10",
+  "request": "request_002_12-57-20-995",
+  "prompt": "Re-express the following sentence in your own voice: \"I will set to work at the leather bench as a cordwainer\"\n\nThis sentence is written in the first person, an",
+  "text": "I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads."
+ },
+ {
+  "t0": 503.2,
+  "ts": 513.3,
+  "t1": 569.4,
+  "section": "craft_work",
+  "voice": "SHOEMAKING",
+  "slot": "slot_10",
+  "request": "request_003_12-58-37-201",
+  "prompt": "Re-express the following sentence in your own voice: \"I could use an awl to help me set to work at the leather bench as a cordwainer, cutting leather for shoes ",
+  "text": "I need an awl to begin, crafting leather for shoes that walk on wet cobblestones, the heel guides every step."
+ },
+ {
+  "t0": 569.4,
+  "ts": 576.4,
+  "t1": 635.3,
+  "section": "craft_work",
+  "voice": "SHOEMAKING",
+  "slot": "slot_10",
+  "request": "request_004_12-59-43-361",
+  "prompt": "Re-express the following sentence in your own voice: \"I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads.",
+  "text": "I will set to work at the leather bench as a cordwainer, cutting leather for shoes that walk on wet roads, using an awl."
+ },
+ {
+  "t0": 654.7,
+  "ts": 661.3,
+  "t1": 721.6,
+  "section": "craft_work",
+  "voice": "SHOEMAKING",
+  "slot": "slot_10",
+  "request": "request_005_13-01-08-693",
+  "prompt": "Re-express the following sentence in your own voice: \"It is done! I managed to set to work at the leather bench as a cordwainer using an awl. Thanks to this suc",
+  "text": "I got to the bench, set to work, an awl in hand. Success felt like the welt for wet roads, tight and true."
+ },
+ {
+  "t0": 838.8,
+  "ts": 840.3,
+  "t1": 926.9,
+  "section": "craft_menu",
+  "voice": "EMPATHY",
+  "slot": "slot_6",
+  "request": "request_003_13-04-12-754",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to a leather bench. This is a dark heavy bench under the window, its top cut all ove",
+  "text": "I see a leather bench under the window, dark and heavy, its top marred by knives and stained by dubbin. My attention is drawn to it, feeling the weight of its history in the quiet city."
+ }
+]
