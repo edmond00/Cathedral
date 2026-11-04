@@ -619,8 +619,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 6";
-        public const string ChapterSubtitle = "Wherein the Will Seeks Its Nearest Road";
+        public const string Chapter = "Volume 7";
+        public const string ChapterSubtitle = "Cuir Bouilli and Pattern Welding";
     }
 
     /// <summary>
