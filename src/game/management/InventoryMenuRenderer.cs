@@ -164,6 +164,9 @@ public sealed class InventoryMenuRenderer
     private bool             _dragHoverReady     = false;
     private const long       DragHoverDelayMs    = 1500;
 
+    // The item a release at the cursor would exchange the dragged item with; blinks while hovered.
+    private Item?            _swapTarget         = null;
+
     // Track whether mouse is over the right panel (for conditional drag preview).
     private bool             _hoveringRightPanel = false;
 
@@ -179,6 +182,14 @@ public sealed class InventoryMenuRenderer
     private static readonly Vector4 BlinkOffBorder = NormalBoxBorder;
     private static readonly Vector4 BlinkOffBg     = NormalBoxBg;
     private static readonly Vector4 BlinkOffText   = NormalTextColor;
+
+    /// <summary>
+    /// The exchange hint: the drop-target yellow, pulsing against the plain box. The dwell pulse
+    /// above stays grey, so the two never read alike.
+    /// </summary>
+    private (Vector4 Border, Vector4 Bg, Vector4 Text) SwapBlinkColors() =>
+        _blinkOn ? (DropTargetBorder, DropTargetBg, Config.Colors.BrightYellow)
+                 : (NormalBoxBorder, NormalBoxBg, NormalTextColor);
 
     // Cached member reference for event handlers
     private PartyMember? _member;
@@ -391,6 +402,9 @@ public sealed class InventoryMenuRenderer
                 }
             }
         }
+
+        var newSwap = _isDragging ? ExchangeAt(x, y, hit, commit: false) : null;
+        if (!ReferenceEquals(newSwap, _swapTarget)) { _swapTarget = newSwap; changed = true; }
 
         return changed;
     }
@@ -711,12 +725,7 @@ public sealed class InventoryMenuRenderer
         }
 
         // ── Exchange with the item under the cursor. ──
-        // Only when a plain drop cannot happen: an exchange needs no free slot on either side,
-        // which is the case it exists for (a sword in the hand, a warhammer in a full pack).
-        bool anchorDropFits = _hoveredAnchor.HasValue && _hoveredAnchor.Value != _dragSourceAnchor
-                              && _member.CanPlace(_hoveredAnchor.Value, _dragItem)
-                              && _member.AvailableSlots(_hoveredAnchor.Value) >= _dragItem.SlotCount;
-        if (!anchorDropFits && TrySwapWithItemAt(x, y, hit))
+        if (ExchangeAt(x, y, hit, commit: true) != null)
         {
             ResetDragState();
             return true;
@@ -737,10 +746,15 @@ public sealed class InventoryMenuRenderer
     /// at the other's position, when the place accepts it once its own occupant has left.
     /// A body-art container that could hold the dragged item is not exchanged with — the drop
     /// meant "into", and failed for want of room.
+    ///
+    /// <para>Only when a plain drop cannot happen: an exchange needs no free slot on either side,
+    /// which is the case it exists for (a sword in the hand, a warhammer in a full pack). With
+    /// <paramref name="commit"/> false nothing moves, and the item that would be exchanged with is
+    /// returned for the hover hint; null means a release here does not exchange.</para>
     /// </summary>
-    private bool TrySwapWithItemAt(int x, int y, ItemHit? hit)
+    private Item? ExchangeAt(int x, int y, ItemHit? hit, bool commit)
     {
-        if (_dragItem == null || _member == null || !_dragSourceAnchor.HasValue) return false;
+        if (_dragItem == null || _member == null || !_dragSourceAnchor.HasValue) return null;
 
         Item? other = null;
         IContainer? otherContainer = null;
@@ -750,36 +764,43 @@ public sealed class InventoryMenuRenderer
         if (contentIdx >= 0)
         {
             var viewed = ResolveViewedContainer();
-            if (viewed == null || contentIdx >= viewed.Contents.Count) return false;
+            if (viewed == null || contentIdx >= viewed.Contents.Count) return null;
+            // The viewed container takes the item as it is: that drop wins.
+            if (viewed != _dragSourceContainer && viewed != _dragItem
+                && viewed.CanContain(_dragItem) && viewed.AvailableSlots >= _dragItem.SlotCount) return null;
             other          = viewed.Contents[contentIdx];
             otherContainer = viewed;
         }
         else if (hit.HasValue && hit.Value.ItemIdx >= 0)
         {
             var items = _member.EquippedItems[hit.Value.Anchor];
-            if (hit.Value.ItemIdx >= items.Count) return false;
+            if (hit.Value.ItemIdx >= items.Count) return null;
             other       = items[hit.Value.ItemIdx];
             otherAnchor = hit.Value.Anchor;
-            if (other is IContainer into && into.CanContain(_dragItem)) return false;
+            if (other is IContainer into && into.CanContain(_dragItem)) return null;
+            // The anchor takes the item as it is: that drop wins.
+            if (otherAnchor != _dragSourceAnchor && _member.CanPlace(otherAnchor, _dragItem)
+                && _member.AvailableSlots(otherAnchor) >= _dragItem.SlotCount) return null;
         }
-        if (other == null || ReferenceEquals(other, _dragItem)) return false;
+        if (other == null || ReferenceEquals(other, _dragItem)) return null;
 
         var dragList  = _dragSourceContainer?.Contents ?? _member.EquippedItems[_dragSourceAnchor.Value];
         var otherList = otherContainer?.Contents ?? _member.EquippedItems[otherAnchor];
         // Within one list an exchange is only a reordering; and neither item may end up inside itself.
-        if (ReferenceEquals(dragList, otherList)) return false;
-        if (Holds(_dragItem, other) || Holds(other, _dragItem)) return false;
+        if (ReferenceEquals(dragList, otherList)) return null;
+        if (Holds(_dragItem, other) || Holds(other, _dragItem)) return null;
 
         int dragIdx  = dragList.IndexOf(_dragItem);
         int otherIdx = otherList.IndexOf(other);
-        if (dragIdx < 0 || otherIdx < 0) return false;
+        if (dragIdx < 0 || otherIdx < 0) return null;
 
+        // Both leave before either is weighed, so each place is judged without its occupant.
         dragList.RemoveAt(dragIdx);
         otherList.RemoveAt(otherIdx);
 
         bool fits = Accepts(_dragSourceContainer, _dragSourceAnchor.Value, other)
                     && Accepts(otherContainer, otherAnchor, _dragItem);
-        if (fits)
+        if (fits && commit)
         {
             dragList.Insert(dragIdx, other);
             otherList.Insert(otherIdx, _dragItem);
@@ -789,7 +810,7 @@ public sealed class InventoryMenuRenderer
             dragList.Insert(dragIdx, _dragItem);
             otherList.Insert(otherIdx, other);
         }
-        return fits;
+        return fits ? other : null;
     }
 
     /// <summary>Whether a place, already emptied of its occupant, would take <paramref name="item"/>.</summary>
@@ -1132,6 +1153,7 @@ public sealed class InventoryMenuRenderer
         _dragSourceItemIdx   = -1;
         _dragSourceContainer = null;
         _dragHoverItem       = null;
+        _swapTarget          = null;
         _dragHoverAnchor    = null;
         _dragHoverStartTick = 0;
         _dragHoverReady     = false;
@@ -1217,6 +1239,10 @@ public sealed class InventoryMenuRenderer
             if (isBeingDragged)
             {
                 border = DragBoxBorder; bg = DragBoxBg; textCol = DragTextColor;
+            }
+            else if (ReferenceEquals(item, _swapTarget))
+            {
+                (border, bg, textCol) = SwapBlinkColors();
             }
             else if (isGrayedOut
                      && !(item is IContainer c && _dragItem != null && c.CanContain(_dragItem)
@@ -1397,7 +1423,14 @@ public sealed class InventoryMenuRenderer
         int y = startRow;
         var dragFg = new Vector4(0.70f, 0.60f, 0.15f, 1f);
         string name = _dragItem != null ? TruncRight(_dragItem.DisplayName, RightContentW - 12) : "?";
-        _terminal.Text(RightContentX, y, $"Dragging: {name}", dragFg, RightPanelBg);
+        // Reworded in place rather than given a row of its own: an extra row would push the
+        // content rows down under the cursor, off the very item being hinted.
+        if (_swapTarget != null)
+            _terminal.Text(RightContentX, y,
+                $"Exchange for: {TruncRight(_swapTarget.DisplayName, RightContentW - 15)}",
+                Config.Colors.BrightYellow, RightPanelBg);
+        else
+            _terminal.Text(RightContentX, y, $"Dragging: {name}", dragFg, RightPanelBg);
         y++;
         DrawSep(y); y++;
         return y;
@@ -1828,7 +1861,10 @@ public sealed class InventoryMenuRenderer
             var ci = container.Contents[i];
             int boxH = ci.SlotCount;
             if (y + boxH > InfoEndRow) break;
-            DrawContentItemBox(ci.DisplayName, RightContentX, y, boxH, NormalBoxBorder, NormalBoxBg, NormalTextColor);
+            var (border, bg, fg) = ReferenceEquals(ci, _swapTarget)
+                ? SwapBlinkColors()
+                : (NormalBoxBorder, NormalBoxBg, NormalTextColor);
+            DrawContentItemBox(ci.DisplayName, RightContentX, y, boxH, border, bg, fg);
             _contentHits.Add(new ContentHit(i, y, y + boxH - 1));
             y += boxH;
         }
