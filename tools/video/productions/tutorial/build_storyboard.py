@@ -739,11 +739,20 @@ RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True, mi
 
 # 11. the second fight, fast-forwarded under one remark, and the city
 f2b, f2e = rs_clip("fight_2")
-# the clip runs on to the city's first passage; the fast-forward stops where the fight does, so the arrival's
-# text is read at its own pace and not raced past under the fight's remark
+# the clip runs on to the city's first passage; the fight is over at the mode change
 f2e = next(e["t"] for e in RS.events if e["type"] == "mode" and e.get("from") == "Fighting" and f2b < e["t"] < f2e) + 0.5
-RS.game(f2b, f2e, "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it "
-        "fast.", *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []), speed=6.0, fade=True)
+# cut, not raced: the encounter, the one thrust that decides it, and its end. A thrust out of reach rolls
+# nothing, so the first that counts is the first whose dice box is closed by Continue.
+engage = RS.click(f2b, f2e, label="ENGAGE")
+swords = [c["t"] for c in RS.clicks if f2b <= c["t"] <= f2e and c.get("label") == "Short Sword"]
+conts = [c["t"] for c in RS.clicks if f2b <= c["t"] <= f2e and c.get("label") == "Continue"]
+hit = next(s_ for s_ in swords if any(s_ < c_ < s_ + 25 for c_ in conts))
+hit_end = next(c_ for c_ in conts if c_ > hit) + 0.8
+RS.game(f2b, engage + 1.5, "Another wolf, on the road to the city. This fight goes the way the first one did, so we "
+        "cut it short.", fade=True)
+RS.game(hit - 0.5, hit_end, "Only one thrust is worth seeing. It breaks the wolf's backbone, and the backbone is where "
+        "movement comes from. From then on, the wolf has no points left to act with.", speed=1.5, fade=True)
+RS.game(f2e - 4.0, f2e, "It never strikes back once. Where you hit matters.", fade=True)
 t = f2e
 
 # 11b. how a place works, before the first city: five steps over the city's own music, looped

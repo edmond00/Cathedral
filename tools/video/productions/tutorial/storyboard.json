@@ -1574,16 +1574,32 @@
    "type": "game",
    "recording": "city",
    "from": 50.64,
+   "to": 62.26,
+   "fade": true,
+   "vo": [
+    "Another wolf, on the road to the city. This fight goes the way the first one did, so we cut it short."
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 147.87,
+   "to": 166.5,
+   "fade": true,
+   "vo": [
+    "Only one thrust is worth seeing. It breaks the wolf's backbone, and the backbone is where movement comes from. From then on, the wolf has no points left to act with."
+   ],
+   "speed": 1.5
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 314.3,
    "to": 318.3,
    "fade": true,
    "vo": [
-    "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it fast.",
-    {
-     "text": "One thing to watch: the first thrust breaks the wolf's backbone, and the backbone is where movement comes from. From then on the wolf has no points left to act with, and it never strikes back once. Where you hit matters.",
-     "wait": true
-    }
-   ],
-   "speed": 6.0
+    "It never strikes back once. Where you hit matters."
+   ]
   },
   {
    "type": "manim",

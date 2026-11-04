@@ -286,8 +286,11 @@ And the calendar moves on by every day worked. Your lifespan is counted in days,
 
 With twenty copper in the purse, to the city.
 
-Another wolf, on the road to the city. This fight goes the way the first one did, so we play it fast.
-One thing to watch: the first thrust breaks the wolf's backbone, and the backbone is where movement comes from. From then on the wolf has no points left to act with, and it never strikes back once. Where you hit matters.
+Another wolf, on the road to the city. This fight goes the way the first one did, so we cut it short.
+
+Only one thrust is worth seeing. It breaks the wolf's backbone, and the backbone is where movement comes from. From then on, the wolf has no points left to act with.
+
+It never strikes back once. Where you hit matters.
 
 **[Locations]**
 Before we walk into the city, a closer look at how a place works. A place is built from areas: squares, streets, alleys, rooms. Areas are grouped into sections. The town's open ground is one section, and every building is a section of its own. Open ground is joined by ways you simply walk. A building is joined to it by a connector, a door, a stair, a climb, which has to be passed. And a path is a shortcut across public ground: two or three areas in one go.
