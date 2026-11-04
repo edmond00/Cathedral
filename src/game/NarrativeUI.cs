@@ -74,7 +74,7 @@ public class NarrativeUI : TerminalPanelUI
         if (trespassing is { } trespass)
         {
             string ground = trespass ? "◆ TRESPASSING ◆" : "open ground";
-            var fg = trespass ? Config.Colors.BrightRed : Config.NarrativeUI.HistoryColor;
+            var fg = trespass ? Config.Colors.BrightPurple : Config.NarrativeUI.HistoryColor;
             int groundX = _layout.CONTENT_START_X
                         + (_layout.CONTENT_END_X - _layout.CONTENT_START_X - ground.Length) / 2;
             _terminal.Text(groundX, headerY, ground, fg, Config.NarrativeUI.BackgroundColor);

@@ -12,5 +12,4 @@ public sealed class Straw : Item
     public override string Article     => "some";
     public override string Description => "A handful of dry golden straw stalks, hollow and brittle";
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fodder };
-    public override int PriceReference => 2;
 }

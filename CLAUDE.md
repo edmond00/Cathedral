@@ -54,7 +54,7 @@ or styling in the chapters.
 
 ## Rules that always apply
 
-Six prohibitions that hold everywhere in the codebase. Every one of them fails *silently* —
+Seven prohibitions that hold everywhere in the codebase. Every one of them fails *silently* —
 nothing throws, nothing warns, and the symptom surfaces far from the cause. They are kept here,
 always loaded, rather than in the skills and nested files that carry the rest of their chapters.
 
@@ -109,6 +109,26 @@ because cell size is the window divided by `MainWidth`/`MainHeight`, and every r
 its rows against that 100x100 — the grid is layout. Fullscreen is the player's lever on cell size.
 The scale ceiling is where the quad's overflow shows on box-drawing glyphs (side rails, popup
 frames, the solid volume bars), which fill their cell to the edge where letters do not.
+
+**Three hues only: purplish, yellowish, greyscale.** Nothing a player sees is red, green, blue, cyan
+or orange — not an error, not a success, not a warning. The meaning is carried within the three:
+
+| hue | means | from `Config.Colors` |
+|---|---|---|
+| yellow / gold | what can be clicked and what is hovered, titles, gain and success, coin; `Ochre` for a warm secondary accent (vital heat, running, knockdown) | `BrightYellow`, `GoldYellow`, `OrangeYellow`, `MediumYellow`, `DarkYellow`, `DarkYellowGrey`, `Ochre`, `Coin*` |
+| purple | wounds, loss, danger, warnings and refusals, enemies, a failed or spoiled attempt, trespass | `BrightPurple`, `Purple`, `LightPurple`, `DarkPurple` |
+| grey | text, the neutral and the plain, what is disabled | `White`, `LightGray*`, `MediumGray*`, `DarkGray*`, `Black` |
+
+The world sphere enforces it in its shaders — a vertex's alpha picks a tone (grey nature, purple
+water, ochre building and field) and its colour is read only as a luminance, so a biome declared
+"green" draws grey; only the developer region overlay (R) opts out. **The terminal does not**: every
+renderer draws exactly the colour it passes, so the rule there is a choice made at each call. Write a
+dark band as a shade of one of the three (a near-black with a gold, grey or purple cast), and reach for
+a named palette colour before a literal. `Red`, `Green`, `Blue`, `Magenta`, `Cyan` and the ANSI
+`Colors.Terminal` table survive for the developer tools only (the image-to-text mode, the terminal's
+test palette, the sphere's debug shaders). To find a stray, grep `src/game` and `src/fight` for those
+names, and read every `new Vector4(r, g, b, …)` literal against the three shapes: grey has r, g and b
+near equal, yellow has r and g together above b, purple has r and b above g. Anything else is a stray.
 
 ## Verifying a change (read this before testing anything)
 

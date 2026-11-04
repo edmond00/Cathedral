@@ -11,7 +11,6 @@ public sealed class LinenTunic : WearableItem
     public override ItemSize Size           => ItemSize.Medium;
     public override WearSlot Slot           => WearSlot.Bodywear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
-    public override int PriceReference => 10;
 
     // Mended rather than ragged: it reads as a working man who keeps himself decent.
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>

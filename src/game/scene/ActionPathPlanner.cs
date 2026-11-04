@@ -85,7 +85,7 @@ public static class ActionPathPlanner
         typeof(SitAndWaitVerb), typeof(HideAndWaitVerb), typeof(BacktrackVerb),
     };
 
-    private readonly record struct State(Guid Area, TimePeriod When, string? Tool);
+    private readonly record struct State(Guid Area, TimePeriod When, string? Tool, string? Leave = null);
 
     private static readonly Dictionary<(Scene, Guid, TimePeriod, string, string), ActionPath?> _cache = new();
 
@@ -95,7 +95,7 @@ public static class ActionPathPlanner
     /// will and every replan through an object; scene state changes only where <see cref="Forget"/>
     /// runs, so an expansion is as good as the plan it served.
     /// </summary>
-    private static readonly Dictionary<(Scene, Guid, TimePeriod, PartyMember, Verb), IReadOnlyList<VerbAction>[]> _expanded = new();
+    private static readonly Dictionary<(Scene, Guid, TimePeriod, string?, PartyMember, Verb), IReadOnlyList<VerbAction>[]> _expanded = new();
     private static readonly Dictionary<(Scene, Guid, TimePeriod), IReadOnlyList<Element>> _elements = new();
 
     /// <summary>Where each kept transit action leaves the body — the same action object, so read once.</summary>
@@ -122,7 +122,7 @@ public static class ActionPathPlanner
         var perVerb = new IReadOnlyList<VerbAction>[verbs.Count][];
         for (int v = 0; v < verbs.Count; v++)
         {
-            var key = (scene, here.Where.Id, here.When, actor, verbs[v]);
+            var key = (scene, here.Where.Id, here.When, here.PlannedLeave, actor, verbs[v]);
             if (!_expanded.TryGetValue(key, out var lists))
             {
                 lists = new IReadOnlyList<VerbAction>[elements.Count];
@@ -146,7 +146,8 @@ public static class ActionPathPlanner
     public static ActionPath? Plan(Scene scene, PoV pov, PartyMember actor, WillTargets will, string? obtained = null)
     {
         var held = actor.GetAllItems().ToList();
-        var key  = (scene, pov.Where.Id, pov.When, will.Key, string.Join(",", held.Select(i => i.ItemId).OrderBy(i => i)) + "+" + obtained);
+        var key  = (scene, pov.Where.Id, pov.When, will.Key,
+                    string.Join(",", held.Select(i => i.ItemId).OrderBy(i => i)) + "+" + obtained + "+" + pov.PlannedLeave);
         if (_cache.TryGetValue(key, out var cached)) return cached;
 
         var path = Search(scene, pov, actor, will, held, obtained, unarmed: false);
@@ -177,9 +178,9 @@ public static class ActionPathPlanner
         if (goalVerbs.Count == 0) return null;
 
         // Unarmed, a goal counts as in hand: nothing is fetched for it, and the click asks for the tool.
-        bool Holds(Verb verb, string? acquired)
+        bool Holds(Verb verb, string? acquired, VerbAction? view = null)
             => unarmed && will.Wants(verb) && CouldServeBareHanded(verb, held)
-               || verb.ReferenceToolIds.Any(id => id == acquired || held.Any(i => i.ItemId == id))
+               || verb.ReferenceToolIdsFor(view).Any(id => id == acquired || held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         // The implements some goal verb needs and the body does not hold. Empty: no detour for one.
@@ -189,10 +190,14 @@ public static class ActionPathPlanner
         // A transit verb that itself needs an implement is walked only with one already in hand.
         var transit = scene.Verbs.Where(v => TransitVerbTypes.Any(t => t.IsInstanceOfType(v))
                                           && (!v.RequiresTool || Holds(v, null)));
-        var narrow  = transit.Concat(goalVerbs).Distinct().ToList();
+        // Asking a master for the use of a workshop is a step on the way too: it opens a conversation,
+        // which the planner otherwise never passes, but its success is known in advance — the leave —
+        // and that is all a crafting will needs of it. The supposed leave rides in the search state.
+        var leaveSteps = scene.Verbs.OfType<AskToUseWorkshopVerb>();
+        var narrow  = transit.Concat(leaveSteps).Concat(goalVerbs).Distinct().ToList();
         var areas   = scene.AllAreas.ToDictionary(a => a.Id);
 
-        var start = new State(pov.Where.Id, pov.When, obtained);
+        var start = new State(pov.Where.Id, pov.When, obtained, pov.PlannedLeave);
         var prev  = new Dictionary<State, (State From, VerbAction? Step)> { [start] = (start, null) };
         var depth = new Dictionary<State, int> { [start] = 0 };
         var queue = new Queue<State>();
@@ -208,14 +213,14 @@ public static class ActionPathPlanner
         {
             var s     = queue.Dequeue();
             if (best is { } b && depth[s] > depth[b.At]) break;
-            var here  = new PoV(areas[s.Area], s.When);
+            var here  = new PoV(areas[s.Area], s.When) { PlannedLeave = s.Leave };
             // Every verb is read only while an implement is still to be found: it is the one search
             // in which a grab or a purchase is a step on the way.
             var verbs = wanted.Count > 0 && s.Tool == null ? scene.Verbs : narrow;
 
             foreach (var action in Offered(scene, here, actor, verbs))
             {
-                if (will.Matches(action) && (!action.Verb.RequiresTool || Holds(action.Verb, s.Tool)))
+                if (will.Matches(action) && (!action.Verb.RequiresTool || Holds(action.Verb, s.Tool, action)))
                 {
                     int index = will.IndexOf(action);
                     if (best == null || index < best.Value.Index) best = (index, s, action);
@@ -223,7 +228,10 @@ public static class ActionPathPlanner
                 }
 
                 if (wanted.Count > 0 && s.Tool == null && Obtains(action, wanted) is { } tool)
-                    Push(new State(s.Area, s.When, tool), action);
+                    Push(s with { Tool = tool }, action);
+
+                if (action.Verb is AskToUseWorkshopVerb && action.Variant is string workshop && s.Leave == null)
+                    Push(s with { Leave = workshop }, action);
 
                 if (!TransitVerbTypes.Any(t => t.IsInstanceOfType(action.Verb))) continue;
 
@@ -309,12 +317,12 @@ public static class ActionPathPlanner
             return path with { Steps = path.Steps.Skip(1).Prepend(new PathStep(own, path.First.Settled)).ToList() };
 
         var held = actor.GetAllItems().ToList();
-        bool Holds(Verb verb)
-            => verb.ReferenceToolIds.Any(id => held.Any(i => i.ItemId == id))
+        bool Holds(Verb verb, VerbAction? view = null)
+            => verb.ReferenceToolIdsFor(view).Any(id => held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         if (path.Steps.Count == 1
-            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb) || path.Unarmed && CouldServeBareHanded(a.Verb, held))) is { } goal)
+            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb, a) || path.Unarmed && CouldServeBareHanded(a.Verb, held))) is { } goal)
             return new ActionPath(new[] { new PathStep(goal) }, -1, will.TargetOf(goal), path.Unarmed);
 
         if (path.ToolStep == 0)
@@ -325,9 +333,15 @@ public static class ActionPathPlanner
                 return path with { Steps = path.Steps.Skip(1).Prepend(new PathStep(obtain)).ToList() };
         }
 
+        foreach (var action in actions.Where(a => a.Verb is AskToUseWorkshopVerb && a.Variant is string && pov.PlannedLeave == null))
+            if (Plan(scene, new PoV(pov.Where, pov.When) { PlannedLeave = (string)action.Variant! }, actor, will) is { } rest
+                && rest.Steps.Count == path.Steps.Count - 1)
+                return new ActionPath(rest.Steps.Prepend(new PathStep(action)).ToList(),
+                                      rest.ToolStep < 0 ? -1 : rest.ToolStep + 1, rest.Target);
+
         foreach (var action in actions.Where(a => TransitVerbTypes.Any(t => t.IsInstanceOfType(a.Verb))))
             foreach (var (area, when) in Destinations(scene, pov, actor, action))
-                if (Plan(scene, new PoV(area, when), actor, will) is { } rest && rest.Steps.Count == path.Steps.Count - 1)
+                if (Plan(scene, new PoV(area, when) { PlannedLeave = pov.PlannedLeave }, actor, will) is { } rest && rest.Steps.Count == path.Steps.Count - 1)
                     return new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, area, when))).ToList(),
                                           rest.ToolStep < 0 ? -1 : rest.ToolStep + 1, rest.Target);
         return null;
@@ -373,12 +387,12 @@ public static class ActionPathPlanner
                                                bool unarmed)
     {
         var held = actor.GetAllItems().ToList();
-        bool Holds(Verb verb)
-            => verb.ReferenceToolIds.Any(id => held.Any(i => i.ItemId == id))
+        bool Holds(Verb verb, VerbAction? view = null)
+            => verb.ReferenceToolIdsFor(view).Any(id => held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         if (unarmed && will.Matches(action) && CouldServeBareHanded(action.Verb, held)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action), Unarmed: true);
-        if (action.Verb.RequiresTool && !Holds(action.Verb)) return null;
+        if (action.Verb.RequiresTool && !Holds(action.Verb, action)) return null;
         if (will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action));
 
         var wanted = scene.Verbs.Where(v => will.Wants(v) && v.RequiresTool && !Holds(v))
@@ -388,11 +402,18 @@ public static class ActionPathPlanner
                 ? new ActionPath(armed.Steps.Prepend(new PathStep(action)).ToList(), 0, armed.Target)
                 : null;
 
+        // The workshop's leave, asked of its master, then whatever the will wants there.
+        if (action.Verb is AskToUseWorkshopVerb && action.Variant is string workshop && pov.PlannedLeave == null)
+            return Plan(scene, new PoV(pov.Where, pov.When) { PlannedLeave = workshop }, actor, will) is { } granted
+                ? new ActionPath(granted.Steps.Prepend(new PathStep(action)).ToList(),
+                                 granted.ToolStep < 0 ? -1 : granted.ToolStep + 1, granted.Target)
+                : null;
+
         if (!TransitVerbTypes.Any(t => t.IsInstanceOfType(action.Verb))) return null;
 
         ActionPath? best = null;
         foreach (var (area, when) in Destinations(scene, pov, actor, action))
-            if (Plan(scene, new PoV(area, when), actor, will) is { } rest
+            if (Plan(scene, new PoV(area, when) { PlannedLeave = pov.PlannedLeave }, actor, will) is { } rest
                 && (best == null || rest.Steps.Count + 1 < best.Steps.Count))
                 best = new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, area, when))).ToList(),
                                       rest.ToolStep < 0 ? -1 : rest.ToolStep + 1, rest.Target);

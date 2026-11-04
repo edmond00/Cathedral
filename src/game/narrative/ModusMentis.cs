@@ -261,5 +261,6 @@ public enum ModusMentisFunction
     Speaking,      // Generates player dialogue replicas in conversation
     Fighting,      // Declarative: this modusMentis unlocks fighting skills (main or secondary)
     Emotion,       // Reacts to what an action produced: declares outcome types that move the spleen
-    Will           // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Will,          // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Craft          // Works one station with one tool: unlocks USE on it and its recipes (CraftingModusMentis)
 }

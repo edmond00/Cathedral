@@ -23,7 +23,7 @@ public class RequiredToolRule : IActionRule
         if (verb == null || !verb.RequiresTool)      return ActionRuleResult.Pass();
         if (ctx.Action.CombinedItem != null)         return ActionRuleResult.Pass();
 
-        string tool = ToolPhrase(verb.ReferenceToolIds);
+        string tool = ToolPhrase(verb.ReferenceToolIdsFor(ctx.Action.PreselectedOutcome));
         return ActionRuleResult.FailNeedsTool($"I would need {tool} for that.", tool);
     }
 

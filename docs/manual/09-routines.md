@@ -32,7 +32,7 @@ the locked excepted.
 Routines have no number of their own. A place holds every routine learned there, and they are
 forgotten only with its map.
 
-## 2. The six kinds
+## 2. The seven kinds
 
 | Kind | Learned when | Walking it opens |
 |---|---|---|
@@ -42,6 +42,7 @@ forgotten only with its map.
 | **Buy** | a merchant agrees to sell | the barter, buying, with no conversation before it; the body returns to the world when it closes |
 | **Sell** | a merchant agrees to buy | the barter, selling, with no conversation before it; the body returns to the world when it closes |
 | **Work** | a master agrees to take the body on | the stint of work, with no conversation before it |
+| **Craft** | the body successfully sets to work at a station (see [X](10-crafting.md)) | the work at that station, with no act rolled; the body returns to the world when it closes |
 
 A conversation that came to the body unbidden — a confrontation over something seen — teaches
 nothing: nobody goes back to be caught again.
@@ -58,7 +59,9 @@ place.
 (see [VI §7](06-narration.md)), and a routine learned there would be a standing invitation back,
 walked with none of the risk. Private ground teaches no routine even where its householder has let
 the body stay ([VI §7](06-narration.md)): that leave lasts the visit, and a routine is walked on a
-later one, where nobody has given it. A routine whose area has become private cannot be walked.
+later one, where nobody has given it. The one exception is a workshop whose master has given the use
+of it ([X §4](10-crafting.md)): that leave is kept for good, and the ground is the body's to stand on
+on every later visit too. A routine whose area has become private cannot be walked.
 
 Nothing made during a visit is learned from either. A corpse, the wreck of broken furniture and what
 either holds are absent from the scene of the next visit, so a gathering upon them teaches nothing.
@@ -76,10 +79,11 @@ still be open ground.
 | Buy, Sell | as Meet; or the area is not the merchant's premises; or the merchant would no longer trade (see [VII](07-social.md)); or an enemy stands in the area |
 | Work | as Meet; or the work is no longer offered, or the master would not take the body on; or an enemy stands in the area |
 | Gather | the source is gone; nothing of the item grows there at all; the body's anatomy cannot perform the manner of taking it; the implement it was learned with is not carried; or an enemy stands in the area |
+| Craft | the station is gone; the trade is no longer held; its implement — or the one it was learned with — is not carried; the station may no longer be used; or an enemy stands in the area |
 
 Companions are not consulted, nor anything done on the way the first time: the way is known. The only
-thing a routine requires the body to bring is **the implement a gathering was learned with** — a seam
-learned with a pick is not worked without one. It is required, never spent.
+thing a routine requires the body to bring is **the implement it was learned with** — a seam learned
+with a pick is not worked without one, nor an anvil without a hammer. It is required, never spent.
 
 A routine found unwalkable on arrival is abandoned, and the visit proceeds as any ordinary arrival.
 
@@ -108,4 +112,4 @@ location: the scene arrived in is long stale.
 
 ---
 
-Previous: [VIII. Of Combat](08-fighting.md) · [Back to the index](README.md)
+Previous: [VIII. Of Combat](08-fighting.md) · Next: [X. Of Crafting](10-crafting.md) · [Back to the index](README.md)

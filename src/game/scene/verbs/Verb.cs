@@ -309,6 +309,12 @@ public abstract class Verb
     /// </summary>
     public virtual IReadOnlyList<string> ReferenceToolIds => System.Array.Empty<string>();
 
+    /// <summary>
+    /// The reference implements of one offered action. The same as <see cref="ReferenceToolIds"/> for
+    /// every verb but USE, whose implement depends on which trade the action is offered as.
+    /// </summary>
+    public virtual IReadOnlyList<string> ReferenceToolIdsFor(VerbAction? view) => ReferenceToolIds;
+
     /// <summary>Whether this verb cannot be attempted with bare hands.</summary>
     public bool RequiresTool => ToolUse == ToolUsage.Required;
 

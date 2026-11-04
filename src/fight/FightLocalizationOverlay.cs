@@ -48,7 +48,7 @@ public class FightLocalizationOverlay
     private int _hoverTermX = -1, _hoverTermY = -1;
     private bool _cancelHovered;
 
-    private static readonly Vector4 BoxBorder = Config.Colors.Orange;
+    private static readonly Vector4 BoxBorder = Config.Colors.Ochre;
     private static readonly Vector4 XColor    = Config.Colors.BrightYellow;
     private static readonly Vector4 XBg       = new(0.2f, 0.2f, 0.0f, 1.0f);
 

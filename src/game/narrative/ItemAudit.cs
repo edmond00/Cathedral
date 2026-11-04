@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Cathedral.Fight;
+using Cathedral.Game.Narrative.Crafting;
 using Cathedral.Game.Npc;
 
 namespace Cathedral.Game.Narrative;
@@ -65,6 +66,7 @@ public static class ItemAudit
         warnings.AddRange(CheckInfoPanel(items, sb));
         warnings.AddRange(CheckLiquids(items, sb));
         warnings.AddRange(CheckTrade(items, sb));
+        warnings.AddRange(CheckPrices(items, sb));
         warnings.AddRange(CheckWeapons(items, sb));
         warnings.AddRange(CheckWeights(items, sb));
         warnings.AddRange(CheckHitLocationDistribution(sb));
@@ -82,6 +84,91 @@ public static class ItemAudit
         }
 
         return sb.ToString();
+    }
+
+    // ── Prices ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Every price is worked out by <see cref="ItemPricing"/>, so what is checked here is that the formula
+    /// holds its promises: nothing above the cap, nothing worth less than the material it breaks down into
+    /// at a station, every refined material dearer by the unit than its raw one, and every recipe worth
+    /// more than the material it is paid in. A failure is a ✗ line, which fails the suite.
+    /// </summary>
+    private static List<string> CheckPrices(IReadOnlyList<Item> items, StringBuilder sb)
+    {
+        var warnings = new List<string>();
+        void Fail(string msg) { sb.AppendLine($"  ✗ {msg}"); warnings.Add(msg); }
+
+        sb.AppendLine("── Prices ────────────────────────────────────────────────────────────");
+        sb.AppendLine();
+        sb.AppendLine("  price = matter × craftsmanship + labour + function + rarity   (ItemPricing)");
+        sb.AppendLine();
+        sb.AppendLine("  copper per unit of material");
+        sb.AppendLine("    " + string.Join("  ", Crafting.CraftMaterials.All.Select(m => $"{m.Label()} {ItemPricing.UnitValue(m):0.##}")));
+        sb.AppendLine();
+
+        var breakdowns = items.Select(i => (Item: i, B: ItemPricing.Of(i))).ToList();
+
+        sb.AppendLine("  craftsmanship     ×      +   items  (declared)");
+        foreach (var c in Enum.GetValues<Craftsmanship>())
+        {
+            var of = breakdowns.Where(x => x.B.Craftsmanship == c).ToList();
+            int declared = of.Count(x => x.Item.Craftsmanship != ItemPricing.DefaultCraftsmanship(x.Item));
+            sb.AppendLine($"    {c,-13} {ItemPricing.Multiplier(c),4:0.#}  {ItemPricing.Labour(c),4}   {of.Count,5}  ({declared})");
+        }
+        sb.AppendLine();
+        sb.AppendLine("  rarity            +   items");
+        foreach (var r in Enum.GetValues<Rarity>())
+            sb.AppendLine($"    {r,-13} {ItemPricing.Premium(r),4}   {breakdowns.Count(x => x.B.Rarity == r),5}");
+        sb.AppendLine();
+
+        var overridden = breakdowns.Where(x => x.B.Override.HasValue).ToList();
+        sb.AppendLine($"  overrides : {overridden.Count}" + (overridden.Count == 0 ? "" :
+            "  " + string.Join(", ", overridden.Select(x => $"{x.Item.ItemId}({x.B.Override})"))));
+        sb.AppendLine();
+
+        sb.AppendLine("  category        min  median  max   dearest");
+        foreach (var g in breakdowns.GroupBy(x => x.Item.Category).OrderBy(g => g.Key))
+        {
+            var prices = g.Select(x => x.B.Price).OrderBy(p => p).ToList();
+            var top = g.OrderByDescending(x => x.B.Price).First().Item.ItemId;
+            sb.AppendLine($"    {g.Key,-12} {prices[0],4}  {prices[prices.Count / 2],6}  {prices[^1],3}   {top}");
+        }
+        sb.AppendLine();
+
+        // The cap: a merchant's variation is clamped to 100, and the reference price leaves room for it.
+        foreach (var (item, b) in breakdowns.Where(x => x.B.Raw > ItemPricing.MaxPrice + 0.5))
+            Fail($"{item.ItemId} prices at {b.Raw:0.#}, above the cap of {ItemPricing.MaxPrice} — clamped, so it " +
+                 "reads the same as everything else at the cap. Lower its craftsmanship or rarity, or its weight");
+
+        // Breaking down never pays: an item is worth at least the units of every material it gives back.
+        foreach (var (item, b) in breakdowns)
+            foreach (var m in Crafting.ItemMaterials.Of(item))
+            {
+                double back = Crafting.ItemMaterials.Units(item) * ItemPricing.UnitValue(m);
+                if (b.Price + 0.5 < back)
+                    Fail($"{item.ItemId} sells at {b.Price} but breaks down into {back:0.#} copper of {m.Label()}");
+            }
+
+        // Refining is worth doing: the refined material is dearer by the unit than the raw one.
+        foreach (var m in Crafting.CraftMaterials.All.Where(m => m.RefinedFrom() is not null))
+            if (ItemPricing.UnitValue(m) <= ItemPricing.UnitValue(m.RefinedFrom()!.Value))
+                Fail($"{m.Label()} is worth no more by the unit than the {m.RefinedFrom()!.Value.Label()} it is refined from");
+
+        // Making pays: a recipe sells for more than the material it costs at its station.
+        int recipes = 0;
+        foreach (var trade in Crafting.CraftingModusMentis.All)
+            foreach (var r in trade.RecipePrototypes)
+            {
+                recipes++;
+                double cost = Crafting.CraftingModusMentis.Cost(r) * ItemPricing.UnitValue(trade.Material);
+                if (ItemPricing.Price(r) <= cost)
+                    Fail($"{r.ItemId}, made by {trade.ModusMentisId}, sells at {ItemPricing.Price(r)} for " +
+                         $"{cost:0.#} copper of {trade.Material.Label()} — making it loses money");
+            }
+        sb.AppendLine($"  recipes checked : {recipes}, each worth more than the material it costs");
+        sb.AppendLine();
+        return warnings;
     }
 
     // ── Kinds ─────────────────────────────────────────────────────────────

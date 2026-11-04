@@ -45,7 +45,7 @@ public static class TownQuarters
         new("Tanners' Quarter",
             new Func<PointOfInterest>[]
             {
-                () => new VatPointOfInterest("Tanning Pits", new() { "Pits sunk in the ground and full of reeking brown liquor, hides soaking in them" }, I(() => new Hide()), new[] { "reeking", "brown" })
+                () => new TanningPitPointOfInterest("Tanning Pits", new() { "Pits sunk in the ground and full of reeking brown liquor, hides soaking in them" }, I(() => new Hide()), new[] { "reeking", "brown" })
                       { Senses = SensoryProfile.Odorous, VerbModiMentis = T(("examine", "tanning"), ("smell", "taint_sense")) },
                 () => new RackPointOfInterest("Drying Hides", new() { "Hides stretched on wooden frames to dry, stinking in the sun" }, I(() => new Hide()), new[] { "stretched", "stinking" })
                       { Senses = SensoryProfile.Odorous, VerbModiMentis = T(("examine", "tanning"), ("smell", "carrion_sense")) },

@@ -53,6 +53,13 @@ public class LocationTravelGameController : IDisposable
     private FightModeAdapter? _fightAdapter = null;
     private DialogueTreeAdapter? _dialogueAdapter = null;
     private TradeMenuAdapter? _tradeAdapter = null;
+    private CraftingMenuAdapter? _craftingAdapter = null;
+
+    /// <summary>The crafting menu was opened by a Craft routine, so closing it returns to the world map.</summary>
+    private bool _craftingFromRoutine;
+
+    /// <summary>The crafting menu's renderer, for the CLI (<c>craft</c>, <c>inspect crafting</c>). Null when closed.</summary>
+    public Cathedral.Game.Management.CraftingMenuRenderer? CliCrafting => _craftingAdapter?.Renderer;
 
     /// <summary>
     /// True while the open trade menu was entered from a Buy or Sell routine rather than from a
@@ -309,6 +316,7 @@ public class LocationTravelGameController : IDisposable
         : _workAdapter != null   ? GameMode.Working
         : _gatherAdapter != null ? GameMode.Gathering
         : _tradeAdapter != null  ? GameMode.Trading
+        : _craftingAdapter != null ? GameMode.Crafting
         // Narration covers THREE phases — exploration, childhood and get-up — all of which run on
         // one _narrativeController with _isInNarrativeMode set. Returning a flat LocationInteraction
         // for all three is what made the pause menu unusable before the world opens: resuming from
@@ -1334,6 +1342,17 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+            {
+                _craftingAdapter.Update();
+
+                if (_craftingAdapter.HasRequestedExit)
+                {
+                    OnCraftingCompleted();
+                }
+                return;
+            }
+
             if (_currentMode == GameMode.Trading && _tradeAdapter != null)
             {
                 _tradeAdapter.Update();
@@ -1984,6 +2003,14 @@ public class LocationTravelGameController : IDisposable
                 return;
             }
 
+            if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+            {
+                if (_craftingAdapter.GetHoveredControlId(x, y) != null)
+                    _ambianceEngine?.TriggerGameEvent(GameEventType.StrongInteraction);
+                _craftingAdapter.OnMouseClick(x, y);
+                return;
+            }
+
             // Route to trade adapter if in trading mode
             if (_currentMode == GameMode.Trading && _tradeAdapter != null)
             {
@@ -2101,6 +2128,7 @@ public class LocationTravelGameController : IDisposable
         // with the ones above is why neither ever ticked: every button on both screens highlighted
         // in silence, which reads as an unresponsive screen next to the menus either side of it.
         GameMode.Trading => _tradeAdapter?.GetHoveredControlId(x, y),
+        GameMode.Crafting => _craftingAdapter?.GetHoveredControlId(x, y),
         GameMode.Working => _workAdapter?.GetHoveredControlId(x, y),
         GameMode.Gathering => _gatherAdapter?.GetHoveredControlId(x, y),
         GameMode.MainMenu => _mainMenuRenderer?.GetEnabledButtonAtPosition(x, y) is { } i and >= 0
@@ -2264,6 +2292,12 @@ public class LocationTravelGameController : IDisposable
             if (_currentMode == GameMode.Trading && _tradeAdapter != null)
             {
                 _tradeAdapter.OnMouseMove(x, y);
+                return;
+            }
+
+            if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+            {
+                _craftingAdapter.OnMouseMove(x, y);
                 return;
             }
 
@@ -2502,6 +2536,7 @@ public class LocationTravelGameController : IDisposable
                 break;
 
             case GameMode.Trading:
+            case GameMode.Crafting:
                 OnEnterTrading();
                 break;
 
@@ -4360,6 +4395,10 @@ public class LocationTravelGameController : IDisposable
         // They differ exactly when the autosave has not fired since the last change.
         if (subject == "save")     return CliSaveDump();
 
+        // The crafting menu, while it is open: station, trade, pool, what can be broken down, what made.
+        if (subject == "crafting")
+            return _craftingAdapter?.Renderer.CliLines().ToList() ?? new List<string> { "crafting menu=closed" };
+
         // The journal by numbers, and one line per entry: what `expect` cannot see once a group is
         // written over, and the queue the chronicler works through.
         if (subject == "journal" && _protagonist != null)
@@ -5744,6 +5783,7 @@ public class LocationTravelGameController : IDisposable
             case GameMode.Working:
             case GameMode.Gathering:
             case GameMode.Trading:
+            case GameMode.Crafting:
             case GameMode.EncounterPrompt:
             case GameMode.WorldView:
             case GameMode.ProtagonistCreation:
@@ -5881,6 +5921,7 @@ public class LocationTravelGameController : IDisposable
         GameMode.Working                                    => "work menu",
         GameMode.Gathering                                  => "gathering",
         GameMode.Trading                                    => "trade menu",
+        GameMode.Crafting                                   => "crafting menu",
         GameMode.EncounterPrompt                            => "encounter",
         GameMode.WorldView                                  => "world",
         GameMode.ProtagonistCreation                        => "protagonist creation",
@@ -6320,6 +6361,11 @@ public class LocationTravelGameController : IDisposable
                 }
                 break;
 
+            case StartCraftingTransition c:
+                if (_narrativeController != null) StartCraftingMode(c.Request);
+                else ReturnToWorldView();
+                break;
+
             case StartDialogueTransition d:
                 if (_narrativeController != null)
                     StartDialogueMode(new DialogueTriggerOutcome(d.Npc, d.TreeId, d.Tree));
@@ -6372,6 +6418,32 @@ public class LocationTravelGameController : IDisposable
 
         // The menu opens once the walk in from the location's entry has been shown.
         _narrativeController.WalkTheApproach(() => open(npc));
+    }
+
+    /// <summary>
+    /// Enters a Craft routine: narrative context at the routine's area and hour, the walk in from the
+    /// entry, then the crafting menu at its station — no USE rolled, the routine being the USE once won.
+    /// </summary>
+    private void StartCraftRoutine(int vertex, Cathedral.Game.Narrative.Routines.CraftRoutine routine)
+    {
+        if (!EstablishNarrativeContext(vertex))
+        {
+            Console.Error.WriteLine("StartCraftRoutine: could not establish narrative context — returning to travel");
+            ReturnToWorldView();
+            return;
+        }
+        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
+        var area    = _narrativeController.Scene is { } scene ? routine.FindArea(scene) : null;
+        var station = area != null ? routine.FindStation(area) : null;
+        if (station == null)
+        {
+            Console.Error.WriteLine($"StartCraftRoutine: '{routine.StationName}' not found in the rebuilt scene — exiting to travel");
+            ExitNarrativeMode();
+            return;
+        }
+        var request = new Cathedral.Game.Narrative.Crafting.CraftingRequest(
+            station, routine.TradeId, routine.ToolItemId.Length > 0 ? routine.ToolItemId : null);
+        _narrativeController.WalkTheApproach(() => StartCraftingMode(request, fromRoutine: true));
     }
 
     /// <summary>Tears down any narrative context and returns to the world-travel view.</summary>
@@ -6490,6 +6562,10 @@ public class LocationTravelGameController : IDisposable
 
             case Cathedral.Game.Narrative.Routines.GatherRoutine gather:
                 StartGatherMode(vertex, gather);
+                break;
+
+            case Cathedral.Game.Narrative.Routines.CraftRoutine craft:
+                StartCraftRoutine(vertex, craft);
                 break;
         }
     }
@@ -7172,6 +7248,66 @@ public class LocationTravelGameController : IDisposable
             _narrativeController.RecordWorkRoutine(npc, job);
     }
 
+    /// <summary>
+    /// Opens the crafting menu at <paramref name="request"/>'s station for its trade — after a successful
+    /// USE, or on arriving by a Craft routine (<paramref name="fromRoutine"/>, which returns to the world
+    /// map on leaving, as a routine's trade does).
+    /// </summary>
+    private void StartCraftingMode(Cathedral.Game.Narrative.Crafting.CraftingRequest request, bool fromRoutine = false)
+    {
+        if (_core.Terminal == null || _narrativeController == null) return;
+        var member = _narrativeController.ActingMember;
+        var trade  = member.ModiMentis.OfType<Cathedral.Game.Narrative.Crafting.CraftingModusMentis>()
+                           .FirstOrDefault(m => m.ModusMentisId == request.ModusMentisId);
+        if (trade == null)
+        {
+            Console.Error.WriteLine($"StartCraftingMode: {request.ModusMentisId} is not held — no menu");
+            if (fromRoutine) ExitNarrativeMode();
+            return;
+        }
+
+        _craftingFromRoutine = fromRoutine;
+        _craftingAdapter = new CraftingMenuAdapter(member, request.Station, trade, _core.Terminal);
+        _narrativeController.CloseNarrationSegment($"working at the {request.Station.DisplayName.ToLowerInvariant()}");
+        if (!fromRoutine)
+            _narrativeController.RecordCraftRoutine(request);
+        SetMode(GameMode.Crafting);
+    }
+
+    /// <summary>
+    /// The crafting menu closed: what was left in hand is thrown away, a one-line trace goes into the
+    /// narration, and a fresh segment begins — or, for a routine's menu, the world map.
+    /// </summary>
+    private void OnCraftingCompleted()
+    {
+        if (_craftingAdapter == null) return;
+        var menu = _craftingAdapter.Renderer;
+        _craftingAdapter = null;
+        _core.Terminal?.Clear();
+
+        string station = menu.Station.DisplayName.ToLowerInvariant();
+        var parts = new List<string>();
+        if (menu.BrokenDown.Count > 0) parts.Add($"broke down {menu.BrokenDown.Count} thing{(menu.BrokenDown.Count == 1 ? "" : "s")}");
+        if (menu.Made.Count > 0) parts.Add($"made {string.Join(", ", menu.Made.Select(n => n.ToLowerInvariant()))}");
+        if (menu.Spoiled.Count > 0) parts.Add($"spoiled {menu.Spoiled.Count} piece{(menu.Spoiled.Count == 1 ? "" : "s")} of work");
+        if (menu.Pool > 0) parts.Add($"left {menu.Pool} {Cathedral.Game.Narrative.Crafting.CraftMaterials.Label(menu.Material)} unused");
+        string note = parts.Count == 0
+            ? $"You left the {station} without working."
+            : $"At the {station} you {string.Join(", and ", parts)}.";
+        Console.WriteLine($"LocationTravelGameController: crafting finished — {note}");
+
+        if (_craftingFromRoutine)
+        {
+            _craftingFromRoutine = false;
+            ExitNarrativeMode();
+            return;
+        }
+
+        SetMode(GameMode.LocationInteraction);
+        _narrativeController?.AppendPhaseNote(note);
+        _narrativeController?.BeginNarrationSegment($"after working at the {station}");
+    }
+
     private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode,
                                 bool fromRoutine = false)
     {
@@ -7386,6 +7522,10 @@ public class LocationTravelGameController : IDisposable
         else if (_currentMode == GameMode.Trading && _tradeAdapter != null)
         {
             _tradeAdapter.OnKeyPress(key);
+        }
+        else if (_currentMode == GameMode.Crafting && _craftingAdapter != null)
+        {
+            _craftingAdapter.OnKeyPress(key);
         }
         else if (_currentMode == GameMode.Working && _workAdapter != null)
         {

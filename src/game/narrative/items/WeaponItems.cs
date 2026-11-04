@@ -62,12 +62,9 @@ public abstract class WeaponItem : Item, IWeaponItem
     public virtual bool IsImprovised => false;
 
     // Weapons are sold as part of the blacksmith's Ironwork, and as the quartermaster's Arms (a bow,
-    // which is no ironwork, overrides this with Arms alone). Goods are priced in copper across the
-    // board — the other denominations are reserved for wages and larger transactions — so a
-    // weapon maps onto ten copper per level above a bare limb: a level-6 warblade costs thirty,
-    // against a barrel's twenty-five and a lantern's thirty.
+    // which is no ironwork, overrides this with Arms alone). The price is ItemPricing's: the metal and
+    // wood in it, worked plain, plus eight copper per level above a bare limb.
     public override List<ItemTag> Tags    => new() { ItemTag.Ironwork, ItemTag.Arms };
-    public override int           PriceReference => Math.Max(1, Level - StrikingLimbCeiling) * 10;
 
     /// <summary>
     /// How much a weapon helps when combined with a <em>narration</em> action — a different

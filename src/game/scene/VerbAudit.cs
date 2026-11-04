@@ -459,6 +459,10 @@ public static partial class VerbAudit
         // A stand-in actor. Verbs that gate on the player — the dialogue verbs want somebody with a
         // speaking modus mentis — need one, and a default protagonist is the plainest possible player.
         var actor = new Protagonist();
+        // USE and the asking of a master's leave are offered only to somebody holding a trade for the
+        // station, and USE only once the leave is given: the probe body holds every trade, and every area
+        // is probed with its own workshop's leave supposed (PoV.PlannedLeave), as the will planner does.
+        foreach (var trade in Cathedral.Game.Narrative.Crafting.CraftingModusMentis.All) actor.ModiMentis.Add(trade);
 
         for (int id = 1; id <= samples; id++)
         {
@@ -511,7 +515,7 @@ public static partial class VerbAudit
                         // records the default as reachable when it is not.
                         try
                         {
-                            if (verb.IsPossible(scene, new PoV(area, period), observable, actor))
+                            if (verb.IsPossible(scene, new PoV(area, period) { PlannedLeave = scene.SectionOf(area)?.DisplayName }, observable, actor))
                             {
                                 var won = verb.ResolveLesson(ctx);
                                 if (won != null) Granted(verb.VerbId).Add(won.ModusMentisId);
@@ -674,7 +678,7 @@ public static partial class VerbAudit
 
         foreach (TimePeriod period in Enum.GetValues<TimePeriod>())
         {
-            var pov = new PoV(area, period);
+            var pov = new PoV(area, period) { PlannedLeave = scene.SectionOf(area)?.DisplayName };
 
             // A sleeping person is not observed as an NPC: placement swaps them and their bed for a
             // single merged object while the sleep lasts, and murder / wake / pickpocket are offered

@@ -8,11 +8,11 @@ public sealed class Cheese : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "cheese";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Cheese";
     public override string Article     => "some";
     public override string Description => "A wedge of aged yellow cheese, firm-rinded and sharp-smelling";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Dairy };
-    public override int PriceReference => 8;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()

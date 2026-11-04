@@ -263,6 +263,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     e.g. all=3,encephalon=5,viscera=5. Memory, noetic points and humors follow from them");
     Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
     Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
+    Console.WriteLine("  --craft-audit [out.json]           Print the crafting audit (materials, trades, stations, supply) and exit");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
     Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
@@ -452,6 +453,14 @@ if (args.Length >= 1 && args[0] == "--npc-audit")
 
 // Item catalogue audit: report identity clashes, unreachable liquids, unweighed items and thin
 // trade tags, then exit. Headless — reads ItemRegistry only, so no LLM, no window, no world.
+// Crafting audit: materials, trades, where every station stands and what there is to work. Headless.
+if (args.Length >= 1 && args[0] == "--craft-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.Crafting.CraftAudit.BuildReport(
+        args.Length >= 2 && !args[1].StartsWith("--") ? args[1] : null));
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--item-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.ItemAudit.BuildReport());

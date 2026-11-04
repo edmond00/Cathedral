@@ -12,7 +12,6 @@ public sealed class Nettle : ConsumableItem
     public override string Description => "A stinging nettle stem, leaves bristling with fine hairs";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -29,7 +28,6 @@ public sealed class Fern : ConsumableItem
     public override string Description => "A curled green fern frond, soft underside paler than its top";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -49,7 +47,6 @@ public sealed class Ivy : Item
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 1;
 }
 
 public sealed class Bramble : ConsumableItem
@@ -60,7 +57,6 @@ public sealed class Bramble : ConsumableItem
     public override string Description => "A thorny bramble cane, snagging on cloth";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -77,7 +73,6 @@ public sealed class Reed : ConsumableItem
     public override string Description => "A cluster of tall hollow reeds, papery at the edges";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -94,7 +89,6 @@ public sealed class Watercress : ConsumableItem
     public override string Description => "A wet handful of watercress, peppery-smelling";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
