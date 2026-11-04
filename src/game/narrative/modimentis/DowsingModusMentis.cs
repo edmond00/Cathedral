@@ -14,6 +14,7 @@ public class DowsingModusMentis : ModusMentis
         "Finds water: where a spring rises, which hollow holds it through the summer, where the ground is green for a reason and a well should be dug. Reads rushes, alders, midges and the cool of a slope, and inclines toward following the water to its source.";
     public override string SkillMeans       => "finding where water rises out of the ground";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

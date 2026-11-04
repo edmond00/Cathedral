@@ -13,6 +13,7 @@ public class TidewatchingModusMentis : ModusMentis
         "Keeps the water's calendar: the tide's hour and height, when the fish run, when a flat is walkable and when it is a trap. Knowledge that is worthless a league inland and decisive on the shore.";
     public override string SkillMeans       => "the keeping of the water's timetable";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

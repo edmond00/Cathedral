@@ -13,6 +13,7 @@ public class MusterModusMentis : ModusMentis
         "Counts men, horses and arms and knows what the count means: how many can march, how many can fight, how many are sick, dead or just missing. Spots a padded roll at a glance.";
     public override string SkillMeans       => "the counting of men and arms";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

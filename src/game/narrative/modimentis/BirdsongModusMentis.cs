@@ -15,6 +15,7 @@ public class BirdsongModusMentis : ModusMentis
         "Tells the birds apart by voice and hears what the voice is for — courting, holding ground, or warning. Reads the silence hardest: a wood that stops singing has been entered by something.";
     public override string SkillMeans       => "the telling apart of bird voices and their alarms";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "ears", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

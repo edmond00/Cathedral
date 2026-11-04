@@ -13,6 +13,7 @@ public class FealtyModusMentis : ModusMentis
         "Weighs every choice against an oath sworn to a lord or a house. Serves before it questions, and holds that a sworn word outlasts any argument against it.";
     public override string SkillMeans       => "the keeping of an oath sworn to a lord";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

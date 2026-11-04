@@ -573,11 +573,19 @@ public static class Config
         /// Zero (the default) leaves the playground answering "willing" every time.
         ///
         /// <para>The playground never refuses, so without this an action modus mentis's refusal — and the
-        /// retries of iterative thinking that follow one (<c>ThinkingIterationsStat</c>) — cannot be
+        /// retries of iterative thinking that follow one (<c>ModusMentis.Doubt</c>) — cannot be
         /// reached by a script at all. A count rather than a switch, because a retry of the same goal is
         /// not asked whether it would rather not, and a test wants to see the chain end.</para>
         /// </summary>
         public static int RefuseMeans { get; set; } = 0;
+
+        /// <summary>
+        /// Every thinking modus mentis's <see cref="Cathedral.Game.Narrative.DoubtLevel"/>, in place of
+        /// the one it declares. Set by <c>--doubt &lt;low|medium|high&gt;</c>. Null (the default) leaves
+        /// each mind its own. A script about iterative thinking or doubt pins it, so that which mind the
+        /// player happens to pick does not decide how many tries there are.
+        /// </summary>
+        public static Cathedral.Game.Narrative.DoubtLevel? DoubtOverride { get; set; } = null;
 
         /// <summary>
         /// The kind of failure penalty a failed act must draw: <c>wound</c>, <c>get_lost</c>,

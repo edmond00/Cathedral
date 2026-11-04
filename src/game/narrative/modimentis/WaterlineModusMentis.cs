@@ -13,6 +13,7 @@ public class WaterlineModusMentis : ModusMentis
         "Judges water by looking: depth from colour, current from the surface, bottom from what the water does over it, and how high it has been from the mark left on the bank. Decides whether a crossing is a crossing or a drowning.";
     public override string SkillMeans       => "the judging of depth and current by eye";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

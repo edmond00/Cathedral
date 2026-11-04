@@ -19,6 +19,7 @@ public class ObduracyModusMentis : ModusMentis
     public override string SkillMeans       => "the hardening that follows one's own hurt";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "backbone", "spleen" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

@@ -13,6 +13,7 @@ public class HagiographyModusMentis : ModusMentis
         "Knows the lives of the saints: their trials, their miracles, their deaths, the days kept in their honour. Finds a saint's story to fit any situation.";
     public override string SkillMeans       => "the knowledge of the lives of the saints";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "anamnesis", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

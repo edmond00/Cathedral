@@ -14,6 +14,7 @@ public class KeywiseModusMentis : ModusMentis
         "Understands a lock from the inside: how its wards are cut, what it is protecting against, and where its maker economised. The theory that makes picking quick, and that tells you at a glance whether a lock is worth attempting.";
     public override string SkillMeans       => "the understanding of a lock as a made thing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

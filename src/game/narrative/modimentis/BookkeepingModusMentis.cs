@@ -13,6 +13,7 @@ public class BookkeepingModusMentis : ModusMentis
         "Keeps accounts in columns that must balance: what came in, what went out, what is owed, what is due. Finds the error in a page of figures, and the theft behind the error.";
     public override string SkillMeans       => "the keeping of accounts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "cerebrum", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

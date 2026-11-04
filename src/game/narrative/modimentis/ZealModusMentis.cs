@@ -13,6 +13,7 @@ public class ZealModusMentis : ModusMentis
         "Burns with conviction: speaks for the faith with fire, cannot let error pass unchallenged, and would rather be hated than silent. Wins converts and enemies in equal measure.";
     public override string SkillMeans       => "the burning conviction that must speak";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

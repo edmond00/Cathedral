@@ -31,6 +31,7 @@ namespace Cathedral.Game.Narrative;
 ///   R17 MM has Will ⇔ it declares 1–5 will targets; a Will MM has neither Observation nor Thinking
 ///   R18 every anatomy that can learn a Will MM can perform at least one verb of each of its targets
 ///   R19 a Will MM declares the places it belongs in (WillPlaces), area kinds only
+///   R20 MM has Thinking ⇔ it declares a DoubtLevel; a Will MM is Medium (it does not declare one)
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -253,6 +254,18 @@ public static class ModusMentisRuleValidator
                 violations.Add($"[R19] {mm.ModusMentisId}: WillPlaces names {place.Name}, which is not an area kind");
             if (!mm.IsWill && mm.WillPlaces.Count > 0)
                 violations.Add($"[R19] {mm.ModusMentisId}: declares WillPlaces but is not a will");
+
+            // R20 — a thinking mind says how readily it thinks again (iterative thinking and doubt), as
+            // R15 makes the Emotion function and its triggers imply each other. A will is Medium by the
+            // base class and may not change it: its goal is set by its course, and nothing reads a level
+            // off a mind that cannot think.
+            bool thinks = fns.Contains(ModusMentisFunction.Thinking);
+            if (thinks && mm.Doubt == null)
+                violations.Add($"[R20] {mm.ModusMentisId}: has the Thinking function but declares no Doubt level");
+            else if (!thinks && !mm.IsWill && mm.Doubt != null)
+                violations.Add($"[R20] {mm.ModusMentisId}: declares a Doubt level ({mm.Doubt}) but cannot think");
+            else if (mm.IsWill && mm.Doubt != DoubtLevel.Medium)
+                violations.Add($"[R20] {mm.ModusMentisId}: a will is Medium doubt; it declares {mm.Doubt}");
 
             // R5 — exactly 1 region XOR exactly 2 distinct organs, canonical ids only
             var organs = mm.Organs;

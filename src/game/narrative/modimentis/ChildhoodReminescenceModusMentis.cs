@@ -23,6 +23,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
         ModusMentisFunction.Thinking,
         ModusMentisFunction.Action,
     };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs         => new[] { "anamnesis", "hippocampus" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

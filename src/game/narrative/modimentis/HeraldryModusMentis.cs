@@ -17,6 +17,7 @@ public class HeraldryModusMentis : ModusMentis
         "Names a rider by the device on their shield, the colours of a surcoat or the banner over a column. Reads the marks that distinguish one branch from another, and catches arms that are borne wrongly, borrowed or freshly repainted.";
     public override string SkillMeans       => "the recognition of coats of arms and family emblems";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

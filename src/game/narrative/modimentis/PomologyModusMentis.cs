@@ -13,6 +13,7 @@ public class PomologyModusMentis : ModusMentis
         "Knows a fruit tree by its bark in winter and its fruit by the set of the blossom. Reads an orchard for age, vigour and canker, and can say which rows were planted for keeping and which for eating.";
     public override string SkillMeans       => "the knowledge of fruit trees and their keeping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

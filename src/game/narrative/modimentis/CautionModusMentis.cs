@@ -14,6 +14,7 @@ public class CautionModusMentis : ModusMentis
         "Stops before the irreversible step and asks what has been missed. Notices the second exit, the watcher, the thing that is slightly wrong, and inclines toward the safer course: the step back, the wide berth, the danger left alone. Slow, unglamorous, and the reason a body is still alive.";
     public override string SkillMeans       => "the pause taken before the step that cannot be undone";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;

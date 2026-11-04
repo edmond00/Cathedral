@@ -14,6 +14,7 @@ public class ForageLoreModusMentis : ModusMentis
         "Scans field and hedge for wild food, marking what is ripe and where it grows. Keeps the eye tuned to edible plants, and inclines toward gathering what the land freely offers.";
     public override string SkillMeans       => "the finding and picking of ripe produce";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

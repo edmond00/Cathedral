@@ -13,6 +13,7 @@ public class CoinEyeModusMentis : ModusMentis
         "Tests coin: weight in the hand, edge for clipping, ring on a hard surface, and the bite that settles the argument. Knows a mint's work from a counterfeit and a clipped coin from a light one, which is the difference between being cheated once and every time.";
     public override string SkillMeans       => "the testing of coin by edge, ring and bite";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

@@ -14,6 +14,7 @@ public class DramaturgyModusMentis : ModusMentis
         "Treats a social moment as a scene to be staged and played to an audience. Attends to presentation, timing, and effect, shaping how one is perceived rather than merely how one acts.";
     public override string SkillMeans => "theatrical social performance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "eyes", "heart" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

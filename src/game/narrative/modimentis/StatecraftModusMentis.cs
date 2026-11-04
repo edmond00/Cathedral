@@ -13,6 +13,7 @@ public class StatecraftModusMentis : ModusMentis
         "Thinks about rule: the balance of lords and towns, the tax the land will bear, the army that must be paid, the order that must be kept. Weighs every decision by what it will cost in ten rounds.";
     public override string SkillMeans       => "the art of ruling";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "cerebrum", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

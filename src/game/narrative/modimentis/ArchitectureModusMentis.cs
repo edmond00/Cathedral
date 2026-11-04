@@ -14,6 +14,7 @@ public class ArchitectureModusMentis : ModusMentis
         "Perceives a building as frozen decisions about load, material, and use rather than a static object. Traces which walls bear weight and which merely divide, and reads a structure for how it holds itself up and where it would fail.";
     public override string SkillMeans => "structural and spatial thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

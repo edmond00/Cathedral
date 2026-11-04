@@ -14,6 +14,7 @@ public class HearthlongingModusMentis : ModusMentis
         "Feels the particular ache of a hearth that belongs to somebody else, and works steadily toward one that does not. Reads a household by its warmth, and is the reason a body eats properly and comes back.";
     public override string SkillMeans       => "the ache a lit window produces at a distance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

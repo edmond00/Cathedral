@@ -13,6 +13,7 @@ public class MysticismModusMentis : ModusMentis
         "Seeks the divine directly, beyond doctrine and words: in silence, in emptiness, in a sudden light. Speaks of what it has found in paradoxes because ordinary speech will not hold it.";
     public override string SkillMeans       => "the seeking of the divine beyond words";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "pineal_gland", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

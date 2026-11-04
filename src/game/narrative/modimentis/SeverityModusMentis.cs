@@ -17,6 +17,7 @@ public class SeverityModusMentis : ModusMentis
         "Sees rules, boundaries and penalties as things that hold a place together, and dislikes seeing them slack. Judges by what is owed rather than by what is convenient, and applies the same measure to itself.";
     public override string SkillMeans       => "the hard regard for what is owed and what is due";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;

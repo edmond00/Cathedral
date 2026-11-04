@@ -14,6 +14,7 @@ public class SeedLoreModusMentis : ModusMentis
         "Judges when and how to sow, reading soil and season for spacing and depth. Sets the hands to planting, and inclines toward starting a crop at the moment it will take.";
     public override string SkillMeans       => "the sowing and timing of seed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

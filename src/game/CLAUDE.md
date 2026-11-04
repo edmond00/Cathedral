@@ -818,7 +818,7 @@ get-up have one verb each:
 |---|---|
 | phase opener | `PickFirstObservationModusMentis` passes over wills while any other observer is held; a will that opens attends only to the object offering the first step |
 | focus | kept iff `WillPriority.PathOn` finds a shortest path beginning with something the object offers; else turned to the unobserved object that does; else refused naming the step. No follow-ups |
-| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). The pineal retries remain for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
+| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). A will's one retry (Medium) remains for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
 | means | **only the act it wants**: a will with Action carries it out itself. A step on the way (a walk, a wait, a tool fetched — `!Will.Matches(step)`) has its means judged like any goal's, the will among the candidates, speakers first for a conversation; the will was not the fittest mind for every walk, and a non-speaking will carried out `propose_to_buy`. `WillActionNeverRefusesItsPathRule`, last, lifts even an imposed refusal for the will's own path whenever the will is the means |
 | speech | **not narrowed.** A will may bear Speaking and then replies in every conversation, whatever its target; without it, in none. Every will whose target is a conversation bears it (51), and cruelty, which had it before. The audit notes a will that wants a conversation and cannot speak |
 
@@ -1031,9 +1031,15 @@ budget reaches, and they were designed together — changing one alone re-breaks
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
 
-**Iterative thinking and doubt: the pineal gland's second thoughts.** `ThinkingIterationsStat` (the
-pineal score, 0–3) is how many times one thinking tries again when its proposal comes to nothing, and
-`DoubtStat` (score ≥ 2) lets the player say NO to a proposal. Both live in
+**Iterative thinking and doubt: a thinking mind's second thoughts.** Every modus mentis with the
+Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R20, fatal): **Low** thinks once and
+is never doubted, **Medium** may try again once, **High** twice — a try spent by a refusal or by the
+player's NO, never by a YES — and the player may doubt at Medium and High while a try remains. It is
+the mind's own, chosen for its persona (questioning, weighing, checking minds High; minds that know
+at a glance, sense, feel, follow a code or act on instinct Low, half the catalogue; 24 / 48 / 72 High / Medium / Low), not the body's: it was the
+pineal gland's score once (`ThinkingIterationsStat`, `DoubtStat`), and every mind of one body
+second-guessed itself alike. A will declares none and is Medium: it never doubts (its goal is set by
+its course) and keeps one more try of a step on its way. Both live in
 `ThinkingExecutor.GenerateThinkingAsync`, which is a loop: goal → means → reasoning → [doubt] →
 willingness → action. Two things end a try, both before any button exists:
 - **the acting modus mentis refuses** (willingness, or a choice rule's imposed refusal);
@@ -1048,8 +1054,8 @@ and a scene whose refusal was the situation's (a watching apprentice, no discree
 every retry on means none of which could pass, then offered the last one unprobed — a button the
 click refused anyway. `thinking_click_rules_not_retried.cli` pins that the button is offered.
 
-A refusal crosses off the pair of goal and means in a `ThinkingChain` (one thinking's life, so a
-pineal of 0 is exactly the old behaviour), and `TryAgain` then asks whether **an untried means is able
+A refusal crosses off the pair of goal and means in a `ThinkingChain` (one thinking's life, so Low
+is exactly the old single try), and `TryAgain` then asks whether **an untried means is able
 to carry the goal out** (`CanCarryOut`: no choice rule imposes a refusal). If one is, the next try
 takes the same goal up at once (`again`), as a second attempt — the pool narrowed to the able, no
 decline — so it ends on a button. If none is, the goal is `Drop`ped and the next try chooses another
@@ -1081,7 +1087,8 @@ phases. `cli/system/reconsider.cli` covers it in the wolf's den.
 The playground never refuses, so `--refuse-means <n>` makes its first n willingness answers
 "unwilling". The CLI answers a doubt from the `doubt yes|no` queue, YES when it is empty, which is
 what keeps scripts written before doubt passing — and `CliIsIdle` counts an asking box as idle.
-Scripts whose subject is the single try pin `--organs pineal_gland=0`
+`--doubt <low|medium|high>` (`Config.Debug.DoubtOverride`) sets every mind's level, so which mind a
+script picks does not decide its tries. Scripts whose subject is the single try pin `--doubt low`
 (`thinking_refused_goal_per_mind.cli`); `thinking_iterates.cli`, `thinking_doubt.cli` and
 `thinking_click_rules_not_retried.cli` cover the two ends and what is left to the click.
 

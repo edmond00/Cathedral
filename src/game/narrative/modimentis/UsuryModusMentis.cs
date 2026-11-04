@@ -13,6 +13,7 @@ public class UsuryModusMentis : ModusMentis
         "Lends money at interest and makes it grow: knows who is desperate, how much they can bear, and what to take when they cannot pay. Counts the debt daily and forgives none of it.";
     public override string SkillMeans       => "the lending of money at interest";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

@@ -15,6 +15,7 @@ public class HarvestJoyModusMentis : ModusMentis
         "Feels plenty in the body: the warmth of a full barn, a full pack, a full table. Gladdened by anything gathered in, and thinks first of whom it will feed.";
     public override string SkillMeans       => "the gladness of anything gathered in";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

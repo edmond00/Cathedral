@@ -64,6 +64,12 @@ high ones resist them. This is read **only** off the two that deliberate and act
 neither of those functions is always medium, since a principled organ of perception is a claim
 nothing could honour.
 
+**Its readiness to doubt** — low, medium or high — declared by every modus mentis bearing the
+Thinking function, and suited to its temper: a mind that questions, weighs and checks is high, one
+that knows at a glance, trusts a sense, a feeling or an instinct, or keeps to a fixed code is low. It sets how often a thinking may be taken up
+again when its proposal comes to nothing, and whether that proposal may be doubted; it is treated in
+[Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act). A will declares none, and is medium.
+
 **Whether it acts discreetly** — quietly, out of sight. A discreet modus mentis is one degree harder
 to notice, which is treated in [Chapter VI](06-narration.md).
 

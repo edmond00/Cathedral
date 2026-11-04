@@ -14,6 +14,7 @@ public class IcecraftModusMentis : ModusMentis
         "Reads ice: grey ice is new and thin, blue ice is old and hard, a sag in the snow is a crevasse, a dark patch is water underneath; the ring of a pole on ice that will bear and the dull thud of ice that will not. Inclines toward the safe line over the ice, and toward testing every step that is not.";
     public override string SkillMeans       => "telling ice that will bear from ice that will not";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
