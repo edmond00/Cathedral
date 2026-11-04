@@ -825,9 +825,9 @@ get-up have one verb each:
 | speech | **not narrowed.** A will may bear Speaking and then replies in every conversation, whatever its target; without it, in none. Every will whose target is a conversation bears it (51), and cruelty, which had it before. The audit notes a will that wants a conversation and cannot speak |
 
 `PartyMember` and `ModusMentisRegistry` list wills with both observers and thinkers (`CanObserve`,
-`CanThink`), so the popups, the NPC pools and the starting kit draw them — **listed after the
-general minds**, so a popup's first entry still ranges freely (and `choose 0` in older scripts still
-picks one). **R17** (Will ⇔ 1–5 targets, and no Observation or Thinking beside it), **R18** (every anatomy that can learn it can
+`CanThink`), so the popups, the NPC pools and the starting kit draw them — listed after the
+general minds in those lists, though the modus mentis popup sorts everything by name, wills among
+the rest, so a script picks a mind with `choose <mm-id>` rather than by position. **R17** (Will ⇔ 1–5 targets, and no Observation or Thinking beside it), **R18** (every anatomy that can learn it can
 perform a verb of **each** target — a second target a wolf cannot meet would still steer its attention) and
 **R19** (a will declares `WillPlaces`, area kinds only) are fatal; R2, R4 and R13 accept Will for the offices it carries. R14 still
 forbids Action + Emotion, on a will as on anything.

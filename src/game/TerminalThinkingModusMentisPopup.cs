@@ -51,12 +51,10 @@ public class TerminalThinkingModusMentisPopup
     public void Show(Vector2 screenPosition, List<ModusMentis> modiMentis, string title = "Select Thinking ModusMentis")
     {
         if (modiMentis == null) throw new ArgumentNullException(nameof(modiMentis));
-        // Listed by name, so a player finds a mind where the alphabet puts it. Wills stay after the
-        // general minds (each group alphabetical): the first entry is still one that ranges freely.
+        // Listed by name, wills among the rest, so a player finds a mind where the alphabet puts it.
         // A copy, too — Hide clears this list, and it must not clear the caller's.
         _thinkingModiMentis = modiMentis
-            .OrderBy(m => m.IsWill)
-            .ThenBy(m => m.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .OrderBy(m => m.DisplayName, StringComparer.OrdinalIgnoreCase)
             .ToList();
         _fixedPosition = screenPosition;
         _hoveredModusMentisIndex = null;
