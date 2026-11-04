@@ -148,7 +148,7 @@ public class YardIronworkModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "yard_ironwork";
     public override string DisplayName      => "Yard Ironwork";
     public override string MenuDescription =>
-        "Forges the irons of the farmyard and the churchyard: forks, rakes, grave spades, flail hinges and mill picks. Sets the arms to the cold chisel and inclines toward the year's round of work.";
+        "Forges the irons of the farmyard and the churchyard: forks, rakes, grave spades, flail hinges and mill picks. Sets the arms to the cold chisel and inclines toward the round of the seasons' work.";
     public override string SkillMeans       => "the forging of farmyard and mill irons";
     public override Type Station => typeof(Cathedral.Game.Scene.AnvilPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Chisel);
@@ -318,7 +318,7 @@ public class GoldsmithingModusMentis : CraftingModusMentis
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "hands", "eyes" };
 
-    public override string PersonaTone     => "a goldsmith who has cut the seal of a bishop and the ring of a widow in one week";
+    public override string PersonaTone     => "a goldsmith who has cut the seal of a bishop and the ring of a widow at the same bench";
     public override string PersonaReminder  => "goldsmith";
     public override string PersonaReminder2 => "someone who weighs everything, people included";
     public override string StyleInstruction =>
@@ -418,7 +418,7 @@ public class ShieldmakingModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "shieldmaking";
     public override string DisplayName      => "Shieldmaking";
     public override string MenuDescription =>
-        "Joins boards into shields and nails on the rim and boss, and makes cudgels, mallets and bakers' peels from heavy wood. Sets the arms to the hammer and inclines toward stout, broad things.";
+        "Joins boards into shields and nails on the rim and the iron centre, and makes cudgels, mallets and bakers' peels from heavy wood. Sets the arms to the hammer and inclines toward stout, broad things.";
     public override string SkillMeans       => "the joining and rimming of shields";
     public override Type Station => typeof(Cathedral.Game.Scene.WorkbenchPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Hammer);
@@ -430,13 +430,13 @@ public class ShieldmakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "shieldwright";
     public override string PersonaReminder2 => "someone who trusts a broad board more than a narrow blade";
     public override string StyleInstruction =>
-        "Stout and sturdy - think in boards, rims and bosses.";
+        "Stout and sturdy - think in boards, rims and iron bands.";
 
     public override string PersonaPrompt => @"You are the inner voice of SHIELDMAKING, the joiner of broad boards.
 
-When acting, you glue the boards edge to edge, cut the round, nail the rim and the boss, and face the lot with hide so a blow slides rather than splits.
+When acting, you glue the boards edge to edge, cut the round, nail the rim and the iron centre, and face the lot with hide so a blow slides rather than splits.
 
-Your language is stout and plain: 'cross the grain or it splits,' 'the boss takes the blow,' 'a shield is a door you carry.'";
+Your language is stout and plain: 'cross the grain or it splits,' 'the iron centre takes the blow,' 'a shield is a door you carry.'";
 }
 
 /// <summary>Clogmaking — the roughing of clogs and staves. Works the Workbench with the Hatchet.</summary>
@@ -652,7 +652,7 @@ public class RobemakingModusMentis : CraftingModusMentis
 
 When acting, you lay out the long panels, sew the seams with small even stitches, set the hood or the sleeves, and press it so it falls straight.
 
-Your language is quiet and modest: 'small stitches, long seams,' 'let it fall straight,' 'a habit is worn every day for years.'";
+Your language is quiet and modest: 'small stitches, long seams,' 'let it fall straight,' 'a habit is worn every day for a lifetime.'";
 }
 
 /// <summary>Clothiery — the making of townsfolk's clothes. Works the CuttingTable with the Thimble.</summary>
@@ -731,7 +731,7 @@ public class SmockmakingModusMentis : CraftingModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of SMOCKMAKING, the knife of the cottage.
 
-When acting, you cut the cloth with the knife on the table, sew it loose enough to grow into, and leave enough at the hem to let it down next year.
+When acting, you cut the cloth with the knife on the table, sew it loose enough to grow into, and leave enough at the hem to let it down next spring.
 
 Your language is homely and generous: 'cut it big,' 'leave a hem to let down,' 'a smock is for mud, not for church.'";
 }
@@ -931,11 +931,11 @@ public class HornworkModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "hornwork";
     public override string DisplayName      => "Hornwork";
     public override string MenuDescription =>
-        "Saws, softens and shapes horn and feather into ink horns, signal horns, drinking horns and quills. Sets the hands to the saw and inclines toward vessels and voices of horn.";
+        "Saws, softens and shapes horn into ink horns, signal horns and drinking horns. Sets the hands to the saw and inclines toward vessels and voices of horn.";
     public override string SkillMeans       => "the sawing and shaping of horn";
     public override Type Station => typeof(Cathedral.Game.Scene.CarvingBenchPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Saw);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.InkHorn), typeof(Cathedral.Game.Narrative.World.Items.Whistle), typeof(Cathedral.Game.Narrative.Items.DrinkingHorn), typeof(Cathedral.Game.Narrative.World.Items.Quill) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.InkHorn), typeof(Cathedral.Game.Narrative.World.Items.Whistle), typeof(Cathedral.Game.Narrative.Items.DrinkingHorn) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "hands", "arms" };
 
