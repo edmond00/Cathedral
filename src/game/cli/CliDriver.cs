@@ -1129,6 +1129,12 @@ public sealed class CliDriver
                     CliMode.Emit("ok: accepted protagonist");
                     return;
                 }
+                // A make's dice box at a crafting station: its Continue settles the roll.
+                if (_game.CurrentMode == GameMode.Crafting && _game.CliCrafting is { } cm)
+                {
+                    if (cm.IsRolling) { CmdCraft(new[] { "settle" }); return; }
+                    CliMode.Emit("error: no dice continue button on screen"); return;
+                }
                 // A fight's dice box has its own Continue, and it blocks the turn until pressed.
                 if (_game.CurrentMode == GameMode.Fighting && _game.CliFight is { } cf)
                 {
@@ -1281,6 +1287,32 @@ public sealed class CliDriver
                 _game.CliHoverCell(x, y);
                 _game.CliClickCell(x, y);
                 CliMode.Emit($"ok: clicked cell {x},{y}");
+                break;
+            }
+            case "humor":
+            {
+                // Select an organ's spendable humor on a settled roll — any dice box, in any mode; then
+                // `click die <n>` spends it on that die. The same buttons a player clicks.
+                var dice = _game.CliActiveDice;
+                if (dice == null) { CliMode.Emit("error: no dice roll on screen"); CliMode.HasFailedAssertion = true; return; }
+                string arg = a.Length > 1 ? a[1] : "";
+                int q = Array.FindIndex(DiceRollComponent.CliQueueNames, n => n.Equals(arg, StringComparison.OrdinalIgnoreCase));
+                if (q < 0 && !int.TryParse(arg, out q)) { CliMode.Emit("error: click humor paunch|hepar|spleen|pulmones"); return; }
+                if (dice.CliHumorButton(q) is not { } hb)
+                { CliMode.Emit("error: no humor buttons on this roll (still rolling, or the body can spend none)"); CliMode.HasFailedAssertion = true; return; }
+                _game.CliHoverCell(hb.X, hb.Y);
+                _game.CliClickCell(hb.X, hb.Y);
+                CliMode.Emit($"ok: selected humor {DiceRollComponent.CliQueueNames[q]}");
+                break;
+            }
+            case "die":
+            {
+                var dice = _game.CliActiveDice;
+                if (dice == null || a.Length < 2 || !int.TryParse(a[1], out int di)) { CliMode.Emit("error: click die <n> (on a dice box)"); CliMode.HasFailedAssertion = true; return; }
+                if (dice.CliDieCell(di) is not { } dc) { CliMode.Emit($"error: no die {di} on screen"); CliMode.HasFailedAssertion = true; return; }
+                _game.CliHoverCell(dc.X, dc.Y);
+                _game.CliClickCell(dc.X, dc.Y);
+                CliMode.Emit($"ok: clicked die {di}");
                 break;
             }
             default:
@@ -1612,17 +1644,28 @@ public sealed class CliDriver
                 { CliMode.Emit($"ok: craft break {item.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
                 break;
             case "make":
+                // Casts the dice and leaves them on the table, so a humor may bend them (click humor/die)
+                // before `craft settle` (or `click continue`) accepts the roll.
                 if (menu.Recipes.FirstOrDefault(Named) is { } recipe
-                    && menu.Make(recipe) is var made && made != Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Refused)
+                    && menu.BeginMake(recipe, instant: true) == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Rolling)
                 {
-                    var roll = menu.LastRoll!;
-                    CliMode.Emit($"ok: craft make {recipe.ItemId} → {(made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Made ? "made" : "spoiled")} "
-                               + $"({roll.Sixes}/{roll.Difficulty} sixes on {roll.Dice} dice) pool {menu.Pool} {menu.Material}");
+                    var d = menu.CliDice!;
+                    CliMode.Emit($"ok: craft make {recipe.ItemId} → rolled {d.FinalPrimaryValues.Count(v => v == 6)}/{d.Difficulty} sixes on {d.NumberOfDice} dice "
+                               + $"({(d.IsCurrentlySuccess ? "would make" : "would spoil")}; craft settle to accept) pool {menu.Pool} {menu.Material}");
                     return;
                 }
                 break;
+            case "settle":
+            {
+                var made = menu.Settle();
+                if (made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Refused) break;
+                var roll = menu.LastRoll!;
+                CliMode.Emit($"ok: craft settle → {(made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Made ? "made" : "spoiled")} "
+                           + $"({roll.Sixes}/{roll.Difficulty} sixes on {roll.Dice} dice) pool {menu.Pool} {menu.Material}");
+                return;
+            }
             default:
-                CliMode.Emit("error: craft break|make <item> | craft leave");
+                CliMode.Emit("error: craft break|make <item> | craft settle | craft leave");
                 CliMode.HasFailedAssertion = true;
                 return;
         }

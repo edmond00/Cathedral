@@ -147,7 +147,9 @@ thrown away. The quantity a body can bring to a station is therefore bounded by 
 (see [IV](04-items.md)), and the work is best brought to the station whole.
 
 **Each attempt is rolled**, and succeeds when its sixes are at least its difficulty, as every roll in
-the game ([VI](06-narration.md)). A failure spoils the work: its material is lost and nothing is made.
+the game ([VI](06-narration.md)). The material is paid when the dice are cast. Before the result is
+accepted the humors may bend the dice, as on any other roll ([III §4](03-humors.md#4-the-transmuting-virtues)),
+up to the viscera's measure. A failure spoils the work: its material is lost and nothing is made.
 
 **The dice** are the sum of three things, one die at the least:
 
