@@ -23,10 +23,10 @@ ROOT = HERE.parents[3]
 MOOD, SEED, SECONDS = "city:27788", 1, 200
 RAW = HERE / "build" / "city_render.wav"
 OUT = HERE / "build" / "city_loop.wav"
-# Matched in RMS to the take's music, the loop still came out 5 dB above the scenes either side of the slide:
-# a take's music is the game's whole mix, model waits and quiet bars included, where the loop is the reel at
-# full tilt. Measured on the built soundtrack (voice included on both sides) and taken off here.
-TRIM_DB = -5.0
+# Matched in RMS to the take's music, nothing more. (A 5 dB cut was tried on the evidence of the built
+# soundtrack's loudness, which was wrong: every slide in the video measures the same, -15 dB, with or without
+# this loop under it. The narration, unbroken over a slide, is what makes a slide louder than a scene.)
+TRIM_DB = 0.0
 
 
 def main():
