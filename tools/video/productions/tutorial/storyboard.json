@@ -1568,7 +1568,7 @@
    "type": "game",
    "recording": "city",
    "from": 50.64,
-   "to": 542.48,
+   "to": 318.3,
    "fade": true,
    "vo": [
     "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it fast.",
@@ -1582,11 +1582,25 @@
   {
    "type": "game",
    "recording": "city",
-   "from": 542.48,
-   "to": 544.62,
+   "from": 318.3,
+   "to": 452.3,
    "fade": true,
    "vo": [
     "We reach the city, and the cobbler's shop.",
+    {
+     "text": "I find myself in the cobbler's shop, in the morning. This place is a low shop, smelling of leather and wax, boots hung by their laces from the beams. Around me is Publiosh Tommaezoth, the cobbler of the city.",
+     "style": "reading",
+     "at": 346.3
+    }
+   ]
+  },
+  {
+   "type": "game",
+   "recording": "city",
+   "from": 452.3,
+   "to": 544.62,
+   "fade": false,
+   "vo": [
     {
      "text": "I am drawn to Publiosh Tommaezoth, the cobbler, by the scene before me. His old boot, through thick with hammering, already asks something before I have finished approaching.",
      "style": "reading",

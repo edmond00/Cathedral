@@ -290,6 +290,8 @@ Another wolf, on the road to the city. This fight goes the way the first one did
 One thing to watch: the first thrust breaks the wolf's backbone, and the backbone is where movement comes from. From then on the wolf has no points left to act with, and it never strikes back once. Where you hit matters.
 
 We reach the city, and the cobbler's shop.
+> *I find myself in the cobbler's shop, in the morning. This place is a low shop, smelling of leather and wax, boots hung by their laces from the beams. Around me is Publiosh Tommaezoth, the cobbler of the city.*
+
 > *I am drawn to Publiosh Tommaezoth, the cobbler, by the scene before me. His old boot, through thick with hammering, already asks something before I have finished approaching.*
 
 We think about him with Provisioning, our second will. Provisioning wants to buy.

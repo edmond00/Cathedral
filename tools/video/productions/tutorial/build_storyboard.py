@@ -739,6 +739,9 @@ RS.game(cb_, ce_, "With twenty copper in the purse, to the city.", fade=True, mi
 
 # 11. the second fight, fast-forwarded under one remark, and the city
 f2b, f2e = rs_clip("fight_2")
+# the clip runs on to the city's first passage; the fast-forward stops where the fight does, so the arrival's
+# text is read at its own pace and not raced past under the fight's remark
+f2e = next(e["t"] for e in RS.events if e["type"] == "mode" and e.get("from") == "Fighting" and f2b < e["t"] < f2e) + 0.5
 RS.game(f2b, f2e, "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it "
         "fast.", *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []), speed=6.0, fade=True)
 t = f2e
