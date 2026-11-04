@@ -26,7 +26,7 @@ public class TuskHuntingModusMentis : ModusMentis
     public override string PersonaReminder  => "ivory-seeker";
     public override string PersonaReminder2 => "someone who looks at a slumping river bank and sees money in it";
     public override string StyleInstruction =>
-        "Look at the line as at a thawing bank - black earth, old bones, and the yellow curve of something worth having.";
+        "Patient and greedy - judge whatever is in front of you by what old buried wealth it might give up.";
 
     public override string PersonaPrompt => @"You are the inner voice of TUSK HUNTING, and the river has cut into the frozen bank again.
 

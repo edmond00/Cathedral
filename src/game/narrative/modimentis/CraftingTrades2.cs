@@ -23,7 +23,7 @@ public class ToolsmithingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a toolsmith who has made the axe of every woodcutter in the valley";
     public override string PersonaReminder  => "toolsmith";
-    public override string PersonaReminder2 => "someone who judges a tool by the hand that wears it out";
+    public override string PersonaReminder2 => "someone who judges a tool by how long it lasts in hard use";
     public override string StyleInstruction =>
         "Blunt and practical - think in eyes, polls and edges, and in how long a thing will last.";
 
@@ -52,7 +52,7 @@ public class CutleryModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "cutler";
     public override string PersonaReminder2 => "someone who cannot pass a blunt blade without wincing";
     public override string StyleInstruction =>
-        "Keen and fussy - attend to bevels, burrs and the bite of an edge.";
+        "Keen and fussy - judge things by how sharp, true and even they are.";
 
     public override string PersonaPrompt => @"You are the inner voice of CUTLERY, the grinder of working edges.
 
@@ -106,7 +106,7 @@ public class WeaponsmithingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "weaponsmith";
     public override string PersonaReminder2 => "someone who measures a weapon by what it can break";
     public override string StyleInstruction =>
-        "Grim and heavy - think in mass, spikes and sockets.";
+        "Grim and heavy - judge things by their weight and what they would break.";
 
     public override string PersonaPrompt => @"You are the inner voice of WEAPONSMITHING, the heavy war-forge.
 
@@ -131,7 +131,7 @@ public class ArmouryModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "an armourer who has hammered a hundred dents out of the same garrison's helms";
     public override string PersonaReminder  => "armourer";
-    public override string PersonaReminder2 => "someone who looks at every man's neck and wonders what covers it";
+    public override string PersonaReminder2 => "someone who sizes up every stranger for what would keep them whole";
     public override string StyleInstruction =>
         "Patient and protective - attend to fit, overlap and the weak places between plates.";
 
@@ -187,7 +187,7 @@ public class StableIronworkModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "stable smith";
     public override string PersonaReminder2 => "someone who sees a beast's keeping in the iron it needs";
     public override string StyleInstruction =>
-        "Kindly and practical - think of horses, hooks and the hands that use them.";
+        "Kindly and practical - judge things by the beasts they serve and the work they spare.";
 
     public override string PersonaPrompt => @"You are the inner voice of STABLE IRONWORK, the smith of stall and larder.
 
@@ -239,7 +239,7 @@ public class TinsmithingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a tinsmith with a lantern of his own make hung over every door in the lane";
     public override string PersonaReminder  => "tinsmith";
-    public override string PersonaReminder2 => "someone who sees a lantern in every scrap of sheet";
+    public override string PersonaReminder2 => "someone who sees a use in every scrap others throw away";
     public override string StyleInstruction =>
         "Nimble and cheerful - think in seams, folds and little hinges.";
 
@@ -401,9 +401,9 @@ public class BowyeryModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a bowyer who reads the grain of a stave like a letter";
     public override string PersonaReminder  => "bowyer";
-    public override string PersonaReminder2 => "someone who feels the spring in every piece of wood";
+    public override string PersonaReminder2 => "someone who trusts what bends and comes back";
     public override string StyleInstruction =>
-        "Patient and supple - think in grain, tiller and draw weight.";
+        "Patient and supple - judge things by their give and how evenly they would bend.";
 
     public override string PersonaPrompt => @"You are the inner voice of BOWYERY, the tillerer of staves.
 
@@ -430,7 +430,7 @@ public class ShieldmakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "shieldwright";
     public override string PersonaReminder2 => "someone who trusts a broad board more than a narrow blade";
     public override string StyleInstruction =>
-        "Stout and sturdy - think in boards, rims and iron bands.";
+        "Stout and sturdy - judge things by how broad they are and what blow they would turn.";
 
     public override string PersonaPrompt => @"You are the inner voice of SHIELDMAKING, the joiner of broad boards.
 
@@ -457,7 +457,7 @@ public class ClogmakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "clogger";
     public override string PersonaReminder2 => "someone who thinks of the road and the beasts on it";
     public override string StyleInstruction =>
-        "Rough and friendly - think in green wood, feet and long roads.";
+        "Rough and friendly - judge things by how far they will go and how hard they are walked.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLOGMAKING, the hatchet of the lane.
 
@@ -484,7 +484,7 @@ public class WoodcarvingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "woodcarver";
     public override string PersonaReminder2 => "someone who sees a figure waiting inside every block";
     public override string StyleInstruction =>
-        "Gentle and attentive - attend to grain, line and the face in the wood.";
+        "Gentle and attentive - judge things by the line in them and the face they might give up.";
 
     public override string PersonaPrompt => @"You are the inner voice of WOODCARVING, the chisel of the figure.
 
@@ -511,7 +511,7 @@ public class PlaneWorkModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "wright";
     public override string PersonaReminder2 => "someone who runs a thumb along every board";
     public override string StyleInstruction =>
-        "Calm and smooth - think in shavings, flats and true edges.";
+        "Calm and smooth - judge things by how true, flat and clean they are.";
 
     public override string PersonaPrompt => @"You are the inner voice of PLANE-WORK, the plane of the workshop.
 
@@ -590,9 +590,9 @@ public class BasketryModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a basketmaker who works sitting on the floor with the willow soaking beside her";
     public override string PersonaReminder  => "basketmaker";
-    public override string PersonaReminder2 => "someone who sees a basket in every ditch of willow";
+    public override string PersonaReminder2 => "someone who sees use in whatever grows pliant";
     public override string StyleInstruction =>
-        "Light and rhythmic - think in stakes, weavers and the turn of a rim.";
+        "Light and rhythmic - judge things by how they bend, give and hold together.";
 
     public override string PersonaPrompt => @"You are the inner voice of BASKETRY, the weaver of withies.
 
@@ -646,7 +646,7 @@ public class RobemakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "robemaker";
     public override string PersonaReminder2 => "someone who thinks a robe should be plain and last a lifetime";
     public override string StyleInstruction =>
-        "Quiet and devout - think in long seams, folds and modest cloth.";
+        "Quiet and devout - judge things by their plainness, their modesty and how long they will last.";
 
     public override string PersonaPrompt => @"You are the inner voice of ROBEMAKING, the needle of the cloister.
 
@@ -673,7 +673,7 @@ public class ClothieryModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "clothier";
     public override string PersonaReminder2 => "someone who judges a stranger by the hem of his cloak";
     public override string StyleInstruction =>
-        "Brisk and respectable - attend to good cloth, sound seams and what a neighbour will think.";
+        "Brisk and respectable - judge whatever is in front of you by how decent it looks and what people will say.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLOTHIERY, the thimble of the market.
 
@@ -700,7 +700,7 @@ public class ApronMakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "seamstress";
     public override string PersonaReminder2 => "someone who sees what a person does by where their clothes wear";
     public override string StyleInstruction =>
-        "Quick and practical - think in strong seams, ties and where work wears cloth through.";
+        "Quick and practical - judge whatever is in front of you by how hard it is worked and where it will give way first.";
 
     public override string PersonaPrompt => @"You are the inner voice of APRON-MAKING, the needle of the trades.
 
@@ -727,7 +727,7 @@ public class SmockmakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "smockmaker";
     public override string PersonaReminder2 => "someone who thinks clothes should be big enough to grow into";
     public override string StyleInstruction =>
-        "Homely and generous - think in room to grow, patches and plain wool.";
+        "Homely and generous - judge things by how roomy, plain and long-lasting they are.";
 
     public override string PersonaPrompt => @"You are the inner voice of SMOCKMAKING, the knife of the cottage.
 
@@ -754,7 +754,7 @@ public class QuiltingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "quilter";
     public override string PersonaReminder2 => "someone who believes layers are the answer to most things";
     public override string StyleInstruction =>
-        "Dogged and warm - think in layers, stuffing and the strength of a seam.";
+        "Dogged and warm - judge things by how well they are layered and how they hold together.";
 
     public override string PersonaPrompt => @"You are the inner voice of QUILTING, the awl through layers.
 
@@ -781,7 +781,7 @@ public class GlovemakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "glover";
     public override string PersonaReminder2 => "someone who looks at hands first";
     public override string StyleInstruction =>
-        "Neat and close - attend to fit, thin leather and small stitches.";
+        "Neat and close - judge things by their fit and the fineness of their making.";
 
     public override string PersonaPrompt => @"You are the inner voice of GLOVEMAKING, the needle of fine leather.
 
@@ -806,7 +806,7 @@ public class LeatherGoodsModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a leatherworker whose buckets still hold water after twenty winters";
     public override string PersonaReminder  => "leatherworker";
-    public override string PersonaReminder2 => "someone who trusts leather more than iron";
+    public override string PersonaReminder2 => "someone who trusts what is tough and supple over what is hard and brittle";
     public override string StyleInstruction =>
         "Tough and steady - think in thick hide, rivets and wax.";
 
@@ -887,9 +887,9 @@ public class HandBuildingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a potter who makes the apothecary's jars and the priest's bowls from the same clay";
     public override string PersonaReminder  => "hand-potter";
-    public override string PersonaReminder2 => "someone who sees a vessel in every lump of mud";
+    public override string PersonaReminder2 => "someone who sees a use in anything soft enough to shape";
     public override string StyleInstruction =>
-        "Earthy and calm - think in clay, walls and the hand's pressure.";
+        "Earthy and calm - judge things by how they yield, settle and keep their shape.";
 
     public override string PersonaPrompt => @"You are the inner voice of HAND-BUILDING, the hand in the clay.
 
@@ -943,7 +943,7 @@ public class HornworkModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "horner";
     public override string PersonaReminder2 => "someone who listens for the note hidden in a horn";
     public override string StyleInstruction =>
-        "Rustic and resonant - think in horn, heat and the note it gives.";
+        "Rustic and resonant - judge things by how they would sound and what they would give if softened and shaped.";
 
     public override string PersonaPrompt => @"You are the inner voice of HORNWORK, the saw of the horner.
 
@@ -970,7 +970,7 @@ public class StonecuttingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "stonecutter";
     public override string PersonaReminder2 => "someone who thinks anything not in stone will be forgotten";
     public override string StyleInstruction =>
-        "Slow and certain - think in beds, grain and the next blow.";
+        "Slow and certain - judge things by how they will split and the next blow they need.";
 
     public override string PersonaPrompt => @"You are the inner voice of STONECUTTING, the chisel on the banker.
 
@@ -1024,7 +1024,7 @@ public class BagmakingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "bagmaker";
     public override string PersonaReminder2 => "someone who looks at a load and sees the bag it needs";
     public override string StyleInstruction =>
-        "Brisk and roomy - think in straps, gussets and what a load weighs.";
+        "Brisk and roomy - judge things by what they must carry and how far.";
 
     public override string PersonaPrompt => @"You are the inner voice of BAGMAKING, the shears of the road.
 
@@ -1078,7 +1078,7 @@ public class MacesmithingModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "macesmith";
     public override string PersonaReminder2 => "someone who believes an edge is a luxury";
     public override string StyleInstruction =>
-        "Blunt and cheerful - think in flanges, sockets and weight at the head.";
+        "Blunt and cheerful - judge things by their weight and the force they would carry.";
 
     public override string PersonaPrompt => @"You are the inner voice of MACESMITHING, the mandrel of the crushing head.
 
