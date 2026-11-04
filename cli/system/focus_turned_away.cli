@@ -28,7 +28,7 @@ advance 12 180
 # Observe the bench with Ripelore; it turns to the butterfly instead.
 click keyword bench
 choose 1
-choose 0
+choose childhood_memory
 advance 12 180
 expect I am not interested in a test bench. My attention shifts to a butterfly
 
