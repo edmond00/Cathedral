@@ -23,6 +23,10 @@ ROOT = HERE.parents[3]
 MOOD, SEED, SECONDS = "city:27788", 1, 200
 RAW = HERE / "build" / "city_render.wav"
 OUT = HERE / "build" / "city_loop.wav"
+# Matched in RMS to the take's music, the loop still came out 5 dB above the scenes either side of the slide:
+# a take's music is the game's whole mix, model waits and quiet bars included, where the loop is the reel at
+# full tilt. Measured on the built soundtrack (voice included on both sides) and taken off here.
+TRIM_DB = -5.0
 
 
 def main():
@@ -48,6 +52,7 @@ def main():
     t, tsr = sf.read(str(take), dtype="float32", always_2d=True)
     ref = t[int(400 * tsr):int(800 * tsr)]
     gain = np.sqrt((ref ** 2).mean()) / max(1e-9, np.sqrt((loop ** 2).mean()))
+    gain *= 10 ** (TRIM_DB / 20)
     sf.write(str(OUT), loop * gain, sr)
     print(f"{OUT}: {end - start:.2f}s ({labels[first_b2 + 1:]} of piece 0), gain {20 * np.log10(gain):+.1f} dB")
 
