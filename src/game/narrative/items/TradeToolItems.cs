@@ -490,3 +490,45 @@ public sealed class Dividers : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
 }
+
+public sealed class Burnisher : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "burnisher";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Burnisher";
+    public override string Description => "A polished steel burnisher in a bone handle, for bringing a blade to a mirror";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class Mandrel : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "mandrel";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Mandrel";
+    public override string Description => "A tapered iron mandrel for forming the socket of a mace or a spear";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Medium;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class Spokeshave : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "spokeshave";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Spokeshave";
+    public override string Description => "A two-handled shave for rounding a shaft or a bow limb true";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Woodwork };
+}

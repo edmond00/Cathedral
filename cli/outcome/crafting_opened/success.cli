@@ -43,7 +43,9 @@ craft break horseshoe
 expect-state crafting pool=2
 expect-state crafting price=7 can=yes
 craft make nail
+craft settle
 craft make nail
+craft settle
 expect-state crafting pool=0
 craft leave
 wait mode LocationInteraction 30

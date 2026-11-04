@@ -424,10 +424,11 @@ public class LocationTravelGameController : IDisposable
         return x < 0 ? null : (x, y);
     }
 
-    /// <summary>Whichever dice box is on screen — narration, conversation or fight — or null.</summary>
+    /// <summary>Whichever dice box is on screen — narration, conversation, fight or crafting — or null.</summary>
     public DiceRollComponent? CliActiveDice =>
         _currentMode == GameMode.Fighting ? _fightAdapter?.CliDice
         : _currentMode == GameMode.Dialogue ? _dialogueAdapter?.Controller?.CliDice
+        : _currentMode == GameMode.Crafting ? _craftingAdapter?.Renderer.CliDice
         : _narrativeController?.CliDice;
 
     /// <summary>The companion-death notice's CONTINUE, when the notice is up.</summary>
