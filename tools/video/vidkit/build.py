@@ -130,6 +130,12 @@ class Build:
             if creates.exists():
                 continue
             creates.parent.mkdir(parents=True, exist_ok=True)
+            if "python" in step:                     # a script of the production's own (it may run the game)
+                self.log(f"preparing {step['creates']}: {step['python']}")
+                subprocess.run([sys.executable, str(self.base / step["python"])], check=True, cwd=self.base)
+                if not creates.exists():
+                    raise RuntimeError(f"prepare step {step['python']} did not write {creates}")
+                continue
             args = [a.replace("{creates}", str(creates)) for a in shlex.split(step["game"], posix=True)]
             self.log(f"preparing {step['creates']}: {' '.join(args[:3])} ...")
             code = run_game(args, timeout=step.get("timeout", 900), log=creates.with_suffix(".log"))
@@ -687,15 +693,37 @@ class Build:
 
         def follows(prev, seg) -> bool:
             """Whether seg's footage carries straight on from prev's: one stretch of the take, cut in two
-            only for the narration. The sound then carries on too, with no fade between them."""
+            only for the narration. The sound then carries on too, with no fade between them. So does a
+            run of segments under the same `"bed"` (a slide in several steps over one piece of music)."""
+            if prev is not None and seg.spec.get("bed") and prev.spec.get("bed") == seg.spec.get("bed"):
+                return True
             e = ends_at(prev) if prev is not None else None
             return (e is not None and seg.src_t0 is not None and seg.spec["recording"] == e[0]
                     and abs(seg.src_t0 - e[1]) < 0.3)
 
+        loops: dict[str, tuple[np.ndarray, int]] = {}   # bed file -> (its samples, where it has got to)
+
+        def bed_track(name: str, length: float) -> np.ndarray:
+            """`length` seconds of a segment's own music, looped, carrying on from where the last segment
+            under it stopped."""
+            if name not in loops:
+                y, r = sf.read(str(self.base / name), dtype="float32", always_2d=True)
+                if y.shape[1] == 1:
+                    y = np.repeat(y, 2, axis=1)
+                loops[name] = (sg.resample_poly(y[:, :2], audio.RATE, r, axis=0).astype(np.float32), 0)
+            y, at_ = loops[name]
+            n_ = int(length * audio.RATE)
+            idx = (at_ + np.arange(n_)) % len(y)
+            loops[name] = (y, int((at_ + n_) % len(y)))
+            return y[idx]
+
         prev = None
         for k, seg in enumerate(segs):
             track = np.zeros((0, 2), np.float32)
-            if seg.src_t0 is not None:
+            if seg.spec.get("bed"):
+                nxt_ = segs[k + 1] if k + 1 < len(segs) else None
+                track = bed_track(seg.spec["bed"], seg.seconds + (0.0 if nxt_ is not None and follows(seg, nxt_) else 0.75))
+            elif seg.src_t0 is not None:
                 src = seg.src_t0
                 path = wav_of(seg.spec["recording"])
                 skipped = False
@@ -719,7 +747,7 @@ class Build:
             nxt = segs[k + 1] if k + 1 < len(segs) else None
             joined_in, joined_out = follows(prev, seg), nxt is not None and follows(seg, nxt)
             rest = seg.seconds - len(track) / audio.RATE + (0.0 if joined_out else 0.75)
-            if rest > 0:
+            if rest > 0 and not seg.spec.get("bed"):
                 track = join(track, filler(rest))
             n = int(0.75 * audio.RATE)
             at = int(seg.start * audio.RATE)

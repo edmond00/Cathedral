@@ -745,9 +745,40 @@ f2e = next(e["t"] for e in RS.events if e["type"] == "mode" and e.get("from") ==
 RS.game(f2b, f2e, "Another wolf, on the road to the city. This fight goes the way the first one did, so we play it "
         "fast.", *([W(REST_NOTES["fight_2_end"])] if "fight_2_end" in REST_NOTES else []), speed=6.0, fade=True)
 t = f2e
+
+# 11b. how a place works, before the first city: five steps over the city's own music, looped
+# (make_city_loop.py renders it with the game's composer and cuts it on its sections)
+LOCATION_STEPS = [
+    ("Before we walk into the city, a closer look at how a place works. A place is built from areas: squares, "
+     "streets, alleys, rooms. Areas are grouped into sections. The town's open ground is one section, and every "
+     "building is a section of its own. Open ground is joined by ways you simply walk. A building is joined to it "
+     "by a connector, a door, a stair, a climb, which has to be passed. And a path is a shortcut across public "
+     "ground: two or three areas in one go."),
+    ("Moving is an act like any other: a mind proposes it, and the dice decide. Following a path is difficulty "
+     "two. Walking to a neighbouring area is difficulty one. A door is opened, or unlocked, before you go through. "
+     "And once you know a way, you do not walk it again: going back is a single act of difficulty two, to any area "
+     "you have already been in. What you know of a place is its mental map, and it lasts as long as you remember "
+     "the place."),
+    ("Time moves only when you make it. A day has six periods, from dawn to night, and every place has its own "
+     "hour of arrival: each visit opens then. To reach another hour, you wait. Sitting needs a seat, and you "
+     "choose the hour you sit until; hiding waits too. A failed roll can waste a period, and passing from night "
+     "to dawn turns the calendar by a day. Hours matter: at night, a building's door is shut."),
+    ("And people move with the hours. Every inhabitant keeps a schedule: a bed, a workplace, and two or three "
+     "other rooms, one for each period. So where you find someone depends on when you come. A trader trades only "
+     "on their own premises: a cobbler met in the street sells nothing. Ask to be led, and they walk you to their "
+     "shop, at the hour they keep it. Work is different: you ask a person for it wherever you meet them, once you "
+     "have been introduced."),
+    ("One honest word about this video. To keep it short, the recording bent some of these rules with debug "
+     "settings. We start inside the shop, the cobbler stays there all day, our minds notice only him, and we are "
+     "already acquainted. Even the two wolves were ordered in advance. In a real run, you arrive on the open "
+     "ground at the place's own hour, and finding the right person at the right time is part of the game."),
+]
+for k, vo in enumerate(LOCATION_STEPS, start=1):
+    manim("Locations", vo, params={"step": k}, bed="build/city_loop.wav")
+
 yb, ye = rs_clip("city_arrival")
 arrive = RS.between(t - 1, ye)
-RS.game(t, RS.end(arrive[0]), "We reach the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]),
+RS.game(t, RS.end(arrive[0]), "So: the city, and the cobbler's shop.", RS.R(arrive[0]), *after(arrive[0]),
         fade=True)
 for i in arrive[1:]:
     RS.game(RS.end(i - 1), RS.end(i), RS.R(i), *after(i))
@@ -876,6 +907,7 @@ storyboard = {
         "flags": "--force-encounter wolf,wolf --no-encounters --npc-static --start-area \"Longhouse Hall,Cobbler's "
                  "Shop\" --observe-only farmer,cobbler --npc-affinity DistantAcquaintance --job-only farmhand "
                  "--save-path build/rec_city3_save.json --no-generate-ahead"}},
+    "prepare": [{"python": "make_city_loop.py", "creates": "build/city_loop.wav"}],
     "manim_file": "scenes.py",
     "segments": segments,
 }

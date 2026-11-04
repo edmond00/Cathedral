@@ -289,7 +289,22 @@ With twenty copper in the purse, to the city.
 Another wolf, on the road to the city. This fight goes the way the first one did, so we play it fast.
 One thing to watch: the first thrust breaks the wolf's backbone, and the backbone is where movement comes from. From then on the wolf has no points left to act with, and it never strikes back once. Where you hit matters.
 
-We reach the city, and the cobbler's shop.
+**[Locations]**
+Before we walk into the city, a closer look at how a place works. A place is built from areas: squares, streets, alleys, rooms. Areas are grouped into sections. The town's open ground is one section, and every building is a section of its own. Open ground is joined by ways you simply walk. A building is joined to it by a connector, a door, a stair, a climb, which has to be passed. And a path is a shortcut across public ground: two or three areas in one go.
+
+**[Locations]**
+Moving is an act like any other: a mind proposes it, and the dice decide. Following a path is difficulty two. Walking to a neighbouring area is difficulty one. A door is opened, or unlocked, before you go through. And once you know a way, you do not walk it again: going back is a single act of difficulty two, to any area you have already been in. What you know of a place is its mental map, and it lasts as long as you remember the place.
+
+**[Locations]**
+Time moves only when you make it. A day has six periods, from dawn to night, and every place has its own hour of arrival: each visit opens then. To reach another hour, you wait. Sitting needs a seat, and you choose the hour you sit until; hiding waits too. A failed roll can waste a period, and passing from night to dawn turns the calendar by a day. Hours matter: at night, a building's door is shut.
+
+**[Locations]**
+And people move with the hours. Every inhabitant keeps a schedule: a bed, a workplace, and two or three other rooms, one for each period. So where you find someone depends on when you come. A trader trades only on their own premises: a cobbler met in the street sells nothing. Ask to be led, and they walk you to their shop, at the hour they keep it. Work is different: you ask a person for it wherever you meet them, once you have been introduced.
+
+**[Locations]**
+One honest word about this video. To keep it short, the recording bent some of these rules with debug settings. We start inside the shop, the cobbler stays there all day, our minds notice only him, and we are already acquainted. Even the two wolves were ordered in advance. In a real run, you arrive on the open ground at the place's own hour, and finding the right person at the right time is part of the game.
+
+So: the city, and the cobbler's shop.
 > *I find myself in the cobbler's shop, in the morning. This place is a low shop, smelling of leather and wax, boots hung by their laces from the beams. Around me is Publiosh Tommaezoth, the cobbler of the city.*
 
 > *I am drawn to Publiosh Tommaezoth, the cobbler, by the scene before me. His old boot, through thick with hammering, already asks something before I have finished approaching.*

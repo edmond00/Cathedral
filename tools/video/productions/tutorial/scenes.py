@@ -557,3 +557,243 @@ class AttackDefence(BrandScene):
         self.beat(0.15)
         self.play(FadeIn(tie), run_time=0.5)
         self.fill_to_target()
+
+
+# ── 7. how a place works ──────────────────────────────────────────────────────
+
+# The town drawn in steps 1-2: a small piece of a city as CityLayout builds one (squares, a street, an
+# alley and a gateway as one outdoor section; each building its own section of rooms, behind a door).
+TOWN_OPEN = {"Gateway": (-5.6, -0.7), "Market Square": (-3.3, 0.6), "High Street": (-3.3, -2.0),
+             "Cross Square": (-0.7, 0.6), "Back Alley": (-0.7, -2.0)}
+TOWN_SHOP = {"Shop": (2.3, 0.6), "Workshop": (4.7, 0.6), "Bedroom": (4.7, -0.8)}
+TOWN_HOUSE = {"Hall": (2.3, -2.4), "Pantry": (4.7, -2.4)}
+TOWN_WAYS = [("Gateway", "Market Square"), ("Market Square", "High Street"), ("Market Square", "Cross Square"),
+             ("High Street", "Back Alley"), ("Cross Square", "Back Alley"),
+             ("Shop", "Workshop"), ("Workshop", "Bedroom"), ("Hall", "Pantry")]
+TOWN_DOORS = [("Cross Square", "Shop"), ("Back Alley", "Hall")]
+TOWN_PATH = ("Gateway", "Cross Square")
+PERIODS = ["dawn", "morning", "noon", "afternoon", "evening", "night"]
+
+
+class Locations(BrandScene):
+    """How a place works (docs/manual/06-narration.md §1, §9; 05-travel.md §8; TradeGate, AskToBeLedVerb;
+    the NPC schedules of SceneNpcPlacement), in five steps (params "step"):
+      1 areas    areas grouped in sections; open ways, connectors (doors), a path
+      2 moving   walk (difficulty 1), path (2), a door passed, going back (2) along the mental map
+      3 time     six periods; each place's hour of arrival; waiting; night shuts doors; a new day
+      4 people   a schedule across the six periods; trade only on premises; ask to be led; work anywhere
+      5 video    what this video's debug settings changed, against a real run"""
+
+    def chips(self, lit):
+        names = ["AREAS", "MOVING", "TIME", "PEOPLE", "THIS VIDEO"]
+        boxes = VGroup()
+        for i, n in enumerate(names, start=1):
+            on = i == lit
+            t = self.text(n, 20, GOLD if on else GRAY50)
+            r = RoundedRectangle(corner_radius=0.06, width=t.width + 0.4, height=t.height + 0.3,
+                                 stroke_color=GOLD if on else GRAY35, stroke_width=2.5 if on else 1.2)
+            boxes.add(VGroup(r.move_to(t), t))
+        boxes.arrange(RIGHT, buff=0.35)
+        return boxes.next_to(self.head, DOWN, buff=0.3)
+
+    def construct(self):
+        step = int(self.params.get("step", 1))
+        self.head = self.header("how a place works", animate=(step == 1))
+        c = self.chips(step)
+        self.add(c) if step > 1 else self.play(FadeIn(c), run_time=0.6)
+        getattr(self, ["", "step_areas", "step_moving", "step_time", "step_people", "step_video"][step])()
+        self.fill_to_target()
+
+    # ── the town ──
+    def town(self, scale=1.0):
+        pos = {**TOWN_OPEN, **TOWN_SHOP, **TOWN_HOUSE}
+        nodes = {}
+        for name, (x, y) in pos.items():
+            color = GRAY85 if name in TOWN_OPEN else LIGHT_PURPLE
+            nodes[name] = self.node(name, color, 20).move_to([x, y - 0.1, 0])
+        ways = VGroup(*[self.edge(nodes[a], nodes[b], GRAY50) for a, b in TOWN_WAYS])
+        doors = VGroup()
+        for a, b in TOWN_DOORS:
+            e = self.edge(nodes[a], nodes[b], GOLD, width=2.5)
+            mid = e.point_from_proportion(0.5)
+            door = Rectangle(width=0.16, height=0.42, stroke_color=GOLD, stroke_width=2,
+                             fill_color=BLACK_, fill_opacity=1).move_to(mid)
+            doors.add(VGroup(e, door))
+        a, b = TOWN_PATH
+        # over the top of the square it passes by, never through its box
+        path = CubicBezier(nodes[a].get_top(), nodes[a].get_top() + UP * 1.5 + RIGHT * 0.4,
+                           nodes[b].get_top() + UP * 1.5 + LEFT * 0.6, nodes[b].get_top())
+        path.set_stroke(LIGHT_PURPLE, 2.5)
+        path = DashedVMobject(path, num_dashes=28)
+        def section(names, label, color):
+            g = VGroup(*[nodes[n] for n in names])
+            box = SurroundingRectangle(g, buff=0.28, corner_radius=0.12, stroke_color=color, stroke_width=1.4)
+            lab = self.text(label, 16, color).next_to(box, DOWN, buff=0.08).align_to(box, LEFT)
+            return VGroup(box, lab)
+        sections = VGroup(section(TOWN_OPEN, "open ground: one section", GRAY60),
+                          section(TOWN_SHOP, "the cobbler's: a section", LIGHT_PURPLE),
+                          section(TOWN_HOUSE, "a house: a section", LIGHT_PURPLE))
+        return nodes, ways, doors, path, sections
+
+    def step_areas(self):
+        nodes, ways, doors, path, sections = self.town()
+        self.wait_until(0.10)
+        self.play(LaggedStart(*[FadeIn(n, scale=0.9) for n in nodes.values()], lag_ratio=0.08), run_time=1.8)
+        self.wait_until(0.30)
+        self.play(LaggedStart(*[Create(s[0]) for s in sections], lag_ratio=0.25),
+                  LaggedStart(*[FadeIn(s[1]) for s in sections], lag_ratio=0.25), run_time=1.4)
+        self.wait_until(0.50)
+        self.play(LaggedStart(*[Create(w) for w in ways], lag_ratio=0.1), run_time=1.2)
+        self.wait_until(0.62)
+        self.play(LaggedStart(*[FadeIn(d, scale=1.4) for d in doors], lag_ratio=0.3), run_time=1.0)
+        tag = self.text("doors: passed, not walked", 18, GOLD).next_to(doors[0], UP, buff=0.55).align_to(doors[0], LEFT)
+        self.play(FadeIn(tag), run_time=0.4)
+        self.wait_until(0.82)
+        self.play(Create(path), run_time=1.2)
+        ptag = self.text("a path: two or three areas at once", 18, LIGHT_PURPLE).next_to(path, UP, buff=0.1)
+        self.play(FadeIn(ptag), run_time=0.4)
+
+    def step_moving(self):
+        nodes, ways, doors, path, sections = self.town()
+        self.add(*nodes.values(), ways, doors, path, sections)
+        token = Dot(radius=0.13, color=GOLD).move_to(nodes["Gateway"].get_center() + UP * 0.32)
+        known = set()
+
+        def visit(name):
+            known.add(name)
+            n = nodes[name]
+            return n[0].animate.set_fill(GRAY20, opacity=1)
+
+        caption = None
+
+        def say(text, color=GOLD):
+            nonlocal caption
+            t = self.text(text, 22, color).to_edge(DOWN, buff=0.18)
+            anims = [FadeIn(t, shift=UP * 0.1)] + ([FadeOut(caption)] if caption else [])
+            caption = t
+            return anims
+
+        self.play(FadeIn(token, scale=2), visit("Gateway"), run_time=0.6)
+        self.wait_until(0.14)
+        self.play(*say("follow a path: difficulty 2", LIGHT_PURPLE), run_time=0.4)
+        a_, b_ = nodes["Gateway"], nodes["Cross Square"]
+        route = CubicBezier(token.get_center(), a_.get_top() + UP * 1.5 + RIGHT * 0.4,
+                            b_.get_top() + UP * 1.5 + LEFT * 0.6, b_.get_center() + UP * 0.32)
+        self.play(MoveAlongPath(token, route), visit("Cross Square"), run_time=1.2)
+        self.wait_until(0.30)
+        self.play(*say("walk to a neighbour: difficulty 1"), run_time=0.4)
+        self.play(token.animate.move_to(nodes["Back Alley"].get_center() + UP * 0.32), visit("Back Alley"), run_time=0.9)
+        self.wait_until(0.42)
+        self.play(*say("a door: opened, or unlocked, then passed"), run_time=0.4)
+        self.play(Indicate(doors[1][1], color=GOLD, scale_factor=1.6), run_time=0.6)
+        self.play(token.animate.move_to(nodes["Hall"].get_center() + UP * 0.32), visit("Hall"), run_time=0.9)
+        self.wait_until(0.62)
+        glow = VGroup(*[SurroundingRectangle(nodes[n], buff=0.06, corner_radius=0.08, stroke_color=GOLD, stroke_width=2)
+                        for n in sorted(known)])
+        self.play(*say("known ways: the place's mental map"), Create(glow), run_time=0.8)
+        self.wait_until(0.76)
+        self.play(*say("go back: difficulty 2, to any area already known", GOLD), run_time=0.4)
+        self.play(token.animate.move_to(nodes["Gateway"].get_center() + UP * 0.32), run_time=1.0)
+        self.play(Flash(token, color=GOLD), run_time=0.5)
+
+    def step_time(self):
+        center = DOWN * 1.0 + LEFT * 3.9
+        r = 1.9
+        wheel = VGroup()
+        labels = VGroup()
+        for i, name in enumerate(PERIODS):
+            a0 = PI / 2 - i * TAU / 6
+            seg = AnnularSector(inner_radius=r * 0.62, outer_radius=r, angle=-TAU / 6 + 0.04, start_angle=a0 - 0.02,
+                                fill_color=GRAY35 if name == "night" else GRAY20, fill_opacity=1,
+                                stroke_color=GRAY50, stroke_width=1).move_arc_center_to(center)
+            mid = a0 - TAU / 12
+            lab = self.text(name, 20, GRAY85).move_to(center + (r + 0.55) * np.array([np.cos(mid), np.sin(mid), 0]))
+            wheel.add(seg)
+            labels.add(lab)
+        self.wait_until(0.04)
+        self.play(LaggedStart(*[FadeIn(s) for s in wheel], lag_ratio=0.12), LaggedStart(*[FadeIn(l) for l in labels], lag_ratio=0.12),
+                  run_time=1.6)
+        notes = VGroup()
+
+        def note(text, color=GRAY85):
+            t = self.text(text, 21, color)
+            notes.add(t)
+            notes.arrange(DOWN, aligned_edge=LEFT, buff=0.36)
+            notes.move_to(DOWN * 1.0).align_to(LEFT * 0.2, LEFT)
+            return t
+
+        # the hand, at this place's hour of arrival
+        def hand_at(i):
+            mid = PI / 2 - i * TAU / 6 - TAU / 12
+            return Line(center, center + r * 0.58 * np.array([np.cos(mid), np.sin(mid), 0]), color=GOLD, stroke_width=5)
+        hand = hand_at(1)
+        self.wait_until(0.20)
+        t1 = note("each place opens at its own hour", GOLD)
+        self.play(Create(hand), FadeIn(t1), wheel[1].animate.set_fill(DARK_YELLOW, opacity=1), run_time=0.9)
+        self.wait_until(0.40)
+        t2 = note("sit and wait, on a seat: choose the hour")
+        self.play(FadeIn(t2), run_time=0.4)
+        self.play(Transform(hand, hand_at(4)), wheel[1].animate.set_fill(GRAY20, opacity=1),
+                  wheel[4].animate.set_fill(DARK_YELLOW, opacity=1), run_time=1.2)
+        self.wait_until(0.58)
+        t3 = note("a failed roll can waste one", LIGHT_PURPLE)
+        self.play(FadeIn(t3), run_time=0.4)
+        self.wait_until(0.70)
+        t4 = note("night into dawn: a new day")
+        self.play(FadeIn(t4), Transform(hand, hand_at(5)), wheel[4].animate.set_fill(GRAY20, opacity=1),
+                  wheel[5].animate.set_fill(DARK_PURPLE, opacity=1), run_time=1.0)
+        self.wait_until(0.86)
+        t5 = note("at night, a building's door is shut", GOLD)
+        door = Rectangle(width=0.22, height=0.5, stroke_color=GOLD, stroke_width=2).next_to(t5, LEFT, buff=0.25)
+        bar = Line(door.get_left(), door.get_right(), color=GOLD, stroke_width=3)
+        self.play(FadeIn(t5), Create(door), Create(bar), run_time=0.6)
+
+    def step_people(self):
+        # one person's day: where a schedule puts them, period by period (an example, as a schedule reads)
+        day = ["bed", "shop", "shop", "shop", "tavern", "bed"]
+        cols = VGroup()
+        for i, (p, where) in enumerate(zip(PERIODS, day)):
+            head = self.text(p, 18, GRAY60)
+            on = where == "shop"
+            cell = RoundedRectangle(corner_radius=0.06, width=1.55, height=0.62,
+                                    stroke_color=GOLD if on else GRAY35, stroke_width=2 if on else 1.2,
+                                    fill_color=DARK_YELLOW if on else BLACK_, fill_opacity=0.35 if on else 1)
+            lab = self.text(where, 20, GOLD if on else GRAY85).move_to(cell)
+            cols.add(VGroup(head, VGroup(cell, lab)).arrange(DOWN, buff=0.15))
+        cols.arrange(RIGHT, buff=0.12).move_to(UP * 0.3)
+        who = self.text("the cobbler's day, for example", 20, LIGHT_PURPLE).next_to(cols, UP, buff=0.3).align_to(cols, LEFT)
+        self.wait_until(0.05)
+        self.play(FadeIn(who), LaggedStart(*[FadeIn(c, shift=UP * 0.1) for c in cols], lag_ratio=0.12), run_time=1.6)
+        rules = [("trades only in his shop", GOLD, 0.40),
+                 ("met elsewhere: ask to be led, to the shop, at its hour", GRAY85, 0.58),
+                 ("work: asked anywhere, once introduced", LIGHT_PURPLE, 0.78)]
+        shown = VGroup()
+        for text, color, at in rules:
+            self.wait_until(at)
+            t = self.text(text, 22, color)
+            shown.add(t)
+            shown.arrange(DOWN, aligned_edge=LEFT, buff=0.28).next_to(cols, DOWN, buff=0.55).align_to(cols, LEFT)
+            anims = [FadeIn(t, shift=RIGHT * 0.15)]
+            if at == 0.40:
+                anims.append(Indicate(VGroup(*[c[1] for c, w in zip(cols, day) if w == "shop"]), color=GOLD, scale_factor=1.08))
+            self.play(*anims, run_time=0.7)
+
+    def step_video(self):
+        rows = [("starts inside the shop", "arrives on the open ground, at the place's hour"),
+                ("the cobbler stays put all day", "he keeps his own day"),
+                ("our minds notice only him", "they notice anyone, and anything"),
+                ("already acquainted", "you meet people first"),
+                ("humors full of pleasure", "what your organs make"),
+                ("two wolves, ordered ahead", "the road decides")]
+        hv = self.text("in this video", 24, LIGHT_PURPLE)
+        hr = self.text("in a real run", 24, GOLD)
+        left = VGroup(hv, *[self.text(a, 20, GRAY60) for a, _ in rows]).arrange(DOWN, aligned_edge=LEFT, buff=0.26)
+        right = VGroup(hr, *[self.text(b, 20, GRAY85) for _, b in rows]).arrange(DOWN, aligned_edge=LEFT, buff=0.26)
+        table = VGroup(left, right).arrange(RIGHT, buff=1.0, aligned_edge=UP).move_to(DOWN * 0.75)
+        table.scale_to_fit_width(min(table.width, config.frame_width - 1.2))
+        self.wait_until(0.06)
+        self.play(FadeIn(hv), FadeIn(hr), run_time=0.5)
+        n = len(rows)
+        for i in range(n):
+            self.wait_until(0.14 + 0.62 * i / n)
+            self.play(FadeIn(left[i + 1], shift=RIGHT * 0.1), FadeIn(right[i + 1], shift=LEFT * 0.1), run_time=0.5)
