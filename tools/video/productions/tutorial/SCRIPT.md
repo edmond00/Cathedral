@@ -371,6 +371,7 @@ These boots give one die of defence on the feet, and they please peasants and so
 The purse is empty again, and that is fine. Every place you visit is kept as a mental map, and each map holds routines: ways back in. Asking for work taught one at the farm.
 The anamnesis decides how many maps you keep, four per point, and the oldest is forgotten first. You can lock the ones you care about.
 
+Back on the world map, we click the farm.
 From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip.
 
 One last tool, and a new one. A will does not have to wait for its target to turn up. Beside the menu button on the world map, this sign opens every will the party holds, and what each one wants. Our purse is still empty, so: Diligence, and its first want, find work.

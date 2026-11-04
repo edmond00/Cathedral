@@ -2018,7 +2018,14 @@
    "to": 1821.03,
    "fade": false,
    "vo": [
-    "From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip."
+    {
+     "text": "Back on the world map, we click the farm.",
+     "at": 1777.01
+    },
+    {
+     "text": "From the world map, a place's routines are one click away. The work routine takes us straight back to work at the farm, with no conversation at all. Earning more coin is now a single trip.",
+     "at": 1791.8
+    }
    ],
    "min_speed": 1.0
   },

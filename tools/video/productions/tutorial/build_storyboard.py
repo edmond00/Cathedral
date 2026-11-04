@@ -855,9 +855,14 @@ RS.game(we, oe,
         "The anamnesis decides how many maps you keep, four per point, and the oldest is forgotten first. You can "
         "lock the ones you care about.", fade=True)
 rb, re_ = rs_clip("routine_box")
+box = RS.click(rb, re_, label="travel-routines-button")
+farm_click = RS.click(rb, re_, label="farm")
+# the walk back to the map plays out first; the line waits for the routine box to open
 RS.game(oe, re_,
-        "From the world map, a place's routines are one click away. The work routine takes us straight back to "
-        "work at the farm, with no conversation at all. Earning more coin is now a single trip.", min_speed=1.0)
+        {"text": "Back on the world map, we click the farm.", "at": round(farm_click + 0.3, 2)},
+        {"text": "From the world map, a place's routines are one click away. The work routine takes us straight back "
+                 "to work at the farm, with no conversation at all. Earning more coin is now a single trip.",
+         "at": round(box + 0.5, 2)}, min_speed=1.0)
 
 # 15b. a will's search: re-shot on its own from the city take's last checkpoint (will.cli, rec_will)
 WILL = Take("will", "build/rec_will", "passages_will.json")
