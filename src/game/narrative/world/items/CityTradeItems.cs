@@ -28,10 +28,11 @@ public sealed class ShoeLast : Item
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Shoe Last";
     public override string Description => "A carved wooden foot, dark with handling, that a shoe is shaped over";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Craftware, ItemTag.Woodwork, ItemTag.Footwear };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Hobnails : Item
@@ -67,10 +68,11 @@ public sealed class Thimble : Item
     public override string ItemId      => "thimble";
     public override string DisplayName => "Thimble";
     public override string Description => "A brass thimble pitted all over by the heads of needles";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override int UsageLevel => 2;
 }
 
 public sealed class SewingNeedles : Item
@@ -80,10 +82,11 @@ public sealed class SewingNeedles : Item
     public override string DisplayName => "Sewing Needles";
     public override string Article     => "some";
     public override string Description => "A felt book stuck with fine steel needles of several sizes";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Craftware };
+    public override int UsageLevel => 2;
 }
 
 public sealed class TailorsChalk : Item
@@ -92,10 +95,11 @@ public sealed class TailorsChalk : Item
     public override string ItemId      => "tailors_chalk";
     public override string DisplayName => "Tailor's Chalk";
     public override string Description => "A flat cake of white chalk worn to an edge for marking cloth";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Cloth };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Waistcoat : WearableItem
@@ -168,10 +172,11 @@ public sealed class MeatHook : Item
     public override string ItemId      => "meat_hook";
     public override string DisplayName => "Meat Hook";
     public override string Description => "A double-ended iron S-hook, the kind joints are hung from";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Tripe : ConsumableItem
@@ -255,17 +260,18 @@ public sealed class TanBark : Item
 
 // ── potter ────────────────────────────────────────────────────────────────
 
-public sealed class EarthenJug : Item
+public sealed class EarthenJug : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "earthen_jug";
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Earthen Jug";
     public override string Description => "A round-bellied jug of glazed brown earthenware with a thumb-pressed handle";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
+    public override ContainerKind Kind => ContainerKind.Vessel;
+    public override int ContentSlots => 6;
 }
 
 public sealed class PottersRib : Item
@@ -281,17 +287,18 @@ public sealed class PottersRib : Item
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
 }
 
-public sealed class GlazedBowl : Item
+public sealed class GlazedBowl : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "glazed_bowl";
     public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName => "Glazed Bowl";
     public override string Description => "A shallow bowl with a running green glaze inside and a bare foot";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
+    public override ContainerKind Kind => ContainerKind.Vessel;
+    public override int ContentSlots => 3;
 }
 
 // ── apothecary ────────────────────────────────────────────────────────────
@@ -334,10 +341,11 @@ public sealed class Pestle : Item
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Pestle";
     public override string Description => "A heavy bronze pestle, polished at the end by grinding";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override int UsageLevel => 2;
 }
 
 // ── barber ────────────────────────────────────────────────────────────────
@@ -376,17 +384,20 @@ public sealed class BleedingBowl : Item
 
 // ── the street ────────────────────────────────────────────────────────────
 
-public sealed class Tumpline : Item
+public sealed class Tumpline : WearableContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "tumpline";
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Tumpline";
     public override string Description => "A broad leather strap a porter passes over the brow to take a load on the back";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override WearSlot Slot => WearSlot.BeltGear;
+    public override ContainerKind Kind => ContainerKind.Storage;
+    public override int ContentSlots => 6;
+    public override IReadOnlyList<Cathedral.Game.Npc.SocialCategory> DialogueAppeal => new[] { Cathedral.Game.Npc.SocialCategory.Peasant, Cathedral.Game.Npc.SocialCategory.Pauper };
 }
 
 public sealed class Lye : Item
@@ -409,10 +420,11 @@ public sealed class WashBeetle : Item
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Wash Beetle";
     public override string Description => "A flat wooden bat, worn pale, for beating wet linen on a stone";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
+    public override int UsageLevel => 2;
 }
 
 public sealed class WaterYoke : Item
@@ -422,10 +434,11 @@ public sealed class WaterYoke : Item
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Water Yoke";
     public override string Description => "A shaped shoulder yoke with a chain and hook hanging at each end";
-    public override ItemCategory Category => ItemCategory.Crafting;
+    public override ItemCategory Category => ItemCategory.Tool;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
+    public override int UsageLevel => 2;
 }
 
 public sealed class LeatherBucket : Item

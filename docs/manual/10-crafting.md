@@ -38,7 +38,8 @@ longer than that single step: a refined material is never refined again.
 ## 2. Stations
 
 A station is a kind of point of interest — an anvil, a forge hearth, a workbench, a loom, a spinning
-wheel, a potter's wheel, a tanning pit, a tallow vat, a cutting table, a leather bench — and **every
+wheel, a potter's wheel, a tanning pit, a tallow vat, a cutting table, a leather bench, a goldsmith's
+bench, a writing desk, a carving bench, a mason's banker — and **every
 station works exactly one material**. What is taken apart there gives back that material and no
 other; what is made there is paid for in it. Several stations may work the same material, the loom
 and the spinning wheel both working fibre, but no station works two.
@@ -46,16 +47,16 @@ and the spinning wheel both working fibre, but no station works two.
 | Material | Worked at |
 |---|---|
 | Ore | the forge hearth |
-| Metal | the anvil |
+| Metal | the anvil, the goldsmith's bench |
 | Wood | the workbench |
 | Fibre | the loom, the spinning wheel |
 | Cloth | the cutting table |
 | Hide | the tanning pit |
-| Leather | the leather bench |
+| Leather | the leather bench, the writing desk |
 | Clay | the potter's wheel |
 | Fat | the tallow vat |
-
-Bone and stone are held by many things and worked at no station.
+| Bone | the carving bench |
+| Stone | the mason's banker |
 
 A workshop commonly holds more than one station: a forge has its hearth and its anvil, a weaver's
 shop its loom and a board to cut the cloth on.
