@@ -13,6 +13,7 @@ public class HomilyModusMentis : ModusMentis
         "Preaches: takes a text and draws from it a lesson for the people in front of you, with a story they recognise and a warning they will remember. Knows the moment a congregation stops listening.";
     public override string SkillMeans       => "the preaching of a lesson from a text";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

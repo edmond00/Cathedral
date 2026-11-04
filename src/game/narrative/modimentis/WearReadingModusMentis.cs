@@ -13,6 +13,7 @@ public class WearReadingModusMentis : ModusMentis
         "Reads an object's history off its surface: how long it has been used, how hard, by which hand, and how many times it has been mended and by whom. What a thing has been through, when nobody is willing to say.";
     public override string SkillMeans       => "the reading of use, age and mending";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

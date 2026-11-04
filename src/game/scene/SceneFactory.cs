@@ -48,6 +48,7 @@ public abstract class SceneFactory
         PlaceBeastSign(scene);
         if (GrowsWild) PlaceWildGrowth(scene, locationId);
         if (PlacesPlay) PlayPlacement.Place(scene, locationId);
+        if (PlacesStations) Shared.StationPlacement.Place(scene, locationId);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
         AssignStableKeys(scene);
@@ -494,10 +495,15 @@ public abstract class SceneFactory
             var visited = schedule.ActivePeriods.Select(p => p.Area).Distinct().ToList();
             if (visited.Count < 2) continue;
 
-            string species = npc.Entity.DisplayName.ToLowerInvariant();
+            // Named by the kind, never the individual: a beast is "the triceratops" to the player
+            // (NpcLabelResolver), and tracks named after its generated name ("Torntread Tracks") told
+            // the player a name nobody gave and told the choice judge nothing at all. Shallow
+            // wildlife is already named by its kind. Two of a kind in one area leave one sign.
+            string kind = npc.Entity is Npc.NpcEntity named ? named.SpeciesName : npc.Entity.DisplayName;
+            string species = kind.ToLowerInvariant();
             foreach (var area in visited)
             {
-                string name = $"{npc.Entity.DisplayName} Tracks";
+                string name = $"{kind} Tracks";
                 if (area.PointsOfInterest.Any(p => p.DisplayName == name)) continue;
 
                 var sign = new FootprintPointOfInterest(npc, name, new List<string>
@@ -526,6 +532,12 @@ public abstract class SceneFactory
     /// (<see cref="PlayPlacement"/>). Off where paths are, for the same reason as wild growth.
     /// </summary>
     protected virtual bool PlacesPlay => LaysPaths;
+
+    /// <summary>
+    /// Whether <see cref="Build(int)"/> spreads the crafting stations and lays a trade's rack beside each
+    /// (<see cref="Shared.StationPlacement"/>). Off where paths are, for the same reason as the plays.
+    /// </summary>
+    protected virtual bool PlacesStations => LaysPaths;
 
     /// <summary>The generator wild growth is drawn from: its own stream, so nothing built before or after it moves.</summary>
     private static Random GrowthRandom(int locationId) => new(unchecked(locationId * 0x27D4EB2F + 0x1656));

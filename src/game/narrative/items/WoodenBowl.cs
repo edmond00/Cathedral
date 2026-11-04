@@ -11,5 +11,4 @@ public sealed class WoodenBowl : ContainerItem
     public override ContainerKind Kind => ContainerKind.Vessel;
     public override int ContentSlots   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Woodwork };
-    public override int PriceReference => 6;
 }

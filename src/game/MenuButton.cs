@@ -20,15 +20,30 @@ namespace Cathedral.Game;
 public sealed class MenuButton
 {
     public const char Glyph = '☰';
-    private const string Face = " ☰ ";
+
+    /// <summary>What the button shows: a glyph padded by a space either side (" ☰ ", " ◎ ").</summary>
+    private readonly string Face;
+
+    /// <summary>Cells between the button's right edge and the screen's: 0 for the ☰, more for one beside it.</summary>
+    private readonly int _rightOffset;
 
     private readonly TerminalHUD _terminal;
-    private readonly (char C, Vector4 Fg, Vector4 Bg)[] _under = new (char, Vector4, Vector4)[Face.Length];
+    private readonly (char C, Vector4 Fg, Vector4 Bg)[] _under;
     private bool _drawn;
 
-    public MenuButton(TerminalHUD terminal) => _terminal = terminal;
+    /// <summary>
+    /// The ☰ by default. Another corner button (the world map's will button) passes its own face and
+    /// how far left of the screen's edge it sits, and is otherwise the same thing.
+    /// </summary>
+    public MenuButton(TerminalHUD terminal, string face = " ☰ ", int rightOffset = 0)
+    {
+        _terminal = terminal;
+        Face = face;
+        _rightOffset = rightOffset;
+        _under = new (char, Vector4, Vector4)[Face.Length];
+    }
 
-    public int X => _terminal.Width - Face.Length;
+    public int X => _terminal.Width - Face.Length - _rightOffset;
     public int Y => 0;
 
     /// <summary>The cell a press lands on, for the CLI; null while the button is not on screen.</summary>

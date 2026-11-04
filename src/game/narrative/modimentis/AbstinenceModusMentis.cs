@@ -14,6 +14,7 @@ public class AbstinenceModusMentis : ModusMentis
         "Refuses plenty on purpose. Eats less than is available, declines the drink, and keeps a body used to going without, which costs nothing when there is plenty and everything when there is not.";
     public override string SkillMeans       => "the declining of what is freely offered";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "paunch", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;

@@ -16,6 +16,7 @@ public class StreetwiseModusMentis : ModusMentis
         "Keeps an alley-bred wariness up, reading a rough street for danger, marks, and the quickest way out. Inclines toward suspicion and quick reckoning where crime and trouble are near.";
     public override string SkillMeans       => "the wariness and cunning learned on rough streets";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "ears" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

@@ -22,29 +22,28 @@ public sealed class Guano : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Fodder };
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 3;
 }
 
 public sealed class CavePearl : StoneRawItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable });
     public override string ItemId      => "cave_pearl";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Cave Pearl";
     public override string Description => "A smooth white ball of stone grown layer on layer in a dripping pool, like a pearl without an oyster";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override int PriceReference => 15;
 }
 
 public sealed class RockCrystal : StoneRawItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable });
     public override string ItemId      => "rock_crystal";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Rock Crystal";
     public override string Description => "A six-sided spar of clear crystal, cold as ice and as clear, broken from a cluster";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 20;
 }
 
 // ── Coast ───────────────────────────────────────────────────────────────────
@@ -74,11 +73,11 @@ public sealed class Amber : StoneRawItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable, ItemKind.Flotsam });
     public override string ItemId      => "amber";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Amber";
     public override string Description => "A lump of honey-coloured amber thrown up on the shingle, warm to the hand, a gnat caught in it";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override int PriceReference => 18;
 }
 
 // ── Woods and water ─────────────────────────────────────────────────────────
@@ -116,17 +115,18 @@ public sealed class BogMyrtle : HerbItem
 // ── Old ground ──────────────────────────────────────────────────────────────
 
 /// <summary>A flint arrowhead of the old people, turned up where barrows stand. Country folk call it elf-shot.</summary>
-public sealed class ElfShot : Item
+public sealed class ElfShot : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Relic, ItemKind.Stone });
     public override string ItemId      => "elf_shot";
+    public override Rarity Rarity => Rarity.Uncommon;
     public override string DisplayName => "Elf-Shot";
     public override string Description => "A leaf-shaped arrowhead of knapped flint, finer than any smith could make, turned up from old ground";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override int PriceReference => 9;
+    public override WearSlot Slot => WearSlot.Neckwear;
+    public override IReadOnlyList<Cathedral.Game.Npc.SocialCategory> DialogueAppeal => new[] { Cathedral.Game.Npc.SocialCategory.Peasant, Cathedral.Game.Npc.SocialCategory.Outlaw };
 }
 
 // ── Dry country ─────────────────────────────────────────────────────────────
@@ -145,11 +145,11 @@ public sealed class Agate : StoneRawItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem, ItemKind.Valuable });
     public override string ItemId      => "agate";
+    public override Rarity Rarity => Rarity.Uncommon;
     public override string DisplayName => "Agate";
     public override string Description => "A rough nodule of agate split open on banded rings of grey, white and rust";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 14;
 }
 
 // ── Cold country ────────────────────────────────────────────────────────────
@@ -159,12 +159,12 @@ public sealed class FossilIvory : Item
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ivory, ItemKind.Bone, ItemKind.Relic });
     public override string ItemId      => "fossil_ivory";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Fossil Ivory";
     public override string Description => "A curved length of yellowed ivory from a beast far bigger than any living, thawed out of a riverbank";
     public override ItemCategory Category => ItemCategory.Crafting;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Mineral };
     public override WeightClass Weight => WeightClass.Medium;
-    public override int PriceReference => 30;
 }
 
 public sealed class Lingonberry : FruitItem

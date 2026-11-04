@@ -14,6 +14,7 @@ public class BeastSenseModusMentis : ModusMentis
         "Reads an animal by its mood and small signs, catching the moment before it bolts or bites. Keeps attention on ears, stance, and breath, and inclines toward calming or steering a beast rather than forcing it.";
     public override string SkillMeans       => "the reading of an animal's mood";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;

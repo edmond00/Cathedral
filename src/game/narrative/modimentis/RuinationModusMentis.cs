@@ -19,6 +19,7 @@ public class RuinationModusMentis : ModusMentis
     public override string SkillMeans       => "the pleasure of a made thing coming apart";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "eyes" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

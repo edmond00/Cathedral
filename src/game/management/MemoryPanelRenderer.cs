@@ -391,7 +391,7 @@ public class MemoryPanelRenderer
 
         _terminal.Text(x + 1, y + 1, name, textCol, slotBg);
         _terminal.Text(x + slotW - 1 - lvl.Length, y + 1, lvl,
-            broken    ? Config.Colors.BrightRed
+            broken    ? Config.Colors.BrightPurple
           : isHovered ? Config.Colors.BrightYellow
                       : Config.Colors.GoldYellow, slotBg);
     }
@@ -543,7 +543,7 @@ public class MemoryPanelRenderer
         string lvlStr = isBroken ? $"Level {modusMentis.Level} — BROKEN"
                                  : $"Level {modusMentis.Level} / {maxLevel}";
         _terminal.Text(EndX - lvlStr.Length, row, lvlStr,
-            isBroken ? Config.Colors.BrightRed : Config.Colors.GoldYellow, DetailTitle);
+            isBroken ? Config.Colors.BrightPurple : Config.Colors.GoldYellow, DetailTitle);
         row++;
 
         // Separator
@@ -621,7 +621,7 @@ public class MemoryPanelRenderer
              modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
         metaLines.Add(("Morality",      modusMentis.MoralLevel.ToString(),                    Config.Colors.LightGray75));
         metaLines.Add((anatomyLabel,    anatomyValue,
-             anatomy.Any(a => a.Contribution < 0) ? Config.Colors.BrightRed : Config.Colors.LightGray75));
+             anatomy.Any(a => a.Contribution < 0) ? Config.Colors.BrightPurple : Config.Colors.LightGray75));
         metaLines.Add(("XP",            atMaxLvl ? "MAX" : $"{modusMentis.CurrentXp} / {xpNeeded}",
              atMaxLvl ? Config.Colors.GoldYellow : Config.Colors.LightGray75));
 

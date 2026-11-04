@@ -21,7 +21,6 @@ public sealed class Tabard : WearableItem
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };
-    public override int PriceReference => 15;
 }
 
 public sealed class Helm : WearableItem
@@ -35,7 +34,6 @@ public sealed class Helm : WearableItem
     public override List<ItemTag> Tags => new() { ItemTag.Arms };
     public override int DefenseDice => 2;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military };
-    public override int PriceReference => 30;
 }
 
 public sealed class ArmingBoots : WearableItem
@@ -48,20 +46,21 @@ public sealed class ArmingBoots : WearableItem
     public override WearSlot Slot => WearSlot.Footwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Arms, ItemTag.Footwear };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Military, SocialCategory.Aristocrat };
-    public override int PriceReference => 20;
 }
 
 public sealed class Whistle : Item
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "whistle";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Signal Horn";
     public override string Description => "A small curved horn on a cord, for calling the watch";
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override int PriceReference => 6;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "wake_up", "provoke" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class KeyRing : Item
@@ -76,7 +75,6 @@ public sealed class KeyRing : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
-    public override int PriceReference => 10;
 }
 
 // ── the clergy and the schools ──────────────────────────────────────────────
@@ -85,13 +83,13 @@ public sealed class Vestment : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "vestment";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName => "Vestment";
     public override string Description => "A long embroidered robe, its gold thread worn at the cuffs";
     public override ItemSize Size => ItemSize.Medium;
     public override WearSlot Slot => WearSlot.Outerwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
-    public override int PriceReference => 45;
 }
 
 public sealed class Habit : WearableItem
@@ -104,7 +102,6 @@ public sealed class Habit : WearableItem
     public override WearSlot Slot => WearSlot.Bodywear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
-    public override int PriceReference => 8;
 }
 
 public sealed class Tonsure : WearableItem
@@ -117,19 +114,18 @@ public sealed class Tonsure : WearableItem
     public override WearSlot Slot => WearSlot.Headgear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
-    public override int PriceReference => 4;
 }
 
 public sealed class ScholarGown : WearableItem
 {
     public override string ItemId      => "scholar_gown";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName => "Scholar's Gown";
     public override string Description => "A long black gown with open sleeves, ink on one of them";
     public override ItemSize Size => ItemSize.Medium;
     public override WearSlot Slot => WearSlot.Outerwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Bourgeois, SocialCategory.Religious };
-    public override int PriceReference => 25;
 }
 
 public sealed class Sandals : WearableItem
@@ -141,7 +137,6 @@ public sealed class Sandals : WearableItem
     public override WearSlot Slot => WearSlot.Footwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing, ItemTag.Footwear };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
-    public override int PriceReference => 4;
 }
 
 // ── trade and the court ─────────────────────────────────────────────────────
@@ -149,31 +144,33 @@ public sealed class Sandals : WearableItem
 public sealed class Doublet : WearableItem
 {
     public override string ItemId      => "doublet";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName => "Doublet";
     public override string Description => "A padded, buttoned doublet of good wool, cut to show the wearer has money";
     public override ItemSize Size => ItemSize.Medium;
     public override WearSlot Slot => WearSlot.Bodywear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Bourgeois, SocialCategory.Urban };
-    public override int PriceReference => 30;
 }
 
 public sealed class Chain : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Armour });
     public override string ItemId      => "chain_of_office";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
+    public override Rarity Rarity => Rarity.Rare;
     public override string DisplayName => "Chain of Office";
     public override string Description => "A heavy gilt chain worn across the shoulders";
     public override ItemSize Size => ItemSize.Small;
     public override WearSlot Slot => WearSlot.Neckwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Aristocrat, SocialCategory.Bourgeois };
-    public override int PriceReference => 90;
 }
 
 public sealed class Mantle : WearableItem
 {
     public override string ItemId      => "mantle";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName => "Fur-trimmed Mantle";
     public override string Description => "A long mantle of fine wool trimmed with grey fur";
     public override ItemSize Size => ItemSize.Medium;
@@ -181,7 +178,6 @@ public sealed class Mantle : WearableItem
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override int DefenseDice => 1;
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Aristocrat };
-    public override int PriceReference => 80;
 }
 
 public sealed class Apron : WearableItem
@@ -193,7 +189,6 @@ public sealed class Apron : WearableItem
     public override WearSlot Slot => WearSlot.Outerwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Urban };
-    public override int PriceReference => 5;
 }
 
 public sealed class Sleeves : WearableItem
@@ -205,7 +200,6 @@ public sealed class Sleeves : WearableItem
     public override WearSlot Slot => WearSlot.Handwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Urban, SocialCategory.Bourgeois };
-    public override int PriceReference => 3;
 }
 
 public sealed class Slops : WearableItem
@@ -217,7 +211,6 @@ public sealed class Slops : WearableItem
     public override WearSlot Slot => WearSlot.Legwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Urban };
-    public override int PriceReference => 6;
 }
 
 // ── the land ────────────────────────────────────────────────────────────────
@@ -231,7 +224,6 @@ public sealed class VintnerApron : WearableItem
     public override WearSlot Slot => WearSlot.Outerwear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Bourgeois };
-    public override int PriceReference => 8;
 }
 
 public sealed class PlanterHat : WearableItem
@@ -243,7 +235,6 @@ public sealed class PlanterHat : WearableItem
     public override WearSlot Slot => WearSlot.Headgear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Bourgeois, SocialCategory.Peasant };
-    public override int PriceReference => 5;
 }
 
 public sealed class DroverHat : WearableItem
@@ -255,7 +246,6 @@ public sealed class DroverHat : WearableItem
     public override WearSlot Slot => WearSlot.Headgear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
-    public override int PriceReference => 6;
 }
 
 public sealed class Jerkin : WearableItem
@@ -267,7 +257,6 @@ public sealed class Jerkin : WearableItem
     public override WearSlot Slot => WearSlot.Bodywear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant, SocialCategory.Military };
-    public override int PriceReference => 12;
 }
 
 public sealed class Hood : WearableItem
@@ -279,7 +268,6 @@ public sealed class Hood : WearableItem
     public override WearSlot Slot => WearSlot.Headgear;
     public override List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Peasant };
-    public override int PriceReference => 3;
 }
 
 public sealed class GraveSpade : Item
@@ -293,5 +281,4 @@ public sealed class GraveSpade : Item
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 12;
 }

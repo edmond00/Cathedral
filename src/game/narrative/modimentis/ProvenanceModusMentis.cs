@@ -13,6 +13,7 @@ public class ProvenanceModusMentis : ModusMentis
         "Traces an object back: where it was made, how it travelled, whose it has been, and whether the present holder came by it honestly. Assembles the answer from small inconsistencies rather than from any single mark.";
     public override string SkillMeans       => "the tracing of an object back to where it came from";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

@@ -1,0 +1,18 @@
+# use — not offered in a master's workshop without leave
+#
+# The smith's anvil in the Test Forge is his: a blacksmith with a hammer in hand is not offered USE on it
+# until the smith has given the use of the workshop (ask_to_use_workshop). `inspect workshops` reads the
+# gate directly (usable=), so the proof does not depend on which mind the seed's kit hands the thinking.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --grant-item hammer --location-type test --location-id 0 --start-area "Test Forge" --period dawn --observe-only "Test Anvil"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+expect-state workshops stations=Test_Anvil,Test_Forge_Hearth,Test_Workbench master=blacksmith authorized=no usable=none
+quit

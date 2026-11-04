@@ -14,6 +14,7 @@ public class SandcraftModusMentis : ModusMentis
         "Reads the desert: which way the dunes are walking, where the wind will drop, the firm sand on a ridge and the soft sand that drowns a stride, the rock that means shade and the green that means water. Inclines toward travelling as the desert allows — by night, by the ridge, by the shortest way to water.";
     public override string SkillMeans       => "finding a way across sand by its ridges and its wind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

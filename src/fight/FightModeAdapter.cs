@@ -45,6 +45,7 @@ public class FightModeAdapter
     // ── Source NPC (for outcome reporting) ───────────────────────────
     private readonly NpcEntity _targetNpc;
     private readonly IReadOnlyList<NpcEntity> _allies;
+    private readonly Protagonist _protagonist;
 
     /// <summary>All enemy NPCs in this fight: main target + allies.</summary>
     public IReadOnlyList<NpcEntity> AllEnemyNpcs { get; }
@@ -195,6 +196,19 @@ public class FightModeAdapter
     /// nothing removes a combat-dead companion at all. That is one gap, not two, and it wants a
     /// decision about what a companion's death should do rather than a line in this method.</para>
     /// </summary>
+    /// <summary>
+    /// A fighter as the journal names them: a party member by name, anybody else the way the player
+    /// knows them ("the wolf", "the reeve") — the fighter's own name is the generated one, which the
+    /// player may never have been told.
+    /// </summary>
+    private string JournalName(Fighter f, bool capital = false)
+    {
+        if (f.Faction == FighterFaction.Party) return f.DisplayName;
+        var npc = AllEnemyNpcs.FirstOrDefault(n => ReferenceEquals(n.Combatant, f.Member));
+        if (npc == null) return f.DisplayName;
+        return capital ? NpcLabelResolver.ShortLabelCapitalized(npc, _protagonist) : NpcLabelResolver.ShortLabel(npc, _protagonist);
+    }
+
     private void SettleEnemyDeaths()
     {
         foreach (var npc in AllEnemyNpcs)
@@ -204,6 +218,7 @@ public class FightModeAdapter
             if (fighter is not { IsAlive: false }) continue;
             npc.IsAlive = false;
             _state.AddLog($"{npc.DisplayName} does not rise again.", LogEntryType.Wound);
+            JournalRecorder.Event($"{NpcLabelResolver.ShortLabelCapitalized(npc, _protagonist)} bled out and did not rise again.");
             Console.WriteLine($"FightModeAdapter: {npc.DisplayName} died of humor depletion — marked slain");
         }
     }
@@ -223,6 +238,7 @@ public class FightModeAdapter
         _ = popup; // unused (popups removed; the param is kept for caller compatibility)
         _targetNpc = targetNpc;
         _allies = allies ?? Array.Empty<NpcEntity>();
+        _protagonist = protagonist;
         _sfx = sfxTrigger;
         _setMusicFilter = setMusicFilter;
         _dice.OnDiceTick = () => _sfx?.Invoke(GameEventType.SmallInteraction);
@@ -1453,6 +1469,7 @@ public class FightModeAdapter
         if (sixes >= 1)
         {
             _state.AddLog($"{active.DisplayName} escapes the fight! ({sixes}/{diceValues.Length} sixes)");
+            JournalRecorder.Event($"{JournalName(active, capital: true)} broke away and fled.", active.Member);
             _state.Result = FightResult.PartyFled;
             // Game-end detection in Update() will pick up the new result on the next frame.
         }
@@ -1632,14 +1649,21 @@ public class FightModeAdapter
         bool landed = result.IsHit && result.Wound != null;
         _sfx?.Invoke(landed ? GameEventType.Hit : GameEventType.NeutralOutcome);
 
+        string blow = _state.PendingSkill.DisplayName.ToLowerInvariant();
         if (landed)
         {
             FightResolver.ApplyWound(_state.PendingTarget, result.Wound);
             _state.AddLog($"HIT! {result.Wound.WoundName} on {_state.PendingTarget.DisplayName}. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Wound);
+            JournalRecorder.Event($"{JournalName(active, capital: true)} struck {JournalName(_state.PendingTarget)} ({blow}): "
+                                + $"{result.Wound.WoundName.ToLowerInvariant()}.", active.Member);
+            if (!_state.PendingTarget.IsAlive)
+                JournalRecorder.Event($"{JournalName(_state.PendingTarget, capital: true)} fell.", active.Member);
         }
         else
         {
             _state.AddLog($"MISS. (atk {result.SixesCount} vs def {result.DefenseSixes})", LogEntryType.Miss);
+            JournalRecorder.Event($"{JournalName(active, capital: true)} went at {JournalName(_state.PendingTarget)} ({blow}) and missed.",
+                                  active.Member);
         }
 
         _state.CheckFightEnd();

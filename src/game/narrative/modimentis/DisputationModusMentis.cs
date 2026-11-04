@@ -15,6 +15,7 @@ public class DisputationModusMentis : ModusMentis
         "Argues in form: states a position, admits the objection, answers it, and concedes only what must be conceded. Opens conversations closed to anybody who cannot show they have been taught to reason rather than merely to insist.";
     public override string SkillMeans       => "the formal argument put in its proper order";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "anamnesis", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech | AnatomyCapability.Abstraction;

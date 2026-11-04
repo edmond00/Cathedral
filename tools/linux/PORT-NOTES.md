@@ -320,6 +320,8 @@ Found while making it work here:
 3. **`--no-embeddings`** (step 3): I added it because the GloVe file cannot be fetched here and the
    game exits without it even in playground. Keep it as a CI/container convenience, or would you
    rather the suite always ran with real vectors (which means a 822 MB fetch in every CI run)?
-4. **Whether to publish a Linux build on itch.io.** `package.ps1 -Runtime linux-x64` produces one,
-   but the `release` skill and `publish.ps1` are unchanged: no butler channel, no smoke test for it,
-   no changelog line. That is a release decision, so it is left alone here.
+4. ~~**Whether to publish a Linux build on itch.io.**~~ Decided: yes. `publish.ps1 -Runtime linux-x64`
+   pushes to `linux` / `linux-demo`, with a Linux pre-flight and smoke test, published from Linux or
+   WSL2; the `release` skill's step 9 ships all four products. The staged build was smoke-tested in a
+   cloud container with the real model and GloVe under Xvfb (window, OpenAL, llama-server ready on
+   CPU, `Build:` line right for both products); a real desktop is still to be tried.

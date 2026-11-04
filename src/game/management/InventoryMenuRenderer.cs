@@ -1884,7 +1884,7 @@ public sealed class InventoryMenuRenderer
         }
         else if (!canDrop && _dragItem != null && y <= InfoEndRow)
         {
-            var noFitFg = new Vector4(0.90f, 0.30f, 0.30f, 1f);
+            var noFitFg = Config.Colors.LightPurple;
             string reason = !container.CanContain(_dragItem) ? "\u2717 Type not accepted"
                           : _dragItem.SlotCount > container.AvailableSlots ? "\u2717 No room"
                           : "\u2717 Cannot drop";

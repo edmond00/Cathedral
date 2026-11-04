@@ -14,6 +14,7 @@ public class HomingModusMentis : ModusMentis
         "Carries the route home entire: the turns taken, the slopes crossed, the sun's angle when the party set out. Never needs a landmark named to find the way back to a place it has been once.";
     public override string SkillMeans       => "the holding of the way back to a known place";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

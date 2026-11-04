@@ -13,6 +13,7 @@ public class EnciphermentModusMentis : ModusMentis
         "Hides meaning in writing: the shifted alphabet, the agreed book, the innocent letter with a second message in it. Thinks in keys and patterns, and assumes every letter has a second meaning.";
     public override string SkillMeans       => "the hiding of meaning in writing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "cerebrum", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

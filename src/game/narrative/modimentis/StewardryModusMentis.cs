@@ -25,6 +25,7 @@ public class StewardryModusMentis : ModusMentis
         ModusMentisFunction.Thinking,
         ModusMentisFunction.Speaking,
     };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Words with a person, and the learning behind them.</summary>

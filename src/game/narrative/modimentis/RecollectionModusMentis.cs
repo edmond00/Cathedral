@@ -13,6 +13,7 @@ public class RecollectionModusMentis : ModusMentis
         "Called back by things. A shape, a smell or a room returns an entire earlier moment complete, unbidden and at inconvenient times. Carries detail that was never deliberately learned, and cannot be searched on purpose.";
     public override string SkillMeans       => "the past arriving whole out of an ordinary object";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "anamnesis", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

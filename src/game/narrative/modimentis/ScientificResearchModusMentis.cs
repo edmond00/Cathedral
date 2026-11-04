@@ -14,6 +14,7 @@ public class ScientificResearchModusMentis : ModusMentis
         "Approaches a problem by method: forming a guess, testing it, and noting the result with care. Inclines toward ordered, evidence-led inquiry over intuition or assumption.";
     public override string SkillMeans       => "methodical testing and careful observation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

@@ -1,0 +1,39 @@
+# ask_to_use_workshop — success
+#
+# A blacksmith asks the Test Forge's master for the use of his workshop. Offered only because the body
+# holds a trade that works a station there; --auto-dialogue settles the conversation as won, which is
+# what gives the leave.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --location-type test --location-id 0 --start-area "Test Forge" --period dawn --observe-only blacksmith
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+expect-state workshops authorized=no
+strategy succeed
+goal ask_to_use_workshop
+advance 12 180
+
+click keyword 0
+choose 0
+choose 0
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect SUCCESS
+expect Conversation:
+expect-verb ask_to_use_workshop
+expect-outcome dialogue_trigger
+wait mode LocationInteraction 60
+expect-state workshops authorized=yes
+expect-state workshops usable=Test_Anvil
+quit

@@ -23,7 +23,6 @@ public sealed class CoinPurse : WearableContainerItem
     public override int ContentSlots        => 3;
     public override List<ItemTag> Tags      => new() { ItemTag.Craftware };
     public override CoinType PriceCoin      => CoinType.Copper;
-    public override int PriceReference      => 5;
 
     // A purse on the belt says you expect to have coin in it — which reads as substance to a
     // tradesman, and as a mark worth watching to anyone who lives by taking things.
@@ -43,7 +42,6 @@ public sealed class DrinkingHorn : ContainerItem
     public override int ContentSlots   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 4;
 }
 
 public sealed class EyePatch : WearableItem
@@ -56,7 +54,6 @@ public sealed class EyePatch : WearableItem
     public override WearSlot Slot           => WearSlot.Eyewear;
     public override List<ItemTag> Tags      => new() { ItemTag.Clothing };
     public override CoinType PriceCoin      => CoinType.Copper;
-    public override int PriceReference      => 2;
 
     // Reads as a man who has been in something and come out of it — which impresses exactly
     // the two sorts of people who measure each other that way.
@@ -75,7 +72,6 @@ public sealed class WoodenCrutch : Item
     public override int   UsageLevel   => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 3;
 }
 
 public sealed class WalkingStaff : Item
@@ -89,7 +85,6 @@ public sealed class WalkingStaff : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Woodwork };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 4;
 }
 
 public sealed class PrayerBeads : WearableItem
@@ -103,7 +98,6 @@ public sealed class PrayerBeads : WearableItem
     public override WearSlot Slot           => WearSlot.Neckwear;
     public override List<ItemTag> Tags      => new() { ItemTag.Craftware, ItemTag.Devotional };
     public override CoinType PriceCoin      => CoinType.Copper;
-    public override int PriceReference      => 3;
 
     // Three beads worn featureless: whoever carries this has prayed the same three prayers for years.
     public override IReadOnlyList<SocialCategory> DialogueAppeal => new[] { SocialCategory.Religious };
@@ -120,7 +114,6 @@ public sealed class LuckCharm : WearableItem
     public override WearSlot Slot           => WearSlot.Neckwear;
     public override List<ItemTag> Tags      => new() { ItemTag.Craftware };
     public override CoinType PriceCoin      => CoinType.Copper;
-    public override int PriceReference      => 2;
 
     // Country superstition — comforting to those who share it, faintly heretical to the devout.
     public override IReadOnlyList<SocialCategory> DialogueAppeal =>
@@ -139,7 +132,6 @@ public sealed class BoneDice : Item
     public override int   UsageLevel   => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
 }
 
 public sealed class WoodenPipe : Item
@@ -153,7 +145,6 @@ public sealed class WoodenPipe : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 4;
 }
 
 public sealed class MendingKit : Item
@@ -167,7 +158,6 @@ public sealed class MendingKit : Item
     public override int   UsageLevel   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Textile, ItemTag.Cloth };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 5;
 }
 
 /// <summary>
@@ -175,16 +165,18 @@ public sealed class MendingKit : Item
 /// to it. Hence <see cref="ItemCategory.Crafting"/>, while its Foodstuff tag keeps it on the
 /// victualler's shelf: category and trade tag answer different questions.
 /// </summary>
-public sealed class SaltPouch : Item
+public sealed class SaltPouch : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Food });
     public override string ItemId      => "salt_pouch";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Pouch of Salt";
     public override string Description => "A tight little leather pouch of grey salt, hoarded like coin";
     public override ItemSize Size      => ItemSize.Small;
     public override WeightClass Weight       => WeightClass.Light;
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 6;
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe().Add<SaltHumor>(100);
 }

@@ -273,7 +273,7 @@ public sealed class PreviewPart
 
     /// <summary>
     /// Completes this part and waits for the player's YES or NO in place of CONTINUE
-    /// (<see cref="LlmPreviewSession.TryAnswer"/>). Used by the doubt of a thinking (<see cref="DoubtStat"/>).
+    /// (<see cref="LlmPreviewSession.TryAnswer"/>). Used by the doubt of a thinking (<see cref="ModusMentis.Doubt"/>).
     /// The part shows its question only once it is the one on screen, so asking a queued part simply
     /// waits for the parts before it.
     /// </summary>

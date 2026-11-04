@@ -13,6 +13,7 @@ public class AlmanacModusMentis : ModusMentis
         "Keeps the farming round in the head: the feast by which a crop must be sown, the eggmoon for cutting, the frosts to fear. Reckons any date as so many days before or after the work that belongs to it.";
     public override string SkillMeans       => "the reckoning of the farming round by feast and eggmoon";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "anamnesis", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

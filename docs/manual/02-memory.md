@@ -12,7 +12,7 @@ Every modus mentis declares the following, and these declarations are the whole 
 **An identity.** A stable name, and the manner in which it operates — the phrase by which an act
 performed through it is described.
 
-**Its functions**, at least one and at most three, drawn from seven:
+**Its functions**, at least one and at most three, drawn from eight:
 
 | Function | Office |
 |---|---|
@@ -23,6 +23,7 @@ performed through it is described.
 | **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
 | **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
 | **Will** | It wants. It observes and deliberates, but only toward the few kinds of act it desires. |
+| **Craft** | It knows a trade: one station, one implement, the few things made there (see [X](10-crafting.md)). Borne always beside Will and Action. |
 
 **Action and emotion are exclusive**, as thinking and action already are. These are the three
 offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one
@@ -63,6 +64,12 @@ ones require abstraction. The common case requires nothing.
 high ones resist them. This is read **only** off the two that deliberate and act; one bearing
 neither of those functions is always medium, since a principled organ of perception is a claim
 nothing could honour.
+
+**Its readiness to doubt** — low, medium or high — declared by every modus mentis bearing the
+Thinking function, and suited to its temper: a mind that questions, weighs and checks is high, one
+that knows at a glance, trusts a sense, a feeling or an instinct, or keeps to a fixed code is low. It sets how often a thinking may be taken up
+again when its proposal comes to nothing, and whether that proposal may be doubted; it is treated in
+[Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act). A will declares none, and is medium.
 
 **Whether it acts discreetly** — quietly, out of sight. A discreet modus mentis is one degree harder
 to notice, which is treated in [Chapter VI](06-narration.md).

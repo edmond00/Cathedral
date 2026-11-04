@@ -14,6 +14,7 @@ public class SpeleologyModusMentis : ModusMentis
         "Reads a cave: the draught that means a passage goes on, the flood line on the wall, the drip that built a column, the sound of water somewhere below. Knows which way is out in the dark and inclines toward going deeper in, by the way the air and the water point.";
     public override string SkillMeans       => "finding the way through a cave by its draughts and water";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "ears", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

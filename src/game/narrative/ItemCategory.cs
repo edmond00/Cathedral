@@ -39,7 +39,10 @@ public enum ItemCategory
     /// <summary>Holds other items and is not itself worn (a jug on a table, a crate).</summary>
     Container,
 
-    /// <summary>Raw material — ore, timber, fibre, hide. Inert until a crafting system exists.</summary>
+    /// <summary>
+    /// Stock and goods with no other office — ore, timber, cloth, a padlock, a ledger. What an item is
+    /// MADE of is a separate question, answered for every category alike by <c>Crafting.ItemMaterials</c>.
+    /// </summary>
     Crafting,
 
     /// <summary>Fits nothing above. A keepsake, a curiosity, a corpse part.</summary>

@@ -235,6 +235,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
     Console.WriteLine("                                     it --playground draws uniformly over every goal the observed object offers.");
+    Console.WriteLine("                                     Without --playground it narrows the goal judge's list the same way.");
     Console.WriteLine("                                     The CLI's `goal` command sets the same thing, for a script that needs to change it");
     Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
@@ -243,6 +244,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --doubt <low|medium|high>          DEBUG: every thinking modus mentis thinks at this level of doubt instead of its");
+    Console.WriteLine("                                     own: low takes no retry and never doubts, medium one, high two");
     Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
     Console.WriteLine("                                     wound, get_lost, waste_time or lose_focus. The draw is otherwise uniform,");
     Console.WriteLine("                                     so this is how a script reaches one. A table with none of it is a miss");
@@ -262,6 +265,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     e.g. all=3,encephalon=5,viscera=5. Memory, noetic points and humors follow from them");
     Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
     Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
+    Console.WriteLine("  --craft-audit [out.json]           Print the crafting audit (materials, trades, stations, supply) and exit");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
     Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
     Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
@@ -451,6 +455,14 @@ if (args.Length >= 1 && args[0] == "--npc-audit")
 
 // Item catalogue audit: report identity clashes, unreachable liquids, unweighed items and thin
 // trade tags, then exit. Headless — reads ItemRegistry only, so no LLM, no window, no world.
+// Crafting audit: materials, trades, where every station stands and what there is to work. Headless.
+if (args.Length >= 1 && args[0] == "--craft-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.Crafting.CraftAudit.BuildReport(
+        args.Length >= 2 && !args[1].StartsWith("--") ? args[1] : null));
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--item-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.ItemAudit.BuildReport());
@@ -1041,6 +1053,15 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
+
+    if (args[i] == "--doubt" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Enum.TryParse<Cathedral.Game.Narrative.DoubtLevel>(args[i + 1], ignoreCase: true, out var doubt)
+            && Enum.IsDefined(doubt))
+            Cathedral.Config.Debug.DoubtOverride = doubt;
+        else
+            Console.Error.WriteLine($"--doubt: unknown level '{args[i + 1]}' (low, medium, high)");
+    }
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

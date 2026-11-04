@@ -330,7 +330,7 @@ namespace Cathedral.Terminal
         /// </summary>
         public void ProgressBar(int x, int y, int width, float percent)
         {
-            ProgressBar(x, y, width, percent, Colors.Green, Colors.DarkGray, Colors.Black);
+            ProgressBar(x, y, width, percent, Colors.Yellow, Colors.DarkGray, Colors.Black);
         }
 
         #endregion

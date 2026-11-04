@@ -16,6 +16,7 @@ public class PhilosophyModusMentis : ModusMentis
         "Steps back from the immediate question to the one beneath it: what a thing truly is, why it should be done, what would follow if everyone did. Inclines toward definitions, first causes, and the argued examination of ordinary life.";
     public override string SkillMeans       => "the questioning of deeper meanings behind the obvious";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Words with a person, and the learning behind them.</summary>

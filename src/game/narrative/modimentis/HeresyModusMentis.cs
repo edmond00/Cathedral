@@ -13,6 +13,7 @@ public class HeresyModusMentis : ModusMentis
         "Doubts the received doctrine and follows the doubt somewhere forbidden. Reads the holy texts for what they do not say, and keeps the conclusions to itself.";
     public override string SkillMeans       => "the forbidden doubting of doctrine";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "cerebrum", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

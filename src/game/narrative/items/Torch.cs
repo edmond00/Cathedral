@@ -13,5 +13,4 @@ public sealed class Torch : Item
     public override ItemSize Size      => ItemSize.Medium;
     public override int   UsageLevel   => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery };
-    public override int PriceReference => 3;
 }

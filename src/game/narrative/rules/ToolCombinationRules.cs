@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.Rules;
 
@@ -102,7 +103,7 @@ public static class ToolCombinationRules
     /// combined from the pack is struck with, not carried.
     /// </summary>
     public static ToolCombinationGate Resolve(Verb? verb, Item item, ToolProficiency proficiency,
-                                              bool wieldable = true)
+                                              bool wieldable = true, VerbAction? view = null)
     {
         if (proficiency == ToolProficiency.None) return ToolCombinationGate.NoProficiency;
 
@@ -117,7 +118,7 @@ public static class ToolCombinationRules
                  : !wieldable                              ? ToolCombinationGate.TooHeavy
                  :                                           ToolCombinationGate.MadeForIt;
 
-        if (IsMadeFor(verb, item))               return ToolCombinationGate.MadeForIt;
+        if (IsMadeFor(verb, item, view))         return ToolCombinationGate.MadeForIt;
         if (IsMadeForOtherWork(verb, item))      return ToolCombinationGate.NotItsPurpose;
         if (verb?.ToolUse == ToolUsage.Excluded) return ToolCombinationGate.ExcludedVerb;
 
@@ -125,15 +126,38 @@ public static class ToolCombinationRules
     }
 
     /// <summary>
+    /// Whether a carried item may be offered for combination with an action at all: a tool, a weapon,
+    /// or anything declaring what it was made for — and never a container holding something, since
+    /// combining it would mean putting its contents down. The narration's "Use Tool" row offers
+    /// exactly these.
+    /// </summary>
+    public static bool IsCombinable(Item item)
+        => (item.Category is ItemCategory.Tool or ItemCategory.Weapon || item.MadeForVerbIds.Count > 0
+            // A trade's implement is combinable whatever its category: the potter's rib and the
+            // candle mould are stock on a shelf until somebody brings them to their station.
+            || Cathedral.Game.Narrative.Crafting.CraftingModusMentis.IsCraftTool(item))
+           && (item is not IContainer c || c.Contents.Count == 0);
+
+    /// <summary>
+    /// Whether combining this carried item with <paramref name="verb"/> could go through: it is
+    /// combinable, and the ladder before the critic does not already refuse it for this act (not a
+    /// weapon for a blow, made for other work). The hand is not judged — that is the click's to say.
+    /// What the will planner asks before planning a tool-required goal bare-handed.
+    /// </summary>
+    public static bool CouldServe(Verb verb, Item item)
+        => IsCombinable(item)
+           && Resolve(verb, item, ToolProficiency.High) is ToolCombinationGate.MadeForIt or ToolCombinationGate.AskTheCritic;
+
+    /// <summary>
     /// Whether this implement is one this act is done with — either named by the verb as a reference
     /// tool, or naming the verb among the acts it was made for. Both are matched by id, never by
     /// display name, which is content and free to change.
     /// </summary>
-    public static bool IsMadeFor(Verb? verb, Item item)
+    public static bool IsMadeFor(Verb? verb, Item item, VerbAction? view = null)
     {
         if (verb == null) return false;
 
-        return verb.ReferenceToolIds.Contains(item.ItemId)
+        return verb.ReferenceToolIdsFor(view).Contains(item.ItemId)
             || item.MadeForVerbIds.Contains(verb.VerbId);
     }
 

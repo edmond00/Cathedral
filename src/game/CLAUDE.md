@@ -184,6 +184,7 @@ so, and says why.
 | Fighting | cancels the armed skill or move target; pauses when nothing is armed |
 | LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
+| WorldView, while the will picker is open | closes the picker (its CLOSE button) |
 | WorldView, while a will's search runs | cancels the search (its CANCEL button); pauses otherwise, as above |
 | ProtagonistCreation | pauses. Not a running phase, but a screen with no other way off it |
 | ProtagonistManagement | back where it was opened from, the same press as its Back button: the main menu, or — opened by a tab's letter (A, I, J, M, H, C, B, from any phase the menu opens over but a fight) — that phase |
@@ -651,8 +652,29 @@ the goal's decline and the willingness scale use log-odds thresholds (`ChoiceJud
 which took the bench from 92.3% to 94.5% and spread the four willingness degrees evenly where the
 likeliest letter almost never said "eager". Willingness is therefore not a pick from a list at all:
 `JudgeWillingnessAsync` always reads the whole scale and the caller narrows the answer to what the
-rules leave on offer. The model is near-certain on ~90% of answers, wrong ones included, so a
+rules leave on offer. **Once the scale assents, eager or willing is a second request**, a yes/no
+question (`ChoiceJudge.EagerQuestion`, "Is this act this faculty's own work, what it is made for?"):
+the scale's own lean did not separate the two, the question does (degree right on 35 of 51 labelled
+cases, against 26). The dissent side is still read off the scale — no yes/no wording of "contrary to
+it" worked; see the skill. The model is near-certain on ~90% of answers, wrong ones included, so a
 confident mistake is fixed in the descriptions and the prompts, never by a threshold.
+
+**Focus, Goal, Means and Reply are read net of an ONLOOKER**: the same list is scored a second time
+for a faculty with no bent of its own (`ChoiceJudge.OnlookerDescription`), and `BaselineWeight` (0.3)
+of its score is taken off each option's. The model has tastes of its own — it gave Cruelty bribery to
+make a prisoner talk — and the onlooker shares them, so they cancel and the faculty's own pull is left.
+It costs a second forward pass on those four kinds (~+1.4 s a decision on CPU); `BaselineWeight = 0`
+switches it off. The log records both scores.
+
+**A name the model misreads is put in plain words before the judge reads it.** The model knows
+"triceratops" as an extinct dinosaur, and in play no faculty — Beast Sense included — would look at an
+appeased one. A species that needs it declares `Species.JudgeNoun` ("three-horned beast"), and
+`ChoiceJudge.InJudgeWords` swaps the name for it, as a whole word, everywhere in the prompt; only the
+judge reads that. The four great reptiles have one. Telling the judge what the word means (a glossary,
+a kind tag) does not work — see the skill.
+
+A beast's tracks are named by its kind (`PlaceBeastSign`: "Triceratops Tracks"), never by its
+generated name: "Torntread Tracks" told the player a name nobody gave and the judge nothing.
 
 **Invoke the `choice-judge` skill before adding or editing a modus mentis or a judge.** It has the
 writing rules both must follow — the judge matches words before natures, so a description that says
@@ -672,8 +694,8 @@ Things to know:
 
 - **A willingness scale is listed in order** (eager → unwilling, refusal last) and never shuffled;
   every other list is shuffled with the decline last.
-- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The willingness splits are bench
-  medians and the game's real mix of acts differs, so these lines are what to re-tune them from.
+- **Every decision logs its log-odds** (`ChoiceJudge:` lines). The unwilling/reluctant split is a
+  bench median and the game's real mix of acts differs, so these lines are what to re-tune it from.
 - **How a question is put matters more than what it says.** Asked "keep it, or turn elsewhere?", the
   keep-focus judge turned away from 72% of everything; asked whether the thing "holds anything for
   this faculty", yes or no, it kept 51% and judged every labelled case right. Asked "how
@@ -754,7 +776,7 @@ a will to open a lock goes for the keys on the gatehouse pegs. **When no such im
 the place, the goal is planned bare-handed** (`ActionPath.Unarmed`, a second search) rather than refused:
 the planner knows only reference tools and made-for items, while the click takes anything carried to
 the critic (a short sword cutting a carcass) and `RequiredToolRule` asks for a tool when nothing is
-combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. Nothing else is modelled, so a path never passes a conversation,
+combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. **Only while the body carries something that could serve the act** (`ToolCombinationRules.CouldServe`: combinable, and not refused before the critic — a hairpin is made for a lock, never a slaughter): otherwise the click is refused for certain, and planning it anyway made every digging and unlocking will reach nearly every place — seven failed `--will-audit` on breadth. Nothing else is modelled, so a path never passes a conversation,
 a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
@@ -796,7 +818,7 @@ get-up have one verb each:
 |---|---|
 | phase opener | `PickFirstObservationModusMentis` passes over wills while any other observer is held; a will that opens attends only to the object offering the first step |
 | focus | kept iff `WillPriority.PathOn` finds a shortest path beginning with something the object offers; else turned to the unobserved object that does; else refused naming the step. No follow-ups |
-| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). The pineal retries remain for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
+| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). A will's one retry (Medium) remains for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
 | means | **only the act it wants**: a will with Action carries it out itself. A step on the way (a walk, a wait, a tool fetched — `!Will.Matches(step)`) has its means judged like any goal's, the will among the candidates, speakers first for a conversation; the will was not the fittest mind for every walk, and a non-speaking will carried out `propose_to_buy`. `WillActionNeverRefusesItsPathRule`, last, lifts even an imposed refusal for the will's own path whenever the will is the means |
 | speech | **not narrowed.** A will may bear Speaking and then replies in every conversation, whatever its target; without it, in none. Every will whose target is a conversation bears it (51), and cruelty, which had it before. The audit notes a will that wants a conversation and cannot speak |
 
@@ -877,6 +899,31 @@ the TRAVEL box says why; nowhere is a transient notice. The place being read bea
 (`MicroworldInterface.HighlightSearchedCell`, its own glyph lit and enlarged), restored as the next is read. Escape and CANCEL end it, and so does
 leaving the map. `cli/system/will_search_world.cli` walks the proposed trip and asserts the will has a
 way there.
+
+**A visit walked for a search wants the searched target first** (`Scene.WillPursuit`). The proposed
+trip carries the will's id and the target's description (`_willProposalPursuit`); TRAVEL on that very
+trip makes it the journey's `_pendingPursuit`, any other journey drops it, and
+`BuildSceneForLocation(visit: true)` at its end puts it on the visit's scene, once. There
+`WillPriority.TargetsOf` answers the pursued target alone (`PursuedOf`, while it can still be reached —
+met or gone, the will reverts to all its targets), so the plan, the phase opener, a focus and `inspect
+will` (`pursuit=yes`) go by it however long its way. `WaysOn` (thinking) takes a way to it through the
+object first, at any length the place makes it, and only when the object offers none a way to the
+other targets, capped at `WillMaxPathSteps` (`WaysThrough(…, reachCap:)`), never "as short as the
+place's shortest". The next visit to the same place is an ordinary one. `cli/system/will_search_pursuit.cli`
+(Woodcraft's "buy seasoned wood": `aim=3/4` five steps on the pursued visit, `aim=1/4` one step on the
+next).
+
+**The ◎ beside the ☰ is the same search without the protagonist screen** (`WillPickerBox`, a second
+`MenuButton` offset four cells left). It is up on the interactive world map whenever the party holds a
+will, and not under any other modal box or a running search. Its box lists **every will the party
+holds** — the protagonist's, then each companion's, by name — down the left, and the selected one's
+wants down the right as buttons. A party can hold dozens of wills, so the left list is what scrolls
+(eighteen rows; ▲ / ▼ rows and the wheel, which the picker takes instead of the camera), and a will
+holds at most five wants, so the right pane never does. A want closes the picker and calls
+`StartWillSearch`, which is what the Memory tab's rows reach after closing the screen
+(`BeginWillSearch`). The picker is modal: a click outside it does nothing, and world clicks are
+ignored under it. `cli/system/will_picker.cli` (`click will-button`, `click will <id>`,
+`click picker up|down|close`, `click want <n>`, `inspect will-picker`).
 
 **Every childhood path leaves a general thinker** (rule C3, `ReminescenceRuleValidator`, fatal): a will
 thinks only toward its targets, so a childhood granting none but wills would leave a body unable to
@@ -984,9 +1031,15 @@ budget reaches, and they were designed together — changing one alone re-breaks
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
 
-**Iterative thinking and doubt: the pineal gland's second thoughts.** `ThinkingIterationsStat` (the
-pineal score, 0–3) is how many times one thinking tries again when its proposal comes to nothing, and
-`DoubtStat` (score ≥ 2) lets the player say NO to a proposal. Both live in
+**Iterative thinking and doubt: a thinking mind's second thoughts.** Every modus mentis with the
+Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R23, fatal): **Low** thinks once and
+is never doubted, **Medium** may try again once, **High** twice — a try spent by a refusal or by the
+player's NO, never by a YES — and the player may doubt at Medium and High while a try remains. It is
+the mind's own, chosen for its persona (questioning, weighing, checking minds High; minds that know
+at a glance, sense, feel, follow a code or act on instinct Low, half the catalogue; 24 / 48 / 72 High / Medium / Low), not the body's: it was the
+pineal gland's score once (`ThinkingIterationsStat`, `DoubtStat`), and every mind of one body
+second-guessed itself alike. A will declares none and is Medium: it never doubts (its goal is set by
+its course) and keeps one more try of a step on its way. Both live in
 `ThinkingExecutor.GenerateThinkingAsync`, which is a loop: goal → means → reasoning → [doubt] →
 willingness → action. Two things end a try, both before any button exists:
 - **the acting modus mentis refuses** (willingness, or a choice rule's imposed refusal);
@@ -1001,8 +1054,8 @@ and a scene whose refusal was the situation's (a watching apprentice, no discree
 every retry on means none of which could pass, then offered the last one unprobed — a button the
 click refused anyway. `thinking_click_rules_not_retried.cli` pins that the button is offered.
 
-A refusal crosses off the pair of goal and means in a `ThinkingChain` (one thinking's life, so a
-pineal of 0 is exactly the old behaviour), and `TryAgain` then asks whether **an untried means is able
+A refusal crosses off the pair of goal and means in a `ThinkingChain` (one thinking's life, so Low
+is exactly the old single try), and `TryAgain` then asks whether **an untried means is able
 to carry the goal out** (`CanCarryOut`: no choice rule imposes a refusal). If one is, the next try
 takes the same goal up at once (`again`), as a second attempt — the pool narrowed to the able, no
 decline — so it ends on a button. If none is, the goal is `Drop`ped and the next try chooses another
@@ -1034,7 +1087,8 @@ phases. `cli/system/reconsider.cli` covers it in the wolf's den.
 The playground never refuses, so `--refuse-means <n>` makes its first n willingness answers
 "unwilling". The CLI answers a doubt from the `doubt yes|no` queue, YES when it is empty, which is
 what keeps scripts written before doubt passing — and `CliIsIdle` counts an asking box as idle.
-Scripts whose subject is the single try pin `--organs pineal_gland=0`
+`--doubt <low|medium|high>` (`Config.Debug.DoubtOverride`) sets every mind's level, so which mind a
+script picks does not decide its tries. Scripts whose subject is the single try pin `--doubt low`
 (`thinking_refused_goal_per_mind.cli`); `thinking_iterates.cli`, `thinking_doubt.cli` and
 `thinking_click_rules_not_retried.cli` cover the two ends and what is left to the click.
 
@@ -1160,8 +1214,63 @@ why the table is a lookup rather than a switch with a default.
 **Five refusals, five neutral sentences** (`ToolFailureKind`). Told only "it did not work", the
 acting modus mentis rewrites it as whichever near-miss flatters the character — so the wording
 distinguishes the wrong implement, the act that admits none, the implement made for other work, the
-hand with no craft in it, and the sound idea beyond an unpractised hand. Only `WrongTool` carries
-the critic's own reason, because it is the only one an LLM was asked about.
+hand with no craft in it, and the sound idea beyond an unpractised hand. Only `WrongTool` carries a
+reason after its sentence — the refusal's own fixed first-person line (`CriticTrees.CannotReason`,
+`SenselessReason`), because it is the only one an LLM decided. **The critic is not asked why.** It
+used to be, in a second request after every refusal, and the answer was a rationalisation of the
+verdict it had just given — "the dagger's blunt nature", of a double-edged tapered blade — shown to
+the player as the cause.
+
+**What the critic asks, and how its answer is read.** Each tree is two questions on one preamble
+(setting, scene, and the thing acted on as its factory describes it — `CriticTarget.Describe`; a
+person is not described, since a description may carry a name not yet given), and
+`ItemUseCritic.WeighAsync` reads both rather than sampling either:
+
+- **the node**, the question as it always was — "compared to bare hands, does X give a meaningful
+  advantage?", or for a required verb "could X be used in place of Y, even if less well?" — whose
+  reading gives the verdict's id: the degree, or the refusal;
+- **its `Counterweight`**, "could X do any real part of this, even clumsily?", each yes naming a
+  physical means (edge, point, weight, length, grip), which contributes only its weight.
+
+The side is the **sum of the two questions' log-odds** of help against refusal (`HelpLogOdds`, 0,
+deliberately untuned); the id is the node's on that side. Alone, the bare-hands question refused a
+third of the sensible improvisations of `tools/prompts/critic_survey.py` — a dagger driven into a
+stone wall's gaps, a staff over quicksand, a shield as a sled — so no band ever got to try them, the
+opposite of what the three degrees are for; alone, the lenient one passed a fifth of the wrong items
+(a tally stick through brambles), because a small model can always imagine a clumsy use. They err on
+different cases. The lenient question cannot give the degree: "even clumsily" drew nearly every
+answer to the clumsy one, a hammer to break a door included, which would have taken every tool away
+from a Low hand. Read, not sampled, because one sample at temperature 0.7 is one draw — a quarter of
+the survey changed side between draws — and read off the **ids' first tokens**, never letters: shown
+as A–E the options came back "D" for most cases whatever they were. Measured on 167 cases, against
+the old critic: sensible items usable at Low 37% → 68%, Medium 40% → 55%, High 70% → 81%; wrong items
+usable at Low and Medium 1.7% → 0, at High 5.0% → 5.0%. **It costs more, not less**: two requests a
+tool use (and one or two one-token yes/no reads after a substitute passes, below) and no generated
+reason, where it was one plus a ~60-token reason after every refusal — about +0.8 s a tool use on CPU
+(4.3 s against 3.5 s), the second prompt read outweighing the reason it replaced. `tools/prompts/NOTES.md`, "The item critic and
+improvised tools", has the rest; `critic_bench.py --variant current` measures the C# as it stands.
+
+**The substitution tree's degree is asked, not read** (`CriticNode.DegreeQuestions`). As options,
+it came back `serves_poorly` for nearly every stand-in its question accepted — a dagger offered as a
+knife, a war axe as an axe — so a Low hand could use none of the required verbs' stand-ins, and no
+rewording of the options moved it. Of a pass the strict question accepted, two yes/no questions are
+asked in order on the same preamble: "is X a kind of Y, or near enough the same tool?" (yes →
+`is_the_tool`), "would X do this work properly, the way Y does, if a little less well?" (yes →
+`serves_well`); neither → `serves_poorly`. A pass the strict question refused and the counterweight
+carried is an improvisation and takes the clumsy degree without asking — reading the strict
+question's likeliest help id there had handed a chisel at an ore seam to a Medium hand, through a
+first-token tie between `serves_well` and `serves_poorly`. On the survey's required verbs, usable by a
+Low hand 0 → 6 of 13 and by a Medium hand 1 → 9 of 27, with nothing passing that should not. The
+second question still says no to most proper stand-ins (a machete for an axe, a chisel at a
+strongbox), and a few true improvisations (a lancet or an awl at a lock, a flint to skin) are still
+refused at every band.
+Under `--playground` and `--debug` none of this runs: a choice is drawn or forced from the node's
+own list, as before.
+
+**The critic reads misread names in plain words too** (`ChoiceJudge.InJudgeWords`, applied to every
+critic request): its goal and its target description name the thing acted on, and the model knows
+"triceratops" as an extinct dinosaur — see "How a modus mentis chooses" above. One vocabulary
+(`Species.JudgeNoun`) for every judging prompt; `critic_bench.py` applies it too.
 
 **`Item.MadeForVerbIds` forbids as much as it permits, and that is the point.** A declaration means
 "accepted for these acts without argument, refused for every other, also without argument" — a glass
@@ -1850,8 +1959,9 @@ share one. A new weapon declares `Bulk`, not `Size`; there is no way to author a
 **A real weapon out-strikes a bare limb.** `Level` is the weapon medium's level, multiplied into dice
 exactly as a hand's score is, and a hand or foot tops out at 3 (`WeaponItem.StrikingLimbCeiling`). So
 every weapon is levelled 4–6, and only an `IsImprovised` one (branch, wooden stick — level 0, opens the
-category's skills and lends nothing) may sit at or under the ceiling. The price is ten copper per level
-above the ceiling. A new weapon picks a level above 3 or declares itself improvised.
+category's skills and lends nothing) may sit at or under the ceiling. Each level above the ceiling adds
+eight copper to the price (`ItemPricing.PerWeaponLevel`). A new weapon picks a level above 3 or declares
+itself improvised.
 
 **The arm behind a hand decides what it can hold** (`PartyMember.HoldLimit`, which reads the Hand Load
 stats — `RightHandLoadStat` / `LeftHandLoadStat`, shown under each arm on the Anatomy tab, so the figure
@@ -2121,6 +2231,34 @@ The test location is the exception: there a person trades wherever their schedul
 it is a fixture and the trade scripts meet the farmer in the wood. `cli/verb/propose_to_buy/on_premises.cli`
 and `off_premises.cli` exercise the real rule on the farm, whose area names are written out.
 
+### What a price is made of
+
+**No item writes its price.** `Item.PriceReference` is not virtual: `ItemPricing` works it out from what
+the item already is, and caches it per class.
+
+```
+price = matter × craftsmanship + labour + function + rarity       (or PriceOverride)
+```
+
+| term | read from |
+|---|---|
+| matter | crafting materials: `ItemMaterials.Units` × the dearest material's `UnitValue` (a refined one dearer than its raw one). No material: the dearest `ItemKind`'s `KindValue`, one portion per light, two when medium, four when heavy |
+| craftsmanship, labour | `Item.Craftsmanship` (Raw ×1 / Stock ×1.5+1 / Plain ×2+2 / Fine ×4+4 / Masterwork ×5+5). Defaulted by `DefaultCraftsmanship`: eaten, drunk, of no material, or raw stuff in `Crafting`/`Other` is Raw; an Aristocrat-only garment is Fine, a Pauper-only one Stock; everything else Plain |
+| function | weapon level above the fist × 8, armour dice × 12, a tool's usage above 1 × 2, a container's slots × ¼ |
+| rarity | `Item.Rarity`, **added** (Uncommon 5, Scarce 12, Rare 30, Precious 60), so a heavy rare thing does not run away |
+
+Why it is a formula: crafting pays for a recipe in material units and breaking an item down gives
+them back, so a price written by hand turned the smithy into a money machine (an iron bar at 10 copper
+made seven daggers at 20) and the saddler into a loss. Built on the same units, an item is never worth
+less than what it breaks down into, and a recipe always sells for more than it costs — `--item-audit`
+fails if either stops being true, and if a price runs past the cap of 90.
+
+**To move a price, move a property, never add a number.** An item that is stock (an iron bar, flour,
+ale), made by hand of raw materials (an amphora, an abacus) or finer than its kind declares
+`Craftsmanship`; a spice, a gem or a relic declares `Rarity`; a diamond would be `Rarity.Precious`.
+`PriceOverride` is for a worth the formula cannot see at all — a promissory note is worth its debt —
+and is used once. Weight sets matter, so a price that reads wrong is often a weight label that is wrong.
+
 ### A lesson from the circumstances, not only from the act
 
 `CircumstanceGrants` answers a different question from the verb's own grant: not "what did I just
@@ -2186,6 +2324,7 @@ generated:
 | the reply picked | `DialogueTreeController.OnOptionSelected` | the options left unpicked are never recorded |
 | a fact | a shown block's `OutcomeReports` with `ShowInUI`, minus bookkeeping by type (practice, grants, spent noetic points, wounds) | not `Outcome.ApplyTo`, which also runs for outcomes nobody saw. The chip text is kept for the screen; the chronicler is given the outcome's `Verbatim` (`Phrase`) — handed "Item received: Knife" it wrote it into the prose |
 | a milestone | the event itself: a lesson (`PartyMember.LearnModusMentis`/`AcquireModusMentis`, party members only), a wound (`FightResolver.ApplyWound`, `WoundInflictionOutcome`), a healing, a companion joining, dying or parted with, a first visit (keyed by vertex, whatever the mental maps forget), a fight won or fled | each once, by `Key` where it could repeat |
+| an event | the game's own sentence for what nothing narrates: a journey set out on (`StartPlannedTravel`), a meeting on the road (`StartTravelEncounter`), a journey given up (a fled encounter) or ended (`OnProtagonistArrived`: the lands crossed, the destination, the days); every attack in a fight, hit or miss, a fall, a bleed-out and an escape (`FightModeAdapter`) | enemies named as the player knows them (`NpcLabelResolver`), never by the fighter's generated name. A journey is its own group: it closes on arrival, before the visit opens, and is written up "on the road" |
 
 A block no modus mentis narrated (`ModusMentis` null: a trade note, a fight's log tail) is the game
 talking and is not recorded. A lesson milestone is shown but marked `Lesson` and kept from the

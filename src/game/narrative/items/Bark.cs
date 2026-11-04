@@ -13,5 +13,4 @@ public sealed class Bark : Item
     public override string Article => "some";
     public override string Description => "A rough flake of bark from a tree trunk";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
-    public override int PriceReference => 2;
 }

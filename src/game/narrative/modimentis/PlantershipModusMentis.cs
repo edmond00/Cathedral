@@ -13,6 +13,7 @@ public class PlantershipModusMentis : ModusMentis
         "Runs a plantation as an account: so many rows, so many hands, so much yield per hand per season. Knows the price of every crop at the coast and works the people to the price.";
     public override string SkillMeans       => "the running of a plantation as a ledger of land and labour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;

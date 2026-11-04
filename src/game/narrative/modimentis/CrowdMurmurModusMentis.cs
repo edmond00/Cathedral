@@ -13,6 +13,7 @@ public class CrowdMurmurModusMentis : ModusMentis
         "Separates one conversation from twenty and follows it without appearing to. Reads a crowded room by its noise alone - whether the talk is easy, guarded, or about to become something else - and hears its own name across it.";
     public override string SkillMeans       => "the picking of one voice out of a room full of them";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "ears", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

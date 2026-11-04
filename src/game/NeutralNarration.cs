@@ -368,7 +368,7 @@ public static class NeutralNarration
             : $"Nothing here draws my attention: what I want is to {WillStep(path.Goal, actor)}, "
             + $"and I must {WillStep(path.First, actor)} first.";
 
-    // ── Iterative thinking and doubt (ThinkingIterationsStat, DoubtStat) ──────────
+    // ── Iterative thinking and doubt (ModusMentis.Doubt) ──────────
 
     /// <summary>
     /// The reasoning of a retry within one thinking: the object was already named by the first
@@ -785,12 +785,6 @@ public static class NeutralNarration
     // Dialogue neutral text now lives on the dialogue tree nodes themselves (direct speech with
     // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
     // + DialogueReplicaWriter — not through this class.
-
-    // ── Critic ─────────────────────────────────────────────────────────────────
-
-    /// <summary>First-person critic verdict ("I think …"), matching the LLM reason's voice.</summary>
-    public static string CriticFailureReason()
-        => "I think this cannot be done as intended.";
 
     // ── Keyword helper ─────────────────────────────────────────────────────────
 

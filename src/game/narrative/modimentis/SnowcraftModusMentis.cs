@@ -14,6 +14,7 @@ public class SnowcraftModusMentis : ModusMentis
         "Reads snow for the slide: the slope loaded by last night's wind, the slab that sounds hollow underfoot, the cornice hanging over a gully, the old scar of an avalanche's track through the trees. Inclines toward the ridge and the trees and away from the open slope, and crosses a chute one at a time and fast.";
     public override string SkillMeans       => "telling a slope that will slide from one that will hold";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 

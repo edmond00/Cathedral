@@ -50,7 +50,7 @@ expect-state skills "woodcraft level=3 xp=0 effective=0 max=0 broken=True"
 # is narrated in that modus mentis's own voice and names the organs and the wounds behind them.
 click keyword 0
 choose 1
-choose 0
+choose ripelore
 advance 8 90
 expect "will not answer"
 expect "cannot look at anything"

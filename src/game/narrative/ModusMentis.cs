@@ -121,6 +121,28 @@ public abstract class ModusMentis
     /// <summary>Whether this modus mentis may be chosen to think: the Thinking function, or a will.</summary>
     public bool CanThink => Functions.Contains(ModusMentisFunction.Thinking) || IsWill;
 
+    /// <summary>
+    /// How readily this mind thinks again within one thinking — the declaration behind iterative
+    /// thinking and doubt (<see cref="DoubtLevel"/>). Every modus mentis with the
+    /// <see cref="ModusMentisFunction.Thinking"/> function declares one, chosen for its persona: a mind
+    /// that questions itself, weighs and checks is <see cref="DoubtLevel.High"/>, a mind that knows at a
+    /// glance or acts on appetite is <see cref="DoubtLevel.Low"/>. Rule R23 makes the function and the
+    /// declaration imply each other.
+    ///
+    /// <para>A will is not asked: its goal is set by its course, so it never doubts, and it is
+    /// <see cref="DoubtLevel.Medium"/> — one more try of a step on its way when that step is refused.</para>
+    ///
+    /// <para><c>--doubt &lt;low|medium|high&gt;</c> overrides every mind's level, for scripts
+    /// (<see cref="EffectiveDoubt"/>).</para>
+    /// </summary>
+    public virtual DoubtLevel? Doubt => IsWill ? DoubtLevel.Medium : null;
+
+    /// <summary>
+    /// The level a thinking actually runs at: <c>--doubt</c> when given, else <see cref="Doubt"/>,
+    /// else <see cref="DoubtLevel.Low"/> (a mind that cannot think has nothing to retry).
+    /// </summary>
+    public DoubtLevel EffectiveDoubt => Config.Debug.DoubtOverride ?? Doubt ?? DoubtLevel.Low;
+
 
     public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)
     public int CurrentXp { get; set; }                // progress toward next level; reset to 0 on level-up
@@ -250,6 +272,39 @@ public readonly record struct ModusMentisXpAward(
 }
 
 /// <summary>
+/// How many times a thinking modus mentis tries again within one thinking when what it proposed comes
+/// to nothing — the acting modus mentis refused it, a coded rule would refuse it, or the player doubted
+/// it — and whether the player may doubt it at all. Declared per thinking modus mentis
+/// (<see cref="ModusMentis.Doubt"/>), for its persona.
+///
+/// <list type="bullet">
+/// <item><b>Low</b> — one try: no doubt and no retry. A refusal ends the thinking.</item>
+/// <item><b>Medium</b> — one more try, spent either by a refusal or by the player's NO.</item>
+/// <item><b>High</b> — two more tries, spent the same way.</item>
+/// </list>
+///
+/// <para>The player may doubt while a try remains, so Medium and High both doubt and Low never does.
+/// A YES spends nothing. Each retry is a fresh choice of goal and means, with every pair already tried
+/// crossed off. The whole chain is one thinking and costs one noetic point. See
+/// <c>ThinkingExecutor.GenerateThinkingAsync</c>.</para>
+/// </summary>
+public enum DoubtLevel
+{
+    Low    = 0,
+    Medium = 1,
+    High   = 2,
+}
+
+public static class DoubtLevelExtensions
+{
+    /// <summary>How many times a thinking at this level may try again: 0, 1 or 2.</summary>
+    public static int Retries(this DoubtLevel level) => (int)level;
+
+    /// <summary>Whether the player may doubt what a thinking at this level proposes.</summary>
+    public static bool MayDoubt(this DoubtLevel level) => level > DoubtLevel.Low;
+}
+
+/// <summary>
 /// ModusMentis functions determine when and how a modusMentis is used.
 /// ModiMentis can have multiple functions.
 /// </summary>
@@ -261,5 +316,6 @@ public enum ModusMentisFunction
     Speaking,      // Generates player dialogue replicas in conversation
     Fighting,      // Declarative: this modusMentis unlocks fighting skills (main or secondary)
     Emotion,       // Reacts to what an action produced: declares outcome types that move the spleen
-    Will           // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Will,          // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Craft          // Works one station with one tool: unlocks USE on it and its recipes (CraftingModusMentis)
 }

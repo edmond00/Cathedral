@@ -292,6 +292,7 @@ public sealed class CliDriver
                 case "routines":    CmdRoutines(rest);                break;
                 case "gather":      CmdGather(rest);                  break;
                 case "trade":       CmdTrade(rest);                   break;
+                case "craft":       CmdCraft(rest);                   break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
@@ -510,7 +511,7 @@ public sealed class CliDriver
           means <mm-id|none>        pin the playground's choice of means — the action modus mentis
                                     that carries the goal out — the way `goal` pins the goal
           doubt <yes|no>            queue the answer to the next doubt of a thinking (the preview box's
-                                    YES / NO, with a pineal gland of 2+). `advance` answers each doubt
+                                    YES / NO, for a mind of Medium or High doubt). `advance` answers each doubt
                                     with the next queued answer, YES when none is queued, so a script
                                     that never says `doubt` runs as if the question were not asked
           fight-end <victory|death|runaway>
@@ -587,6 +588,7 @@ public sealed class CliDriver
             // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
             // pressing CONTINUE would sit out its whole timeout with nothing to say why.
             if (n.HasDeferredFight) sb.Append(" fight-held=yes");
+            if (n.HasDeferredCrafting) sb.Append(" crafting-held=yes");
             sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
             sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");
@@ -712,6 +714,16 @@ public sealed class CliDriver
         foreach (var want in _game.CliWantRows)
         {
             CliMode.Emit($"  click want {want}  (seek this target in every place within reach)");
+            any = true;
+        }
+        if (_game.CliWillButtonCell != null)
+        {
+            CliMode.Emit("  click will-button  (the ◎: every will the party holds, and what each wants)");
+            any = true;
+        }
+        if (_game.CliWillPickerLines() is { Count: > 1 } picker && picker[1].Contains("state=open"))
+        {
+            CliMode.Emit("  click will <mm-id>  (select a will in the picker)  ·  click picker up|down|close");
             any = true;
         }
         if (_game.CurrentMode == GameMode.WorldView && _game.CliWillSearchLines()[0].Contains("state=running"))
@@ -1010,6 +1022,25 @@ public sealed class CliDriver
                 Report(_game.CliClickWant(want), $"pressed want {want}");
                 return;
             }
+            case "will-button":
+                // The ◎ beside the ☰ on the world map: the will picker.
+                Report(_game.CliPress(_game.CliWillButtonCell, "will button"), "pressed the will button");
+                return;
+            case "will":
+            {
+                // A will's row in the open picker, by id (scrolled into view first).
+                if (a.Length < 2) { CliMode.Emit("error: click will <mm-id>"); return; }
+                Report(_game.CliPress(_game.CliPickerWillCell(a[1]), $"will \"{a[1]}\" in the picker"), $"selected will {a[1]}");
+                return;
+            }
+            case "picker":
+            {
+                // The picker's ▲ / ▼ rows and its CLOSE.
+                string which = a.Length > 1 ? a[1].ToLowerInvariant() : "";
+                if (which is not ("up" or "down" or "close")) { CliMode.Emit("error: click picker up|down|close"); return; }
+                Report(_game.CliPress(_game.CliPickerCell(which), $"picker {which}"), $"pressed picker {which}");
+                return;
+            }
             case "search-cancel":
             {
                 Report(_game.CliCancelWillSearch() ? null : "no will's search under way", "cancelled the will's search");
@@ -1097,6 +1128,12 @@ public sealed class CliDriver
                     _game.CliClickCell(cc.X, cc.Y);
                     CliMode.Emit("ok: accepted protagonist");
                     return;
+                }
+                // A make's dice box at a crafting station: its Continue settles the roll.
+                if (_game.CurrentMode == GameMode.Crafting && _game.CliCrafting is { } cm)
+                {
+                    if (cm.IsRolling) { CmdCraft(new[] { "settle" }); return; }
+                    CliMode.Emit("error: no dice continue button on screen"); return;
                 }
                 // A fight's dice box has its own Continue, and it blocks the turn until pressed.
                 if (_game.CurrentMode == GameMode.Fighting && _game.CliFight is { } cf)
@@ -1250,6 +1287,32 @@ public sealed class CliDriver
                 _game.CliHoverCell(x, y);
                 _game.CliClickCell(x, y);
                 CliMode.Emit($"ok: clicked cell {x},{y}");
+                break;
+            }
+            case "humor":
+            {
+                // Select an organ's spendable humor on a settled roll — any dice box, in any mode; then
+                // `click die <n>` spends it on that die. The same buttons a player clicks.
+                var dice = _game.CliActiveDice;
+                if (dice == null) { CliMode.Emit("error: no dice roll on screen"); CliMode.HasFailedAssertion = true; return; }
+                string arg = a.Length > 1 ? a[1] : "";
+                int q = Array.FindIndex(DiceRollComponent.CliQueueNames, n => n.Equals(arg, StringComparison.OrdinalIgnoreCase));
+                if (q < 0 && !int.TryParse(arg, out q)) { CliMode.Emit("error: click humor paunch|hepar|spleen|pulmones"); return; }
+                if (dice.CliHumorButton(q) is not { } hb)
+                { CliMode.Emit("error: no humor buttons on this roll (still rolling, or the body can spend none)"); CliMode.HasFailedAssertion = true; return; }
+                _game.CliHoverCell(hb.X, hb.Y);
+                _game.CliClickCell(hb.X, hb.Y);
+                CliMode.Emit($"ok: selected humor {DiceRollComponent.CliQueueNames[q]}");
+                break;
+            }
+            case "die":
+            {
+                var dice = _game.CliActiveDice;
+                if (dice == null || a.Length < 2 || !int.TryParse(a[1], out int di)) { CliMode.Emit("error: click die <n> (on a dice box)"); CliMode.HasFailedAssertion = true; return; }
+                if (dice.CliDieCell(di) is not { } dc) { CliMode.Emit($"error: no die {di} on screen"); CliMode.HasFailedAssertion = true; return; }
+                _game.CliHoverCell(dc.X, dc.Y);
+                _game.CliClickCell(dc.X, dc.Y);
+                CliMode.Emit($"ok: clicked die {di}");
                 break;
             }
             default:
@@ -1554,6 +1617,60 @@ public sealed class CliDriver
         bool ok = sub == "leave" && _game.CliTradeLeave();
         CliMode.Emit(ok ? $"ok: trade leave (mode={_game.CurrentMode})"
                         : $"error: trade leave — no trade menu open (currently {_game.CurrentMode})");
+    }
+
+    /// <summary>
+    /// The crafting menu: <c>craft break &lt;item&gt;</c> destroys a carried item for the station's
+    /// material, <c>craft make &lt;item&gt;</c> makes one recipe from the pool, <c>craft leave</c> closes the
+    /// menu (what is left in hand is thrown away). Items are named by id or display name. A refusal
+    /// fails the run, since a script that asked to make something and could not is asserting it can.
+    /// </summary>
+    private void CmdCraft(string[] a)
+    {
+        var menu = _game.CliCrafting;
+        if (menu == null) { CliMode.Emit($"error: craft — no crafting menu open (currently {_game.CurrentMode})"); CliMode.HasFailedAssertion = true; return; }
+        string sub  = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        string name = string.Join(' ', a.Skip(1)).Trim();
+        bool Named(Cathedral.Game.Narrative.Item i) => string.Equals(i.ItemId, name, StringComparison.OrdinalIgnoreCase)
+                           || string.Equals(i.DisplayName, name, StringComparison.OrdinalIgnoreCase);
+        switch (sub)
+        {
+            case "leave":
+                menu.Leave();
+                CliMode.Emit($"ok: craft leave (pool {menu.Pool} thrown away)");
+                return;
+            case "break":
+                if (menu.Breakables().FirstOrDefault(Named) is { } item && menu.BreakDown(item))
+                { CliMode.Emit($"ok: craft break {item.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
+                break;
+            case "make":
+                // Casts the dice and leaves them on the table, so a humor may bend them (click humor/die)
+                // before `craft settle` (or `click continue`) accepts the roll.
+                if (menu.Recipes.FirstOrDefault(Named) is { } recipe
+                    && menu.BeginMake(recipe, instant: true) == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Rolling)
+                {
+                    var d = menu.CliDice!;
+                    CliMode.Emit($"ok: craft make {recipe.ItemId} → rolled {d.FinalPrimaryValues.Count(v => v == 6)}/{d.Difficulty} sixes on {d.NumberOfDice} dice "
+                               + $"({(d.IsCurrentlySuccess ? "would make" : "would spoil")}; craft settle to accept) pool {menu.Pool} {menu.Material}");
+                    return;
+                }
+                break;
+            case "settle":
+            {
+                var made = menu.Settle();
+                if (made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Refused) break;
+                var roll = menu.LastRoll!;
+                CliMode.Emit($"ok: craft settle → {(made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Made ? "made" : "spoiled")} "
+                           + $"({roll.Sixes}/{roll.Difficulty} sixes on {roll.Dice} dice) pool {menu.Pool} {menu.Material}");
+                return;
+            }
+            default:
+                CliMode.Emit("error: craft break|make <item> | craft settle | craft leave");
+                CliMode.HasFailedAssertion = true;
+                return;
+        }
+        CliMode.Emit($"error: craft {sub} {name} — refused ({string.Join(" | ", menu.CliLines().Where(l => l.StartsWith("crafting message")))})");
+        CliMode.HasFailedAssertion = true;
     }
 
     /// <summary>

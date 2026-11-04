@@ -95,6 +95,12 @@ public static class WillAudit
         var movers   = new HashSet<Type>();
         var checkedT = new HashSet<Type>();
         var actor    = new Protagonist();
+        // A crafting will's own act, USE, is offered only to a body holding the trade and only where the
+        // workshop's leave is given — which nothing in a cold build has. The probe body holds every trade,
+        // and every area is read with its own workshop's leave supposed (PoV.PlannedLeave), exactly as the
+        // path planner supposes it after an ask-to-use-workshop step.
+        foreach (var trade in ModusMentisRegistry.Instance.GetAllModiMentis().OfType<Crafting.CraftingModusMentis>())
+            actor.ModiMentis.Add(trade);
         var factories = VerbAudit.Factories().ToList();
         int rounds = 0;
         for (int id = 1; id <= Samples && hits.Any(kv => kv.Value == 0 && !PlayGated(kv.Key)); id++, rounds++)
@@ -105,7 +111,7 @@ public static class WillAudit
             foreach (var area in scene.AllAreas)
             foreach (var hour in Hours)
             {
-                var pov = new PoV(area, hour);
+                var pov = new PoV(area, hour) { PlannedLeave = scene.SectionOf(area)?.DisplayName };
                 foreach (var action in scene.View(pov, actor).Entries.SelectMany(e => e.ApplicableVerbs))
                 {
                     foreach (var target in hits.Keys.ToList())

@@ -1,0 +1,38 @@
+# will_search_pursuit — a visit walked for a will's search wants the searched target first
+#
+# Woodcraft wants four things; in the forest a search for its third ("buy seasoned wood") proposes,
+# the nearest is its first — a branch to gather, one step from the entry. On the visit the search's
+# trip ends in (Scene.WillPursuit), the will steers by the searched target alone: its plan is the
+# five-step way to the charcoal burner, not the branch underfoot (`aim=3/4`, `pursuit=yes`). Its other
+# targets stay within reach only by the three-step rule, when an object offers no way to the main one
+# (WillPriority.WaysOn). The pursuit is the visit's: walking out and entering the same place again is
+# an ordinary visit, and the will goes back to the nearest of its wants.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm woodcraft
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+
+click will-button
+click will woodcraft
+click want 2
+wait 120
+expect-state will-search "will-search state=proposed"
+expect "Woodcraft: buy seasoned wood"
+travel-go
+wait mode LocationInteraction 120
+expect-state will "aim=3/4"
+expect-state will "pursuit=yes"
+
+# Out, and in again: an ordinary visit, which wants the nearest.
+advance 12 180
+click button
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 120
+expect-state will "aim=1/4"
+expect-no-state will "pursuit=yes"
+quit

@@ -15,7 +15,8 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-expect the surrounding buildings
+# The phrase wraps differently as the square gains furniture; "surrounding buildings" stays on one line.
+expect surrounding buildings
 
 click keyword buildings
 choose 1
