@@ -231,7 +231,7 @@ function a modus mentis bears, since that decides where in the machinery it is c
   short as the shortest the place offers (see [VI §6](06-narration.md#6-the-two-families-of-rule)). The course is reckoned through the place itself —
   walking, climbing, crossing, opening doors, waiting for another hour — and, where the act it wants
   needs an implement the body lacks, through taking one up or proposing to buy one from somebody whose
-  wares include it — the act's own implement, or anything made for that act, as keys are for a lock. It cannot be reckoned through anything whose issue is not known beforehand — a fight, a
+  wares include it — the act's own implement, or anything made for that act, as keys are for a lock. An implement is never a condition of the course: where none can be had in the place the course is reckoned without one, whatever the body carries, and an act the will wants that is offered where the body stands is proposed even while one could be fetched. The implement is asked for only when the act is carried out ([VI](06-narration.md)). It cannot be reckoned through anything whose issue is not known beforehand — a fight, a
   roll, a conversation — save two conversations whose success says all the course needs: the leave of a
   workshop, and a trader's leading the way to their premises. A want is either to buy or to sell, never both. A will to sell
   accepts as its end only a trader who would buy something the body carries, and it searches a place for no other. Where no course to any of its wants exists within the place, the will
