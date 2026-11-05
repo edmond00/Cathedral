@@ -467,7 +467,7 @@ public class TalkSoldieringTree : DialogueTree
                     "I promise to tell them the rest over a pot.",
                     "You heard. You weren't there. Leave it.",
                     "I tell them to leave it.",
-                    typeof(WarWearinessModusMentis), typeof(EspritDeCorpsModusMentis))),
+                    typeof(WarWearinessModusMentis), typeof(ComradeshipModusMentis))),
 
             new PlayerOption("campaign_glory", "say I heard it was glorious",
                 "I heard it was glorious.",

@@ -422,7 +422,7 @@ internal static class ReminescenceCatalog
                 new("a company of knights",
                     observationText:  "the noise of children shouting, playing at something urgent in the sun",
                     outcomeText:      "playing knights with other children — your old friends from those rounds",
-                    outcome: To("pillage", skills: new[] { typeof(FriendshipModusMentis), typeof(EspritDeCorpsModusMentis) }),
+                    outcome: To("pillage", skills: new[] { typeof(FriendshipModusMentis), typeof(ComradeshipModusMentis) }),
                     contextSummary:   "playing with childhood friends"),
 
                 new("a magic sword",

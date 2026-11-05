@@ -779,11 +779,12 @@ at the later hour, a place the follower never is. `cli/system/will_follow_one_en
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
 opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
 made for it** (`Item.MadeForVerbIds`, `ToolIdsFor`): a ring of keys is a tool made for `unlock_door`, so
-a will to open a lock goes for the keys on the gatehouse pegs. **When no such implement can be had in
-the place, the goal is planned bare-handed** (`ActionPath.Unarmed`, a second search) rather than refused:
-the planner knows only reference tools and made-for items, while the click takes anything carried to
-the critic (a short sword cutting a carcass) and `RequiredToolRule` asks for a tool when nothing is
-combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. **Only while the body carries something that could serve the act** (`ToolCombinationRules.CouldServe`: combinable, and not refused before the critic — a hairpin is made for a lock, never a slaughter): otherwise the click is refused for certain, and planning it anyway made every digging and unlocking will reach nearly every place — seven failed `--will-audit` on breadth. Nothing else is modelled, so a path never passes a fight or loot, and passes only the two
+a will to open a lock goes for the keys on the gatehouse pegs. **An implement never refuses a will: the tool is checked on the click and nowhere else.** Fetching one is a course the
+plan prefers, never a condition. When none can be had in the place the way is planned bare-handed (`ActionPath.Unarmed`, a second
+search), goal and tool-required steps alike, whatever the body carries; and an act the will wants that is offered right here is
+taken as it stands in `PathThrough` and `ShortestThrough`, even while the plan means to fetch something for it. `RequiredToolRule`
+asks for the tool on the click, and the critic judges what is handed over. A narrower rule (d675c418, only with something carried
+that could serve) left Butchery with nothing to say about a boar in front of an empty-handed body, which read as a bug. Nothing else is modelled, so a path never passes a fight or loot, and passes only the two
 conversations whose success is known in advance: `ask_to_use_workshop` (the leave, `PoV.PlannedLeave`) and
 `ask_to_be_led` (`TradeGate.NextOnPremises`, read in `Destinations` as the same question
 `WalkToPremises` asks), behind its introduction like any favour. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
