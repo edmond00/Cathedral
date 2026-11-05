@@ -61,7 +61,8 @@ walked with none of the risk. Private ground teaches no routine even where its h
 the body stay ([VI §7](06-narration.md)): that leave lasts the visit, and a routine is walked on a
 later one, where nobody has given it. The one exception is a workshop whose master has given the use
 of it ([X §4](10-crafting.md)): that leave is kept for good, and the ground is the body's to stand on
-on every later visit too. A routine whose area has become private cannot be walked.
+on every later visit too. A station worked without its master's leave teaches no routine, the work
+being a crime that could not be walked again. A routine whose area has become private cannot be walked.
 
 Nothing made during a visit is learned from either. A corpse, the wreck of broken furniture and what
 either holds are absent from the scene of the next visit, so a gathering upon them teaches nothing.

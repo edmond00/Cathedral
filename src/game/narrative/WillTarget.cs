@@ -190,6 +190,12 @@ public sealed class WillTarget
                      && npc.BuyCatalog?.Offers.Any(o => o.Prototype.Kinds.Contains(kind) && such(o.Prototype)) == true,
                 $"selling {label}");
 
+    /// <summary>Narrowed to a trader whose wares include one of <paramref name="itemTypes"/>. <paramref name="label"/> names the set in the audit.</summary>
+    public WillTarget SellingAny(string label, params Type[] itemTypes)
+        => With(e => e is SceneNpc { Entity: Cathedral.Game.Npc.NpcEntity npc }
+                     && npc.BuyCatalog?.Offers.Any(o => itemTypes.Any(t => t.IsInstanceOfType(o.Prototype))) == true,
+                $"selling {label}");
+
     /// <summary>
     /// Narrows a will to PLAY to one or more kinds of play (<see cref="PlayActivity"/> subclasses): a
     /// cheat wants a game of knucklebones, a slider a slope. <paramref name="label"/> names the set in

@@ -753,6 +753,11 @@ only ("pick a lock"); each target has its own, and a path is narrated with the o
 (`ActionPath.Target`, `WillTargets.PurposeOf`). A single target converts implicitly, so
 `Will => WillTarget.To<…>(…)` is still a one-target will; several are `WillTargets.Of(t1, t2, …)`.
 
+**A target buys or sells, never both** (R24; a will wanting both declares two targets). A will to sell
+accepts only a trader who buys something carried: `ActionPathPlanner.IsGoal` asks `TradeGate.BuysSomethingOf`
+(the sell menu's reading), for every plan and so for the search for a location too. The gate is the will's,
+not the verb's: a free mind may still propose to sell with nothing to offer. `cli/system/will_sell_*`.
+
 **A modus mentis builds its targets afresh on every read** (`Will =>` is expression-bodied), so never key
 anything on a `WillTarget` instance across two reads of `mm.Will`: the planner's cache keys on
 `WillTargets.Key` (the targets' description), `WillAudit` snapshots `mm.Will` once, and `inspect will`
@@ -1557,6 +1562,21 @@ decided.** Sealed, like `IsPossible` and for the same reason — the setting tes
 area makes *anything* trespass) applies to every verb at once, and three call sites could each forget
 it. The verb's own half is `protected IsIllegalFor`. What that buys:
 
+- **a protected floor** (`AreaTenure.Protected`, stamped by `SceneFactory.MarkProtected` on every public
+  room, roofs excepted, of a section whose entry door is open by day and shut at night: workshops,
+  shops, inns, longhouses, edifices) is not trespass, so `IsPrivate` stays false and everything that
+  reads it treats the room as public. `Verb.Conduct` (`Passive` by default, `Intrusive` on grab,
+  gather, steal, use, cut, the extraction verbs and break) is what it asks:
+  `PrivacyModel.IsIntrusion(scene, pov)` — protected, a living speaking master (`CraftingAccess.MasterOf`),
+  no leave — makes an intrusive verb a crime from `IsIllegal`. `PrivacyModel.IsFreeToTake` chooses
+  between `grab`/`gather` and `steal`: never free in a private room, leave or no leave; free on a
+  protected floor once authorized. `use` is offered without leave on a protected floor only, as a crime,
+  and the planner skips it and any intrusive way of obtaining a tool (a will asks, then works; leave is
+  supposed through `PoV.PlannedLeave`). Asking stays trade-only, so a floor without a station is bought
+  from or stolen from. A will that wants to grab or gather must be able to do so somewhere without
+  leave, and a will to buy must have a seller: `--mm-audit` fails on either, and a target wanting
+  `steal` is exempt. `--crime-audit` "PROTECTED FLOOR", `cli/verb/use/no_leave`,
+  `cli/system/protected_floor_will`;
 - `attack` / `slay` against somebody who **already counts you an enemy** is not a crime — the quarrel
   was declared before the blow. `murder` (on a sleeper) stays unconditional: a sleeper has declared
   nothing;
@@ -1684,7 +1704,7 @@ reaches the NPC and nothing else.
 **Tolerance is presence, not ownership.** `PrivacyModel.IsTrespassing(scene, area)` is
 `IsPrivate && section not tolerated`, and it is what `Verb.IsIllegal`, the `NoBusinessHere` witness and
 the header read. Everything about the room *belonging* to somebody stays on `Area.IsPrivate`: steal vs
-grab, `ReachesPrivateArea` (unlock / break / slip into stay crimes; open-door is lawful), lessons,
+grab (with `PrivacyModel.IsFreeToTake`, for a protected floor), `ReachesPrivateArea` (unlock / break / slip into stay crimes; open-door is lawful), lessons,
 and `RoutineRecorder.IsRecordable` — a routine is walked on a later visit, where nobody gave leave.
 Per visit, never persisted. `--crime-audit` §4d; `cli/outcome/trespass_tolerated`,
 `cli/outcome/shown_the_door`, `cli/system/wait_stopped_by_householder.cli`.

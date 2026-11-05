@@ -101,14 +101,15 @@ public sealed class TestSceneFactory : SceneFactory
 
         // ── Crafting: a station nobody owns, and a workshop with a master ─────
         // The ruin's anvil is anybody's (USE without leave); the forge's anvil, hearth and bench are the
-        // smith's, and USE there waits on ask_to_use_workshop. The forge is public ground, so walking in
-        // is lawful — what the leave buys is the equipment, not the floor.
+        // smith's, and USE there waits on ask_to_use_workshop. The forge is protected ground, so walking
+        // in is lawful — what the leave buys is the equipment and the stock, not the floor.
         var ruin  = Area_("Test Ruin",  "ruin",  "among the test ruin",
                           "pick your way into the ruin",
                           "Three walls of a smithy nobody has worked in for years, an anvil rusting by the old hearth");
         var forge = new ForgeArea("Test Forge", "in the test forge", "step into the forge",
                                   new List<string> { "A working forge, hot and loud, its master at the anvil" },
                                   new[] { "hot", "ringing", "smoky" });
+        forge.Tenure = AreaTenure.Protected;
 
         var outdoors = new Section("Test Grounds", new List<string> { "the open ground of a test location" },
                                    seed => new NoisyGenerator { Seed = seed, Density = 0.5f });
@@ -335,7 +336,8 @@ public sealed class TestSceneFactory : SceneFactory
             { Senses = SensoryProfile.Examinable });
 
         forge.PointsOfInterest.Add(new ForgeHearthPointOfInterest("Test Forge Hearth",
-            new List<string> { "A brick hearth with the fire banked, the bellows at its side" })
+            new List<string> { "A brick hearth with the fire banked, the bellows at its side" },
+            items: new() { new ItemElement(new Cathedral.Game.Narrative.Items.CharcoalRake()) })
             { Senses = SensoryProfile.Examinable });
 
         forge.PointsOfInterest.Add(new WorkbenchPointOfInterest("Test Workbench",

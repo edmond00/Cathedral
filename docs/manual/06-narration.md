@@ -8,7 +8,7 @@ the machinery of the preceding chapters is actually spent.
 A **location** is built as a set of **areas** — rooms, yards, tracks, clearings — joined by open
 ways and by **connectors**, the latter being doors, stairs, cliffs, crossings, paths and the like.
 An area holds **points of interest**, and a point of interest may hold **items**. Every area is of
-one of three tenures — private, public or wild — which has consequences of law (§7).
+one of four tenures — private, protected, public or wild — which has consequences of law (§7).
 
 **Ways and paths.** Neighbouring areas of open ground are joined by a way that is simply walked: to
 move into a neighbour is an act of difficulty 1. A connector that gates passage — a door, a climb, a
@@ -25,7 +25,7 @@ path or climb already gone by — is not walked again but **gone back by**, and 
 so when it takes such a way in. Going back is a single act of difficulty 2, whatever the distance,
 and it reaches any area already visited that known ways join to the one stood in: the destination
 is chosen once the act has succeeded, from all of them. It never passes a door locked against the
-comer, and never steps from public ground into private, so the private rooms it may return to are
+comer, and never steps from other ground into private, so the private rooms it may return to are
 only those of the private ground the body already stands in. A will that goes back as a step of its
 course goes to the area its course needs, and nothing is chosen. What going back teaches follows
 from how it was done: with an enemy in sight, by night, or on private ground, each teaches its own;
@@ -379,18 +379,28 @@ it, each act that can be a crime has its own condition — striking someone who 
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
 storehouse is nobody's privacy.
 
-**Ground has three tenures.** *Private* ground is somebody's, and makes every act a trespass. It is
-never entered from public ground unawares: the only ways in are a door locked against the comer —
+**Ground has four tenures.** *Private* ground is somebody's, and makes every act a trespass. It is
+never entered from other ground unawares: the only ways in are a door locked against the comer —
 the door of a house, or of any room that is somebody's, the rooms off a great building's passages
 among them — and ways that are themselves an intrusion, a window slipped through or a wall scaled. No open way,
-stair or unlocked door leads from public ground into private, though within private ground the ways
-between rooms are open.
+stair or unlocked door leads from other ground into private, though within private ground the ways
+between rooms are open. What lies there is never free to take: to carry it off is theft, whoever has
+let the body in.
+*Protected* ground is a keeper's floor open to callers: every room not private within a building whose
+entry door stands open by day and is shut at night — the hall of a workshop, a shop or an inn, the
+passages and public rooms of a temple or a castle. To stand there is no trespass, and an act that
+leaves the place as it was — speech, the senses, waiting, walking — is no crime. An act that lays hands
+on the place is a crime until a living master of the building has given leave: taking what lies there,
+working its stations, cutting, extracting and breaking. With the leave these are lawful, and the leave
+once given is kept; but it is asked only by a body holding a trade whose station stands in that building
+([X §4](10-crafting.md)), so that elsewhere what lies on such a floor is to be bought or stolen. A floor
+whose master is dead or mute asks no leave of anybody. A roof is outside the door, and is public.
 *Public* ground is everybody's: the streets, yards and fields of a farm, a village or a city. *Wild*
 ground is nobody's: the open ground of a forest, a plain, a cave, a coast, a mountain, a peak and
 the climate biomes. A store kept there — a woodshed, a net shed, an ore store — is somebody's stock
 and remains public. The tenure decides one thing besides trespass: whether a beast belongs to
-anybody. Striking or killing a beast that is not already an enemy is a crime on public and on
-private ground, where the creature is taken to be somebody's; on wild ground it is hunting, and no
+anybody. Striking or killing a beast that is not already an enemy is a crime on any ground but the
+wild, the creature being taken to be somebody's; on wild ground it is hunting, and no
 crime at all. A creature small enough to be taken in the hand is caught or crushed rather than
 struck, and neither is a crime against it on any ground; private ground remains a trespass. A
 person is never game: every crime against a person is a crime on wild ground as anywhere.

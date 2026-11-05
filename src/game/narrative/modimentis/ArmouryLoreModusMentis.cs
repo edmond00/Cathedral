@@ -16,8 +16,8 @@ public class ArmouryLoreModusMentis : ModusMentis
     public override string SkillMeans       => "the knowledge of arms and armour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
     public override WillTargets? Will => WillTargets.Of(
-        WillTarget.ToAny("take up a fine weapon", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Weapon, "a real weapon", Fine),
         WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a fine weapon").Selling(ItemKind.Weapon, "a real weapon", Fine),
+        WillTarget.ToAny("take up a fine weapon", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Weapon, "a real weapon", Fine),
         WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look a weapon over").YieldingKind(ItemKind.Weapon, "a real weapon", Fine));
 
     /// <summary>A weapon made as one: a branch or a stick swung in a fight is no work to judge.</summary>

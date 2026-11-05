@@ -180,6 +180,11 @@ workshop or an inn, the barn or shed of a farm, the store of a stable or a fold,
 fisherman's shed, the entrance hall of a great building — and a trade may be proposed only while
 both parties stand there. The same person met elsewhere will talk, but will not deal.
 
+**A trader buys two things.** What the trade takes in is bought at its full price, as a smith buys ore.
+What the trade itself sells is bought back at half its reference price, as a smith buys ironwork, so
+that nothing bought of a trader can be sold back at a profit. A trader's catalogue in either direction
+is a selection from those kinds and not the whole of them, and differs from one trader to the next.
+
 **Barter needs no introduction.** A shop deals with strangers, and since trade is only ever proposed
 on the premises, asking to buy or to sell is the one asking nobody needs to be presented for. Only
 one who counts you an enemy refuses it.

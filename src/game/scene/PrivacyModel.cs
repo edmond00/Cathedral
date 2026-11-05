@@ -35,6 +35,24 @@ public static class PrivacyModel
                                    || scene.AuthorizedWorkshops.Contains(section.DisplayName)));
 
     /// <summary>
+    /// Whether an intrusive act (<see cref="Verbs.VerbConduct.Intrusive"/>) from <paramref name="pov"/>
+    /// intrudes on a master: the floor is protected, it has a living master, and that master has given
+    /// no leave. Presence and passive acts are never asked this.
+    /// </summary>
+    public static bool IsIntrusion(Scene scene, PoV pov)
+        => pov.Where.IsProtected
+           && scene.SectionOf(pov.Where) is { } section
+           && !Cathedral.Game.Narrative.Crafting.CraftingAccess.HasLeave(scene, pov, section);
+
+    /// <summary>
+    /// Whether what lies about <paramref name="pov"/> is free to take. Never in a private room, whoever
+    /// let the taker in; on a protected floor only with the master's leave. Else it is a theft, and the
+    /// verb for it is <see cref="Verbs.StealVerb"/>.
+    /// </summary>
+    public static bool IsFreeToTake(Scene scene, PoV pov)
+        => !pov.Where.IsPrivate && !IsIntrusion(scene, pov);
+
+    /// <summary>
     /// Whether striking at <paramref name="target"/> from <paramref name="pov"/> is hunting: the
     /// target is a beast (shallow wildlife, or a named creature without a human anatomy) and the
     /// ground is <see cref="AreaTenure.Wild"/>, so the beast is nobody's. On public or private ground

@@ -16,7 +16,7 @@ public class JailcraftModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<UnlockDoorVerb>("open a locked door"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up the keys").Yielding<Cathedral.Game.Narrative.World.Items.KeyRing>());
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a ring of keys").SellingAny("keys", typeof(Cathedral.Game.Narrative.World.Items.KeyRing)));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Dwellings);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

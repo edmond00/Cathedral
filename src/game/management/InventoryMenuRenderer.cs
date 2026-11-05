@@ -1617,6 +1617,11 @@ public sealed class InventoryMenuRenderer
         DrawKV("Weight", item.Weight.Label(),      ref y);
         DrawKV("Size",   item.Size.ToString(),     ref y);
 
+        // What is left in the hand once it is taken apart, and how much of each.
+        var materials = Cathedral.Game.Narrative.Crafting.ItemMaterials.Of(item);
+        DrawKV("Made of", materials.Count == 0 ? "nothing to work"
+            : string.Join(", ", materials.Select(m => $"{Cathedral.Game.Narrative.Crafting.ItemMaterials.Units(item)} {m.ToString().ToLowerInvariant()}")), ref y);
+
         // What the thing is worth, before the small per-merchant variation a catalogue applies.
         // Shown for everything, including items no NPC currently stocks: an item without a trade
         // tag is one nobody happens to deal in, not one without a value.

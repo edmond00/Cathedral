@@ -143,6 +143,15 @@ public static class ActionPathPlanner
     }
 
     /// <summary>
+    /// Whether <paramref name="action"/> is an end <paramref name="will"/> would accept from this body:
+    /// what it wants, and, for a proposal to sell, a trader who buys something the body carries.
+    /// </summary>
+    public static bool IsGoal(WillTargets will, VerbAction action, PartyMember actor)
+        => will.Matches(action)
+           && (action.Verb is not ProposeToSellVerb
+               || action.Target is SceneNpc { Entity: NpcEntity npc } && TradeGate.BuysSomethingOf(npc, actor));
+
+    /// <summary>
     /// The shortest path from <paramref name="pov"/> to an action <paramref name="will"/> matches, or
     /// null when there is none within this place — no such action here at all, or none the body can
     /// reach (or equip itself for) without leaving. <paramref name="obtained"/> is an implement taken
@@ -223,16 +232,22 @@ public static class ActionPathPlanner
             // in which a grab or a purchase is a step on the way.
             var verbs = wanted.Count > 0 && s.Tool == null ? scene.Verbs : narrow;
 
+            bool intrusion = PrivacyModel.IsIntrusion(scene, here);
             foreach (var action in Offered(scene, here, actor, verbs))
             {
-                if (will.Matches(action) && (!action.Verb.RequiresTool || Holds(action.Verb, s.Tool, action)))
+                // On a master's floor without leave a will asks first: USE is offered there as a crime,
+                // and neither it nor an implement lifted on the way is a way a will plans.
+                if (intrusion && action.Verb is UseStationVerb) continue;
+
+                if (IsGoal(will, action, actor) && (!action.Verb.RequiresTool || Holds(action.Verb, s.Tool, action)))
                 {
                     int index = will.IndexOf(action);
                     if (best == null || index < best.Value.Index) best = (index, s, action);
                     continue;
                 }
 
-                if (wanted.Count > 0 && s.Tool == null && Obtains(action, wanted) is { } tool)
+                if (wanted.Count > 0 && s.Tool == null && !(intrusion && action.Verb.Conduct == VerbConduct.Intrusive)
+                    && Obtains(action, wanted) is { } tool)
                     Push(s with { Tool = tool }, action);
 
                 if (action.Verb is AskToUseWorkshopVerb && action.Variant is string workshop && s.Leave == null)
@@ -342,7 +357,7 @@ public static class ActionPathPlanner
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
         if (path.Steps.Count == 1
-            && actions.FirstOrDefault(a => will.Matches(a) && (!a.Verb.RequiresTool || Holds(a.Verb, a) || path.Unarmed && CouldServeBareHanded(a.Verb, held))) is { } goal)
+            && actions.FirstOrDefault(a => IsGoal(will, a, actor) && (!a.Verb.RequiresTool || Holds(a.Verb, a) || path.Unarmed && CouldServeBareHanded(a.Verb, held))) is { } goal)
             return new ActionPath(new[] { new PathStep(goal) }, -1, will.TargetOf(goal), path.Unarmed);
 
         if (path.ToolStep == 0)
@@ -411,9 +426,9 @@ public static class ActionPathPlanner
             => verb.ReferenceToolIdsFor(view).Any(id => held.Any(i => i.ItemId == id))
                || held.Any(i => i.MadeForVerbIds.Contains(verb.VerbId));
 
-        if (unarmed && will.Matches(action) && CouldServeBareHanded(action.Verb, held)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action), Unarmed: true);
+        if (unarmed && IsGoal(will, action, actor) && CouldServeBareHanded(action.Verb, held)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action), Unarmed: true);
         if (action.Verb.RequiresTool && !Holds(action.Verb, action)) return null;
-        if (will.Matches(action)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action));
+        if (IsGoal(will, action, actor)) return new ActionPath(new[] { new PathStep(action) }, -1, will.TargetOf(action));
 
         var wanted = scene.Verbs.Where(v => will.Wants(v) && v.RequiresTool && !Holds(v))
                                 .SelectMany(ToolIdsFor).ToHashSet();

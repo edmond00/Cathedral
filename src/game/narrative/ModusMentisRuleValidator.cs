@@ -35,6 +35,7 @@ namespace Cathedral.Game.Narrative;
 ///   R21 no two crafting MMs share a station and a tool
 ///   R22 every crafting station kind is worked by at least one crafting MM
 ///   R23 MM has Thinking ⇔ it declares a DoubtLevel; a Will MM is Medium (it does not declare one)
+///   R24 a will target wants to buy or to sell, never both: a will wanting both declares two targets
 ///
 /// Soft targets (reported by the audit, never fatal):
 ///   ~80% two-organ MMs vs ~20% one-region MMs
@@ -248,6 +249,13 @@ public static class ModusMentisRuleValidator
                             violations.Add($"[R18] {mm.ModusMentisId}: a {anatomy} can learn it but perform none of the verbs of its target ({target})");
                     }
                 }
+
+            // R24 — buying and selling ask different things of the body (coin, goods), so one target
+            // cannot be planned for both.
+            if (mm.Will is { } trading)
+                foreach (var target in trading.Where(t => t.VerbTypes.Contains(typeof(Scene.Verbs.ProposeToBuyVerb))
+                                                       && t.VerbTypes.Contains(typeof(Scene.Verbs.ProposeToSellVerb))))
+                    violations.Add($"[R24] {mm.ModusMentisId}: \"{target.Purpose}\" wants to buy and to sell; declare two targets");
 
             // R19 — a will names the places it belongs in, and only area kinds. --will-audit measures
             // the will against them; a will with none would never be checked where it matters.

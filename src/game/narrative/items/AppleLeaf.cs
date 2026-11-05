@@ -3,12 +3,15 @@ using Cathedral.Game.Narrative;
 
 namespace Cathedral.Game.Narrative.Items;
 
-public sealed class AppleLeaf : Item
+public sealed class AppleLeaf : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "apple_leaf";
     public override string DisplayName => "Apple Leaf";
     public override string Description => "A broad waxy leaf from an apple tree";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(70).Add<PulpHumor>(30);
 }

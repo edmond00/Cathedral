@@ -45,6 +45,7 @@ public static class CrimeAudit
 
         AuditPrivacyModel(sb, failures);
         AuditVerbLegality(sb, failures);
+        AuditProtectedFloor(sb, failures);
         AuditGoalRules(sb, failures);
         AuditWillingnessRules(sb, failures);
         AuditDiscreetWillingness(sb, failures);
@@ -191,6 +192,87 @@ public static class CrimeAudit
         sb.AppendLine();
 
         AuditWildLegality(sb, failures);
+    }
+
+    /// <summary>
+    /// A workshop's entry room: presence and passive acts lawful, intrusive acts a crime until the
+    /// master gives leave, and a private room's goods never free to take, leave or no leave.
+    /// </summary>
+    private static void AuditProtectedFloor(StringBuilder sb, List<string> failures)
+    {
+        sb.AppendLine("--- PROTECTED FLOOR: a workshop's entry room ---");
+
+        void Check(string name, bool ok)
+        {
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name}");
+            if (!ok) failures.Add($"protected floor: {name}");
+        }
+
+        var scene = new Village.VillageSceneFactory().Build(1);
+        var hall = scene.AllAreas.FirstOrDefault(a => a.IsProtected
+            && a.PointsOfInterest.Any(CraftingStations.IsStation)
+            && a.PointsOfInterest.Any(p => p.Items.Count > 0)
+            && scene.SectionOf(a) is { } s && Narrative.Crafting.CraftingAccess.MasterOf(scene, s) != null);
+        if (hall == null)
+        {
+            Check("a village has a mastered workshop with a station and stock", false);
+            return;
+        }
+        var section = scene.SectionOf(hall)!;
+        var pov     = new PoV(hall, TimePeriod.Noon);
+        var station = hall.PointsOfInterest.First(CraftingStations.IsStation);
+        var item    = hall.PointsOfInterest.SelectMany(p => p.Items).First();
+        Verb grab = new GrabVerb(), steal = new StealVerb(), use = new UseStationVerb(), examine = new ExamineVerb(), sit = new SitAndWaitVerb();
+
+        Check("standing here is no trespass", !PrivacyModel.IsTrespassing(scene, hall));
+        Check("examining here is lawful", !examine.IsIllegal(scene, pov, station));
+        Check("waiting here is lawful", !sit.IsIllegal(scene, pov, null));
+        Check("without leave: grab is not offered", !grab.IsPossible(scene, pov, item));
+        Check("without leave: steal is offered", steal.IsPossible(scene, pov, item));
+        Check("without leave: steal is a crime", steal.IsIllegal(scene, pov, item));
+        Check("without leave: use is offered", use.IsPossible(scene, pov, station));
+        Check("without leave: use is a crime", use.IsIllegal(scene, pov, station));
+
+        var planned = new PoV(hall, TimePeriod.Noon) { PlannedLeave = section.DisplayName };
+        Check("leave supposed: grab reads as offered", grab.IsPossible(scene, planned, item));
+
+        scene.AuthorizedWorkshops.Add(section.DisplayName);
+        Check("with leave: grab is offered", grab.IsPossible(scene, pov, item));
+        Check("with leave: grab is lawful", !grab.IsIllegal(scene, pov, item));
+        Check("with leave: steal is not offered", !steal.IsPossible(scene, pov, item));
+        Check("with leave: use is lawful", use.IsPossible(scene, pov, station) && !use.IsIllegal(scene, pov, station));
+
+        var back = section.Areas.FirstOrDefault(a => a.IsPrivate && a.PointsOfInterest.Any(p => p.Items.Count > 0));
+        if (back != null)
+        {
+            var backPov  = new PoV(back, TimePeriod.Noon);
+            var backItem = back.PointsOfInterest.SelectMany(p => p.Items).First();
+            Check("with leave, a back room: grab is not offered", !grab.IsPossible(scene, backPov, backItem));
+            Check("with leave, a back room: steal is a crime", steal.IsPossible(scene, backPov, backItem) && steal.IsIllegal(scene, backPov, backItem));
+        }
+
+        // Every location: the public rooms behind a door shut at night are protected, a roof never.
+        int stray = 0, roofs = 0, floors = 0;
+        foreach (var (_, build, _) in VerbAudit.Factories())
+        {
+            Scene built;
+            try { built = build(1); } catch { continue; }
+            foreach (var door in built.AllAreas.SelectMany(a => a.PointsOfInterest).OfType<DoorPointOfInterest>().Distinct()
+                                      .Where(d => d.Role == DoorRole.Entry && d.DoorState == DoorState.Unlocked))
+                if (built.SectionOf(door.BackArea) is { } s)
+                    foreach (var a in s.Areas)
+                    {
+                        if (a is RoofArea) { if (a.IsProtected) roofs++; }
+                        else if (a.IsProtected) floors++;
+                        else if (!a.IsPrivate) stray++;
+                    }
+        }
+        Check($"every location: public rooms behind a night door are protected ({floors} floors, {stray} not)", stray == 0 && floors > 0);
+        Check("every location: no roof is protected", roofs == 0);
+
+        sb.AppendLine("  intrusive verbs: " + string.Join(", ", VerbRegistry.Instance.GetAll()
+            .Where(v => v.Conduct == VerbConduct.Intrusive).Select(v => v.VerbId).OrderBy(id => id)));
+        sb.AppendLine();
     }
 
     /// <summary>

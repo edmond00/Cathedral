@@ -36,17 +36,20 @@ public sealed class Fern : ConsumableItem
         .Add<PulpHumor>(45).Add<FungiHumor>(30).Add<FiberHumor>(25);
 }
 
-public sealed class Ivy : Item
+public sealed class Ivy : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
     public override string ItemId      => "ivy";
     public override string DisplayName => "Ivy";
     public override string Description => "A trailing length of ivy, leaves leathery and dark";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FiberHumor>(50).Add<NauseaHumor>(30).Add<VenomHumor>(20);
 }
 
 public sealed class Bramble : ConsumableItem

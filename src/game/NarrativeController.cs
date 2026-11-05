@@ -4777,10 +4777,16 @@ public class NarrativeController
                 outp.Add($"workshop \"{section.DisplayName}\" stations={string.Join(",", stations.Select(s => s.DisplayName.Replace(' ', '_')))} "
                        + $"master={master?.Archetype.ArchetypeId ?? "none"} "
                        + $"authorized={(Cathedral.Game.Narrative.Crafting.CraftingAccess.IsAuthorized(_scene, section) ? "yes" : "no")} "
-                       // Which of them the acting member is offered USE on from where it stands: the gate itself,
-                       // read directly, so a script need not get a thinking mind to choose it to prove a refusal.
+                       // Which of them the acting member may lawfully USE from where it stands, and which it is
+                       // offered only as a crime: the gates themselves, read directly, so a script need not get a
+                       // thinking mind to choose it.
                        + $"usable={string.Join(",", stations.Where(st => _pov != null && st is Cathedral.Game.Scene.PointOfInterest p
-                                       && Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get("use") is { } use && use.IsPossible(_scene, _pov, p, actor))
+                                       && Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get("use") is { } use && use.IsPossible(_scene, _pov, p, actor)
+                                       && !use.IsIllegal(_scene, _pov, p, actor))
+                                     .Select(st => st.DisplayName.Replace(' ', '_')).DefaultIfEmpty("none"))} "
+                       + $"crime={string.Join(",", stations.Where(st => _pov != null && st is Cathedral.Game.Scene.PointOfInterest p
+                                       && Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get("use") is { } use && use.IsPossible(_scene, _pov, p, actor)
+                                       && use.IsIllegal(_scene, _pov, p, actor))
                                      .Select(st => st.DisplayName.Replace(' ', '_')).DefaultIfEmpty("none"))}");
             }
 

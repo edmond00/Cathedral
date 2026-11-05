@@ -6,6 +6,18 @@ using Cathedral.Game.Npc;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
+/// What an act does to the ground it is done on. Asked of a protected floor only
+/// (<see cref="AreaTenure.Protected"/>): anywhere else the answer changes nothing.
+/// </summary>
+public enum VerbConduct
+{
+    /// <summary>Leaves the place as it was: speech, the senses, waiting, walking.</summary>
+    Passive,
+    /// <summary>Lays hands on what belongs to the place: taking, working its stations, breaking, digging.</summary>
+    Intrusive,
+}
+
+/// <summary>
 /// Abstract action that can modify the active party member (inventory),
 /// the <see cref="PoV"/> (changing area/focus), or the <see cref="Scene"/> state (unlocking, etc.).
 /// Verbs are registered in the global <see cref="VerbRegistry"/> and filtered per scene.
@@ -41,12 +53,20 @@ public abstract class Verb
     ///
     /// <para>Legality is contextual, not a constant: a blow struck at somebody who is already your
     /// enemy is self-defence, a lock picked on a public storehouse is nobody's business, and a bowl
-    /// smashed in a public hall is only bad manners. A null actor means "no particular body" (content
+    /// smashed in a public square is only bad manners. A null actor means "no particular body" (content
     /// audits, tooling) and is treated as having no enemies — the strictest reading, so an audit never
     /// under-reports what is a crime.</para>
     /// </summary>
     public bool IsIllegal(Scene scene, PoV pov, Element? target, PartyMember? actor = null)
-        => PrivacyModel.IsTrespassing(scene, pov.Where) || IsIllegalFor(scene, pov, target, actor);
+        => PrivacyModel.IsTrespassing(scene, pov.Where)
+           || (Conduct == VerbConduct.Intrusive && PrivacyModel.IsIntrusion(scene, pov))
+           || IsIllegalFor(scene, pov, target, actor);
+
+    /// <summary>
+    /// Whether this verb lays hands on the place. Passive by default; override for anything that takes,
+    /// works, breaks or digs. <c>--crime-audit</c> lists every intrusive verb, so the set stays in view.
+    /// </summary>
+    public virtual VerbConduct Conduct => VerbConduct.Passive;
 
     /// <summary>
     /// The verb's own condition for being a crime, asked outside anybody's private space.

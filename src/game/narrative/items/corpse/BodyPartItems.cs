@@ -320,7 +320,7 @@ public sealed class Silk : BodyPartItem
 }
 
 /// <summary>Bait. The reason a fisherman turns over stones.</summary>
-public sealed class Grub : BodyPartItem
+public sealed class Grub : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Food });
     public override string ItemId      => "grub";
@@ -329,6 +329,13 @@ public sealed class Grub : BodyPartItem
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override IReadOnlyList<string> MadeForVerbIds => new[] { "fish" };
     public override int UsageLevel => 1;
+    public override ItemSize Size => ItemSize.Small;
+    public override WeightClass Weight => WeightClass.Insignificant;
+    public override CoinType PriceCoin => CoinType.Copper;
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Modest;
+    protected override HumorRecipe Recipe => new HumorRecipe()
+        .Add<FatHumor>(60).Add<SerumHumor>(40);
 }
 
 public sealed class Wax : BodyPartItem

@@ -13,9 +13,10 @@ their dice in.
 
 ## 1. Materials
 
-Every item is made of nought, one or several **materials**, of which there are eleven: ore, metal,
-wood, fibre, cloth, hide, leather, clay, fat, bone and stone. A knife is of metal and wood, a tunic of
-cloth, a horseshoe of metal; a loaf of bread, a feather or a letter is of nothing a station can use.
+Every item that is not consumed is made of one or several **materials**, of which there are eleven:
+ore, metal, wood, fibre, cloth, hide, leather, clay, fat, bone and stone. A knife is of metal and wood,
+a tunic of cloth, a horseshoe of metal. A consumable may be of none: a loaf of bread or an apple is of
+nothing a station can use.
 
 **An item holds a number of units of each of its materials set by its burden** (see
 [IV §1](04-items.md)), doubling at each step:
@@ -91,10 +92,12 @@ wood and fibre lie in most places — and a trade is not the less a desire for b
 
 ## 4. Leave
 
-**A station inside a workshop that has a master is used only with the master's leave.** The master
-is the workshop's owner of highest authority who is alive and can speak. A station that no one owns —
-an anvil among ruins, an anvil set out in a street, a tanning pit in a public quarter — is used by
-whoever comes upon it, and no leave is asked or wanted.
+**A station inside a workshop that has a master is lawfully used only with the master's leave.** The
+master is the workshop's owner of highest authority who is alive and can speak. A station on the
+workshop's entry floor may be set to work without it, and that is a crime, as any laying of hands on
+protected ground is ([VI §7](06-narration.md)); a station on other ground is not to be used at all
+without it. A station that no one owns — an anvil among ruins, an anvil set out in a street, a tanning
+pit in a public quarter — is used by whoever comes upon it, and no leave is asked or wanted.
 
 The leave is asked in conversation, and only by a body holding a trade whose station stands in that
 workshop; no other has a reason to ask, and none is offered the asking. The conversation is a
@@ -103,12 +106,13 @@ gives nothing, and the asking may be made again.
 
 **Leave once given is given for good.** It covers every station of the workshop, it is remembered of
 the location on every later visit, and it makes the body's presence in the workshop no trespass (see
-[VI §7](06-narration.md)). It gives no title to what lies on the workshop's shelves: taking from a
-master's stock is what it always was.
+[VI §7](06-narration.md)). What lies on the entry floor it makes free to take, and to take it is then
+no crime. What lies in the private rooms behind remains the master's, and to take it is theft still.
 
 It is to be observed that the asking is **a step on the way**, never a thing a trade wants. A trade's
 will reckons the leave a conversation would give, and so plans through it: ask the master, then set to
-work. Being a step and not the end, the conversation is carried by whichever speaking modus mentis is
+work. A will does not plan the working of a station without leave, nor the lifting of an implement to do
+it with. Being a step and not the end, the conversation is carried by whichever speaking modus mentis is
 judged fittest, so that a trade which has no speech of its own is not thereby barred from a master's
 workshop.
 

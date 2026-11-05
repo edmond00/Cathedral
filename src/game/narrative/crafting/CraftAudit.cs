@@ -35,6 +35,8 @@ public static class CraftAudit
         sb.AppendLine("=== CRAFT AUDIT ===");
         sb.AppendLine($"{trades.Count} crafting modi mentis, {CraftingStations.All.Count} station kinds, "
                     + $"{CraftMaterials.All.Length} materials, {items.Count(i => ItemMaterials.Of(i).Count > 0)} of {items.Count} items hold a material");
+        foreach (var i in items.Where(i => i is not ConsumableItem && ItemMaterials.Of(i).Count == 0))
+            fails.Add($"✗ {i.ItemId} is no consumable and holds no material");
         sb.AppendLine();
 
         // ── Materials ─────────────────────────────────────────────────────────

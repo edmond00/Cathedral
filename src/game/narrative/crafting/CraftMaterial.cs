@@ -65,8 +65,8 @@ public static class CraftMaterials
 /// gives back, so the two directions can never disagree.</para>
 ///
 /// <para>The table is keyed by <b>type</b>, never by name, like everything else that identifies content.
-/// An item absent from it holds nothing a station can use — a loaf, a feather, a letter. Coverage is
-/// printed by <c>--craft-audit</c>.</para>
+/// Only a consumable may be absent from it — a loaf, an apple. <c>--craft-audit</c> fails on anything
+/// else that holds no material.</para>
 /// </summary>
 public static class ItemMaterials
 {
@@ -97,6 +97,17 @@ public static class ItemMaterials
 
     private static readonly Dictionary<Type, CraftMaterial[]> Table = new()
     {
+        [typeof(Cathedral.Game.Narrative.Items.PineCone)] = M(CraftMaterial.Wood),
+        [typeof(Cathedral.Game.Narrative.Items.Thorn)] = M(CraftMaterial.Wood),
+        [typeof(Cathedral.Game.Narrative.Items.Feather)] = M(CraftMaterial.Bone),
+        [typeof(Cathedral.Game.Narrative.Items.Plume)] = M(CraftMaterial.Bone),
+        [typeof(Cathedral.Game.Narrative.Items.Wing)] = M(CraftMaterial.Bone),
+        [typeof(Cathedral.Game.Narrative.World.Items.Pen)] = M(CraftMaterial.Wood),
+        [typeof(Cathedral.Game.Narrative.World.Items.Tar)] = M(CraftMaterial.Wood),
+        [typeof(Cathedral.Game.Narrative.World.Items.Lye)] = M(CraftMaterial.Fat),
+        [typeof(Cathedral.Game.Narrative.World.Items.Coal)] = M(CraftMaterial.Ore),
+        [typeof(Cathedral.Game.Narrative.World.Items.Peat)] = M(CraftMaterial.Stone),
+        [typeof(Cathedral.Game.Narrative.World.Items.Guano)] = M(CraftMaterial.Stone),
         [typeof(Cathedral.Game.Narrative.Items.Antler)] = M(CraftMaterial.Bone),
         [typeof(Cathedral.Game.Narrative.Items.ArmingSword)] = M(CraftMaterial.Metal),
         [typeof(Cathedral.Game.Narrative.Items.BakersPeel)] = M(CraftMaterial.Wood),

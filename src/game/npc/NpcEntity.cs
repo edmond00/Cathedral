@@ -186,8 +186,11 @@ public class NpcEntity : INpcEntity
     /// <summary>Tag of the goods this NPC sells (player can buy). Null = sells nothing.</summary>
     public Narrative.ItemTag? SellTag => Archetype.SellTag;
 
-    /// <summary>Tag of the goods this NPC buys (player can sell). Null = buys nothing.</summary>
+    /// <summary>Tag of what the trade takes in (player can sell), besides its own line. Null = takes nothing in.</summary>
     public Narrative.ItemTag? BuyTag => Archetype.BuyTag;
+
+    /// <summary>The tag a proposal to sell speaks of: what the trade takes in, else its own line.</summary>
+    public Narrative.ItemTag? BoughtTag => BuyTag ?? SellTag;
 
     /// <summary>True when this NPC trades in either direction.</summary>
     public bool Trades => SellTag != null || BuyTag != null;
@@ -235,7 +238,7 @@ public class NpcEntity : INpcEntity
 
     /// <summary>The catalogue of goods this NPC buys from the player (lazy, cached, seeded by id).</summary>
     public Trade.NpcTradeCatalog? SellCatalog =>
-        BuyTag is { } tag ? _sellCatalog ??= Trade.NpcTradeCatalog.Build(NpcId, Trade.TradeMode.Sell, tag) : null;
+        Trades ? _sellCatalog ??= Trade.NpcTradeCatalog.BuildBuying(NpcId, BuyTag, SellTag) : null;
 
     // ── IsAlive ───────────────────────────────────────────────────────────────
 

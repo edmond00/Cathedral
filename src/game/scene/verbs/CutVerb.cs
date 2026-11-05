@@ -28,6 +28,9 @@ public class CutVerb : Verb
     };
     public override int    BaseDifficulty => 2;
 
+    /// <summary>Lays hands on what belongs to the place.</summary>
+    public override VerbConduct Conduct => VerbConduct.Intrusive;
+
     /// <summary>Butchering a carcass is knife work. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 

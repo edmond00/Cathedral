@@ -414,7 +414,7 @@ public class ProposeToSellTree : DialogueTree
     {
         // No introduction needed: trade happens on the trader's premises, where dealing with a
         // stranger is the whole business (see TradeGate). An enemy still will not deal.
-        if (npc.BuyTag is null) return false;
+        if (!npc.Trades) return false;
         return !npc.AffinityTable.IsEnemy(partyMemberId);
     }
 }
