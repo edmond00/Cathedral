@@ -17,8 +17,9 @@ namespace Cathedral.Game.Narrative.Crafting;
 ///     used by whoever finds it.</item>
 /// </list>
 ///
-/// <para>Using a forge behind its master's back is not a crime the game models; it is not offered at
-/// all. A smith's anvil is not something a stranger takes over unnoticed.</para>
+/// <para>Using a station without leave is offered only on a protected floor
+/// (<see cref="AreaTenure.Protected"/>), where it is a crime like any other intrusive act. It stays
+/// unoffered on other ground, and a will never plans it: its way is to ask, then work.</para>
 /// </summary>
 public static class CraftingAccess
 {
@@ -51,11 +52,16 @@ public static class CraftingAccess
     /// given — or supposed given by the planner (<see cref="PoV.PlannedLeave"/>).
     /// </summary>
     public static bool MayUse(Scene.Scene scene, PoV pov, PointOfInterest station)
-    {
-        if (WorkshopOf(scene, station) is not { } section) return true;
-        if (MasterOf(scene, section) == null) return true;
-        return IsAuthorized(scene, section) || pov.PlannedLeave == section.DisplayName;
-    }
+        => WorkshopOf(scene, station) is not { } section || HasLeave(scene, pov, section);
+
+    /// <summary>
+    /// Whether <paramref name="section"/> asks nothing of <paramref name="pov"/>: it has no master, or
+    /// its leave is given, or the planner supposes it given.
+    /// </summary>
+    public static bool HasLeave(Scene.Scene scene, PoV pov, Section section)
+        => MasterOf(scene, section) == null
+           || IsAuthorized(scene, section)
+           || pov.PlannedLeave == section.DisplayName;
 
     /// <summary>
     /// The workshops <paramref name="master"/> owns that hold a station one of

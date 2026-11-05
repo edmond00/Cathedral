@@ -20,6 +20,7 @@ namespace Cathedral.Game.Narrative.Items;
 public sealed class StableChildSmock : WearableItem
 {
     public override string ItemId           => "stable_child_smock";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Stable Child Smock";
     public override string Description      => "A coarse linen smock stained with hay-dust and oat husks";
     public override ItemSize Size           => ItemSize.Medium;
@@ -31,6 +32,7 @@ public sealed class StableChildSmock : WearableItem
 public sealed class StableChildBreeches : WearableItem
 {
     public override string ItemId           => "stable_child_breeches";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Stable Child Breeches";
     public override string Description      => "Knee-length wool breeches patched at the seat";
     public override WearSlot Slot           => WearSlot.Legwear;
@@ -41,6 +43,7 @@ public sealed class StableChildBreeches : WearableItem
 public sealed class StableChildClogs : WearableItem
 {
     public override string ItemId           => "stable_child_clogs";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Footwear };
     public override string DisplayName      => "Wooden Clogs";
     public override string Description      => "Heavy wooden clogs, soled with old straw padding";
     public override WearSlot Slot           => WearSlot.Footwear;
@@ -54,6 +57,7 @@ public sealed class StableChildClogs : WearableItem
 public sealed class TownsmanCloak : WearableItem
 {
     public override string ItemId           => "townsman_cloak";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Townsman Cloak";
     public override string Description      => "A serviceable hooded cloak of plain dark wool";
     public override ItemSize Size           => ItemSize.Medium;
@@ -66,6 +70,7 @@ public sealed class TownsmanCloak : WearableItem
 public sealed class TownsmanTunic : WearableItem
 {
     public override string ItemId           => "townsman_tunic";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Townsman Tunic";
     public override string Description      => "A plain belted tunic of undyed linen";
     public override ItemSize Size           => ItemSize.Medium;
@@ -77,6 +82,7 @@ public sealed class TownsmanTunic : WearableItem
 public sealed class TownsmanBreeches : WearableItem
 {
     public override string ItemId           => "townsman_breeches";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Townsman Breeches";
     public override string Description      => "Knee-length grey breeches of close-woven wool";
     public override WearSlot Slot           => WearSlot.Legwear;
@@ -87,6 +93,7 @@ public sealed class TownsmanBreeches : WearableItem
 public sealed class TownsmanCap : WearableItem
 {
     public override string ItemId           => "townsman_cap";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Townsman Cap";
     public override string Description      => "A felt cap with a turned-up brim";
     public override WearSlot Slot           => WearSlot.Headgear;
@@ -98,6 +105,7 @@ public sealed class TownsmanCap : WearableItem
 public sealed class PlainRobe : WearableItem
 {
     public override string ItemId           => "plain_robe";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Plain Robe";
     public override string Description      => "A long undyed wool robe with a knotted cord at the waist";
     public override ItemSize Size           => ItemSize.Large;
@@ -110,6 +118,7 @@ public sealed class PlainRobe : WearableItem
 public sealed class FarmerSmock : WearableItem
 {
     public override string ItemId           => "farmer_smock";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Farmer Smock";
     public override string Description      => "A heavy linen smock smelling faintly of grain and barn";
     public override ItemSize Size           => ItemSize.Medium;
@@ -120,6 +129,7 @@ public sealed class FarmerSmock : WearableItem
 public sealed class FarmerBreeches : WearableItem
 {
     public override string ItemId           => "farmer_breeches";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Farmer Breeches";
     public override string Description      => "Sturdy wool breeches, knee-tied with leather thongs";
     public override WearSlot Slot           => WearSlot.Legwear;
@@ -129,6 +139,7 @@ public sealed class FarmerBreeches : WearableItem
 public sealed class FarmerStrawHat : WearableItem
 {
     public override string ItemId           => "farmer_straw_hat";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Straw Hat";
     public override string Description      => "A wide-brimmed straw hat, bleached pale by sun";
     public override WearSlot Slot           => WearSlot.Headgear;
@@ -138,6 +149,7 @@ public sealed class FarmerStrawHat : WearableItem
 public sealed class FarmerClogs : WearableItem
 {
     public override string ItemId           => "farmer_clogs";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Footwear };
     public override string DisplayName      => "Farmer Clogs";
     public override string Description      => "Caked wooden clogs, heavy and serviceable";
     public override WearSlot Slot           => WearSlot.Footwear;
@@ -149,6 +161,7 @@ public sealed class FarmerClogs : WearableItem
 public sealed class SilkStockings : WearableItem
 {
     public override string ItemId           => "silk_stockings";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Silk Stockings";
     public override string Description      => "A pair of pale-grey silk stockings, finely knitted";
     public override WearSlot Slot           => WearSlot.Legwear;
@@ -158,6 +171,7 @@ public sealed class SilkStockings : WearableItem
 public sealed class KneeLengthCoat : WearableItem
 {
     public override string ItemId           => "knee_length_coat";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName      => "Knee-length Coat";
     public override string Description      => "A panelled coat of dark wool trimmed in velvet";
@@ -171,6 +185,7 @@ public sealed class KneeLengthCoat : WearableItem
 public sealed class NobleUndertunic : WearableItem
 {
     public override string ItemId           => "noble_undertunic";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Clothing };
     public override string DisplayName      => "Noble Undertunic";
     public override string Description      => "A fine ivory linen undertunic with embroidered cuffs";
     public override ItemSize Size           => ItemSize.Medium;
@@ -181,6 +196,7 @@ public sealed class NobleUndertunic : WearableItem
 public sealed class SoftLeatherShoes : WearableItem
 {
     public override string ItemId           => "soft_leather_shoes";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Footwear };
     public override string DisplayName      => "Soft Leather Shoes";
     public override string Description      => "Thin-soled shoes of supple dyed leather, not made for rough roads";
     public override WearSlot Slot           => WearSlot.Footwear;
@@ -191,6 +207,7 @@ public sealed class SoftLeatherShoes : WearableItem
 public sealed class TravelersBackpack : WearableContainerItem
 {
     public override string ItemId           => "travelers_backpack";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override string DisplayName      => "Travellers' Pack";
     public override string Description      => "A heavy canvas pack with leather straps, sized for the road";
     public override ItemSize Size           => ItemSize.Large;
@@ -219,6 +236,7 @@ public sealed class Sausage : ConsumableItem
 public sealed class LeatherCanteen : WearableContainerItem
 {
     public override string ItemId           => "leather_canteen";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override string DisplayName      => "Leather Canteen";
     public override string Description      => "A wax-treated leather canteen on a long shoulder strap";
     public override ItemSize Size           => ItemSize.Small;
@@ -291,7 +309,7 @@ public sealed class WoodenStick : WeaponItem
     public override bool   IsImprovised   => true;
     public override string WeaponCategory => "blunt";
     public override int    UsageLevel     => 1;
-    public override List<ItemTag> Tags    => new();
+    public override List<ItemTag> Tags    => new() { ItemTag.Woodwork };
 }
 
 /// <summary>
@@ -302,6 +320,7 @@ public sealed class WoodenDoll : Item
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "wooden_doll";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Woodwork };
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Wooden Doll";
     public override string Description => "A small, lovingly worn doll of carved oak — a sleeping princess once";

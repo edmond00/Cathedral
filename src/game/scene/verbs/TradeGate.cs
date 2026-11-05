@@ -1,3 +1,4 @@
+using System.Linq;
 using Cathedral.Game.Dialogue.Affinity;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
@@ -33,6 +34,18 @@ internal static class TradeGate
             if (scene.GetAreaOf(trader, when) is { } area && npc.TradesIn(area)) return (area, when);
         }
         return null;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="npc"/> would buy anything <paramref name="actor"/> carries: the same
+    /// reading as the sell menu, by type, a container only when empty. Free proposing does not ask
+    /// this; a will does, since a will to sell has no business with a trader who wants nothing it holds.
+    /// </summary>
+    public static bool BuysSomethingOf(NpcEntity npc, PartyMember actor)
+    {
+        if (npc.SellCatalog is not { } catalog) return false;
+        var held = actor.GetAllItems().Where(i => i is not IContainer { Contents.Count: > 0 }).ToList();
+        return catalog.Offers.Any(o => held.Any(i => i.GetType() == o.Prototype.GetType()));
     }
 
     public static bool CanTrade(NpcEntity npc, PartyMember? actor, Area where)

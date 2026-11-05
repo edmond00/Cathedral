@@ -81,7 +81,7 @@ public class RoutineRecorder
             TradeName    = trade.DisplayName,
             ToolItemId   = tool?.ItemId ?? "",
             ToolItemName = tool?.DisplayName ?? "",
-        }, pov, IsRecordable(scene, pov.Where));
+        }, pov, IsRecordable(scene, pov.Where) && Crafting.CraftingAccess.MayUse(scene, pov, request.Station));
     }
 
     // ── The five moments ──────────────────────────────────────────────────────

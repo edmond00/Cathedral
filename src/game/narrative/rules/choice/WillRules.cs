@@ -107,7 +107,7 @@ public static class WillPriority
 
     /// <summary>Whether <paramref name="goal"/> is the act the will wants, or the first step of a way to it it would take.</summary>
     public static bool OnItsWay(ModusMentis mm, Scene.Scene scene, PoV pov, PartyMember actor, VerbAction goal)
-        => mm.Will!.Matches(goal) || WaysOn(mm, scene, pov, actor, new[] { goal }).Count > 0;
+        => ActionPathPlanner.IsGoal(mm.Will!, goal, actor) || WaysOn(mm, scene, pov, actor, new[] { goal }).Count > 0;
 
     /// <summary>
     /// Whether a will carries its step out itself: it bears the Action function and the body can still
@@ -137,7 +137,7 @@ public class WillActionNeverRefusesItsPathRule : IWillingnessRule
         if (!ctx.Probe)
             Console.WriteLine($"ChoiceRules: [{ctx.ModusMentis.DisplayName}] wills it — no refusal offered for its own path.");
         var assent = offered.WithoutDecline() with { ImposedRefusal = null };
-        return WillPriority.ActsItself(ctx.ModusMentis) && ctx.ModusMentis.Will!.Matches(goal)
+        return WillPriority.ActsItself(ctx.ModusMentis) && ActionPathPlanner.IsGoal(ctx.ModusMentis.Will!, goal, ctx.Actor)
                && assent.Stances.Contains(EagerStance)
             ? assent with { Stances = new[] { EagerStance } }
             : assent;

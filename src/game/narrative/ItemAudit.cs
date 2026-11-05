@@ -707,13 +707,28 @@ public static class ItemAudit
         foreach (ItemTag tag in Enum.GetValues<ItemTag>())
         {
             var sellers = traders.Where(a => a.SellTag == tag).Select(a => a.ArchetypeId).ToList();
-            var buyers  = traders.Where(a => a.BuyTag  == tag).Select(a => a.ArchetypeId).ToList();
+            var buyers  = traders.Where(a => a.BuyTag == tag || a.SellTag == tag).Select(a => a.ArchetypeId).ToList();
             sb.AppendLine($"    {tag,-13} sold by {(sellers.Count == 0 ? "nobody" : string.Join(", ", sellers))}");
             sb.AppendLine($"    {"",-13} bought by {(buyers.Count == 0 ? "nobody" : string.Join(", ", buyers))}");
             foreach (var line in Columnise(items.Where(i => i.Tags.Contains(tag)).Select(i => i.ItemId).OrderBy(s => s, StringComparer.Ordinal), perLine: 5, width: 22))
                 sb.AppendLine($"      {line}");
             if (sellers.Count == 0 && items.Any(i => i.Tags.Contains(tag)))
                 sb.AppendLine($"      (no seller: these are only ever bought)");
+        }
+        sb.AppendLine();
+
+        // Everything lasting can find a buyer: nothing a body keeps should be worth nothing anywhere.
+        // A trader takes in their BuyTag and buys back their SellTag. A catalogue is a draw from a tag, so
+        // this says "potentially", not "here".
+        var bought = traders.SelectMany(a => new[] { a.BuyTag, a.SellTag }).OfType<ItemTag>().ToHashSet();
+        var unsellable = items.Where(i => i is not ConsumableItem && !i.ItemId.StartsWith("debug_") && !i.ItemId.StartsWith("fight_")
+                                       && !i.Tags.Any(bought.Contains)).OrderBy(i => i.ItemId, StringComparer.Ordinal).ToList();
+        sb.AppendLine($"  {(unsellable.Count == 0 ? "✓" : "✗")} every non-consumable has a trader who buys its kind "
+                    + $"({unsellable.Count} without)");
+        foreach (var i in unsellable)
+        {
+            sb.AppendLine($"  ✗ {i.ItemId} ({i.Category}): no trader buys [{string.Join(", ", i.Tags)}]");
+            warnings.Add($"{i.ItemId} is no consumable and no trader buys it");
         }
         sb.AppendLine();
 

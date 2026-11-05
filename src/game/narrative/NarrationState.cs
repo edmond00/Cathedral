@@ -35,11 +35,18 @@ public abstract class ModusMentisChainElement
     /// bear. Summing the stored levels lets a ruined arm roll its full pool. The parameter is
     /// optional because the display paths (the action line's level pips, the scroll buffer) read this
     /// without a body to hand; every path that becomes dice has one.</para>
+    ///
+    /// <para>An implement in the chain is lent whole. It is no modus mentis of the body: it has no
+    /// organs, so the ceiling would read as the base of 1 and a level 4 rake would lend one die.</para>
     /// </summary>
     public int GetTotalModusMentisLevel(PartyMember? member = null)
     {
-        int Level(ModusMentis? mm) =>
-            mm == null ? 0 : member?.GetEffectiveModusMentisLevel(mm) ?? mm.Level;
+        int Level(ModusMentis? mm) => mm switch
+        {
+            null => 0,
+            SyntheticItemModusMentis => mm.Level,
+            _ => member?.GetEffectiveModusMentisLevel(mm) ?? mm.Level,
+        };
 
         int total = Level(ChainModusMentis);
         var current = ChainOrigin;

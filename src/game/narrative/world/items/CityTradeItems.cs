@@ -255,7 +255,7 @@ public sealed class TanBark : Item
     public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
-    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
+    public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber, ItemTag.Pelt };
 }
 
 // ── potter ────────────────────────────────────────────────────────────────

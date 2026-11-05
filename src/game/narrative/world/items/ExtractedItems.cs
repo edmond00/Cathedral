@@ -152,6 +152,7 @@ public sealed class SplinteredTimber : WoodRawItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flotsam });
     public override string ItemId      => "splintered_timber";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Timber };
     public override string DisplayName => "Splintered Timber";
     public override string Description => "Broken boards with the nails still in them, sprung apart along the grain";
     public override WeightClass Weight => WeightClass.Light;

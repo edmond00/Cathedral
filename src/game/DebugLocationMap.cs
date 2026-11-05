@@ -132,6 +132,9 @@ public sealed class DebugLocationMap
     private static readonly Vector4 PrivateBand     = new(0.200f, 0.125f, 0.270f, 1f);
     private static readonly Vector4 PrivateFill     = new(0.080f, 0.050f, 0.105f, 1f);
     private static readonly Vector4 PrivateName     = Config.Colors.LightPurple;
+    private static readonly Vector4 ProtectedBand   = new(0.185f, 0.155f, 0.215f, 1f);
+    private static readonly Vector4 ProtectedFill   = new(0.078f, 0.066f, 0.090f, 1f);
+    private static readonly Vector4 ProtectedName   = Config.Colors.LightGray85;
     private static readonly Vector4 HereBand        = new(0.360f, 0.290f, 0.030f, 1f);
     private static readonly Vector4 HereFill        = new(0.130f, 0.105f, 0.015f, 1f);
     private static readonly Vector4 HereName        = Config.Colors.BrightYellow;
@@ -574,9 +577,9 @@ public sealed class DebugLocationMap
         {
             bool isHere = here != null && area.Id == here.Id;
             var known = AreaKnown(area);
-            var band = isHere ? HereBand : area.IsPrivate ? PrivateBand : BoxBand;
-            var fill = isHere ? HereFill : area.IsPrivate ? PrivateFill : BoxFill;
-            var ink  = isHere ? HereName : area.IsPrivate ? PrivateName : BoxName;
+            var band = isHere ? HereBand : area.IsPrivate ? PrivateBand : area.IsProtected ? ProtectedBand : BoxBand;
+            var fill = isHere ? HereFill : area.IsPrivate ? PrivateFill : area.IsProtected ? ProtectedFill : BoxFill;
+            var ink  = isHere ? HereName : area.IsPrivate ? PrivateName : area.IsProtected ? ProtectedName : BoxName;
             if (known == Known.Seen)
             {
                 band = Shade(band, SeenShade); fill = Shade(fill, SeenShade); ink = Shade(ink, SeenShade);
@@ -607,7 +610,7 @@ public sealed class DebugLocationMap
 
             // Who is about is only known where you stand: a count anywhere else would be a sighting
             // nobody made.
-            string tenure = area.IsPrivate ? "private" : area.IsWild ? "wild" : "public";
+            string tenure = TenureLabel(scene, area);
             string detail = isHere ? $"you · {scene.GetNpcsAt(area, period).Count} npc"
                           : known == Known.Visited ? tenure
                           : known == Known.Seen ? "not visited"
@@ -1335,13 +1338,21 @@ public sealed class DebugLocationMap
         return c < _lineAt.Length && _lineAt[c] is { } link ? LinkLabel(link) : null;
     }
 
+    /// <summary>Whose ground a card names. A protected floor says when its master has given leave.</summary>
+    private static string TenureLabel(Scene.Scene? scene, Area area)
+        => area.IsPrivate ? "private"
+         : area.IsWild ? "wild"
+         : !area.IsProtected ? "public"
+         : scene?.SectionOf(area) is { } section && Narrative.Crafting.CraftingAccess.IsAuthorized(scene, section) ? "authorized"
+         : "protected";
+
     private HoverLabel AreaLabel(Area area)
     {
         var known = _paintedKnown.TryGetValue(area, out var k) ? k : Known.Unknown;
         if (_paintedChoosable != null && _paintedChoosable.Contains(area))
             return new($"go back to {area.DisplayName}", true);
         if (known == Known.Unknown) return new("an unknown area", false);
-        string tenure = area.IsPrivate ? "private" : area.IsWild ? "wild" : "public";
+        string tenure = TenureLabel(_laidOut, area);
         string state = _paintedHere != null && area.Id == _paintedHere.Id ? "you are here"
                      : known == Known.Visited ? "visited" : "seen, not visited";
         return new($"{area.DisplayName} · {tenure} · {state}", false);

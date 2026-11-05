@@ -233,7 +233,8 @@ function a modus mentis bears, since that decides where in the machinery it is c
   needs an implement the body lacks, through taking one up or proposing to buy one from somebody whose
   wares include it — the act's own implement, or anything made for that act, as keys are for a lock. It cannot be reckoned through anything whose issue is not known beforehand — a fight, a
   roll, a conversation — save two conversations whose success says all the course needs: the leave of a
-  workshop, and a trader's leading the way to their premises. Where no course to any of its wants exists within the place, the will
+  workshop, and a trader's leading the way to their premises. A want is either to buy or to sell, never both. A will to sell
+  accepts as its end only a trader who would buy something the body carries, and it searches a place for no other. Where no course to any of its wants exists within the place, the will
   refuses everything there, and says it would have to leave to find what it wants. A will that bears the
   Action function carries out the act it wants itself, and never refuses one of its own course. The
   acts that lead to it are another matter: their means is chosen as for any goal, the will among

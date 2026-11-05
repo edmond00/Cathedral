@@ -1,0 +1,24 @@
+# A master's floor: a will asks first, and takes only with the leave
+#
+# The smelter stands on the smith's protected floor with no charcoal rake, and the rake lies on the
+# hearth. His will's nearest aim is to take it up. Without leave taking it is a theft, which a will that
+# wants a grab does not plan, so the plan is the lawful one, two steps: ask the smith, grab the rake.
+# `inspect workshops` reads the gates directly: the hearth, the one station his trade works, is offered
+# only as a crime until the leave is given.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm smelting --location-type test --location-id 0 --start-area "Test Forge" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+expect-state workshops usable=none
+expect-state workshops crime=Test_Forge_Hearth
+expect-state will will smelting steps=2
+expect-state will for the use of the test smithy
+expect-state will grab a charcoal rake
+quit

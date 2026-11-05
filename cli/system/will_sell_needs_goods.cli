@@ -1,0 +1,19 @@
+# A will to sell looks for a trader who buys something carried
+#
+# The hawker wants to sell, and stands before the brewer, who trades here and buys crops. This body
+# carries no crop, so selling to the brewer is no end for the will. The proposal stays offered to a free
+# mind (cli/verb/propose_to_sell); only the will passes it by. will_sell_finds_buyer.cli is the same
+# scene carrying what the brewer buys.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm hawking --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+expect-state will will hawking steps=none
+quit

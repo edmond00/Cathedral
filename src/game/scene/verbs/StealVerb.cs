@@ -8,7 +8,8 @@ using Cathedral.Game.Narrative.ModiMentis;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Steals an item from a <see cref="Area.IsPrivate"/> area.
+/// Steals an item from where it is not free to take (<see cref="PrivacyModel.IsFreeToTake"/>): a
+/// private room, always; a protected floor, until its master gives leave.
 /// Functionally identical to <see cref="GrabVerb"/> but marks the action as illegal,
 /// which triggers witness detection and the "caught red-handed" dialogue on failure.
 /// </summary>
@@ -19,6 +20,9 @@ public class StealVerb : Verb
     public override string DisplayName    => "Steal";
     public override int    BaseDifficulty => 3;
 
+    /// <summary>Lays hands on what belongs to the place.</summary>
+    public override VerbConduct Conduct => VerbConduct.Intrusive;
+
     /// <summary>Lifting something and carrying it away. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
@@ -27,15 +31,15 @@ public class StealVerb : Verb
 
     /// <summary>
     /// Taking what is not yours is a crime wherever it happens. Unconditional here rather than left
-    /// to the sealed setting test: the verb already requires a private area, so the two agree today —
-    /// but a chest that stops being private must not quietly become free to loot.
+    /// to the setting tests: a leave given or a stay tolerated lifts the trespass in a private room,
+    /// and what lies there is still not the taker's.
     /// </summary>
     protected override bool IsIllegalFor(Scene scene, PoV pov, Element? target, PartyMember? actor) => true;
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
-        if (!pov.Where.IsPrivate) return false;
+        if (PrivacyModel.IsFreeToTake(scene, pov)) return false;
 
         // A corpse's parts are cut, never stolen — you do not pickpocket a carcass for its own hide.
         // What the dead were carrying is a plain PoI beside the body, so it still steals normally.

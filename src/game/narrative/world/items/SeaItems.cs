@@ -66,6 +66,7 @@ public sealed class Shell : Item
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Shellfish, ItemKind.Flotsam });
     public override string ItemId      => "shell";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override string DisplayName => "Shell";
     public override string Description => "A banded spiral shell, chalky and empty, worn thin at the lip";
     public override ItemCategory Category => ItemCategory.Crafting;
@@ -93,6 +94,7 @@ public sealed class Driftwood : Item
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood, ItemKind.Flotsam, ItemKind.Fuel });
     public override string ItemId      => "driftwood";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Timber };
     public override string DisplayName => "Driftwood";
     public override string Description => "A water-pale piece of driftwood, salt-cracked";
     public override ItemCategory Category => ItemCategory.Crafting;
@@ -104,6 +106,7 @@ public sealed class RopeFragment : Item
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flotsam, ItemKind.Fibre });
     public override string ItemId      => "rope_fragment";
+    public override System.Collections.Generic.List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override string DisplayName => "Rope Fragment";
     public override string Description => "A frayed length of tarred rope cut by a tide-rock";
     public override ItemCategory Category => ItemCategory.Crafting;

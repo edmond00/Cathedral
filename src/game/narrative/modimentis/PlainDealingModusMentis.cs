@@ -14,7 +14,9 @@ public class PlainDealingModusMentis : ModusMentis
         "Names the defect, quotes one price, and does not move. Loses money on individual bargains and makes it back over rounds, because people come looking for the trader who does not need to be watched.";
     public override string SkillMeans       => "the one honest price, named and held";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTargets? Will => WillTarget.ToAny("trade at an honest price", typeof(ProposeToBuyVerb), typeof(ProposeToSellVerb));
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<ProposeToBuyVerb>("buy at an honest price"),
+        WillTarget.To<ProposeToSellVerb>("sell at an honest price"));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "tongue", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

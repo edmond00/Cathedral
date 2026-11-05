@@ -7,7 +7,7 @@ using Cathedral.Game.Npc;
 namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
-/// Proposes to sell a category of goods to an NPC (the NPC's <see cref="NpcEntity.BuyTag"/>).
+/// Proposes to sell goods to an NPC: what the trade takes in and what it sells itself (<see cref="NpcEntity.SellCatalog"/>).
 /// On success it opens the propose-to-sell dialogue; only succeeding THAT dialogue opens the
 /// sell menu. Gated to the NPC's premises, and to anyone who does not count
 /// you an enemy — no introduction is needed (see <see cref="TradeGate"/>).
@@ -25,7 +25,7 @@ public class ProposeToSellVerb : DialogueVerb
         if (SleeperGate.IsAsleep(scene, pov, target)) return false;  // wake them first
         if (sceneNpc.Entity is not NpcEntity npc) return false;
         if (!npc.CanSpeak || !npc.IsAlive) return false;
-        if (npc.BuyTag is null) return false;
+        if (!npc.Trades) return false;
         if (!scene.GetNpcsAt(pov.Where, pov.When).Exists(n => n.Id == sceneNpc.Id)) return false;
 
         return TradeGate.CanTrade(npc, actor, pov.Where);
@@ -34,7 +34,7 @@ public class ProposeToSellVerb : DialogueVerb
     public override string Verbatim(Scene scene, PoV pov, Element target)
     {
         var npc = (target as SceneNpc)?.Entity as NpcEntity;
-        string goods = npc?.BuyTag?.Label() ?? "goods";
+        string goods = npc?.BoughtTag?.Label() ?? "goods";
         return $"meet {NpcPronoun(target)} to propose to sell {goods}";
     }
 

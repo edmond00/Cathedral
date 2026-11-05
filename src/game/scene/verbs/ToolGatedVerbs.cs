@@ -22,6 +22,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// </summary>
 public abstract class ExtractionVerb : Verb
 {
+    /// <summary>Lays hands on what belongs to the place.</summary>
+    public override VerbConduct Conduct => VerbConduct.Intrusive;
+
     /// <summary>
     /// Work that yields nothing has still been worked: the hour goes into it, and the back with it.
     /// The heavier trades (mine, cut_wood) name their own injuries.
@@ -228,6 +231,9 @@ public class BreakVerb : Verb
     public override string VerbId         => "break";
     public override string DisplayName    => "Break";
     public override int    BaseDifficulty => 3;
+
+    /// <summary>Lays hands on what belongs to the place.</summary>
+    public override VerbConduct Conduct => VerbConduct.Intrusive;
 
     /// <summary>A hammer or an axe swung at a thing. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

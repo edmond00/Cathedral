@@ -495,6 +495,18 @@ public class MentalMapsPanelRenderer
                 else yield return ($"As {work.JobTitle} — work no longer offered", Config.Colors.DarkGray35);
                 break;
 
+            case CraftRoutine craft:
+                var worked = ModusMentisRegistry.Instance.GetModusMentis(craft.TradeId) as Cathedral.Game.Narrative.Crafting.CraftingModusMentis;
+                string tool = craft.ToolItemName.Length > 0 ? craft.ToolItemName : worked?.ToolPrototype?.DisplayName ?? "";
+                if (tool.Length > 0) yield return ($"  · needs: {tool}", plain);
+                if (worked == null) break;
+                yield return ("", plain);
+                yield return ("Can be made here:", head);
+                foreach (var made in worked.RecipePrototypes)
+                    yield return ($"  · {made.DisplayName}: {Cathedral.Game.Narrative.Crafting.ItemMaterials.Units(made)} {worked.Material.ToString().ToLowerInvariant()}, "
+                                + $"difficulty {Cathedral.Game.Narrative.Crafting.CraftRoll.Difficulty(made)}", plain);
+                break;
+
             case GatherRoutine gather:
                 yield return (RoutineRecorder.SameThing(gather.ItemName, gather.SourceName)
                     ? gather.SourceName : $"{gather.ItemName} from {gather.SourceName}", head);

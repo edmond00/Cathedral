@@ -32,6 +32,9 @@ public class GatherVerb : Verb
     };
     public override int    BaseDifficulty => 1;
 
+    /// <summary>Lays hands on what belongs to the place.</summary>
+    public override VerbConduct Conduct => VerbConduct.Intrusive;
+
     /// <summary>Picking and carrying off what grows. No hands, no verb.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
@@ -41,7 +44,7 @@ public class GatherVerb : Verb
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {
         if (target is not ItemElement itemEl) return false;
-        if (pov.Where.IsPrivate) return false;                 // private → Steal
+        if (!PrivacyModel.IsFreeToTake(scene, pov)) return false;   // not free → Steal
 
         var poi = ItemPickup.FindHoldingPoI(pov, itemEl);
         return poi != null && poi.IsNatural;                   // man-made → Grab

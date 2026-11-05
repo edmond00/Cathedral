@@ -9,8 +9,9 @@ namespace Cathedral.Game.Scene.Verbs;
 
 /// <summary>
 /// USE — set to work at a crafting station. Offered only to a body holding a crafting modus mentis for
-/// the station's kind, and only where the station may be worked (<see cref="CraftingAccess.MayUse"/>):
-/// nobody's, or its master's leave given.
+/// the station's kind, and where the station may be worked (<see cref="CraftingAccess.MayUse"/>):
+/// nobody's, or its master's leave given. On a protected floor it is offered without leave too, and
+/// is then a crime (<see cref="PrivacyModel.IsIntrusion"/>).
 ///
 /// <para><b>One action per trade.</b> A body holding both the blacksmith and the bladesmith is offered
 /// the anvil twice, the trade being the action's variant, so a will wants the one that is itself and a
@@ -32,6 +33,9 @@ public sealed class UseStationVerb : Verb
     public override string VerbId         => "use";
     public override string DisplayName    => "Use";
     public override int    BaseDifficulty => 2;
+
+    /// <summary>Works a station that belongs to the place.</summary>
+    public override VerbConduct Conduct => VerbConduct.Intrusive;
 
     public override ToolUsage ToolUse => ToolUsage.Required;
 
@@ -70,7 +74,7 @@ public sealed class UseStationVerb : Verb
     private static IEnumerable<CraftingModusMentis> Trades(Scene scene, PoV pov, Element target, PartyMember? actor)
     {
         if (target is not PointOfInterest station || !CraftingStations.IsStation(station)) return Enumerable.Empty<CraftingModusMentis>();
-        if (!CraftingAccess.MayUse(scene, pov, station)) return Enumerable.Empty<CraftingModusMentis>();
+        if (!pov.Where.IsProtected && !CraftingAccess.MayUse(scene, pov, station)) return Enumerable.Empty<CraftingModusMentis>();
         var trades = actor == null
             ? CraftingModusMentis.All.Where(mm => mm.Station.IsInstanceOfType(station))
             : CraftingModusMentis.HeldFor(actor, station);

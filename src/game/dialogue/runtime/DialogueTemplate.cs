@@ -76,7 +76,7 @@ public static class DialogueTemplate
 
             // ── Trade ─────────────────────────────────────────────────────────
             ["npc:sells"]        = c => c.Npc.SellTag?.Label() ?? "what little I have",
-            ["npc:buys"]         = c => c.Npc.BuyTag?.Label()  ?? "little enough",
+            ["npc:buys"]         = c => c.Npc.BoughtTag?.Label()  ?? "little enough",
             ["npc:wares"]        = c => Wares(c),
             ["you:goods"]        = c => CarriedGoods(c),
 
@@ -258,12 +258,12 @@ public static class DialogueTemplate
     /// </summary>
     private static string CarriedGoods(DialogueContext c)
     {
-        if (c.Npc.BuyTag is not { } tag) return "what I'm carrying";
+        if (c.Npc.BoughtTag is not { } tag) return "what I'm carrying";
 
         // GetAllItems(), not Inventory: TryAcquireItem never writes to the overflow list, so
         // reading Inventory here made this token always fall back to the bare tag label.
         var names = c.Pc.GetAllItems()
-            .Where(i => i.Tags.Contains(tag))
+            .Where(i => i.Tags.Contains(tag) || (c.Npc.SellTag is { } own && i.Tags.Contains(own)))
             .Select(i => i.WithArticle())
             .Distinct()
             .Take(3)

@@ -91,10 +91,28 @@ public sealed class NpcTradeCatalog
     /// (<paramref name="npcId"/>, <paramref name="mode"/>, <paramref name="tag"/>).
     /// </summary>
     public static NpcTradeCatalog Build(string npcId, TradeMode mode, ItemTag tag)
-    {
-        var rng = new Random(StableSeed(npcId, mode));
+        => new(mode, tag, Draw(npcId, mode, tag, salt: 0, usedHalf: false, except: Array.Empty<TradeOffer>()));
 
-        var available = ItemRegistry.Instance.WithTag(tag).ToList();
+    /// <summary>
+    /// What a trader buys: <paramref name="wanted"/>, what the trade takes in, at the full price; and
+    /// <paramref name="ownLine"/>, what the trade itself sells, at half. Half keeps the two directions
+    /// apart: the lowest a line is ever sold for is above what it is bought back at, so nothing can be
+    /// bought from a trader and sold back at a profit. Either may be null, not both.
+    /// </summary>
+    public static NpcTradeCatalog BuildBuying(string npcId, ItemTag? wanted, ItemTag? ownLine)
+    {
+        var offers = new List<TradeOffer>();
+        if (wanted is { } w) offers.AddRange(Draw(npcId, TradeMode.Sell, w, salt: 0, usedHalf: false, except: offers));
+        if (ownLine is { } l && ownLine != wanted) offers.AddRange(Draw(npcId, TradeMode.Sell, l, salt: 1, usedHalf: true, except: offers));
+        return new NpcTradeCatalog(TradeMode.Sell, (wanted ?? ownLine)!.Value, offers);
+    }
+
+    private static List<TradeOffer> Draw(string npcId, TradeMode mode, ItemTag tag, int salt, bool usedHalf, IReadOnlyList<TradeOffer> except)
+    {
+        var rng = new Random(StableSeed(npcId, mode) + salt);
+
+        var taken = except.Select(o => o.Prototype.GetType()).ToHashSet();
+        var available = ItemRegistry.Instance.WithTag(tag).Where(i => !taken.Contains(i.GetType())).ToList();
 
         // Choose how many items to offer.
         int count;
@@ -116,19 +134,22 @@ public sealed class NpcTradeCatalog
         {
             // A liquid is sold in something. Pick the vessel from the same seeded rng so the
             // catalogue stays reproducible, and fold its price into the line.
-            if (!proto.IsLiquid) return new TradeOffer(proto, VaryPrice(proto.PriceReference, rng));
+            if (!proto.IsLiquid) return new TradeOffer(proto, usedHalf ? Halved(proto.PriceReference) : VaryPrice(proto.PriceReference, rng));
 
             var vessel = PickVesselFor(proto, rng);
             if (vessel == null) return null;                       // nothing to pour it into — skip
             int bundle = proto.PriceReference + vessel.PriceReference;
-            return new TradeOffer(proto, VaryPrice(bundle, rng), vessel);
+            return new TradeOffer(proto, usedHalf ? Halved(bundle) : VaryPrice(bundle, rng), vessel);
         })
         .Where(o => o != null)
         .Select(o => o!)
         .ToList();
 
-        return new NpcTradeCatalog(mode, tag, offers);
+        return offers;
     }
+
+    /// <summary>What a trader pays for their own line: half, at least 1, clamped as any price is.</summary>
+    private static int Halved(int reference) => Math.Clamp(reference / 2, 1, 100);
 
     /// <summary>
     /// A vessel that will hold <paramref name="liquid"/>, chosen deterministically. Ordered by id

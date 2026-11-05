@@ -41,6 +41,7 @@ public abstract class SceneFactory
 
         BuildSections(rng, locationId, scene);
         if (LaysPaths) Shared.OutdoorLayout.LayPaths(scene, PathRandom(locationId));
+        MarkProtected(scene);
         MarkWilderness(scene);
         BuildNpcs(rng, locationId, scene);
         DropDepartedNpcs(scene);
@@ -155,6 +156,25 @@ public abstract class SceneFactory
         }
         if (chosen == null) return;
         scene.NpcSchedules[chosen.Id].Set(period, entry);
+    }
+
+    /// <summary>
+    /// Stamps <see cref="AreaTenure.Protected"/> on the public rooms of every building whose entry door
+    /// is open by day and shut at night: a workshop's or an inn's hall, a temple's passages and public
+    /// rooms. Somebody keeps that door, so somebody keeps what is behind it. A roof belongs to the
+    /// section but is reached from outside, by the wall, and stays public. Before the wilderness pass,
+    /// so a lodge in a forest is its keeper's and not nobody's.
+    /// </summary>
+    private static void MarkProtected(Scene scene)
+    {
+        var entries = scene.AllAreas.SelectMany(a => a.PointsOfInterest).OfType<Building.DoorPointOfInterest>()
+                           .Where(d => d.Role == Building.DoorRole.Entry && d.DoorState == Building.DoorState.Unlocked)
+                           .Distinct();
+        foreach (var door in entries)
+            if (scene.SectionOf(door.BackArea) is { } section)
+                foreach (var area in section.Areas)
+                    if (area.Tenure == AreaTenure.Public && area is not RoofArea)
+                        area.Tenure = AreaTenure.Protected;
     }
 
     /// <summary>

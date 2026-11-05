@@ -31,10 +31,11 @@ public class Area : Element
     public string[] Moods { get; }
 
     /// <summary>
-    /// Whose ground this is: somebody's (<see cref="AreaTenure.Private"/>), everybody's
-    /// (<see cref="AreaTenure.Public"/>) or nobody's (<see cref="AreaTenure.Wild"/>). Factories set
-    /// private and public; wild is stamped afterwards by <see cref="SceneFactory"/> on the open ground
-    /// of a wilderness location. <see cref="PrivacyModel"/> is what reads it.
+    /// Whose ground this is: somebody's (<see cref="AreaTenure.Private"/>), somebody's but open to
+    /// callers (<see cref="AreaTenure.Protected"/>), everybody's (<see cref="AreaTenure.Public"/>) or
+    /// nobody's (<see cref="AreaTenure.Wild"/>). Factories set private, protected and public; wild is
+    /// stamped afterwards by <see cref="SceneFactory"/> on the open ground of a wilderness location.
+    /// <see cref="PrivacyModel"/> is what reads it.
     /// </summary>
     public AreaTenure Tenure { get; set; }
 
@@ -51,6 +52,9 @@ public class Area : Element
 
     /// <summary>Nobody's ground: see <see cref="AreaTenure.Wild"/>.</summary>
     public bool IsWild => Tenure == AreaTenure.Wild;
+
+    /// <summary>A master's floor, open to callers: see <see cref="AreaTenure.Protected"/>.</summary>
+    public bool IsProtected => Tenure == AreaTenure.Protected;
 
 
     public Area(
@@ -87,4 +91,12 @@ public enum AreaTenure
     /// hunting, not a crime. Crimes against people are crimes here as anywhere.
     /// </summary>
     Wild,
+
+    /// <summary>
+    /// A keeper's floor, open to callers: a public room behind a door shut at night, such as the hall
+    /// of a workshop, a shop or an inn, or a temple's passages. Standing here and
+    /// any passive act is lawful; an intrusive one (<see cref="Verbs.VerbConduct.Intrusive"/>) is a
+    /// crime until the master gives leave (<see cref="PrivacyModel.IsIntrusion"/>).
+    /// </summary>
+    Protected,
 }

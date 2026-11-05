@@ -65,6 +65,53 @@ public static class WillAudit
         => will.VerbTypes.All(v => RelationGated.Any(g => g.IsAssignableFrom(v)))
            || will.OnTypes.Any(t => typeof(Cathedral.Game.Npc.Corpse.CorpsePointOfInterest).IsAssignableFrom(t));
 
+    /// <summary>
+    /// Every target that wants to grab or gather must be met somewhere without anybody's leave. The sweep
+    /// above supposes each workshop's leave, as a crafting will may ask for it; another will has no such
+    /// asking, so here no leave is supposed and the body holds no trade. A crafting will is left out, for
+    /// that same reason. Stealing is a want of its own and is no part of this.
+    /// </summary>
+    private static void TakingSection(StringBuilder sb, Dictionary<ModusMentis, WillTargets> targetsOf)
+    {
+        var grab = new GrabVerb();
+        var gather = new GatherVerb();
+        var steal = new StealVerb();
+        var propose = new ProposeToBuyVerb();
+        var taking = targetsOf.Where(kv => kv.Key is not Crafting.CraftingModusMentis)
+                              .SelectMany(kv => kv.Value.Where(t => (t.Wants(grab) || t.Wants(gather)) && !t.Wants(steal)).Select(t => (Will: kv.Key, Target: t)))
+                              .ToList();
+        var buying = targetsOf.SelectMany(kv => kv.Value.Where(t => t.Wants(propose)).Select(t => (Will: kv.Key, Target: t))).ToList();
+        var sold = buying.Select(x => x.Target).Distinct().ToDictionary(t => t, _ => 0);
+        var free = taking.Select(x => x.Target).Distinct().ToDictionary(t => t, _ => 0);
+        var body = new Protagonist();
+        var factories = VerbAudit.Factories().ToList();
+        for (int id = 1; id <= Samples && (free.Values.Any(n => n == 0) || sold.Values.Any(n => n == 0)); id++)
+        foreach (var (_, build, _) in factories.Where(f => id <= f.Samples))
+        {
+            Cathedral.Game.Scene.Scene scene;
+            try { scene = build(id); } catch { continue; }
+            foreach (var npc in scene.Npcs)
+                foreach (var target in sold.Keys.ToList())
+                    if (target.Matches(new VerbAction(propose, "", npc))) sold[target]++;
+            foreach (var area in scene.AllAreas)
+            foreach (var hour in Hours)
+            foreach (var action in scene.View(new PoV(area, hour), body).Entries.SelectMany(e => e.ApplicableVerbs))
+                foreach (var target in free.Keys.ToList())
+                    if (target.Matches(action) && !action.Verb.IsIllegal(scene, new PoV(area, hour), action.Target, body)) free[target]++;
+        }
+
+        var missing = taking.Where(x => free[x.Target] == 0 && !PlayGated(x.Target)).ToList();
+        sb.AppendLine($"  {(missing.Count == 0 ? "✓" : "✗")} {taking.Count} targets want to grab or gather; "
+                    + $"{missing.Count} can be met nowhere without leave");
+        foreach (var (will, target) in missing)
+            sb.AppendLine($"  ✗ {will.ModusMentisId}: \"{target.Purpose}\" ({target.Describe()}) — take it nowhere lawfully; buy it instead");
+
+        var unsold = buying.Where(x => sold[x.Target] == 0).ToList();
+        sb.AppendLine($"  {(unsold.Count == 0 ? "✓" : "✗")} {buying.Count} targets want to buy; {unsold.Count} are sold by nobody");
+        foreach (var (will, target) in unsold)
+            sb.AppendLine($"  ✗ {will.ModusMentisId}: \"{target.Purpose}\" ({target.Describe()}) — nobody sells it");
+    }
+
     public static string Section(List<ModusMentis> all)
     {
         var sb    = new StringBuilder();
@@ -160,6 +207,8 @@ public static class WillAudit
                                : "   — offered nowhere: this target would never be met"));
             }
         }
+
+        TakingSection(sb, targetsOf);
 
         foreach (var t in movers.Where(t => !ActionPathPlanner.TransitVerbTypes.Contains(t) && t != typeof(VoyageTowardVerb)).OrderBy(t => t.Name))
             sb.AppendLine($"  ✗ {t.Name} moves the body or the hour but is not in ActionPathPlanner.TransitVerbTypes — no will could plan through it");
