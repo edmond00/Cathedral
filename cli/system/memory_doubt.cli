@@ -1,0 +1,41 @@
+# The memory panel's detail box shows each office's own property, and only that one: a thinking modus
+# mentis its doubt (ModusMentis.Doubt) — High and Medium with the tries they get again, Low with none
+# — and an acting one whether it acts discreetly. Caution thinks and does not act, so it has a Doubt
+# row and no Discreet row; Stealth acts and does not think, so the reverse. Husbandry is a will
+# that acts: Discreet, and no Doubt — a will is never doubted. It is also a will of five targets, the
+# longest block the box holds, and its XP row must still be there.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --grant-mm caution,alchemy,impatience,stealth,husbandry --location-type test --location-id 0
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+manage Memory
+wait 10
+
+select mm caution
+wait
+expect Doubt High — 2 more tries
+expect-not Discreet
+
+select mm alchemy
+wait
+expect Doubt Medium — 1 more try
+
+select mm impatience
+wait
+expect Doubt Low — no second try
+
+select mm stealth
+wait
+expect Discreet Yes — acts unnoticed
+expect-not Doubt
+
+select mm husbandry
+wait
+expect Discreet No
+expect-not Doubt
+expect XP
+quit
