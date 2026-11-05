@@ -14,4 +14,4 @@
 # Nothing in the working tree can confirm that and dist/ cannot be used to try - see
 # "Hotfixes" in SKILL.md.
 
-5e54f36a38f4d57e5b10b8d729ff29a08ec23c47 2026-11-05 Volume 7 - Cuir Bouilli and Pattern Welding
+b152b9d393e44ea626ab373bb03b2825e892af6c 2026-11-05 Volume 7 - Cuir Bouilli and Pattern Welding
