@@ -539,7 +539,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "porter_guild_man",
                 DisplayName = "Porters' Fraternity",
-                ModiMentis  = new[] { "esprit_de_corps", "loyalty", "muster" },
+                ModiMentis  = new[] { "comradeship", "loyalty", "muster" },
                 Appearance  = "a fraternity badge sewn on the cap",
                 Persona     = "You belong to the porters' fraternity and you would fight anyone who undercuts its rates. When one of you is hurt, the rest feed his family.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "touch one porter and you will have all of us at your door") },

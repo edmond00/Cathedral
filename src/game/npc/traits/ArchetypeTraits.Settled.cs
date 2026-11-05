@@ -542,7 +542,7 @@ public sealed partial class PersonalityTraitRegistry
             {
                 TraitId     = "captain_loves_his_men",
                 DisplayName = "Father of the Garrison",
-                ModiMentis  = new[] { "esprit_de_corps", "loyalty", "empathy" },
+                ModiMentis  = new[] { "comradeship", "loyalty", "empathy" },
                 Appearance  = "greets every soldier by name",
                 Persona     = "You know every soldier, their families and their troubles, and they would die for you. You worry that one day they will.",
                 Opinions    = new[] { (DialogueTopic.Kin, "two hundred men. Every one of them is mine to bring home") },
