@@ -86,6 +86,13 @@ public static class CraftAudit
         var groundKinds    = CraftMaterials.All.ToDictionary(m => m, _ => new HashSet<string>());
         var sellerKinds    = CraftMaterials.All.ToDictionary(m => m, _ => new HashSet<string>());
         var npcTrades      = new Dictionary<string, int>();
+        // Per item id: how often it lies about, in how many kinds of place, how many people carry it and sell it.
+        var itemGround     = new Dictionary<string, int>();
+        var itemGroundKinds= new Dictionary<string, HashSet<string>>();
+        var itemCarried    = new Dictionary<string, int>();
+        var itemSold       = new Dictionary<string, HashSet<string>>();
+        void Count(Dictionary<string, int> d, string id) => d[id] = d.GetValueOrDefault(id) + 1;
+        void Mark(Dictionary<string, HashSet<string>> d, string id, string kind) => (d.TryGetValue(id, out var h) ? h : d[id] = new()).Add(kind);
         int builds = 0, npcs = 0;
         var kindsWithStation = new HashSet<string>();
         var allKinds = new HashSet<string>();
@@ -111,6 +118,11 @@ public static class CraftAudit
                         stationFree[type] = stationFree.GetValueOrDefault(type) + 1;
                 }
                 foreach (var ie in poi.Items)
+                {
+                    Count(itemGround, ie.Item.ItemId);
+                    Mark(itemGroundKinds, ie.Item.ItemId, label);
+                }
+                foreach (var ie in poi.Items)
                     foreach (var m in ItemMaterials.Of(ie.Item))
                     {
                         groundUnits[m] += ItemMaterials.Units(ie.Item);
@@ -121,12 +133,16 @@ public static class CraftAudit
             {
                 if (sn.Entity is not NpcEntity npc) continue;
                 npcs++;
+                foreach (var held in npc.Combatant.GetAllItems()) Count(itemCarried, held.ItemId);
                 foreach (var t in npc.Combatant.ModiMentis.OfType<CraftingModusMentis>())
                     npcTrades[t.ModusMentisId] = npcTrades.GetValueOrDefault(t.ModusMentisId) + 1;
                 try
                 {
                     foreach (var offer in npc.BuyCatalog?.Offers ?? (IReadOnlyList<Npc.Trade.TradeOffer>)Array.Empty<Npc.Trade.TradeOffer>())
+                    {
+                        Mark(itemSold, offer.Prototype.ItemId, label);
                         foreach (var m in ItemMaterials.Of(offer.Prototype)) sellerKinds[m].Add(label);
+                    }
                 }
                 catch { /* a catalogue that cannot be built outside play sells nothing here */ }
             }
@@ -165,6 +181,15 @@ public static class CraftAudit
             sb.AppendLine($"  {id,-16} {n,4}");
         sb.AppendLine();
 
+        // ── What an item is for, beyond its matter ───────────────────────────
+        // An item with none of these offices can only be sold, or broken down at a station. That is right
+        // for ore, timber and fleece; for a padlock or a book it is a thing with a use in life and none here.
+        var inert = items.Where(i => Uses(i).Count == 0).ToList();
+        sb.AppendLine($"── items with no use but their price and their matter ({inert.Count} of {items.Count}) ──");
+        foreach (var g in inert.GroupBy(i => i.Tags.Count > 0 ? i.Tags[0].ToString() : "untagged").OrderByDescending(g => g.Count()))
+            sb.AppendLine($"  · {g.Key,-12} {g.Count(),3}  {string.Join(", ", g.Select(i => i.DisplayName).Take(10))}{(g.Count() > 10 ? ", …" : "")}");
+        sb.AppendLine();
+
         if (fails.Count == 0) sb.AppendLine("No failures — every station stands somewhere and every worked material is held by something.");
         else
         {
@@ -185,8 +210,38 @@ public static class CraftAudit
                     materials = ItemMaterials.Of(i).Select(x => x.Label()).ToList(),
                     madeBy = trades.Where(t => t.Recipes.Contains(i.GetType())).Select(t => t.ModusMentisId).ToList(),
                 }).ToList(),
+                census = items.Select(i => new
+                {
+                    id = i.ItemId, name = i.DisplayName, category = i.Category.ToString(), price = i.PriceReference,
+                    tags = i.Tags.Select(t => t.ToString()).ToList(), uses = Uses(i),
+                    materials = ItemMaterials.Of(i).Select(x => x.Label()).ToList(),
+                    units = ItemMaterials.Of(i).Count > 0 ? ItemMaterials.Units(i) : 0,
+                    madeBy = trades.Where(t => t.Recipes.Contains(i.GetType())).Select(t => t.ModusMentisId).ToList(),
+                    toolOf = trades.Where(t => t.Tool == i.GetType()).Select(t => t.ModusMentisId).ToList(),
+                    ground = itemGround.GetValueOrDefault(i.ItemId),
+                    groundKinds = itemGroundKinds.TryGetValue(i.ItemId, out var gk) ? gk.Count : 0,
+                    carried = itemCarried.GetValueOrDefault(i.ItemId),
+                    soldIn = itemSold.TryGetValue(i.ItemId, out var sk) ? sk.Count : 0,
+                }).ToList(),
             }, new JsonSerializerOptions { WriteIndented = true }));
 
         return sb.ToString();
+    }
+
+    /// <summary>
+    /// The offices an item holds beside being sold or broken down: fought with, worn, eaten, holding
+    /// things, combined with an act (as a tool, or by an act it was made for), or a trade's implement.
+    /// </summary>
+    public static List<string> Uses(Item i)
+    {
+        var u = new List<string>();
+        if (i.Category == ItemCategory.Weapon)   u.Add("weapon");
+        if (i.Category == ItemCategory.Wearing)  u.Add("worn");
+        if (i.Category == ItemCategory.Consumable) u.Add("eaten");
+        if (i.Category == ItemCategory.Container || i is IContainer) u.Add("container");
+        if (i.Category == ItemCategory.Tool && Rules.ToolCombinationRules.IsCombinable(i)) u.Add("tool");
+        if (i.MadeForVerbIds.Count > 0)          u.Add("made-for");
+        if (CraftingModusMentis.IsCraftTool(i))  u.Add("trade-tool");
+        return u;
     }
 }

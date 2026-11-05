@@ -41,30 +41,33 @@ public sealed class CottonCloth : TextileItem
     public override string Description => "A bolt of plain white cotton, light and close-woven";
 }
 
-public sealed class Amphora : Item
+public sealed class Amphora : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "amphora";
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Amphora";
     public override string Description => "A tall two-handled clay jar sealed with pitch";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Heavy;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Pottery };
+    public override ContainerKind Kind => ContainerKind.Vessel;
+    public override int ContentSlots => 9;
 }
 
-public sealed class SpiceBundle : Item
+public sealed class SpiceBundle : ConsumableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Herb });
     public override string ItemId      => "spice_bundle";
     public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Spice Bundle";
     public override string Description => "A sewn cloth packet stamped with a merchant's mark, smelling of pepper";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Herb };
+    public override ConsumableType ConsumableType => ConsumableType.Food;
+    protected override HumorRichness Richness => HumorRichness.Sparse;
+    protected override HumorRecipe Recipe => new HumorRecipe().Add<CholerHumor>(40).Add<VaporHumor>(35).Add<SaltHumor>(25);
 }
 
 public sealed class Scales : Item
@@ -78,6 +81,8 @@ public sealed class Scales : Item
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "propose_to_buy", "propose_to_sell" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Abacus : Item
@@ -91,9 +96,11 @@ public sealed class Abacus : Item
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Woodwork, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "propose_to_buy", "propose_to_sell" };
+    public override int UsageLevel => 2;
 }
 
-public sealed class Signet : Item
+public sealed class Signet : WearableItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Valuable });
     public override string ItemId      => "signet";
@@ -101,10 +108,13 @@ public sealed class Signet : Item
     public override Rarity Rarity => Rarity.Rare;
     public override string DisplayName => "Signet Ring";
     public override string Description => "A heavy bronze ring cut with a merchant house's device";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override WearSlot Slot => WearSlot.Handwear;
+    public override IReadOnlyList<Cathedral.Game.Npc.SocialCategory> DialogueAppeal => new[] { Cathedral.Game.Npc.SocialCategory.Bourgeois, Cathedral.Game.Npc.SocialCategory.Aristocrat };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "introduce_me" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class PromissoryNote : Item
@@ -118,6 +128,8 @@ public sealed class PromissoryNote : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "offer_bribe", "propose_to_buy" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Lock : Item
@@ -212,6 +224,8 @@ public sealed class Compass : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path", "backtrack" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Chart : Item
@@ -226,6 +240,8 @@ public sealed class Chart : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path", "backtrack" };
+    public override int UsageLevel => 2;
 }
 
 // ── the tavern ──────────────────────────────────────────────────────────────
@@ -294,16 +310,17 @@ public sealed class Beer : ConsumableItem
         .Add<AlcoholHumor>(45).Add<FumeHumor>(30).Add<ZenHumor>(25);
 }
 
-public sealed class Tankard : Item
+public sealed class Tankard : ContainerItem
 {
     public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Vessel });
     public override string ItemId      => "tankard";
     public override string DisplayName => "Pewter Tankard";
     public override string Description => "A lidded pewter tankard dented on one side";
-    public override ItemCategory Category => ItemCategory.Crafting;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override ContainerKind Kind => ContainerKind.Vessel;
+    public override int ContentSlots => 3;
 }
 
 public sealed class Dice : Item
@@ -317,6 +334,8 @@ public sealed class Dice : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "play" };
+    public override int UsageLevel => 2;
 }
 
 // ── the counting house ──────────────────────────────────────────────────────
@@ -345,6 +364,8 @@ public sealed class Letter : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "petition", "explain_myself", "introduce_me" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Ledgerbook : Item
@@ -358,6 +379,8 @@ public sealed class Ledgerbook : Item
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "propose_to_buy", "propose_to_sell" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Scroll : Item
@@ -371,6 +394,8 @@ public sealed class Scroll : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching", "examine" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Writ : Item
@@ -384,4 +409,6 @@ public sealed class Writ : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "petition", "explain_myself", "introduce_me" };
+    public override int UsageLevel => 2;
 }

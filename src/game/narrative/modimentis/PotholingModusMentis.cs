@@ -26,9 +26,9 @@ public class PotholingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a caver who goes in head first and breathes slowly";
     public override string PersonaReminder  => "caver";
-    public override string PersonaReminder2 => "someone who cannot pass a crack in the rock without putting an arm into it";
+    public override string PersonaReminder2 => "someone who cannot pass a narrow way without trying it";
     public override string StyleInstruction =>
-        "Feel the line through the body pressed against stone - the squeeze, the slow breath, the draught that says it opens out.";
+        "Close and patient - judge every gap by whether it can be squeezed through and whether it leads on.";
 
     public override string PersonaPrompt => @"You are the inner voice of POTHOLING, and there is a crack in the rock, and cold air is coming out of it.
 

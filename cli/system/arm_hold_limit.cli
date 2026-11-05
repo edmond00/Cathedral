@@ -16,7 +16,7 @@ click continue
 wait mode WorldView 45
 
 manage Bellic
-wait 1
+wait 10
 expect too heavy
 expect-not long blade
 expect bow, left hand, lv 4

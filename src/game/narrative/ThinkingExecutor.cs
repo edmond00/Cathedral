@@ -163,7 +163,18 @@ public class ThinkingExecutor
             // The way through what this object offers, which need not be the one the plan kept nor as
             // short: any within a few steps of the goal, the shortest of them, and between equally short
             // ones, the will's own pick.
-            var ways = Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, subOutcomes.OfType<VerbAction>());
+            // What this phase has already put a button on screen for is no way at all: a will is asked
+            // for its way only through what is left, so a second thought reaches for another first step
+            // of up to the same length, as a goal choice does. A wait or a backtrack is told apart only
+            // once settled ("…until noon"), so it is read settled, and goes if that much was offered.
+            var afforded = subOutcomes.OfType<VerbAction>().ToList();
+            var fresh = afforded.Where(v => proposed?.WasProposed(v) != true).ToList();
+            var ways = Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, fresh);
+            while (proposed != null && ways.Where(w => proposed.WasProposed(w.First.SettledAction)).ToList() is { Count: > 0 } spent)
+            {
+                fresh.RemoveAll(v => spent.Any(w => Scene.ActionPathPlanner.SameAction(v, w.First.Action)));
+                ways = Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, fresh);
+            }
             willPath = ways.Count switch
             {
                 0 => null,
@@ -174,11 +185,18 @@ public class ThinkingExecutor
                      : subOutcomes.OfType<VerbAction>().FirstOrDefault(v => Scene.ActionPathPlanner.SameAction(v, willPath.First.Action));
             if (willStep == null)
             {
-                string refusal = planned == null
+                // Every way through this object is on screen already: it was on the way, and there is
+                // nothing more to say of it, which "that does nothing for it" would deny.
+                bool allOffered = fresh.Count < afforded.Count
+                                  && Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, afforded).Count > 0;
+                string refusal = allOffered
+                    ? NeutralNarration.IterationExhausted(targetDescription)
+                    : planned == null
                     ? NeutralNarration.WillReasoningNotHere(targetDescription, thinkingModusMentis.Will!.Purpose)
                     : NeutralNarration.WillReasoningNotThisWay(targetDescription, planned, thinkingModusMentis.Will!.PurposeOf(planned), actingMember);
                 Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] wills '{thinkingModusMentis.Will!.Purpose}' — "
-                                + (willPath == null ? "no way here." : $"'{targetDescription}' is not on the way."));
+                                + (allOffered ? "every way through this has been offered."
+                                   : willPath == null ? "no way here." : $"'{targetDescription}' is not on the way."));
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, refusal, NarrationKind.Reasoning, thoughtPart, cancellationToken));
                 return Finish(new List<ParsedNarrativeAction>());
             }

@@ -22,7 +22,7 @@ public class SpeleologyModusMentis : ModusMentis
     public override string PersonaReminder  => "cave-reader";
     public override string PersonaReminder2 => "someone who knows the way out by which way the draught blows";
     public override string StyleInstruction =>
-        "Read the dark by its signs - which way the air moves, where water has been, how long the stone took to grow.";
+        "Patient and reading - judge the dark by its signs, which way it moves and how long it took to form.";
 
     public override string PersonaPrompt => @"You are the inner voice of SPELEOLOGY, and the cave is talking, if anyone would listen.
 

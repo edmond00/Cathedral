@@ -13,4 +13,6 @@ public sealed class Hay : Item
     public override string Description => "A tied bundle of dried grass, rough and dust-smelling";
     public override ItemSize Size      => ItemSize.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fodder };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "tame", "appease" };
+    public override int UsageLevel => 2;
 }

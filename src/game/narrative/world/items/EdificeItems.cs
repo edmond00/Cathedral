@@ -20,6 +20,8 @@ public sealed class Tome : Item
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Medium;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching", "examine" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Parchment : Item
@@ -45,6 +47,8 @@ public sealed class Quill : Item
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching" };
+    public override int UsageLevel => 1;
 }
 
 public sealed class InkHorn : Item
@@ -58,6 +62,8 @@ public sealed class InkHorn : Item
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching" };
+    public override int UsageLevel => 1;
 }
 
 public sealed class WaxTablet : Item
@@ -71,6 +77,8 @@ public sealed class WaxTablet : Item
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Writing };
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "gather_knowledge", "ask_teaching" };
+    public override int UsageLevel => 1;
 }
 
 public sealed class Chalk : StoneRawItem

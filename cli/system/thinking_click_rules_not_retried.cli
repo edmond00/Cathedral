@@ -24,7 +24,7 @@ strategy succeed
 goal examine
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect-not That will not do, and I think again
 expect [Woodcraft

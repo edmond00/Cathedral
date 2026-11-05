@@ -22,7 +22,7 @@ public class SandcraftModusMentis : ModusMentis
     public override string PersonaReminder  => "desert guide";
     public override string PersonaReminder2 => "someone who can tell where the wind will drop before it does";
     public override string StyleInstruction =>
-        "Read the line by sand and wind - which way the grains move, where the ground is firm, how far to shade and water.";
+        "Steady and sparing - judge everything by the wind, by what is firm underfoot and by how far relief is.";
 
     public override string PersonaPrompt => @"You are the inner voice of SANDCRAFT, and the desert is not empty, whatever the stranger thinks.
 

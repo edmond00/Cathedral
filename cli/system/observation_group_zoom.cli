@@ -27,7 +27,7 @@ expect shifts to an apple tree
 # Attention directed to the tree: its contents, not the tree again.
 click keyword tree
 choose 1
-choose 0
+choose childhood_memory
 advance 12 180
 expect My attention is drawn to a branch
 expect shifts to an apple.

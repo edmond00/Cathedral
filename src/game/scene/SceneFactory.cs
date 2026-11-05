@@ -48,6 +48,7 @@ public abstract class SceneFactory
         PlaceBeastSign(scene);
         if (GrowsWild) PlaceWildGrowth(scene, locationId);
         if (PlacesPlay) PlayPlacement.Place(scene, locationId);
+        if (PlacesStations) Shared.StationPlacement.Place(scene, locationId);
         AssignVerbs(scene);
         MergeDuplicateNamedPois(scene);
         AssignStableKeys(scene);
@@ -531,6 +532,12 @@ public abstract class SceneFactory
     /// (<see cref="PlayPlacement"/>). Off where paths are, for the same reason as wild growth.
     /// </summary>
     protected virtual bool PlacesPlay => LaysPaths;
+
+    /// <summary>
+    /// Whether <see cref="Build(int)"/> spreads the crafting stations and lays a trade's rack beside each
+    /// (<see cref="Shared.StationPlacement"/>). Off where paths are, for the same reason as the plays.
+    /// </summary>
+    protected virtual bool PlacesStations => LaysPaths;
 
     /// <summary>The generator wild growth is drawn from: its own stream, so nothing built before or after it moves.</summary>
     private static Random GrowthRandom(int locationId) => new(unchecked(locationId * 0x27D4EB2F + 0x1656));

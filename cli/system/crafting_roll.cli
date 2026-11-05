@@ -22,7 +22,7 @@ means blacksmithing
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 1
@@ -51,6 +51,7 @@ expect-state crafting pool=2
 # A miss: the metal is spent, nothing is made.
 strategy fail-dice
 craft make nail
+craft settle
 expect-state crafting result=spoiled
 expect-state crafting pool=1
 expect-no-state items nail
@@ -58,6 +59,7 @@ expect-no-state items nail
 # A hit: made, and in the pack.
 strategy succeed
 craft make nail
+craft settle
 expect-state crafting result=made
 expect-state crafting pool=0
 expect-state items nail

@@ -26,7 +26,7 @@ public class SummitFeverModusMentis : ModusMentis
     public override string PersonaReminder  => "summit-seeker";
     public override string PersonaReminder2 => "someone who cannot see a top without needing to stand on it";
     public override string StyleInstruction =>
-        "Look upward in every line - the next hold, the last pitch, the sky waiting where the rock ends.";
+        "Restless and upward - judge everything by the next hold and how much higher it leads.";
 
     public override string PersonaPrompt => @"You are the inner voice of SUMMIT FEVER, and there is a top above you that nobody is standing on.
 

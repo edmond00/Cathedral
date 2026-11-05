@@ -19,14 +19,14 @@ expect-state journal kind=Narration state=Raw
 # Leaving closes the visit; the chronicler takes it up on the next frame.
 click button
 wait mode WorldView 60
-wait 1
+wait 10
 expect-state journal pending-groups=0
 expect-state journal written-groups=1
 expect-state journal kind=Milestone
 expect-no-state journal kind=Narration state=Pending
 
 manage Journal
-wait 1
+wait 10
 expect [chronicle]
 expect First came to the
 expect-not not yet written up

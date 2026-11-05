@@ -28,7 +28,7 @@ strategy succeed
 goal appease
 click keyword wolf
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0
@@ -51,7 +51,7 @@ goal tame
 # ("wolf", "limp", "rolling"...) is a shuffle among equally related words, not a fixed choice.
 click keyword 0
 choose 0
-choose 0
+choose beast_sense
 advance 12 180
 click action 0
 choose 0

@@ -27,7 +27,7 @@ public class HoneyHuntingModusMentis : ModusMentis
     public override string PersonaReminder  => "honey-hunter";
     public override string PersonaReminder2 => "someone who hears a hive humming and is already reaching for it";
     public override string StyleInstruction =>
-        "Let the line hum - the bird chattering ahead, the hive in the tree, smoke, stings and the dark comb dripping.";
+        "Eager and unafraid - judge whatever is in front of you by the sweetness it may hide and the sting it will cost.";
 
     public override string PersonaPrompt => @"You are the inner voice of HONEY HUNTING, and a little grey bird is chattering at you from a thorn tree.
 

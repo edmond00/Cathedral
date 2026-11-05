@@ -40,7 +40,7 @@ regions
 # The keyword opens thinking. The goal choice runs here, behind the choice rules.
 click keyword chest
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 state
 regions

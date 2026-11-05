@@ -12,4 +12,6 @@ public sealed class Clover : Item
     public override string Article => "some";
     public override string Description => "A sprig of three-leafed clover with a small pink head";
     public override List<ItemTag> Tags => new() { ItemTag.Herb };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "tame", "appease" };
+    public override int UsageLevel => 2;
 }

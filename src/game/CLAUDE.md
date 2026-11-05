@@ -767,7 +767,9 @@ plus what the category implies; `--item-audit` prints each kind's items and the 
 **`ActionPathPlanner.Plan` is the whole mechanism**: one BFS for all the targets, over (area, period, implement obtained),
 successors from `Scene.View(pov, actor, verbs)` — the live gates — and from the outcomes a success
 *would* apply, read and never applied: `AreaMoveOutcome` / `DoorUnlockOutcome` move,
-`TimeShiftOutcome` passes the hour, and `sit_and_wait` is every other period. Only
+`TimeShiftOutcome` passes the hour, and `sit_and_wait` is every other period. **One success has one
+ending**: `stalk` reports the hour and the move together, and read apart they planned on standing still
+at the later hour, a place the follower never is. `cli/system/will_follow_one_ending.cli`. Only
 `TransitVerbTypes` plus the goal verbs are expanded, except while a missing reference tool is sought,
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
 opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
@@ -776,8 +778,10 @@ a will to open a lock goes for the keys on the gatehouse pegs. **When no such im
 the place, the goal is planned bare-handed** (`ActionPath.Unarmed`, a second search) rather than refused:
 the planner knows only reference tools and made-for items, while the click takes anything carried to
 the critic (a short sword cutting a carcass) and `RequiredToolRule` asks for a tool when nothing is
-combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. **Only while the body carries something that could serve the act** (`ToolCombinationRules.CouldServe`: combinable, and not refused before the critic — a hairpin is made for a lock, never a slaughter): otherwise the click is refused for certain, and planning it anyway made every digging and unlocking will reach nearly every place — seven failed `--will-audit` on breadth. Nothing else is modelled, so a path never passes a conversation,
-a fight or loot. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
+combined. Refusing there made Butchery decline a hyena and then its corpse with a blade in the pack. **Only while the body carries something that could serve the act** (`ToolCombinationRules.CouldServe`: combinable, and not refused before the critic — a hairpin is made for a lock, never a slaughter): otherwise the click is refused for certain, and planning it anyway made every digging and unlocking will reach nearly every place — seven failed `--will-audit` on breadth. Nothing else is modelled, so a path never passes a fight or loot, and passes only the two
+conversations whose success is known in advance: `ask_to_use_workshop` (the leave, `PoV.PlannedLeave`) and
+`ask_to_be_led` (`TradeGate.NextOnPremises`, read in `Destinations` as the same question
+`WalkToPremises` asks), behind its introduction like any favour. **A sit is every other hour, and the path is one of them**: `PathStep.Until` keeps the
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
 asks nothing. A player's own wait still chooses. `sit_and_wait` is the only transit verb whose
@@ -818,14 +822,14 @@ get-up have one verb each:
 |---|---|
 | phase opener | `PickFirstObservationModusMentis` passes over wills while any other observer is held; a will that opens attends only to the object offering the first step |
 | focus | kept iff `WillPriority.PathOn` finds a shortest path beginning with something the object offers; else turned to the unobserved object that does; else refused naming the step. No follow-ups |
-| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). A will's one retry (Medium) remains for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
+| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). **The ledger applies**: a goal the will takes is not chosen, so it never passed `ChooseGoalAsync`, and the same button came back thought after thought. `GenerateThinkingAsync` now offers `WaysOn` only what `ActionProposalLedger.WasProposed` leaves, reading a wait or a backtrack settled (`PathStep.SettledAction`), so a second thought takes the next way within the same reach, and the last says `IterationExhausted`. `cli/system/will_no_duplicate.cli`. No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). A will's one retry (Medium) remains for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
 | means | **only the act it wants**: a will with Action carries it out itself. A step on the way (a walk, a wait, a tool fetched — `!Will.Matches(step)`) has its means judged like any goal's, the will among the candidates, speakers first for a conversation; the will was not the fittest mind for every walk, and a non-speaking will carried out `propose_to_buy`. `WillActionNeverRefusesItsPathRule`, last, lifts even an imposed refusal for the will's own path whenever the will is the means |
 | speech | **not narrowed.** A will may bear Speaking and then replies in every conversation, whatever its target; without it, in none. Every will whose target is a conversation bears it (51), and cruelty, which had it before. The audit notes a will that wants a conversation and cannot speak |
 
 `PartyMember` and `ModusMentisRegistry` list wills with both observers and thinkers (`CanObserve`,
-`CanThink`), so the popups, the NPC pools and the starting kit draw them — **listed after the
-general minds**, so a popup's first entry still ranges freely (and `choose 0` in older scripts still
-picks one). **R17** (Will ⇔ 1–5 targets, and no Observation or Thinking beside it), **R18** (every anatomy that can learn it can
+`CanThink`), so the popups, the NPC pools and the starting kit draw them — listed after the
+general minds in those lists, though the modus mentis popup sorts everything by name, wills among
+the rest, so a script picks a mind with `choose <mm-id>` rather than by position. **R17** (Will ⇔ 1–5 targets, and no Observation or Thinking beside it), **R18** (every anatomy that can learn it can
 perform a verb of **each** target — a second target a wolf cannot meet would still steer its attention) and
 **R19** (a will declares `WillPlaces`, area kinds only) are fatal; R2, R4 and R13 accept Will for the offices it carries. R14 still
 forbids Action + Emotion, on a will as on anything.

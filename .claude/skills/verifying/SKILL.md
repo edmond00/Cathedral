@@ -168,6 +168,11 @@ Run `help` for the authoritative list. The essentials:
                             the box by itself, taking the NEXT period when it asks — so a script
                             that only needs to get past a wait does nothing new; one that tests the
                             choice stops after the dice `click continue`, `wait`s, then clicks
+  click humor <queue>       on any settled dice box (narration, conversation, fight, crafting): select
+                            that organ's spendable humor (paunch|hepar|spleen|pulmones). Fails the
+                            run when the body can spend none on this roll
+  click die <n>             spend the selected humor on die n (0-based). `inspect humors` shows the
+                            queue it came from one shorter; cli/system/crafting_humor.cli
   click keyword <name>      a narration keyword
   click action <n>          a narration action
   click option <n>          a dialogue reply

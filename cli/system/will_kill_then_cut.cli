@@ -30,7 +30,7 @@ expect-state will "kill a beast for its meat"
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 1

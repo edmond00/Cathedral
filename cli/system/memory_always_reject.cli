@@ -27,7 +27,7 @@ expect-no-state skills skill gut_feeling
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0
@@ -54,7 +54,7 @@ regions
 # The same act again teaches nothing: no chip is shown, and gut_feeling stays unlearned.
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0

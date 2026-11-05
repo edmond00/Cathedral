@@ -15,9 +15,12 @@ namespace Cathedral.Game.Scene;
 /// </summary>
 public sealed record PathStep(VerbAction Action, object? Settled = null)
 {
-    public string Verbatim => Settled != null && Action.Variant == null && Action.Verb.Settle(Action, Settled) is { } settled
-        ? settled.Verbatim
-        : Action.Verbatim;
+    /// <summary>The action as it would be offered: settled on what the path needs of it, when it needs anything.</summary>
+    public VerbAction SettledAction => Settled != null && Action.Variant == null && Action.Verb.Settle(Action, Settled) is { } settled
+        ? settled
+        : Action;
+
+    public string Verbatim => SettledAction.Verbatim;
 }
 
 /// <summary>
@@ -48,7 +51,9 @@ public sealed record ActionPath(IReadOnlyList<PathStep> Steps, int ToolStep, Wil
 /// <i>would</i> apply, which are read and never applied: <see cref="AreaMoveOutcome"/> and
 /// <see cref="DoorUnlockOutcome"/> move the body, <see cref="TimeShiftOutcome"/> moves the hour. A sit
 /// is every other hour of the day, since the sitter chooses. Nothing else a verb does is modelled, so
-/// a path never passes through a conversation, a fight or a roll of loot: it stops at them.</para>
+/// a path never passes through a fight or a roll of loot, and through only the two conversations whose
+/// success is known in advance: the leave of a workshop, and a trader leading the way to their premises
+/// (<see cref="AskToBeLedVerb"/>, <see cref="TradeGate.NextOnPremises"/>).</para>
 ///
 /// <para><b>Implements.</b> A goal verb that requires a tool (<see cref="Verb.RequiresTool"/>) is
 /// reached only holding one of its <see cref="Verb.ReferenceToolIds"/>, or something made for it. When
@@ -82,7 +87,7 @@ public static class ActionPathPlanner
         typeof(GoUpStairsVerb), typeof(GoDownStairsVerb), typeof(ClimbUpVerb), typeof(ClimbDownVerb),
         typeof(ScaleUpVerb), typeof(ScaleDownVerb), typeof(CrossVerb), typeof(SwimAcrossVerb),
         typeof(SlipIntoVerb), typeof(FollowPathVerb), typeof(TrackVerb), typeof(StalkVerb),
-        typeof(SitAndWaitVerb), typeof(HideAndWaitVerb), typeof(BacktrackVerb),
+        typeof(SitAndWaitVerb), typeof(HideAndWaitVerb), typeof(BacktrackVerb), typeof(AskToBeLedVerb),
     };
 
     private readonly record struct State(Guid Area, TimePeriod When, string? Tool, string? Leave = null);
@@ -278,6 +283,15 @@ public static class ActionPathPlanner
             yield break;
         }
 
+        // Being led opens a conversation, which reports no move: the walk follows the won conversation
+        // (NarrativeController.WalkToPremises), to the place and hour this same question names.
+        if (action.Verb is AskToBeLedVerb)
+        {
+            if (action.Target is SceneNpc trader && TradeGate.NextOnPremises(scene, trader, here.When) is { } visit)
+                yield return visit;
+            yield break;
+        }
+
         IReadOnlyList<Outcome> reports;
         try { reports = action.Verb.SuccessReports(scene, here, actor, action.Target!, action); }
         catch (Exception ex)
@@ -285,15 +299,21 @@ public static class ActionPathPlanner
             Console.Error.WriteLine($"ActionPathPlanner: {action.Verb.VerbId} could not be read ({ex.Message}) — skipped.");
             yield break;
         }
+        // One success has one ending: a stalk passes the hour AND moves the body. Read apart they were two
+        // ends, and one was a place the follower never stands: still where they began, at the later hour.
+        Area? reached = null;
+        TimePeriod? until = null;
         foreach (var report in reports)
         {
             switch (report)
             {
-                case AreaMoveOutcome m:   yield return (m.Destination, here.When); break;
-                case DoorUnlockOutcome u: yield return (u.Destination, here.When); break;
-                case TimeShiftOutcome t:  yield return (here.Where, t.Destination); break;
+                case AreaMoveOutcome m:   reached = m.Destination; break;
+                case DoorUnlockOutcome u: reached = u.Destination; break;
+                case TimeShiftOutcome t:  until = t.Destination; break;
             }
         }
+        if (reached != null || until != null)
+            yield return (reached ?? here.Where, until ?? here.When);
     }
 
     /// <summary>

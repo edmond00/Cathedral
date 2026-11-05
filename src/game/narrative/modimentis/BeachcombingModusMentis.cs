@@ -24,7 +24,7 @@ public class BeachcombingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a stooping walker of the tideline who never comes home empty-handed";
     public override string PersonaReminder  => "beachcomber";
-    public override string PersonaReminder2 => "someone who walks the strand at every ebb to see what the sea gave up";
+    public override string PersonaReminder2 => "someone who expects every day to have left something behind for them";
     public override string StyleInstruction =>
         "See the line as a tideline does - things washed in, turned over, picked up and weighed in the hand.";
 

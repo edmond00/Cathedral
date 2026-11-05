@@ -22,7 +22,7 @@ advance 12 180
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 
 # The hammer is the blacksmith's own implement: MadeForIt, no critic.
@@ -53,7 +53,9 @@ expect-state crafting crafting break item=iron_bar units=8
 craft break Iron Bar
 expect-state crafting pool=8
 craft make horseshoe
+craft settle
 craft make horseshoe
+craft settle
 expect-state crafting pool=4
 craft leave
 wait mode LocationInteraction 30

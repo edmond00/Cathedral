@@ -150,37 +150,74 @@ public sealed class CraftingMenuRenderer
         return true;
     }
 
-    public enum MakeResult { Refused, Spoiled, Made }
+    public enum MakeResult { Refused, Rolling, Spoiled, Made }
+
+    // ── The roll of one thing made ───────────────────────────────────────────
+    //
+    // Making is two steps, like every other roll in the game: the material is paid and the dice are cast
+    // in the dice box (BeginMake), and the result is accepted on its Continue (Settle). Between the two the
+    // viscera's humors may bend the dice (DiceRollComponent's transmuting virtues), exactly as in a
+    // narration, a conversation or a fight. The roll is drawn when it is begun, so a seed replays it.
+
+    private readonly DiceRollComponent _dice = new();
+    private Item? _pendingMade;
+    private int _pendingCost;
+    private int[]? _pendingValues;
+    private DateTime _rollStarted;
+
+    /// <summary>The dice box while a make is on it, for the CLI and <c>--record</c>; null otherwise.</summary>
+    public DiceRollComponent? CliDice => _dice.IsVisible ? _dice : null;
+
+    /// <summary>True while a make's dice are on screen and not yet accepted.</summary>
+    public bool IsRolling => _pendingMade != null;
 
     /// <summary>
-    /// Pays for one <paramref name="recipe"/> and rolls for it (<see cref="CraftRoll"/>). Made, it goes into
-    /// the pack; spoiled, the material is gone and nothing is made. Refused — not enough in hand, or no room
-    /// for the thing — nothing is paid and nothing rolled.
+    /// Pays for one <paramref name="recipe"/> and casts its dice (<see cref="CraftRoll"/>). Refused — not
+    /// enough in hand, no room for the thing, or a roll already on the table — nothing is paid and nothing
+    /// rolled. <paramref name="instant"/> lands the dice at once (the CLI); otherwise they spin first.
     /// </summary>
-    public MakeResult Make(Item recipe)
+    public MakeResult BeginMake(Item recipe, bool instant = false)
     {
+        if (IsRolling) return MakeResult.Refused;
         int cost = Cost(recipe);
         if (Pool < cost) { _message = $"Not enough {Material.Label()}: {recipe.DisplayName.ToLowerInvariant()} takes {cost}."; _tone = Tone.Info; return MakeResult.Refused; }
         var made = ItemRegistry.NewInstance(recipe);
         if (!_member.CanAcquireItem(made)) { _message = $"No room in your pack for {made.WithArticle()}."; _tone = Tone.Info; return MakeResult.Refused; }
 
-        var roll = CraftRoll.Roll(Dice, Difficulty(recipe));
-        LastRoll = roll;
+        int dice = Dice, difficulty = Difficulty(recipe);
         Pool -= cost;
+        _pendingMade   = made;
+        _pendingCost   = cost;
+        _pendingValues = CraftRoll.Roll(dice, difficulty).Values;
+        _rollStarted   = DateTime.Now;
+        _dice.Start(dice, difficulty, subtitle: $"Making {made.WithArticle()}", difficultyVerb: "to make");
+        int limit = _member.DerivedStats.FirstOrDefault(st => st.Name == "humor_modifier_limit")?.GetValue(_member) ?? 0;
+        if (limit > 0) _dice.EnableHumorModifiers(_member.HumorQueues, limit);
+        if (instant) _dice.Complete(_pendingValues);
+        _message = "";
+        return MakeResult.Rolling;
+    }
+
+    /// <summary>
+    /// Accepts the roll on the table: its dice as the humors left them. Made, the thing goes into the
+    /// pack; spoiled, the material is gone and nothing is made. Refused while the dice still spin.
+    /// </summary>
+    public MakeResult Settle()
+    {
+        if (_pendingMade is not { } made || _dice.IsRolling) return MakeResult.Refused;
+        var roll = new CraftRoll.Result(_dice.NumberOfDice, _dice.Difficulty, _dice.FinalPrimaryValues.ToArray());
+        int cost = _pendingCost;
+        _pendingMade = null; _pendingValues = null;
+        _dice.Hide();
+        LastRoll = roll;
         string dice = $"{roll.Sixes} {(roll.Sixes == 1 ? "six" : "sixes")} on {roll.Dice} {(roll.Dice == 1 ? "die" : "dice")}, {roll.Difficulty} needed";
-        if (!roll.Succeeded)
+        if (!roll.Succeeded || !_member.AcquireItem(made))
         {
             Spoiled.Add(made.DisplayName);
             _message = $"Spoiled {made.WithArticle()} ({dice}): -{cost} {Material.Label()} lost.";
             _tone = Tone.Bad;
             Console.WriteLine($"CraftingMenu: spoiled {made.ItemId} ← -{cost} {Material} ({dice}; pool {Pool})");
             return MakeResult.Spoiled;
-        }
-        if (!_member.AcquireItem(made))
-        {
-            Pool += cost;   // the room was there a moment ago; nothing is lost to a placement that changed under us
-            _message = $"No room in your pack for {made.WithArticle()}.";
-            return MakeResult.Refused;
         }
         Made.Add(made.DisplayName);
         _message = $"Made {made.WithArticle()} ({dice}): -{cost} {Material.Label()}.";
@@ -191,16 +228,28 @@ public sealed class CraftingMenuRenderer
 
     public void Leave()
     {
+        if (IsRolling) return;
         if (Pool > 0) Console.WriteLine($"CraftingMenu: {Pool} {Material} left over and thrown away");
         IsComplete = true;
     }
 
     // ── Input ────────────────────────────────────────────────────────────────
 
-    public void OnMouseMove(int x, int y) { _hoverX = x; _hoverY = y; }
+    public void OnMouseMove(int x, int y)
+    {
+        _hoverX = x; _hoverY = y;
+        if (_dice.IsVisible) _dice.HandleHumorHover(x, y);
+    }
+
+    private bool OnDiceContinue(int x, int y)
+    {
+        var r = _dice.ContinueButtonRegion;
+        return !_dice.IsRolling && r.Width > 0 && y == r.Y && x >= r.X && x < r.X + r.Width;
+    }
 
     public string? GetHoveredControlId(int x, int y)
     {
+        if (_dice.IsVisible) return OnDiceContinue(x, y) ? "craft:dice-continue" : null;
         if (y == _buttonsRow && x >= _leaveX0 && x < _leaveX1) return "craft:leave";
         if (y == _pagerRow && (Near(x, _prevX) || Near(x, _nextX))) return Near(x, _prevX) ? "craft:prev" : "craft:next";
         if (RowAt(y) is { } row)
@@ -213,6 +262,13 @@ public sealed class CraftingMenuRenderer
 
     public void OnMouseClick(int x, int y)
     {
+        // The dice box is modal: its Continue settles the roll, anything else may spend a humor.
+        if (_dice.IsVisible)
+        {
+            if (OnDiceContinue(x, y)) Settle();
+            else _dice.HandleHumorClick(x, y);
+            return;
+        }
         if (y == _buttonsRow && x >= _leaveX0 && x < _leaveX1) { Leave(); return; }
         if (y == _pagerRow)
         {
@@ -223,7 +279,7 @@ public sealed class CraftingMenuRenderer
         }
         if (RowAt(y) is not { } row) return;
         if (row.Left != null && x >= _boxX + LeftOff && x < _boxX + LeftOff + ColW) BreakDown(row.Left);
-        else if (row.Right != null && x >= _boxX + RightOff && x < _boxX + RightOff + ColW && CanMake(row.Right)) Make(row.Right);
+        else if (row.Right != null && x >= _boxX + RightOff && x < _boxX + RightOff + ColW && CanMake(row.Right)) BeginMake(row.Right);
     }
 
     private static bool Near(int x, int x0) => x0 != int.MinValue && x >= x0 && x < x0 + 3;
@@ -317,6 +373,16 @@ public sealed class CraftingMenuRenderer
         _leaveX0 = _boxX + (BoxW - leave.Length) / 2; _leaveX1 = _leaveX0 + leave.Length;
         bool hov = _hoverY == y && _hoverX >= _leaveX0 && _hoverX < _leaveX1;
         _terminal.Text(_leaveX0, y, leave, hov ? BtnHovFg : BtnFg, hov ? BtnHovBg : BtnBg);
+
+        if (_dice.IsVisible)
+        {
+            if (_dice.IsRolling && _pendingValues != null
+                && (DateTime.Now - _rollStarted).TotalMilliseconds >= Config.Dice.AnimationDurationMs)
+                _dice.Complete(_pendingValues);
+            _dice.Advance();
+            _terminal.DimRect(0, 0, _terminal.Width, _terminal.Height, Config.Colors.DarkGray35, Config.Colors.Black);
+            _dice.Render(_terminal, _terminal.Width / 2, _terminal.Height / 2, OnDiceContinue(_hoverX, _hoverY));
+        }
     }
 
     private void RenderBreakRow(Item item, int y, Vector4 rowBg)
@@ -379,6 +445,10 @@ public sealed class CraftingMenuRenderer
         yield return $"crafting trade={_trade.ModusMentisId} material={Material.Label()} pool={Pool} dice={Dice} station=\"{_station.DisplayName}\"";
         foreach (var c in Contributions)
             yield return $"crafting dice-from {c.From.ToString().ToLowerInvariant()} dice={c.Dice} name=\"{c.Label}\"";
+        if (_pendingMade is { } pending)
+            yield return $"crafting rolling item={pending.ItemId} dice={_dice.NumberOfDice} needed={_dice.Difficulty} "
+                       + $"sixes={_dice.FinalPrimaryValues.Count(v => v == 6)} settled={(_dice.IsRolling ? "no" : "yes")} "
+                       + $"would={(_dice.IsCurrentlySuccess ? "make" : "spoil")} humors={(_dice.HumorEnabled ? "yes" : "no")}";
         if (LastRoll is { } roll)
             yield return $"crafting last-roll dice={roll.Dice} sixes={roll.Sixes} needed={roll.Difficulty} result={(roll.Succeeded ? "made" : "spoiled")}";
         foreach (var i in Breakables())

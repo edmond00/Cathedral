@@ -77,7 +77,7 @@ public class SmeltingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a bloomer who has fed a hearth through the night more times than anyone can count";
     public override string PersonaReminder  => "smelter";
-    public override string PersonaReminder2 => "someone who believes everything good starts in the fire";
+    public override string PersonaReminder2 => "someone who believes every good thing comes out of patience and heat";
     public override string StyleInstruction =>
         "Heavy and patient - think in fires, blooms and the weight of what comes out.";
 
@@ -133,7 +133,7 @@ public class CooperageModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "cooper";
     public override string PersonaReminder2 => "someone who judges every vessel by whether it holds";
     public override string StyleInstruction =>
-        "Rhythmic and practical - think in staves, hoops and whether a thing will hold water.";
+        "Rhythmic and practical - judge things by whether they are tight and will hold.";
 
     public override string PersonaPrompt => @"You are the inner voice of COOPERAGE, the drawknife-hand that makes things that hold.
 
@@ -160,7 +160,7 @@ public class WoodturningModusMentis : CraftingModusMentis
     public override string PersonaReminder  => "turner";
     public override string PersonaReminder2 => "someone who sees a bowl in every burl";
     public override string StyleInstruction =>
-        "Light and attentive - think in curves, grain and the shape inside the wood.";
+        "Light and attentive - judge things by their curves and the shape waiting in them.";
 
     public override string PersonaPrompt => @"You are the inner voice of WOODTURNING, the chisel-hand that finds small things in wood.
 
@@ -175,11 +175,11 @@ public class WeavingModusMentis : CraftingModusMentis
     public override string ModusMentisId    => "weaving";
     public override string DisplayName      => "Weaving";
     public override string MenuDescription =>
-        "Weaves fibre into cloth at the loom - plain cloth, linen, sailcloth and heavy blankets - and cuts the web free with the shears. Sets the hands to the shuttle and the eye to the weave.";
+        "Weaves fibre into cloth at the loom - plain cloth, linen, sailcloth and heavy blankets, and wicker hampers - and cuts the web free with the shears. Sets the hands to the shuttle and the eye to the weave.";
     public override string SkillMeans       => "the weaving of fibre into cloth";
     public override Type Station => typeof(Cathedral.Game.Scene.LoomPointOfInterest);
     public override Type Tool    => typeof(Cathedral.Game.Narrative.World.Items.Shears);
-    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Cloth), typeof(Cathedral.Game.Narrative.World.Items.Linen), typeof(Cathedral.Game.Narrative.World.Items.Sailcloth), typeof(Cathedral.Game.Narrative.World.Items.HorseBlanket) };
+    public override IReadOnlyList<Type> Recipes => new[] { typeof(Cathedral.Game.Narrative.World.Items.Cloth), typeof(Cathedral.Game.Narrative.World.Items.Linen), typeof(Cathedral.Game.Narrative.World.Items.Sailcloth), typeof(Cathedral.Game.Narrative.World.Items.HorseBlanket), typeof(Cathedral.Game.Narrative.Items.Hamper) };
     public override IReadOnlyList<Type> WillPlaces => new[] { typeof(Cathedral.Game.Scene.WorkshopArea) };
     public override string[] Organs        => new[] { "hands", "eyes" };
 
@@ -239,7 +239,7 @@ public class NeedleworkModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a tailor who sizes a stranger by eye before they have said a word";
     public override string PersonaReminder  => "garment-maker";
-    public override string PersonaReminder2 => "someone who notices a bad seam across a crowded room";
+    public override string PersonaReminder2 => "someone who notices a careless finish from far off";
     public override string StyleInstruction =>
         "Neat and observant - think in measures, seams and how a thing will hang on a body.";
 
@@ -347,9 +347,9 @@ public class HarnessMakingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a saddler whose work outlasts the horses it was made for";
     public override string PersonaReminder  => "saddler";
-    public override string PersonaReminder2 => "someone who thinks a strap is as good as the stitch that holds it";
+    public override string PersonaReminder2 => "someone who trusts nothing until he knows what holds it together";
     public override string StyleInstruction =>
-        "Solid and practical - think in straps, buckles and what a thing must bear.";
+        "Solid and practical - judge things by what they must hold and how long they will hold it.";
 
     public override string PersonaPrompt => @"You are the inner voice of HARNESS MAKING, the knife at the saddler's bench.
 
@@ -374,9 +374,9 @@ public class WheelThrowingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a potter whose hands are grey to the wrist in every season";
     public override string PersonaReminder  => "potter";
-    public override string PersonaReminder2 => "someone who sees a pot in every lump of mud";
+    public override string PersonaReminder2 => "someone who sees in anything that turns the shape it could be drawn up into";
     public override string StyleInstruction =>
-        "Calm and tactile - think in centring, walls and how a thing will fire.";
+        "Calm and tactile - judge things by their balance and how they would stand the kiln.";
 
     public override string PersonaPrompt => @"You are the inner voice of WHEEL THROWING, the hands on the spinning clay.
 
@@ -401,9 +401,9 @@ public class CandlemakingModusMentis : CraftingModusMentis
 
     public override string PersonaTone     => "a chandler who can tell good tallow from rank by the smell alone";
     public override string PersonaReminder  => "chandler";
-    public override string PersonaReminder2 => "someone who sells light by the pound";
+    public override string PersonaReminder2 => "someone who counts every hour of light as money spent";
     public override string StyleInstruction =>
-        "Thrifty and practical - think in fat, wicks and how long a light will burn.";
+        "Thrifty and practical - judge things by what they cost and how long they will last.";
 
     public override string PersonaPrompt => @"You are the inner voice of CANDLEMAKING, the chandler at the tallow vat.
 

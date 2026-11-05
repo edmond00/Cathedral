@@ -305,6 +305,8 @@ public sealed class WoodenDoll : Item
     public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Wooden Doll";
     public override string Description => "A small, lovingly worn doll of carved oak — a sleeping princess once";
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "play" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class Worm : ConsumableItem

@@ -23,7 +23,7 @@ advance 12 180
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 
@@ -49,7 +49,7 @@ expect RUNAWAY
 goal contemplate
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 click action 0

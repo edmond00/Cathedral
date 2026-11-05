@@ -15,11 +15,12 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-expect the surrounding buildings
+# The phrase wraps differently as the square gains furniture; "surrounding buildings" stays on one line.
+expect surrounding buildings
 
 click keyword buildings
 choose 1
-choose 0
+choose bushcraft
 advance 12 180
 expect My attention is drawn to a merchant house
 expect My attention shifts to a counting house
@@ -27,7 +28,7 @@ expect My attention shifts to a counting house
 goal scale_up
 click keyword house
 choose 0
-choose 0
+choose avarice
 advance 12 180
 expect scale the merchant house wall
 quit

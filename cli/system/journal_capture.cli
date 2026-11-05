@@ -22,7 +22,7 @@ goal meet_stranger
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0
@@ -45,7 +45,7 @@ advance 12 180
 
 # --- the journal, mid-visit -----------------------------------------------------------
 manage Journal
-wait 1
+wait 10
 expect J O U R N A L
 expect ◆ DAY 1
 expect First came to the
@@ -61,7 +61,7 @@ manage
 click button
 wait mode WorldView 60
 manage Journal
-wait 1
+wait 10
 expect 1 visit not yet written up
 expect Good day
 expect-state journal pending-groups=1

@@ -21,7 +21,7 @@ advance 12 180
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 0
@@ -35,4 +35,5 @@ expect-verb ask_to_use_workshop
 expect-outcome dialogue_trigger
 wait mode LocationInteraction 60
 expect-state workshops authorized=yes
+expect-state workshops usable=Test_Anvil
 quit

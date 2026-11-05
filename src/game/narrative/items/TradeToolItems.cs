@@ -362,3 +362,173 @@ public sealed class Whetstone : Item
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Mineral, ItemTag.Surgery };
     public override CoinType PriceCoin => CoinType.Copper;
 }
+
+// -- The new trades' implements ----------------------------------------------
+
+public sealed class Fuller : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "fuller";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Fuller";
+    public override string Description => "A round-nosed iron set struck with a hammer to drive the groove down a sword blank";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 4;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class SwageBlock : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "swage_block";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Swage Block";
+    public override string Description => "A heavy iron block pierced and grooved on every face, for forming axe eyes and hammer heads";
+    public override ItemSize Size      => ItemSize.Medium;
+    public override WeightClass Weight       => WeightClass.Heavy;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 4;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class FarriersRasp : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "farriers_rasp";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Farrier's Rasp";
+    public override string Description => "A broad flat rasp, coarse on one face and fine on the other, for hoof and hot iron alike";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class DrawPlate : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "draw_plate";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Draw Plate";
+    public override string Description => "A hardened steel plate pierced with a row of shrinking holes, to draw wire fine enough for a needle";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class SmithsFile : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "smiths_file";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Smith's File";
+    public override string Description => "A long half-round file with a wooden handle, for truing the edge of a plane iron or a chisel";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class SmithsPunch : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "smiths_punch";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Smith's Punch";
+    public override string Description => "A short square iron punch, its head mushroomed by years of hammer blows";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class Graver : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "graver";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Graver";
+    public override string Description => "A slender steel burin set in a mushroom-shaped handle, for cutting lines in silver and gold";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Insignificant;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
+}
+
+public sealed class CastingLadle : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "casting_ladle";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Casting Ladle";
+    public override string Description => "A deep iron ladle on a long handle, its lip crusted with spilt pewter";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class Dividers : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "dividers";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Dividers";
+    public override string Description => "A pair of brass dividers with fine steel points, for stepping off a scale or a circle";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Insignificant;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
+}
+
+public sealed class Burnisher : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "burnisher";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Burnisher";
+    public override string Description => "A polished steel burnisher in a bone handle, for bringing a blade to a mirror";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class Mandrel : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "mandrel";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Mandrel";
+    public override string Description => "A tapered iron mandrel for forming the socket of a mace or a spear";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Medium;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
+}
+
+public sealed class Spokeshave : Item
+{
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
+    public override string ItemId      => "spokeshave";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
+    public override string DisplayName => "Spokeshave";
+    public override string Description => "A two-handled shave for rounding a shaft or a bow limb true";
+    public override ItemSize Size      => ItemSize.Small;
+    public override WeightClass Weight       => WeightClass.Light;
+    public override ItemCategory Category => ItemCategory.Tool;
+    public override int   UsageLevel   => 3;
+    public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Woodwork };
+}
