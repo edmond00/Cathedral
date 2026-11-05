@@ -98,6 +98,11 @@ public static class CraftAudit
         int builds = 0, npcs = 0;
         var kindsWithStation = new HashSet<string>();
         var allKinds = new HashSet<string>();
+        // What wild ground gives up, by hand and by a tool, as the verbs themselves offer it.
+        var wildBody  = new Protagonist();
+        var wildHand  = CraftMaterials.All.ToDictionary(m => m, _ => new SortedSet<string>());
+        var wildTool  = CraftMaterials.All.ToDictionary(m => m, _ => new SortedSet<string>());
+        var wildKinds = CraftMaterials.All.ToDictionary(m => m, _ => new HashSet<string>());
 
         foreach (var (label, build, samples) in VerbAudit.Factories())
         for (int id = 1; id <= Math.Min(Samples, samples); id++)
@@ -129,6 +134,22 @@ public static class CraftAudit
                     {
                         groundUnits[m] += ItemMaterials.Units(ie.Item);
                         groundKinds[m].Add(label);
+                    }
+            }
+            foreach (var area in scene.AllAreas.Where(a => a.IsWild))
+            foreach (var action in scene.View(new PoV(area, TimePeriod.Morning), wildBody).Entries.SelectMany(e => e.ApplicableVerbs))
+            {
+                var by = action.Verb is Cathedral.Game.Scene.Verbs.GrabVerb or Cathedral.Game.Scene.Verbs.GatherVerb ? wildHand
+                       : action.Verb is Cathedral.Game.Scene.Verbs.ExtractionVerb ? wildTool : null;
+                if (by == null) continue;
+                var got = action.Target is ItemElement one ? new[] { one.Item }
+                        : action.Target is PointOfInterest source ? source.Items.Select(i => i.Item).ToArray()
+                        : Array.Empty<Item>();
+                foreach (var item in got)
+                    foreach (var m in ItemMaterials.Of(item))
+                    {
+                        by[m].Add(item.ItemId);
+                        if (by == wildHand) wildKinds[m].Add(label);
                     }
             }
             foreach (var sn in scene.Npcs)
@@ -175,6 +196,17 @@ public static class CraftAudit
             var note = worked && groundKinds[m].Count == 0 && sellerKinds[m].Count == 0 ? "  · offered nowhere sampled" : "";
             sb.AppendLine($"  {m.Label(),-9} {groundUnits[m],12} {groundKinds[m].Count,14} {sellerKinds[m].Count,14}{note}");
             supplyRows.Add(new { material = m.Label(), groundUnits = groundUnits[m], groundKinds = groundKinds[m].Count, sellerKinds = sellerKinds[m].Count });
+        }
+        sb.AppendLine();
+
+        // A note, not a failure. A freshly built scene holds no corpse, so what is cut from a kill is not
+        // counted, and what a tool extracts is listed apart: it asks for the implement first.
+        sb.AppendLine("── taken on wild ground: gathered or grabbed by hand, extracted with a tool ──");
+        sb.AppendLine($"  {"material",-9} {"by hand",8} {"kinds",6} {"by tool",8}  by hand, then by tool");
+        foreach (var m in CraftMaterials.All)
+        {
+            string Some(SortedSet<string> ids) => ids.Count == 0 ? "-" : string.Join(", ", ids.Take(6)) + (ids.Count > 6 ? ", …" : "");
+            sb.AppendLine($"  {(wildHand[m].Count == 0 ? "·" : "✓")} {m.Label(),-9} {wildHand[m].Count,6} {wildKinds[m].Count,6} {wildTool[m].Count,8}  {Some(wildHand[m])}  |  {Some(wildTool[m])}");
         }
         sb.AppendLine();
 
