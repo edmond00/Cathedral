@@ -32,6 +32,7 @@ Changed
   - Childhoods grant more modi mentis, always leave you able to speak, and come in a different order in each world.
   - The interface uses only purple, yellow and grey.
   - Popups list modi mentis by name, with wills among the rest.
+  - The Memory tab now shows how much a thinking modus mentis doubts itself, and shows Discreet only for those that carry out acts.
   - An item dropped on another exchanges places with it when there is no free room. The item it would exchange with blinks.
 
 Fixed
