@@ -20,7 +20,7 @@ public class FencraftModusMentis : ModusMentis
     public override string PersonaReminder  => "fenman";
     public override string PersonaReminder2 => "someone who walks a bog that would drown anyone else";
     public override string StyleInstruction =>
-        "Tread the line carefully - what the ground gives under the foot, the colour of the green, the water underneath.";
+        "Wary and light-footed - judge every step by what it will hold and what lies hidden under it.";
 
     public override string PersonaPrompt => @"You are the inner voice of FENCRAFT, and the ground ahead is mostly water pretending not to be.
 

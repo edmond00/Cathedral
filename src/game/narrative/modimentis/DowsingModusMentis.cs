@@ -22,7 +22,7 @@ public class DowsingModusMentis : ModusMentis
     public override string PersonaReminder  => "water-finder";
     public override string PersonaReminder2 => "someone who can tell you where to dig the well";
     public override string StyleInstruction =>
-        "Trace the line back toward its water - what grows where it is wet, which way the ground falls, where it must rise.";
+        "Searching and certain - read whatever is in front of you for where the hidden wet must lie.";
 
     public override string PersonaPrompt => @"You are the inner voice of DOWSING, and somewhere under this ground there is water.
 

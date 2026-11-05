@@ -25,7 +25,7 @@ public class TrufflingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a forager on the knees in the sand, fingers working round a pale knob";
     public override string PersonaReminder  => "truffle-hunter";
-    public override string PersonaReminder2 => "someone who reads a crack in the sand as a meal underneath";
+    public override string PersonaReminder2 => "someone who takes every small sign as a promise of something good to eat";
     public override string StyleInstruction =>
         "Keep the line close to the ground - cracks in the sand, the pale thing under them, the earthy smell when it comes out.";
 

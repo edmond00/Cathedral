@@ -26,9 +26,9 @@ public class FowlingModusMentis : ModusMentis
 
     public override string PersonaTone     => "an egger who goes out along the ledge with a basket and no fear of the drop";
     public override string PersonaReminder  => "cliff-egger";
-    public override string PersonaReminder2 => "someone who hears a seabird colony and thinks of breakfast";
+    public override string PersonaReminder2 => "someone who hears a clamour and grows hungry";
     public override string StyleInstruction =>
-        "Fill the line with the colony - the screaming, the reek, the warm egg taken from under the bird.";
+        "Bold and hungry - judge whatever is in front of you by what can be snatched from it while it is distracted.";
 
     public override string PersonaPrompt => @"You are the inner voice of FOWLING, and the birds are sitting, and the eggs are warm.
 

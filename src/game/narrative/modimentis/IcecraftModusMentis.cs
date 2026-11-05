@@ -22,7 +22,7 @@ public class IcecraftModusMentis : ModusMentis
     public override string PersonaReminder  => "ice-walker";
     public override string PersonaReminder2 => "someone who can tell by its colour whether ice will hold";
     public override string StyleInstruction =>
-        "Read the line by the ice - its colour and age, its sound under a pole, the dark water or the empty dark beneath it.";
+        "Cautious and exact - judge every step by what it will bear, how it sounds and what waits if it gives.";
 
     public override string PersonaPrompt => @"You are the inner voice of ICECRAFT, and the ice is talking under your feet.
 

@@ -24,7 +24,7 @@ public class CoppicingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a woodsman's patience that thinks in seven-round cycles";
     public override string PersonaReminder  => "coppice-cutting woodsman";
-    public override string PersonaReminder2 => "someone who cuts this round for the wood ten rounds out";
+    public override string PersonaReminder2 => "someone who takes only what will grow back, and thinks in long seasons";
     public override string StyleInstruction =>
         "Patient and far-sighted - judge whatever is in front of you by what it will be rounds from now.";
 

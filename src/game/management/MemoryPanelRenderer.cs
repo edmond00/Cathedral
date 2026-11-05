@@ -617,8 +617,21 @@ public class MemoryPanelRenderer
             }
         }
 
-        metaLines.Add(("Discreet",     modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
-             modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
+        // Each office's own property, shown only where it is read: discretion off the mind that carries an
+        // act out, doubt off the mind that thinks one up. A will is not shown a doubt: it keeps one more
+        // try of a step on its way (Medium, by the base class) but is never doubted, its goal set by its
+        // course.
+        if (modusMentis.Functions.Contains(ModusMentisFunction.Action))
+            metaLines.Add(("Discreet",     modusMentis.ActsDiscretely ? "Yes — acts unnoticed" : "No",
+                 modusMentis.ActsDiscretely ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
+        if (modusMentis.Functions.Contains(ModusMentisFunction.Thinking) && modusMentis.Doubt is { } doubt)
+            metaLines.Add(("Doubt",     doubt switch
+                {
+                    DoubtLevel.High   => "High — 2 more tries",
+                    DoubtLevel.Medium => "Medium — 1 more try",
+                    _                 => "Low — no second try",
+                },
+                doubt > DoubtLevel.Low ? Config.Colors.BrightYellow : Config.Colors.LightGray75));
         metaLines.Add(("Morality",      modusMentis.MoralLevel.ToString(),                    Config.Colors.LightGray75));
         metaLines.Add((anatomyLabel,    anatomyValue,
              anatomy.Any(a => a.Contribution < 0) ? Config.Colors.BrightPurple : Config.Colors.LightGray75));

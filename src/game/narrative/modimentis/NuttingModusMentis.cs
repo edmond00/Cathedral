@@ -22,7 +22,7 @@ public class NuttingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a gatherer with a crook to pull the boughs down and pockets that are never full";
     public override string PersonaReminder  => "nut-gatherer";
-    public override string PersonaReminder2 => "someone who sees an autumn wood as a larder to be emptied";
+    public override string PersonaReminder2 => "someone who sees the autumn as plenty to be gathered in before it is gone";
     public override string StyleInstruction =>
         "Count the line in handfuls - boughs pulled down, husks split, pockets filling against the winter.";
 

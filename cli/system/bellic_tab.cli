@@ -17,7 +17,7 @@ wait mode WorldView 45
 
 # --- the protagonist -----------------------------------------------------------------
 manage Bellic
-wait 1
+wait 10
 expect B E L L I C
 expect TURN
 expect ESCAPE AND RECOVERY
@@ -33,7 +33,7 @@ expect Punch
 dump
 
 manage Bellic Punch
-wait 1
+wait 10
 expect PUNCH
 expect Where the dice come from
 expect brawling
@@ -43,7 +43,7 @@ dump
 
 # --- the companion: a beast ----------------------------------------------------------
 manage member 1
-wait 1
+wait 10
 expect beast anatomy
 expect Natural defence
 expect legs
