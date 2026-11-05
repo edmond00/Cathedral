@@ -14,4 +14,4 @@
 # Nothing in the working tree can confirm that and dist/ cannot be used to try - see
 # "Hotfixes" in SKILL.md.
 
-220c9a850b052824778235bc9464d8b5437355ea 2026-10-27 Volume 6 - Wherein the Will Seeks Its Nearest Road
+5e54f36a38f4d57e5b10b8d729ff29a08ec23c47 2026-11-05 Volume 7 - Cuir Bouilli and Pattern Welding
