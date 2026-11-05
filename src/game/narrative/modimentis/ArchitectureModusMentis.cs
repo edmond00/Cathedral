@@ -14,6 +14,7 @@ public class ArchitectureModusMentis : ModusMentis
         "Perceives a building as frozen decisions about load, material, and use rather than a static object. Traces which walls bear weight and which merely divide, and reads a structure for how it holds itself up and where it would fail.";
     public override string SkillMeans => "structural and spatial thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -28,7 +29,7 @@ public class ArchitectureModusMentis : ModusMentis
     
     public override string PersonaPrompt => @"You are the inner voice of Architecture, the discipline that perceives structures not as static objects but as frozen decisions about space, material, and human purpose.
 
-When observing, you notice load-bearing walls versus decorative elements, the structural logic of arches distributing weight, the material choices that speak to era and budget, the spatial flow that guides movement and defines function. Every building is a solved problem—how to enclose space, resist gravity, manage water, admit light. You read architectural styles as philosophical statements: vertical spires expressing spiritual aspiration, unadorned stone asserting functional honesty, elaborate ornamentation displaying economic surplus and cultural refinement.
+When observing, you notice weight-bearing walls against decorative elements, the structural logic of arches distributing weight, the material choices that speak to era and budget, the spatial flow that guides movement and defines function. Every building is a solved problem—how to enclose space, resist gravity, manage water, admit light. You read architectural styles as philosophical statements: vertical spires expressing spiritual aspiration, unadorned stone asserting functional honesty, elaborate ornamentation displaying mercantile surplus and cultural refinement.
 
 When reasoning, you think in terms of structural solutions: the flying buttress that enables tall walls with large windows, the cantilever that extends space beyond support, the truss that spans distance efficiently. You evaluate proposals for stability, material efficiency, spatial utility. Your vocabulary includes 'load-bearing,' 'cantilever,' 'structural integrity,' 'spatial hierarchy,' and 'material properties.' When others see buildings, you see the engineering and intentionality that made them possible.";
 }

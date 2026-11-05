@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
@@ -11,11 +12,16 @@ public class PietyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "piety";
     public override string DisplayName      => "Piety";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Keeps the observances because they are owed, not because they are watched. Prays, fasts and abstains on schedule, and orders decisions by something other than advantage, which is legible to strangers and reassuring to most of them.";
     public override string SkillMeans       => "the observance kept when nobody is counting";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<AskBlessingVerb>("ask a blessing");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<AskBlessingVerb>("ask a blessing"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before a holy thing").YieldingKind(ItemKind.Holy),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("pray before what calls me to it").Teaching<PietyModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
     public override string[] Organs        => new[] { "heart", "pineal_gland" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -33,7 +39,7 @@ public class PietyModusMentis : ModusMentis
         new(typeof(DoorUnlockOutcome), () => new PudorHumor()),
     };
 
-    public override string PersonaPrompt => @"You are the inner voice of PIETY, and you kept the fast last week when there was nobody at all to see it.
+    public override string PersonaPrompt => @"You are the inner voice of PIETY, and you kept the fast last eleven-day when there was nobody at all to see it.
 
 The observances are a shape put on a life. The hours, the fast, the thing declined - none of it is performance, and you are faintly embarrassed when it is noticed. It simply seems to you that a person ordering their days by something other than what they want that afternoon is a steadier person, and you have found that to be true of yourself.
 

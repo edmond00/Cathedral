@@ -45,8 +45,8 @@ public class BondmanArchetype : PeasantArchetype
     {
         [DialogueTopic.Work]       = "it's never finished. That's the whole of it — there's no day you can look at and call it done",
         [DialogueTopic.Weather]    = "we go out in it either way, so I've stopped having a view",
-        [DialogueTopic.Harvest]    = "a good year and the lord's share is bigger. A bad year and ours is smaller. Work that one out",
-        [DialogueTopic.Rest]       = "the feast days. Those are ours, and nobody can take them, and I count toward them all year",
+        [DialogueTopic.Harvest]    = "a good round and the lord's share is bigger. A bad round and ours is smaller. Work that one out",
+        [DialogueTopic.Rest]       = "the feast days. Those are ours, and nobody can take them, and I count toward them all round",
         [DialogueTopic.Kin]        = "my people are here and will be after me. That's what being bound means — it isn't only me tied",
         [DialogueTopic.Neighbours] = "I see the small kindnesses out here that nobody up the hill ever hears about",
         [DialogueTopic.Roads]      = "I couldn't take one if I wanted to. I've stopped looking down them",

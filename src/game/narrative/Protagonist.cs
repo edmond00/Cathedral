@@ -14,8 +14,11 @@ public class Protagonist : PartyMember
 {
     // ── Protagonist-only data ────────────────────────────────────
 
-    /// <summary>Journal entries written throughout the journey.</summary>
-    public List<string> JournalEntries { get; set; } = new();
+    /// <summary>
+    /// The run's journal: what was narrated, said and changed, and the milestones, grouped by visit
+    /// for the chronicler. See <see cref="Narrative.Journal"/> and <see cref="JournalRecorder"/>.
+    /// </summary>
+    public Journal Journal { get; set; } = new();
 
     /// <summary>Named companions travelling with the protagonist.</summary>
     /// <summary>

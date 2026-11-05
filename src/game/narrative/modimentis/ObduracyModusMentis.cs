@@ -19,6 +19,7 @@ public class ObduracyModusMentis : ModusMentis
     public override string SkillMeans       => "the hardening that follows one's own hurt";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "backbone", "spleen" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
@@ -27,7 +28,7 @@ public class ObduracyModusMentis : ModusMentis
     public override string PersonaReminder  => "hardened, unmovable";
     public override string PersonaReminder2 => "someone whom injury makes less movable rather than more";
     public override string StyleInstruction =>
-        "Colour the line with weight, stone and the shutting of a door.";
+        "Heavy and shut - let nothing in front of you move you.";
     public override MoralLevel MoralLevel    => MoralLevel.High;
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]

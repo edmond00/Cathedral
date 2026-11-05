@@ -1,9 +1,11 @@
+using Cathedral.Game.Narrative;
 ﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Rope : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Fibre });
     public override ItemCategory Category => ItemCategory.Tool;
     public override string ItemId      => "rope";
     public override string DisplayName => "Rope";
@@ -11,7 +13,6 @@ public sealed class Rope : Item
     public override ItemSize Size      => ItemSize.Medium;
     public override WeightClass Weight       => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.FishingGear };
-    public override int PriceReference => 6;
     public override int UsageLevel     => 4;
 
     // Deliberately declares no MadeForVerbIds. A rope obviously serves the climbs, and naming them

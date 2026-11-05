@@ -17,6 +17,7 @@ public class FellowFeelingModusMentis : ModusMentis
         "Grants a living thing an inside: wants, fears, a day of its own that was going on before you arrived. Slows the hand that would otherwise take or kill without thinking, and makes an animal easier to read for the same reason.";
     public override string SkillMeans       => "the recognition of another creature's inside";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;

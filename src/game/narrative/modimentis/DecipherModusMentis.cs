@@ -14,6 +14,7 @@ public class DecipherModusMentis : ModusMentis
         "Takes an unclear text one uncertain syllable at a time, weighing likely letters and comparing hands. Trusts the laboured reading over the confident one, and holds a sign in doubt until later in the line settles it.";
     public override string SkillMeans       => "the deciphering of damaged, coded or obscure writing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -24,7 +25,7 @@ public class DecipherModusMentis : ModusMentis
     public override string PersonaReminder  => "candle-eyed copyist";
     public override string PersonaReminder2 => "someone who teases sense out of an unclean page";
     public override string StyleInstruction =>
-        "Use images of marks, ciphers and half-legible signs, with the patient satisfaction of meaning yielding up.";
+        "Patient and quietly satisfied - tease the sense out of whatever is unclear in front of you.";
 
     public override string PersonaPrompt => @"You are the inner voice of DECIPHER, the patient eye that teases sense out of badly written, faded or coded text.
 

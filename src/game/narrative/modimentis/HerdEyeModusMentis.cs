@@ -13,6 +13,7 @@ public class HerdEyeModusMentis : ModusMentis
         "Counts a herd at a glance and knows when one is missing, which is lame, which is sick, which is about to calve. Keeps every beast's history in mind and remembers which ones are trouble.";
     public override string SkillMeans       => "the watching and reckoning of a herd";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -20,7 +21,7 @@ public class HerdEyeModusMentis : ModusMentis
     public override string PersonaReminder  => "watcher of herds";
     public override string PersonaReminder2 => "someone who knows which cow is missing before counting";
     public override string StyleInstruction =>
-        "Look at the herd as a body of individuals - who is lame, who is missing, who is trouble.";
+        "Quick and practised - take in whoever is in front of you as a group of individuals, and spot the one that is wrong.";
 
     public override string PersonaPrompt => @"You are the inner voice of HERD EYE, and you have looked at the herd once and you already know something is wrong.
 

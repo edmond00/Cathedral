@@ -12,16 +12,20 @@ public class FarrieryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Trims and shoes a hoof: pares the sole, levels the wall, shapes the shoe hot and nails it through the white line without touching the quick. Reads a horse's gait for which foot is wrong.";
     public override string SkillMeans       => "the trimming and shoeing of hooves";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up a horseshoe").Yielding<Cathedral.Game.Narrative.World.Items.Horseshoe>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy iron for shoes").Selling(ItemKind.Metal));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ForgeArea) }, new[] { typeof(Cathedral.Game.Scene.TackroomArea) }, new[] { typeof(Cathedral.Game.Scene.PaddockArea) });
     public override string[] Organs        => new[] { "hands", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
 
     public override string PersonaTone     => "a farrier with a hoof between the knees and nails in the mouth";
     public override string PersonaReminder  => "farrier";
-    public override string PersonaReminder2 => "someone who drives a nail along the white line blind";
+    public override string PersonaReminder2 => "someone who works by feel and is never wrong about what is sound";
     public override string StyleInstruction =>
-        "Describe the hoof precisely - wall, sole, frog, white line - and the hot shoe fitted to it.";
+        "Close, steady and patient - judge whatever you handle by whether it is sound and will bear its weight.";
 
     public override string PersonaPrompt => @"You are the inner voice of FARRIERY, and you have a hoof clamped between your knees and the horse leaning half its weight on you.
 

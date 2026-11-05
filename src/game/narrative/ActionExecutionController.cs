@@ -257,7 +257,7 @@ public class ActionExecutionController
             difficultyScore,
             ActingMember,
             cancellationToken,
-            outcomeVerbatims: CollectVerbatims(llmDecidedReports));
+            outcomeVerbatims: CollectVerbatims(llmDecidedReports), lessonVerbatims: CollectLessons(llmDecidedReports));
 
         return new ActionExecutionResult
         {
@@ -307,7 +307,8 @@ public class ActionExecutionController
             var allReports = new List<Outcome>(verbReports);
             string narration = await _outcomeNarrator.NarrateOutcomeAsync(
                 action, actionModusMentis, successOutcome, true, difficultyScore, ActingMember,
-                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview);
+                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview,
+                lessonVerbatims: CollectLessons(allReports));
             return new ActionExecutionResult
             {
                 Action = action,
@@ -347,7 +348,8 @@ public class ActionExecutionController
 
             string narration = await _outcomeNarrator.NarrateOutcomeAsync(
                 action, actionModusMentis, failureOutcome, false, difficultyScore, ActingMember,
-                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview);
+                cancellationToken, outcomeVerbatims: CollectVerbatims(allReports), preview: preview,
+                lessonVerbatims: CollectLessons(allReports));
 
             return new ActionExecutionResult
             {
@@ -370,9 +372,15 @@ public class ActionExecutionController
         }
     }
 
-    /// <summary>The non-empty <see cref="Outcome.Verbatim"/> phrases, in order.</summary>
+    /// <summary>The non-empty <see cref="Outcome.Verbatim"/> phrases, in order — the lessons apart (see <see cref="CollectLessons"/>).</summary>
     private static IReadOnlyList<string> CollectVerbatims(IEnumerable<Outcome> reports)
-        => reports.Select(r => r.Verbatim)
+        => reports.Where(r => !r.IsLesson).Select(r => r.Verbatim)
+                  .Where(v => !string.IsNullOrWhiteSpace(v))
+                  .ToList();
+
+    /// <summary>The lessons' verbatims, said in a sentence of their own (<see cref="Outcome.IsLesson"/>).</summary>
+    private static IReadOnlyList<string> CollectLessons(IEnumerable<Outcome> reports)
+        => reports.Where(r => r.IsLesson).Select(r => r.Verbatim)
                   .Where(v => !string.IsNullOrWhiteSpace(v))
                   .ToList();
 
@@ -415,7 +423,8 @@ public class ActionExecutionController
             difficultyScore, ActingMember,
             successVerbatims: System.Array.Empty<string>(),
             failureVerbatims: CollectVerbatims(llmDecidedReports),
-            cancellationToken);
+            cancellationToken,
+            failureLessons: CollectLessons(llmDecidedReports));
 
         var success = new ActionExecutionResult
         {

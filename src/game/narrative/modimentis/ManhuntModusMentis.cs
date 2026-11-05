@@ -14,7 +14,8 @@ public class ManhuntModusMentis : ModusMentis
         "Tracks a person rather than a beast: reads where a fugitive will run, asks the right questions, notices the broken hedge and the stolen loaf. Thinks like the hunted to find them.";
     public override string SkillMeans       => "the tracking of a fugitive";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<TrackVerb>("track somebody down");
+    public override WillTargets? Will => WillTarget.To<TrackVerb>("track somebody down");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 

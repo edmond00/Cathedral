@@ -45,6 +45,7 @@ public class DialogueTreeRegistry
         Register(new HearGossipTree());
         // Being taken to where a trader keeps their goods (AskToBeLedTree.cs).
         Register(new AskToBeLedTree());
+        Register(new AskToUseWorkshopTree());
     }
 
     private void Register(DialogueTree tree) => _trees[tree.TreeId] = tree;

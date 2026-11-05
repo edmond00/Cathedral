@@ -49,11 +49,11 @@ public class HaywardArchetype : PeasantArchetype
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Beasts]     = "one loose beast in standing corn can undo a month. That's why I'm hard about the hedges",
+        [DialogueTopic.Beasts]     = "one loose beast in standing corn can undo thirty days. That's why I'm hard about the hedges",
         [DialogueTopic.Wilds]      = "deer come out of the wood at dusk and eat what a family was counting on. I've no love for them",
         [DialogueTopic.Work]       = "everyone thinks I only walk about. Then a gap opens and they find out what I was doing",
         [DialogueTopic.Neighbours] = "I know who cuts a corner off the common and hopes nobody counted. Somebody counted",
-        [DialogueTopic.Weather]    = "wind is my enemy. It takes the top off a hedge and I'm a week putting it back",
+        [DialogueTopic.Weather]    = "wind is my enemy. It takes the top off a hedge and I'm an eleven-day putting it back",
         [DialogueTopic.Harvest]    = "from the ear filling to the last sheaf carried, I don't sleep properly. That's when everything gets taken",
         [DialogueTopic.Roads]      = "strangers on the boundary at dusk. Nine times in ten it's nothing. It's the tenth I'm out here for",
         [DialogueTopic.Rest]       = "when the field's bare and there's nothing left to steal, then I rest",

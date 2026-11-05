@@ -1,0 +1,120 @@
+{"case": "village_noon_party:005:swap:poetry", "version": "final_reasoning_clause", "seed": 62, "sid": "S1533", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"turn my gaze to tales of old\""}
+{"case": "village_noon_party:005:swap:poetry", "version": "final", "seed": 61, "sid": "S8026", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "setting copied (\"this medieval village\")"}
+{"case": "village_noon_party:005:swap:poetry", "version": "final_reasoning_clause", "seed": 61, "sid": "S8906", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the fields beyond, +trees"}
+{"case": "village_noon_party:005:swap:poetry", "version": "final", "seed": 62, "sid": "S1243", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"tales from the distant hills\""}
+{"case": "talk_blacksmith:012:swap:dread", "version": "final", "seed": 62, "sid": "S4376", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+the door"}
+{"case": "talk_blacksmith:012:swap:dread", "version": "final", "seed": 61, "sid": "S8578", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the exit"}
+{"case": "talk_blacksmith:012:swap:dread", "version": "final_reasoning_clause", "seed": 62, "sid": "S9049", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-hammering; \"hands glowing from the forge\""}
+{"case": "talk_blacksmith:012:swap:dread", "version": "final_reasoning_clause", "seed": 61, "sid": "S5546", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "\"no fire to shape\", \"all alone\" (she is at the anvil)"}
+{"case": "talk_miller:011:swap:pride", "version": "final", "seed": 61, "sid": "S3625", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an offer, +an insult"}
+{"case": "talk_miller:011:swap:pride", "version": "final_reasoning_clause", "seed": 62, "sid": "S1563", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an offer not met with respect"}
+{"case": "talk_miller:011:swap:pride", "version": "final_reasoning_clause", "seed": 61, "sid": "S9530", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+her offer declined"}
+{"case": "talk_miller:011:swap:pride", "version": "final", "seed": 62, "sid": "S9029", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an offer, +a dismissive tone"}
+{"case": "village_dawn:010:swap:poetry", "version": "final_reasoning_clause", "seed": 61, "sid": "S6370", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+meadow, +bells"}
+{"case": "village_dawn:010:swap:poetry", "version": "final", "seed": 62, "sid": "S2246", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "setting copied; +willows by the brook"}
+{"case": "village_dawn:010:swap:poetry", "version": "final_reasoning_clause", "seed": 62, "sid": "S5095", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-cross"}
+{"case": "village_dawn:010:swap:poetry", "version": "final", "seed": 61, "sid": "S6917", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the nearby meadow, +forgotten kings"}
+{"case": "forest_evening:004:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S1730", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "-snail; \"delay\" for \"will not\"; clause copied (\"only colors\")"}
+{"case": "forest_evening:004:own", "version": "final", "seed": 62, "sid": "S7887", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-snail"}
+{"case": "forest_evening:004:own", "version": "final", "seed": 61, "sid": "S3272", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-snail"}
+{"case": "forest_evening:004:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S6817", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"who might see\""}
+{"case": "village_noon_party:005:swap:courtesy", "version": "final", "seed": 62, "sid": "S7252", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"I greet\" (no one)"}
+{"case": "village_noon_party:005:swap:courtesy", "version": "final_reasoning_clause", "seed": 61, "sid": "S7901", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+greeting, +the village green"}
+{"case": "village_noon_party:005:swap:courtesy", "version": "final_reasoning_clause", "seed": 62, "sid": "S5646", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+lush green fields"}
+{"case": "village_noon_party:005:swap:courtesy", "version": "final", "seed": 61, "sid": "S5297", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the market"}
+{"case": "forest_evening:005:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S8484", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-timber means"}
+{"case": "forest_evening:005:own", "version": "final", "seed": 62, "sid": "S3861", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "setting copied"}
+{"case": "forest_evening:005:own", "version": "final", "seed": 61, "sid": "S5966", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-timber means"}
+{"case": "forest_evening:005:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S6940", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-timber means"}
+{"case": "village_dawn:010:swap:dread", "version": "final", "seed": 61, "sid": "S3178", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "village_dawn:010:swap:dread", "version": "final_reasoning_clause", "seed": 61, "sid": "S8486", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "village_dawn:010:swap:dread", "version": "final_reasoning_clause", "seed": 62, "sid": "S4922", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the door, +the fields beyond"}
+{"case": "village_dawn:010:swap:dread", "version": "final", "seed": 62, "sid": "S8203", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"no fire to light\""}
+{"case": "farm_night:013:swap:ruination", "version": "final_reasoning_clause", "seed": 61, "sid": "S7147", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the other ways"}
+{"case": "farm_night:013:swap:ruination", "version": "final", "seed": 61, "sid": "S1725", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the other ways"}
+{"case": "farm_night:013:swap:ruination", "version": "final_reasoning_clause", "seed": 62, "sid": "S1066", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+forgotten tools and seeds"}
+{"case": "farm_night:013:swap:ruination", "version": "final", "seed": 62, "sid": "S4860", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the other ways"}
+{"case": "talk_miller:011:swap:dread", "version": "final", "seed": 62, "sid": "S3195", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-her work"}
+{"case": "talk_miller:011:swap:dread", "version": "final_reasoning_clause", "seed": 62, "sid": "S4194", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-her work"}
+{"case": "talk_miller:011:swap:dread", "version": "final_reasoning_clause", "seed": 61, "sid": "S5962", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a cold hearth"}
+{"case": "talk_miller:011:swap:dread", "version": "final", "seed": 61, "sid": "S9787", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the miller's house, +a darkening hall"}
+{"case": "talk_farm:002:own", "version": "final", "seed": 62, "sid": "S6998", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"other fields\""}
+{"case": "talk_farm:002:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S4935", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+the fields"}
+{"case": "talk_farm:002:own", "version": "final", "seed": 61, "sid": "S6150", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_farm:002:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S9994", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+fields beyond, +crops to tend"}
+{"case": "forest_evening:010:own", "version": "final", "seed": 61, "sid": "S8383", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:010:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S8143", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"it is now ripe\""}
+{"case": "forest_evening:010:own", "version": "final", "seed": 62, "sid": "S8700", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the oak described by the style (swell, colour, scent)"}
+{"case": "forest_evening:010:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S2064", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "style copied into the oak"}
+{"case": "forest_evening:002:swap:avarice", "version": "final", "seed": 62, "sid": "S6319", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+silver in my pocket; -means"}
+{"case": "forest_evening:002:swap:avarice", "version": "final", "seed": 61, "sid": "S9223", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a silver coin"}
+{"case": "forest_evening:002:swap:avarice", "version": "final_reasoning_clause", "seed": 61, "sid": "S3562", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+coins"}
+{"case": "forest_evening:002:swap:avarice", "version": "final_reasoning_clause", "seed": 62, "sid": "S4674", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+silver in my purse"}
+{"case": "forest_evening:004:swap:rhetoric", "version": "final", "seed": 61, "sid": "S7764", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"paths less trodden\""}
+{"case": "forest_evening:004:swap:rhetoric", "version": "final", "seed": 62, "sid": "S4905", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:004:swap:rhetoric", "version": "final_reasoning_clause", "seed": 62, "sid": "S1604", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:004:swap:rhetoric", "version": "final_reasoning_clause", "seed": 61, "sid": "S1520", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"contemplative glade\""}
+{"case": "talk_farm:005:own", "version": "final", "seed": 62, "sid": "S9136", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+memories; persona formula copied"}
+{"case": "talk_farm:005:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S5934", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "the formula copied without sense"}
+{"case": "talk_farm:005:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S2180", "F": 2, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_farm:005:own", "version": "final", "seed": 61, "sid": "S9740", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+minor repairs"}
+{"case": "farm_night:013:own", "version": "final", "seed": 61, "sid": "S2326", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:013:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S3452", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+hosts' names"}
+{"case": "farm_night:013:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S7298", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:013:own", "version": "final", "seed": 62, "sid": "S7130", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "means turned to \"be welcomed\""}
+{"case": "talk_miller:002:own", "version": "final", "seed": 62, "sid": "S2850", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+her name; \"as she passes by\""}
+{"case": "talk_miller:002:own", "version": "final", "seed": 61, "sid": "S2582", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-introducing myself; +her name"}
+{"case": "talk_miller:002:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S8234", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+her name"}
+{"case": "talk_miller:002:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S3725", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:005:swap:poetry", "version": "final_reasoning_clause", "seed": 61, "sid": "S4128", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:005:swap:poetry", "version": "final_reasoning_clause", "seed": 62, "sid": "S6712", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"another lens\", \"ancient woodlands\""}
+{"case": "forest_evening:005:swap:poetry", "version": "final", "seed": 62, "sid": "S8098", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:005:swap:poetry", "version": "final", "seed": 61, "sid": "S7784", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "examine made \"trace the shell\""}
+{"case": "village_dawn:010:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S8300", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the fields beyond, +long shadows"}
+{"case": "village_dawn:010:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S5021", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+carved scenes, +the fields beyond"}
+{"case": "village_dawn:010:own", "version": "final", "seed": 62, "sid": "S5500", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"stories of the past\""}
+{"case": "village_dawn:010:own", "version": "final", "seed": 61, "sid": "S3351", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+ripe wheat, +the smiths' hammers"}
+{"case": "farm_night:008:own", "version": "final", "seed": 61, "sid": "S9550", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the want made leaving; +the door"}
+{"case": "farm_night:008:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S3923", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"find a way to leave\""}
+{"case": "farm_night:008:own", "version": "final", "seed": 62, "sid": "S2957", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "the want made leaving; style copied"}
+{"case": "farm_night:008:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S5374", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "the means made a task"}
+{"case": "village_noon_party:005:own", "version": "final", "seed": 61, "sid": "S8466", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied word for word"}
+{"case": "village_noon_party:005:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S5957", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:005:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S3702", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied word for word"}
+{"case": "village_noon_party:005:own", "version": "final", "seed": 62, "sid": "S3855", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "setting copied"}
+{"case": "village_noon_party:002:swap:avarice", "version": "final", "seed": 61, "sid": "S3885", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+hoardings, +coins in hand"}
+{"case": "village_noon_party:002:swap:avarice", "version": "final", "seed": 62, "sid": "S8866", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+the nearby forge, +coins"}
+{"case": "village_noon_party:002:swap:avarice", "version": "final_reasoning_clause", "seed": 61, "sid": "S6694", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+lanterns, +a chest in the common room"}
+{"case": "village_noon_party:002:swap:avarice", "version": "final_reasoning_clause", "seed": 62, "sid": "S6374", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "doors closed tight (the lane is loud); +gold coins"}
+{"case": "farm_dusk:002:own", "version": "final", "seed": 61, "sid": "S8122", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+someone's face before me"}
+{"case": "farm_dusk:002:own", "version": "final", "seed": 62, "sid": "S4664", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an offer, +an insult"}
+{"case": "farm_dusk:002:own", "version": "final_reasoning_clause", "seed": 61, "sid": "S1082", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"my refusal\""}
+{"case": "farm_dusk:002:own", "version": "final_reasoning_clause", "seed": 62, "sid": "S9926", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "farm_dusk:002:swap:mercy", "version": "final", "seed": 61, "sid": "S1715", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the other ways"}
+{"case": "farm_dusk:002:swap:mercy", "version": "final_reasoning_clause", "seed": 61, "sid": "S6433", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied, clause copied (\"it colors how I perceive\")"}
+{"case": "farm_dusk:002:swap:mercy", "version": "final", "seed": 62, "sid": "S6233", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "farm_dusk:002:swap:mercy", "version": "final_reasoning_clause", "seed": 62, "sid": "S4975", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the other ways"}
+{"case": "forest_evening:010:swap:ruination", "version": "final", "seed": 61, "sid": "S2309", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+bark collapsing"}
+{"case": "forest_evening:010:swap:ruination", "version": "final", "seed": 62, "sid": "S5288", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-cut wood"}
+{"case": "forest_evening:010:swap:ruination", "version": "final_reasoning_clause", "seed": 62, "sid": "S8340", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-cut wood"}
+{"case": "forest_evening:010:swap:ruination", "version": "final_reasoning_clause", "seed": 61, "sid": "S7632", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"before it collapses\""}
+{"case": "farm_night:008:swap:pride", "version": "final", "seed": 61, "sid": "S3592", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the want reversed (\"I decline\")"}
+{"case": "farm_night:008:swap:pride", "version": "final_reasoning_clause", "seed": 61, "sid": "S7399", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an insult"}
+{"case": "farm_night:008:swap:pride", "version": "final", "seed": 62, "sid": "S9122", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "the want reversed"}
+{"case": "farm_night:008:swap:pride", "version": "final_reasoning_clause", "seed": 62, "sid": "S4955", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the want reversed (\"keep my distance\")"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "final_reasoning_clause", "seed": 61, "sid": "S9607", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+coin in my purse; -her work"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "final", "seed": 62, "sid": "S5451", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+her coins, +the market"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "final", "seed": 61, "sid": "S9521", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-her work"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "final_reasoning_clause", "seed": 62, "sid": "S9190", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+coins, +a chest behind the well"}
+{"case": "talk_farm:002:swap:avarice", "version": "final_reasoning_clause", "seed": 61, "sid": "S2028", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+coins in hand"}
+{"case": "talk_farm:002:swap:avarice", "version": "final", "seed": 62, "sid": "S3724", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+silver inside, +a silversmith"}
+{"case": "talk_farm:002:swap:avarice", "version": "final", "seed": 61, "sid": "S9018", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+silver in its walls, +the fields"}
+{"case": "talk_farm:002:swap:avarice", "version": "final_reasoning_clause", "seed": 62, "sid": "S8560", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"my silver\""}
+{"case": "farm_night:013:swap:pride", "version": "final_reasoning_clause", "seed": 62, "sid": "S7572", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "the welcome refused"}
+{"case": "farm_night:013:swap:pride", "version": "final", "seed": 62, "sid": "S3224", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an insult; the means denied"}
+{"case": "farm_night:013:swap:pride", "version": "final_reasoning_clause", "seed": 61, "sid": "S7888", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"the tone of their offering\""}
+{"case": "farm_night:013:swap:pride", "version": "final", "seed": 61, "sid": "S9868", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"the terms of offer\""}
+{"case": "village_dawn:002:swap:dread", "version": "final_reasoning_clause", "seed": 62, "sid": "S6721", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-means"}
+{"case": "village_dawn:002:swap:dread", "version": "final", "seed": 62, "sid": "S9825", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-means; +the exit"}
+{"case": "village_dawn:002:swap:dread", "version": "final_reasoning_clause", "seed": 61, "sid": "S7354", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"it calls me to leave\""}
+{"case": "village_dawn:002:swap:dread", "version": "final", "seed": 61, "sid": "S9026", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "-listen; +the door"}

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -12,6 +13,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "childhood_reminescence";
     public override string DisplayName      => "Childhood Reminescence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription =>
         "Reaches back for half-buried moments of childhood, letting a dim scene surface and sharpen. Colours present thought with what is slowly recovered, still in the phase of active recollection rather than settled memory.";
     public override string SkillMeans       => "the slow recovery of childhood memories";
@@ -21,6 +23,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
         ModusMentisFunction.Thinking,
         ModusMentisFunction.Action,
     };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs         => new[] { "anamnesis", "hippocampus" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -32,7 +35,7 @@ public class ChildhoodReminescenceModusMentis : ModusMentis
     public override string PersonaReminder  => "weary remembering traveller";
     public override string PersonaReminder2 => "someone whose past is rising in fragments through fatigue";
     public override string StyleInstruction =>
-        "Let half-remembered images surface like old fragments, tinged with nostalgia, wistfulness and a faint ache.";
+        "Wistful and faintly aching - let what is in front of you feel half-familiar, without naming any memory it does not hold.";
 
     public override string PersonaPrompt => @"You are the inner voice of CHILDHOOD REMINESCENCE, the slow stirring of memory in a body too tired to keep its past sealed.
 

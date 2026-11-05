@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,6 +10,7 @@ public class CardSharpingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "card_sharping";
     public override string DisplayName      => "Card Sharping";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Cheats at games of chance: the marked card, the loaded die, the second deal, the confederate at the next table. Keeps a calm face while the hand does its work.";
     public override string SkillMeans       => "the cheating at games of chance";
@@ -23,7 +25,7 @@ public class CardSharpingModusMentis : ModusMentis
     public override string PersonaReminder  => "card-sharp";
     public override string PersonaReminder2 => "someone whose dice always land well";
     public override string StyleInstruction =>
-        "Narrate the game - the calm face, the quick hand, the loaded die - and the mark's growing loss.";
+        "Calm-faced and quick - see in whatever is in front of you the game, the mark and the advantage.";
 
     public override string PersonaPrompt => @"You are the inner voice of CARD SHARPING, and the mark thinks he is winning, which is exactly where you want him.
 

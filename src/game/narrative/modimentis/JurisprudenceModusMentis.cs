@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,11 +11,15 @@ public class JurisprudenceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "jurisprudence";
     public override string DisplayName      => "Jurisprudence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Knows the law: its codes, its customs, its precedents, its loopholes. Can say what a case turns on and what a court will probably decide, and which old ruling the other side has forgotten.";
     public override string SkillMeans       => "the knowledge of law and how it is applied";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<PetitionVerb>("put a case before somebody with the power to grant it");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<PetitionVerb>("put a case before somebody with the power to grant it"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look upon an instrument of the law").Teaching<JurisprudenceModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Stronghold);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;

@@ -53,7 +53,11 @@ public sealed class PartyState
     // discriminator and buys nothing, since there is exactly one protagonist.
     public string? CharacterName { get; set; }
     public int CurrentLocationId { get; set; }
-    public List<string> Journal { get; set; } = new();
+    /// <summary>
+    /// The journal, entries and chronicler queue together (the queue is the entries still pending).
+    /// Plain data with public setters, so stored as-is — but copied, not shared.
+    /// </summary>
+    public Journal Journal { get; set; } = new();
     public int Gold { get; set; }
     public int Silver { get; set; }
     public int Copper { get; set; }
@@ -80,7 +84,7 @@ public sealed class PartyState
             Companions        = protagonist.CompanionParty.Select(CaptureMember).ToList(),
             CharacterName     = protagonist.CharacterName,
             CurrentLocationId = protagonist.CurrentLocationId,
-            Journal           = new List<string>(protagonist.JournalEntries),
+            Journal           = protagonist.Journal.Clone(),
             Gold              = protagonist.Party.Gold,
             Silver            = protagonist.Party.Silver,
             Copper            = protagonist.Party.Copper,
@@ -114,6 +118,9 @@ public sealed class PartyState
             {
                 Id = mm.ModusMentisId, Level = mm.Level, Xp = mm.CurrentXp,
             });
+
+        // ALWAYS REJECT's ignore list, sorted so the file does not depend on set order.
+        dto.RejectedModiMentis = m.RejectedModiMentisIds.OrderBy(id => id, StringComparer.Ordinal).ToList();
 
         foreach (var module in m.MemoryModules)
             dto.Memory[module.Type] = module.Slots
@@ -203,8 +210,7 @@ public sealed class PartyState
         protagonist.RestoreCharacterName(CharacterName);
         protagonist.CurrentLocationId = CurrentLocationId;
 
-        protagonist.JournalEntries.Clear();
-        protagonist.JournalEntries.AddRange(Journal);
+        protagonist.Journal = Journal.Clone();
 
         // Party is get-only and starts at zero on a fresh protagonist, so crediting is a restore.
         if (Gold   > 0) protagonist.Party.Add(CoinType.Gold,   Gold);
@@ -279,6 +285,12 @@ public sealed class PartyState
         //    queries read one and the mutations write the other, so two lists here would mean a member
         //    whose skills never change as far as anything reading them is concerned.
         m.LearnedModiMentis = m.ModiMentis;
+
+        // 5b. The ALWAYS REJECT ignore list. Plain ids, not instances: an id that names nothing is
+        //     inert (no lesson can match it), so it is kept rather than failed on.
+        m.RejectedModiMentisIds.Clear();
+        foreach (var id in dto.RejectedModiMentis)
+            m.RejectedModiMentisIds.Add(id);
 
         // 6. Memory placement, by index, using the instances from step 4.
         foreach (var (moduleType, slotIds) in dto.Memory)
@@ -492,6 +504,9 @@ public sealed class PartyState
 
         public Dictionary<string, int> OrganScores { get; set; } = new();
         public List<ModusMentisDto> ModiMentis { get; set; } = new();
+
+        /// <summary>Ids refused for good from the memory panel (ALWAYS REJECT).</summary>
+        public List<string> RejectedModiMentis { get; set; } = new();
 
         /// <summary>Slot contents by module, positionally. Null entries are empty slots, and the
         /// position matters — the working and residual modules evict from the far end.</summary>

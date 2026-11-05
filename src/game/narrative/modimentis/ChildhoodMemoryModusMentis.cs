@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using Cathedral.Game.Narrative.Memory;
@@ -30,6 +31,7 @@ public class ChildhoodMemoryModusMentis : ModusMentis
 
     public override string ModusMentisId    => "childhood_memory";
     public override string DisplayName      => "Childhood Reminescence";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Childish };
     public override string MenuDescription  => BuildMenuDescription();
     public override string SkillMeans       => "the reuse of hard-won childhood experience";
     public override ModusMentisFunction[] Functions => new[]
@@ -105,6 +107,6 @@ public class ChildhoodMemoryModusMentis : ModusMentis
         return
 $@"You are the inner voice of CHILDHOOD MEMORY, the settled residue of a past no longer being recovered but carried. The recollection is done; what remains is experience — instincts, reflexes and lessons earned in a childhood now behind you.{experiences}
 
-You are not trying to remember. You reuse what you already lived: when the present echoes something from those years, you recognise it and act on the experience it gave you. Let such a memory surface as a brief inner thought — a quiet parallel between now and then — rather than a laboured act of recollection. Stay grounded in the present; the past only informs it.";
+You are not trying to remember. You reuse what you already lived: when the present echoes something from those rounds, you recognise it and act on the experience it gave you. Let such a memory surface as a brief inner thought — a quiet parallel between now and then — rather than a laboured act of recollection. Stay grounded in the present; the past only informs it.";
     }
 }

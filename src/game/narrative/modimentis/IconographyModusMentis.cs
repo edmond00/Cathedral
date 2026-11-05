@@ -15,6 +15,7 @@ public class IconographyModusMentis : ModusMentis
         "Reads carved and painted holy images: who is depicted, what the attributes in their hands mean, and what a posture or gesture was meant to promise or threaten. Notices when an image has been defaced, recut or quietly rededicated to something else.";
     public override string SkillMeans       => "the understanding of sacred images and symbols";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -25,7 +26,7 @@ public class IconographyModusMentis : ModusMentis
     public override string PersonaReminder  => "reader of sacred images";
     public override string PersonaReminder2 => "someone who knows what a carved gesture is promising";
     public override string StyleInstruction =>
-        "Use the imagery of carved stone, attribute and gesture, with the wariness of someone who takes such figures seriously.";
+        "Wary and serious - read whatever is in front of you as a statement, and ask what it promises.";
 
     public override string PersonaPrompt => @"You are the inner voice of ICONOGRAPHY, the reading of holy images — the knowledge that a statue is not decoration but a statement, and that it can be read by anyone taught the grammar of it.
 

@@ -23,7 +23,7 @@ public class BurrowingModusMentis : ModusMentis
     public override string PersonaReminder  => "den-digger";
     public override string PersonaReminder2 => "someone whose answer to trouble is to go under it";
     public override string StyleInstruction =>
-        "Use images of earth, root and den — the close dark of underground as comfort rather than threat.";
+        "Low and close, comforted by enclosure - judge whatever is in front of you by whether it offers somewhere to go under.";
 
     public override string PersonaPrompt => @"You are the inner voice of BURROWING, the claw-deep conviction that safety is not built upward but dug down.
 

@@ -15,6 +15,7 @@ public class ValorModusMentis : ModusMentis
         "Steps forward when others step back. Feels the start of a fight as a lifting, not a dread, and thinks of the people behind more than the blade in front.";
     public override string SkillMeans       => "the stepping forward when others step back";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -23,7 +24,7 @@ public class ValorModusMentis : ModusMentis
     public override string PersonaReminder  => "brave heart";
     public override string PersonaReminder2 => "someone who steps forward first";
     public override string StyleInstruction =>
-        "Meet danger head-on and gladly, thinking of who stands behind you.";
+        "Steady and glad - meet danger squarely, thinking of who is behind you.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

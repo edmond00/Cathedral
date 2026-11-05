@@ -97,7 +97,7 @@ public class TigerArchetype : NamedNpcArchetype
     {
         "a striped tiger stands broadside in the green, enormous and unhurried",
         "a tiger lowers its head and stares, the stripes making nonsense of its outline",
-        "a tiger pads out of the bamboo and stops, a low cough rolling out of it",
+        "a tiger pads out of the cane and stops, a low cough rolling out of it",
     };
 }
 

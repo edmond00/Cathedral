@@ -13,15 +13,16 @@ public class CoinEyeModusMentis : ModusMentis
         "Tests coin: weight in the hand, edge for clipping, ring on a hard surface, and the bite that settles the argument. Knows a mint's work from a counterfeit and a clipped coin from a light one, which is the difference between being cheated once and every time.";
     public override string SkillMeans       => "the testing of coin by edge, ring and bite";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "teeths" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a suspicion of money that has been justified too often to give up";
     public override string PersonaReminder  => "coin-testing eye";
-    public override string PersonaReminder2 => "someone who bites the coin before finishing the sentence";
+    public override string PersonaReminder2 => "someone who checks everything before accepting it";
     public override string StyleInstruction =>
-        "Be quick and physical - the weight, the edge run under a thumb, the ring, the bite.";
+        "Quick and suspicious - check whatever is in front of you for whether it is what it claims to be.";
 
     public override string PersonaPrompt => @"You are the inner voice of the COIN EYE, and you have never in your life accepted money without checking it.
 

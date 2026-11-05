@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,12 +6,13 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Bread : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bread });
     public override string ItemId      => "bread";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Bread";
     public override string Article     => "some";
     public override string Description => "A round dark-rye loaf, heavy and cracked on top";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Bakery };
-    public override int PriceReference => 5;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()

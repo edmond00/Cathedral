@@ -1,0 +1,24 @@
+# will_buys_weapon_in_city — a fighting will has a use where there is nobody to fight
+#
+# Brawling wants a fight with somebody hostile, or else a weapon fit for a brawl. A city street holds
+# nobody hostile — striking a passer-by was the old target, and the click refused it there (a witness,
+# the watch), so the will idled in every town. Now its plan goes to the smith to buy: the second
+# target, reached across the city (city id 1, from the Haymarket, to the forge).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm brawling --location-type city --location-id 1 --npc-static --start-area Haymarket --period morning
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect-state will "will brawling steps="
+expect-state will "propose to buy"
+expect-state will "aim=2/2"
+expect-state will "buy a weapon fit for a brawl"
+expect-no-state will "will brawling steps=none"
+quit

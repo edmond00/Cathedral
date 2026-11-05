@@ -10,7 +10,7 @@ namespace Cathedral.Audio.Music;
 /// </summary>
 public enum Part
 {
-    Drone, Pad, Melody, Counter, Ostinato, Bass, Perc, Bell, Ambience, Fight, Sfx,
+    Drone, Pad, Melody, Counter, Ostinato, Bass, Perc, Bell, Ambience, Cantus, Fight, Sfx,
 }
 
 /// <summary>
@@ -80,6 +80,8 @@ internal sealed class Synth
         Configure(Part.Perc, reverb: 0.4f, chorus: 0f, spread: 0.3f);
         Configure(Part.Bell, reverb: 0.7f, chorus: 0f, spread: 0.6f);
         Configure(Part.Ambience, reverb: 0.6f, chorus: 0.3f, spread: 0.8f);
+        // The distant choir: almost all hall, wide, as if from the far end of a nave or across a valley.
+        Configure(Part.Cantus, reverb: 0.9f, chorus: 0.35f, spread: 0.85f);
         Configure(Part.Fight, reverb: 0.4f, chorus: 0.1f, spread: 0.5f);
         Configure(Part.Sfx, reverb: 0.25f, chorus: 0f, spread: 0.2f);
     }
@@ -110,7 +112,7 @@ internal sealed class Synth
     }
 
     /// <summary>Starts a note now. <paramref name="pan"/> is -1..1 inside the part's spread.</summary>
-    public void NoteOn(Part part, Instrument inst, float midi, float velocity, double seconds, float pan = 0f)
+    public void NoteOn(Part part, Instrument inst, float midi, float velocity, double seconds, float pan = 0f, float glide = 0f)
     {
         if (velocity <= 0f) return;
         if (_voices.Count >= MaxVoices) StealOne();
@@ -119,6 +121,7 @@ internal sealed class Synth
         v.Pan = Math.Clamp(pan, -1f, 1f) * _bus[(int)part].PanSpread;
         v.StartSample = Sample;
         v.GateEnd = Sample + Math.Max(1, (long)(seconds * Dsp.SampleRate));
+        v.Glide = glide;
         v.Init(midi, velocity, unchecked(_seed * 31 + ++_voiceSeed * 7919));
         _voices.Add(v);
     }

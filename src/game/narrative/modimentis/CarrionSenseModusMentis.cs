@@ -15,13 +15,16 @@ public class CarrionSenseModusMentis : ModusMentis
         "Catches the smell of death and spoilage from far off and reads its age without flinching. Judges what a find is worth to an empty belly, telling the merely dead from the truly dangerous.";
     public override string SkillMeans       => "the smelling of death from afar and the judging of what remains";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("find the dead by their smell").On<Npc.Corpse.CorpsePointOfInterest>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SmellVerb>("find the dead by their smell").On<Npc.Corpse.CorpsePointOfInterest>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("follow the smell of what died here").Teaching<CarrionSenseModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Graves);
     public override string[] Organs        => new[] { "snout", "paunch" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a scavenger's nose that reads death on the wind without disgust or fear";
     public override string PersonaReminder  => "carrion-wise scavenger";
-    public override string PersonaReminder2 => "someone who smells the dead thing two fields away and knows how long it has lain";
+    public override string PersonaReminder2 => "someone who knows death when they meet it, and how long ago it came";
     public override string StyleInstruction =>
         "Speak of decay and remains plainly and without horror, with the practical appraisal of a scavenger.";
 

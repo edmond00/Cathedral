@@ -233,8 +233,19 @@ public static class NpcContentGenerator
         // and refusing later would silently shorten the roster — a wolf drawing six skills off the
         // global pool would keep only the two its anatomy allows — so the anatomy narrows the pool and
         // the archetype still gets the count it asked for.
+        //
+        // Each pool is shuffled by a generator of its own, seeded with one draw of the person's: the
+        // shuffle used to take one draw per modus mentis in the pool, so every modus mentis added to
+        // the catalogue — or made a will, which puts it in two more pools — moved every trait, wound and
+        // belonging drawn after it, and gave every location id different people.
         List<ModusMentis> Pool(IEnumerable<ModusMentis> source)
-            => Shuffled(ModusMentisAnatomy.LearnableBy(source, body), rng);
+        {
+            var order = new Random(rng.Next());
+            return ModusMentisAnatomy.LearnableBy(source, body)
+                .OrderBy(m => m.ModusMentisId, StringComparer.Ordinal)
+                .OrderBy(_ => order.Next())
+                .ToList();
+        }
 
         var pools = new[]
         {
@@ -263,9 +274,6 @@ public static class NpcContentGenerator
         foreach (var template in ordered.DistinctBy(m => m.ModusMentisId))
             NpcSkillGrant.Grant(body, template.ModusMentisId, rng);
     }
-
-    private static List<ModusMentis> Shuffled(IEnumerable<ModusMentis> source, Random rng)
-        => source.OrderBy(_ => rng.Next()).ToList();
 
     /// <summary>
     /// Re-clamps every skill to what the finished body can sustain.

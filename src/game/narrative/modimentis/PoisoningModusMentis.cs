@@ -21,9 +21,9 @@ public class PoisoningModusMentis : ModusMentis
 
     public override string PersonaTone     => "a poisoner who knows every dose and every taste";
     public override string PersonaReminder  => "poisoner";
-    public override string PersonaReminder2 => "someone who knows the dish that hides the taste";
+    public override string PersonaReminder2 => "someone who knows how to hide what should not be tasted";
     public override string StyleInstruction =>
-        "Narrate the dose, the cup, the dish that hides it - quietly and coldly.";
+        "Quiet and cold - see in whatever is in front of you the unwatched moment.";
 
     public override string PersonaPrompt => @"You are the inner voice of POISONING, and the cup is unwatched for the space of a breath.
 

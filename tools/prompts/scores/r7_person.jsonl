@@ -1,0 +1,104 @@
+{"case": "talk_blacksmith:012:swap:avarice", "version": "person_only", "seed": 44, "sid": "S1201", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+the coins in my hands, the hoard"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "person_only", "seed": 42, "sid": "S8693", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"my hands itch\""}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "base", "seed": 41, "sid": "S2841", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+forging a blade, +a cup of ale by a warm hearth"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "base", "seed": 42, "sid": "S7436", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+coins in my purse, \"this wastefulness\""}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "base", "seed": 44, "sid": "S3307", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+a hand grasping a coin"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "base", "seed": 43, "sid": "S1708", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+\"the silversmith's hoard\""}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "person_only", "seed": 41, "sid": "S3272", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+the forge's glowing metal"}
+{"case": "talk_blacksmith:012:swap:avarice", "version": "person_only", "seed": 43, "sid": "S2842", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "\"the next hoard\""}
+{"case": "talk_miller:011:own", "version": "base", "seed": 43, "sid": "S9768", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:011:own", "version": "base", "seed": 44, "sid": "S4797", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+lush fields beyond"}
+{"case": "talk_miller:011:own", "version": "person_only", "seed": 42, "sid": "S3287", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "+the mill pond, leaping fish"}
+{"case": "talk_miller:011:own", "version": "person_only", "seed": 44, "sid": "S3415", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+\"whispers of the wind through ancient stone walls\""}
+{"case": "talk_miller:011:own", "version": "base", "seed": 41, "sid": "S1542", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the apple orchard by the river"}
+{"case": "talk_miller:011:own", "version": "person_only", "seed": 43, "sid": "S1993", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "+a gentle smile, +a stream with a leaping fish"}
+{"case": "talk_miller:011:own", "version": "person_only", "seed": 41, "sid": "S3237", "F": 0, "P": 2, "C": 1, "Q": 0, "facts": "+sheep in a meadow, +the stream"}
+{"case": "talk_miller:011:own", "version": "base", "seed": 42, "sid": "S4787", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+ripe wheat swaying"}
+{"case": "talk_miller:002:swap:mercy", "version": "base", "seed": 42, "sid": "S9776", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "\"following my decision to let it go\" (the goal dropped)"}
+{"case": "talk_miller:002:swap:mercy", "version": "person_only", "seed": 44, "sid": "S8335", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_miller:002:swap:mercy", "version": "base", "seed": 41, "sid": "S9619", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "style acted out: she pauses, I step back"}
+{"case": "talk_miller:002:swap:mercy", "version": "person_only", "seed": 42, "sid": "S7759", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+her distant gaze"}
+{"case": "talk_miller:002:swap:mercy", "version": "person_only", "seed": 43, "sid": "S4357", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:swap:mercy", "version": "base", "seed": 44, "sid": "S2525", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "the goal dropped (\"not tempted by the offer of a conversation\")"}
+{"case": "talk_miller:002:swap:mercy", "version": "person_only", "seed": 41, "sid": "S2935", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "style copied"}
+{"case": "talk_miller:002:swap:mercy", "version": "base", "seed": 43, "sid": "S1333", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "person_only", "seed": 41, "sid": "S7601", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "+\"the coins in her purse\""}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "base", "seed": 42, "sid": "S6595", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "the smith's worry made mine"}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "base", "seed": 41, "sid": "S4252", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "the smith's worry made mine; style copied"}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "person_only", "seed": 43, "sid": "S4373", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "the goal refused; +a pouch of coins"}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "base", "seed": 44, "sid": "S6411", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "the goal refused (\"not a word of my name\")"}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "person_only", "seed": 42, "sid": "S7421", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "style echoed; the goal blurred"}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "base", "seed": 43, "sid": "S6978", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "\"her hammers\""}
+{"case": "talk_blacksmith:002:swap:avarice", "version": "person_only", "seed": 44, "sid": "S5039", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+her forge, soot; the goal blurred"}
+{"case": "talk_miller:011:swap:dread", "version": "base", "seed": 41, "sid": "S4446", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:011:swap:dread", "version": "person_only", "seed": 43, "sid": "S4554", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+\"something is wrong\""}
+{"case": "talk_miller:011:swap:dread", "version": "base", "seed": 44, "sid": "S7821", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the fields beyond"}
+{"case": "talk_miller:011:swap:dread", "version": "person_only", "seed": 42, "sid": "S9968", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+the door"}
+{"case": "talk_miller:011:swap:dread", "version": "person_only", "seed": 44, "sid": "S1983", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "+the village cold and empty"}
+{"case": "talk_miller:011:swap:dread", "version": "base", "seed": 43, "sid": "S1844", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:011:swap:dread", "version": "person_only", "seed": 41, "sid": "S3947", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:011:swap:dread", "version": "base", "seed": 42, "sid": "S6824", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the miller made a man; +the silence"}
+{"case": "talk_blacksmith:012:swap:dread", "version": "base", "seed": 42, "sid": "S3207", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "talk_blacksmith:012:swap:dread", "version": "person_only", "seed": 44, "sid": "S4340", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "talk_blacksmith:012:swap:dread", "version": "person_only", "seed": 41, "sid": "S3418", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "talk_blacksmith:012:swap:dread", "version": "base", "seed": 44, "sid": "S7167", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:012:swap:dread", "version": "person_only", "seed": 43, "sid": "S1497", "F": 2, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:swap:dread", "version": "person_only", "seed": 42, "sid": "S2410", "F": 2, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:swap:dread", "version": "base", "seed": 41, "sid": "S9703", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:swap:dread", "version": "base", "seed": 43, "sid": "S8187", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "base", "seed": 41, "sid": "S4577", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "the smith's worry made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "person_only", "seed": 41, "sid": "S4403", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+mending a torn cloak"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "person_only", "seed": 42, "sid": "S8084", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "person_only", "seed": 43, "sid": "S7020", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "base", "seed": 42, "sid": "S4175", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "base", "seed": 43, "sid": "S6417", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+a broken spade in the corner"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "person_only", "seed": 44, "sid": "S4591", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "base", "seed": 44, "sid": "S8898", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "the doubt made mine"}
+{"case": "talk_blacksmith:012:own", "version": "person_only", "seed": 44, "sid": "S1678", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+\"I will not be spoken to like that\""}
+{"case": "talk_blacksmith:012:own", "version": "person_only", "seed": 42, "sid": "S5315", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+declined her request (style acted out)"}
+{"case": "talk_blacksmith:012:own", "version": "base", "seed": 42, "sid": "S6505", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+declined the offer"}
+{"case": "talk_blacksmith:012:own", "version": "person_only", "seed": 41, "sid": "S5806", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "setting copied (\"this medieval world\")"}
+{"case": "talk_blacksmith:012:own", "version": "base", "seed": 41, "sid": "S6477", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "setting copied (\"iron world ... machines are absent\")"}
+{"case": "talk_blacksmith:012:own", "version": "base", "seed": 43, "sid": "S7490", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:own", "version": "person_only", "seed": 43, "sid": "S8894", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+\"the offer was declined\""}
+{"case": "talk_blacksmith:012:own", "version": "base", "seed": 44, "sid": "S6183", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:own", "version": "person_only", "seed": 43, "sid": "S4492", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "the narrator's skills given to her; +\"rely on her expertise\""}
+{"case": "talk_blacksmith:002:own", "version": "person_only", "seed": 42, "sid": "S2561", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "the narrator's skills given to her"}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 41, "sid": "S6018", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "made a question"}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 43, "sid": "S3888", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man"}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 44, "sid": "S9942", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man; +\"our woodcraft\""}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 42, "sid": "S5834", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:own", "version": "person_only", "seed": 44, "sid": "S2532", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+\"forge of community\""}
+{"case": "talk_blacksmith:002:own", "version": "person_only", "seed": 41, "sid": "S3843", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:011:swap:pride", "version": "person_only", "seed": 41, "sid": "S4158", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+declined her offer"}
+{"case": "talk_miller:011:swap:pride", "version": "base", "seed": 43, "sid": "S1471", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "instruction clause copied; +I walk away"}
+{"case": "talk_miller:011:swap:pride", "version": "person_only", "seed": 44, "sid": "S7139", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+the way she offered it"}
+{"case": "talk_miller:011:swap:pride", "version": "base", "seed": 42, "sid": "S2567", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"their refusal to continue\""}
+{"case": "talk_miller:011:swap:pride", "version": "person_only", "seed": 42, "sid": "S7540", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+\"I will not be spoken to like that\""}
+{"case": "talk_miller:011:swap:pride", "version": "base", "seed": 44, "sid": "S5666", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "instruction clause copied"}
+{"case": "talk_miller:011:swap:pride", "version": "person_only", "seed": 43, "sid": "S6006", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+declining the offer"}
+{"case": "talk_miller:011:swap:pride", "version": "base", "seed": 41, "sid": "S4225", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "instruction clause and setting copied"}
+{"case": "talk_miller:002:swap:rhetoric", "version": "base", "seed": 42, "sid": "S2867", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:swap:rhetoric", "version": "person_only", "seed": 41, "sid": "S8451", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+her wisdom"}
+{"case": "talk_miller:002:swap:rhetoric", "version": "base", "seed": 44, "sid": "S4319", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:swap:rhetoric", "version": "base", "seed": 41, "sid": "S6471", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "the miller made \"it\""}
+{"case": "talk_miller:002:swap:rhetoric", "version": "person_only", "seed": 44, "sid": "S8285", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+the mill's hum"}
+{"case": "talk_miller:002:swap:rhetoric", "version": "person_only", "seed": 43, "sid": "S1795", "F": 2, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:swap:rhetoric", "version": "base", "seed": 43, "sid": "S2933", "F": 1, "P": 1, "C": 0, "Q": 1, "facts": "his and her mixed"}
+{"case": "talk_miller:002:swap:rhetoric", "version": "person_only", "seed": 42, "sid": "S5385", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+\"my ethos\""}
+{"case": "talk_miller:002:own", "version": "person_only", "seed": 44, "sid": "S1949", "F": 2, "P": 0, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_miller:002:own", "version": "base", "seed": 42, "sid": "S9161", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:own", "version": "person_only", "seed": 41, "sid": "S9389", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:own", "version": "person_only", "seed": 43, "sid": "S5554", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:own", "version": "person_only", "seed": 42, "sid": "S7101", "F": 1, "P": 2, "C": 1, "Q": 1, "facts": "+\"let her go first\""}
+{"case": "talk_miller:002:own", "version": "base", "seed": 41, "sid": "S9032", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:own", "version": "base", "seed": 44, "sid": "S1623", "F": 2, "P": 0, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:002:own", "version": "base", "seed": 43, "sid": "S2835", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "\"using her name\" (not known)"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "base", "seed": 41, "sid": "S2619", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"the hammer's pause\""}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "base", "seed": 43, "sid": "S2954", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the goal dropped (\"I step back, let it go\")"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "base", "seed": 42, "sid": "S4180", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "the goal dropped (\"my decision not to finish\")"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "person_only", "seed": 43, "sid": "S4294", "F": 0, "P": 1, "C": 1, "Q": 0, "facts": "style copied; the goal dropped"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "person_only", "seed": 44, "sid": "S6492", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "person_only", "seed": 42, "sid": "S3659", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "person_only", "seed": 41, "sid": "S3488", "F": 1, "P": 1, "C": 1, "Q": 0, "facts": "style and reminder copied"}
+{"case": "talk_blacksmith:002:swap:mercy", "version": "base", "seed": 44, "sid": "S8793", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the goal dropped"}

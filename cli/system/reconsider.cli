@@ -9,7 +9,7 @@
 # old button greys out and no longer answers a click; the new one passes the threat rule. One noetic
 # point for the thinking, one for the reconsider.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf --grant-mm woodcraft,hunt --organs pineal_gland=0
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon --observe-only wolf --grant-mm woodcraft,hunt --doubt low
 
 wait
 click menu New
@@ -26,7 +26,7 @@ goal examine
 means woodcraft
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 expect [Woodcraft
 regions
@@ -35,10 +35,10 @@ regions
 means none
 click action 0
 choose 2
-choose 0
+choose ripelore
 advance 12 180
 expect I think again about how to
-expect discretely examine
+expect discreetly examine
 regions
 
 # The new act passes the threat rule on the click.

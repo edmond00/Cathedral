@@ -14,7 +14,8 @@ public class LutePlayingModusMentis : ModusMentis
         "Plays a stringed instrument: the tuning, the fingering, the song suited to the hall. Hears a string out of true across a room, and changes the music to suit the mood of the listeners.";
     public override string SkillMeans       => "the playing of the lute";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<SingAlongVerb>("play and sing along");
+    public override WillTargets? Will => WillTarget.To<SingAlongVerb>("play and sing along");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft | AnatomyCapability.Speech;
@@ -23,7 +24,7 @@ public class LutePlayingModusMentis : ModusMentis
     public override string PersonaReminder  => "lutenist";
     public override string PersonaReminder2 => "someone who changes the song to the mood";
     public override string StyleInstruction =>
-        "Narrate the music - the tuning, the fingers, the song chosen for the room.";
+        "Attuned and responsive - read the mood of whoever is around you, and answer it.";
 
     public override string PersonaPrompt => @"You are the inner voice of LUTE PLAYING, and the room is restless, so you change the song.
 

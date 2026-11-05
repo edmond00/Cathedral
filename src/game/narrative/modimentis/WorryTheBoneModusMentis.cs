@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class WorryTheBoneModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "worry_the_bone";
     public override string DisplayName      => "Worry the Bone";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Takes hold with the jaw and does not release, working a grip back and forth until something gives. Applies the same stubbornness to any task that yields to persistence rather than force.";
     public override string SkillMeans       => "the stubborn working at a thing until it gives way";
@@ -22,7 +24,7 @@ public class WorryTheBoneModusMentis : ModusMentis
     public override string PersonaReminder  => "bone-worrier";
     public override string PersonaReminder2 => "someone who wins by refusing to release";
     public override string StyleInstruction =>
-        "Use images of grip, jaw and dogged working-loose, with the satisfaction of a thing finally giving way.";
+        "Dogged and gripping - hold to whatever is in front of you until it gives way.";
 
     public override string PersonaPrompt => @"You are the inner voice of WORRY THE BONE, the jaw's oldest wisdom: that most things give up before a grip does.
 

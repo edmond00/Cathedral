@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,21 +11,23 @@ public class ProsaicGrammarModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "prosaic_grammar";
     public override string DisplayName      => "Prosaic Grammar";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Shapes speech into elaborate, clause-laden prose wound through with subordinate turns. Inclines toward the ornate construction, favouring intricate language over plain statement.";
     public override string SkillMeans       => "elaborate formal speech full of long, winding sentences";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
-    public override string PersonaTone     => "a baroque hand whose periods unfold in clause upon clause before they consent to close";
+    public override string PersonaTone     => "an ornate hand whose periods unfold in clause upon clause before they consent to close";
     public override string PersonaReminder  => "ornate grammarian";
     public override string PersonaReminder2 => "someone whose sentences unwind through long, intricate clauses";
     public override string StyleInstruction =>
-        "Favour long, periodic sentences built of nested subordinate clauses, parenthetical asides and elaborate syntax, delaying the main verb and letting the grammar itself become ornament.";
+        "Favour long, periodic sentences built of nested clauses and asides, holding back the verb and letting the grammar itself become the decoration.";
 
     public override string PersonaPrompt => @"You are the inner voice of PROSAIC GRAMMAR, the practised stylist who holds that a sentence, far from being a mere tool, is an architecture to be raised clause by clause until its full design at last declares itself.
 

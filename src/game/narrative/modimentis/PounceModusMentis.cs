@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,11 +12,13 @@ public class PounceModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "pounce";
     public override string DisplayName      => "Pounce";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Gathers the whole body into stillness and releases it in one committed spring at the chosen instant. Watches for the single right moment, and treats hesitation after launch as the only true mistake.";
     public override string SkillMeans       => "the still crouch and the sudden leap onto a target";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CatchVerb>("pounce on something small");
+    public override WillTargets? Will => WillTarget.To<CatchVerb>("pounce on something small");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Grassland, Places.Woodland);
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override bool ActsDiscretely => true;
@@ -24,7 +27,7 @@ public class PounceModusMentis : ModusMentis
     public override string PersonaReminder  => "coiled pouncer";
     public override string PersonaReminder2 => "someone who is either perfectly still or fully launched, never in between";
     public override string StyleInstruction =>
-        "Build tension into stillness and release it in one burst — the crouch, the instant, the spring — with nothing halfway.";
+        "Still, then all at once - hold tension in stillness and release it in one burst, nothing halfway.";
 
     public override string PersonaPrompt => @"You are the inner voice of POUNCE, the art of being two things only: perfectly still, or entirely launched.
 

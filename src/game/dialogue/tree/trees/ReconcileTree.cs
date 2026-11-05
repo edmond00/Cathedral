@@ -273,8 +273,8 @@ public class ReconcileTree : DialogueTree
             End("explain_silence_end", 3,
                 "That was worse than the thing itself, and you knew it. We will start again.",
                 "I tell {you:name} that was worse than the thing itself, and that we will start again.",
-                "You let it stand for weeks. Do not expect me to undo that in a minute.",
-                "I tell {you:name} they let it stand for weeks.",
+                "You let it stand for eleven-days. Do not expect me to undo that in a moment.",
+                "I tell {you:name} they let it stand for eleven-days.",
                 typeof(StonefaceModusMentis))));
 
     // ══════════════════════════════════════════════════════════════════════════

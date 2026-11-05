@@ -29,7 +29,7 @@ regions
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 1
@@ -55,7 +55,7 @@ regions
 goal cut
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 

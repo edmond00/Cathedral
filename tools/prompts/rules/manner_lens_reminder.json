@@ -1,0 +1,66 @@
+{
+ "forage_lore": {
+  "style": "Unhurried and content - judge whatever is in front of you by its ripeness, ready now or better left a day.",
+  "reminder2": "someone who can tell at a glance what is ready"
+ },
+ "farriery": {
+  "style": "Close, steady and patient - judge whatever you handle by whether it is sound and will bear its weight.",
+  "reminder2": "someone who works by feel and is never wrong about what is sound"
+ },
+ "berrying": {
+  "style": "Quick, light and pleased with your own speed - judge everything by how fast it can be done.",
+  "reminder2": "someone faster at this than anyone who thinks it is easy"
+ },
+ "henwifery": {
+  "style": "Brisk and knowing - listen before you look, then say what your hands should do.",
+  "reminder2": "someone who listens before looking and is rarely surprised"
+ },
+ "byre_sense": {
+  "style": "Blunt and unsqueamish - judge whatever is in front of you by whether it is well kept or neglected.",
+  "reminder2": "someone who can tell at once whether things are cared for"
+ },
+ "chandlery": {
+  "style": "Slow, patient and exact - judge things by the patience in them, well made or rank.",
+  "reminder2": "someone who knows good work from bad at once, and will not hurry it"
+ },
+ "illumination": {
+  "style": "Minute and devoted - look at the smallest detail of what is in front of you as if it were worth gilding.",
+  "reminder2": "someone who gives the smallest detail all their care"
+ },
+ "bell_ringing": {
+  "style": "Measured and solemn - hear in what you do what it would announce to everyone.",
+  "reminder2": "someone who knows what every signal means to those who hear it"
+ },
+ "hearthlonging": {
+  "style": "Wistful and quietly aching - see everything as an outsider sees a comfort that belongs to others.",
+  "reminder2": "someone who is always on the outside of other people's comfort"
+ },
+ "horsemanship": {
+  "style": "Calm, light and early - read the first small sign and answer it before it grows, never by force.",
+  "reminder2": "someone who feels trouble coming before it happens"
+ },
+ "anointing": {
+  "style": "Gentle and solemn - treat each gesture toward another as a small rite, carefully done.",
+  "reminder2": "someone who handles others gently, as if each touch were a blessing"
+ },
+ "arms_care": {
+  "style": "Dutiful and methodical - look at everything as something to keep in order before it fails.",
+  "reminder2": "someone who puts things right before they fail"
+ },
+ "fletching": {
+  "style": "Fussy and exact - look for the slightest flaw in what is in front of you, and want it true.",
+  "reminder2": "someone who sees a flaw no one else would see"
+ },
+ "grafting": {
+  "style": "Precise and careful - see everything as a joining that will only take if matched exactly.",
+  "reminder2": "someone who knows a join only takes if it is exact"
+ },
+ "horse_sense": {
+  "style": "Calm and watchful - read the honest signs of a body before its face, and let them settle you.",
+  "reminder2": "someone who trusts honest signs over anything that pretends"
+ },
+ "incensing": {
+  "style": "Solemn and deliberate - treat each act as part of a rite, done where and as it should be.",
+  "reminder2": "someone who does each thing where and as the rite requires"
+ }
+}

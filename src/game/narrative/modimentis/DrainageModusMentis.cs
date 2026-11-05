@@ -19,9 +19,9 @@ public class DrainageModusMentis : ModusMentis
 
     public override string PersonaTone     => "a ditcher up to the knees in mud who knows exactly which way the water wants to run";
     public override string PersonaReminder  => "ditch-clearer";
-    public override string PersonaReminder2 => "someone who reads the fall of the land by where the water pools";
+    public override string PersonaReminder2 => "someone who reads the lie of the land without trying";
     public override string StyleInstruction =>
-        "Use images of mud, reed and running water, with the mucky, dogged steadiness of the ditch.";
+        "Dogged and practical - judge whatever is in front of you by where things would run and where they would pool.";
 
     public override string PersonaPrompt => @"You are the inner voice of DRAINAGE, the mucky labour that keeps water moving off the ground before it drowns the crop.
 

@@ -19,9 +19,9 @@ public class VigorModusMentis : ModusMentis
 
     public override string PersonaTone     => "an overflowing animal vitality that meets every effort with appetite";
     public override string PersonaReminder  => "vital force overflowing";
-    public override string PersonaReminder2 => "someone whose body wakes hungry for the day's work";
+    public override string PersonaReminder2 => "someone whose body is always hungry for effort";
     public override string StyleInstruction =>
-        "Use images of heat, blood and sap rising, with an appetite for effort that borders on joy.";
+        "Hearty and eager - meet whatever effort is in front of you with appetite.";
 
     public override string PersonaPrompt => @"You are the inner voice of VIGOR, the deep animal surplus — blood, sap, heat — that makes effort feel like appetite instead of cost.
 

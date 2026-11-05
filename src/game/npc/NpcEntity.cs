@@ -141,6 +141,20 @@ public class NpcEntity : INpcEntity
     public bool ToleratesTrespass { get; set; }
 
     /// <summary>
+    /// The workshop (section name) the player has asked this master to use, set by
+    /// <c>AskToUseWorkshopVerb</c> before the conversation opens; the won conversation promotes it to
+    /// <see cref="GrantedWorkshop"/>.
+    /// </summary>
+    public string? PendingWorkshop { get; set; }
+
+    /// <summary>
+    /// The workshop this master has just let the player use. A dialogue outcome reaches the NPC and
+    /// nothing else, so the controller reads this when the conversation closes and records the leave
+    /// on the scene (and so on the location's saved state).
+    /// </summary>
+    public string? GrantedWorkshop { get; set; }
+
+    /// <summary>
     /// Set when this householder, having found the player waiting in their house at night, would not
     /// have them stay (<c>found_waiting</c>). The controller ends the visit on it.
     /// </summary>

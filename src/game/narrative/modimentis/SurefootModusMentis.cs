@@ -19,7 +19,7 @@ public class SurefootModusMentis : ModusMentis
 
     public override string PersonaTone     => "a goat-certain balance that has never trusted a step it did not test";
     public override string PersonaReminder  => "sure-stepping balancer";
-    public override string PersonaReminder2 => "someone whose feet interrogate the ground before believing it";
+    public override string PersonaReminder2 => "someone who never trusts their footing until it has proved itself";
     public override string StyleInstruction =>
         "Feel the ground through the line — the tested hold, the shifting scree, the weight eased on — steady where the footing is not.";
 

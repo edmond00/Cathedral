@@ -1,0 +1,27 @@
+# will_follow_one_ending — following somebody has one ending, the place AND the hour together
+#
+# A stalk passes the hour and moves the body. The planner read those as two separate ends, and one
+# was a place the follower never stands: still where they began, at the later hour. At this forge in
+# the afternoon the only trader there sells no real weapon, and another apprentice who does comes back
+# for the evening, so Armoury Lore planned "follow her, then meet him" in two steps, though following
+# her ends in the Back Lane, away from the forge he trades at. Its real way is to find him where he
+# stands now and be led back: three steps.
+#
+# Pinned to a generated village, because the case needs a trader's schedule and a catalogue, which the
+# test location does not roll. If this scene is rebuilt differently, find another by reading
+# `inspect will` at each hour, rather than loosening the assertions.
+#
+# FLAGS: --playground --skip-childhood --debug --seed -2106049018 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type village --location-id 24900 --start-area "Forge" --period afternoon --grant-mm armoury_lore --organs all=5
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+advance 12 180
+expect-state will "will armoury_lore steps=3 first="
+expect-no-state will "will armoury_lore steps=2"
+quit

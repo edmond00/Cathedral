@@ -43,12 +43,33 @@ outerwear, belt gear, and each hold).
 
 The rule of admission is short:
 
-- The two **holds** — the hands — take anything.
+- The two **holds** — the hands — take anything their arm can bear (below).
 - Every **other** anchor is a garment slot and takes only a garment whose own slot maps to it.
 - **A liquid is refused everywhere.** It may exist only inside a vessel, never loose upon the body
   and never in a pack.
 
 What can be placed nowhere is held in overflow, awaiting a free place.
+
+### What a hand can bear
+
+Each hold is governed by the arm behind it — the right hold by the right arm, the left by the left —
+and admits nothing heavier than that arm's **Hand Load** allows, the score being taken after its
+wounds:
+
+| Arm | Bears up to |
+|---|---|
+| 0 | light |
+| 1 | medium |
+| 2 | heavy |
+
+An insignificant thing is within every arm's bearing, and an arm disabled by a High wound bears as
+an arm of nought. Only what sits directly in the hand is weighed: a bag is held by its handle, so a
+heavy thing within a medium bag is a medium burden to the hand that carries the bag. A container
+takes a heavy thing whatever the arms, and a heavy thing that neither a hand nor any container can
+take is refused, exactly as a pack that is full refuses.
+
+A thing placed in a hand while its arm was sound stays there when a wound weakens the arm; it is
+then held and no longer borne, which matters only to a weapon (§8).
 
 ## 4. Vessels and storage
 
@@ -78,8 +99,12 @@ Each item is of exactly one category, and the category decides which systems loo
 | **Wearing** | Worn upon an anchor. May protect, may flatter, may hold. |
 | **Consumable** | Eaten, drunk or inhaled; pushes humors into an organ's queue. |
 | **Container** | Holds other items, not being itself worn. |
-| **Crafting** | Raw material — ore, timber, fibre, hide. |
+| **Crafting** | Stock and goods of no other office — ore, timber, cloth, a padlock, a ledger. Admitted to nothing of its own. |
 | **Other** | A keepsake, a curiosity, a part cut from a corpse. |
+
+What an item is **made of** is a separate matter from its category, and every category may hold
+materials: a knife, a tunic and a barrel are as much stock for a trade as a bar of iron (see
+[X §1](10-crafting.md)).
 
 Each category names its own subordinate kind rather than sharing one flat list, so that an
 impossible pairing cannot be stated. A liquid is precisely a drinkable consumable; nothing declares
@@ -210,7 +235,15 @@ A weapon is the one category that reaches into combat, and it does so by two dec
 
 **Its level** is the bonus dice it lends when it is the medium a blow is struck through — the same
 office an organ's score performs for an unarmed blow (see [Chapter VIII
-§3](08-fighting.md#3-mediums)).
+§3](08-fighting.md#3-mediums)). A made weapon always surpasses a bare limb: a hand or a foot reaches
+at most three, and every weapon not improvised is of level four, five or six.
+
+**Its bulk** is never small. Every weapon is medium or large, so that no hand, of nine slots, can
+hold two.
+
+**Its burden** decides which arms can fight with it, by the bearing of §3: a light weapon serves
+any arm, a medium one an arm of one or more, a heavy one only an arm of two. Weapons are made in all
+three burdens.
 
 **Its category** — long blade, axe, bow, blunt, and the rest — decides *which fighting skills it
 bears*. A skill is written against a category rather than against a particular weapon, so every long
@@ -225,7 +258,7 @@ what they have learned as much as by what they carry.
 category's skills as any weapon does, but lends no dice to them: the blow it carries is the
 fighter's learning and nothing more. As an implement it lends a single die.
 
-A weapon must be held in a hand to serve as a medium within a fight; one in a pack is a burden and nothing else. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)).
+A weapon must be held directly in a hand, and be within that hand's arm's bearing, to serve as a medium within a fight; one in a pack or a bag is a burden and nothing else, and one too heavy for the arm that holds it is held and not wielded. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)); a weapon so taken up must be within the bearing of one of the two arms, or the blow is refused.
 
 ## 9. Garments
 
@@ -292,16 +325,67 @@ A garment may be a container, as [§4](#4-vessels-and-storage) describes.
 
 ## 10. Coin
 
-Three denominations — copper, silver and gold. Each priced item is priced in **exactly one** of
-them, and **there is no conversion**: a purchase must be met with enough coins of the item's own
-denomination.
+Three denominations — copper, silver and gold — and **there is no conversion** between them: a
+purchase must be met with enough coins of the item's own denomination. Every thing offered for sale is
+priced in copper, a copper being about the price of an egg; silver and gold buy no goods.
 
-The scale, for orientation rather than enforcement: a copper is about the price of an egg, a silver
-about that of a sword and a hundred copper, a gold about that of a horse and a hundred silver.
+An item bears a **reference price**, from one to ninety, and it is not set at will: it is reckoned
+from what the thing is, by one rule for everything.
 
-An item bears a **reference price** in its own denomination, from one to ninety. A merchant's
-catalogue applies a small variation atop that and confines the result to the range one to a hundred,
-so the same thing is not worth precisely the same in two places.
+**Price = matter × craftsmanship + labour + function + rarity.**
+
+**Matter** is what the thing is made of. An item of crafting materials holds as many units of each as
+its burden gives (see [X §1](10-crafting.md)), and is valued at its dearest material:
+
+| Material | Copper per unit |
+|---|---|
+| Stone | ¼ |
+| Clay | ½ |
+| Wood, fibre, bone | 1 |
+| Ore, fat | 1½ |
+| Hide | 2 |
+| Metal | 2½ |
+| Cloth | 3 |
+| Leather | 4 |
+
+A refined material is always dearer than the raw one it is made from. A thing of no crafting material
+— food, drink, a feather, a letter — is valued by what it is: one copper for a plant, a flower, an egg,
+water or a page; two for a herb, fodder, seed, fuel or liquor; three for fruit, berries, nuts,
+vegetables, grain, mushrooms, dairy, bread or a remedy; four for fish, shellfish or honey; five for
+meat. That is one portion; a medium burden is two portions, a heavy one four.
+
+**Craftsmanship** is how much labour stands between the thing and the world it came from:
+
+| Craftsmanship | Matter × | Labour + | Of the sort |
+|---|---|---|---|
+| Raw | 1 | 0 | gathered, cut or dug: a log, an ore, a turnip |
+| Stock | 1½ | 1 | a material worked once: an iron bar, flour, ale |
+| Plain | 2 | 2 | a thing made for use: a knife, a tunic, a loaf |
+| Fine | 4 | 4 | a thing made well: a doublet, a censer, a ledger |
+| Masterwork | 5 | 5 | a master's piece |
+
+Whatever is eaten or drunk, whatever is of no crafting material, and loose raw material are reckoned
+Raw; a thing worked beyond that — flour, ale, spun thread, a thrown jug — is reckoned at its proper
+craftsmanship. A garment worn only by the aristocracy is Fine, one worn only by paupers Stock; every
+other made thing is Plain.
+
+**Function** is what the thing does: eight copper for each level a weapon stands above the best bare
+limb (see [VIII](08-fighting.md)), twelve for each die of armour, two for each level of use of
+an implement above the first (see §7), and a quarter of a copper for each slot of room in a container.
+
+**Rarity** is how hard the thing is to come by, whatever it is made of, and is added rather than
+multiplied: nothing for the common, five for the uncommon, twelve for the scarce, thirty for the rare,
+sixty for the precious. A few things are worth what no part of the rule can see — a promissory note is
+worth its debt — and bear a price of their own.
+
+Two consequences follow, and they are the reason for the rule. **Nothing is worth less than what it
+breaks down into** at a station, since craftsmanship never multiplies matter by less than one; and
+**everything a trade makes is worth more than the material it costs** (see [X](10-crafting.md)).
+
+A merchant's catalogue applies a variation of up to fifteen parts in a hundred either way atop the
+reference price, rounded and never less than one copper, and confines the result to the range one
+to a hundred, so the same thing is not worth precisely the same in two places. A drink is sold in the
+vessel that holds it, at the two prices together.
 
 ---
 

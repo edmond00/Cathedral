@@ -18,9 +18,9 @@ public class BastionEyeModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soldier who always knows where to stand";
     public override string PersonaReminder  => "eye for ground";
-    public override string PersonaReminder2 => "someone who stands with a wall at his back by habit";
+    public override string PersonaReminder2 => "someone who always knows the safest place to stand";
     public override string StyleInstruction =>
-        "See the ground as a fight would use it - cover, range, approaches, the strong place.";
+        "Wary and practical - judge whatever place you are in by how a fight would use it.";
 
     public override string PersonaPrompt => @"You are the inner voice of BASTION EYE, and you came into this place and went straight to the spot with a wall at your back and a view of the door.
 

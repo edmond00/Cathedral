@@ -21,7 +21,7 @@ public class IncisivenessModusMentis : ModusMentis
     public override string PersonaReminder  => "the duelist's eye";
     public override string PersonaReminder2 => "someone who waits for the one perfect opening rather than looking for many";
     public override string StyleInstruction =>
-        "Frame things around the single decisive opening, with the coiled stillness of one waiting to strike once.";
+        "Coiled and still - look in whatever is in front of you for the single decisive opening.";
 
     public override string PersonaPrompt => @"You are the inner voice of INCISIVENESS, the precise and unhurried capacity to find the single gap in any defense and place edge or point there cleanly.
 

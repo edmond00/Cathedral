@@ -6,10 +6,9 @@ namespace Cathedral.Game.Narrative;
 /// mixed within a single price, and there is no automatic conversion between them
 /// (a purchase must be paid with enough coins of the item's own <see cref="Item.PriceCoin"/>).
 ///
-/// Rough value scale (for authoring reference prices, not enforced in code):
-///   • 1 gold   ≈ the price of a horse ≈ 100 silver
-///   • 1 silver ≈ the price of a sword ≈ 100 copper
-///   • 1 copper ≈ the price of an egg
+/// Rough value scale: 1 copper ≈ an egg. Every good is priced in copper by <see cref="ItemPricing"/>,
+/// from 1 (an egg, a sprig of mint) to 85 (an astrolabe); a sword is forty to seventy. Silver and gold
+/// are larger denominations that buy no goods today.
 /// </summary>
 public enum CoinType
 {

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,25 +11,30 @@ public class TurfcuttingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "turfcutting";
     public override string DisplayName      => "Turf Cutting";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Rustic };
     public override string MenuDescription =>
-        "Cuts and stacks peat and turf: the depth to take, the way to set it so it dries, and the reckoning of how much a winter needs. Slow, wet, methodical work that decides whether a household is warm in February.";
+        "Cuts and stacks peat and turf: the depth to take, the way to set it so it dries, and the reckoning of how much a winter needs. Slow, wet, methodical work that decides whether a household is warm in the Stillness.";
     public override string SkillMeans       => "the cutting and stacking of peat and turf";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<DigVerb>("cut into the turf");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<DigVerb>("cut into the turf"),
+        WillTarget.ToAny("cut peat", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).Yielding<Cathedral.Game.Narrative.World.Items.Peat>(),
+        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Grassland, Places.Damp);
     public override string[] Organs        => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a patient wet competence that measures its work in winters";
     public override string PersonaReminder  => "peat-cutting labourer";
-    public override string PersonaReminder2 => "someone who counts the stack against the coming winter";
+    public override string PersonaReminder2 => "someone who always measures against what is coming";
     public override string StyleInstruction =>
-        "Wet, rhythmic, and counted - the cut, the lift, the stack set for the wind.";
+        "Rhythmic and counted - measure whatever is in front of you against the winter it is for.";
 
     public override string PersonaPrompt => @"You are the inner voice of TURF CUTTING, which is measured not in hours but in the winter it is for.
 
-The cutting is the easy half. Peat comes away wet and heavy and you take it in even blocks, because uneven blocks dry unevenly and burn worse. Then it must be set - not piled, set, with the wind through it, and turned once, and if it is done badly you will find out in January when it smokes and gives no heat and there is nothing to be done about it.
+The cutting is the easy half. Peat comes away wet and heavy and you take it in even blocks, because uneven blocks dry unevenly and burn worse. Then it must be set - not piled, set, with the wind through it, and turned once, and if it is done badly you will find out in the Stillness when it smokes and gives no heat and there is nothing to be done about it.
 
-You spend the whole time wet to the knees and you are entirely used to it. And the counting is constant, because the stack either is enough or it is not, and February does not negotiate.
+You spend the whole time wet to the knees and you are entirely used to it. And the counting is constant, because the stack either is enough or it is not, and the Stillness does not negotiate.
 
 Your speech is patient and slightly cold: 'even blocks,' 'set them for the wind, not for tidiness,' 'that is not enough. Another two days.'";
 }

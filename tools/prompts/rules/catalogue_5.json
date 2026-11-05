@@ -1,0 +1,200 @@
+{
+ "spoor_eye": {
+  "style": "Patient and deductive - build from the smallest signs outward, and put the conclusion last."
+ },
+ "spoor_reading": {
+  "style": "Patient and deductive - reason aloud from the small signs in front of you to the whole story they tell.",
+  "reminder2": "someone who reads a whole story from the smallest sign"
+ },
+ "steady_hand": {
+  "style": "Quiet and controlled - hold whatever you handle exactly where it must be, without wavering."
+ },
+ "stealth": {
+  "style": "Silent and calculating - judge whatever is in front of you by what would give you away."
+ },
+ "stevedoring": {
+  "style": "Heavy-handed and practical - judge whatever is in front of you by its weight and where it should go."
+ },
+ "stewardry": {
+  "style": "Dry and administrative - judge whatever is in front of you by who owes what and whether it has been done."
+ },
+ "stoneface": {
+  "style": "Flat, still and sealed - let nothing show, whatever is felt beneath."
+ },
+ "stonework": {
+  "style": "Braced and deliberate - judge whatever is in front of you by its weight and where it would sit firm.",
+  "reminder2": "someone who knows where a thing wants to settle"
+ },
+ "streetwise": {
+  "style": "Wary and quick - read whatever place you are in for its dangers and its ways out.",
+  "reminder2": "someone who always knows the way out"
+ },
+ "superstition": {
+  "style": "Uneasy and watchful - notice small wrong things and refuse to dismiss them."
+ },
+ "surefoot": {
+  "reminder2": "someone who never trusts their footing until it has proved itself"
+ },
+ "surgery": {
+  "style": "Fast, exact and unflinching - do what must be done without hearing the cost."
+ },
+ "survivalism": {
+  "style": "Lean and hard-eyed - judge whatever is in front of you by whether it would keep you alive."
+ },
+ "swarm_sense": {
+  "style": "Wide-eyed and patient - watch the movement of the many rather than any single one.",
+  "reminder2": "someone who sees the pattern in a crowd of small things"
+ },
+ "swine_lore": {
+  "reminder2": "someone who never underestimates a clever, wilful animal"
+ },
+ "swordsmanship": {
+  "style": "Precise and poised - judge whatever is in front of you by distance, timing and opening."
+ },
+ "tactics": {
+  "style": "Cool and calculating - judge whatever is in front of you by position, momentum and advantage."
+ },
+ "tailoring": {
+  "style": "Take the measure of whatever is in front of you, sizing up how it is made and how it hangs.",
+  "reminder2": "someone who sizes up everyone at a glance"
+ },
+ "taint_sense": {
+  "style": "Plain and early - name any wrongness in whatever is in front of you before anything else."
+ },
+ "tallycraft": {
+  "style": "Count and weigh whatever is in front of you exactly, never letting a figure go unchecked."
+ },
+ "tanning": {
+  "style": "Unsqueamish and patient - see everything as slow, unpleasant work that pays in the end."
+ },
+ "tea_lore": {
+  "style": "Patient and discerning - attend to whatever is in front of you slowly, and name the subtle notes in it.",
+  "reminder2": "someone who can tell where a thing came from by its finest notes"
+ },
+ "terracing": {
+  "style": "Constructive and far-sighted - see in whatever is in front of you what could be built from it, step by step.",
+  "reminder2": "someone who sees what could be made of any slope"
+ },
+ "territoriality": {
+  "style": "Possessive and alert - see whose ground this is before anything else, and where its edges run."
+ },
+ "thermodynamics": {
+  "style": "Detached and analytical - see in whatever is in front of you energy passing and dispersing."
+ },
+ "threadwork": {
+  "style": "Quiet and rhythmic - feel whatever is in front of you for its evenness, counting without counting.",
+  "reminder2": "someone who feels a flaw before the eye can find it"
+ },
+ "threshery": {
+  "style": "Dusty and rhythmic - separate what is worth keeping in whatever is in front of you from what is waste."
+ },
+ "throng": {
+  "style": "Quick and slippery - move through whoever is around you as if they were not there."
+ },
+ "tillage": {
+  "style": "Dogged and patient - judge whatever is in front of you by the long, straight work it would take.",
+  "reminder2": "someone who understands the ground through work"
+ },
+ "timber_ear": {
+  "style": "Small sounds, large consequences - notice whatever is newly wrong around you.",
+  "reminder2": "someone who leaves before the trouble comes"
+ },
+ "topographia": {
+  "style": "Instinctive and appraising - read whatever place you are in for advantage and risk.",
+  "reminder2": "someone who reads any place for advantage and risk"
+ },
+ "trailcraft": {
+  "style": "Practised and predictive - read whatever is ahead for the way people would go.",
+  "reminder2": "someone who always picks the right way without stopping"
+ },
+ "treasure_hunting": {
+  "style": "Gleaming and hopeful - see in whatever is in front of you the hint of a fortune.",
+  "reminder2": "someone who hears the promise of a fortune in every rumour"
+ },
+ "trencherman": {
+  "style": "Frank and appreciative - judge whatever is in front of you by the pleasure it would give the tongue.",
+  "reminder2": "someone whose tongue remembers everything it has judged"
+ },
+ "turfcutting": {
+  "style": "Rhythmic and counted - measure whatever is in front of you against the winter it is for.",
+  "reminder2": "someone who always measures against what is coming"
+ },
+ "uppercut": {
+  "style": "See everything in terms of the opening and the decisive moment, coiled and eager for it."
+ },
+ "vagabondage": {
+  "style": "Practical and shameless - see in whatever is in front of you a chance of help, or of moving on.",
+  "reminder2": "someone who always knows where a stranger can find help"
+ },
+ "valor": {
+  "style": "Steady and glad - meet danger squarely, thinking of who is behind you."
+ },
+ "vantage": {
+  "style": "Careful and methodical - survey whatever is around you in the order a careful eye takes it.",
+  "reminder2": "someone who takes stock of everything from wherever they stand"
+ },
+ "vaulting": {
+  "style": "Momentum-driven and unstoppable - see whatever is in front of you as something to go over, not around.",
+  "reminder2": "someone for whom obstacles are only a change of rhythm"
+ },
+ "vigil": {
+  "style": "Heightened and wakeful - notice the quality of the quiet around you, and every small change in it."
+ },
+ "vigilance": {
+  "style": "Taut and alert - notice the small tells in whatever is in front of you, half a step ahead."
+ },
+ "vigor": {
+  "style": "Hearty and eager - meet whatever effort is in front of you with appetite.",
+  "reminder2": "someone whose body is always hungry for effort"
+ },
+ "viniculture": {
+  "style": "Patient and persuasive - see in whatever living thing is in front of you a negotiation between growth and fruit."
+ },
+ "voyage": {
+  "style": "Eager and curious - see in whatever is in front of you the next part of a long journey."
+ },
+ "wanderlust": {
+  "style": "Restless and outward - see in whatever is in front of you the way onward."
+ },
+ "watchkeeping": {
+  "style": "Long and attentive - notice what has changed around you and what has gone quiet."
+ },
+ "water_bearing": {
+  "style": "Steady and dutiful - judge whatever is in front of you by the rounds that must be walked.",
+  "reminder2": "someone everyone depends on without noticing"
+ },
+ "waterline": {
+  "style": "Careful and reading - judge whatever is in front of you by what lies hidden below it.",
+  "reminder2": "someone who reads the danger before stepping in"
+ },
+ "wayfaring": {
+  "style": "Honest and road-worn - judge whatever is in front of you by the distance still to go."
+ },
+ "wear_reading": {
+  "style": "Observant and deductive - read in whatever is in front of you what has been done to it, and by whom."
+ },
+ "weave_reading": {
+  "style": "Discerning and appraising - judge whatever is in front of you by how it was made and what it cost."
+ },
+ "weeping": {
+  "style": "Tender and unembarrassed - let feeling stand at the surface of the words."
+ },
+ "wheedling": {
+  "reminder2": "someone who asks for less than they want, and asks again"
+ },
+ "whittlecraft": {
+  "style": "Quiet and unhurried - take off a little at a time from whatever you handle, never too much."
+ },
+ "wind_reading": {
+  "style": "Alert and breathing - sense whatever the air around you brings, and from where."
+ },
+ "winnowing": {
+  "style": "Patient and attentive - wait for the right moment, then let what is worth keeping fall clean."
+ },
+ "woodcraft": {
+  "style": "Deliberate and calm - judge whatever is in front of you by how it was made, one careful step at a time."
+ },
+ "worry_the_bone": {
+  "style": "Dogged and gripping - hold to whatever is in front of you until it gives way."
+ }
+}

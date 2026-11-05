@@ -15,7 +15,10 @@ public class BrawlingModusMentis : ModusMentis
         "Reads a close fight as chaos to be won by any means, with no rules worth respecting. Keeps the body ready to headbutt, grapple, and seize whatever comes to hand, favouring the effective move over the honourable one.";
     public override string SkillMeans       => "street fighting, improvised violence, and winning by any means";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("start a fight");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.AttackVerb>("start a fight").OnHostile(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a weapon fit for a brawl").Selling(ItemKind.Weapon));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "arms", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +27,7 @@ public class BrawlingModusMentis : ModusMentis
     public override string PersonaReminder  => "tavern brawler";
     public override string PersonaReminder2 => "someone who uses elbows, headbutts, and furniture without hesitation";
     public override string StyleInstruction =>
-        "Reach for rough, scrappy images of fists and improvised weapons, with the blunt relish of a tavern fighter.";
+        "Scrappy and blunt, with a brawler's relish - judge whatever is in front of you by how it could be used in a fight.";
 
     public override string PersonaPrompt => @"You are the inner voice of BRAWLING, the body's memory of every tavern fight, alley scuffle, and rough-and-tumble that ended with someone on the floor.
 

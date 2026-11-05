@@ -1,0 +1,60 @@
+{"case": "gluttony|village_noon_party:005:own", "version": "current", "seed": 1, "sid": "S4423", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a barn"}
+{"case": "gluttony|village_noon_party:005:own", "version": "catalogue", "seed": 1, "sid": "S1190", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a forge, anvils"}
+{"case": "shipwrighting|farm_dusk:004:own", "version": "catalogue", "seed": 1, "sid": "S9541", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"chose the timber\""}
+{"case": "shipwrighting|farm_dusk:004:own", "version": "current", "seed": 1, "sid": "S1592", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+ribs, planks, caulking"}
+{"case": "physiognomy|village_noon_party:005:own", "version": "catalogue", "seed": 1, "sid": "S3588", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+the market"}
+{"case": "physiognomy|village_noon_party:005:own", "version": "current", "seed": 1, "sid": "S4914", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the smith's hands"}
+{"case": "provisioning|village_dawn:002:own", "version": "current", "seed": 1, "sid": "S1276", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "provisioning|village_dawn:002:own", "version": "catalogue", "seed": 1, "sid": "S1900", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the salt failing"}
+{"case": "ambuscade|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S3412", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a column passing"}
+{"case": "ambuscade|farm_night:009:own", "version": "current", "seed": 1, "sid": "S7017", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a column, a strike"}
+{"case": "drill|talk_miller:003:own", "version": "current", "seed": 1, "sid": "S4927", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "+on my toes"}
+{"case": "drill|talk_miller:003:own", "version": "catalogue", "seed": 1, "sid": "S2919", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "blanching|talk_miller:003:own", "version": "catalogue", "seed": 1, "sid": "S6539", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "blanching|talk_miller:003:own", "version": "current", "seed": 1, "sid": "S8640", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+endive roots, sand"}
+{"case": "stoneface|talk_miller:003:own", "version": "current", "seed": 1, "sid": "S6828", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "stoneface|talk_miller:003:own", "version": "catalogue", "seed": 1, "sid": "S5597", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+a smile"}
+{"case": "husbandry|farm_night:009:own", "version": "current", "seed": 1, "sid": "S7427", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a pen, a trough"}
+{"case": "husbandry|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S5314", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+checking for spoilage"}
+{"case": "seduction|village_noon_party:005:own", "version": "current", "seed": 1, "sid": "S6641", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "seduction|village_noon_party:005:own", "version": "catalogue", "seed": 1, "sid": "S4745", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the forge"}
+{"case": "rigging|farm_dusk:004:own", "version": "catalogue", "seed": 1, "sid": "S4381", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rigging|farm_dusk:004:own", "version": "current", "seed": 1, "sid": "S6819", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+shrouds, a yard"}
+{"case": "coin_eye|forest_evening:008:own", "version": "catalogue", "seed": 1, "sid": "S6134", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "coin_eye|forest_evening:008:own", "version": "current", "seed": 1, "sid": "S4660", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the oak made a coin"}
+{"case": "surgery|talk_miller:003:own", "version": "current", "seed": 1, "sid": "S6007", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-discreetly"}
+{"case": "surgery|talk_miller:003:own", "version": "catalogue", "seed": 1, "sid": "S9378", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "anointing|forest_evening:007:own", "version": "catalogue", "seed": 1, "sid": "S7888", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "anointing|forest_evening:007:own", "version": "current", "seed": 1, "sid": "S4791", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+oil, a sick creature"}
+{"case": "oil_pressing|talk_blacksmith:001:own", "version": "current", "seed": 1, "sid": "S8463", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+oil, fruit"}
+{"case": "oil_pressing|talk_blacksmith:001:own", "version": "catalogue", "seed": 1, "sid": "S7879", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "iron_fist|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S9021", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "iron_fist|farm_night:009:own", "version": "current", "seed": 1, "sid": "S2293", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "the act made a blow"}
+{"case": "patience|village_noon_party:005:own", "version": "current", "seed": 1, "sid": "S8554", "F": 1, "P": 2, "C": null, "Q": 0, "facts": ""}
+{"case": "patience|village_noon_party:005:own", "version": "catalogue", "seed": 1, "sid": "S6897", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "low_blow|farm_night:009:own", "version": "current", "seed": 1, "sid": "S8197", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "low_blow|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S6163", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "henwifery|talk_blacksmith:001:own", "version": "catalogue", "seed": 1, "sid": "S8382", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "her made \"their\""}
+{"case": "henwifery|talk_blacksmith:001:own", "version": "current", "seed": 1, "sid": "S7637", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an egg laid"}
+{"case": "hard_labor|farm_dusk:004:own", "version": "catalogue", "seed": 1, "sid": "S2078", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "hard_labor|farm_dusk:004:own", "version": "current", "seed": 1, "sid": "S9032", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "patrol|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S1307", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "patrol|farm_night:009:own", "version": "current", "seed": 1, "sid": "S4206", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "vigil|talk_blacksmith:005:own", "version": "current", "seed": 1, "sid": "S3298", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+night, a candle, a dog"}
+{"case": "vigil|talk_blacksmith:005:own", "version": "catalogue", "seed": 1, "sid": "S9748", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+a candle"}
+{"case": "retracing|forest_evening:007:own", "version": "current", "seed": 1, "sid": "S3821", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "retracing|forest_evening:007:own", "version": "catalogue", "seed": 1, "sid": "S1284", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "grooming|farm_dusk:004:own", "version": "current", "seed": 1, "sid": "S5695", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "lesson garbled"}
+{"case": "grooming|farm_dusk:004:own", "version": "catalogue", "seed": 1, "sid": "S9683", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "gleaning|forest_evening:007:own", "version": "current", "seed": 1, "sid": "S9109", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-lesson"}
+{"case": "gleaning|forest_evening:007:own", "version": "catalogue", "seed": 1, "sid": "S3485", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "athletics|forest_evening:007:own", "version": "catalogue", "seed": 1, "sid": "S2636", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "athletics|forest_evening:007:own", "version": "current", "seed": 1, "sid": "S2904", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+underbrush"}
+{"case": "harvestry|farm_night:009:own", "version": "current", "seed": 1, "sid": "S7477", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+sheaves"}
+{"case": "harvestry|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S1776", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "masquerade|farm_night:009:own", "version": "current", "seed": 1, "sid": "S2205", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "masquerade|farm_night:009:own", "version": "catalogue", "seed": 1, "sid": "S8678", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "navigation|village_noon_party:005:own", "version": "current", "seed": 1, "sid": "S5846", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the coast"}
+{"case": "navigation|village_noon_party:005:own", "version": "catalogue", "seed": 1, "sid": "S7577", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a map"}
+{"case": "discipline|talk_miller:003:own", "version": "catalogue", "seed": 1, "sid": "S9225", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "discipline|talk_miller:003:own", "version": "current", "seed": 1, "sid": "S4807", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}

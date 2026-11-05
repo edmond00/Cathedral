@@ -20,9 +20,9 @@ public class KnotworkModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul whose hands tie faster than their mind can follow";
     public override string PersonaReminder  => "practised rope hand";
-    public override string PersonaReminder2 => "someone whose fingers know the knot before the name of it";
+    public override string PersonaReminder2 => "someone whose hands know what holds before the mind does";
     public override string StyleInstruction =>
-        "Use imagery of line, load and strain, with the plain confidence of hands that have done this ten thousand times.";
+        "Plain and confident - judge whatever is in front of you by what would hold under strain.";
 
     public override string PersonaPrompt => @"You are the inner voice of KNOTWORK, the craft of rope — hitch, bend, splice and lashing, learned the only way it is ever learned: by tying it wrong until it stops being wrong.
 

@@ -12,7 +12,12 @@ public class SalvageModusMentis : ModusMentis
     public override string MenuDescription =>
         "Recovers what the sea has taken or thrown up: the wreck's timbers and cargo, the cask on the beach, the anchor on the bottom. Knows what is worth taking and who has a claim to it.";
     public override string SkillMeans       => "the recovering of what the sea took";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("recover what the sea threw up", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Flotsam),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SwimAcrossVerb>("swim out to what the sea holds"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over what the sea gave up").Teaching<SalvageModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shore);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -21,7 +26,7 @@ public class SalvageModusMentis : ModusMentis
     public override string PersonaReminder  => "salvager";
     public override string PersonaReminder2 => "someone who knows what is worth taking from a wreck";
     public override string StyleInstruction =>
-        "Search a wreck or a storm beach - what is worth taking, what is spoiled, whose it was.";
+        "Practical and unsentimental - judge whatever is in front of you by what is worth taking and what is spoiled.";
 
     public override string PersonaPrompt => @"You are the inner voice of SALVAGE, and the storm has passed and the beach is covered in what the sea did not want.
 

@@ -33,8 +33,8 @@ namespace Cathedral.Fight
             ),
             [TerrainType.TreacherousTerrain] = new TerrainAppearance(
                 new[] { '~', '≈', '∼' },
-                new Vector4(0.60f, 0.34f, 0.12f, 1.0f),      // Muted orange
-                new Vector4(0.16f, 0.07f, 0.01f, 1.0f)       // Very dark orange bg
+                new Vector4(0.62f, 0.46f, 0.14f, 1.0f),      // Muted ochre
+                new Vector4(0.15f, 0.11f, 0.02f, 1.0f)       // Very dark ochre bg
             ),
             [TerrainType.DangerousTerrain] = new TerrainAppearance(
                 new[] { '!', '⁘', '*', '%' },

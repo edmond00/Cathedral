@@ -59,10 +59,10 @@ public class ReeveArchetype : PeasantArchetype
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
         [DialogueTopic.Work]       = "I don't ask for more than a person can do. I do ask for all of it",
-        [DialogueTopic.Harvest]    = "the harvest is the year's account, and my name is on the bottom of it",
+        [DialogueTopic.Harvest]    = "the harvest is the round's account, and my name is on the bottom of it",
         [DialogueTopic.Neighbours] = "I'm one of them and I'm set over them. There's no comfortable way to stand in that",
         [DialogueTopic.Trade]      = "the boundary stones and the tally-stick. Argue with either and you'll find I've a long memory",
-        [DialogueTopic.Weather]    = "a wet week costs me a hundred days of labour I'll never get back. I feel it as money",
+        [DialogueTopic.Weather]    = "a wet eleven-day costs me a hundred days of labour I'll never get back. I feel it as money",
         [DialogueTopic.Kin]        = "my people work the strips beside everyone else's. It keeps me honest, mostly",
         [DialogueTopic.Rest]       = "the feast days are kept properly here. A field worked through them turns sullen and yields worse",
         [DialogueTopic.Roads]      = "strangers looking for work I can use. Strangers looking about them I'd rather see moving on",
@@ -71,7 +71,7 @@ public class ReeveArchetype : PeasantArchetype
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
         => $@"You are {name}, the reeve overseeing this field. You are accountable to the lord (or to the village if it is freeholder land) for the harvest, the bondmen, the boundary stones.
 
-You speak with the careful authority of someone who measures and counts. You can be hard with shirkers and short with strangers. You know which strips have given best, which ditches need clearing, and what was planted last year.
+You speak with the careful authority of someone who measures and counts. You can be hard with shirkers and short with strangers. You know which strips have given best, which ditches need clearing, and what was planted last round.
 
 Beneath the brusqueness is fairness — most of the time. You know the bondmen by name, and you know whose family is hungry.";
 }

@@ -59,7 +59,7 @@ public class FishermanArchetype : WildernessNpcArchetype
     {
         [DialogueTopic.Water]      = "it feeds you and it drowns you, and it doesn't change its manner between the two",
         [DialogueTopic.Weather]    = "I read the sky better than anyone inland. I've had to. Getting it wrong is the last mistake",
-        [DialogueTopic.Food]       = "fish twice a day, every day. I'd trade a week of catch for a good loaf and a bowl of something hot",
+        [DialogueTopic.Food]       = "fish twice a day, every day. I'd trade an eleven-day of catch for a good loaf and a bowl of something hot",
         [DialogueTopic.Omens]      = "there's things you don't say on the water and things you don't bring aboard. Call it foolish; I still won't",
         [DialogueTopic.Beasts]     = "seals take fish straight out of the net and look you in the eye while they do it",
         [DialogueTopic.Trade]      = "the catch is worth most the hour it lands and nothing at all by the third day. That's the whole of my bargaining",

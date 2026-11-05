@@ -1,0 +1,188 @@
+[cli] script loaded: /home/user/repo/tools/prompts/scripts/corpus_cave_morning.cli
+[cli] ready — type `help` for commands
+[cli] > wait
+[cli] wait done (idle)
+[cli] > wait mode MainMenu 900
+[cli] wait done (mode=MainMenu)
+[cli] > click menu New
+[cli] ok: pressed menu "New"
+[cli] > wait mode ProtagonistCreation 60
+[cli] wait done (mode=ProtagonistCreation)
+[cli] > click continue
+[cli] ok: accepted protagonist
+[cli] > wait mode WorldView 300
+[cli] wait done (mode=WorldView)
+[cli] > travel here
+[cli] ok: entering the location at vertex 17 (own vertex)
+[cli] > wait mode LocationInteraction 900
+[cli] wait done (mode=LocationInteraction)
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose tactics
+[cli] ok: chose tactics
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] ok: clicked action 0
+[cli] > choose 0
+[cli] action-strategy Custom action="try to descend through the stone's grip, down the ladder of bark and vertigo." outcome="VerbAction → climb down the mineshaft ladder"
+[cli] dice-roll auto=success (3 dice, need 7 sixes) (use `strategy fail-dice` to force failure)
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: walk continue
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose sense_of_humor
+[cli] ok: chose sense_of_humor
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] ok: clicked action 0
+[cli] > choose 0
+[cli] action-strategy Custom action="try to go back by the mineshaft ladder, down the way I know, to find what keeps me alive tonight." outcome="VerbAction → go back by the mineshaft ladder, the way I know"
+[cli] dice-roll auto=success (3 dice, need 2 sixes) (use `strategy fail-dice` to force failure)
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 12 1500
+[cli] ok: go back to Entrance Hall
+[cli] ok: preview continue
+[cli] ok: walk continue
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click button
+[cli] ok: pressed narration footer button
+[cli] > wait 1500
+[cli] wait done (idle (≤1500s))
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 1
+[cli] ok: clicked keyword "1"
+[cli] > choose 1
+[cli] ok: chose 1
+[cli] > choose nightwalking
+[cli] ok: chose nightwalking
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click keyword 0
+[cli] ok: clicked keyword "0"
+[cli] > choose 0
+[cli] ok: chose 0
+[cli] > choose ruination
+[cli] ok: chose ruination
+[cli] > advance 12 1500
+[cli] ok: preview continue
+[cli] ok: preview continue
+[cli] advance done (no preview pending)
+[cli] > click action 0
+[cli] ok: clicked action 0
+[cli] > choose 0
+[cli] action-strategy Custom action="try to go back by the mineshaft ladder, through the tunnel where bats roost, past the stone altar where we left coins, to the well where shadows dance." outcome="VerbAction → go back by the mineshaft ladder, the way I know"
+[cli] dice-roll auto=success (3 dice, need 1 six) (use `strategy fail-dice` to force failure)
+[cli] ok: chose 0
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] ok: confirmed dice
+[cli] > advance 12 1500
+[cli] ok: go back to Main Shaft
+[cli] ok: preview continue
+[cli] ok: walk continue
+[cli] advance done (no preview pending)
+[cli] > advance 12 1500
+[cli] advance done (no preview pending)
+[cli] > wait 30
+[cli] wait done (idle (≤30s))
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 1
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click option 0
+[cli] error: not in a conversation
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > click continue
+[cli] error: no dice continue button on screen
+[cli] > advance 20 1500
+[cli] advance done (no preview pending)
+[cli] > state
+[cli] mode=LocationInteraction idle=True carry[4/50] narration[loading=False dice=none continue=True noetic=1/3 observed=3/3 preview=none time=none walk=none backtrack=none history=60 total=94 scroll=23]
+[cli] > quit
+[cli] quitting (all assertions passed)

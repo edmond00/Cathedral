@@ -13,6 +13,7 @@ public class DeferenceModusMentis : ModusMentis
         "Addresses authority the way authority expects: the form, the distance, the eyes lowered at the right moment. Costs nothing, opens doors that arguing does not, and is entirely separate from what is actually believed.";
     public override string SkillMeans       => "the correct address of those set above you";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "visage" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

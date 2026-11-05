@@ -202,6 +202,13 @@ public class NarrationBlock : ModusMentisChainElement
     public IReadOnlyList<Outcome>? OutcomeReports { get; init; } = null;
 
     /// <summary>
+    /// For an action's outcome block: what was tried, in plain words ("catch the crab"), and whether
+    /// it worked. The narration above is the acting mind's telling of it; this is the event itself,
+    /// which the journal keeps. Null for every other block.
+    /// </summary>
+    public ActionAttempt? Attempt { get; init; } = null;
+
+    /// <summary>
     /// For <see cref="NarrationBlockType.DialogueOptions"/> blocks: the selectable player replies,
     /// rendered in the scroll buffer as clickable lines (like thinking-block actions). Null for all
     /// other block types.
@@ -268,6 +275,9 @@ public enum NarrationBlockType
     Emotion         // What the outcome stirred in the actor, in an emotion modus mentis's voice
 }
 
+/// <summary>What an action's outcome block is about: the act in plain words, and how it went.</summary>
+public sealed record ActionAttempt(string Act, bool Succeeded);
+
 /// <summary>
 /// Types of observation blocks in the narration system.
 /// Used to determine if a keyword came from an overall or focus observation.
@@ -296,7 +306,7 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// thinking modusMentis, captured BEFORE the action modusMentis re-expressed it into persona voice.
     /// <see cref="DisplayText"/>/<see cref="ActionText"/> hold the styled form (the button label and
     /// the phrasing critics see); this preserves the plain meaning so the neutral outcome sentence
-    /// ("It is done! I succeeded to …" / "Alas, I failed to …") templates cleanly instead of
+    /// ("It is done! I managed to …" / "Alas, I failed to …") templates cleanly instead of
     /// re-embedding an already-styled phrase that does not fit it. Empty for actions with no
     /// neutral source.
     /// </summary>

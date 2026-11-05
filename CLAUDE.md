@@ -16,6 +16,21 @@ dotnet run                  # main game
 dotnet run -- --help        # all options
 ```
 
+**In a Linux cloud container** there is no SDK and no screen. Install the SDK from Ubuntu's archive
+(`dotnet-install.sh` is blocked by the network policy) and give the game a virtual display before
+launching it, or every run dies with `GLFWException: Failed to detect any supported platform`:
+
+```bash
+apt-get update && apt-get install -y dotnet-sdk-8.0
+Xvfb :99 -screen 0 1280x1024x24 &
+mkdir -p /tmp/xdg && chmod 700 /tmp/xdg
+export DISPLAY=:99 XDG_RUNTIME_DIR=/tmp/xdg
+export CLI_EXTRA_FLAGS=--no-embeddings   # models/embeddings/ (GloVe) is gitignored, so absent
+```
+
+The exports do not outlive one shell command, so repeat them in the command that runs the game or
+`run_tests.sh`. The audits need none of the display setup.
+
 ## The player manual
 
 `docs/` holds the player manual and nothing else. `design/` (formerly `docs/`) is drafts, location
@@ -39,7 +54,7 @@ or styling in the chapters.
 
 ## Rules that always apply
 
-Six prohibitions that hold everywhere in the codebase. Every one of them fails *silently* —
+Seven prohibitions that hold everywhere in the codebase. Every one of them fails *silently* —
 nothing throws, nothing warns, and the symptom surfaces far from the cause. They are kept here,
 always loaded, rather than in the skills and nested files that carry the rest of their chapters.
 
@@ -95,6 +110,26 @@ its rows against that 100x100 — the grid is layout. Fullscreen is the player's
 The scale ceiling is where the quad's overflow shows on box-drawing glyphs (side rails, popup
 frames, the solid volume bars), which fill their cell to the edge where letters do not.
 
+**Three hues only: purplish, yellowish, greyscale.** Nothing a player sees is red, green, blue, cyan
+or orange — not an error, not a success, not a warning. The meaning is carried within the three:
+
+| hue | means | from `Config.Colors` |
+|---|---|---|
+| yellow / gold | what can be clicked and what is hovered, titles, gain and success, coin; `Ochre` for a warm secondary accent (vital heat, running, knockdown) | `BrightYellow`, `GoldYellow`, `OrangeYellow`, `MediumYellow`, `DarkYellow`, `DarkYellowGrey`, `Ochre`, `Coin*` |
+| purple | wounds, loss, danger, warnings and refusals, enemies, a failed or spoiled attempt, trespass | `BrightPurple`, `Purple`, `LightPurple`, `DarkPurple` |
+| grey | text, the neutral and the plain, what is disabled | `White`, `LightGray*`, `MediumGray*`, `DarkGray*`, `Black` |
+
+The world sphere enforces it in its shaders — a vertex's alpha picks a tone (grey nature, purple
+water, ochre building and field) and its colour is read only as a luminance, so a biome declared
+"green" draws grey; only the developer region overlay (R) opts out. **The terminal does not**: every
+renderer draws exactly the colour it passes, so the rule there is a choice made at each call. Write a
+dark band as a shade of one of the three (a near-black with a gold, grey or purple cast), and reach for
+a named palette colour before a literal. `Red`, `Green`, `Blue`, `Magenta`, `Cyan` and the ANSI
+`Colors.Terminal` table survive for the developer tools only (the image-to-text mode, the terminal's
+test palette, the sphere's debug shaders). To find a stray, grep `src/game` and `src/fight` for those
+names, and read every `new Vector4(r, g, b, …)` literal against the three shapes: grey has r, g and b
+near equal, yellow has r and g together above b, purple has r and b above g. Anything else is a stray.
+
 ## Verifying a change (read this before testing anything)
 
 The game is an OpenGL app driven by mouse clicks, so "run it and see" is not something an
@@ -107,7 +142,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 **Invoke the `verifying` skill before writing or running any `.cli` script.** It carries the
 reproducibility flags, the full command vocabulary, `--debug`'s forced outcomes, the test-suite
 layout, `--verb-probe`, and what `--cli` cannot check. **Invoke `audits` after touching content**
-— it carries the thirteen headless audits and says which one covers which change.
+— it carries the seventeen headless audits and says which one covers which change.
 
 **The full suite is the release gate, not the check for a change.** `./run_tests.sh` launches the game
 once per script, two hundred times, a dozen at once, and takes about a quarter of an hour. Run it only when preparing a
@@ -140,7 +175,7 @@ every line that left is the same text, moved.
 | `src/game/history/CLAUDE.md` | when working with files under `src/game/history/` | the world history generator: the empire's lore as data, sow and sprout, the rules that keep a generated past coherent, lore moons and their profiles, realms over regions, why history is regenerated and not saved |
 | `verifying` skill | on invocation | `--cli`, the reproducibility flags, the command vocabulary, forcing outcomes, the test suite and `cli/` layout, `--verb-probe`, extending the CLI, adding a debug flag, what `--cli` cannot check |
 | `playtest` skill | on invocation | launching the game for the user to play by hand: the baseline command, which debug flags reach which feature, the CPU/GPU rule, when `--playground` belongs on |
-| `audits` skill | on invocation | `--outcome-audit`, `--crime-audit`, `--dialogue-audit`, `--npc-audit`, `--mm-audit`, `--item-audit`, `--verb-audit`, `--world-variant-audit`, `--history-audit`, `--mm-grant-csv`, `--mm-reach-csv`, `--llm-probe-audit`, `--building-audit` |
+| `audits` skill | on invocation | `--outcome-audit`, `--play-audit`, `--crime-audit`, `--dialogue-audit`, `--npc-audit`, `--mm-audit`, `--will-audit`, `--will-lesson-audit`, `--item-audit`, `--verb-audit`, `--world-variant-audit`, `--history-audit`, `--mm-grant-csv`, `--mm-reach-csv`, `--llm-probe-audit`, `--building-audit`, `--biome-audit` |
 | `runtime` skill | on invocation | `models/model.gguf` and the llama.cpp backends, `-ngl`, the first-run probe, the connection-pool and streaming contracts, server-start fallback, `log.txt` and the `logs/` tree, the crash report, the Settings screen |
 | `release` skill | on invocation | the ten release steps, and now the packaging, publishing, naming and shipped-build-verification reference behind them; the demo build (`-Demo`, its channel, the run limit and its limits as protection) |
 | `manual` skill | on invocation | the player manual's style guide, chapter map and procedure |
@@ -148,7 +183,7 @@ every line that left is the same text, moved.
 | `video` skill | on invocation | narrated videos about the game: `--record` (the CLI with a camera, player commands only), storyboards, manim in the game's identity, Piper voice-over, the game's own music; `tools/video/` |
 | `mm-grants` skill | on invocation | writing the modus mentis grant audit by hand |
 | `choice-judge` skill | on invocation | how a modus mentis's bounded decisions are judged; the rules for writing a modus mentis's description, manner and means, and a judge's prompt; `tools/judge/`, the benchmark and audit that measure them against the shipped model |
-| `music` skill | on invocation | the procedural soundtrack: the composer, the synthesiser, the live streams and the legacy engine (`--music-engine legacy`); the evaluation harness in `tools/music/` (`--render-music`, metrics, sheets, reading the score) and the rules for changing the music |
+| `music` skill | on invocation | the procedural soundtrack: the composer, the synthesiser, the seven mood gauges and the idioms they lead to (dances, chant, far music, fights, night), the live streams and the legacy engine (`--music-engine legacy`); recipes for each kind of change and how to verify it; the evaluation harness in `tools/music/` (`--render-music`, `--music-census`, metrics, sheets, reading the score) and the rules for changing the music |
 | `anatomy-art` skill | on invocation | generating body ASCII art (`assets/art/body/<name>/`) from labelled shapes with `tools/art/`, sharing proposals as PNGs, and the art direction: anatomical, retro/glitchy, the organ glyph vocabulary |
 
 **When a change alters a rule a player is subject to, invoke the `manual` skill** — that has not moved

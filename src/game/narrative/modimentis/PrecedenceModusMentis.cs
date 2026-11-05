@@ -13,15 +13,16 @@ public class PrecedenceModusMentis : ModusMentis
         "Knows who goes before whom: at table, in procession, in the order of address. Reads a room for its hierarchy at a glance, and notices the slight of a wrong place given.";
     public override string SkillMeans       => "the knowledge of who goes before whom";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
 
     public override string PersonaTone     => "a master of ceremonies who sees every slight";
     public override string PersonaReminder  => "master of ceremonies";
-    public override string PersonaReminder2 => "someone who knows who sits above the salt";
+    public override string PersonaReminder2 => "someone who knows everyone's place and every slight";
     public override string StyleInstruction =>
-        "Read the room for rank - who sits where, who speaks first - and notice every slight.";
+        "Alert and touchy - read whoever is around you for rank, and notice every slight.";
 
     public override string PersonaPrompt => @"You are the inner voice of PRECEDENCE, and you came into the hall and saw at once who outranks whom, and who has been insulted.
 

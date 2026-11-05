@@ -139,10 +139,29 @@ public sealed class AmbianceEngine : IDisposable
     /// </summary>
     public void TriggerGameEvent(GameEventType evt)
     {
+        if (evt == GameEventType.Transition && !TransitionDue()) return;
+
         // Before any audio work: the visual response should not depend on whether audio came up.
         GameEventFired?.Invoke(evt);
         _engine.TriggerGameEvent(evt);
     }
+
+    /// <summary>
+    /// One press can change mode twice in a row (leaving a place for the map, which at once starts a
+    /// journey; a fight that hands back to narration which repaints its map), and two swishes on top of
+    /// each other read as a stutter. A transition within <see cref="TransitionDebounceMs"/> of the last
+    /// is the same transition.
+    /// </summary>
+    private bool TransitionDue()
+    {
+        long now = Environment.TickCount64;
+        long last = System.Threading.Interlocked.Read(ref _lastTransitionMs);
+        if (now - last < TransitionDebounceMs) return false;
+        return System.Threading.Interlocked.CompareExchange(ref _lastTransitionMs, now, last) == last;
+    }
+
+    private const long TransitionDebounceMs = 250;
+    private long _lastTransitionMs = long.MinValue / 2;
 
     /// <summary>Fires a short sound effect.</summary>
     public void PlaySoundEffect(SoundEffectType sfx) => _engine.PlaySoundEffect(sfx);

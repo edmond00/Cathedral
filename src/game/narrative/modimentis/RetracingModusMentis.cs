@@ -19,7 +19,7 @@ public class RetracingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a walker who trusts only ground already trodden, and reads it back like old footprints";
     public override string PersonaReminder  => "footprint-reader";
-    public override string PersonaReminder2 => "someone who walks back over their own old prints";
+    public override string PersonaReminder2 => "someone who always remembers the way they came";
     public override string StyleInstruction =>
         "Speak of the way back as a string of remembered landmarks, taken again in reverse order.";
 

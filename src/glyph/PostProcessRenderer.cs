@@ -111,6 +111,12 @@ namespace Cathedral.Glyph
             new(DitherMode.Noise,   2, 1), // PositiveOutcome   — success
             new(DitherMode.Noise,   2, 1), // NegativeOutcome   — failure
             new(DitherMode.Noise,   2, 1), // NeutralOutcome
+            // Hit — a blow lands: two tones in coarse blocks, the frame shattered for a beat.
+            new(DitherMode.Bayer4Mono, 2, 4, 0.18f),
+            // Transition — a change of phase or screen. Frequent, so it is a click's weight with
+            // the click's palette and duration; only the grain differs (noise, not Bayer), so
+            // the two read as related but distinct. Never pixelated: that is the hit's.
+            new(DitherMode.Noise,   3, 1),
         };
 
         /// <summary>Whether event pulses fire at all. F/G/H tune the resting state regardless.</summary>
@@ -241,11 +247,15 @@ namespace Cathedral.Glyph
             if (_pulseRemaining > 0f) _pulseRemaining -= deltaSeconds;
         }
 
-        /// <summary>Outcomes outrank clicks, which outrank hovers.</summary>
+        /// <summary>
+        /// A hit outranks outcomes, which outrank clicks, which outrank hovers. A transition sits
+        /// with the outcomes, so the click that caused it does not hide it in the same frame.
+        /// </summary>
         private static int PulsePriority(int evt) => (GameEventType)evt switch
         {
             GameEventType.SmallInteraction => 0,
             GameEventType.StrongInteraction => 1,
+            GameEventType.Hit => 3,
             _ => 2
         };
 

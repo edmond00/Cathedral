@@ -50,7 +50,7 @@ public class BrewerArchetype : CraftsmanArchetype
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
         [DialogueTopic.Weather]    = "a hot spell sours a batch faster than a curse would. I brew small and often in summer",
-        [DialogueTopic.Harvest]    = "barley first, and let the bakers argue after. A year without ale is a year of bad tempers",
+        [DialogueTopic.Harvest]    = "barley first, and let the bakers argue after. A round without ale is a round of bad tempers",
         [DialogueTopic.Food]       = "ale is food, whatever anyone tells you. It's kept more folk upright through winter than pottage has",
         [DialogueTopic.Rest]       = "my house is where this place goes to stop being tired. That's a trade worth doing well",
         [DialogueTopic.Neighbours] = "drink loosens tongues, and I stand behind the barrel. I know more than I ever repeat",

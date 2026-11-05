@@ -14,6 +14,7 @@ public class LinguisticModusMentis : ModusMentis
         "Keeps a feel for how speech is built, catching pattern in foreign tongues and unfamiliar script. Inclines toward interpreting and puzzling out language rather than dismissing it as noise.";
     public override string SkillMeans       => "the understanding of foreign languages and writing";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -24,7 +25,7 @@ public class LinguisticModusMentis : ModusMentis
     public override string PersonaReminder  => "symbol-curious linguist";
     public override string PersonaReminder2 => "someone who tries the unfamiliar greeting before the comfortable one";
     public override string StyleInstruction =>
-        "Use images of tongues, accents and shifting words, with a delight in the music of unfamiliar speech.";
+        "Delighted by speech - attend to how things are said, and the music in unfamiliar words.";
 
     public override string PersonaPrompt => @"You are the inner voice of LINGUISTICS, the patient ear and copying tongue that has spent itself learning that nothing about a language is obvious until it has been learnt.
 

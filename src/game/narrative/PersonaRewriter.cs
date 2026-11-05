@@ -58,6 +58,11 @@ public class PersonaRewriter
     /// prompt can name the speaker ("You are Bob, the speaker"). Pass the placeholder, not the
     /// real name — the caller restores real names afterwards, like everywhere else in dialogue.
     /// </param>
+    /// <param name="flavour">
+    /// The voice of the modus mentis writing (<see cref="Sanitizer.PersonaFlavour.For"/>), applied after
+    /// the sanitizer and before the real names come back, so it can neither bring back a forbidden word
+    /// nor touch a character's name. Null for a mind that declares no register.
+    /// </param>
     public async Task<string> RewriteAsync(
         int slotId,
         string neutralText,
@@ -71,7 +76,8 @@ public class PersonaRewriter
         string? speakerName = null,
         Preview.ILlmPreviewSink? preview = null,
         CancellationToken ct = default,
-        string? observedOther = null)
+        string? observedOther = null,
+        Sanitizer.PersonaFlavour? flavour = null)
     {
         string? observedOtherReal = string.IsNullOrWhiteSpace(observedOther) ? null : observedOther.Trim();
         // Single name boundary: everything that goes INTO the prompt is switched to the scene's simple,
@@ -131,6 +137,7 @@ public class PersonaRewriter
         // when it does, the sanitizer must not treat it as the model's invention. See SourceVocabulary.
         var sourceVocabulary = SourceVocabulary.From(neutralText, addressee, dialogueContext, speakerName);
         preview?.OnSourceVocabulary(sourceVocabulary);
+        preview?.OnFlavour(flavour);
 
         // When a preview sink is supplied, stream the tokens through it; otherwise keep the one-shot
         // path so the Critic / non-preview callers are byte-for-byte unchanged. The grammar produces the
@@ -138,11 +145,21 @@ public class PersonaRewriter
         // A spoken kind arrives behind the "I say to X : " frame, which is scaffolding for the model and
         // must not be seen: the token stream is filtered so the preview box never shows it either.
         Action<string, int>? onToken = preview == null ? null : MakeTokenForwarder(preview, kind, addressee);
+        var history = _llm.GetInstance(slotId)?.GetMessages();
+        var started = DateTime.Now;
         string text = preview != null
             ? await _llm.GenerateConstrainedStringStreamingAsync(
                   slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory,
                   onTokenStreamed: onToken)
             : await _llm.GenerateConstrainedStringAsync(slotId, prompt, gbnf, RewriteMaxTokens, skipReset: keepHistory);
+
+        RecordRewrite(new
+        {
+            kind = kind.ToString(), slotId, neutralText, personaReminder2, styleInstruction, addressee,
+            dialogueContext, speakerName, observedOther, forcedPrefix, keepHistory,
+            place = SceneSetting.Place, history, prompt, gbnf, output = text,
+            ms = (DateTime.Now - started).TotalMilliseconds,
+        });
 
         if (IsSpokenKind(kind))
             text = StripReplyFrame(text, addressee);
@@ -160,6 +177,8 @@ public class PersonaRewriter
         string sanitized = IsSpokenKind(kind)
             ? await SanitizeSpokenAsync(trimmed, sourceVocabulary)
             : await TextSanitizationPipeline.SanitizeAsync(trimmed, sourceVocabulary);
+        if (flavour != null)
+            sanitized = flavour.Apply(sanitized, sourceVocabulary);
         string restored  = NameFaking.Real(sanitized);
 
         // A dialogue turn keeps the quoted shape — DialogueReplicaWriter.NormalizeReply is the one place
@@ -193,6 +212,29 @@ public class PersonaRewriter
         preview?.OnComplete(restored);
         return restored;
     }
+
+    /// <summary>
+    /// Appends one rewrite's inputs, the slot's history and the raw answer to
+    /// <c>rewrite_inputs.jsonl</c> in the session's log directory — the corpus
+    /// <c>tools/prompts/</c> rebuilds every rewrite prompt from. Development logging only: a null
+    /// session directory (a shipped build) writes nothing, and a failed write costs only the record.
+    /// </summary>
+    private void RecordRewrite(object record)
+    {
+        string? dir = _llm.SessionLogDir;
+        if (dir == null) return;
+        try
+        {
+            string line = JsonSerializer.Serialize(record) + "\n";
+            lock (RecordLock) System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "rewrite_inputs.jsonl"), line);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"PersonaRewriter: could not record a rewrite: {ex.Message}");
+        }
+    }
+
+    private static readonly object RecordLock = new();
 
     /// <summary>
     /// Whether <paramref name="text"/> says the narrator is <paramref name="other"/>: "I am Jeffrey",

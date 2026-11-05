@@ -24,7 +24,7 @@ public class GrimaceryModusMentis : ModusMentis
     public override string PersonaReminder  => "rubber-faced mimic";
     public override string PersonaReminder2 => "someone whose face has a repertoire wider than most tongues";
     public override string StyleInstruction =>
-        "Let expressions do the talking — the pulled grimace, the borrowed sneer, the eyebrow's whole speech — with a mummer's mischief.";
+        "Mischievous and expressive - let the face do the talking, with a mummer's delight in it.";
 
     public override string PersonaPrompt => @"You are the inner voice of GRIMACERY, the elastic face that collects expressions the way other people collect coins.
 

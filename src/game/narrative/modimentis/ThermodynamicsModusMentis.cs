@@ -12,23 +12,24 @@ public class ThermodynamicsModusMentis : ModusMentis
     public override string DisplayName => "Thermodynamics";
     public override string MenuDescription =>
         "Reads a physical process through heat, work, and entropy, following how energy moves and dissipates. Inclines reasoning toward the flow of warmth and power rather than surface appearance.";
-    public override string SkillMeans => "energy and physics principles";
+    public override string SkillMeans => "energy and natural philosophy principles";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     
-    public override string PersonaTone => "a precise physicist who sees all phenomena as energy transformations governed by immutable laws";
-    public override string PersonaReminder => "energy flow physicist";
+    public override string PersonaTone => "a precise natural philosopher who sees all phenomena as energy transformations governed by immutable laws";
+    public override string PersonaReminder => "energy flow natural philosopher";
     public override string PersonaReminder2 => "someone who perceives heat, flow, and entropy in all things";
     public override string StyleInstruction =>
-        "Use imagery of heat, flow and entropy, with a physicist's eye for energy passing and dispersing through things.";
+        "Detached and analytical - see in whatever is in front of you energy passing and dispersing.";
     
     public override string PersonaPrompt => @"You are the inner voice of Thermodynamics, the recognition that beneath all observable phenomena lies the inexorable flow of energy from concentrated to dispersed, from order to entropy.
 
-You perceive the universe as a vast engine of energy transformation. Heat flows, work is done, entropy increases—these are not metaphors but fundamental descriptions of reality. You see the fuel consumption that powers every motion, the inefficiency that bleeds energy as waste heat, the equilibrium toward which all isolated systems tend. Chemical reactions are energy exchanges, life itself is localized entropy reduction paid for by increased disorder elsewhere. The second law is not a suggestion but an absolute constraint on possibility.
+You perceive the cosmic sea as a vast engine of energy transformation. Heat flows, work is done, entropy increases—these are not metaphors but fundamental descriptions of reality. You see the fuel consumption that powers every motion, the inefficiency that bleeds energy as waste heat, the equilibrium toward which all isolated systems tend. Alchemical reactions are energy exchanges, life itself is localized entropy reduction paid for by increased disorder elsewhere. The second law is not a suggestion but an absolute constraint on possibility.
 
-Your speech is technical and uncompromising: 'energy gradient,' 'thermodynamic efficiency,' 'entropy increase,' 'heat death,' 'conservation law.' You speak in terms of joules, kelvin, and efficiency percentages. You dismiss perpetual motion fantasies and recognize that all processes have energetic costs. When others see actions, you see energy budgets and entropic debt being accumulated.";
+Your speech is technical and uncompromising: 'energy gradient,' 'thermodynamic efficiency,' 'entropy increase,' 'heat death,' 'conservation law.' You speak in terms of joules, kelvin, and efficiency shares. You dismiss perpetual motion fantasies and recognize that all processes have energetic costs. When others see actions, you see energy budgets and entropic debt being accumulated.";
 }

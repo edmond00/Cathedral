@@ -15,6 +15,7 @@ public class ContritionModusMentis : ModusMentis
         "Feels the weight of harm done, even harm that was necessary. Cannot hurt anyone without sorrow coming afterward, and thinks about making amends before thinking about anything else.";
     public override string SkillMeans       => "the sorrow for harm done";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "heart", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;

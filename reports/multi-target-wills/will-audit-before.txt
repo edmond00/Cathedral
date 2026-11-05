@@ -1,0 +1,682 @@
+=== Proscribed Palimpsest — 2026-10-28 16:32:46 ===
+Build: full
+SaveFile: no readable save at /root/.config/Cathedral/save.json — Continue will be greyed out.
+[RNG] Master seed: 1 (boot default)
+ModusMentisRegistry: Registered 477 modiMentis automatically via reflection
+PlainSceneFactory: Open, 3+2+2 areas
+VerbRegistry: Discovered 68 verb(s): appease, ask_to_be_led, attack, backtrack, commission_work, ask_remedy, give_alms, hear_gossip, climb_down, climb_up, cross, cut, follow_path, gather, get_up, go_down_stairs, go_up_stairs, grab, hide_and_wait, introduce_me, meet_stranger, move, open_door, propose_to_buy, propose_to_sell, track, stalk, reconcile, remember, request_job, scale_up, scale_down, examine, contemplate, listen, smell, ask_blessing, confess, petition, talk_soldiering, talk_far_places, offer_bribe, ask_teaching, sing_along, sit_and_wait, slay, murder, wake_up, slip_into, explain_myself, beg_for_coin, provoke, propose_to_join, gather_knowledge, pickpocket, steal, strengthen_relationship, swim_across, tame, catch, crush, fish, mine, cut_wood, dig, break, unlock_door, voyage_toward
+PlainSceneFactory: River, 2+1+3 areas
+PlainSceneFactory: Heath, 2+1+1+2 areas
+ForestSceneFactory: Deciduous/Wildwood, 2+1+2+1 areas, woodcutter=False, charcoal=False
+ForestSceneFactory: Mixed/Worked, 2+2+1 areas, woodcutter=True, charcoal=False
+ItemRegistry: Discovered 500 item type(s).
+ForestSceneFactory: Deciduous/Wet, 2+2+1+1 areas, woodcutter=False, charcoal=False
+CaveSceneFactory: Mined (Iron), 1/3/4 areas, miner=True
+CaveSceneFactory: Den (Coal), 2/4/2 areas, miner=False
+CaveSceneFactory: Mined (Stone), 2/3/2 areas, miner=False
+CoastSceneFactory: Sandy, strand 3, reaches Islet/Dunes/Headland, fish=Herring, fisherman=False
+CoastSceneFactory: Estuary, strand 3, reaches Estuary/Marsh/Dunes, fish=Cod, fisherman=False
+CoastSceneFactory: Rocky, strand 4, reaches Headland/SeaCave, fish=Mackerel, fisherman=False
+MountainSceneFactory: Wooded, 3/3/2 areas
+MountainSceneFactory: Rugged, 3/3/2 areas
+MountainSceneFactory: Wooded, 5/2/2 areas
+PeakSceneFactory: Horn, 3/3/1 areas
+PeakSceneFactory: Glaciated, 3/2/1 areas
+PeakSceneFactory: Horn, 4/3/1 areas
+DesertSceneFactory: Erg, oasis=True, 3/2/0 areas
+DesertSceneFactory: Reg, oasis=True, 3/2/1 areas
+DesertSceneFactory: Erg, oasis=False, 1/3/2 areas
+HotSteppeSceneFactory: Savanna, 2/3/0/2 areas
+HotSteppeSceneFactory: Tableland, 3/2/0/3 areas
+HotSteppeSceneFactory: Savanna, 1/3/2/0 areas
+JungleSceneFactory: Lowland, river 2, Deep Jungle/Jungle Edge/Clay Lick
+JungleSceneFactory: Ruined, river 2, Deep Jungle/The Ruins/Clay Lick
+JungleSceneFactory: Lowland, river 3, Deep Jungle/The Falls
+CanyonSceneFactory: floor 3, rim 2, side 1, badlands 0
+CanyonSceneFactory: floor 4, rim 2, side 1, badlands 2
+CanyonSceneFactory: floor 3, rim 3, side 2, badlands 0
+SeaIceSceneFactory: edge 2, pack 2, fast 0, far=True
+SeaIceSceneFactory: edge 3, pack 3, fast 2, far=False
+SeaIceSceneFactory: edge 2, pack 3, fast 1, far=False
+GlacierSceneFactory: ice 2, neve 1, margin 3, nunatak=True, grotto=False
+GlacierSceneFactory: ice 3, neve 0, margin 2, nunatak=True, grotto=True
+GlacierSceneFactory: ice 2, neve 0, margin 2, nunatak=True, grotto=False
+SnowfieldSceneFactory: 3/2/2 areas
+SnowfieldSceneFactory: 3/3/2 areas
+SnowfieldSceneFactory: 4/3/1 areas
+ColdSteppeSceneFactory: Tundra, 2+1+1+1 areas
+ColdSteppeSceneFactory: Barrens, 2+1+1 areas
+ColdSteppeSceneFactory: Tundra, 3+1+1 areas
+AgricultureSceneFactory: Built almond grove — family=Grove, biome=hot steppe, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built almond grove — family=Grove, biome=hot steppe, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built almond grove — family=Grove, biome=hot steppe, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built apple orchard — family=Orchard, biome=plain, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built apple orchard — family=Orchard, biome=plain, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built apple orchard — family=Orchard, biome=plain, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built banana plantation — family=Plantation, biome=jungle, areas=8, 4 worker(s)
+AgricultureSceneFactory: Built banana plantation — family=Plantation, biome=jungle, areas=7, 6 worker(s)
+AgricultureSceneFactory: Built banana plantation — family=Plantation, biome=jungle, areas=5, 4 worker(s)
+AgricultureSceneFactory: Built barley field — family=Field, biome=plain, areas=6, 6 worker(s)
+AgricultureSceneFactory: Built barley field — family=Field, biome=plain, areas=8, 7 worker(s)
+AgricultureSceneFactory: Built barley field — family=Field, biome=plain, areas=6, 5 worker(s)
+AgricultureSceneFactory: Built bean field — family=Field, biome=cold steppe, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built bean field — family=Field, biome=cold steppe, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built bean field — family=Field, biome=cold steppe, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built cabbage field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built cabbage field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built cabbage field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built carrot field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built carrot field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built carrot field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built cherry orchard — family=Orchard, biome=plain, areas=5, 4 worker(s)
+AgricultureSceneFactory: Built cherry orchard — family=Orchard, biome=plain, areas=8, 3 worker(s)
+AgricultureSceneFactory: Built cherry orchard — family=Orchard, biome=plain, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built citrus grove — family=Grove, biome=hot steppe, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built citrus grove — family=Grove, biome=hot steppe, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built citrus grove — family=Grove, biome=hot steppe, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built coconut grove — family=Grove, biome=jungle, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built coconut grove — family=Grove, biome=jungle, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built coconut grove — family=Grove, biome=jungle, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built corn field — family=Field, biome=hot steppe, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built corn field — family=Field, biome=hot steppe, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built corn field — family=Field, biome=hot steppe, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built cotton field — family=Field, biome=hot steppe, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built cotton field — family=Field, biome=hot steppe, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built cotton field — family=Field, biome=hot steppe, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built endive cellar — family=Cellar, biome=mountain, areas=5, 3 worker(s)
+AgricultureSceneFactory: Built endive cellar — family=Cellar, biome=mountain, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built endive cellar — family=Cellar, biome=mountain, areas=4, 4 worker(s)
+AgricultureSceneFactory: Built hay field — family=Field, biome=cold steppe, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built hay field — family=Field, biome=cold steppe, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built hay field — family=Field, biome=cold steppe, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built hop field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built hop field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built hop field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built mango orchard — family=Orchard, biome=jungle, areas=5, 4 worker(s)
+AgricultureSceneFactory: Built mango orchard — family=Orchard, biome=jungle, areas=8, 3 worker(s)
+AgricultureSceneFactory: Built mango orchard — family=Orchard, biome=jungle, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built mushroom cellar — family=Cellar, biome=mountain, areas=5, 3 worker(s)
+AgricultureSceneFactory: Built mushroom cellar — family=Cellar, biome=mountain, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built mushroom cellar — family=Cellar, biome=mountain, areas=4, 4 worker(s)
+AgricultureSceneFactory: Built oat field — family=Field, biome=cold steppe, areas=6, 6 worker(s)
+AgricultureSceneFactory: Built oat field — family=Field, biome=cold steppe, areas=8, 7 worker(s)
+AgricultureSceneFactory: Built oat field — family=Field, biome=cold steppe, areas=6, 5 worker(s)
+AgricultureSceneFactory: Built olive grove — family=Grove, biome=hot steppe, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built olive grove — family=Grove, biome=hot steppe, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built olive grove — family=Grove, biome=hot steppe, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built onion field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built onion field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built onion field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built orange grove — family=Grove, biome=jungle, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built orange grove — family=Grove, biome=jungle, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built orange grove — family=Grove, biome=jungle, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built pea field — family=Field, biome=cold steppe, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built pea field — family=Field, biome=cold steppe, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built pea field — family=Field, biome=cold steppe, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built pear orchard — family=Orchard, biome=plain, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built pear orchard — family=Orchard, biome=plain, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built pear orchard — family=Orchard, biome=plain, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built potato field — family=Field, biome=mountain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built potato field — family=Field, biome=mountain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built potato field — family=Field, biome=mountain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built radish field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built radish field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built radish field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built rice paddy — family=Paddy, biome=jungle, areas=9, 4 worker(s)
+AgricultureSceneFactory: Built rice paddy — family=Paddy, biome=jungle, areas=8, 6 worker(s)
+AgricultureSceneFactory: Built rice paddy — family=Paddy, biome=jungle, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built rye field — family=Field, biome=cold steppe, areas=6, 6 worker(s)
+AgricultureSceneFactory: Built rye field — family=Field, biome=cold steppe, areas=8, 7 worker(s)
+AgricultureSceneFactory: Built rye field — family=Field, biome=cold steppe, areas=6, 5 worker(s)
+AgricultureSceneFactory: Built spice plantation — family=Plantation, biome=hot steppe, areas=8, 4 worker(s)
+AgricultureSceneFactory: Built spice plantation — family=Plantation, biome=hot steppe, areas=7, 6 worker(s)
+AgricultureSceneFactory: Built spice plantation — family=Plantation, biome=hot steppe, areas=5, 4 worker(s)
+AgricultureSceneFactory: Built sugarcane plantation — family=Plantation, biome=jungle, areas=8, 4 worker(s)
+AgricultureSceneFactory: Built sugarcane plantation — family=Plantation, biome=jungle, areas=7, 6 worker(s)
+AgricultureSceneFactory: Built sugarcane plantation — family=Plantation, biome=jungle, areas=5, 4 worker(s)
+AgricultureSceneFactory: Built tea garden — family=Garden, biome=jungle, areas=7, 5 worker(s)
+AgricultureSceneFactory: Built tea garden — family=Garden, biome=jungle, areas=10, 4 worker(s)
+AgricultureSceneFactory: Built tea garden — family=Garden, biome=jungle, areas=8, 4 worker(s)
+AgricultureSceneFactory: Built tomato field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built tomato field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built tomato field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built turnip field — family=Field, biome=plain, areas=5, 6 worker(s)
+AgricultureSceneFactory: Built turnip field — family=Field, biome=plain, areas=7, 7 worker(s)
+AgricultureSceneFactory: Built turnip field — family=Field, biome=plain, areas=5, 5 worker(s)
+AgricultureSceneFactory: Built vineyard — family=Vineyard, biome=hot steppe, areas=6, 4 worker(s)
+AgricultureSceneFactory: Built vineyard — family=Vineyard, biome=hot steppe, areas=9, 3 worker(s)
+AgricultureSceneFactory: Built vineyard — family=Vineyard, biome=hot steppe, areas=7, 4 worker(s)
+AgricultureSceneFactory: Built wheat field — family=Field, biome=plain, areas=6, 6 worker(s)
+AgricultureSceneFactory: Built wheat field — family=Field, biome=plain, areas=8, 7 worker(s)
+AgricultureSceneFactory: Built wheat field — family=Field, biome=plain, areas=6, 5 worker(s)
+FarmSceneFactory: Built farm — layout=Spur, pond=True, 6 worker(s), 5 longhouse bed(s), 1 barracks bed(s)
+FarmSceneFactory: Spawned Beornwyn Whulhphric the Crooked (farmer) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Avelynwyn X (swineherd) — sleeps in Longhouse Second Dormitory
+FarmSceneFactory: Spawned Ghrimbalhd the Stern (poultry_keeper) — sleeps in Longhouse Second Dormitory
+FarmSceneFactory: Spawned Ozwald Ghrymbaeld-Fraenkescoth (farmhand) — sleeps in Longhouse Third Dormitory
+FarmSceneFactory: Spawned Ghiovanna Koenred of the Ruins (farmhand) — sleeps in Longhouse Third Dormitory
+FarmSceneFactory: Spawned Serwyush Torwaelhd the Cold (farmhand) — sleeps in Barracks Dormitory
+FarmSceneFactory: Built farm — layout=Hub, pond=True, 6 worker(s), 5 longhouse bed(s), 1 barracks bed(s)
+FarmSceneFactory: Spawned Whilhfredwyn Alhberyk-Whyztaen (farmer) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Aelhdwyn Ghaeutierettael-Anzeaeu (swineherd) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Inghryd Beargate (poultry_keeper) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Francezco Greenridge (farmhand) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Koztanzwyn (farmhand) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Veronykae Smallfell (farmhand) — sleeps in Barracks Dormitory
+FarmSceneFactory: Built farm — layout=Hub, pond=True, 5 worker(s), 5 longhouse bed(s), 0 barracks bed(s)
+FarmSceneFactory: Spawned Dunztaen of the Moor (farmer) — sleeps in Longhouse Dormitory
+FarmSceneFactory: Spawned Haemon Daeghobert (swineherd) — sleeps in Longhouse Second Dormitory
+FarmSceneFactory: Spawned Oshlaf Coldroot (poultry_keeper) — sleeps in Longhouse Second Dormitory
+FarmSceneFactory: Spawned Ghautyerette Katerinaael-Dheophaenael (farmhand) — sleeps in Longhouse Third Dormitory
+FarmSceneFactory: Spawned Whilfreda Whynphlhaed (farmhand) — sleeps in Longhouse Third Dormitory
+LivestockSceneFactory: Built pasture — biome=cold steppe, areas=7, 4 hand(s)
+LivestockSceneFactory: Built pasture — biome=cold steppe, areas=5, 3 hand(s)
+LivestockSceneFactory: Built pasture — biome=cold steppe, areas=8, 3 hand(s)
+LivestockSceneFactory: Built ranch — biome=hot steppe, areas=7, 5 hand(s)
+LivestockSceneFactory: Built ranch — biome=hot steppe, areas=8, 4 hand(s)
+LivestockSceneFactory: Built ranch — biome=hot steppe, areas=8, 5 hand(s)
+LivestockSceneFactory: Built sheepfold — biome=mountain, areas=8, 4 hand(s)
+LivestockSceneFactory: Built sheepfold — biome=mountain, areas=6, 2 hand(s)
+LivestockSceneFactory: Built sheepfold — biome=mountain, areas=9, 2 hand(s)
+LivestockSceneFactory: Built stable — biome=plain, areas=7, 4 hand(s)
+LivestockSceneFactory: Built stable — biome=plain, areas=5, 3 hand(s)
+LivestockSceneFactory: Built stable — biome=plain, areas=8, 3 hand(s)
+VillageSceneFactory: burg built (mountain) — layout=Hub, 4 outdoor area(s), 2 workshop(s), 2 house(s), 31 areas
+VillageSceneFactory: Spawned Aelhwen Swiftfell (blacksmith) in Forge
+VillageSceneFactory: Spawned Kynewulhph XIV of the Crossing (baker) in Bakery
+VillageSceneFactory: Spawned Chilperyk (apprentice) in Soot-Darkened House
+VillageSceneFactory: Spawned Klotilde Zedaynael-Aeldooz (apprentice) in Lime-Washed House
+VillageSceneFactory: burg built (mountain) — layout=Chain, 4 outdoor area(s), 3 workshop(s), 4 house(s), 45 areas
+VillageSceneFactory: Spawned Brunhylhd Fraenkezca-Eweraerd (blacksmith) in Forge
+VillageSceneFactory: Spawned Rowenwyn Giuliaaelh the Mild (miller) in Mill
+VillageSceneFactory: Spawned Lhorenzoth (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Eaelhhswith (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Phabius the White (apprentice) in Sagging House
+VillageSceneFactory: Spawned Lhaeurwyn of the Ridge (apprentice) in Lichen-Crusted House
+VillageSceneFactory: Spawned Aelhdwyn of the Rill (apprentice) in Moss-Shouldered House
+VillageSceneFactory: burg built (mountain) — layout=Ring, 5 outdoor area(s), 3 workshop(s), 4 house(s), 46 areas
+VillageSceneFactory: Spawned Zunngyfu Swiftlund (blacksmith) in Forge
+VillageSceneFactory: Spawned Ozhwyn (miller) in Mill
+VillageSceneFactory: Spawned Zaendro (weaver) in Weaver's Workshop
+VillageSceneFactory: Spawned Senric Harthorn (apprentice) in Ivy-Grown House
+VillageSceneFactory: Spawned Markellha Foxbank (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Aeethelthryth Zhaewaeru the Just (apprentice) in Sunken House
+VillageSceneFactory: Spawned Caeacilius (apprentice) in Slump-Walled House
+VillageSceneFactory: fort built (jungle) — layout=Chain, 4 outdoor area(s), 1 workshop(s), 1 house(s), 25 areas
+VillageSceneFactory: Spawned Flhoriael V of the Combe (blacksmith) in Forge
+VillageSceneFactory: Spawned Balhdwyn (apprentice) in Wind-Scoured House
+VillageSceneFactory: fort built (jungle) — layout=Hub, 5 outdoor area(s), 2 workshop(s), 3 house(s), 40 areas
+VillageSceneFactory: Spawned Eaedghyfu of the Bog (blacksmith) in Forge
+VillageSceneFactory: Spawned Appioz Frostridge (weaver) in Weaver's Workshop
+VillageSceneFactory: Spawned Julhya Hollowbrook (apprentice) in Settled House
+VillageSceneFactory: Spawned Herezhwidh the Grey (apprentice) in Bleached House
+VillageSceneFactory: Spawned Herwaelh Hawkbank (apprentice) in Smoke-Stained House
+VillageSceneFactory: fort built (jungle) — layout=Hub, 5 outdoor area(s), 1 workshop(s), 1 house(s), 25 areas
+VillageSceneFactory: Spawned Aeymar the Fierce (blacksmith) in Forge
+VillageSceneFactory: Spawned Aenzghar Eaedryk (apprentice) in Sagging House
+VillageSceneFactory: hamlet built (hot steppe) — layout=Hub, 4 outdoor area(s), 2 workshop(s), 2 house(s), 27 areas
+VillageSceneFactory: Spawned Flhoriael V of the Combe (blacksmith) in Forge
+VillageSceneFactory: Spawned Daphnaael IX (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Maryaael Floriaeelh the Cold (apprentice) in Sunken House
+VillageSceneFactory: Spawned Klotildaael the Grim (apprentice) in Lime-Washed House
+VillageSceneFactory: hamlet built (hot steppe) — layout=Chain, 4 outdoor area(s), 1 workshop(s), 1 house(s), 16 areas
+VillageSceneFactory: Spawned Phowlquez Swiftridge (blacksmith) in Forge
+VillageSceneFactory: Spawned Aermand Frostbridge (apprentice) in Bleached House
+VillageSceneFactory: hamlet built (hot steppe) — layout=Ring, 5 outdoor area(s), 1 workshop(s), 2 house(s), 22 areas
+VillageSceneFactory: Spawned Zweyn Redside (blacksmith) in Forge
+VillageSceneFactory: Spawned Ermengardael Oakthorpe (apprentice) in Wind-Scoured House
+VillageSceneFactory: Spawned Alyenor (apprentice) in Lime-Washed House
+VillageSceneFactory: townlet built (hot steppe) — layout=Ring, 5 outdoor area(s), 4 workshop(s), 4 house(s), 60 areas
+VillageSceneFactory: Spawned Dhoraael (blacksmith) in Forge
+VillageSceneFactory: Spawned Aentonioz Ghodwyn-Aemilhiaks (miller) in Mill
+VillageSceneFactory: Spawned Ulhphred Redmead (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Gyacomo Marsellhwyn of the Furlong (cooper) in Cooper's Workshop
+VillageSceneFactory: Spawned Ghiovanna VIII the Elder (apprentice) in Sagging House
+VillageSceneFactory: Spawned Milhdred Aentonywyn (apprentice) in Patched House
+VillageSceneFactory: Spawned Alhberyc Kwen (apprentice) in Slump-Walled House
+VillageSceneFactory: Spawned Milhdred Shunnghiphu of the Thicket (apprentice) in Swallow-Nested House
+VillageSceneFactory: townlet built (hot steppe) — layout=Chain, 4 outdoor area(s), 3 workshop(s), 3 house(s), 47 areas
+VillageSceneFactory: Spawned Eghbert Koenred (blacksmith) in Forge
+VillageSceneFactory: Spawned Odelyaeel of the Orchard (miller) in Mill
+VillageSceneFactory: Spawned Zunngifu Brightside (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Baeldryk Maexymos the Elder (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Wynnaeael Maksimuzh (apprentice) in Sagging House
+VillageSceneFactory: Spawned Godwyn Baelhdwyn the Mild (apprentice) in Lichen-Crusted House
+VillageSceneFactory: townlet built (hot steppe) — layout=Ring, 5 outdoor area(s), 4 workshop(s), 6 house(s), 68 areas
+VillageSceneFactory: Spawned Zaewaru the Steady (blacksmith) in Forge
+VillageSceneFactory: Spawned Frydha Eldercrest (miller) in Mill
+VillageSceneFactory: Spawned Emmwyn Ashvale (weaver) in Weaver's Workshop
+VillageSceneFactory: Spawned Antoniodh the Silent (brewer) in Alehouse
+VillageSceneFactory: Spawned Aquilha (apprentice) in Settled House
+VillageSceneFactory: Spawned Ghautierette Philhyppo (apprentice) in Wind-Scoured House
+VillageSceneFactory: Spawned Izabella Aedhelhstane-Wynnaaeel (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Lhaurwyn the Steady (apprentice) in Ivy-Grown House
+VillageSceneFactory: Spawned Lauraaelh V (apprentice) in Crooked House
+VillageSceneFactory: Spawned Gervaeis XIV of the Tarn (apprentice) in Lichen-Crusted House
+VillageSceneFactory: village built (plain) — layout=Hub, 4 outdoor area(s), 2 workshop(s), 2 house(s), 24 areas
+VillageSceneFactory: Spawned Kyneburh (blacksmith) in Forge
+VillageSceneFactory: Spawned Hervaeelh V (baker) in Bakery
+VillageSceneFactory: Spawned Fowlques Thornmead (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Aelphghifu Broadhelm (apprentice) in Settled House
+VillageSceneFactory: village built (plain) — layout=Chain, 4 outdoor area(s), 3 workshop(s), 3 house(s), 36 areas
+VillageSceneFactory: Spawned Lhuighi of the Ruins (blacksmith) in Forge
+VillageSceneFactory: Spawned Ernaulht Ghaeryn of the Wood (miller) in Mill
+VillageSceneFactory: Spawned Bertraem XIII (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Ingryd Foxleigh (apprentice) in Patched House
+VillageSceneFactory: Spawned Aelhwen Edydh (apprentice) in Settled House
+VillageSceneFactory: Spawned Haraelhd Faebyuz (apprentice) in Sagging House
+VillageSceneFactory: village built (plain) — layout=Ring, 5 outdoor area(s), 3 workshop(s), 4 house(s), 37 areas
+VillageSceneFactory: Spawned Kosimoth the Ready (blacksmith) in Forge
+VillageSceneFactory: Spawned Aelhfryk Lheophrik (miller) in Mill
+VillageSceneFactory: Spawned Aelhberic XII (weaver) in Weaver's Workshop
+VillageSceneFactory: Spawned Giorgioth the Quiet (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Aelhberik the Quiet (apprentice) in Swallow-Nested House
+VillageSceneFactory: Spawned Maerghheritwyn Shextaex of the Glen (apprentice) in Tar-Daubed House
+VillageSceneFactory: Spawned Aeethelflaed the Crooked (apprentice) in Moss-Shouldered House
+CitySceneFactory: Built Town — biome=plain, size=1, 105 areas
+HistoricSceneFactory: Built The Citadel (Citadel) — biome=plain, 81 areas
+HistoricSceneFactory: Built The Custom House (Port) — biome=coast, 62 areas
+HistoricSceneFactory: Built The Palace (Palace) — biome=plain, 66 areas
+HistoricSceneFactory: Built The Imperial School (ImperialSchool) — biome=plain, 65 areas
+HistoricSceneFactory: Built The Castle (Castle) — biome=plain, 33 areas
+HistoricSceneFactory: Built The Castle (Castle) — biome=plain, 27 areas
+HistoricSceneFactory: Built The Castle (Castle) — biome=plain, 32 areas
+HistoricSceneFactory: Built The Fortress (Fortress) — biome=plain, 31 areas
+HistoricSceneFactory: Built The Fortress (Fortress) — biome=plain, 30 areas
+HistoricSceneFactory: Built The Fortress (Fortress) — biome=plain, 33 areas
+HistoricSceneFactory: Built The Temple (Temple) — biome=plain, 23 areas
+HistoricSceneFactory: Built The Temple (Temple) — biome=plain, 26 areas
+HistoricSceneFactory: Built The Temple (Temple) — biome=plain, 28 areas
+HistoricSceneFactory: Built The Imperial Temple (ImperialTemple) — biome=plain, 32 areas
+HistoricSceneFactory: Built The Imperial Temple (ImperialTemple) — biome=plain, 36 areas
+HistoricSceneFactory: Built The Imperial Temple (ImperialTemple) — biome=plain, 37 areas
+HistoricSceneFactory: Built The Commandery (Commandery) — biome=coast, 35 areas
+HistoricSceneFactory: Built The Commandery (Commandery) — biome=coast, 32 areas
+HistoricSceneFactory: Built The Commandery (Commandery) — biome=coast, 34 areas
+HistoricSceneFactory: Built The Monastery (Monastery) — biome=mountain, 32 areas
+HistoricSceneFactory: Built The Monastery (Monastery) — biome=mountain, 34 areas
+HistoricSceneFactory: Built The Monastery (Monastery) — biome=mountain, 34 areas
+HistoricSceneFactory: Built The Mine (Mine) — biome=mountain, 12 areas
+HistoricSceneFactory: Built The Mine (Mine) — biome=mountain, 15 areas
+HistoricSceneFactory: Built The Mine (Mine) — biome=mountain, 19 areas
+HistoricSceneFactory: Built The Sanctuary (Sanctuary) — biome=plain, 8 areas
+HistoricSceneFactory: Built The Sanctuary (Sanctuary) — biome=plain, 12 areas
+HistoricSceneFactory: Built The Sanctuary (Sanctuary) — biome=plain, 10 areas
+HistoricSceneFactory: Built The Burial Field (BurialField) — biome=plain, 9 areas
+HistoricSceneFactory: Built The Burial Field (BurialField) — biome=plain, 12 areas
+HistoricSceneFactory: Built The Burial Field (BurialField) — biome=plain, 10 areas
+HistoricSceneFactory: Built The Pyramid (Pyramid) — biome=desert, 25 areas
+HistoricSceneFactory: Built The Pyramid (Pyramid) — biome=desert, 30 areas
+HistoricSceneFactory: Built The Pyramid (Pyramid) — biome=desert, 28 areas
+HistoricSceneFactory: Built The Wreck (Wreck) — biome=coast, 3 areas
+HistoricSceneFactory: Built The Wreck (Wreck) — biome=coast, 3 areas
+HistoricSceneFactory: Built The Wreck (Wreck) — biome=coast, 3 areas
+RuinSceneFactory: Built Ruins (was building) — biome=plain, 4 areas
+RuinSceneFactory: Built Ruins (was building) — biome=plain, 3 areas
+RuinSceneFactory: Built Ruins (was building) — biome=plain, 4 areas
+VillageSceneFactory: village built (cold steppe) — layout=Hub, 4 outdoor area(s), 2 workshop(s), 3 house(s), 31 areas
+VillageSceneFactory: Spawned Wyztaen Wolfbrook (blacksmith) in Forge
+VillageSceneFactory: Spawned Haekon Redleigh (baker) in Bakery
+VillageSceneFactory: Spawned Leofphlhaeed Whaeryn (apprentice) in Soot-Darkened House
+VillageSceneFactory: Spawned Keolwulhph Millbury (apprentice) in Lime-Washed House
+VillageSceneFactory: Spawned Kynewulhph XIV of the Crossing (apprentice) in Sunken House
+VillageSceneFactory: village built (cold steppe) — layout=Chain, 4 outdoor area(s), 3 workshop(s), 4 house(s), 44 areas
+VillageSceneFactory: Spawned Aliks VI (blacksmith) in Forge
+VillageSceneFactory: Spawned Wulhfgaar of the Fell (miller) in Mill
+VillageSceneFactory: Spawned Leonidael (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Awelynae the Short (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Ghiowaenna of the Pasture (apprentice) in Sagging House
+VillageSceneFactory: Spawned Edghaar Veronykae of the Wold (apprentice) in Lichen-Crusted House
+VillageSceneFactory: Spawned Caecyliwyn Ironbourne (apprentice) in Moss-Shouldered House
+VillageSceneFactory: village built (cold steppe) — layout=Ring, 5 outdoor area(s), 3 workshop(s), 3 house(s), 38 areas
+VillageSceneFactory: Spawned Aelhfryk Sekstosh of the Ruins (blacksmith) in Forge
+VillageSceneFactory: Spawned Lhorenzodh Lhorenzodh the Keen (miller) in Mill
+VillageSceneFactory: Spawned Aelhfryk Lheophrik (weaver) in Weaver's Workshop
+VillageSceneFactory: Spawned Peronnellaael of the Standing Stones (apprentice) in Ivy-Grown House
+VillageSceneFactory: Spawned Giorgioth the Quiet (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Aelhberik the Quiet (apprentice) in Sunken House
+VillageSceneFactory: burg built (snowfield) — layout=Hub, 4 outdoor area(s), 2 workshop(s), 2 house(s), 31 areas
+VillageSceneFactory: Spawned Aelhwen Swiftfell (blacksmith) in Forge
+VillageSceneFactory: Spawned Kynewulhph XIV of the Crossing (baker) in Bakery
+VillageSceneFactory: Spawned Chilperyk (apprentice) in Soot-Darkened House
+VillageSceneFactory: Spawned Klotilde Zedaynael-Aeldooz (apprentice) in Lime-Washed House
+VillageSceneFactory: burg built (snowfield) — layout=Chain, 4 outdoor area(s), 3 workshop(s), 4 house(s), 45 areas
+VillageSceneFactory: Spawned Brunhylhd Fraenkezca-Eweraerd (blacksmith) in Forge
+VillageSceneFactory: Spawned Rowenwyn Giuliaaelh the Mild (miller) in Mill
+VillageSceneFactory: Spawned Lhorenzoth (carpenter) in Carpenter's Workshop
+VillageSceneFactory: Spawned Eaelhhswith (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Phabius the White (apprentice) in Sagging House
+VillageSceneFactory: Spawned Lhaeurwyn of the Ridge (apprentice) in Lichen-Crusted House
+VillageSceneFactory: Spawned Aelhdwyn of the Rill (apprentice) in Moss-Shouldered House
+VillageSceneFactory: burg built (snowfield) — layout=Ring, 5 outdoor area(s), 3 workshop(s), 4 house(s), 46 areas
+VillageSceneFactory: Spawned Zunngyfu Swiftlund (blacksmith) in Forge
+VillageSceneFactory: Spawned Ozhwyn (miller) in Mill
+VillageSceneFactory: Spawned Zaendro (weaver) in Weaver's Workshop
+VillageSceneFactory: Spawned Senric Harthorn (apprentice) in Ivy-Grown House
+VillageSceneFactory: Spawned Markellha Foxbank (apprentice) in Smoke-Stained House
+VillageSceneFactory: Spawned Aeethelthryth Zhaewaeru the Just (apprentice) in Sunken House
+VillageSceneFactory: Spawned Caeacilius (apprentice) in Slump-Walled House
+HistoricSceneFactory: Built The Citadel (Citadel) — biome=hot steppe, 81 areas
+RuinSceneFactory: Built Ruins (was building) — biome=jungle, 4 areas
+RuinSceneFactory: Built Ruins (was building) — biome=jungle, 3 areas
+RuinSceneFactory: Built Ruins (was building) — biome=jungle, 4 areas
+=== WILL AUDIT ===
+141 wills of 477 modi mentis; 225 scenes built (3 ids per factory, 1 for a town or city), planned from the entry area and from each will's places, at Morning and Night (678s).
+
+--- HEADLINE (wills measurable on a fresh scene) ---
+  wills measured                 114 (27 need a state play brings about)
+  targets per will               1.00
+  coverage (will, start)          46.5%   (23836 of 51300)
+  coverage (will, location kind)  50.1%   (4512 of 9006)
+  related coverage                64.5%   (14494 of 22472)
+  wills ≥60% in their places      62 of 114
+  mean plan length               2.52 steps
+
+--- PER WILL ---
+    will                   tgts  cover steps related breadth  places
+  · absolution                1      —             —       —  needs a state play brings about: ConfessVerb
+  ✗ aesthetic                 1   100%   1.1    100%    100%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! almsgiving                1     0%   2.5      2%      1%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium
+  ✗ ambuscade                 1   100%   1.8     99%    100%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! anglery                   1     1%   4.0      3%      1%  Stream,Pond,Pool,River,Lake,Tarn,Ford,Oxbow,Waterhole,Riverbank,Waterfall,Canal,Waterside,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  ! apothecary_nose           1    10%   1.8     11%     11%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Strip,Crop,Orchard,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak
+  ! archeology                1     2%   5.2      0%      6%  Ruin,Barrow,Chamber,Crypt,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot
+  ! armoury_lore              1     5%   2.8      0%     15%  Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon,Workshop,Forge,Bakery,Mill,Market,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard
+  ✗ bargaining                1    76%   3.0     95%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  · barrack_wit               1      —             —       —  needs a state play brings about: TalkSoldieringVerb
+  ! beachcombing              1     5%   1.7     50%      5%  Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  · beast_call                1      —             —       —  needs a state play brings about: AppeaseVerb
+  ✗ beggary                   1    80%   2.2    100%     84%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall  — something to do in more than 75% of location kinds: no longer a will
+  ! berrying                  1    12%   1.8     17%     14%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Strip,Crop,Orchard,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak
+  ✗ blood_lust                1    98%   1.8     96%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine  — something to do in more than 75% of location kinds: no longer a will
+  ✗ brawling                  1    98%   1.8    100%    100%  Alehouse,Teahouse,Refectory,Hall,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! bribery                   1    14%   2.3     56%     19%  Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay
+  ✗ brokerage                 1    76%   3.0     95%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ! brute_force               1    21%   4.8     25%     51%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon,Ruin,Barrow,Chamber,Crypt
+  · busking                   1      —             —       —  needs a state play brings about: SingAlongVerb
+  · butchery                  1      —             —       —  needs a state play brings about: CutVerb
+  ! canecraft                 1     1%   1.0     33%      1%  Plantation
+  · carousal                  1      —             —       —  needs a state play brings about: SingAlongVerb
+  · carrion_sense             1      —             —       —  needs a state play brings about: SmellVerb on CorpsePointOfInterest
+  · chant                     1      —             —       —  needs a state play brings about: SingAlongVerb
+  ✗ charnel_sense             1   100%   1.3    100%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Crypt,Barrow,Ground,Pit,Green,Lane  — something to do in more than 75% of location kinds: no longer a will
+  ! clambering                1    13%   2.0     36%     15%  Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine
+  ! coppicing                 1     0%   5.0      0%      1%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine
+  ✗ cruelty                   1    91%   1.7     92%     95%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Pen,Pigsty,Coop,Paddock,Byre,Fold,Corral,Warren,Lambing,Shearing,Dairy,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar  — something to do in more than 75% of location kinds: no longer a will
+  ✗ curiosity                 1   100%   1.0    100%    100%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Ruin,Barrow,Chamber,Crypt,Library,Scriptorium,Archive,Classroom,Lecture,Observatory,Chancery  — something to do in more than 75% of location kinds: no longer a will
+  ✗ cutpurse                  1    80%   2.2    100%     84%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall  — something to do in more than 75% of location kinds: no longer a will
+  ✗ death_shake               1    91%   1.7     94%     95%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine  — something to do in more than 75% of location kinds: no longer a will
+  ! delving                   1     2%   4.3      9%      3%  Chamber,Tunnel,Shaft,Chasm,Pit,Sinkhole,Colony,Alcove,Seam,Grotto,SeaCave,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully
+  ✓ devotion                  1     9%   2.5     71%     11%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium
+  · diligence                 1      —             —       —  needs a state play brings about: RequestJobVerb
+  · diplomacy                 1      —             —       —  needs a state play brings about: ReconcileVerb
+  ✗ eavesdropping             1   100%   1.1    100%    100%  Alehouse,Teahouse,Refectory,Hall,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar  — something to do in more than 75% of location kinds: no longer a will
+  ✗ enterprise                1    76%   3.0     95%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ✗ exploration               1    99%   1.2    100%    100%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay  — something to do in more than 75% of location kinds: no longer a will
+  · fables_and_tales          1      —             —       —  needs a state play brings about: HearGossipVerb
+  ! felling                   1     0%   5.0      0%      1%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine
+  ✗ ferocity                  1    98%   1.8     96%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine  — something to do in more than 75% of location kinds: no longer a will
+  · flattery                  1      —             —       —  needs a state play brings about: StrengthenRelationshipVerb
+  ! forcing                   1    21%   4.8     27%     51%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon,Treasury,Countinghouse,Chancery
+  ✗ fording                   1    72%   1.6     75%     84%  Stream,Pond,Pool,River,Lake,Tarn,Ford,Oxbow,Waterhole,Riverbank,Waterfall,Canal,Waterside  — something to do in more than 75% of location kinds: no longer a will
+  ! foul_play                 1    16%   5.3     21%     28%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay
+  ! fowling                   1    14%   2.3     17%     30%  Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Coop
+  · friendship                1      —             —       —  needs a state play brings about: StrengthenRelationshipVerb
+  ✗ gluttony                  1    95%   1.2     99%     99%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Market,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ! gold_fever                1     2%   4.3      9%      3%  Chamber,Tunnel,Shaft,Chasm,Pit,Sinkhole,Colony,Alcove,Seam,Grotto,SeaCave,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully
+  · gossip                    1      —             —       —  needs a state play brings about: HearGossipVerb
+  ! grave_robbing             1     1%   4.8      0%      3%  Crypt,Barrow,Ground,Pit,Green,Lane
+  ! gravework                 1     1%   4.8      0%      3%  Crypt,Barrow,Ground,Pit,Green,Lane
+  ✗ greed                     1    80%   2.2    100%     84%  Treasury,Countinghouse,Solar,Chancery,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Cellar  — something to do in more than 75% of location kinds: no longer a will
+  · gregariousness            1      —             —       —  needs a state play brings about: ProposeToJoinVerb
+  ✗ harvestry                 1    90%   1.9     89%     99%  Strip,Crop,Orchard,Grove,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak  — something to do in more than 75% of location kinds: no longer a will
+  ✗ hawking                   1    76%   3.0     80%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! herblore                  1    10%   1.8     25%     11%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock
+  ✗ high_society_manners      1    74%   2.3     95%     76%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall  — something to do in more than 75% of location kinds: no longer a will
+  ! honey_hunting             1     1%   2.2      6%      1%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna
+  ! hop_lore                  1     1%   1.0      2%      1%  Strip,Crop,Orchard,Grove,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak
+  ✗ humility                  1    80%   2.2    100%     84%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium  — something to do in more than 75% of location kinds: no longer a will
+  · inquiry                   1      —             —       —  needs a state play brings about: GatherKnowledgeVerb
+  ✗ insolence                 1    80%   2.2    100%     84%  Alehouse,Teahouse,Refectory,Hall,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! intercession              1    10%   3.1     41%     13%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon
+  · interrogation             1      —             —       —  needs a state play brings about: GatherKnowledgeVerb
+  ✗ invective                 1    80%   2.2    100%     84%  Alehouse,Teahouse,Refectory,Hall,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! jailcraft                 1     0%   0.0      0%      0%  Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar
+  ! jurisprudence             1    10%   3.1     41%     13%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon
+  ! largesse                  1     0%   2.5      2%      1%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium
+  ! lockpicking               1     0%   0.0      0%      0%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Treasury,Countinghouse,Chancery,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon
+  ✗ looting                   1    91%   1.2     97%     92%  Ruin,Barrow,Chamber,Crypt,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood  — something to do in more than 75% of location kinds: no longer a will
+  ✗ low_blow                  1    52%   5.4     62%     77%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood  — something to do in more than 75% of location kinds: no longer a will
+  · lute_playing              1      —             —       —  needs a state play brings about: SingAlongVerb
+  ! manhunt                   1     6%   1.8     13%     13%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  ✗ meditation                1    99%   1.9    100%    100%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully  — something to do in more than 75% of location kinds: no longer a will
+  ! moonwater                 1     5%   1.9     18%      9%  Stream,Pond,Pool,River,Lake,Tarn,Ford,Oxbow,Waterhole,Riverbank,Waterfall,Canal,Waterside,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  ✗ musk_reading              1   100%   1.3    100%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood  — something to do in more than 75% of location kinds: no longer a will
+  ! mycology                  1     4%   1.5      8%      4%  Spawnroom,Cellarway,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside
+  ! natation                  1     5%   1.9     18%      9%  Stream,Pond,Pool,River,Lake,Tarn,Ford,Oxbow,Waterhole,Riverbank,Waterfall,Canal,Waterside,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  · nautical_jargon           1      —             —       —  needs a state play brings about: TalkOfFarPlacesVerb
+  ✗ navigation                1    90%   2.9     63%     94%  Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! nutting                   1     2%   2.0      6%      3%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine
+  · parley                    1      —             —       —  needs a state play brings about: ReconcileVerb
+  ! petitioning               1    10%   3.1     41%     13%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon
+  ✓ petty_thief               1    14%   4.2     77%     25%  Workshop,Forge,Bakery,Mill,Market,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Quay
+  · pidgin                    1      —             —       —  needs a state play brings about: TalkOfFarPlacesVerb
+  ✓ piety                     1     9%   2.5     71%     11%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium
+  ✗ pilgrimage                1    90%   2.9     88%     94%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ✗ plain_dealing             1    76%   3.0     95%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ! plunge                    1     5%   1.9     16%      9%  Stream,Pond,Pool,River,Lake,Tarn,Ford,Oxbow,Waterhole,Riverbank,Waterfall,Canal,Waterside,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker
+  ! potholing                 1     5%   2.4     20%     10%  Chamber,Tunnel,Shaft,Chasm,Pit,Sinkhole,Colony,Alcove,Seam,Grotto,SeaCave,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully
+  ✗ pounce                    1    91%   1.7     95%     95%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Hill,Shieling,Tundra,Tussock,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine  — something to do in more than 75% of location kinds: no longer a will
+  ✗ predator                  1    80%   2.2     61%     84%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Hill,Shieling,Tundra,Tussock  — something to do in more than 75% of location kinds: no longer a will
+  ✗ provisioning              1    75%   3.0     93%     78%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ✗ prowl                     1    80%   2.2     78%     84%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ✗ pugilitas                 1    98%   1.8    100%    100%  Alehouse,Teahouse,Refectory,Hall,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ✗ rage                      1    98%   1.8    100%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Alehouse,Teahouse,Refectory,Hall  — something to do in more than 75% of location kinds: no longer a will
+  ✗ ratcatcher                1    91%   1.7     91%     95%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Strip,Crop,Orchard,Grove,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak,Pen,Pigsty,Coop,Paddock,Byre,Fold,Corral,Warren,Lambing,Shearing,Dairy,Workshop,Forge,Bakery,Mill,Market,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ✗ receiving                 1    76%   3.0     95%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall  — something to do in more than 75% of location kinds: no longer a will
+  ✗ reverence                 1   100%   1.1    100%    100%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium  — something to do in more than 75% of location kinds: no longer a will
+  ! rigging                   1    13%   2.0     59%     15%  Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully
+  ✓ rooftops                  1    70%   1.7     88%     73%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Roof,Loft,Battlements
+  · roping                    1      —             —       —  needs a state play brings about: TameVerb
+  ! sacrilege                 1     7%   1.9     43%      6%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium
+  ✗ scent_draw                1   100%   1.3    100%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Hill,Shieling,Tundra,Tussock  — something to do in more than 75% of location kinds: no longer a will
+  ✗ scenting                  1   100%   1.3    100%    100%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Hill,Shieling,Tundra,Tussock  — something to do in more than 75% of location kinds: no longer a will
+  · scholarship               1      —             —       —  needs a state play brings about: AskTeachingVerb
+  · seduction                 1      —             —       —  needs a state play brings about: StrengthenRelationshipVerb
+  ! sextonry                  1     1%   4.8      0%      3%  Crypt,Barrow,Ground,Pit,Green,Lane,Chapel,Sanctum,Cloister,Cell,Henge,Scriptorium
+  · shanty                    1      —             —       —  needs a state play brings about: SingAlongVerb
+  ✗ sharp_practice            1    76%   3.0     95%     80%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall,Workshop,Forge,Bakery,Mill,Fishmarket,Countinghouse,Cobblery,Tailory,Chandlery,Butchery,Tannery,Pottery,Dispensary,Barbershop,Ropewalk,Shipyard  — something to do in more than 75% of location kinds: no longer a will
+  ! simony                    1    14%   2.3     57%     19%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium
+  ! simpling                  1    10%   1.8     11%     11%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Strip,Crop,Orchard,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak
+  ✗ sloth                     1    99%   1.9    100%    100%  Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar,Alehouse,Teahouse,Refectory,Hall,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock  — something to do in more than 75% of location kinds: no longer a will
+  ✗ snatch                    1    91%   1.7     95%     95%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Hill,Shieling,Tundra,Tussock,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine  — something to do in more than 75% of location kinds: no longer a will
+  ✓ sneak_art                 1    56%   2.6     72%     68%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Bedroom,Dormitory,Kitchen,Pantry,Store,Loft,Landing,Room,Solar,Cellar
+  · soldiery                  1      —             —       —  needs a state play brings about: TalkSoldieringVerb
+  ! spadework                 1     2%   5.2      1%      6%  Strip,Crop,Orchard,Grove,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak,Crypt,Barrow,Ground,Pit,Green,Lane
+  ✗ spite                     1    80%   2.2    100%     84%  Alehouse,Teahouse,Refectory,Hall,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! spoor_eye                 1     6%   1.8     13%     13%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  ! spoor_reading             1     6%   1.8     13%     13%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  ✗ stalking                  1    80%   2.2     61%     84%  Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Savanna,Thicket,Clearing,Riverwood,Forest,Coppice,Crown,Grove,Holloway,Deadwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Hill,Shieling,Tundra,Tussock  — something to do in more than 75% of location kinds: no longer a will
+  ✓ summit_fever              1    13%   2.0     73%     15%  Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully
+  ! tea_lore                  1     1%   1.0      2%      1%  Strip,Crop,Orchard,Grove,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak
+  · theology                  1      —             —       —  needs a state play brings about: AskTeachingVerb
+  ! tillage                   1     2%   5.2      1%      6%  Strip,Crop,Orchard,Grove,Plantation,Vineyard,Paddy,Terrace,Garden,Vegetable,Herb,Seedbed,Hedgebank,Windbreak
+  ✗ topographia               1    90%   2.9     86%     94%  Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ! treasure_hunting          1     2%   5.2      0%      6%  Ruin,Barrow,Chamber,Crypt,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay
+  ! truffling                 1     0%   4.0     13%      1%  Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot
+  ! turfcutting               1     2%   5.2      0%      6%  Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside
+  ! tusk_hunting              1     0%   0.0      0%      0%  Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker
+  ✗ vagabondage               1    90%   2.9     90%     94%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market  — something to do in more than 75% of location kinds: no longer a will
+  ! vantage                   1    13%   2.0     36%     15%  Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine
+  ✗ vaulting                  1    72%   1.6     72%     84%  Stream,Pond,Pool,River,Lake,Tarn,Ford,Oxbow,Waterhole,Riverbank,Waterfall,Canal,Waterside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully  — something to do in more than 75% of location kinds: no longer a will
+  ! veinsight                 1     2%   4.3      9%      3%  Chamber,Tunnel,Shaft,Chasm,Pit,Sinkhole,Colony,Alcove,Seam,Grotto,SeaCave,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully
+  ✗ vigil                     1    99%   1.9    100%    100%  Chapel,Sanctum,Cloister,Crypt,Cell,Henge,Scriptorium,Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon  — something to do in more than 75% of location kinds: no longer a will
+  ✓ viniculture               1     1%   1.0    100%      1%  Vineyard
+  ✗ wanderlust                1    90%   2.9     90%     94%  Forest,Clearing,Coppice,Crown,Grove,Holloway,Thicket,Deadwood,Riverwood,Understorey,Krummholz,Ravine,Meadow,Grassland,Heath,Hedgerow,WaterMeadow,Common,Savanna,Hill,Shieling,Tundra,Tussock,Bog,Carr,Fen,Swamp,Mangrove,Muskeg,Seep,Wellspring,Grotto,Ditchside,Cliff,Crag,Ridge,Summit,Ledge,Scree,Col,Couloir,Eyrie,FalseSummit,Cleft,Inselberg,Kopje,Mesa,Rim,Tableland,Nunatak,Cornice,Gully,Dune,Reg,Wadi,Oasis,Yardang,Badlands,Wash,Slot,Ice,Floe,Hummock,Berg,Polynya,Crevasse,Icefall,Moraine,Snowpack,Drift,Neve,Icefoot,Haulout,Frostfield,Pingo,Esker,Den,Wallow,Lick,Waterhole,Thornbrush,Termitary,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay,Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market  — something to do in more than 75% of location kinds: no longer a will
+  ✗ watchkeeping              1    99%   1.9    100%    100%  Armoury,Guardroom,Gatehouse,Battlements,Rampart,Parade,Outworks,Gatefront,Wallfoot,Dungeon,Beach,Shore,Shingle,Mudflat,Saltmarsh,Estuary,Islet,Rookery,SeaCave,Sandbar,Quay  — something to do in more than 75% of location kinds: no longer a will
+  ✗ wheedling                 1    80%   2.2    100%     84%  Street,Alley,Square,Lane,Green,Row,Walk,Gateway,Market,Quay,Alehouse,Teahouse,Refectory,Hall  — something to do in more than 75% of location kinds: no longer a will
+  (! below the related target: a will that idles where it ought not)
+
+--- PER LOCATION KIND (share of wills with something to do) ---
+  ALMOND GROVE              52.6%
+  APPLE ORCHARD             52.6%
+  BANANA PLANTATION         51.8%
+  BARLEY FIELD              52.6%
+  BEAN FIELD                52.6%
+  BURG                      57.9%
+  BURG (SNOWFIELD)          57.9%
+  BURIAL FIELD              43.9%
+  CABBAGE FIELD             52.6%
+  CANYON                    41.2%
+  CARROT FIELD              52.6%
+  CASTLE                    52.6%
+  CAVE                      56.1%
+  CHERRY ORCHARD            52.6%
+  CITADEL                   56.1%
+  CITADEL (HOT STEPPE)      56.1%
+  CITRUS GROVE              52.6%
+  CITY                      59.6%
+  COAST                     39.5%
+  COCONUT GROVE             52.6%
+  COLD STEPPE               39.5%
+  COMMANDERY                52.6%
+  CORN FIELD                52.6%
+  COTTON FIELD              52.6%
+  DESERT                    39.5%
+  ENDIVE CELLAR             51.8%
+  FARM                      54.4%
+  FOREST                    57.0%
+  FORT                      66.7%
+  FORTRESS                  46.5%
+  GLACIER                   38.6%
+  HAMLET                    53.5%
+  HAY FIELD                 52.6%
+  HOP FIELD                 53.5%
+  HOT STEPPE                43.0%
+  IMPERIAL SCHOOL           56.1%
+  IMPERIAL TEMPLE           50.9%
+  JUNGLE                    37.7%
+  MANGO ORCHARD             52.6%
+  MINE                      53.5%
+  MONASTERY                 49.1%
+  MOUNTAIN                  43.9%
+  MUSHROOM CELLAR           51.8%
+  OAT FIELD                 52.6%
+  OLIVE GROVE               52.6%
+  ONION FIELD               52.6%
+  ORANGE GROVE              52.6%
+  PALACE                    57.0%
+  PASTURE                   50.0%
+  PEA FIELD                 52.6%
+  PEAK                      36.8%
+  PEAR ORCHARD              52.6%
+  PLAIN                     34.2%
+  PORT                      53.5%
+  POTATO FIELD              52.6%
+  PYRAMID                   36.8%
+  RADISH FIELD              52.6%
+  RANCH                     50.9%
+  RICE PADDY                51.8%
+  RUIN                      44.7%
+  RUIN (JUNGLE)             44.7%
+  RYE FIELD                 52.6%
+  SANCTUARY                 40.4%
+  SEA ICE                   40.4%
+  SHEEPFOLD                 50.0%
+  SNOWFIELD                 38.6%
+  SPICE PLANTATION          51.8%
+  STABLE                    49.1%
+  SUGARCANE PLANTATION      52.6%
+  TEA GARDEN                52.6%
+  TEMPLE                    49.1%
+  TOMATO FIELD              52.6%
+  TOWNLET                   57.9%
+  TURNIP FIELD              52.6%
+  VILLAGE                   53.5%
+  VILLAGE (COLD STEPPE)     60.5%
+  VINEYARD                  53.5%
+  WHEAT FIELD               52.6%
+  WRECK                     19.3%
+
+--- AREA KINDS BUILT, PER LOCATION KIND (for declaring a will's places) ---
+  ALMOND GROVE             Ditchside Dormitory Drying Forest Garden Grove Hall Kitchen Packing Pantry Pond Roof Store Windbreak Yard
+  APPLE ORCHARD            Ditchside Dormitory Forest Garden Hall Kitchen Orchard Packing Pantry Pond Press Roof Store Windbreak Yard
+  BANANA PLANTATION        Canal Dormitory Drying Grassland Hall Kitchen Packing Pantry Plantation Pond Roof Store Yard
+  BARLEY FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Threshing Yard
+  BEAN FIELD               Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  BURG                     Bakery Bedroom Byre Courtyard Dormitory Forge Green Hall Kitchen Landing Lane Loft Mill Pantry Pen Roof Row Square Store Threshing Walk Workshop Yard
+  BURG (SNOWFIELD)         Bakery Bedroom Byre Courtyard Dormitory Forge Green Hall Kitchen Landing Lane Loft Mill Pantry Pen Roof Row Square Store Threshing Walk Workshop Yard
+  BURIAL FIELD             Chamber Dormitory Green Ground Grove Hall Kitchen Landing Pantry Pit Roof Store Walk
+  CABBAGE FIELD            Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  CANYON                   Alcove Amphitheatre Badlands Boulder Grove Ledge Mesa Pool Rim Scree Seep Slot Wash
+  CARROT FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  CASTLE                   Bathhouse Battlements Brewhouse Cellar Chamber Chapel Corridor Dormitory Gatefront Gatehouse Green Guardroom Hall Kitchen Latrine Orchard Outworks Pantry Pen Solar Store Treasury Wallfoot Wardrobe
+  CAVE                     Alcove Chamber Chasm Colony Den Entrance Overhang Pit Pool River Shaft Shed Sinkhole Tunnel
+  CHERRY ORCHARD           Ditchside Dormitory Forest Garden Hall Kitchen Orchard Packing Pantry Pond Roof Store Windbreak Yard
+  CITADEL                  Alley Armoury Battlements Bedroom Byre Cellar Chamber Chancery Corridor Dormitory Forge Gatehouse Gateway Guardroom Hall Kitchen Landing Latrine Loft Pantry Refectory Roof Solar Square Store Street Treasury Workshop Yard
+  CITADEL (HOT STEPPE)     Alley Armoury Battlements Bedroom Byre Cellar Chamber Chancery Corridor Dormitory Forge Gatehouse Gateway Guardroom Hall Kitchen Landing Latrine Loft Pantry Refectory Roof Solar Square Store Street Treasury Workshop Yard
+  CITRUS GROVE             Ditchside Dormitory Drying Forest Garden Grove Hall Kitchen Packing Pantry Pond Roof Store Windbreak Yard
+  CITY                     Alehouse Alley Bakery Bedroom Byre Cobblery Dispensary Dormitory Forge Gateway Hall Kitchen Landing Laundry Loft Pantry Roof Square Store Street Workshop Yard
+  COAST                    Beach Cliff Dune Estuary Islet Mudflat Pond Pool Rookery Saltmarsh SeaCave Shingle Shore
+  COCONUT GROVE            Ditchside Dormitory Forest Garden Grove Hall Kitchen Packing Pantry Pond Press Roof Store Windbreak Yard
+  COLD STEPPE              Boulder Esker Frostfield Islet Lake Pingo Thaw Thicket Tundra Tussock
+  COMMANDERY               Archive Armoury Battlements Cellar Chancery Corridor Dormitory Dungeon Gatefront Gatehouse Green Guardroom Kitchen Latrine Observatory Orchard Pen Refectory Shore Store Treasury Wallfoot Workshop
+  CORN FIELD               Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  COTTON FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  DESERT                   Crag Dune Grove Inselberg Oasis Overhang Reg Ruin Wadi Yardang
+  ENDIVE CELLAR            Cellarway Dormitory Forcing Hall Kitchen Landing Pantry Roof Shaft Store
+  FARM                     Coop Courtyard Dormitory Garden Grassland Hall Kitchen Landing Orchard Pantry Pigsty Pool Roof Shed Store Thicket Warren Yard
+  FOREST                   Carr Clearing Coppice Crown Grove Holloway Pond Ravine Shed Slope Stream Thicket Wellspring
+  FORT                     Bedroom Byre Dormitory Forge Garden Hall Kitchen Landing Loft Orchard Pantry Parade Pen Rampart Roof Store Threshing Walk Workshop
+  FORTRESS                 Armoury Battlements Cellar Chancery Chapel Corridor Dormitory Dungeon Gatefront Gatehouse Green Guardroom Kitchen Latrine Orchard Outworks Pantry Pen Refectory Store Wallfoot Workshop
+  GLACIER                  Crevasse Grotto Ice Icefall Lake Moraine Neve Nunatak Ridge Snout Valley
+  HAMLET                   Bedroom Byre Courtyard Forge Garden Green Hall Kitchen Landing Loft Pantry Pen Roof Row Square Store Threshing Walk Workshop Yard
+  HAY FIELD                Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  HOP FIELD                Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  HOT STEPPE               Boulder Kopje Lick River Riverwood Savanna Tableland Termitary Thornbrush Wallow Waterhole
+  IMPERIAL SCHOOL          Alley Archive Bakery Battlements Bedroom Classroom Corridor Dormitory Gatehouse Gateway Hall Kitchen Landing Lecture Library Observatory Pantry Refectory Roof Square Store Street Workshop
+  IMPERIAL TEMPLE          Archive Bathhouse Battlements Cell Chamber Chapel Corridor Courtyard Crypt Garden Gatehouse Green Grove Guardroom Hall Kitchen Latrine Library Refectory Ruin Store Treasury
+  JUNGLE                   Chamber Crown Grove Lick Mangrove Oxbow Riverbank Ruin Sandbar Swamp Thicket Understorey Waterfall
+  MANGO ORCHARD            Ditchside Dormitory Forest Garden Hall Kitchen Orchard Packing Pantry Pond Roof Store Windbreak Yard
+  MINE                     Dormitory Hall Kitchen Landing Pantry Pool Roof Scree Seam Shaft Shed Store Stream Yard
+  MONASTERY                Bathhouse Battlements Brewhouse Cell Cellar Chapel Cloister Corridor Garden Gatehouse Green Infirmary Kitchen Latrine Laundry Library Orchard Pantry Pond Refectory Scriptorium Store Workshop
+  MOUNTAIN                 Boulder Cleft Couloir Crag Eyrie Forest Grotto Meadow Scree Shieling Stream Waterfall
+  MUSHROOM CELLAR          Cellarway Dormitory Hall Kitchen Landing Pantry Roof Shaft Spawnroom Store
+  OAT FIELD                Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Threshing Yard
+  OLIVE GROVE              Ditchside Dormitory Forest Garden Grove Hall Kitchen Packing Pantry Pond Press Roof Store Windbreak Yard
+  ONION FIELD              Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  ORANGE GROVE             Ditchside Dormitory Drying Forest Garden Grove Hall Kitchen Packing Pantry Pond Roof Store Windbreak Yard
+  PALACE                   Alley Bakery Bathhouse Battlements Bedroom Chamber Chancery Chapel Corridor Dormitory Gatehouse Gateway Guardroom Hall Kitchen Landing Pantry Roof Solar Square Store Street Treasury Wardrobe Workshop
+  PASTURE                  Byre Dairy Dormitory Garden Grassland Hall Kitchen Landing Paddock Pantry Roof Shed Store Yard
+  PEA FIELD                Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  PEAK                     Basin Col Cornice Crag FalseSummit Gully Ice Moraine Ridge Snowpack Summit
+  PEAR ORCHARD             Ditchside Dormitory Forest Garden Hall Kitchen Orchard Packing Pantry Pond Press Roof Store Windbreak Yard
+  PLAIN                    Barrow Bog Chamber Ford Grassland Heath Hedgerow Hill Meadow Oxbow WaterMeadow
+  PORT                     Alley Archive Bakery Battlements Bedroom Cellar Corridor Countinghouse Dormitory Fishmarket Gatehouse Gateway Guardroom Hall Kitchen Landing Pantry Quay Roof Ropewalk Shipyard Square Store Street
+  POTATO FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  PYRAMID                  Archive Battlements Chamber Chapel Corridor Courtyard Crypt Dormitory Gatehouse Guardroom Pit Ruin Store Treasury Walk
+  RADISH FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  RANCH                    Corral Courtyard Dormitory Grassland Hall Kitchen Landing Pantry Pond Roof Shed Store Tackroom Trough Yard
+  RICE PADDY               Canal Dormitory Grassland Hall Kitchen Paddy Pantry Pond Roof Seedbed Store Threshing Yard
+  RUIN                     Ruin
+  RUIN (JUNGLE)            Ruin
+  RYE FIELD                Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Threshing Yard
+  SANCTUARY                Dormitory Grove Hall Kitchen Landing Overhang Pantry Pool Roof Sanctum Store Walk
+  SEA ICE                  Berg Brash Floe Grotto Haulout Hummock Ice Icefoot Islet Lead Polynya Snowpack
+  SHEEPFOLD                Dormitory Fold Garden Grassland Hall Kitchen Lambing Landing Paddock Pantry Pen Roof Shearing Shed Store Yard
+  SNOWFIELD                Basin Boulder Chute Cornice Crag Drift Forest Ice Krummholz Runout Snowpack Tarn
+  SPICE PLANTATION         Canal Dormitory Drying Grassland Hall Kitchen Packing Pantry Plantation Pond Roof Store Yard
+  STABLE                   Dormitory Fodder Garden Grassland Hall Kitchen Landing Paddock Pantry Roof Shed Store Tackroom Yard
+  SUGARCANE PLANTATION     Canal Dormitory Grassland Hall Kitchen Packing Pantry Plantation Pond Press Roof Store Yard
+  TEA GARDEN               Ditchside Dormitory Drying Forest Garden Hall Hedgebank Kitchen Pantry Pond Roof Store Teahouse Terrace Yard
+  TEMPLE                   Battlements Cell Chamber Chapel Corridor Courtyard Crypt Garden Gatehouse Green Grove Hall Kitchen Latrine Library Refectory Scriptorium Store
+  TOMATO FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  TOWNLET                  Alehouse Bedroom Byre Courtyard Dormitory Forge Green Hall Kitchen Landing Lane Loft Mill Pantry Roof Row Square Store Threshing Walk Waterside Workshop Yard
+  TURNIP FIELD             Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Yard
+  VILLAGE                  Bakery Bedroom Byre Courtyard Forge Green Hall Kitchen Landing Lane Mill Pantry Pen Roof Row Square Store Threshing Walk Workshop Yard
+  VILLAGE (COLD STEPPE)    Bakery Bedroom Byre Courtyard Forge Green Hall Kitchen Landing Lane Loft Mill Pantry Pen Roof Row Square Store Threshing Walk Workshop Yard
+  VINEYARD                 Cellar Ditchside Dormitory Forest Garden Hall Kitchen Pantry Pond Press Roof Store Vineyard Windbreak Yard
+  WHEAT FIELD              Barn Courtyard Ditchside Dormitory Hall Hedgebank Kitchen Pantry Roof Shed Store Strip Threshing Yard
+  WRECK                    Beach Chamber Shore
+
+

@@ -9,11 +9,12 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 public class ScientificResearchModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "scientific_research";
-    public override string DisplayName      => "Scientific Research";
+    public override string DisplayName      => "Learned Research";
     public override string MenuDescription =>
         "Approaches a problem by method: forming a guess, testing it, and noting the result with care. Inclines toward ordered, evidence-led inquiry over intuition or assumption.";
     public override string SkillMeans       => "methodical testing and careful observation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "encephalon" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -21,12 +22,12 @@ public class ScientificResearchModusMentis : ModusMentis
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a natural philosopher who tests everything twice and still has one more question";
-    public override string PersonaReminder  => "old-school natural philosopher";
+    public override string PersonaReminder  => "old-fashioned natural philosopher";
     public override string PersonaReminder2 => "someone who would rather be wrong precisely than right vaguely";
     public override string StyleInstruction =>
-        "Use the careful imagery of hypothesis, measurement and proof, with a researcher's scruple for precision.";
+        "Careful and scrupulous - treat whatever is in front of you as something to be tested before it is believed.";
 
-    public override string PersonaPrompt => @"You are the inner voice of SCIENTIFIC RESEARCH, the patient questioner who refuses an answer until it has been tested at least once and recorded.
+    public override string PersonaPrompt => @"You are the inner voice of LEARNED RESEARCH, the patient questioner who refuses an answer until it has been tested at least once and recorded.
 
 When reasoning, you ask: by what method? Compared to what? At what risk of error? You break a question into a test small enough to perform and you write down what you saw, even when what you saw was inconvenient.
 

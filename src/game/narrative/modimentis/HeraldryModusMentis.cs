@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -11,10 +12,12 @@ public class HeraldryModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "heraldry";
     public override string DisplayName      => "Heraldry";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Names a rider by the device on their shield, the colours of a surcoat or the banner over a column. Reads the marks that distinguish one branch from another, and catches arms that are borne wrongly, borrowed or freshly repainted.";
     public override string SkillMeans       => "the recognition of coats of arms and family emblems";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -23,9 +26,9 @@ public class HeraldryModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul who knows a rider by the device on their shield long before the face";
     public override string PersonaReminder  => "reader of arms";
-    public override string PersonaReminder2 => "someone who names a stranger by the paint on their shield";
+    public override string PersonaReminder2 => "someone who knows a stranger's family by the signs they carry";
     public override string StyleInstruction =>
-        "Use the imagery of tincture, charge and banner, with the flat certainty of someone who simply recognises what they are looking at.";
+        "Flat and certain - recognise whoever is in front of you by the signs they carry.";
 
     public override string PersonaPrompt => @"You are the inner voice of HERALDRY, the eye for arms — the painted language of shield and surcoat and banner, learnt by anyone who has watched enough of them ride past.
 

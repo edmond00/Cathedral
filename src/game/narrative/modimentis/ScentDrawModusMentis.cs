@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,17 +11,19 @@ public class ScentDrawModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "scent_draw";
     public override string DisplayName      => "Scent Draw";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Draws air on purpose rather than merely breathing it: long pulls through the nose that separate a scent into its parts, its age, and the direction it is coming from.";
     public override string SkillMeans       => "the deliberate drawing of air to take a scent apart";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<SmellVerb>("draw a scent apart");
+    public override WillTargets? Will => WillTarget.To<SmellVerb>("draw a scent apart");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "pulmones", "snout" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a working nose that takes the air apart on purpose, layer by layer";
     public override string PersonaReminder  => "one who draws the air deliberately";
-    public override string PersonaReminder2 => "a creature that reads air the way others read a page";
+    public override string PersonaReminder2 => "a creature that learns more from the air than from its eyes";
     public override string StyleInstruction =>
         "Report scent in layers and in order - freshest first, then what lies under it, then its direction.";
 

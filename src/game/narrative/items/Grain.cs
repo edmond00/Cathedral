@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,6 +6,7 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Grain : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Grain });
     public override string ItemId      => "grain";
     public override string DisplayName => "Grain";
     public override string Article     => "some";
@@ -13,7 +15,6 @@ public sealed class Grain : ConsumableItem
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
-    public override int PriceReference => 5;
     protected override HumorRichness Richness => HumorRichness.Hearty;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FiberHumor>(55).Add<CalxHumor>(25).Add<PulpHumor>(20);

@@ -173,6 +173,24 @@ public abstract class NamedNpcArchetype : NpcArchetype
     /// </summary>
     public virtual SocialCategory? Social => null;
 
+    /// <summary>
+    /// The ways of speaking this person's lines are rewritten into, a share of the time
+    /// (<see cref="Narrative.Sanitizer.PersonaFlavour"/>) — the NPC side of
+    /// <see cref="ModusMentis.Registers"/>. Follows the standing by default: a peasant talks field and
+    /// byre, a monk the old high speech, a beggar the back streets' cant, a soldier clipped, a lord
+    /// like the schoolmen he was raised by. Override where the trade speaks otherwise than the rank.
+    /// </summary>
+    public virtual IReadOnlyList<Narrative.Sanitizer.Register> Registers => Social switch
+    {
+        SocialCategory.Peasant    => new[] { Narrative.Sanitizer.Register.Rustic },
+        SocialCategory.Religious  => new[] { Narrative.Sanitizer.Register.Archaic },
+        SocialCategory.Pauper     => new[] { Narrative.Sanitizer.Register.Cant },
+        SocialCategory.Outlaw     => new[] { Narrative.Sanitizer.Register.Cant },
+        SocialCategory.Military   => new[] { Narrative.Sanitizer.Register.Terse },
+        SocialCategory.Aristocrat => new[] { Narrative.Sanitizer.Register.Learned },
+        _                         => Array.Empty<Narrative.Sanitizer.Register>(),
+    };
+
     // ── Spawn ─────────────────────────────────────────────────────────────────
 
     /// <summary>
@@ -201,7 +219,9 @@ public abstract class NamedNpcArchetype : NpcArchetype
         // Read gender back through GenderStat so it is the single source of truth for the name.
         string name = isHuman
             ? Naming.NameGenerator.GenerateHuman(NpcLabelResolver.GenderIsMale(combatant), nameRng)
-            : Naming.NameGenerator.GenerateBeast(nameRng);
+            : Species.AnatomyType == AnatomyType.Reptile
+                ? Naming.NameGenerator.GenerateReptile(nameRng)
+                : Naming.NameGenerator.GenerateBeast(nameRng);
         combatant.SetDisplayName(name);
 
         // The stable name-derived id: names are per-NPC and reproducible across visits (nameRng),
@@ -380,8 +400,8 @@ public abstract class NamedNpcArchetype : NpcArchetype
     private static string DefaultOpinion(Dialogue.Tree.DialogueTopic topic) => topic switch
     {
         Dialogue.Tree.DialogueTopic.Weather    => "it does what it likes and we do what we can under it",
-        Dialogue.Tree.DialogueTopic.Seasons    => "each part of the year asks its own work of you, and it never asks politely",
-        Dialogue.Tree.DialogueTopic.Harvest    => "a good year feeds you and a bad one teaches you; we've had both",
+        Dialogue.Tree.DialogueTopic.Seasons    => "each part of the round asks its own work of you, and it never asks politely",
+        Dialogue.Tree.DialogueTopic.Harvest    => "a good round feeds you and a bad one teaches you; we've had both",
         Dialogue.Tree.DialogueTopic.Food       => "plain fare, enough of it, and hot — that's all I ask of a table",
         Dialogue.Tree.DialogueTopic.Beasts     => "a beast will tell you what it needs if you've the patience to watch it",
         Dialogue.Tree.DialogueTopic.Wilds      => "the wild has its uses, but I'd not sleep out in it by choice",

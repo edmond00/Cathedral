@@ -65,6 +65,18 @@ public enum Willingness { Eager, Willing, Reluctant, Unwilling }
 /// made things worse: the position bias they correct is already small. Every decision logs its
 /// log-odds, so the thresholds can be re-tuned from real play.</para>
 ///
+/// <para><b>What the faculty adds, not what the model likes.</b> Focus, Goal, Means and Reply are read
+/// against an ONLOOKER (<see cref="BaselineWeight"/>): the same list scored a second time for a faculty
+/// with no bent of its own, and part of its score taken off. What the model likes for itself — bribery
+/// over the fist, busking over the cutpurse — the onlooker likes too, so it cancels, and the faculty's
+/// own pull is left. A second forward pass per decision, for a third fewer bench errors (see the
+/// choice-judge skill for the measurements).</para>
+///
+/// <para><b>Names the model misreads are put in plain words</b> (<see cref="InJudgeWords"/>,
+/// <see cref="Species.JudgeNoun"/>). The model knows "triceratops" as an extinct dinosaur and passed an
+/// appeased one over for a tapir, a strangler fig or nothing, in every faculty; read as "the
+/// three-horned beast" it is a beast like any other.</para>
+///
 /// <para>Like the matcher it replaced, it <b>throws rather than falling back</b>: option A is a real
 /// narrative choice attributed to the character, and a substituted answer the player cannot see is
 /// worse than a failure they can. In playground mode it is never reached —
@@ -93,14 +105,49 @@ public static class ChoiceJudge
     /// unwilling) exceeds this. Right on 39 of 40 bench cases, against 38 for the likeliest letter.</summary>
     public const double AssentLogOdds = -1.8;
 
-    /// <summary>Willingness, once assenting: eager when log P(eager) − log P(willing) is at least this.
-    /// The bench median, so eager and willing split assent about evenly. The judge almost never answers
-    /// "eager" outright (1 case in 40), so its lean, not its answer, is what is read.</summary>
-    public const double EagerLogOdds = -6.4;
+    /// <summary>
+    /// Willingness, once assenting: eager when the yes/no answer to <see cref="EagerQuestion"/> has
+    /// log-odds of yes over no above this. Untuned (0, the even point), as the item critic's is: on 35
+    /// labelled degrees the answer was right for any value from 0 to 2. It replaced reading the scale's
+    /// own lean, log P(eager) − log P(willing) at the bench median: that lean did not separate the two at
+    /// all (eager acts −18…+8, willing ones −12…0), and right on 20 of 35 against 29.
+    /// </summary>
+    public const double EagerYesLogOdds = 0.0;
+
+    /// <summary>The question that tells eager from willing, asked yes or no once the scale assents.</summary>
+    public const string EagerQuestion = "Is this act this faculty's own work, what it is made for?";
 
     /// <summary>Willingness, once dissenting: unwilling (a refusal) when log P(unwilling) − log P(reluctant)
     /// is at least this. The bench median, so the two split dissent about evenly.</summary>
     public const double UnwillingLogOdds = -0.6;
+
+    /// <summary>
+    /// How much of the ONLOOKER's score is taken off each option's (<see cref="OnlookerDescription"/>):
+    /// an option is scored by log P(letter | this faculty) − <c>BaselineWeight</c> × log P(letter | the
+    /// onlooker), the same list in the same order, so what is left is what this faculty adds to the
+    /// model's own liking for the option. Measured on the bench (see the choice-judge skill): 0.3 was
+    /// best, 0.2–0.5 all better than none, 1 (the full contrast) far worse. 0 switches the second
+    /// call off.
+    /// </summary>
+    public const double BaselineWeight = 0.3;
+
+    /// <summary>
+    /// The kinds read against the onlooker. KeepFocus and Willingness are not: neither gained on the
+    /// bench, and both are a fixed yes/no or a scale the onlooker has no stake in.
+    /// </summary>
+    private static readonly HashSet<ChoiceKind> BaselineKinds = new()
+        { ChoiceKind.Focus, ChoiceKind.Goal, ChoiceKind.Means, ChoiceKind.Reply };
+
+    /// <summary>
+    /// The neutral faculty every option is also scored for (<see cref="BaselineWeight"/>). Asked
+    /// "as itself", the model brings its own preferences: the means judge gave Cruelty bribery to make a
+    /// prisoner talk and Covetousness busking to earn coins, because bribery and busking are what the
+    /// model likes. The onlooker likes them too, so subtracting part of its score leaves Cruelty's own
+    /// pull toward the fist. Unlike a content-free prior (measured and rejected: it corrects only the
+    /// letters' position, which is small), it reads the same options in the same scene.
+    /// </summary>
+    public const string OnlookerDescription =
+        "ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unremarkable.";
 
     private static LlamaServerManager? _llm;
     private static readonly Dictionary<ChoiceKind, int> _slots = new();
@@ -153,7 +200,17 @@ public static class ChoiceJudge
         if (options.Count > MaxOptions)
             throw new ArgumentException($"ChoiceJudge.PickAsync: {options.Count} options exceeds {MaxOptions}; sample before calling.");
 
-        var lp = await LetterLogProbsAsync(kind, BuildPrompt(kind, faculty, situation, options, question), options.Count);
+        string prompt = BuildPrompt(kind, Describe(faculty), situation, options, question);
+        var raw = await LetterLogProbsAsync(kind, prompt, options.Count);
+        double[]? onlooker = null;
+        var lp = raw;
+        if (BaselineWeight > 0 && BaselineKinds.Contains(kind))
+        {
+            // The same list, the same order, the onlooker in the faculty's place. The decline keeps the
+            // faculty's own score: "nothing here is for me" is not an option the onlooker can weigh.
+            onlooker = await LetterLogProbsAsync(kind, BuildPrompt(kind, OnlookerDescription, situation, options, question), options.Count);
+            lp = raw.Select((x, i) => i == declineIndex ? x : x - BaselineWeight * onlooker[i]).ToArray();
+        }
 
         int best = ArgMax(lp, except: -1);
         string how;
@@ -167,7 +224,9 @@ public static class ChoiceJudge
         {
             how = $"log-odds {F(lp[best] - LogSumExp(lp.Where((_, i) => i != best)))} over the rest";
         }
+        if (onlooker != null) how += $", net of the onlooker x{BaselineWeight:0.0#}";
         Console.WriteLine($"ChoiceJudge: {kind} for {faculty.DisplayName} -> {options[best]} ({how})");
+        Record(new { kind = kind.ToString(), faculty = faculty.ModusMentisId, situation, options, question, declineIndex, prompt, lp = raw, onlooker, scores = lp, best });
         return best;
     }
 
@@ -177,26 +236,40 @@ public static class ChoiceJudge
     /// is read from its scores in two steps:
     /// <list type="number">
     /// <item>assent or dissent: <see cref="AssentLogOdds"/> on (eager or willing) against (reluctant or unwilling);</item>
-    /// <item>how strongly, within that side: <see cref="EagerLogOdds"/> or <see cref="UnwillingLogOdds"/>.</item>
+    /// <item>how strongly, within that side: on assent, a second request asks <see cref="EagerQuestion"/>
+    ///       yes or no (<see cref="EagerYesLogOdds"/>); on dissent, the scale's own lean,
+    ///       <see cref="UnwillingLogOdds"/>. The dissent side stays on the scale because no yes/no wording
+    ///       could ask it: "does this act contradict / go against / betray this faculty's nature?" came
+    ///       back yes for the faculty's own work and no for its opposite, and a positive wording ("is this
+    ///       the opposite of…", "is it made to avoid…") never came back yes at all.</item>
     /// </list>
     /// Taking the likeliest letter instead gave 1 eager in 40 bench cases (17 willing, 13 reluctant,
-    /// 9 unwilling), so the −1 difficulty of an eager act almost never happened; read this way the four
-    /// degrees came out 10/9/10/11 and the assent was right one case more often. The caller narrows the
+    /// 9 unwilling), so the −1 difficulty of an eager act almost never happened, and the assent was
+    /// right one case less often. Against the 51 labelled degrees (tools/judge/cases.py), the degree is
+    /// right 35 times this way, 26 with the scale's lean on both sides, 18 with the likeliest letter. The caller narrows the
     /// answer to what the rules leave on offer: a mind with no refusal left answers Reluctant.
     /// </summary>
     public static async Task<Willingness> JudgeWillingnessAsync(
         ModusMentis faculty, string situation, CancellationToken ct = default)
     {
         var scale = new[] { "eager", "willing", "reluctant", "unwilling" }.Select(StanceLabel).ToList();
-        var lp = await LetterLogProbsAsync(ChoiceKind.Willingness,
-                                           BuildPrompt(ChoiceKind.Willingness, faculty, situation, scale, null), scale.Count);
+        string prompt = BuildPrompt(ChoiceKind.Willingness, Describe(faculty), situation, scale, null);
+        var lp = await LetterLogProbsAsync(ChoiceKind.Willingness, prompt, scale.Count);
         double assent = LogSumExp(new[] { lp[0], lp[1] }) - LogSumExp(new[] { lp[2], lp[3] });
-        Willingness w = assent > AssentLogOdds
-            ? (lp[0] - lp[1] >= EagerLogOdds ? Willingness.Eager : Willingness.Willing)
-            : (lp[3] - lp[2] >= UnwillingLogOdds ? Willingness.Unwilling : Willingness.Reluctant);
+        double? eagerYes = null;
+        Willingness w;
+        if (assent > AssentLogOdds)
+        {
+            eagerYes = await YesLogOddsAsync(ChoiceKind.Willingness, BuildYesNoPrompt(Describe(faculty), situation, EagerQuestion));
+            w = eagerYes > EagerYesLogOdds ? Willingness.Eager : Willingness.Willing;
+        }
+        else
+            w = lp[3] - lp[2] >= UnwillingLogOdds ? Willingness.Unwilling : Willingness.Reluctant;
         Console.WriteLine($"ChoiceJudge: Willingness for {faculty.DisplayName} -> {w} " +
-                          $"(assent {F(assent)} vs {F(AssentLogOdds)}; eager-willing {F(lp[0] - lp[1])} vs {F(EagerLogOdds)}; " +
-                          $"unwilling-reluctant {F(lp[3] - lp[2])} vs {F(UnwillingLogOdds)})");
+                          $"(assent {F(assent)} vs {F(AssentLogOdds)}; " +
+                          (eagerYes is double e ? $"its own work? yes {F(e)} vs {F(EagerYesLogOdds)}" :
+                                                  $"unwilling-reluctant {F(lp[3] - lp[2])} vs {F(UnwillingLogOdds)}") + ")");
+        Record(new { kind = "Willingness", faculty = faculty.ModusMentisId, situation, prompt, lp, eagerYes, answer = w.ToString() });
         return w;
     }
 
@@ -232,6 +305,50 @@ public static class ChoiceJudge
         return lp;
     }
 
+    /// <summary>
+    /// The log-odds of "yes" against "no" as the reply's first token, every spelling summed — one forward
+    /// pass, read like the letters (<c>ItemUseCritic</c> reads its yes/no questions the same way).
+    /// </summary>
+    private static async Task<double> YesLogOddsAsync(ChoiceKind kind, string prompt)
+    {
+        if (!IsReady || _llm == null || !_llm.IsServerReady)
+            throw new InvalidOperationException("ChoiceJudge is not ready.");
+        var top = await _llm.GetFirstTokenLogProbsAsync(_slots[kind], prompt, TopLogprobs);
+        var yes = top.Where(t => t.Token.Trim() is "yes" or "Yes").Select(t => t.LogProb).DefaultIfEmpty(AbsentLogProb);
+        var no  = top.Where(t => t.Token.Trim() is "no" or "No").Select(t => t.LogProb).DefaultIfEmpty(AbsentLogProb);
+        return LogSumExp(yes) - LogSumExp(no);
+    }
+
+    private static string BuildYesNoPrompt(string faculty, string situation, string question)
+    {
+        var sb = new StringBuilder("The faculty: ").Append(faculty).Append("\n\n");
+        if (!string.IsNullOrWhiteSpace(situation))
+            sb.Append("The situation: ").Append(ToThirdPerson(Regex.Replace(situation.Trim(), @"\s+", " "))).Append("\n\n");
+        sb.Append(question).Append("\n\nAnswer yes or no.");
+        return InJudgeWords(sb.ToString());
+    }
+
+    /// <summary>
+    /// Appends one decision to <c>judge_inputs.jsonl</c> in the session's log directory, for
+    /// <c>tools/prompts/</c>. Development logging only: nothing is written without a session directory.
+    /// </summary>
+    private static void Record(object record)
+    {
+        string? dir = _llm?.SessionLogDir;
+        if (dir == null) return;
+        try
+        {
+            string line = System.Text.Json.JsonSerializer.Serialize(record) + "\n";
+            lock (RecordLock) System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "judge_inputs.jsonl"), line);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"ChoiceJudge: could not record a decision: {ex.Message}");
+        }
+    }
+
+    private static readonly object RecordLock = new();
+
     private static int ArgMax(double[] v, int except)
     {
         int best = -1;
@@ -260,18 +377,38 @@ public static class ChoiceJudge
         return sb.ToString();
     }
 
-    private static string BuildPrompt(ChoiceKind kind, ModusMentis faculty, string situation, IReadOnlyList<string> options, string? question)
+    private static string BuildPrompt(ChoiceKind kind, string faculty, string situation, IReadOnlyList<string> options, string? question)
     {
         var sb = new StringBuilder();
-        sb.Append(kind == ChoiceKind.Means ? "The thinking faculty: " : "The faculty: ").Append(Describe(faculty)).Append("\n\n");
+        sb.Append(kind == ChoiceKind.Means ? "The thinking faculty: " : "The faculty: ").Append(faculty).Append("\n\n");
         if (!string.IsNullOrWhiteSpace(situation))
             sb.Append("The situation: ").Append(ToThirdPerson(Regex.Replace(situation.Trim(), @"\s+", " "))).Append("\n\n");
         sb.Append(question ?? Questions[kind]).Append('\n');
         for (int i = 0; i < options.Count; i++)
             sb.Append(Letter(i)).Append(" - ").Append(ToThirdPerson(options[i].Trim())).Append('\n');
         sb.Append("\nAnswer with the letter and nothing else.");
-        return sb.ToString();
+        return InJudgeWords(sb.ToString());
     }
+
+    /// <summary>
+    /// The prompt with every name the model misreads put in plain words (<see cref="Species.JudgeNoun"/>):
+    /// "focus on the triceratops" is read as "focus on the three-horned beast". Whole words, any case,
+    /// wherever they stand — an option, the situation, a question, the act being weighed. Only the judge
+    /// reads the result; what the player sees is untouched.
+    /// </summary>
+    public static string InJudgeWords(string text)
+    {
+        foreach (var (word, noun) in JudgeVocabulary.Value)
+            text = word.Replace(text, noun);
+        return text;
+    }
+
+    private static readonly Lazy<List<(Regex Word, string Noun)>> JudgeVocabulary = new(() =>
+        SpeciesRegistry.All
+            .Where(s => !string.IsNullOrWhiteSpace(s.JudgeNoun))
+            .Select(s => (new Regex($@"\b{Regex.Escape(s.DisplayName)}\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant),
+                          s.JudgeNoun!))
+            .ToList());
 
     /// <summary>
     /// The willingness scale as the judge reads it, each degree defined, keyed by its bare adjective

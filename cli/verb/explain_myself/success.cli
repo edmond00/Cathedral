@@ -21,7 +21,7 @@ advance 12 180
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 
@@ -49,7 +49,7 @@ strategy succeed
 goal explain_myself
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 click action 0

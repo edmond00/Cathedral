@@ -1,0 +1,134 @@
+# round 3b, scored blind (fresh base seeds mixed in). Rubric: RUBRIC.md
+# farm_night:003:own
+S9552 F1 P1 C- Q1 | +sack or silver; "fill the column"
+S7785 F0 P1 C- Q1 | persona prompt copied ("one short in the column"); -the ways
+S5971 F2 P2 C- Q1 |
+S6990 F1 P2 C- Q0 | "a ways lead on"; "the column must balance"
+S5745 F2 P2 C- Q1 |
+S3862 F1 P2 C- Q1 | +grains; style echoed ("figures that come out even")
+# farm_dusk:003:loose:greed_bare
+S9850 F0 P1 C- Q1 | +to gather stored grain for the winter
+S5559 F2 P0 C- Q1 |
+S2804 F2 P0 C- Q1 |
+S1441 F2 P0 C- Q0 | "will trod"
+S5078 F2 P0 C- Q1 |
+S7294 F1 P0 C- Q0 | "lead the track path"
+# farm_night:009:own
+S7874 F1 P2 C- Q2 | +my beasts
+S5135 F1 P2 C- Q1 | +the pen, +content beasts
+S9218 F1 P2 C- Q1 | +the pen, +each beast
+S6200 F1 P2 C- Q1 | +my beasts
+S7579 F1 P2 C- Q1 | +each animal in their pen
+S3253 F1 P2 C- Q2 | +my beasts at their trough
+# talk_blacksmith:004:swap:stoneface
+S2018 F0 P2 C- Q1 | +her smile; +stone walls; -learned
+S3291 F0 P2 C- Q1 | +her eyes met mine; -Rachel, -learned
+S4220 F0 P1 C- Q1 | "answered the call"; -Rachel, -learned
+S3472 F1 P2 C- Q1 | +her eyes met mine
+S9730 F2 P0 C- Q1 |
+S4440 F0 P1 C- Q0 | +she smiled, +her body language, +spoke further; over-long
+# farm_night:014:swap:cutpurse
+S6423 F1 P0 C- Q2 | track "to" both
+S9846 F0 P1 C0 Q0 | +seizing the purse (a crime); style copied
+S3023 F0 P1 C0 Q0 | style copied
+S2133 F0 P1 C- Q0 | style copied: strings in hand
+S6065 F0 P1 C- Q0 | style copied
+S7712 F0 P1 C- Q0 | style copied
+# village_noon_party:009:own
+S2341 F1 P1 C- Q1 | +worn wooden handles
+S9311 F2 P0 C- Q2 |
+S8767 F0 P2 C- Q1 | +people's hands, teeth, skin, shoulders
+S3320 F0 P1 C- Q1 | +blacksmiths, +elders
+S7695 F1 P0 C- Q1 | +creaking doors, +distant call
+S9291 F0 P1 C- Q0 | style copied ("the hands, teeth, colour")
+# village_noon_party:003:own
+S6511 F0 P2 C- Q1 | +childhood at the castle, +the storm
+S1292 F0 P2 C- Q1 | +lessons, +thunder
+S8090 F0 P2 C- Q1 | +preceptor, +reading, +the storm
+S7098 F0 P2 C- Q1 | +the storm
+S1846 F0 P2 C- Q1 | +the storm
+S6810 F0 P2 C- Q1 | +lessons, +iron-bound walls
+# village_noon_party:009:loose:greed_bare
+S1824 F1 P0 C- Q1 | "both doors down"
+S8819 F2 P0 C- Q2 |
+S7141 F2 P0 C- Q2 |
+S1084 F2 P0 C- Q2 |
+S7643 F1 P0 C- Q2 | +"my fellows"
+S4914 F1 P0 C- Q1 | +creaking doors, +narrow alley
+# talk_farm:005:swap:courtesy
+S2918 F1 P0 C- Q1 | +the fields beyond
+S4503 F0 P0 C- Q0 | +a field that needs tending; style copied
+S5072 F1 P0 C- Q2 | +the fields
+S9633 F0 P1 C- Q1 | +walk to the next field, +greeting the land
+S6893 F1 P0 C- Q2 | +the fields beyond
+S1952 F0 P0 C- Q0 | style copied; +the next field
+# talk_blacksmith:005:own
+S5377 F0 P1 C- Q1 | +the offer; -the occasion
+S2052 F0 P1 C- Q1 | +turned down their offer
+S5513 F0 P1 C- Q1 | +turned down their offer
+S4157 F0 P1 C- Q0 | style copied; instruction clause echoed; setting copied
+S9734 F0 P1 C- Q0 | style copied; instruction clause echoed
+S3121 F0 P1 C- Q1 | +turned away
+# farm_night:015:loose:greed_bare
+S5098 F1 P0 C- Q1 | +the coop's secure walls
+S6039 F0 P0 C- Q1 | +step inside the coop, +greasy hands; -trailcraft
+S6698 F1 P0 C- Q1 | +hidden path
+S6224 F1 P0 C- Q1 | +the coop's warm embrace
+S3797 F1 P0 C- Q0 | "trailcrafting"
+S6440 F2 P0 C- Q2 |
+# forest_evening:011:own
+S2541 F2 P2 C- Q1 |
+S5465 F1 P2 C- Q1 | +each beam
+S6490 F1 P2 C- Q1 | +a beam for walls
+S1159 F2 P2 C- Q1 |
+S1829 F1 P2 C- Q1 | +each beam
+S6701 F0 P2 C- Q0 | +the plane, +fitting; persona prompt copied
+# farm_night:007:swap:keen_nose
+S1314 F1 P0 C- Q1 | wallow read as a shed
+S8653 F0 P1 C- Q0 | style copied; +hay, +winter day in a barn
+S5464 F0 P2 C- Q1 | +winter's frost, +the barn's roof caved in
+S8762 F1 P0 C- Q1 | wallow read as a shed
+S1884 F0 P2 C- Q1 | +the year the well went bad
+S4248 F1 P1 C- Q1 |
+# forest_evening:007:own
+S6075 F0 P1 C- Q1 | +shaved the snail's shell
+S5228 F0 P1 C- Q1 | +the stroke of the knife
+S2229 F0 P1 C- Q1 | +carved a shaving; -lore
+S8944 F0 P1 C- Q1 | +cut close with my blade
+S1338 F1 P1 C- Q1 | +marked the shell
+S9605 F1 P1 C- Q1 | +marked the shell
+# talk_blacksmith:012:loose:pedant_reminder
+S3267 F0 P0 C- Q1 | the smith's worry made mine
+S7602 F0 P0 C- Q1 | the smith's worry made mine
+S7415 F0 P0 C- Q1 | the smith's worry made mine
+S4002 F0 P0 C- Q0 | +a neighbouring forge
+S4205 F0 P0 C0 Q1 | the smith made a man
+S5119 F0 P0 C0 Q1 | the smith made a man
+# talk_blacksmith:005:swap:dread
+S3470 F0 P1 C- Q1 | +left the hall, +fresh air
+S2808 F1 P1 C- Q0 | style copied
+S4479 F0 P1 C- Q0 | +the door beckoning
+S1822 F0 P1 C- Q0 | +"the door's back objecting"
+S9797 F0 P1 C- Q1 | feeling replaced ("a refusal that cannot be voiced")
+S5999 F0 P1 C- Q1 | feeling replaced; +the fire
+# village_dawn:004:own
+S6169 F0 P1 C- Q0 | +mind the gate, tend the hens
+S6179 F1 P2 C- Q1 | -water voice
+S1810 F2 P1 C- Q1 |
+S3645 F0 P1 C- Q0 | lesson replaced ("earth's song")
+S7864 F0 P1 C- Q0 | +worked the soil, harnessed beasts; "success, or not"
+S2520 F1 P0 C- Q0 | lesson made "water's song"
+# farm_dusk:005:own
+S6109 F0 P1 C- Q1 | +barn rafters; -trailcraft
+S5104 F2 P1 C- Q1 |
+S7613 F0 P0 C- Q0 | +"I am a farmer"
+S8868 F2 P1 C- Q2 |
+S9882 F1 P1 C- Q1 | reminder echoed
+S2395 F1 P0 C- Q0 | "trailcrafted"
+# talk_blacksmith:002:own
+S9897 F1 P1 C0 Q1 | the smith made "craftsman"; her stance made mine
+S4960 F1 P2 C1 Q1 | her stance made mine
+S4685 F0 P1 C0 Q1 | his forge, her eyes; worry made mine; +she notices me
+S9720 F0 P2 C1 Q1 | +my forge, +our hearth; reminder copied
+S5345 F1 P2 C1 Q1 |
+S3677 F0 P1 C1 Q1 | reminder copied ("shape truth into the most persuasive form"); setting copied

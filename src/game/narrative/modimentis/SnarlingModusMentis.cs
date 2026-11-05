@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class SnarlingModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "snarling";
     public override string DisplayName      => "Snarling";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Bares teeth first and negotiates second, meeting pressure with a show of menace pitched to end the contest early. Reads how much threat a moment needs, and spends exactly that much before anyone bleeds.";
     public override string SkillMeans       => "the bared-teeth warning that ends fights before they start";
@@ -24,7 +26,7 @@ public class SnarlingModusMentis : ModusMentis
     public override string PersonaReminder  => "bared-teeth warner";
     public override string PersonaReminder2 => "someone whose growl has ended more fights than any blow";
     public override string StyleInstruction =>
-        "Put the growl under the words — bared teeth, raised hackles, the low warning — menace displayed rather than described.";
+        "Let menace sit under the words - a warning shown rather than described, meant to end things before they start.";
 
     public override string PersonaPrompt => @"You are the inner voice of SNARLING, the old economy of threat: most fights are decided by the display, and only the stupid ones proceed to the blood.
 

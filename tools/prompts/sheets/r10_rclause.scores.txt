@@ -1,0 +1,151 @@
+# round 10 (StyleIsNotSceneClause kept for Reasoning alone vs the final wording), scored blind
+# village_noon_party:005:swap:poetry
+S1533 F1 P2 C- Q1 | "turn my gaze to tales of old"
+S8026 F1 P2 C- Q1 | setting copied ("this medieval village")
+S8906 F0 P2 C- Q1 | +the fields beyond, +trees
+S1243 F1 P2 C- Q1 | "tales from the distant hills"
+# talk_blacksmith:012:swap:dread
+S4376 F1 P2 C- Q2 | +the door
+S8578 F1 P2 C- Q1 | +the exit
+S9049 F1 P1 C- Q1 | -hammering; "hands glowing from the forge"
+S5546 F0 P2 C- Q1 | "no fire to shape", "all alone" (she is at the anvil)
+# talk_miller:011:swap:pride
+S3625 F0 P2 C- Q1 | +an offer, +an insult
+S1563 F0 P2 C- Q1 | +an offer not met with respect
+S9530 F0 P2 C- Q1 | +her offer declined
+S9029 F0 P2 C- Q1 | +an offer, +a dismissive tone
+# village_dawn:010:swap:poetry
+S6370 F0 P2 C- Q1 | +meadow, +bells
+S2246 F0 P2 C- Q0 | setting copied; +willows by the brook
+S5095 F1 P2 C- Q1 | -cross
+S6917 F0 P2 C- Q1 | +the nearby meadow, +forgotten kings
+# forest_evening:004:own
+S1730 F0 P2 C- Q0 | -snail; "delay" for "will not"; clause copied ("only colors")
+S7887 F1 P2 C- Q1 | -snail
+S3272 F1 P2 C- Q1 | -snail
+S6817 F1 P2 C- Q1 | +"who might see"
+# village_noon_party:005:swap:courtesy
+S7252 F1 P1 C- Q1 | "I greet" (no one)
+S7901 F0 P1 C- Q0 | +greeting, +the village green
+S5646 F0 P1 C- Q1 | +lush green fields
+S5297 F0 P1 C- Q1 | +the market
+# forest_evening:005:own
+S8484 F1 P2 C- Q1 | -timber means
+S3861 F1 P2 C- Q1 | setting copied
+S5966 F1 P2 C- Q1 | -timber means
+S6940 F1 P2 C- Q2 | -timber means
+# village_dawn:010:swap:dread
+S3178 F1 P2 C- Q1 | +the door
+S8486 F1 P2 C- Q1 | +the door
+S4922 F0 P2 C- Q1 | +the door, +the fields beyond
+S8203 F1 P2 C- Q1 | "no fire to light"
+# farm_night:013:swap:ruination
+S7147 F1 P2 C- Q1 | -the other ways
+S1725 F1 P2 C- Q1 | -the other ways
+S1066 F0 P2 C- Q1 | +forgotten tools and seeds
+S4860 F1 P2 C- Q1 | -the other ways
+# talk_miller:011:swap:dread
+S3195 F1 P2 C- Q2 | -her work
+S4194 F1 P2 C- Q2 | -her work
+S5962 F0 P2 C- Q1 | +a cold hearth
+S9787 F0 P2 C- Q1 | +the miller's house, +a darkening hall
+# talk_farm:002:own
+S6998 F1 P1 C- Q1 | "other fields"
+S4935 F1 P1 C- Q1 | +the fields
+S6150 F1 P1 C- Q1 |
+S9994 F0 P1 C- Q1 | +fields beyond, +crops to tend
+# forest_evening:010:own
+S8383 F2 P2 C- Q1 |
+S8143 F1 P2 C- Q1 | "it is now ripe"
+S8700 F0 P2 C- Q1 | the oak described by the style (swell, colour, scent)
+S2064 F1 P2 C- Q0 | style copied into the oak
+# forest_evening:002:swap:avarice
+S6319 F0 P2 C- Q0 | +silver in my pocket; -means
+S9223 F0 P2 C- Q1 | +a silver coin
+S3562 F0 P2 C- Q1 | +coins
+S4674 F0 P2 C- Q1 | +silver in my purse
+# forest_evening:004:swap:rhetoric
+S7764 F1 P1 C- Q1 | "paths less trodden"
+S4905 F2 P1 C- Q1 |
+S1604 F2 P1 C- Q1 |
+S1520 F1 P1 C- Q1 | "contemplative glade"
+# talk_farm:005:own
+S9136 F1 P2 C- Q1 | +memories; persona formula copied
+S5934 F1 P1 C- Q0 | the formula copied without sense
+S2180 F2 P1 C- Q0 |
+S9740 F1 P2 C- Q1 | +minor repairs
+# farm_night:013:own
+S2326 F2 P0 C- Q1 |
+S3452 F1 P1 C- Q1 | +hosts' names
+S7298 F2 P0 C- Q1 |
+S7130 F1 P0 C- Q1 | means turned to "be welcomed"
+# talk_miller:002:own
+S2850 F1 P2 C- Q1 | +her name; "as she passes by"
+S2582 F1 P2 C- Q1 | -introducing myself; +her name
+S8234 F1 P2 C- Q1 | +her name
+S3725 F2 P2 C- Q1 |
+# forest_evening:005:swap:poetry
+S4128 F2 P1 C- Q1 |
+S6712 F1 P1 C- Q1 | "another lens", "ancient woodlands"
+S8098 F2 P2 C- Q1 |
+S7784 F1 P2 C- Q1 | examine made "trace the shell"
+# village_dawn:010:own
+S8300 F0 P1 C- Q1 | +the fields beyond, +long shadows
+S5021 F0 P1 C- Q1 | +carved scenes, +the fields beyond
+S5500 F1 P1 C- Q1 | "stories of the past"
+S3351 F0 P1 C- Q1 | +ripe wheat, +the smiths' hammers
+# farm_night:008:own
+S9550 F0 P2 C- Q1 | the want made leaving; +the door
+S3923 F1 P2 C- Q1 | "find a way to leave"
+S2957 F0 P2 C- Q0 | the want made leaving; style copied
+S5374 F1 P2 C- Q1 | the means made a task
+# village_noon_party:005:own
+S8466 F1 P1 C- Q0 | style copied word for word
+S5957 F2 P1 C- Q1 |
+S3702 F1 P1 C- Q0 | style copied word for word
+S3855 F1 P2 C- Q1 | setting copied
+# village_noon_party:002:swap:avarice
+S3885 F0 P2 C- Q1 | +hoardings, +coins in hand
+S8866 F0 P2 C- Q0 | +the nearby forge, +coins
+S6694 F0 P2 C- Q0 | +lanterns, +a chest in the common room
+S6374 F0 P2 C- Q1 | doors closed tight (the lane is loud); +gold coins
+# farm_dusk:002:own
+S8122 F0 P1 C- Q1 | +someone's face before me
+S4664 F0 P2 C- Q1 | +an offer, +an insult
+S1082 F1 P2 C- Q1 | +"my refusal"
+S9926 F1 P1 C- Q0 | style copied
+# farm_dusk:002:swap:mercy
+S1715 F1 P2 C- Q1 | -the other ways
+S6433 F1 P1 C- Q0 | style copied, clause copied ("it colors how I perceive")
+S6233 F1 P1 C- Q0 | style copied
+S4975 F1 P2 C- Q1 | -the other ways
+# forest_evening:010:swap:ruination
+S2309 F0 P2 C- Q0 | +bark collapsing
+S5288 F1 P2 C- Q1 | -cut wood
+S8340 F1 P1 C- Q1 | -cut wood
+S7632 F1 P2 C- Q1 | "before it collapses"
+# farm_night:008:swap:pride
+S3592 F0 P2 C- Q1 | the want reversed ("I decline")
+S7399 F0 P2 C- Q1 | +an insult
+S9122 F0 P1 C- Q1 | the want reversed
+S4955 F0 P2 C- Q1 | the want reversed ("keep my distance")
+# talk_blacksmith:012:swap:avarice
+S9607 F0 P2 C- Q1 | +coin in my purse; -her work
+S5451 F0 P2 C- Q1 | +her coins, +the market
+S9521 F1 P2 C- Q1 | -her work
+S9190 F0 P2 C- Q1 | +coins, +a chest behind the well
+# talk_farm:002:swap:avarice
+S2028 F0 P2 C- Q1 | +coins in hand
+S3724 F0 P2 C- Q0 | +silver inside, +a silversmith
+S9018 F0 P2 C- Q0 | +silver in its walls, +the fields
+S8560 F1 P2 C- Q1 | "my silver"
+# farm_night:013:swap:pride
+S7572 F0 P1 C- Q0 | the welcome refused
+S3224 F0 P2 C- Q1 | +an insult; the means denied
+S7888 F1 P1 C- Q1 | +"the tone of their offering"
+S9868 F1 P1 C- Q1 | +"the terms of offer"
+# village_dawn:002:swap:dread
+S6721 F1 P2 C- Q1 | -means
+S9825 F1 P2 C- Q1 | -means; +the exit
+S7354 F1 P2 C- Q1 | "it calls me to leave"
+S9026 F0 P2 C- Q1 | -listen; +the door

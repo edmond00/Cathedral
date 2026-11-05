@@ -14,7 +14,8 @@ public class RooftopsModusMentis : ModusMentis
         "Travels over the roofs of a town: knows which tiles hold, which gutters bear weight, where the gaps between houses can be jumped. Sees the city from above as a second set of streets.";
     public override string SkillMeans       => "the travelling over roofs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<ScaleUpVerb>("get up onto the roofs");
+    public override WillTargets? Will => WillTarget.To<ScaleUpVerb>("get up onto the roofs");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Roofs);
     public override string[] Organs        => new[] { "feet", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override bool ActsDiscretely => true;
@@ -23,7 +24,7 @@ public class RooftopsModusMentis : ModusMentis
     public override string PersonaReminder  => "roof-runner";
     public override string PersonaReminder2 => "someone who knows which tiles hold";
     public override string StyleInstruction =>
-        "Move over the roofs - tiles, gutters, gaps, the drop - with a city-thief's ease.";
+        "See everything for what holds your weight and what gives, with a climber's easy confidence.";
 
     public override string PersonaPrompt => @"You are the inner voice of ROOFTOPS, and down there are the streets and up here are your streets.
 

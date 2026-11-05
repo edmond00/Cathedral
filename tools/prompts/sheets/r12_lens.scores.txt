@@ -1,0 +1,81 @@
+# round 12 (persona rule 1, second form: the style as a lens on what is there, vs as a manner), scored blind
+S8775 F2 P0 C- Q1 |
+S5407 F2 P0 C- Q1 |
+S9669 F1 P1 C- Q1 | "well-maintained"
+S6730 F1 P0 C- Q1 | "well-pruned"
+S3336 F1 P1 C- Q0 | setting copied
+S7252 F2 P2 C- Q1 |
+S1177 F1 P2 C- Q1 | -lesson; feeling made longing for home
+S7139 F2 P2 C- Q1 |
+S8905 F0 P2 C- Q1 | +an anointed thumb, a holy touch
+S5490 F1 P2 C- Q1 | "under the scent of olive and balsam"
+S8540 F0 P2 C- Q1 | +produce in my garden
+S4729 F2 P2 C- Q1 |
+S1027 F2 P0 C- Q1 |
+S3380 F2 P0 C- Q1 |
+S8209 F2 P0 C- Q1 |
+S7023 F2 P0 C- Q1 |
+S3658 F2 P1 C- Q1 |
+S6565 F2 P1 C- Q1 |
+S4444 F2 P1 C- Q2 |
+S1963 F1 P2 C- Q0 | style copied
+S4270 F2 P0 C- Q1 |
+S2222 F1 P1 C- Q1 | lesson blurred
+S9413 F0 P0 C- Q1 | +the village well, +elders
+S6521 F1 P1 C- Q0 | style copied
+S7629 F0 P2 C- Q1 | +oil on the snail
+S2431 F0 P2 C- Q1 | +the snail anointed
+S1304 F1 P2 C- Q1 | "breathed on the last detail"
+S1995 F0 P2 C- Q0 | +gold, +a hare in the margin
+S9338 F0 P2 C- Q1 | +a shaft; -lesson
+S4657 F1 P2 C- Q1 | -lesson; "the bend in the wood"
+S2490 F1 P1 C- Q1 | -lesson
+S7943 F1 P2 C- Q1 | "the marrow waiting"
+S8270 F1 P1 C- Q0 | style copied
+S2843 F2 P0 C- Q1 |
+S7933 F2 P0 C- Q1 |
+S3212 F0 P1 C- Q1 | success undercut; -lesson
+S9839 F0 P1 C- Q1 | +a nest; -lesson
+S6120 F2 P1 C- Q1 |
+S3679 F2 P0 C- Q1 |
+S1841 F2 P1 C- Q1 |
+S3805 F0 P2 C- Q0 | the act made grafting
+S9310 F0 P2 C- Q0 | +a graft
+S2369 F1 P2 C- Q1 | +a knell
+S7562 F1 P2 C- Q1 | "a solemn toll for those who have passed"
+S7862 F0 P2 C- Q0 | the stocks made ripe; +a basket
+S8693 F0 P2 C- Q1 | +a bush, +a basket
+S8811 F2 P0 C- Q1 |
+S7300 F0 P0 C- Q1 | +a loaf of bread
+S9866 F1 P1 C- Q0 | style copied; "her ears"
+S1499 F1 P2 C- Q1 | "her ears twitch"
+S2354 F2 P0 C- Q1 |
+S4143 F1 P1 C- Q1 | "this relic"
+S5285 F0 P2 C- Q1 | -lesson; +"took what I could"
+S6838 F0 P2 C- Q1 | feeling replaced; +a weak beast
+S6949 F1 P2 C- Q1 | "far from well-kept"
+S7317 F2 P0 C- Q1 |
+S6077 F1 P1 C- Q0 | style copied
+S2865 F1 P0 C- Q0 | style copied
+S5134 F1 P1 C- Q2 | discreetly made "lightly"
+S4849 F1 P1 C- Q1 | discreetly made "lightly"
+S6492 F1 P0 C- Q1 | -discreetly
+S6952 F0 P2 C- Q0 | +a wick, a vat of grease
+S7082 F1 P1 C- Q1 | "warmth in others' eyes"
+S9377 F0 P2 C- Q1 | +people gathered; feeling turned wistful
+S9192 F1 P0 C- Q1 | +the village well
+S3939 F2 P0 C- Q1 |
+S1461 F2 P1 C- Q1 |
+S7240 F2 P1 C- Q1 |
+S8047 F0 P1 C- Q0 | +a nest; "I cackle"
+S1535 F0 P2 C- Q1 | +a nest, +hoots
+S9503 F1 P1 C- Q1 | -lesson
+S1421 F0 P2 C- Q1 | +smoke rising
+S4639 F0 P2 C- Q0 | +a graft
+S7999 F0 P2 C- Q1 | +a graft
+S1712 F1 P1 C- Q1 | +checking the straw
+S7361 F2 P0 C- Q1 |
+S4348 F1 P2 C- Q0 | setting copied; "tales of old in the stones"
+S2681 F0 P2 C- Q1 | intent reversed
+S4614 F1 P2 C- Q1 | "calls for a knell"
+S3917 F2 P1 C- Q1 |

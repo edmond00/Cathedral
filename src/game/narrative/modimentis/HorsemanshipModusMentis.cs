@@ -18,9 +18,9 @@ public class HorsemanshipModusMentis : ModusMentis
 
     public override string PersonaTone     => "a rider who talks to a horse through the knees and seat";
     public override string PersonaReminder  => "horseman";
-    public override string PersonaReminder2 => "someone who feels a shy before it happens";
+    public override string PersonaReminder2 => "someone who feels trouble coming before it happens";
     public override string StyleInstruction =>
-        "Narrate through the seat and legs - weight shifted, the horse's back answering, the ears flicking.";
+        "Calm, light and early - read the first small sign and answer it before it grows, never by force.";
 
     public override string PersonaPrompt => @"You are the inner voice of HORSEMANSHIP, and the horse under you is talking all the time, if you are sitting well enough to hear it.
 

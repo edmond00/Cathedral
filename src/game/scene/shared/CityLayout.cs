@@ -163,7 +163,7 @@ public static class CityLayout
             new[]
             {
                 new Way("Fair Ground", "A trampled open ground where the furs are sold at the fairs, empty between them", new[] { "open", "muddy", "cold" }),
-                new Way("Kremlin Yard", "The yard before the town's log stockade, a bell on a frame at its centre", new[] { "stockaded", "cold", "watchful" }),
+                new Way("Citadel Yard", "The yard before the town's log stockade, a bell on a frame at its centre", new[] { "stockaded", "cold", "watchful" }),
                 new Way("Horse Market", "A frozen square of horse-traders, steaming beasts tethered in rows", new[] { "frozen", "steaming", "loud" }),
                 new Way("Church Green", "A snowy green round an onion-domed wooden church", new[] { "snowy", "domed", "quiet" }),
             },
@@ -206,23 +206,24 @@ public static class CityLayout
     {
         string style = StyleOf(biome);
         int squares = size >= 3 ? 2 : 1;
-        int streets = Math.Clamp(2 + size + rng.Next(0, 2), 2, ClassicStreetCap(style));
+        int streets = Math.Clamp(1 + size + rng.Next(0, 2), 2, ClassicStreetCap(style));
         int alleys  = Math.Clamp(size - 1 + rng.Next(0, 2), 1, ClassicAlleyCap);
         return Lay(scene, rng, biome, style, squares, streets, alleys, sectionName);
     }
 
     /// <summary>
-    /// A city cell proper, of the given size (1 .. 3): two or three squares, seven to twelve streets,
-    /// two to five alleys and the gate - about thirteen, seventeen or twenty ways. Otherwise as
-    /// <see cref="Build"/>.
+    /// A city cell proper, of the given size (1 .. 3): one or two squares, four to seven streets, one to
+    /// three alleys and the gate - about eight, ten or twelve ways. It was twice that, which made a city
+    /// cell four hundred areas and every city the same city; a third of it keeps it the largest place in
+    /// the country and leaves room for two cities to differ. Otherwise as <see cref="Build"/>.
     /// </summary>
     public static CityPlan BuildDense(Scene scene, Random rng, string biome, int size, string sectionName)
     {
         string style = StyleOf(biome);
         var pools = Styles[style];
-        int squares = Math.Min(size >= 2 ? 3 : 2, pools.Squares.Length);
-        int streets = Math.Min(5 + 2 * size + rng.Next(0, 2), pools.Streets.Length);
-        int alleys  = Math.Min(1 + size + rng.Next(0, 2), pools.Alleys.Length);
+        int squares = Math.Min(size >= 3 ? 2 : 1 + rng.Next(0, 2), pools.Squares.Length);
+        int streets = Math.Min(3 + size + rng.Next(0, 2), pools.Streets.Length);
+        int alleys  = Math.Min(size + rng.Next(0, 1), pools.Alleys.Length);
         return Lay(scene, rng, biome, style, squares, streets, alleys, sectionName);
     }
 
@@ -303,7 +304,7 @@ public static class CityLayout
                         { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "drainage", ["listen"] = "water_voice" } }
                     : new FountainPointOfInterest("Fountain", new() { "A stone basin fed by a spout in a carved face, children splashing at its edge" },
                         new() { I(new WaterDraught()) }, new[] { "splashing", "carved", "central" })
-                        { Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "architecture", ["listen"] = "water_voice" } });
+                        { Play = new PaddlePlay(), Senses = SensoryProfile.Audible, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "architecture", ["listen"] = "water_voice" } });
                 pois.Add(new StatuePointOfInterest("Statue", new() { rng.NextDouble() < 0.5 ? "A weathered statue of a founder, his name worn off the plinth" : "A statue of a robed figure holding up a book, pigeons on its head" },
                     moods: new[] { "weathered", "proud", "pigeon-spattered" })
                     { Senses = SensoryProfile.Beautiful, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "archeology", ["contemplate"] = "vanitas" } });

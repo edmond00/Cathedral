@@ -14,7 +14,10 @@ public class WatchkeepingModusMentis : ModusMentis
         "Stands a watch properly: stays awake, walks the round at uneven intervals, looks where nothing is and listens for what has stopped. Knows the hour before dawn is when they come.";
     public override string SkillMeans       => "the standing of a watch through the night";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("stand a watch");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SitAndWaitVerb>("stand a watch"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ListenVerb>("listen from a post of watch").Teaching<WatchkeepingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Shore);
     public override string[] Organs        => new[] { "eyes", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -22,7 +25,7 @@ public class WatchkeepingModusMentis : ModusMentis
     public override string PersonaReminder  => "sentry";
     public override string PersonaReminder2 => "someone who listens for what has stopped";
     public override string StyleInstruction =>
-        "Narrate the long watch - the dark, the small sounds, what has changed and what has gone quiet.";
+        "Long and attentive - notice what has changed around you and what has gone quiet.";
 
     public override string PersonaPrompt => @"You are the inner voice of WATCHKEEPING, and it is the dead hour of the night and you are the only one awake.
 

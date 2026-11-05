@@ -368,7 +368,7 @@ public static class NeutralNarration
             : $"Nothing here draws my attention: what I want is to {WillStep(path.Goal, actor)}, "
             + $"and I must {WillStep(path.First, actor)} first.";
 
-    // ── Iterative thinking and doubt (ThinkingIterationsStat, DoubtStat) ──────────
+    // ── Iterative thinking and doubt (ModusMentis.Doubt) ──────────
 
     /// <summary>
     /// The reasoning of a retry within one thinking: the object was already named by the first
@@ -420,12 +420,14 @@ public static class NeutralNarration
 
     /// <summary>
     /// The intended action as a first-person "I will …" statement (e.g. "I will climb the tree").
-    /// When <paramref name="discrete"/> is true the adverb "discretely" is inserted ("I will
-    /// discretely climb the tree") to reflect a stealthy modus mentis. The styled rewrite is
+    /// When <paramref name="discrete"/> is true the adverb "discreetly" is inserted ("I will
+    /// discreetly climb the tree") to reflect a stealthy modus mentis. The styled rewrite is
     /// GBNF-forced to open with the "I will " prefix, which is then stripped to form the button label.
+    /// It was spelt "discretely" — separately, one at a time — which is not what a stealthy mind does,
+    /// and the rewrite is handed the word it is given.
     /// </summary>
     public static string ActionIntent(string verbVerbatim, bool discrete = false)
-        => discrete ? $"I will discretely {FirstPerson(verbVerbatim)}"
+        => discrete ? $"I will discreetly {FirstPerson(verbVerbatim)}"
                     : $"I will {FirstPerson(verbVerbatim)}";
 
     /// <summary>
@@ -444,18 +446,37 @@ public static class NeutralNarration
     // ── VerbAction outcomes ────────────────────────────────────────────────────────
     // actionDisplay is already a clean verb phrase (e.g. "climb the tree"), so it is used verbatim.
 
-    public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
-    {
-        var head = $"It is done! I succeeded to {FirstPerson(actionDisplay)}.";
-        var tail = OutcomeConsequences(outcomeVerbatims);
-        return tail.Length == 0 ? head : $"{head} Thanks to this success I {tail}.";
-    }
+    /// <summary>
+    /// "It is done! I managed to …". It said "I succeeded to …", which is not English; a model handed a
+    /// broken sentence copies it ("Succeeded to listen, learned to see earth's way") or repairs it in
+    /// its own direction. Measured as a change on its own (tools/prompts, 62 samples a side) it moved
+    /// nothing else: the lesson was lost as often, the copies out of the prompt as rare.
+    /// </summary>
+    public static string OutcomeSuccess(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null,
+                                        IReadOnlyList<string>? lessonVerbatims = null)
+        => $"It is done! I managed to {FirstPerson(actionDisplay)}."
+         + ConsequenceSentences("Thanks to this success I", outcomeVerbatims, lessonVerbatims);
 
-    public static string OutcomeFailure(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null)
+    public static string OutcomeFailure(string actionDisplay, IReadOnlyList<string>? outcomeVerbatims = null,
+                                        IReadOnlyList<string>? lessonVerbatims = null)
+        => $"Alas, I failed to {FirstPerson(actionDisplay)}."
+         + ConsequenceSentences("Due to this failure I", outcomeVerbatims, lessonVerbatims);
+
+    /// <summary>
+    /// " Thanks to this success I made my way to the coop. And I learned trailcraft." — the consequences
+    /// as one sentence, and a lesson (<see cref="Cathedral.Game.Narrative.Outcome.IsLesson"/>) in a
+    /// sentence of its own after them. Last in the comma list, the lesson was the clause a rewrite
+    /// dropped or replaced with what its name sounds like ("learned water voice" became "learned
+    /// earth's song"): 45% of outcome samples lost it, 34% with its own sentence (tools/prompts, 124
+    /// samples a side; blind fidelity no lower). A lesson with nothing before it stays where it was.
+    /// </summary>
+    private static string ConsequenceSentences(string lead, IReadOnlyList<string>? effects, IReadOnlyList<string>? lessons)
     {
-        var head = $"Alas, I failed to {FirstPerson(actionDisplay)}.";
-        var tail = OutcomeConsequences(outcomeVerbatims);
-        return tail.Length == 0 ? head : $"{head} Due to this failure I {tail}.";
+        var e = OutcomeConsequences(effects);
+        var l = OutcomeConsequences(lessons);
+        if (e.Length == 0 && l.Length == 0) return "";
+        if (e.Length == 0) return $" {lead} {l}.";
+        return l.Length == 0 ? $" {lead} {e}." : $" {lead} {e}. And I {l}.";
     }
 
     /// <summary>
@@ -489,10 +510,14 @@ public static class NeutralNarration
     /// back empty (every verbatim was bookkeeping) falls back to the feeling alone rather than
     /// producing a dangling "Because I ,".</para>
     /// </summary>
-    public static string Emotion(IReadOnlyList<string>? outcomeVerbatims, string feelsLike)
+    public static string Emotion(IReadOnlyList<string>? outcomeVerbatims, string feelsLike,
+                                 IReadOnlyList<string>? lessonVerbatims = null)
     {
         var tail = OutcomeConsequences(outcomeVerbatims);
-        return tail.Length == 0 ? feelsLike : $"I {tail}. {feelsLike}";
+        var lesson = OutcomeConsequences(lessonVerbatims);
+        if (tail.Length == 0 && lesson.Length == 0) return feelsLike;
+        if (tail.Length == 0) return $"I {lesson}. {feelsLike}";
+        return lesson.Length == 0 ? $"I {tail}. {feelsLike}" : $"I {tail}. And I {lesson}. {feelsLike}";
     }
 
     public static string PlausibilityFailure(string actionDisplay)
@@ -651,6 +676,14 @@ public static class NeutralNarration
          + "This is settled with a weapon or with the body, and that is neither.";
 
     /// <summary>
+    /// Neutral sentence for a weapon neither arm can bear. The weapon is right for the blow; the arm
+    /// is what fails it, so the wording names the weight and not the implement.
+    /// </summary>
+    public static string ItemCombinationTooHeavy(string itemWithArticle)
+        => $"I tried to swing {FirstPerson(itemWithArticle)} and could not. "
+         + "It is heavier than my arms can wield, and it dragged at my grip instead of striking.";
+
+    /// <summary>
     /// Neutral sentence for the middle case: the implement could be made to serve, and this body is
     /// not the one to make it. The critic passed a verdict the hands could not reach, so the
     /// wording must credit the idea and refuse the execution.
@@ -752,12 +785,6 @@ public static class NeutralNarration
     // Dialogue neutral text now lives on the dialogue tree nodes themselves (direct speech with
     // {scope:field} template tokens) and flows through Cathedral.Game.Dialogue.Runtime.DialogueTemplate
     // + DialogueReplicaWriter — not through this class.
-
-    // ── Critic ─────────────────────────────────────────────────────────────────
-
-    /// <summary>First-person critic verdict ("I think …"), matching the LLM reason's voice.</summary>
-    public static string CriticFailureReason()
-        => "I think this cannot be done as intended.";
 
     // ── Keyword helper ─────────────────────────────────────────────────────────
 

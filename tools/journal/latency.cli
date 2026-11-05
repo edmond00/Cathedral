@@ -1,0 +1,66 @@
+# The chronicler's cost to the narration, measured: one fixed scripted run with the real model, played
+# twice — with the chronicler and with --no-chronicler — and the [llm-timing] lines of the two log files
+# compared by tools/journal/latency.py. Not part of the suite: it needs the model and takes minutes.
+#
+# The `wait for` holds are a player reading: they are what gives the chronicler the quiet it waits for,
+# so the second visit's clicks land while it is writing the first visit up and have to preempt it.
+#
+# FLAGS: --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer" --cpu --no-llm-probe --llm-threads 4 --llm-seed 7
+
+wait mode MainMenu 900
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode WorldView 600
+
+# --- visit 1: the brewer ------------------------------------------------------------------
+travel here
+wait mode LocationInteraction 600
+advance 20 900
+wait for 6
+click keyword 0
+choose 0
+choose 0
+advance 20 900
+wait for 6
+click action 0
+choose 0
+advance 20 900
+click continue
+advance 20 900
+wait for 6
+state
+click button
+wait 600
+advance 20 900
+click button
+wait mode WorldView 600
+
+# --- the chronicler takes visit 1 up while the player reads the map ------------------------
+wait for 10
+
+# --- visit 2: every click below may land on a chronicler job and has to preempt it --------
+travel here
+wait mode LocationInteraction 600
+advance 20 900
+wait for 6
+click keyword 0
+choose 0
+choose 0
+advance 20 900
+wait for 6
+click action 0
+choose 0
+advance 20 900
+click continue
+advance 20 900
+wait for 8
+click button
+wait 600
+advance 20 900
+click button
+wait mode WorldView 600
+wait for 240
+inspect journal
+crash-report latency
+quit

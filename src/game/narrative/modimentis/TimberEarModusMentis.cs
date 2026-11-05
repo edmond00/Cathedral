@@ -18,9 +18,9 @@ public class TimberEarModusMentis : ModusMentis
 
     public override string PersonaTone     => "an ear that hears a building complain and takes it seriously";
     public override string PersonaReminder  => "strain-listening ear";
-    public override string PersonaReminder2 => "someone who left the room before the beam went";
+    public override string PersonaReminder2 => "someone who leaves before the trouble comes";
     public override string StyleInstruction =>
-        "Small sounds, large consequences - a creak, a tick, a note that was not there yesterday.";
+        "Small sounds, large consequences - notice whatever is newly wrong around you.";
 
     public override string PersonaPrompt => @"You are the inner voice of the TIMBER EAR, and you have walked out of two buildings that later fell down.
 

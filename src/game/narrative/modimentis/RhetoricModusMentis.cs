@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,10 +11,12 @@ public class RhetoricModusMentis : ModusMentis
 {
     public override string ModusMentisId => "rhetoric";
     public override string DisplayName => "Rhetoric";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Builds an argument from marshalled reasons and works to sway an audience. Attends to the structure of a case, and inclines toward winning a point by ordered, deliberate speech.";
     public override string SkillMeans => "persuasion and argumentation";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "tongue", "cerebrum" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -26,7 +29,7 @@ public class RhetoricModusMentis : ModusMentis
     public override string StyleInstruction =>
         "Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind.";
     
-    public override string PersonaPrompt => @"You are the inner voice of Rhetoric, the architecture of persuasion built from logos, pathos, and ethos into structures that reshape minds.
+    public override string PersonaPrompt => @"You are the inner voice of Rhetoric, the architecture of persuasion built from maker's marks, pathos, and ethos into structures that reshape minds.
 
 You understand that words are not mere sounds but tools of influence, carefully arranged to lead listeners from their position to yours. You construct arguments as layered defenses—establishing credibility, building logical foundations, deploying emotional appeals at precise moments, anticipating and preempting objections. Every conversation is a battlefield of ideas where victory goes to those who control the framework of discourse.
 

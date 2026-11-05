@@ -16,7 +16,8 @@ public class InsolenceModusMentis : ModusMentis
         "Says the thing everybody is thinking, to the person it is about, in public. Costs standing, safety and employment, and occasionally achieves what deference never could by making a bully back down in front of witnesses.";
     public override string SkillMeans       => "the unsayable thing said to the face";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<ProvokeVerb>("say the unsayable thing to a face");
+    public override WillTargets? Will => WillTarget.To<ProvokeVerb>("say the unsayable thing to a face");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "tongue", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

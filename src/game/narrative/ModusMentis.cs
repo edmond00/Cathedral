@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative;
@@ -98,7 +99,15 @@ public abstract class ModusMentis
     /// and the will attends only to the object of the path's first step and proposes only that step.
     /// See <c>WillPriority</c> for every place this narrows a choice.</para>
     /// </summary>
-    public virtual WillTarget? Will => null;
+    public virtual WillTargets? Will => null;
+
+    /// <summary>
+    /// The kinds of area a will belongs in — where a player would expect it to find something to do
+    /// (herblore: a forest, a meadow). Area types, never names. Read by <c>--will-audit</c>, which plans
+    /// the will from each and reports the share that has a way to a target: the related coverage.
+    /// Empty for a modus mentis that is not a will. <see cref="WillPlaces"/> holds the usual groups.
+    /// </summary>
+    public virtual IReadOnlyList<Type> WillPlaces => Array.Empty<Type>();
 
     /// <summary>Whether this modus mentis bears the <see cref="ModusMentisFunction.Will"/> function.</summary>
     public bool IsWill => Functions.Contains(ModusMentisFunction.Will);
@@ -111,6 +120,28 @@ public abstract class ModusMentis
 
     /// <summary>Whether this modus mentis may be chosen to think: the Thinking function, or a will.</summary>
     public bool CanThink => Functions.Contains(ModusMentisFunction.Thinking) || IsWill;
+
+    /// <summary>
+    /// How readily this mind thinks again within one thinking — the declaration behind iterative
+    /// thinking and doubt (<see cref="DoubtLevel"/>). Every modus mentis with the
+    /// <see cref="ModusMentisFunction.Thinking"/> function declares one, chosen for its persona: a mind
+    /// that questions itself, weighs and checks is <see cref="DoubtLevel.High"/>, a mind that knows at a
+    /// glance or acts on appetite is <see cref="DoubtLevel.Low"/>. Rule R23 makes the function and the
+    /// declaration imply each other.
+    ///
+    /// <para>A will is not asked: its goal is set by its course, so it never doubts, and it is
+    /// <see cref="DoubtLevel.Medium"/> — one more try of a step on its way when that step is refused.</para>
+    ///
+    /// <para><c>--doubt &lt;low|medium|high&gt;</c> overrides every mind's level, for scripts
+    /// (<see cref="EffectiveDoubt"/>).</para>
+    /// </summary>
+    public virtual DoubtLevel? Doubt => IsWill ? DoubtLevel.Medium : null;
+
+    /// <summary>
+    /// The level a thinking actually runs at: <c>--doubt</c> when given, else <see cref="Doubt"/>,
+    /// else <see cref="DoubtLevel.Low"/> (a mind that cannot think has nothing to retry).
+    /// </summary>
+    public DoubtLevel EffectiveDoubt => Config.Debug.DoubtOverride ?? Doubt ?? DoubtLevel.Low;
 
 
     public int Level { get; set; }                    // current level; capped by GetMaxLevelForModusMentis (random initial)
@@ -132,11 +163,19 @@ public abstract class ModusMentis
 
     /// <summary>
     /// Whether this modus mentis carries out its actions discreetly (quietly, out of sight).
-    /// A discrete modus mentis is one step harder to notice: it prepends "discretely" to its action
+    /// A discrete modus mentis is one step harder to notice: it prepends "discreetly" to its action
     /// text and, in the effective-proximity model, downgrades a nearby witness/threat by one level
     /// (Visual→Audio, Audio→None). Defaults to false; override to true on stealthy modiMentis.
     /// </summary>
     public virtual bool ActsDiscretely => false;
+
+    /// <summary>
+    /// The ways of speaking this mind's narration is rewritten into after the forbidden words are gone
+    /// ("aye", "naught", "bairn"), first listed winning where two replace the same word. Empty for
+    /// most: a register is a flavour for a mind whose voice is unmistakable, not a default. See
+    /// <see cref="Sanitizer.PersonaFlavour"/>.
+    /// </summary>
+    public virtual IReadOnlyList<Sanitizer.Register> Registers => Array.Empty<Sanitizer.Register>();
 
     /// <summary>
     /// Persona prompt for LLM (only for Observation and Thinking modiMentis).
@@ -163,6 +202,12 @@ public abstract class ModusMentis
     /// A paraphrase of <see cref="PersonaReminder"/> used at the end of prompts as
     /// "Stay in the character of [PersonaReminder2]." — a different angle on the same persona.
     /// Example: "someone who never misses a detail", "a mind that measures everything it touches".
+    ///
+    /// <para><b>A disposition, not a picture.</b> Whatever it names, the model puts in the scene:
+    /// "someone who finds the hidden nest by listening" put a nest in nine answers of sixteen,
+    /// "someone who stops at lit windows" a window in a forge. Say how the persona is — "someone who
+    /// listens before looking and is rarely surprised" — and name none of its things.
+    /// <see cref="PersonaLint"/> fails <c>--mm-audit</c> on a reminder naming two concrete nouns.</para>
     /// </summary>
     public virtual string? PersonaReminder2 => null;
 
@@ -176,6 +221,16 @@ public abstract class ModusMentis
     /// IMPORTANT: describe ONLY figurative/stylistic licence or optional inner feelings here.
     /// NEVER instruct the model to add literal facts, names, objects or events — that would break the
     /// "keep every literal fact, invent nothing" contract the rewrite prompt also enforces.
+    ///
+    /// <para><b>A manner, then a lens on whatever is in the scene</b> — "Slow, patient and exact -
+    /// judge things by the patience in them, well made or rank." Never the persona's own objects or
+    /// acts, and never "Use images of…" or "Narrate the…", which open a list of them: the model treats
+    /// what a style names as present. "Use images of rendering fat, the dip and the cooling coat,
+    /// wicks, wax and the steady flame" turned a greeting into a candle dipped twenty times; across the
+    /// catalogue, the more things a style named the more of them reached scenes that held none
+    /// (tools/prompts, NOTES.md, "Persona fields"). The manner is what a one-line action can still
+    /// carry without inventing an act for it. <see cref="PersonaLint"/> fails <c>--mm-audit</c> on a
+    /// style naming two concrete nouns or opening such a list.</para>
     ///
     /// The base value preserves the old generic behaviour for modiMentis without a persona.
     /// </summary>
@@ -217,6 +272,39 @@ public readonly record struct ModusMentisXpAward(
 }
 
 /// <summary>
+/// How many times a thinking modus mentis tries again within one thinking when what it proposed comes
+/// to nothing — the acting modus mentis refused it, a coded rule would refuse it, or the player doubted
+/// it — and whether the player may doubt it at all. Declared per thinking modus mentis
+/// (<see cref="ModusMentis.Doubt"/>), for its persona.
+///
+/// <list type="bullet">
+/// <item><b>Low</b> — one try: no doubt and no retry. A refusal ends the thinking.</item>
+/// <item><b>Medium</b> — one more try, spent either by a refusal or by the player's NO.</item>
+/// <item><b>High</b> — two more tries, spent the same way.</item>
+/// </list>
+///
+/// <para>The player may doubt while a try remains, so Medium and High both doubt and Low never does.
+/// A YES spends nothing. Each retry is a fresh choice of goal and means, with every pair already tried
+/// crossed off. The whole chain is one thinking and costs one noetic point. See
+/// <c>ThinkingExecutor.GenerateThinkingAsync</c>.</para>
+/// </summary>
+public enum DoubtLevel
+{
+    Low    = 0,
+    Medium = 1,
+    High   = 2,
+}
+
+public static class DoubtLevelExtensions
+{
+    /// <summary>How many times a thinking at this level may try again: 0, 1 or 2.</summary>
+    public static int Retries(this DoubtLevel level) => (int)level;
+
+    /// <summary>Whether the player may doubt what a thinking at this level proposes.</summary>
+    public static bool MayDoubt(this DoubtLevel level) => level > DoubtLevel.Low;
+}
+
+/// <summary>
 /// ModusMentis functions determine when and how a modusMentis is used.
 /// ModiMentis can have multiple functions.
 /// </summary>
@@ -228,5 +316,6 @@ public enum ModusMentisFunction
     Speaking,      // Generates player dialogue replicas in conversation
     Fighting,      // Declarative: this modusMentis unlocks fighting skills (main or secondary)
     Emotion,       // Reacts to what an action produced: declares outcome types that move the spleen
-    Will           // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Will,          // Observes and thinks toward one target action only (ModusMentis.Will, ActionPathPlanner)
+    Craft          // Works one station with one tool: unlocks USE on it and its recipes (CraftingModusMentis)
 }

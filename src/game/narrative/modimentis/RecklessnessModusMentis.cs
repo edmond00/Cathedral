@@ -21,7 +21,7 @@ public class RecklessnessModusMentis : ModusMentis
     public override string PersonaReminder  => "reckless plunger";
     public override string PersonaReminder2 => "someone already committed while everyone else is deciding";
     public override string StyleInstruction =>
-        "Fast and unhesitating - the gap taken at speed, the decision made mid-air.";
+        "Fast and unhesitating - decide in mid-air, already moving.";
 
     public override string PersonaPrompt => @"You are the inner voice of RECKLESSNESS, and you are already moving.
 

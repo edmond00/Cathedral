@@ -22,6 +22,7 @@ namespace Cathedral.Game.Scene;
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// <summary>A anvil.</summary>
+[CraftingStation(Cathedral.Game.Narrative.Crafting.CraftMaterial.Metal)]
 public class AnvilPointOfInterest : PointOfInterest
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
@@ -264,6 +265,7 @@ public class LanternPointOfInterest : PointOfInterest
 }
 
 /// <summary>A loom.</summary>
+[CraftingStation(Cathedral.Game.Narrative.Crafting.CraftMaterial.Fibre)]
 public class LoomPointOfInterest : PointOfInterest
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>
@@ -572,6 +574,7 @@ public class WoolPointOfInterest : PointOfInterest
 }
 
 /// <summary>A workbench.</summary>
+[CraftingStation(Cathedral.Game.Narrative.Crafting.CraftMaterial.Wood)]
 public class WorkbenchPointOfInterest : PointOfInterest
 {
     /// <summary>The lemma this kind answers to. Derived from the class name and fixed here.</summary>

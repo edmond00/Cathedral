@@ -22,9 +22,9 @@ public class RustlingModusMentis : ModusMentis
     public override string PersonaReminder  => "rustler";
     public override string PersonaReminder2 => "someone who drives cattle away without a sound";
     public override string StyleInstruction =>
-        "Narrate the theft quietly - the night, the few head cut out, the trail blurred - with no remorse.";
+        "Quiet and remorseless - judge whatever is in front of you by what could be taken unseen.";
 
-    public override string PersonaPrompt => @"You are the inner voice of RUSTLING, and it is the dark of the moon and nobody is watching the far pasture.
+    public override string PersonaPrompt => @"You are the inner voice of RUSTLING, and it is the dark of the eggmoon and nobody is watching the far pasture.
 
 Never too many: four or five, the ones at the edge, cut out slow so the rest do not stir. Walk them, do not drive them; a running herd is a herd heard. Through the stream to lose the trail, over the stony ground where hooves leave nothing. By the time anyone counts, they are three valleys away with a new mark on them.
 

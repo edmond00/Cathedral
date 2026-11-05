@@ -60,13 +60,22 @@ public static class KeywordExtractor
     /// <para>Nothing is withheld on account of what another object of the same block chose. Two
     /// sentences about two men both offer "man", each wired to its own man, because the anchor rides
     /// on the sentence rather than on a per-block table keyed by the word.</para>
+    ///
+    /// <para><paramref name="flavourLemmas"/> is the voice the text was rewritten into
+    /// (<see cref="Sanitizer.PersonaFlavour.KeywordLemmas"/>): a word it wrote in place of a noun is
+    /// read as that noun, so "steed" names the horse it replaced and becomes its keyword.</para>
     /// </summary>
     public static List<string> ExtractKeywords(string text, string referenceLemma, int count, string? ownName = null,
-                                               bool isPerson = false)
+                                               bool isPerson = false,
+                                               IReadOnlyDictionary<string, string>? flavourLemmas = null)
     {
         if (string.IsNullOrWhiteSpace(text) || count <= 0) return new List<string>();
 
         var candidates = NounExtractor.ExtractKeywordCandidates(text);
+        if (flavourLemmas != null)
+            candidates = candidates
+                .Select(c => flavourLemmas.TryGetValue(c.Surface.ToLowerInvariant(), out var lemma) ? (c.Surface, lemma) : c)
+                .ToList();
         var refLemma = (referenceLemma ?? string.Empty).ToLowerInvariant().Trim();
 
         // No candidate words at all → longest word fallback (a single keyword only).

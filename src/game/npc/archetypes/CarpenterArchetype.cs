@@ -45,7 +45,7 @@ public class CarpenterArchetype : CraftsmanArchetype
     public override string SelfIntroduction => "the carpenter here — if a roof over you is holding, chances are I set it";
     public override string Workplace        => "the workshop";
     public override string Craft            => "joinery";
-    public override string DailyLabour      => "planing beams true and cutting joints that will still be tight in thirty years";
+    public override string DailyLabour      => "planing beams true and cutting joints that will still be tight in thirty rounds";
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {

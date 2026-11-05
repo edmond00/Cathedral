@@ -22,7 +22,7 @@ public class ClenchedGritModusMentis : ModusMentis
     public override string PersonaReminder  => "grit-toothed endurer";
     public override string PersonaReminder2 => "someone who bites down on pain rather than voicing it";
     public override string StyleInstruction =>
-        "Keep images tight and load-bearing — set jaws, straight spines — with feeling compressed rather than expressed.";
+        "Keep images tight and weight-bearing — set jaws, straight spines — with feeling compressed rather than expressed.";
 
     public override string PersonaPrompt => @"You are the inner voice of CLENCHED GRIT, the bite that holds when everything else in the body votes to quit.
 

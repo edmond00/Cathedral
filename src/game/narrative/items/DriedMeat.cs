@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,14 +6,15 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class DriedMeat : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "dried_meat";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Dried Meat";
     public override string Article     => "some";
     public override string Description => "A strip of salted dark meat, hard and leathery, smelling of brine";
     public override ConsumableType ConsumableType => ConsumableType.Food;
     public override bool IsHard => true;
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
-    public override int PriceReference => 10;
     protected override HumorRichness Richness => HumorRichness.Rich;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(40).Add<SaltHumor>(35).Add<FatHumor>(25);

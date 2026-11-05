@@ -1,0 +1,96 @@
+# round 8 (no style in the request vs fresh base), scored blind
+# talk_blacksmith:012:loose:pedant_reminder
+S2500 F0 P0 C- Q0 | the smith's worry made mine; garbled
+S9438 F0 P0 C0 Q1 | the smith made a man; +tales of old
+S1580 F0 P0 C0 Q1 | the smith made a man
+S7049 F1 P0 C- Q1 |
+# village_noon_party:009:loose:greed_bare
+S8171 F2 P0 C- Q2 |
+S9651 F2 P0 C- Q1 |
+S2767 F2 P0 C- Q2 |
+S8485 F1 P0 C- Q1 | +craftsmen
+# talk_farm:005:swap:courtesy
+S5619 F0 P0 C- Q1 | +fields with new life, the coming harvest
+S7202 F2 P0 C- Q2 |
+S7934 F0 P0 C- Q1 | +a field of ripening oats
+S8272 F0 P1 C- Q0 | style acted out ("greetings and precedence already observed")
+# village_dawn:004:own
+S3365 F0 P1 C- Q0 | lesson replaced ("learned to listen truly")
+S1811 F0 P1 C- Q0 | lesson replaced ("earth's song")
+S2491 F0 P1 C- Q0 | lesson replaced ("the field's heart")
+S7768 F0 P0 C- Q0 | "my voice clear as stone"; -lesson
+# forest_evening:007:own
+S2231 F1 P0 C- Q1 | "lore learning"
+S9907 F0 P1 C- Q0 | +cut the snail
+S5728 F1 P0 C- Q1 |
+S6916 F1 P1 C- Q1 | +its place in the forest
+# talk_blacksmith:004:swap:stoneface
+S8083 F0 P0 C- Q1 | lesson replaced ("the ways of our village"); -Rachel
+S6999 F1 P2 C- Q1 | +her eyes held a spark
+S1557 F0 P2 C- Q1 | +her eyes found me, eager; -lesson
+S9628 F0 P0 C- Q1 | +her warm smile; -lesson
+# talk_blacksmith:005:swap:dread
+S4493 F1 P1 C- Q1 | +the village too quiet
+S9277 F1 P0 C- Q0 | garbled
+S7831 F0 P1 C- Q0 | style copied
+S2032 F0 P1 C- Q0 | feeling replaced ("heavier")
+# village_noon_party:009:own
+S1143 F2 P0 C- Q2 |
+S1124 F2 P0 C- Q1 |
+S9357 F0 P1 C- Q0 | +hands in dirt, smoke from hearths
+S6912 F0 P1 C- Q1 | +the smith's and the scribe's hands
+# forest_evening:011:own
+S2124 F2 P2 C- Q2 |
+S4684 F1 P0 C- Q2 | cut made take
+S1384 F2 P2 C- Q1 |
+S6306 F1 P2 C- Q1 | +a beam
+# village_noon_party:003:own
+S6765 F1 P2 C- Q2 | +"as in my childhood"
+S9642 F0 P2 C- Q1 | +the storm
+S3609 F0 P2 C- Q1 | +preceptor, +the storm
+S1355 F1 P2 C- Q1 | +"as in my childhood"
+# farm_night:015:loose:greed_bare
+S1221 F1 P0 C- Q1 | lesson blurred
+S4571 F1 P0 C- Q1 | +hidden path; -lesson
+S6104 F2 P0 C- Q1 |
+S4723 F0 P0 C- Q1 | +treasures within
+# farm_night:003:own
+S9367 F1 P1 C- Q1 |
+S5943 F0 P1 C- Q1 | +its keys
+S1689 F0 P1 C- Q0 | persona prompt copied ("the column must be balanced"); +tools and supplies
+S5633 F0 P1 C- Q0 | persona prompt copied ("one short column")
+# talk_blacksmith:005:own
+S5466 F0 P1 C- Q0 | style copied
+S4335 F0 P1 C- Q0 | instruction clause and system rule copied
+S8884 F0 P1 C- Q1 | +accepted their offer; feeling replaced ("heavier")
+S3345 F0 P1 C- Q0 | +a blade of silver from a hawk's wing
+# farm_dusk:005:own
+S4490 F2 P1 C- Q1 |
+S5364 F1 P1 C- Q2 | -trailcraft
+S1791 F1 P1 C- Q1 | -trailcraft
+S8188 F0 P1 C- Q0 | system rule copied ("iron and myth-filled land")
+# farm_night:007:swap:keen_nose
+S8357 F0 P2 C- Q1 | +a spring when illness lingered
+S2719 F0 P2 C- Q1 | +straw, droppings, a spring
+S1041 F1 P1 C- Q0 |
+S5370 F1 P1 C- Q0 |
+# farm_night:009:own
+S4918 F1 P2 C- Q2 | +feeding time
+S2445 F2 P0 C- Q2 |
+S8263 F1 P2 C- Q1 | +the pen, +each animal
+S3133 F2 P1 C- Q2 |
+# talk_blacksmith:002:own
+S6589 F1 P1 C1 Q1 | "a craftsman ... her"
+S6745 F1 P1 C- Q0 |
+S1482 F2 P1 C1 Q1 |
+S2603 F1 P1 C1 Q1 | +shared knowledge
+# farm_night:014:swap:cutpurse
+S3446 F2 P0 C- Q2 |
+S2051 F2 P0 C- Q2 |
+S3560 F0 P1 C- Q0 | style copied
+S9286 F0 P1 C- Q0 | style copied
+# farm_dusk:003:loose:greed_bare
+S5015 F2 P0 C- Q0 |
+S9690 F2 P0 C- Q0 | "will trod"
+S5727 F2 P0 C- Q1 |
+S8766 F2 P0 C- Q0 |

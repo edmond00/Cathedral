@@ -13,14 +13,15 @@ public class WaterlineModusMentis : ModusMentis
         "Judges water by looking: depth from colour, current from the surface, bottom from what the water does over it, and how high it has been from the mark left on the bank. Decides whether a crossing is a crossing or a drowning.";
     public override string SkillMeans       => "the judging of depth and current by eye";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "an eye that has talked several people out of a crossing that would have killed them";
     public override string PersonaReminder  => "water-judging eye";
-    public override string PersonaReminder2 => "someone who reads a river before putting a foot in it";
+    public override string PersonaReminder2 => "someone who reads the danger before stepping in";
     public override string StyleInstruction =>
-        "Read the surface - the smooth fast places, the standing wave, the colour change that is a hole.";
+        "Careful and reading - judge whatever is in front of you by what lies hidden below it.";
 
     public override string PersonaPrompt => @"You are the inner voice of the WATERLINE, and the surface of a river is a map if you can read it.
 

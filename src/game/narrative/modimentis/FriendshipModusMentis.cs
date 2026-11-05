@@ -17,7 +17,8 @@ public class FriendshipModusMentis : ModusMentis
         "Reaches for trust and easy companionship, reading how a bond might be built or deepened. Inclines toward warmth and loyalty, and takes another as a possible ally rather than an obstacle.";
     public override string SkillMeans       => "warm and open friendliness";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<StrengthenRelationshipVerb>("make a friend");
+    public override WillTargets? Will => WillTarget.To<StrengthenRelationshipVerb>("make a friend");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Settled);
     public override string[] Organs        => new[] { "heart", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -28,7 +29,7 @@ public class FriendshipModusMentis : ModusMentis
     public override string PersonaReminder  => "open-hearted comrade";
     public override string PersonaReminder2 => "someone who treats new acquaintance as future fellowship";
     public override string StyleInstruction =>
-        "Use warm images of companionship and welcome, with an open-hearted hope of friendship to come.";
+        "Warm and open-hearted - meet whoever is in front of you with welcome and the hope of friendship.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

@@ -36,7 +36,7 @@ public static class BuildingFactory
     {
         var kind   = spec.Kind;
         var mat    = spec.Material ?? BuildingDescriptions.RollMaterial(kind, rng);
-        int floors = RollFloors(kind, rng);
+        int floors = spec.Style is { } style0 ? StyleFloors(style0, rng) : RollFloors(kind, rng);
         int beds   = Math.Max(1, spec.BedCount);
 
         var allRooms   = new List<Area>();
@@ -52,7 +52,7 @@ public static class BuildingFactory
         allRooms.Add(hall);
 
         // ── Service rooms ─────────────────────────────────────────────────────
-        foreach (var role in RollServiceRooms(kind, floors, rng))
+        foreach (var role in spec.Style is { } style ? StyleRooms(style, floors, rng) : RollServiceRooms(kind, floors, rng))
         {
             var room = BuildingRooms.Build(role, spec.RoomPrefix, kind, mat, 1);
             groundInner.Add((room, role));
@@ -298,6 +298,51 @@ public static class BuildingFactory
         front.PointsOfInterest.Add(door);
         back.PointsOfInterest.Add(door);
         return door;
+    }
+
+    private static int StyleFloors(DwellingStyle style, Random rng) => style switch
+    {
+        DwellingStyle.Cottage       => 1,
+        DwellingStyle.ByreHouse     => rng.NextDouble() < 0.5 ? 2 : 1,
+        DwellingStyle.Tenement      => rng.NextDouble() < 0.5 ? 3 : 2,
+        DwellingStyle.WorkshopHouse => 2,
+        DwellingStyle.TownHouse     => 2,
+        _                           => rng.NextDouble() < 0.40 ? 2 : 1,
+    };
+
+    /// <summary>The ground rooms a dwelling of <paramref name="style"/> has beside its hall.</summary>
+    private static IEnumerable<RoomRole> StyleRooms(DwellingStyle style, int floors, Random rng)
+    {
+        switch (style)
+        {
+            case DwellingStyle.Cottage:
+                yield return RoomRole.Yard;
+                if (rng.NextDouble() < 0.5) yield return RoomRole.Pantry;
+                if (rng.NextDouble() < 0.35) yield return RoomRole.Byre;
+                break;
+            case DwellingStyle.ByreHouse:
+                yield return RoomRole.Byre;
+                if (floors >= 2) yield return RoomRole.Loft;
+                else if (rng.NextDouble() < 0.5) yield return RoomRole.Store;
+                break;
+            case DwellingStyle.Tenement:
+                yield return RoomRole.Store;
+                yield return RoomRole.Loft;
+                break;
+            case DwellingStyle.WorkshopHouse:
+                yield return RoomRole.Workroom;
+                yield return RoomRole.Kitchen;
+                break;
+            case DwellingStyle.TownHouse:
+                yield return RoomRole.Parlour;
+                yield return RoomRole.Kitchen;
+                if (rng.NextDouble() < 0.6) yield return RoomRole.Pantry;
+                if (rng.NextDouble() < 0.5) yield return RoomRole.Cellar;
+                break;
+            default:
+                foreach (var r in RollServiceRooms(BuildingKind.House, floors, rng)) yield return r;
+                break;
+        }
     }
 
     private static int RollFloors(BuildingKind kind, Random rng) => kind switch

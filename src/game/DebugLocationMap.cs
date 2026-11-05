@@ -567,6 +567,8 @@ public sealed class DebugLocationMap
                     LineColor(grid.NetA[c], known));
         }
 
+        PaintExit(Put);
+
         // Areas over everything: a card, the name on a coloured band, the detail under it.
         foreach (var (area, (bx, by)) in _boxAt)
         {
@@ -876,6 +878,7 @@ public sealed class DebugLocationMap
         int failed = RouteAll(_grid, _links, weights);
         _layoutNets = _netDashed.Count;
         foreach (var link in _links) SetPath(_grid, link);
+        LayExit(scene);
 
         Console.WriteLine($"DebugLocationMap: laid out {_boxAt.Count} areas in {_sectionBoxes.Count} sections, " +
                           $"{_links.Count} lines ({failed} unroutable), {_viewLinks.Count} views, canvas {_canvasW}x{_canvasH}");
@@ -1041,6 +1044,239 @@ public sealed class DebugLocationMap
         return steps;
     }
 
+    // ── The way in and out ───────────────────────────────────────────────────
+
+    /// <summary>
+    /// Where the location is left and entered: the glyph a fight arena's exit uses, out in the margin
+    /// past every section, with a line from the card of the area the location is entered by.
+    /// </summary>
+    public const char ExitGlyph = '⎆';   // ⎆
+
+    private static readonly Vector4 ExitInk     = Config.Colors.GoldYellow;
+    private static readonly Vector4 ExitInkDim  = new(0.44f, 0.36f, 0.06f, 1f);
+    private static readonly Vector4 ExitGround  = new(0.16f, 0.11f, 0.0f, 1f);
+    private static readonly Vector4 ExitLine    = new(0.62f, 0.50f, 0.10f, 1f);
+    private const int ExitBlinkMs = 400;
+
+    /// <summary>The area the location is entered by, as the layout found it.</summary>
+    private Area? _entryArea;
+
+    /// <summary>The way out, cell by cell: from the entry card's middle to the exit glyph, both included.</summary>
+    private readonly List<(int X, int Y)> _exitPath = new();
+
+    /// <summary>The way out's line cells outside the card, by canvas index, for the pointer's label.</summary>
+    private readonly HashSet<int> _exitCells = new();
+
+    /// <summary>The canvas cell of the exit glyph, or null when no way out could be laid.</summary>
+    private (int X, int Y)? ExitCell => _exitPath.Count > 1 ? _exitPath[^1] : null;
+
+    /// <summary>The exit glyph's canvas cell for <paramref name="scene"/>, laying it out first; null when it has none.</summary>
+    public (int X, int Y)? ExitCellOf(Scene.Scene scene)
+    {
+        if (scene.Sections.Count == 0) return null;
+        EnsureLayout(scene);
+        return ExitCell;
+    }
+
+    /// <summary>The area the location is entered and left by, as the map has it.</summary>
+    public Area? EntryAreaOf(Scene.Scene scene)
+    {
+        if (scene.Sections.Count == 0) return null;
+        EnsureLayout(scene);
+        return _entryArea;
+    }
+
+    /// <summary>
+    /// Lays the way out: the shortest run on the grid from the middle of the entry card to the
+    /// margin round the canvas, outside every section. It crosses a section's edge straight, crosses a
+    /// line straight over and never runs along one, and turns as little as it can — the same rules
+    /// the lines keep, so it reads as one more of them. Nothing is laid when no such run exists.
+    /// </summary>
+    private void LayExit(Scene.Scene scene)
+    {
+        _exitPath.Clear();
+        _exitCells.Clear();
+        _entryArea = Scene.SceneSyntheticGraphFactory.ResolveEntryArea(scene);
+        if (_entryArea == null || !_boxAt.TryGetValue(_entryArea, out var box)) return;
+
+        var g = _grid;
+        int w = g.W, h = g.H;
+        bool OwnBox(int x, int y) => x >= box.X && x < box.X + BoxW && y >= box.Y && y < box.Y + BoxH;
+        bool Goal(int x, int y) => x == 1 || y == 1 || x == w - 2 || y == h - 2;
+
+        // Dijkstra over (cell, direction entered by): turning and crossing are charged, so the state
+        // has to know which way it came.
+        int states = w * h * 4;
+        var dist = new float[states];
+        var parent = new int[states];
+        Array.Fill(dist, float.MaxValue);
+        Array.Fill(parent, -1);
+        var queue = new PriorityQueue<int, float>();
+        var (mx, my) = Middle(_entryArea);
+        for (int d = 0; d < 4; d++)
+        {
+            int st = (my * w + mx) * 4 + d;
+            dist[st] = 0;
+            queue.Enqueue(st, 0);
+        }
+
+        int found = -1;
+        while (queue.TryDequeue(out int st, out float cost))
+        {
+            if (cost > dist[st]) continue;
+            int c = st / 4, dir = st % 4, x = c % w, y = c / w;
+            if (!OwnBox(x, y) && Goal(x, y)) { found = st; break; }
+            // A line crossed is crossed straight over: no turn on it.
+            bool onLine = !OwnBox(x, y) && g.NetA[c] != -1;
+            for (int d = 0; d < 4; d++)
+            {
+                if (onLine && d != dir) continue;
+                if (d == (dir + 2) % 4 && cost > 0) continue;
+                int nx = x + DX[d], ny = y + DY[d];
+                if (!g.InBounds(nx, ny)) continue;
+                int nc = ny * w + nx;
+                float step = 1f;
+                if (!OwnBox(nx, ny))
+                {
+                    bool vertical = d is N or S;
+                    switch (g.Kind[nc])
+                    {
+                        case Cell.Box:
+                        case Cell.Hard:
+                            continue;
+                        case Cell.HBorder when !vertical:
+                        case Cell.VBorder when vertical:
+                            continue;
+                        case Cell.HBorder:
+                        case Cell.VBorder:
+                            step += CrossBorderCost;
+                            break;
+                        case Cell.BesideBox:
+                            if (!OwnBoxRing(nx, ny)) step += BesideBoxCost;
+                            break;
+                    }
+                    if (g.NetA[nc] != -1)
+                    {
+                        // Only straight over a single straight line.
+                        int across = vertical ? Horizontal : Vertical;
+                        if (g.NetB[nc] != -1 || g.MaskA[nc] != across) continue;
+                        step += CrossLineCost;
+                    }
+                }
+                if (cost > 0 && d != dir) step += TurnCost;
+                int ns = nc * 4 + d;
+                float nd = cost + step;
+                if (nd < dist[ns])
+                {
+                    dist[ns] = nd;
+                    parent[ns] = st;
+                    queue.Enqueue(ns, nd);
+                }
+            }
+        }
+        if (found < 0)
+        {
+            Console.WriteLine($"DebugLocationMap: no way out could be laid from '{_entryArea.DisplayName}'");
+            return;
+        }
+
+        var cells = new List<(int X, int Y)>();
+        for (int st = found; st >= 0; st = parent[st])
+        {
+            int c = st / 4;
+            if (cells.Count == 0 || cells[^1] != (c % w, c / w)) cells.Add((c % w, c / w));
+        }
+        cells.Reverse();
+        _exitPath.AddRange(cells);
+        foreach (var (x, y) in cells)
+            if (!OwnBox(x, y)) _exitCells.Add(y * w + x);
+
+        // Laid on the grid as a net of its own, so the views routed later cross it as they cross any
+        // line rather than run along it.
+        int net = _netDashed.Count;
+        _netDashed.Add(false);
+        _netView.Add(false);
+        for (int i = 0; i < cells.Count; i++)
+        {
+            var (x, y) = cells[i];
+            if (OwnBox(x, y)) continue;
+            int bits = 0;
+            foreach (int j in new[] { i - 1, i + 1 })
+            {
+                if (j < 0 || j >= cells.Count) continue;
+                for (int d = 0; d < 4; d++)
+                    if (cells[j].X == x + DX[d] && cells[j].Y == y + DY[d]) bits |= 1 << d;
+            }
+            g.Add(y * w + x, net, bits);
+        }
+        _layoutNets = _netDashed.Count;
+
+        bool OwnBoxRing(int x, int y) => x >= box.X - 1 && x <= box.X + BoxW && y >= box.Y - 1 && y <= box.Y + BoxH;
+    }
+
+    /// <summary>The way out's line and the blinking exit glyph at its end.</summary>
+    private void PaintExit(Action<int, int, char, Vector4, Vector4?> put)
+    {
+        if (ExitCell is not { } exit) return;
+        for (int i = 0; i < _exitPath.Count - 1; i++)
+        {
+            var (x, y) = _exitPath[i];
+            int c = y * _canvasW + x;
+            if (!_exitCells.Contains(c)) continue;
+            int mask = 0;
+            foreach (int j in new[] { i - 1, i + 1 })
+            {
+                if (j < 0) continue;
+                var (ox, oy) = _exitPath[j];
+                for (int d = 0; d < 4; d++)
+                    if (ox == x + DX[d] && oy == y + DY[d]) mask |= 1 << d;
+            }
+            // A line already there is crossed: the crossing glyph, in the way out's colour.
+            var grid = _overlay ?? _grid;
+            char glyph = grid.NetB[c] != -1 ? '╋' : LineGlyph(mask, dashed: false);
+            put(x, y, glyph, ExitLine, null);
+        }
+        bool lit = Environment.TickCount64 / ExitBlinkMs % 2 == 0;
+        put(exit.X, exit.Y, ExitGlyph, lit ? ExitInk : ExitInkDim, ExitGround);
+    }
+
+    /// <summary>
+    /// The party coming in: from the exit glyph along the way in to the middle of the entry card.
+    /// Empty when the map has no way out laid, or <paramref name="entry"/> is not the area it starts from.
+    /// </summary>
+    public List<WalkStep> WalkIn(Scene.Scene scene, Area entry)
+    {
+        var steps = new List<WalkStep>();
+        if (scene.Sections.Count == 0) return steps;
+        EnsureLayout(scene);
+        if (ExitCell == null || _entryArea == null || entry.Id != _entryArea.Id) return steps;
+        for (int i = _exitPath.Count - 1; i >= 0; i--)
+            steps.Add(new WalkStep(_exitPath[i].X, _exitPath[i].Y, entry, -1));
+        return steps;
+    }
+
+    /// <summary>
+    /// The party leaving: from <paramref name="from"/> along <paramref name="hops"/> (as
+    /// <see cref="Walk"/> takes them) and on from the entry card out to the exit glyph. When the walk
+    /// does not end on the entry card (no known way to it), the last step is a jump to the glyph.
+    /// Empty when the map has no way out laid.
+    /// </summary>
+    public List<WalkStep> WalkOut(Scene.Scene scene, Area from, IReadOnlyList<(Area To, string? Link)> hops)
+    {
+        if (scene.Sections.Count == 0) return new();
+        EnsureLayout(scene);
+        if (ExitCell is not { } exit || _entryArea == null || !_boxAt.ContainsKey(from)) return new();
+        var steps = hops.Count > 0 ? Walk(scene, from, hops) : new List<WalkStep>();
+        if (steps.Count == 0) steps.Add(new WalkStep(Middle(from).X, Middle(from).Y, from, -1));
+        var last = steps[^1];
+        if (last.Here.Id == _entryArea.Id)
+            foreach (var (x, y) in _exitPath.Skip(1))
+                steps.Add(new WalkStep(x, y, last.Here, last.Hop));
+        else
+            steps.Add(new WalkStep(exit.X, exit.Y, last.Here, last.Hop));
+        return steps;
+    }
+
     /// <summary>Towards white by <paramref name="k"/> (towards black when negative).</summary>
     private static Vector4 Lift(Vector4 c, float k)
         => k >= 0 ? new(c.X + (1 - c.X) * k, c.Y + (1 - c.Y) * k, c.Z + (1 - c.Z) * k, 1f)
@@ -1093,6 +1329,9 @@ public sealed class DebugLocationMap
         int cx = _viewX + x - left, cy = _viewY + y - top;
         if (cx < 0 || cy < 0 || cx >= _canvasW || cy >= _canvasH) return null;
         int c = cy * _canvasW + cx;
+        if (ExitCell is { } exit && exit.X == cx && exit.Y == cy)
+            return new("the way out of this place", false);
+        if (_exitCells.Contains(c)) return new($"the way in: {_entryArea?.DisplayName}", false);
         return c < _lineAt.Length && _lineAt[c] is { } link ? LinkLabel(link) : null;
     }
 

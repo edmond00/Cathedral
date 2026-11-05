@@ -19,9 +19,9 @@ public class PantingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a heat-wise body that recovers by the tongue and never runs itself past cooling";
     public override string PersonaReminder  => "heat-shedding recoverer";
-    public override string PersonaReminder2 => "someone who knows the body is a fire that must be vented";
+    public override string PersonaReminder2 => "someone who always knows when the body needs to cool";
     public override string StyleInstruction =>
-        "Use images of heat, breath and shade — the body as a fire managed — with the relief of cooling in them.";
+        "Hot and relieved - judge whatever is in front of you by whether it would let the body cool.";
 
     public override string PersonaPrompt => @"You are the inner voice of PANTING, the open-mouthed wisdom that a body is a fire, and fires that cannot vent go out for good.
 

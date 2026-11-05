@@ -19,9 +19,9 @@ public class ClimbDownVerb : Verb
     public override string DisplayName => "Climb Down";
     public override int    BaseDifficulty => 6;
 
-    /// <summary>Claws or arms — see <see cref="Verb.GrantedModusMentisIds"/> for why the beast lesson comes first.</summary>
+    /// <summary>Claws, arms or a reptile's balancing tail — see <see cref="Verb.GrantedModusMentisIds"/> for why the beast lesson comes first.</summary>
     public override IReadOnlyList<string> GrantedModusMentisIds(Element? target)
-        => new[] { "clambering", "scaling" };
+        => new[] { "clambering", "scaling", "counterweight" };
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
     {

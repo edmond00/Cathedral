@@ -12,7 +12,7 @@ Every modus mentis declares the following, and these declarations are the whole 
 **An identity.** A stable name, and the manner in which it operates — the phrase by which an act
 performed through it is described.
 
-**Its functions**, at least one and at most three, drawn from seven:
+**Its functions**, at least one and at most three, drawn from eight:
 
 | Function | Office |
 |---|---|
@@ -22,7 +22,8 @@ performed through it is described.
 | **Speaking** | It speaks. It furnishes the replies of a conversation. |
 | **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
 | **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
-| **Will** | It wants one thing. It observes and deliberates, but only toward a single kind of act. |
+| **Will** | It wants. It observes and deliberates, but only toward the few kinds of act it desires. |
+| **Craft** | It knows a trade: one station, one implement, the few things made there (see [X](10-crafting.md)). Borne always beside Will and Action. |
 
 **Action and emotion are exclusive**, as thinking and action already are. These are the three
 offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one
@@ -32,9 +33,17 @@ and is moved by it does so through two modi mentis, not one.
 **A will observes and deliberates, and does nothing else of the kind.** It holds both offices, so it
 bears neither the Observation nor the Thinking function beside them; it may bear Action, Speaking,
 Emotion or Fighting as any other may, save that action and emotion remain exclusive. What it wants is
-declared once — one manner of acting, that manner upon one kind of thing, or a family of them — and
-everything it attends to and proposes follows from that declaration (see §7). A will is learnable only
-by a body able to do what it wants. A will is a desire for one act and not a general competence — a craft or a temper that serves many acts is an ordinary modus mentis — and somewhat under a third of the catalogue are wills.
+declared once, as between one and five wants in an order of preference — each a manner of acting,
+that manner upon one kind of thing, or a family of them, and a family of things may be named by what
+they are, so that every mushroom answers a will for mushrooms, or by what they teach, so that a want
+may be a manner of acting upon whatever, so acted upon, teaches that very will. Every will that some
+thing teaches holds a want of this last kind, for a mind indifferent to the thing that taught it
+would decline the one object most plainly its own — and everything it attends to and proposes
+follows from that declaration (see §7). A will is learnable only by a body able to do every
+one of the things it wants. A will is a desire for recognisable things and not a general competence:
+a modus mentis whose manner wants particular acts — of fungi, of a trade, of the hunt — may be a will
+of several wants that its manner covers, while one whose manner is general, a sense or a temper or a
+touch that serves any act, is an ordinary modus mentis. Some two in five of the catalogue are wills.
 
 **Its anatomical sources** — the organs or regions it draws upon. The rule here is strict and admits
 no mixture: **exactly one region, or exactly two distinct organs.** No source is the principal one;
@@ -55,6 +64,12 @@ ones require abstraction. The common case requires nothing.
 high ones resist them. This is read **only** off the two that deliberate and act; one bearing
 neither of those functions is always medium, since a principled organ of perception is a claim
 nothing could honour.
+
+**Its readiness to doubt** — low, medium or high — declared by every modus mentis bearing the
+Thinking function, and suited to its temper: a mind that questions, weighs and checks is high, one
+that knows at a glance, trusts a sense, a feeling or an instinct, or keeps to a fixed code is low. It sets how often a thinking may be taken up
+again when its proposal comes to nothing, and whether that proposal may be doubted; it is treated in
+[Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act). A will declares none, and is medium.
 
 **Whether it acts discreetly** — quietly, out of sight. A discreet modus mentis is one degree harder
 to notice, which is treated in [Chapter VI](06-narration.md).
@@ -158,7 +173,7 @@ modus mentis at the far end is pushed out and **lost outright** — struck from 
 altogether. It does not fall back into any other module. Whatever has not been filed by the time the
 next thing is learned is what stands to be lost.
 
-Filing is done deliberately, and there are three moves.
+Filing is done deliberately, and there are four moves.
 
 **Consolidate** takes a modus mentis out of working memory and lodges it in the long-term module of
 its own kind — procedural, semantic or sensory. It requires a free slot in that module, and there is
@@ -174,6 +189,12 @@ better.
 **Reject** discards a modus mentis from working memory on the spot. It exists so that room can be
 banked *before* the queue takes the choice away — the slot freed goes to the back of the queue, so
 the next thing learned has somewhere to sit.
+
+**Reject for good** discards it in the same manner and further sets it on the character's list of
+refusals, which is kept with the character for the rest of the run. A modus mentis on that list is
+never learned again: an act, a conversation or a stint of work that would teach it teaches nothing
+in its place, and a fighting skill that it unlocks is no longer offered to be taken up in a fight. The list governs learning only; it takes nothing from what is
+already held, and nothing removes a modus mentis from it once set there.
 
 The **residual** queue is the last holding, and it is a reprieve rather than a store: what enters it
 has been put out of active use, and enough archiving after it will push it out of memory for good.
@@ -202,14 +223,18 @@ function a modus mentis bears, since that decides where in the machinery it is c
 - A **fighting** modus mentis unlocks a fighting skill and lends its level to that skill's dice. It
   is never consulted directly.
 - A **will** is asked nothing either, in the sense the others are: it is told the shortest course of
-  acts that leads, from where the body stands, to an act of the kind it wants, and it attends to and
-  proposes only the first act of such a course. Where several courses are equally short — two people
-  to strike, two bushes to pick — the first act of any of them will serve. The course is reckoned through the place itself —
+  acts that leads, from where the body stands, to an act of any kind it wants, and it attends only to
+  the first act of such a course. Its wants are weighed by distance alone: the nearest is pursued,
+  whichever it is, and between wants equally near, the one it holds first. Where several courses are
+  equally short — two people to strike, two bushes to pick — the first act of any of them will serve. In deliberation it is less strict: it
+  proposes the first act of any course of at most three acts, the wanted act included, or of one as
+  short as the shortest the place offers (see [VI §6](06-narration.md#6-the-two-families-of-rule)). The course is reckoned through the place itself —
   walking, climbing, crossing, opening doors, waiting for another hour — and, where the act it wants
   needs an implement the body lacks, through taking one up or proposing to buy one from somebody whose
-  wares include it. It cannot be reckoned through anything whose issue is not known beforehand: a
-  conversation, a fight, a roll. Where no such course exists within the place, the will refuses
-  everything there, and says it would have to leave to find what it wants. A will that bears the
+  wares include it — the act's own implement, or anything made for that act, as keys are for a lock. It cannot be reckoned through anything whose issue is not known beforehand — a fight, a
+  roll, a conversation — save two conversations whose success says all the course needs: the leave of a
+  workshop, and a trader's leading the way to their premises. Where no course to any of its wants exists within the place, the will
+  refuses everything there, and says it would have to leave to find what it wants. A will that bears the
   Action function carries out the act it wants itself, and never refuses one of its own course. The
   acts that lead to it are another matter: their means is chosen as for any goal, the will among
   the candidates, and where the means chosen refuses, the same act may be tried again with another. Speech is not

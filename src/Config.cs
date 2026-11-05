@@ -148,6 +148,25 @@ public static class Config
         public static global::Cathedral.LLM.LlamaComputeDevice? ForcedLlmDevice { get; set; } = null;
 
         /// <summary>
+        /// <c>--llm-threads &lt;n&gt;</c>: llama-server's <c>-t</c> for this run, over the saved setting —
+        /// what lets a measurement run at a player's thread count on a machine with more cores. Null
+        /// leaves the setting (and llama.cpp's own default) in charge.
+        /// </summary>
+        public static int? ForcedLlmThreads { get; set; } = null;
+
+        /// <summary>
+        /// <c>--llm-seed &lt;n&gt;</c>: a sampler seed sent with every request, so two measured runs of one
+        /// script take the same narrative path. Null sends none, as the game always has.
+        /// </summary>
+        public static int? LlmSeed { get; set; } = null;
+
+        /// <summary>
+        /// <c>--no-chronicler</c>: the journal records as usual but no background session writes it up —
+        /// the "without" half of measuring what the chronicler costs the narration.
+        /// </summary>
+        public static bool ChroniclerDisabled { get; set; } = false;
+
+        /// <summary>
         /// Biome or location name to place the protagonist on at world generation, e.g. "village".
         /// Set by <c>--start-at &lt;name&gt;</c>. Matched case-insensitively as a substring; ignored
         /// when nothing in the world matches.
@@ -487,6 +506,17 @@ public static class Config
         public static string? EncounterOnArrival { get; set; } = null;
 
         /// <summary>
+        /// Creature for a travel encounter forced on the first step of the next journey that is
+        /// <b>not</b> its last, once. Set by <c>--encounter-mid-journey &lt;creature&gt;</c>.
+        ///
+        /// <para>The twin of <see cref="EncounterOnArrival"/>: winning here resumes a journey that
+        /// still has a path to walk, which is the branch every player meets and no script did —
+        /// <see cref="NoEncounters"/> switches the random rolls off. It walked the rest of the way
+        /// over an opaque-black terminal. Honoured before <see cref="NoEncounters"/>, as its twin is.</para>
+        /// </summary>
+        public static string? EncounterMidJourney { get; set; } = null;
+
+        /// <summary>
         /// Beast archetype to add to every scene as it is built, e.g. "wolf". Set by
         /// <c>--spawn-beast &lt;name&gt;</c>. Null means add nothing.
         ///
@@ -508,6 +538,10 @@ public static class Config
         /// draw over every goal the observed object offers, so a script that means to appease — and
         /// then to tame — a beast offering a dozen goals is not testing anything it can name. Ignored
         /// for a thinking phase where no goal matches, which then draws as usual.</para>
+        ///
+        /// <para>Without <c>--playground</c> it narrows the list the goal judge chooses from the same
+        /// way, so a script on the real model can reach the verb it is about — the item critic's
+        /// prompts, for one, are only sent for a verb that admits a tool.</para>
         /// </summary>
         public static string? GoalOnly { get; set; } = null;
 
@@ -539,11 +573,19 @@ public static class Config
         /// Zero (the default) leaves the playground answering "willing" every time.
         ///
         /// <para>The playground never refuses, so without this an action modus mentis's refusal — and the
-        /// retries of iterative thinking that follow one (<c>ThinkingIterationsStat</c>) — cannot be
+        /// retries of iterative thinking that follow one (<c>ModusMentis.Doubt</c>) — cannot be
         /// reached by a script at all. A count rather than a switch, because a retry of the same goal is
         /// not asked whether it would rather not, and a test wants to see the chain end.</para>
         /// </summary>
         public static int RefuseMeans { get; set; } = 0;
+
+        /// <summary>
+        /// Every thinking modus mentis's <see cref="Cathedral.Game.Narrative.DoubtLevel"/>, in place of
+        /// the one it declares. Set by <c>--doubt &lt;low|medium|high&gt;</c>. Null (the default) leaves
+        /// each mind its own. A script about iterative thinking or doubt pins it, so that which mind the
+        /// player happens to pick does not decide how many tries there are.
+        /// </summary>
+        public static Cathedral.Game.Narrative.DoubtLevel? DoubtOverride { get; set; } = null;
 
         /// <summary>
         /// The kind of failure penalty a failed act must draw: <c>wound</c>, <c>get_lost</c>,
@@ -577,8 +619,8 @@ public static class Config
             "Proscribed Palimpsest";
 #endif
 
-        public const string Chapter = "Volume 6";
-        public const string ChapterSubtitle = "Wherein the Will Seeks Its Nearest Road";
+        public const string Chapter = "Volume 7";
+        public const string ChapterSubtitle = "Cuir Bouilli and Pattern Welding";
     }
 
     /// <summary>
@@ -932,6 +974,12 @@ public static class Config
         public const char PathDestinationChar = '+'; // Plus for destination
         public const char ForbiddenDestinationChar = '⨯'; // Cross for impassable tiles (sea/ocean on foot)
 
+        /// <summary>How much larger the place a will's search is reading is drawn than its own glyph.</summary>
+        public const float SearchedCellScale = 2.2f;
+
+        /// <summary>The searched place's glyph beats between these multiples of its size, this many times a second.</summary>
+        public const float SearchedCellPulseMin = 0.8f, SearchedCellPulseMax = 1.25f, SearchedCellPulseHz = 3f;
+
         // Numbered glyphs used to mark waypoints in click-order on the world map.
         // Falls back to PathDestinationChar past the array length.
         public static readonly char[] WaypointNumberChars = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨' };
@@ -1257,6 +1305,12 @@ public static class Config
     
     #region Base Colors
     
+    /// <summary>
+    /// The game's colours. <b>Everything a player sees is purplish, yellowish or greyscale</b> — see
+    /// "Colours" in CLAUDE.md. Red, Green, Blue, Magenta and Cyan below, and the ANSI <see cref="Terminal"/>
+    /// table, exist for the developer tools only (the image-to-text mode, the terminal's test palette, the
+    /// sphere's debug shaders); no screen of the game uses them.
+    /// </summary>
     public static class Colors
     {
         // Basic colors
@@ -1274,13 +1328,8 @@ public static class Config
         public static readonly Vector4 Transparent = new(0.0f, 0.0f, 0.0f, 0.0f);
         
         // Extended colors
-        public static readonly Vector4 LightCyan = new(0.5f, 0.9f, 1.0f, 1.0f);
-        public static readonly Vector4 LightGreen = new(0.5f, 1.0f, 0.5f, 1.0f);
-        public static readonly Vector4 BrightGreen = new(0.4f, 1.0f, 0.4f, 1.0f);
-        public static readonly Vector4 BrightRed = new(1.0f, 0.4f, 0.4f, 1.0f);
         public static readonly Vector4 OrangeYellow = new(1.0f, 0.8f, 0.0f, 1.0f);
-        public static readonly Vector4 Orange = new(1.0f, 0.5f, 0.0f, 1.0f);
-        public static readonly Vector4 DarkOrange = new(0.6f, 0.25f, 0.0f, 1.0f);
+        public static readonly Vector4 Ochre = new(0.85f, 0.65f, 0.15f, 1.0f);       // Warm dark gold: the palette's secondary yellow (vital heat, running, knockdown) — where orange used to be
         public static readonly Vector4 LightPurpleGray = new(0.8f, 0.8f, 0.9f, 1.0f);
         public static readonly Vector4 Gray70 = new(0.7f, 0.7f, 0.7f, 1.0f);
         public static readonly Vector4 Gray90 = new(0.9f, 0.9f, 0.9f, 1.0f);
@@ -1551,6 +1600,19 @@ public static class Config
         /// <summary>How long a transient world-map notice stays on screen.</summary>
         public const double NoticeSeconds = 4.0;
 
+        /// <summary>
+        /// A will's search (the Memory tab's "Wants" rows) reads at most one place per this many
+        /// seconds, however quickly the places are read, so the place under check can be seen beating
+        /// on the sphere. Nothing under <c>--playground</c> (<see cref="AnimationsAreInstant"/>).
+        /// </summary>
+        public const double WillSearchMinSecondsPerPlace = 0.08;
+
+        /// <summary>How long the box holds on the place found before the trip to it is planned.</summary>
+        public const double WillSearchFoundHoldSeconds = 0.8;
+
+        /// <summary>Milliseconds a frame may spend reading places for a will's search (at least one a frame).</summary>
+        public const int WillSearchFrameBudgetMs = 12;
+
         // Colors
         public static readonly Vector4 BorderColor      = Colors.DarkYellowGrey;
         public static readonly Vector4 BackgroundColor  = Colors.BlackTransparent;
@@ -1636,7 +1698,7 @@ public static class Config
         /// hundred-odd scripts. Playground already replaces the thing that makes a run slow (the
         /// LLM); this replaces the rest. See <see cref="AnimationsAreInstant"/>.</para>
         /// </summary>
-        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 5.0f;
+        public static float AnimationDurationSeconds => AnimationsAreInstant ? 0f : 2.5f;
 
         /// <summary>
         /// The animation duration in milliseconds, for <see cref="System.Threading.Tasks.Task.Delay(int)"/>.
@@ -1681,6 +1743,13 @@ public static class Config
         /// encoded straight into the GBNF grammar as the upper bound of the free-text body.
         /// </summary>
         public const int MaxNarrativeTextLength = 800;
+
+        /// <summary>
+        /// The longest path of actions, the goal included, a will accepts from an object it is asked to
+        /// think about, when the path is not the shortest this place offers (see
+        /// <c>ActionPathPlanner.WaysThrough</c>). The shortest path is accepted however long it is.
+        /// </summary>
+        public const int WillMaxPathSteps = 3;
 
         // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
         // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
@@ -1730,16 +1799,17 @@ public static class Config
         /// </summary>
         public const string DefaultStyleInstruction = "Where it fits, a figure of speech (metaphor, comparison, imagery) or an inner feeling that suits your character is welcome.";
 
-        /// <summary>
-        /// Follows a modus mentis's own <c>StyleInstruction</c>. A small model reads the things a style
-        /// names as things that are there: HOSPITALITY's "the imagery of hearth, board and made bed" put a
-        /// hearth and a made bed into four replies in five, in a sheepfold, a temple, a castle, beside
-        /// "I will ask him what he knows". This clause alone did not stop it (replayed against the
-        /// shipped model it changed nothing while the style still listed objects); what stopped it was
-        /// rewriting the style as an attitude, and with that done this clause took the remaining leaks
-        /// from 5 in 16 to none. So a style names a way of seeing, never a list of props.
-        /// </summary>
-        private const string StyleIsNotSceneClause = "It only colours how the given facts are told — what it names is not in the scene unless the given information puts it there.";
+        // There was a StyleIsNotSceneClause here, after a modus mentis's own style: "It only colours how the
+        // given facts are told — what it names is not in the scene unless the given information puts it
+        // there." It was written when HOSPITALITY's style listed "hearth, board and made bed" and a
+        // small model furnished every scene with them; once that style was rewritten as an attitude, the
+        // clause took the remaining leaks from 5 in 16 to none. Measured again over the whole corpus
+        // (tools/prompts, 80 samples a side over 40 styled cases, and a blind round of 38 a side), it no
+        // longer earned its 25 tokens: style words were copied into the answer as often without it (9%
+        // against 11%), blind fidelity was no lower (0.60 against 0.53, and level in the other round),
+        // and the clause itself was being copied — "it only colours how the given facts are told" came
+        // back word for word from Pride, Dread and Arithmetic. A style is still to name a way of seeing,
+        // never a list of props: the clause is gone, the rule for writing a style is not.
 
         /// <summary>
         /// Style clause for dialogue replies: a spoken line carries personality in its wording, not in a
@@ -1768,7 +1838,7 @@ public static class Config
         {
             string style = string.IsNullOrWhiteSpace(styleInstruction)
                 ? DefaultStyleInstruction
-                : $"Your way of seeing: {styleInstruction.Trim()} {StyleIsNotSceneClause}";
+                : $"Your way of seeing: {styleInstruction.Trim()}";
             string character = personaReminder2 != null ? $"Stay in the character of {personaReminder2}." : "Stay in character.";
             var parts = new[]
             {
@@ -2113,6 +2183,22 @@ public static class Config
         // Maximum context window size in tokens passed to the llama.cpp server (-c flag)
         public const int ContextSize = 2048;
         public const double Temperature = 0.7;
+
+        /// <summary>
+        /// How long the foreground must have been quiet (nothing in flight, nothing finished more
+        /// recently) before a background job — the chronicler — may start. See
+        /// <c>LlamaServerManager.GenerateBackgroundAsync</c>. Long enough that the gap between two
+        /// requests of one narration phase never qualifies; a player reading is what it waits for.
+        /// </summary>
+        public const int BackgroundQuietMs = 4000;
+
+        /// <summary>
+        /// How much of a background prompt is sent per prefill step, in characters (~16 tokens). The
+        /// server can only drop a cancelled request between batches, so this bounds what a preempted
+        /// chronicler job can still cost a foreground request: one step's prefill. Measured at 160 characters
+        /// on a 4-thread CPU, a preempting request waited 0.9-1.8 s; see design/BELLIC_JOURNAL_REPORT.md.
+        /// </summary>
+        public const int BackgroundPrefillChars = 64;
         public const int TopK = 12;
         public const double TopP = 0.95;
 

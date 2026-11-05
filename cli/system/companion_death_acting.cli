@@ -33,7 +33,7 @@ expect [KENRYC GREYGATE]
 # Speak About: keyword -> "Speak About" -> speaking modus mentis -> companion.
 click keyword 0
 choose 2
-choose 0
+choose friendship
 choose 0
 advance 12 180
 
@@ -47,7 +47,7 @@ strategy succeed
 goal smell
 click keyword 0
 choose 0
-choose 0
+choose birdsong
 advance 12 180
 click action 0
 choose 0

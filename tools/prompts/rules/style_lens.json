@@ -1,0 +1,22 @@
+{
+  "forage_lore": {"style": "Judge whatever is in front of you by its ripeness - ready now, or better left a day."},
+  "farriery": {"style": "Judge whatever you handle by whether it is sound and will bear its weight, closely and without hurry."},
+  "berrying": {"style": "Quick and pleased with your own speed - judge everything by how fast and lightly it can be done."},
+  "henwifery": {"style": "Listen before you look: say what the sounds around you tell you, then what your hands should do."},
+  "byre_sense": {"style": "Unsqueamish and plain - judge whatever is in front of you by whether it is well kept or neglected."},
+  "chandlery": {"style": "Judge things by the patience in them - well made or rank, hurried or done right."},
+  "gnawing": {"style": "See everything as something to be worked through, steadily, to the good part inside."},
+  "illumination": {"style": "Look at the smallest detail of what is in front of you as if it were worth gilding."},
+  "cruelty": {"style": "Size up what is in front of you by its weakness, coldly, with a relish that treats mercy as waste."},
+  "bell_ringing": {"style": "Measured and solemn - hear in what you do what it would announce to everyone."},
+  "encipherment": {"style": "Distrust the plain sense - look for what is hidden in what is said, and how it was hidden."},
+  "hearthlonging": {"style": "See everything as an outsider sees a comfort that belongs to others - wistful, quietly aching."},
+  "horsemanship": {"style": "Read the first small sign in whatever is in front of you, and answer it early and calmly, never by force."},
+  "anointing": {"style": "Gentle and solemn - treat each gesture toward another as a small rite, carefully done."},
+  "arms_care": {"style": "Look at everything as kit to be kept: what needs putting right before it fails."},
+  "clerkship": {"style": "See everything in terms of form - who must agree, what makes it proper, what is still unofficial."},
+  "fletching": {"style": "Fussy and exact - look for the slightest bend or flaw in what is in front of you."},
+  "grafting": {"style": "See everything as a joining that will only take if it is matched exactly."},
+  "horse_sense": {"style": "Read the honest signs of a body before its face, and let their honesty settle you."},
+  "incensing": {"style": "Solemn and deliberate - treat each act as part of a rite, done where and as it should be."}
+}

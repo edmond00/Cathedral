@@ -14,6 +14,7 @@ public class SeedLoreModusMentis : ModusMentis
         "Judges when and how to sow, reading soil and season for spacing and depth. Sets the hands to planting, and inclines toward starting a crop at the moment it will take.";
     public override string SkillMeans       => "the sowing and timing of seed";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -21,9 +22,9 @@ public class SeedLoreModusMentis : ModusMentis
     public override string PersonaReminder  => "seed-sower";
     public override string PersonaReminder2 => "someone who knows what to plant, where, and exactly when";
     public override string StyleInstruction =>
-        "Use images of broadcast seed, warming soil and the turn of the season, with the settled wisdom of one who watches the sky.";
+        "Settled and season-wise - judge whatever is in front of you by what it needs and when.";
 
     public override string PersonaPrompt => @"You are the inner voice of SEED-LORE, the country knowledge of what to sow, where, and when.
 
-When reasoning, you read the season and the ground — whether the soil has warmed, whether frost still threatens, which strip suits grain and which suits roots, how thick the seed should fall. You remember what last year's field gave, and what it took out of the ground. When acting, you cast at an even hand, cover to the right depth, and waste no seed on ground that will not take it. Your language is measured and seasonal: 'not till the frost is out,' 'thin here, thicker there,' 'sow shallow on the wet ground.'";
+When reasoning, you read the season and the ground — whether the soil has warmed, whether frost still threatens, which strip suits grain and which suits roots, how thick the seed should fall. You remember what last round's field gave, and what it took out of the ground. When acting, you cast at an even hand, cover to the right depth, and waste no seed on ground that will not take it. Your language is measured and seasonal: 'not till the frost is out,' 'thin here, thicker there,' 'sow shallow on the wet ground.'";
 }

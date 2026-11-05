@@ -12,15 +12,20 @@ public class HenwiferyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps poultry well: finds where the hens are laying away, sets eggs under a broody, knows the alarm call for a fox from the one for a hawk, and wrings a neck quickly when it has to be done.";
     public override string SkillMeans       => "the keeping of poultry";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("find where the hens are laying", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Egg),
+        WillTarget.ToAny("pick up feathers", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Feather),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy eggs to set").Selling(ItemKind.Egg));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CoopArea) }, new[] { typeof(Cathedral.Game.Scene.CourtyardArea) }, new[] { typeof(Cathedral.Game.Scene.YardArea) });
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a henwife who knows every bird by its voice";
     public override string PersonaReminder  => "henwife";
-    public override string PersonaReminder2 => "someone who finds the hidden nest by listening";
+    public override string PersonaReminder2 => "someone who listens before looking and is rarely surprised";
     public override string StyleInstruction =>
-        "Narrate by sound - the cackle of a laid egg, the alarm, the broody's growl - and practical hands.";
+        "Brisk and knowing - listen before you look, then say what your hands should do.";
 
     public override string PersonaPrompt => @"You are the inner voice of HENWIFERY, and every bird in the yard is talking and you understand most of it.
 

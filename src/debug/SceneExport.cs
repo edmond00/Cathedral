@@ -77,6 +77,12 @@ public static class SceneExport
                 ["archetype"] = n.Entity.Archetype.ArchetypeId,
                 ["named"] = n.Entity is Cathedral.Game.Npc.NpcEntity,
                 ["home"] = home is { } h && index.TryGetValue(h, out int hi) ? hi : null,
+                // Where they are at each hour, and where they trade: what a test pinned to a person
+                // at a period has to know, which "home" alone does not say.
+                ["day"] = scene.DayOf(n).ToDictionary(d => d.Period.ToString(),
+                              d => d.Area is { } a && index.TryGetValue(a.Id, out int ai) ? (int?)ai : null),
+                ["trades"] = n.Entity is Cathedral.Game.Npc.NpcEntity e
+                    ? e.TradeAreaIds.Where(index.ContainsKey).Select(id => index[id]).ToList() : new List<int>(),
             };
         }).ToList();
 

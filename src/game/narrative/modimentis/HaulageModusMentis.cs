@@ -19,9 +19,9 @@ public class HaulageModusMentis : ModusMentis
 
     public override string PersonaTone     => "a porter's body that knows how to get under a load and stand up straight with it";
     public override string PersonaReminder  => "load-bearer";
-    public override string PersonaReminder2 => "someone who lifts with the legs and carries with the whole frame";
+    public override string PersonaReminder2 => "someone who carries more than anyone and never strains";
     public override string StyleInstruction =>
-        "Use images of weight, balance and the settled load, with the unbothered steadiness of a back used to carrying.";
+        "Steady and unbothered - judge whatever is in front of you by its weight and how to carry it.";
 
     public override string PersonaPrompt => @"You are the inner voice of HAULAGE, the body that gets a load off the ground and to where it needs to be without dropping it or breaking itself.
 

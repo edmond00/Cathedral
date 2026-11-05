@@ -59,6 +59,18 @@ reported. The two go together — a consequence that reports nothing changed not
 observed. This is why the account rendered after an act is not decoration upon it but the whole
 evidence of what it did.
 
+**Play** is the one manner of acting that takes its whole character from its object. Stones skipped
+across a creek, a rope swing ridden out over a bank, a hound scratched behind the ears and a heap of
+hay jumped into share nothing but being done for their own sake, and so the thing played with
+settles everything another manner settles for itself: what precisely is done, how hard it is, what
+the body must be capable of (hands for a stone or a rope, Abstraction for a game with rules — see
+[Chapter I §5](01-anatomy.md#5-the-three-capabilities)), what it teaches, and what a failure may
+cost. A creature is played with only while it does not count the actor an enemy. **A successful
+play changes nothing in the world**; its whole consequence is the modus mentis it teaches, which is
+that play's own — the skipping of stones teaches the skipping of stones — and failing any the body
+can hold, a general playfulness. About a quarter of the areas of the world hold something to be
+played at.
+
 ## 3. The phase and its budget
 
 Narration proceeds in **phases**. A phase opens with an observation, and within it the acting body
@@ -116,6 +128,12 @@ could carry it out under them — an examination where none of them observes —
 for the rest of the phase. If some can, the next mind to choose it is offered only those as the means,
 and the one chosen answers only with a degree of assent; it may not refuse.
 
+**A mind that wanted nothing of an object is not asked twice.** A thinking modus mentis may judge that
+nothing an object affords is worth doing, and say so. Its judgement does not vary — the same mind
+asked about the same object returns the same answer — so to ask it again within the phase is to
+insist: the second time, it may not decline, and settles on one of the goals offered. Another mind
+asked about the same object may still decline it.
+
 A new phase in the same place sees the whole scene, and every act in it, afresh.
 
 ## 5. The three steps of an act
@@ -123,6 +141,13 @@ A new phase in the same place sees the whole scene, and every act in it, afresh.
 **Observation.** An observing modus mentis is asked what is worth attending to among the things
 present that have not yet been attended to, and renders what it finds. One object is chosen; the
 rest wait.
+
+Once something has been attended to within the phase, an observing modus mentis choosing what to
+attend to next may instead decline to attend to anything further, and its account closes on that
+declaration. **The declining is spent once taken.** It is open to one modus mentis in a phase, and
+every modus mentis that observes after it must attend to something present: were each free to decline
+in turn, a thing in plain view could go unattended for the whole phase. A will's turning from what
+does not begin its course (§6) is a rule of its nature, not this declining, and is not spent.
 
 Attention may also be directed: a thing already rendered may be given to an observing modus mentis
 to attend to closely. That modus mentis may decline it, and if so turns to another thing of its own
@@ -177,8 +202,9 @@ level may settle the answer before it is asked: a high one refuses a crime, a lo
 one (see §7); and one that speaks may not refuse a conversation (§6).
 
 **Second thoughts.** A thinking whose proposal comes to nothing may be taken up again by the same
-thinking modus mentis, as many times as the measure of *Iterative Thinking* allows — the pineal
-gland's score, from nought to three ([Chapter I](01-anatomy.md)). A proposal comes to nothing when the
+thinking modus mentis, as many times as its readiness to doubt allows
+([Chapter II §1](02-memory.md#1-what-a-modus-mentis-is)): never at low, once at medium, twice at
+high. A proposal comes to nothing when the
 acting modus mentis refuses it, or when it is doubted, as below. Each refusal is rendered, and the
 mind acknowledges it before deliberating anew. A refused goal is taken up again at once if another
 acting modus mentis not yet tried for it — for a conversation, a speaking one, where any is held — is
@@ -189,12 +215,13 @@ so. Only a refusal given before an act is offered is deliberated anew: the coded
 act when it is attempted, and a witness in sight or an enemy in the room is not a reason to think
 again but a reason the attempt fails. The whole chain is one thinking, and costs one noetic point.
 
-**Doubt.** A body whose pineal gland scores two or more may doubt. While a further deliberation
-remains, the reasoning ends upon a question, and is answered — to hold to the proposal or not —
+**Doubt.** A thinking modus mentis of medium or high readiness may be doubted; one of low readiness
+never is. While a further deliberation remains, the reasoning ends upon a question, and is answered — to hold to the proposal or not —
 before the acting modus mentis is asked. Not to hold to it strikes off the goal
 itself, with every acting modus mentis at once — the doubt is of the end, not of the means — and the
 mind deliberates again upon another. Either answer is voiced by the thinking
-modus mentis. No doubt is offered on the last deliberation, which would otherwise end the thinking
+modus mentis. Not to hold to it spends a further deliberation, as a refusal does; to hold to it
+spends none. No doubt is offered on the last deliberation, which would otherwise end the thinking
 upon nothing.
 
 **Reconsideration.** An act already offered may be thought over again by a thinking modus mentis of
@@ -312,14 +339,32 @@ elsewhere. It never opens a
 phase while any other observing modus mentis is held. Given an object to attend to closely, it keeps
 it if the object affords that first act, turns from it to the object that does if one remains
 unattended this phase, and otherwise declines it, naming the act that would begin the course.
-Deliberating, it is offered no goal but that first act, and on an object that does not afford it it
-proposes nothing, saying only what it wants; it admits no doubt, having no goal to choose between, and
-tries again only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
+Deliberating, it is less strict than in attending. Of the acts the object affords, those that begin a
+course to what it wants of at most three acts, the wanted act included — or of one no longer than the
+shortest course the place offers, however long that is — are its candidates; it is offered only the
+candidate whose course is shortest, and where several courses are equally short it chooses among
+their first acts itself. An act already offered within the phase is no candidate
+([§4](#4-the-two-ledgers)), so a second deliberation upon the same object takes the next course through
+it, within the same bounds, and with none left the will proposes nothing and lets the object go. On an
+object that affords no candidate it proposes nothing, saying only
+what it wants; it admits no doubt, its goal being set by its course, and
+tries again — once, a will being of medium readiness — only with another means for an act on its way. In either office it gives its course as its reason. Where the course does not exist
 within the place, it declines in both and says that only leaving offers what it wants. Bearing the
 Action function, it is its own means for the act it wants, and is not asked how willingly: it is
 eager for it, and the difficulty falls by one; an act on its way is carried out by
-whichever means is chosen for it, as any goal is. A will cannot refuse an act of its own course — though a rule
+whichever means is chosen for it, as any goal is. A will cannot refuse an act that would be its candidate — though a rule
 of action, which judges circumstance and not character, still may.
+
+**A visit made for one want.** From the world a will may be sent to seek one of its wants among the
+places within range: they are examined in order of the cost of the road to each, the nearest first,
+and the first in which the course to that want exists from the place's way in, at the hour of
+arrival, is proposed as the journey's end. A visit reached by that journey is made for that want, and
+while it lasts the will reckons its course to that want alone, however long — the course it
+attends by, the object it opens a phase on, the one it keeps in attending. Deliberating, it takes
+first a course through the object to that want, whatever its length; only where the object affords
+none are its other wants candidates, and then only by a course of at most three acts. Where no
+course to the sought want remains in the place — the thing done, or gone — the will reckons by all
+its wants again. Any other visit, a later one to the same place among them, is reckoned as above.
 
 The distinction has a practical edge: an act blocked by a rule of action is an act you attempted and
 were stopped from completing, and you pay for the attempt.
@@ -355,7 +400,7 @@ person is never game: every crime against a person is a crime on wild ground as 
 | | A thinking modus mentis | An acting modus mentis |
 |---|---|---|
 | **High** | Crimes are dropped from its list of goals. Filtering everything away is a legitimate result. | Refuses at once, unasked, before the act is offered. |
-| **Low** | If any goal on offer is a crime, **only** the crimes are offered. | Cannot refuse: the option to decline is withheld. |
+| **Low** | If any goal on offer is a crime, **only** the crimes are offered, and it may not decline them all: it chooses one. | Cannot refuse: the option to decline is withheld. |
 
 Both halves are needed, because the goal and the means are two separate decisions: a scrupulous
 skill may still be chosen to carry out a goal some other mind settled on.
@@ -366,7 +411,11 @@ anything.
 *May I act at all?* Asked of **raw** proximity by the rules of action. Somebody in the room blocks a
 non-discreet modus mentis outright. A **discreet** modus mentis may always attempt — that permission
 is the whole of what discretion buys at close quarters. The acts that answer a confronting witness
-(below) are exempt: done to the one already watching, they leave nobody to be caught by.
+(below) are exempt: done to the one already watching, they leave nobody to be caught by. Nor may a
+discreet modus mentis decline an act that only its discretion permits here — a crime in sight of a
+witness, any act but facing the threat while an enemy stands in the room, any act but answering a
+confronting witness. It may undertake such an act reluctantly; it may not refuse it, save where
+principle refuses it first. Out of everybody's sight it declines as any other mind.
 
 *What does failing cost?* Asked of **effective** proximity, where discretion applies. Discretion
 silences a body **through a wall**, never **in the same room**: it downgrades a Visual presence not
@@ -402,12 +451,23 @@ Fumbling the approach is itself a slip before the witness, and one is collared a
 for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
 discreet act that fails in the same room is seen.
 
+**Departure.** A place is left as it was entered, by its one way in, which lies beyond the area the
+place was entered by. To leave is to walk there: from the area stood in, back along the ways already
+known, to that area and out. A free departure is not stopped on the way.
+
 **Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
 roll of as many dice as the feet's runaway score, needing a single six, which the humors may bend
-as they bend any other roll. Success leaves the place.
-Failure begins the fight with an enemy, or the confrontation with a witness. A confrontation ends
-with the conversation it opens: a witness who came on the body's account then returns to the day
-they were drawn from, unless the conversation has made an enemy of them.
+as they bend any other roll. Failure begins the fight with an enemy, or the confrontation with a
+witness. Success sets the body walking for the way in, and the walk is checked the rest of the way
+out: every further area it passes through — the areas a path runs past among them — is weighed as
+though the body stood in it, and wherever an enemy or a witness would confront it there, it is
+stopped and rolls again on the same terms. Each success carries it on to the next such area, or out
+of the place when none is left. A failure at such a stop forces nothing: the body stays in the area
+where it was stopped, the noetic points are not restored, and the next phase opens on whoever
+stopped it — who now stands in the area with it, so that leaving is a runaway once more.
+
+A confrontation ends with the conversation it opens: a witness who came on the body's account then
+returns to the day they were drawn from, unless the conversation has made an enemy of them.
 
 **Found waiting.** The householder who comes in at nightfall to find the body waiting in their house
 (see [Chapter V §8](05-travel.md#8-the-periods-of-the-day)) confronts it as any witness does, and

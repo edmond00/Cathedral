@@ -20,9 +20,9 @@ public class ScalingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a climber who counts reaches ahead and never commits to one they cannot undo";
     public override string PersonaReminder  => "hauling climber";
-    public override string PersonaReminder2 => "someone who reads a wall upward in three moves at a time";
+    public override string PersonaReminder2 => "someone who sees a way up several moves ahead";
     public override string StyleInstruction =>
-        "Write in reaches and holds — the tested edge, the shifting weight, the arm that has one pull left in it.";
+        "Deliberate and testing - judge whatever is in front of you by its holds and what each will bear.";
 
     public override string PersonaPrompt => @"You are the inner voice of SCALING, the arm that finds the hold and the shoulder that pays for it.
 

@@ -39,7 +39,7 @@
 .PARAMETER Runtime
     The target. win-x64 (the default) is the Windows package as it has always been. linux-x64
     packages for Linux: the same game self-contained for Linux, models/llama-linux in place of the
-    two Windows toolchains, the SoundFont the Linux audio path plays its music with, and a .tar.gz
+    two Windows toolchains, and a .tar.gz
     instead of a zip, written with explicit file modes so the game and llama-server arrive
     executable even when the package is built on Windows (tools/linux/make_tarball.py). Needs a
     Python on PATH.
@@ -52,7 +52,8 @@
     ./package.ps1
     ./package.ps1 -NoModel -NoZip      # fast check that staging works
     ./package.ps1 -Demo                # the demo, into dist-demo/
-    ./package.ps1 -Runtime linux-x64   # the Linux package, a .tar.gz
+    ./package.ps1 -Runtime linux-x64   # the Linux package, into dist-linux/, plus a .tar.gz
+    ./package.ps1 -Runtime linux-x64 -Demo   # the Linux demo, into dist-demo-linux/
 #>
 param(
     [string]$OutputDir,
@@ -82,7 +83,14 @@ $ManualPdf = "$ShipName-Manual.pdf"
 # own name because that folder is what a player unpacks, and "ProscribedPalimpsest-Demo" says which
 # one they have. The EXECUTABLE keeps its name — publish.ps1, the smoke test and every support
 # instruction say ProscribedPalimpsest.exe.
-if ([string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir = if ($Demo) { "dist-demo" } else { "dist" } }
+#
+# Linux stages under its own folders too (dist-linux/, dist-demo-linux/), for the same reason: a
+# release packages all four products in a row, and each run wipes its own output folder. The folder
+# a player unpacks keeps its name on both platforms.
+if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+    $OutputDir = if ($Demo) { "dist-demo" } else { "dist" }
+    if ($LinuxTarget) { $OutputDir += "-linux" }
+}
 $StageName = if ($Demo) { "$ShipName-Demo" } else { $ShipName }
 
 $stage = Join-Path $root (Join-Path $OutputDir $StageName)
@@ -127,9 +135,9 @@ $Payload = @(
         # any GPU backend under backends/.
         @{ Path = "models/llama-linux";           Required = $true  }
 
-        # The SoundFont the Linux audio path renders the music with (assets/audio/README.md).
-        # Optional: without it the game is silent but for its UI ticks, and says so in the log.
-        @{ Path = "assets/audio/soundfont.sf2";   Required = $false; Big = $true }
+        # No SoundFont: the music synthesises its own instruments on every platform, and only the
+        # legacy engine (--music-engine legacy, a development flag ShipArguments strips) reads
+        # assets/audio/soundfont.sf2. Shipping 32+ MB nothing can reach would be dead weight.
     }
 
     # GloVe vectors. WordEmbedding treats these as mandatory and errors out without them.

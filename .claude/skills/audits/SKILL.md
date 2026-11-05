@@ -1,6 +1,6 @@
 ---
 name: audits
-description: The thirteen headless audits that check content rather than code: --outcome-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit and --building-audit. Use after adding or editing a verb, an outcome, a modus mentis, an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, or a batch of scene content, and to find out which audit covers a change.
+description: The eighteen headless audits that check content rather than code: --outcome-audit, --play-audit, --crime-audit, --dialogue-audit, --npc-audit, --mm-audit, --will-audit, --will-lesson-audit, --item-audit, --verb-audit, --world-variant-audit, --history-audit, --mm-grant-csv, --mm-reach-csv, --llm-probe-audit, --building-audit, --biome-audit and --forbidden-words-audit. Use after adding or editing a verb, an outcome, a kind of play or where plays are placed, a modus mentis, a will's targets or places, an object's lesson (VerbModiMentis), an item, an NPC archetype, a dialogue tree, a scene factory, a world variant, the world history generator or the lore catalogue, the Layer 1 forbidden-word list, or a batch of scene content, and to find out which audit covers a change.
 ---
 
 # The audits
@@ -43,6 +43,30 @@ its outcome from the view's `Variant` — `introduce_me` needs to know *which* t
 target-only overload comes back empty. And outcomes reached by paths the sweep cannot walk (a phase
 transition, a failure branch, `tame`'s appeased beast) are declared in `OutcomeAudit.Elsewhere` with a
 reason, rather than left as noise to be ignored.
+
+### Checking where PLAY is offered
+
+```bash
+dotnet run -- --play-audit
+```
+
+PLAY's content is spread across three routes — a factory's own objects, creature archetypes and
+`PlayPlacement`'s pass over a finished scene — so no one file says how much of the world can be
+played in. This builds every factory the verb audit sweeps (up to 20 ids each) and counts the areas
+where `PlayVerb` accepts something at some hour, for a default protagonist. About a minute.
+
+- **The share** — mean of the factories' shares, held to 20–32% (✗ outside), with the pooled share
+  over every area beside it. Cities and citadels are hundreds of rooms, so the pooled figure moves with
+  the indoor rules (dormitories, halls, roofs) and the mean with the wilderness; keep both near 25%.
+- **Kinds of play** — areas offering each `PlayActivity` subclass; ✗ on one no scene offers.
+- **What carries them**, **how each is worded** (one line per carrier and name — read it after adding a
+  `{0}` template; a plural object under a singular pronoun shows here), **lessons taught to a person**.
+- **Each play's lessons** — ✗ when no body the play is offered to can hold any of them.
+- **By kind of area** — areas, areas with a play, share. What the chances in `PlayPlacement.Rules`
+  were tuned against.
+
+Run it after adding a kind of play, a plaything, a play on a factory object or an archetype, or after
+changing a placement chance or a factory's areas.
 
 ### Checking the crime system
 
@@ -171,15 +195,88 @@ related MMs fatal, so the coverage table is really about spotting the ones scrap
 report also prints a **per-anatomy** table — what each anatomy can actually learn, source by source,
 which is a much smaller set than the catalogue-wide one and the only one R11 reads.
 
-The **wills** section fails (✗) on two shares, not one: wills in the catalogue (25–33%), and wills
-among **the lessons the offered acts teach** (20–36%) — every act the sampled locations offer counts
+The **wills** section fails (✗) on two shares, not one: wills in the catalogue (36–44%), and wills
+among **the lessons the offered acts teach** (28–42%) — every act the sampled locations offer counts
 its `ResolveLesson` once, so `grab`, offered everywhere, weighs as it does in play. The second is the
 one a player feels and the first cannot see: it read 56% while the catalogue read a third, because
 nearly every verb's own lesson had been made a will of that verb. Below it the 25 lessons offered
 most, wills marked. Before making a modus mentis a will, look it up there: one near the top moves
 the learned share by points.
 
+It lists every target of every will and fails (✗) one that no location offers.
+
+The **persona wording** section (`PersonaLint`) fails (✗) on a `StyleInstruction` or
+`PersonaReminder2` written as things: two or more concrete nouns, or a style opening a props list
+("images of", "narrate the"). It loads the GloVe vectors to tell a concrete noun, so this audit takes
+a few seconds more than it did. The rules and why are in the `choice-judge` skill ("Writing the
+voice"); `tools/prompts/persona_lint.py --text "…"` checks a wording before it goes in.
+
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
+
+### Checking where wills have something to do
+
+```bash
+dotnet run -- --will-audit [out.json]          # the report; the JSON feeds reports/multi-target-wills.html
+dotnet run -- --will-trace <will-id> [LOCATION] # why one will has, or lacks, something to do there
+```
+
+`--mm-audit` asks whether a will's targets are offered *anywhere*; this asks the question a player
+meets, with the planner itself (`ActionPathPlanner.Plan`): standing here, is there a way to anything the
+will wants? Every location factory the audits sweep is built for three ids (one for a town or city), and
+every will planned from the entry area and from the first area of a kind it declares it belongs in
+(`ModusMentis.WillPlaces`, rule R19), at morning and at night. About three minutes. Three numbers:
+
+- **coverage** — the share of (will, start) with a plan, overall and per location kind;
+- **related coverage** — the same from the will's own places: the headline, since a will idling where a
+  player expects it to work is the playtest complaint. **✗ under 60% overall** (64.5% over 114 one-target
+  wills before they had several; 64% over 159 after, and 69% for the original 114); a will under 60%
+  in its own places is marked `!`;
+- **breadth** — the share of location kinds where the will has something to do. **✗ above 75% for a
+  will with several targets**: added targets are how a desire grows into a general mind (`cross`,
+  `scale_up`, `provoke`, fuel or wood as a second target did exactly that). A single target whose act
+  is everywhere (to sit, to smell) is marked `~`, not failed. Breadth is judged on the will's **own**
+  targets: one bound to its lesson (`.Teaching<…>()`, below) reaches only what the content already says
+  teaches the will, so it neither counts toward "several" nor toward the breadth that fails.
+
+Wills whose every target needs a state play brings about (a conversation that needs an acquaintance,
+a beast to calm, a corpse) and that no fresh scene shows are listed `·` and left out of the shares. The
+actor carries nothing, so a will whose act needs an implement counts only where one can be taken up or
+bought on the way. Run it after changing a will's targets or places, a location factory, or the planner.
+The last section prints the area kinds each location kind builds — what to read when declaring places.
+
+### Checking that a will wants what teaches it
+
+```bash
+dotnet run -- --will-lesson-audit
+```
+
+The playtest complaint behind it: examining the petroglyphs teaches **archeology**, the player picks
+archeology to think about the petroglyphs, and archeology — a will to dig, to study a relic, to fetch a
+spade — says it has no interest in them. Every other audit was green: the lesson resolves, the will is
+offered somewhere, and the refusal is the planner working as designed.
+
+The relation is read off the content, never judged: **an object's lesson** — its declared
+`VerbModiMentis` (`IVerbModusMentisSource`) and what `Verb.ResolveLesson` gives a human for an act on it.
+Every location factory is built for up to four ids, every area at morning and at night, and every
+observation object (a point of interest with its items, a person, an area — what a keyword reaches) is
+asked, for each will an act on it teaches, what the thinking phase asks: does anything it offers begin a
+shortest path to the will (`ActionPathPlanner.PathThrough`)? About a minute.
+
+- **✗** — the object **declares** the will its lesson and offers nothing the will wants or passes on its
+  way. The fix is almost always the will's lesson-bound target: it ends on
+  `WillTarget.To<ExamineVerb>(purpose).Teaching<ThisModusMentis>()` (`ToAny` for several verbs), which
+  matches exactly the objects declaring that lesson for those verbs. If the will has none yet, that is
+  one slot of its five. If the will plainly should not want the object, the lesson is what is wrong.
+- **note** — the lesson is the verb's own (its default, or a contextual case in its `Lessons`): about the
+  act wherever it is done, not about the object, so it is listed and not failed. Six today (gossip
+  taught by sitting on a bench, vantage by scaling a giant tree…).
+- A pairing that is right as it stands goes in `WillLessonAudit.Accepted` with the reason; an entry that
+  no longer refuses is itself a ✗, so the list cannot go stale.
+
+It read 167 ✗ (63 wills) when written; every one was closed by a `Teaching<>` target. Run it after
+adding or editing a will's targets, after giving a point of interest or an archetype a `VerbModiMentis`
+that names a will, and after a batch of scene content. `cli/system/will_lesson_object.cli` is the
+reported case, played.
 
 ### Checking the item catalogue
 
@@ -205,11 +302,35 @@ distribution and what it means at each backbone tier. Then it warns about:
   line is the only thing standing between layered garments and an unhittable torso, so read it
   after touching any `DefenseDice`.
 
+**The weapon rules fail the suite** (✗ lines, unlike the warnings above), and the weapons table
+prints each weapon's size, weight, level and the arm level that holds it:
+
+- a weapon smaller than medium — two would share a nine-slot hand. `WeaponItem` seals `Size` behind
+  `WeaponSize`, which has no small value, so this only fires for an `IWeaponItem` written outside it;
+- a weapon not `IsImprovised` whose `Level` does not exceed the best human striking limb (read off the
+  anatomy, 3 today) — no better than a fist. `WeaponItem.StrikingLimbCeiling` must agree with it;
+- the real weapons unbalanced across the three hold tiers — fewer than a fifth of them light, medium
+  or heavy (an arm of level 0/1/2 holds up to that weight), or any insignificant weapon.
+
+**The price rules fail the suite too.** No item writes its price: `ItemPricing` works it out as
+`matter × craftsmanship + labour + function + rarity` (see "What a price is made of" in
+`src/game/CLAUDE.md`), and the Prices section prints the per-material unit values, how many items sit
+at each `Craftsmanship` and `Rarity` (and how many declare it rather than take the default), the
+overrides, and min/median/max per category. It fails (✗):
+
+- a price whose sum runs past `ItemPricing.MaxPrice` (90) — clamped, so it would read like every
+  other capped thing;
+- an item worth less than the material it breaks down into at a station;
+- a refined material (metal, cloth, leather) no dearer by the unit than its raw one;
+- a crafting recipe that sells for no more than the material it costs at its station — making it
+  would lose money. Fix it with the output's `Craftsmanship`, not a price.
+
 It also samples `FightResolver.PreRollHitLocation` 60k times and compares the result against each
 body part's share of the wound pool. Armour needs the hit location *before* the dice, so unaimed
 attacks now pre-roll one; that check is the proof the pre-roll did not change where blows land.
 
-Run it after touching any item, `WearableItem`, `ArmorSections`, or the weight tiers.
+Run it after touching any item, `WearableItem`, `ArmorSections`, the weight tiers, `ItemPricing` or a
+crafting recipe.
 
 ### Checking what there is to DO in a location
 
@@ -391,6 +512,38 @@ Run it after touching a variant's numbers, `WorldShape`, the biome thresholds, `
 in `WorldRegions`. Walk what it
 reports with `--world-variant <id>`.
 
+### Checking the forbidden-word list (Layer 1 of the sanitizer)
+
+```bash
+dotnet run -- --forbidden-words-audit
+dotnet run -- --forbidden-words-scan <file>    # apply the list to each line of a text file, print what changed
+```
+
+`ForbiddenWords.cs` is the list of real-world and modern words every LLM text is rewritten without
+(`ForbiddenWordsDictionary.Apply`, no request made): *mile* → *league*, *week* → *eleven-day*, *moon*
+→ *eggmoon*, *Napoleon* → *Aqilon*. It replaces by exact surface form — every plural and verb form is
+listed, never stemmed — and re-agrees the sentence around the replacement (a/an, a replacement's own
+article dropped after a determiner, a count rewritten with its unit: *two months* → *sixty days*).
+
+The audit fails on three silent faults and on any known rewrite going wrong:
+
+- a form that is a `NameFaking` placeholder name — those are swapped back to characters' real names
+  after Layer 1, so replacing one renames a character;
+- a replacement holding a listed form ("throwing star"), which the next text would fix and this one not;
+- an empty replacement;
+- a sentence in its table rewritten differently from the expected line. The table also holds lines
+  that must come back **unchanged** — the period's own words with a second sense (*second*, *a pen of
+  sheep*, *March onward!*, *Minute and devoted*, *the Fallen God*). Add one there whenever an entry
+  turns out to bite an ordinary sentence.
+
+Before adding a word: grep the game's own text for it. A word the lore uses (*Imperial Senate*,
+*tide-opera*, *salt magazine*, *the Fallen God*), a content word with an ordinary second sense
+(*runway* in the moss, *vintage* of a vine) or a species name (*Arctic Fox*) stays out of the list.
+Run `--forbidden-words-scan` over the game's string literals after a large addition; every hit there is
+either text to change or an entry to drop.
+
+Run it after editing `ForbiddenWords.cs` or `ForbiddenWordsDictionary.cs`.
+
 ### Checking the world histories
 
 ```bash
@@ -423,6 +576,40 @@ standing, faiths, places, wars, milliseconds, hash) and a sample of Belune's lor
 
 Run it after touching anything under `src/game/history/`, the lore catalogue, `LoreMoons`, the region
 division, or a world variant a lore moon is forced to.
+
+### Checking the wilderness: diversity, layout and exploration
+
+```bash
+dotnet run -- --biome-audit [biome]        # e.g. --biome-audit mountain, --biome-audit hotsteppe
+```
+
+`--building-audit` checks that a place is *built* right; this one checks that a wild place is *worth
+arriving at more than once*. It builds 40 locations of every wilderness biome (`BiomeAudit.Biomes`:
+the six temperate factories and every `ClimateSceneFactories` entry) and scores three things:
+
+- **diversity** — the share of every triple of samples whose members all differ from one another, in
+  content (area kinds and section names, Jaccard distance ≥ 0.34) *and* in layout signature (section
+  sizes, edges, loops, branch points, climbs). Three forests should be three forests. `jac` is the mean
+  pairwise distance, `lay` the number of distinct layouts in 40;
+- **coherence** — every area reachable, every section one connected piece, and the factory held to
+  the shape it states. `WildSceneFactory` subclasses set `Profile` and give each section a `Tier`:
+  **Pyramid** (bands that narrow as they rise, meeting only their neighbours, a summit of at most
+  two), **Descent** (levels meeting only their neighbours, one mouth), **Radial** (every section
+  touches the hub), **Spine** (every section touches the line it hangs off), **Mosaic** (three or more
+  sections meeting on at least as many borders). `chain%` is the share of builds that are a bare
+  corridor;
+- **exploration** — the movement kinds besides a walk that a visit offers: climb, scale, cross, swim,
+  slip in, follow a path, voyage toward a landscape. `move` per visit, `3+%` of visits with at least
+  three, `seen` how many a biome ever offers.
+
+It fails (✗) a biome under 40% diversity or outside 5–10 areas, and lists every layout fault as a
+warning. **Read the per-biome block, not just the row**: it gives each area kind's and section's
+frequency, and a kind at 100% is usually what holds diversity down — the cure is another kind of
+place, not reweighting, because larger places drawn from the same pool overlap more.
+
+Before the overhaul the wilderness averaged 5% diversity (ten biomes at 0%) with two sections each;
+after, 70%, every profile honoured. Run it after touching a wilderness factory, `WildSceneFactory`, a
+wild area kind, or `OutdoorLayout`.
 
 ### Checking buildings, scenes and NPC schedules
 

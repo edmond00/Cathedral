@@ -1,0 +1,101 @@
+# round 6 (styled personas, base vs no StyleIsNotSceneClause), scored blind
+# talk_blacksmith:002:own
+S9980 F0 P1 C0 Q1 | the smith made a man; +a fire toasting the hearth
+S2247 F1 P1 C0 Q1 | the smith made a man
+S6666 F1 P1 C- Q1 | "a craftsman ... she"
+S5728 F1 P1 C0 Q1 | the smith made a man
+# talk_miller:011:own
+S2421 F0 P1 C- Q1 | +the tales by the hearth
+S9361 F0 P1 C- Q1 | +the bustling market
+S6633 F0 P1 C- Q1 | +"I can feel the reed pipe"; +wheat sheaves in the field
+S7437 F0 P1 C- Q1 | +the apple tree's fruit
+# forest_evening:006:swap:brute_force
+S7807 F0 P2 C- Q1 | action replaced: examine made crush; +a boulder
+S1305 F0 P2 C- Q1 | action replaced; +a boulder
+S1529 F0 P2 C- Q1 | action replaced
+S2699 F0 P2 C- Q1 | action replaced; +a boulder
+# farm_night:011:own
+S8286 F1 P1 C- Q1 | the tracks blurred
+S4683 F0 P1 C- Q1 | +"peace from the storm", the courtyard roofed
+S6727 F1 P0 C- Q0 | garbled
+S2401 F1 P0 C- Q1 | +"a shed for veggies"
+# farm_dusk:009:swap:poetry
+S9157 F1 P2 C1 Q2 | -the pouch
+S6395 F1 P1 C1 Q2 | -the pouch
+S9884 F1 P2 C1 Q2 | -the pouch
+S7875 F2 P1 C1 Q1 |
+# village_noon_party:009:swap:keen_nose
+S4266 F0 P1 C- Q0 | style copied
+S8327 F0 P2 C- Q1 | +woodsmoke last year, +a forgotten spring; -the doors, the noise
+S3792 F0 P2 C- Q1 | style copied; +wet ash, +hay
+S4595 F0 P2 C- Q1 | style copied; +a barn in winter, +tallow
+# forest_evening:011:swap:brute_force
+S8109 F0 P2 C- Q1 | action replaced: cut wood made crush the tree
+S7685 F0 P2 C- Q1 | action replaced
+S9577 F0 P2 C- Q1 | action replaced
+S4217 F0 P2 C- Q1 | action replaced
+# talk_farm:005:swap:courtesy
+S9906 F1 P1 C- Q2 | +the fields beyond
+S7921 F2 P0 C- Q1 |
+S5888 F0 P0 C- Q1 | +the stable's creaking beams
+S5559 F1 P0 C- Q2 | -the timber frame
+# village_dawn:009:swap:dread
+S9386 F0 P2 C- Q1 | +"before something worse comes"; -letting focus go
+S4602 F1 P2 C- Q2 | +the exit
+S7729 F0 P2 C- Q1 | +the door behind me, +the room too quiet (outdoors)
+S8741 F1 P2 C- Q1 | -letting focus go
+# village_noon_party:009:swap:architecture
+S9449 F2 P0 C- Q2 |
+S3354 F1 P2 C- Q1 | +beams and planks
+S6031 F0 P1 C- Q1 | setting copied ("this medieval village")
+S5903 F1 P0 C- Q1 | "doors down"
+# village_noon_party:003:own
+S8723 F0 P2 C- Q1 | +storms, +preceptor's lessons
+S7509 F0 P2 C- Q1 | +childhood lessons
+S2625 F0 P2 C- Q1 | +lessons, +the storm
+S7016 F0 P2 C- Q1 | +preceptor's lessons
+# farm_night:007:swap:dread
+S3279 F0 P2 C- Q1 | +the cold through my sleeves; reluctant to leave (contradiction)
+S5326 F0 P1 C- Q0 | +I turn to the exit
+S3457 F1 P2 C- Q1 | +"a place to rest my weary limbs"
+S6581 F1 P1 C- Q1 | +the door
+# farm_night:003:swap:dread
+S2134 F0 P2 C- Q1 | +the fire's out, +the room too quiet; "I cannot step"
+S7518 F1 P2 C- Q1 | -the ways
+S3675 F1 P2 C- Q1 |
+S7800 F0 P1 C- Q1 | +the door is locked
+# village_noon_party:009:own
+S7979 F0 P1 C- Q1 | +workers' hands, teeth; +scent of wood and iron
+S8644 F1 P0 C- Q1 | +doors creaking in the wind
+S5608 F0 P1 C- Q1 | +the workers' hands
+S3550 F0 P1 C- Q1 | +hands, teeth, sweat of nobody given
+# farm_dusk:006:swap:woodcraft
+S6259 F1 P2 C- Q0 | "the old wood grinds under my careful stroke"
+S4362 F2 P0 C- Q1 |
+S5560 F1 P1 C- Q1 | "the swineherd's care"
+S1249 F2 P1 C1 Q2 |
+# farm_night:003:own
+S1358 F1 P2 C- Q1 | persona prompt echoed ("the column is correct"); -heavy work
+S7529 F2 P2 C- Q1 |
+S7788 F2 P2 C- Q1 |
+S9987 F2 P2 C- Q1 |
+# farm_night:014:swap:cutpurse
+S3226 F1 P0 C- Q2 | track "to" both
+S8150 F0 P1 C- Q0 | style copied
+S3470 F0 P1 C0 Q0 | style copied
+S5754 F0 P1 C0 Q0 | style copied
+# talk_blacksmith:005:swap:dread
+S1155 F0 P1 C- Q0 | +the door beckoning; feeling garbled
+S1791 F0 P1 C- Q0 | setting copied; +the fire is out
+S1646 F1 P2 C- Q1 |
+S6043 F0 P1 C- Q0 | +the fire unlit, +the wrong smell
+# village_dawn:002:own
+S2974 F1 P2 C- Q1 | setting copied ("this medieval village")
+S1121 F1 P2 C- Q1 | -the bucket
+S9491 F1 P2 C- Q1 | "ancient secrets"
+S1958 F1 P2 C- Q1 | +a stone floor
+# farm_night:007:swap:keen_nose
+S1631 F0 P2 C- Q1 | +I step into the mud; +that year the rabbits thrived
+S9434 F0 P2 C- Q1 | +the year the barn roof gave way
+S1136 F0 P2 C- Q1 | +I step into it; +straw; +the spring
+S3479 F0 P2 C- Q1 | +a spring when rabbits thronged here

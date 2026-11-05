@@ -1,0 +1,1 @@
+talk_blacksmith:002:own,talk_blacksmith:002:swap:avarice,talk_blacksmith:002:swap:mercy,talk_blacksmith:012:own,talk_blacksmith:012:swap:avarice,talk_blacksmith:012:swap:dread,talk_blacksmith:012:loose:pedant_reminder,talk_miller:002:own,talk_miller:002:swap:mercy,talk_miller:002:swap:rhetoric,talk_miller:011:own,talk_miller:011:swap:dread,talk_miller:011:swap:pride

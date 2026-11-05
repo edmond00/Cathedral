@@ -312,7 +312,8 @@ public static class MmReachAudit
             var r = reach.GetValueOrDefault(mm.ModusMentisId) ?? new Reach();
 
             bool human = Learnable(mm, AnatomyType.Human);
-            bool beast = Learnable(mm, AnatomyType.Beast);
+            // "Beast companion" is any animal companion: a tamed reptile is held to the same column.
+            bool beast = Learnable(mm, AnatomyType.Beast) || Learnable(mm, AnatomyType.Reptile);
 
             // Reachable means a route names it AND some body in the party can hold the lesson. A
             // grant to a body that cannot learn it is refused, not capped — see ModusMentisAnatomy.

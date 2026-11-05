@@ -43,19 +43,20 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default,
         IReadOnlyList<string>? outcomeVerbatims = null,
         string? neutralOverride = null,
-        ILlmPreviewSink? preview = null)
+        ILlmPreviewSink? preview = null,
+        IReadOnlyList<string>? lessonVerbatims = null)
     {
         // The reminescence path supplies its own neutral meaning (a plain "I tried to remember …"
         // framing that embeds the concrete recovered memory); everything else templates it here.
-        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims);
+        string neutral = neutralOverride ?? BuildNeutralOutcome(action, succeeded, outcomeVerbatims, lessonVerbatims);
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         // forcedPrefix "I " constrains the styled result to a first-person opening (every neutral
-        // outcome is first-person — "I succeeded to …", "Alas, I failed to …", "I tried to remember
+        // outcome is first-person — "I managed to …", "Alas, I failed to …", "I tried to remember
         // …"), the same GBNF trick the action rewrite uses. When a preview
         // sink is supplied, the outcome streams into the preview box like every other narration.
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>
@@ -74,7 +75,7 @@ public class OutcomeNarrator
         CancellationToken cancellationToken = default,
         ILlmPreviewSink? preview = null)
     {
-        string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike);
+        string neutral = NeutralNarration.Emotion(felt.Verbatims, felt.Humor.FeelsLike, felt.Lessons);
         int    slotId  = await GetOrCreateNarratorSlotAsync(felt.ModusMentis);
         // Written on a clean history, which is then put back. The slot is the modus mentis's own and
         // serves everything it does — a conversation's replies included — so with its history kept an
@@ -90,7 +91,7 @@ public class OutcomeNarrator
         {
             return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Emotion,
                 felt.ModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+                styleInstruction: felt.ModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(felt.ModusMentis));
         }
         finally
         {
@@ -121,13 +122,15 @@ public class OutcomeNarrator
         PartyMember protagonist,
         IReadOnlyList<string>? successVerbatims,
         IReadOnlyList<string>? failureVerbatims,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        IReadOnlyList<string>? successLessons = null,
+        IReadOnlyList<string>? failureLessons = null)
     {
         if (PlaygroundMode.IsActive)
         {
             _pendingNarratorSlot = -1;
-            return (BuildNeutralOutcome(action, true, successVerbatims),
-                    BuildNeutralOutcome(action, false, failureVerbatims));
+            return (BuildNeutralOutcome(action, true, successVerbatims, successLessons),
+                    BuildNeutralOutcome(action, false, failureVerbatims, failureLessons));
         }
 
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
@@ -136,7 +139,7 @@ public class OutcomeNarrator
 
         string success = await NarrateOutcomeAsync(
             action, actionModusMentis, successOutcome, true, difficulty, protagonist, cancellationToken,
-            outcomeVerbatims: successVerbatims);
+            outcomeVerbatims: successVerbatims, lessonVerbatims: successLessons);
         var afterSuccess = instance?.SnapshotHistory();
 
         // Reset to the pre-narration baseline so the failure branch generates without seeing the
@@ -145,7 +148,7 @@ public class OutcomeNarrator
 
         string failure = await NarrateOutcomeAsync(
             action, actionModusMentis, failureOutcome, false, difficulty, protagonist, cancellationToken,
-            outcomeVerbatims: failureVerbatims);
+            outcomeVerbatims: failureVerbatims, lessonVerbatims: failureLessons);
         var afterFailure = instance?.SnapshotHistory();
 
         _pendingNarratorSlot   = (instance != null) ? slotId : -1;
@@ -189,7 +192,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>
@@ -212,7 +215,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     /// <summary>The neutral sentence a refusal is re-voiced from — also the fallback shown when it cannot be.</summary>
@@ -243,7 +246,7 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(modusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             modusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: modusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
     }
 
     /// <summary>
@@ -255,8 +258,10 @@ public class OutcomeNarrator
     /// were not. Collapsing them into one "it did not work" leaves the rewrite to invent which, and
     /// it invents the flattering one.</para>
     ///
-    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries the critic's own reason, because it
-    /// is the only kind an LLM was asked about.</para>
+    /// <para>Only <see cref="ToolFailureKind.WrongTool"/> carries a reason after the sentence: the
+    /// refusal's own fixed line ("I think nothing about it could do any of this work"), since it is the
+    /// only kind an LLM decided. The critic is no longer asked to explain itself — see
+    /// <c>CriticTrees.CannotReason</c>.</para>
     /// </summary>
     public async Task<string> NarrateItemCombinationFailureAsync(
         ParsedNarrativeAction action,
@@ -275,6 +280,7 @@ public class OutcomeNarrator
             ToolFailureKind.NoProficiency => NeutralNarration.ItemCombinationNoProficiency(item.WithArticle()),
             ToolFailureKind.BeyondSkill   => NeutralNarration.ItemCombinationBeyondSkill(display, item.WithArticle()),
             ToolFailureKind.NotAWeapon    => NeutralNarration.ItemCombinationNotAWeapon(item.WithArticle()),
+            ToolFailureKind.TooHeavy      => NeutralNarration.ItemCombinationTooHeavy(item.WithArticle()),
             _                             => NeutralNarration.ItemCombinationFailure(display, item.WithArticle()),
         };
         if (kind == ToolFailureKind.WrongTool && !string.IsNullOrWhiteSpace(criticReason))
@@ -283,18 +289,19 @@ public class OutcomeNarrator
         int slotId = await GetOrCreateNarratorSlotAsync(actionModusMentis);
         return await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Outcome,
             actionModusMentis.PersonaReminder2, keepHistory: true, forcedPrefix: OutcomePrefix,
-            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken);
+            styleInstruction: actionModusMentis.StyleInstruction, preview: preview, ct: cancellationToken, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(actionModusMentis));
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private static string BuildNeutralOutcome(
-        ParsedNarrativeAction action, bool succeeded, IReadOnlyList<string>? outcomeVerbatims)
+        ParsedNarrativeAction action, bool succeeded, IReadOnlyList<string>? outcomeVerbatims,
+        IReadOnlyList<string>? lessonVerbatims = null)
     {
         var d = ActionDisplay(action);
         return succeeded
-            ? NeutralNarration.OutcomeSuccess(d, outcomeVerbatims)
-            : NeutralNarration.OutcomeFailure(d, outcomeVerbatims);
+            ? NeutralNarration.OutcomeSuccess(d, outcomeVerbatims, lessonVerbatims)
+            : NeutralNarration.OutcomeFailure(d, outcomeVerbatims, lessonVerbatims);
     }
 
     /// <summary>
@@ -303,7 +310,7 @@ public class OutcomeNarrator
     /// so the "I tried to …" framing embeds the plain phrasing rather than the already-styled label;
     /// falls back to DisplayText, then to ActionText with any leading "try to " stripped.
     /// </summary>
-    private static string ActionDisplay(ParsedNarrativeAction action)
+    internal static string ActionDisplay(ParsedNarrativeAction action)
     {
         if (!string.IsNullOrWhiteSpace(action.NeutralActionText)) return action.NeutralActionText;
         if (!string.IsNullOrWhiteSpace(action.DisplayText)) return action.DisplayText;

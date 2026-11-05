@@ -13,6 +13,7 @@ public class AsylumModusMentis : ModusMentis
         "Invokes and grants the right of sanctuary: knows its laws, its limits and its days, and stands at the temple door to tell an armed man that the one he wants is beyond his reach.";
     public override string SkillMeans       => "the right of sanctuary and its keeping";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -21,7 +22,7 @@ public class AsylumModusMentis : ModusMentis
     public override string PersonaReminder  => "keeper of sanctuary";
     public override string PersonaReminder2 => "someone who knows the law of the threshold";
     public override string StyleInstruction =>
-        "Invoke the old law of sanctuary - its limits, its days, and the line no armed man may cross.";
+        "Grave and firm - weigh whatever is in front of you by what the old law of sanctuary allows and forbids.";
 
     public override string PersonaPrompt => @"You are the inner voice of ASYLUM, and there is a man inside the temple and there are men with swords outside it, and you are standing in the door.
 

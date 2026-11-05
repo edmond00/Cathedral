@@ -52,7 +52,7 @@ public sealed partial class EmpireLore
         C(-1051, "The marriage of Ban", "Ansedor takes his daughter Hesperine as his wife. The household is sworn to silence.", Ansedor, Hesperine);
         Cc(-980, "The half-elves", "The Ban begin to call themselves half-elves, descended from an elf prince and a princess.", HouseOfBan);
         C(-903, "The Ten Chapters", "Hesperine and Oudin complete the Ten Chapters from the elf's account.", Hesperine, Oudin, Principism);
-        Cc(-800, "The week of eleven days", "Principists in Benepelop adopt the eleven-day week, one day per chapter.", Principism);
+        Cc(-800, "The count of eleven days", "Principists in Benepelop adopt a count of eleven days, one day per chapter.", Principism);
         C(-512, "The Parting of the Houses", "At Oudin's death his three sons divide the family's offices: the Old House, the Red Brick House and the Counsel.", Oudin, OldHouse, RedBrickHouse, Counsel);
         C(-505, "The Red Brick House", "The Red Brick House is built on the Clay Hill of Avolor to hold the elf.", RedBrickHouse, RedBrickHouseBuilding);
         Cc(-420, "The refining", "The Balnus learn to refine the blood, and daily drinking becomes survivable.", RedBrickHouse);
@@ -115,7 +115,7 @@ public sealed partial class EmpireLore
             Accede(from, who, KingdomOfBelune, who.Sex == Sex.Female ? "Queen of Belune" : "King of Belune");
 
         // ── The Vahyrian Empire ──
-        Cc(80, "The Aqilonic Roads", "Stone highways are laid from Avolor to Dokur.", Empire);
+        Cc(80, "The Aqilonic Roads", "Stone high roads are laid from Avolor to Dokur.", Empire);
         C(118, "The Hask Rising", "Vhomer Hask, son of Vhomanor, raises Pebelos against the empire; he is crushed in 121.", Fig("Vhomer Hask"), Pebelos, Empire);
         C(211, "The burning of the Foundling House", "The foundling Grizx, aged thirteen, sets the Foundling House of Perorigak on fire and is put in the Blind Cells.", Grizx, FoundlingHouse, BlindCells);
         C(222, "Out of the dark", "Grizx is released after four thousand days in darkness, blinded by the daylight, and sees Rede.", Grizx);
@@ -148,12 +148,12 @@ public sealed partial class EmpireLore
         C(1011, "The three churches", "The emperor recognises the Genesive, Figurative and Principative churches.", GenesiveQothism, FigurativeQothism, PrincipativeQothism, Empire);
         Cc(1065, "The springs of Belune", "Aqilon V plants trading posts and sanatoria at Belune's hot springs.", AqilonV, Belune);
         Cc(1090, "The Exchange Plagues", "The sick of Pyr bring plagues that kill nine tenths of Belune's natives, over fifty rounds.", Belune);
-        C(1212, "The Imperial Thermal Sanatorium", "Polop II builds a palace-hospital on Belune for his daughter Jelebanne.", PolopII, Jelebanne, Belune);
+        C(1212, "The Imperial Thermal Sanatorium", "Polop II builds a palace-infirmary on Belune for his daughter Jelebanne.", PolopII, Jelebanne, Belune);
         C(1321, "The Kingdom of Belune", "Belune is made a kingdom of the empire and Jelebanne crowned its queen.", Jelebanne, KingdomOfBelune, Belune);
 
         // ── The coup ──
         C(1660, "A union of the houses", "Teosodoc II marries Clemence Ban-Balnus, daughter of Oppretitette.", TeosodocII, Fig("Clemence"));
-        C(1686, "The baptism of Beatilda", "Beatilda drinks the blood at the Red Brick House on her 1100th day.", Beatilda, RedBrickHouse);
+        C(1686, "The anointing of Beatilda", "Beatilda drinks the blood at the Red Brick House on her 1100th day.", Beatilda, RedBrickHouse);
         C(1694, "Prunil sighted", "The IISTG sights Prunil.", IISTG, Prunil);
         Cc(1697, "The glimpse", "Beatilda sees the chained elf in the Well-Room.", Beatilda, RedBrickHouseBuilding);
         C(1701, "The contract", "The Red Brick House commissions Beatilda's death from the Ticklers' Guild; Jhoeland Leneu enters her guard.", Beatilda, Jhoeland, RedBrickHouse, TicklersGuild);
@@ -196,7 +196,7 @@ public sealed partial class EmpireLore
         C(2815, "The far voyages", "Arneviz Geoant begins his voyages to the farthest worlds.", ArnevizGeoant, IISTG, Ysthane);
         C(2871, "Geoant sails", "Arneviz Geoant sails for a world beyond the star-tables and does not return.", ArnevizGeoant, GeoantsMark);
         Cc(3100, "The Count of Worlds", "Two hundred and ninety-nine worlds visited, two hundred and twenty-nine held. The expansion stops.", Empire, IISTG);
-        C(3420, "The exile of Vesifia", "Vesifia III, twenty-five metres tall, is sent to Golden Avoria, where the Great Red Pyramid rises around her.", VesifiaIII, GoldenAvoria);
+        C(3420, "The exile of Vesifia", "Vesifia III, twenty-five paces tall, is sent to Golden Avoria, where the Great Red Pyramid rises around her.", VesifiaIII, GoldenAvoria);
         C(3569, "The Deep Expeditions", "Naabus VII sends four submarines to the sea floor to find elf medicine in the ruins of the Eternal Temple.", NaabusVII, IISTG, Nadirine);
         C(3579, "The elf of the temple", "The Patience of Rhesis returns with a small, red, pig-nosed creature from the sea floor.", Idrenne, NaabusVII);
         C(3579, "The Hatching", "Pyr hatches. Its light goes out of every sky, and the empire ends.", Pyr, Empire);

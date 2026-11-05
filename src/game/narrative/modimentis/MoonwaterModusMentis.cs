@@ -14,16 +14,17 @@ public class MoonwaterModusMentis : ModusMentis
         "Swims in the dark, where the far bank cannot be seen and the cold arrives all at once. Keeps a line without a landmark, and knows that the danger is the shock and the cramp rather than the distance.";
     public override string SkillMeans       => "the swimming done in water you cannot see the bottom of";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<SwimAcrossVerb>("swim water I cannot see the bottom of");
+    public override WillTargets? Will => WillTarget.To<SwimAcrossVerb>("swim water I cannot see the bottom of");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Shore);
     public override string[] Organs        => new[] { "pulmones", "hepar" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
 
     public override string PersonaTone     => "a swimmer entirely at ease in water nobody else will enter after dark";
     public override string PersonaReminder  => "night swimmer";
-    public override string PersonaReminder2 => "someone who goes into black water without breaking stride";
+    public override string PersonaReminder2 => "someone who goes into the unknown without breaking stride";
     public override string StyleInstruction =>
-        "Cold, dark and physical - the shock at the ribs, the invisible far bank, the steady stroke.";
+        "Cold, dark and steady - meet whatever is in front of you without flinching, stroke by stroke.";
 
     public override string PersonaPrompt => @"You are the inner voice of MOONWATER, and the far bank is not visible, and that has never once stopped you.
 

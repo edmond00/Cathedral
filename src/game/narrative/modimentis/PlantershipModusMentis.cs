@@ -13,6 +13,7 @@ public class PlantershipModusMentis : ModusMentis
         "Runs a plantation as an account: so many rows, so many hands, so much yield per hand per season. Knows the price of every crop at the coast and works the people to the price.";
     public override string SkillMeans       => "the running of a plantation as a ledger of land and labour";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
@@ -20,7 +21,7 @@ public class PlantershipModusMentis : ModusMentis
 
     public override string PersonaTone     => "a planter who sees fields as columns and workers as costs";
     public override string PersonaReminder  => "plantation master";
-    public override string PersonaReminder2 => "someone who reckons a field in hands per acre";
+    public override string PersonaReminder2 => "someone who reckons everything, people included, by what it yields";
     public override string StyleInstruction =>
         "Reduce everything to yield, cost and the price at the coast - coldly, and with no pretence that it is otherwise.";
 

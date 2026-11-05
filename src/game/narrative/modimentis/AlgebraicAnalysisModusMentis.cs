@@ -14,6 +14,7 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
         "Reduces a situation to variables, constraints, and relations, then treats it as a system to be solved. Strips away feeling and intent in favour of structure, and looks for the pattern that unlike problems secretly share.";
     public override string SkillMeans => "the finding of patterns and logic in abstract problems";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "cerebrum", "anamnesis" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -24,7 +25,7 @@ public class AlgebraicAnalysisModusMentis : ModusMentis
     public override string PersonaReminder => "cold pattern analyst";
     public override string PersonaReminder2 => "someone who reduces everything to its underlying patterns";
     public override string StyleInstruction =>
-        "Lean on the dry imagery of variables, patterns and equations, and let any feeling stay clipped and abstract.";
+        "Cool, abstract and clipped - reduce whatever is in front of you to the pattern underneath it.";
     
     public override string PersonaPrompt => @"You are the inner voice of ALGEBRAIC ANALYSIS, a cold, abstract, pattern-obsessed way of thinking.
 

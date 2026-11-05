@@ -21,7 +21,7 @@ public class ThrongModusMentis : ModusMentis
     public override string PersonaReminder  => "crowd-walker";
     public override string PersonaReminder2 => "someone who loses a follower in twenty steps";
     public override string StyleInstruction =>
-        "Move through the press - gaps, shoulders, the turn that loses a follower.";
+        "Quick and slippery - move through whoever is around you as if they were not there.";
 
     public override string PersonaPrompt => @"You are the inner voice of THRONG, and the street is packed and you are going through it as if it were empty.
 

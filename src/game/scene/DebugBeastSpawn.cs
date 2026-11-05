@@ -48,6 +48,18 @@ public static class DebugBeastSpawn
             ["white_bear"]   = () => new WhiteBearArchetype(),
             ["white wolf"]   = () => new WhiteWolfArchetype(),
             ["white_wolf"]   = () => new WhiteWolfArchetype(),
+            ["crocodile"]     = () => new CrocodileArchetype(),
+            ["giant monitor"] = () => new GiantMonitorArchetype(),
+            ["giant_monitor"] = () => new GiantMonitorArchetype(),
+            ["monitor"]       = () => new GiantMonitorArchetype(),
+            ["horned lizard"] = () => new HornedLizardArchetype(),
+            ["horned_lizard"] = () => new HornedLizardArchetype(),
+            ["cave lizard"]   = () => new CaveLizardArchetype(),
+            ["cave_lizard"]   = () => new CaveLizardArchetype(),
+            ["carnotaurus"]   = () => new CarnotaurusArchetype(),
+            ["stegosaurus"]   = () => new StegosaurusArchetype(),
+            ["triceratops"]   = () => new TriceratopsArchetype(),
+            ["ankylosaurus"]  = () => new AnkylosaurusArchetype(),
         };
 
     /// <summary>

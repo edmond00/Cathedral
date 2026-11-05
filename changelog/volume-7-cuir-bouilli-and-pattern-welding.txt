@@ -1,0 +1,45 @@
+Volume 7 - Cuir Bouilli and Pattern Welding
+2026-11-05
+
+You can now craft: learn a trade, work at a station with its implement, and turn materials into most of the usable items in the game. Every wilderness location was rebuilt with its own layout, and towns and villages are smaller and more varied. Wills can want several things and search the world map for them, and a Journal now records your run and has it written up as you play.
+
+Added
+  - Crafting: each trade is a modus mentis with one kind of station, one implement and its own recipes. Break carried items down into materials, then make new ones.
+  - Every item made is rolled in the dice box, and humors can change the roll. Failing spoils the material.
+  - Handiwork, a new measure from the hands, adds 0 to 3 dice to every crafting roll.
+  - A workshop's master can be asked for the use of their equipment.
+  - 17 new bags and containers, 20 new weapons, and uses for 57 items that had none.
+  - Journal tab: your visits, journeys and fights are recorded and written up in the background while you play.
+  - Bellic tab: a party member's fighting numbers, and what goes into each skill's dice.
+  - Play: skipping stones, sliding on ice, chasing hens and more, with 14 new modi mentis to learn from them.
+  - Great reptiles: eight species with their own anatomy, wounds and horn and tail attacks.
+  - A will's target can be searched for across the world map, from the Memory tab or the new button beside the menu. The nearest place by road is planned as a trip.
+  - Always Reject on the Memory tab: a modus mentis you refuse this way is never learned again.
+  - Arriving at and leaving a location are walked on its map. A Runaway is now checked in every area on the way out.
+  - New music: chant in holy places, stranger music in jungles and deserts, and war drums in fights.
+  - A short sound and visual pulse marks each change of screen, and a landed blow hits harder on screen.
+
+Changed
+  - Every wilderness kind (forest, mountain, coast, cave, desert, jungle and the rest) has a new layout and new kinds of area.
+  - Cities, villages and castles are smaller, with varied houses and town quarters.
+  - A will can now want up to five things and goes for the nearest. When thinking, it can propose any way of up to three acts, and it offers no act twice in a phase.
+  - A will can ask a trader it knows to lead the way to their premises as a step on its way.
+  - Weapons are stronger than a bare limb, one fills a hand, and an arm must be strong enough to hold it. Hand Load on the Anatomy tab shows the limit.
+  - Prices are now worked out from an item's material, workmanship and use.
+  - How much a thinking modus mentis doubts itself now belongs to that modus mentis, not to the pineal gland.
+  - Tool use is judged more fairly: sensible improvised tools pass more often, and wrong ones still fail.
+  - Some modi mentis now speak in their own register, such as archaic, rustic or terse.
+  - Childhoods grant more modi mentis, always leave you able to speak, and come in a different order in each world.
+  - The interface uses only purple, yellow and grey.
+  - Popups list modi mentis by name, with wills among the rest.
+  - The Memory tab now shows how much a thinking modus mentis doubts itself, and shows Discreet only for those that carry out acts.
+  - An item dropped on another exchanges places with it when there is no free room. The item it would exchange with blinks.
+
+Fixed
+  - A will no longer plans to stay in place after following somebody; following now counts as both the walk and the wait.
+  - Once one modus mentis lets its focus go, the next must look at something, so a beast in plain view is no longer ignored by all of them.
+  - Thinking about a person no longer gives the thinker that person's traits.
+  - Victory over a fight on the road no longer continues over a black screen.
+
+Internal
+  - New audits for wilderness variety, crafting and wills, and a large rewrite of the modi mentis' instructions to the language model.

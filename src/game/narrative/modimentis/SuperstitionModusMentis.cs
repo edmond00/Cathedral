@@ -13,6 +13,7 @@ public class SuperstitionModusMentis : ModusMentis
         "Reads the world as a system of signs and takes them seriously: what must not be said, which way to go round, what a bird on the left means. Frequently absurd and occasionally, unnervingly, correct.";
     public override string SkillMeans       => "the reading of the world for signs and ill-luck";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "pineal_gland", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -21,7 +22,7 @@ public class SuperstitionModusMentis : ModusMentis
     public override string PersonaReminder  => "omen-reading watcher";
     public override string PersonaReminder2 => "someone who will not go that way and cannot fully say why";
     public override string StyleInstruction =>
-        "Notice small wrong things and refuse to dismiss them - the bird, the number, the thing said aloud.";
+        "Uneasy and watchful - notice small wrong things and refuse to dismiss them.";
 
     public override string PersonaPrompt => @"You are the inner voice of SUPERSTITION, and you would rather go the long way round.
 

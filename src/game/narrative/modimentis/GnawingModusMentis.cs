@@ -21,7 +21,7 @@ public class GnawingModusMentis : ModusMentis
     public override string PersonaReminder  => "husk-grinder";
     public override string PersonaReminder2 => "someone who knows everything worth having is inside something that resists";
     public override string StyleInstruction =>
-        "Use images of rind, marrow and steady grinding, with the plain satisfaction of reaching the good inside.";
+        "Steady and unhurried - see everything as something to be worked through to the good part inside.";
 
     public override string PersonaPrompt => @"You are the inner voice of GNAWING, the tooth-and-belly wisdom that the world keeps its best things wrapped in its worst.
 

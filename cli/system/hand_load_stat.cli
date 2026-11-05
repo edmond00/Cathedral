@@ -1,0 +1,29 @@
+# The Hand Load stat: under each arm on the Anatomy tab, the heaviest thing that hand can hold.
+#
+# One stat per arm (RightHandLoadStat, LeftHandLoadStat), read off the arm part's score: 0 light,
+# 1 medium, 2 heavy. It is the figure PartyMember.HoldLimit enforces, so what the panel shows is the
+# rule. --organs sets the two arms apart so each hand reads its own arm, not the pair.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --organs right_arm=0,left_arm=2
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 45
+
+manage Anatomy
+wait 5
+point organ right_arm
+wait 5
+expect Hand Load
+expect light
+dump
+
+point organ left_arm
+wait 5
+expect Hand Load
+expect heavy
+dump
+
+quit

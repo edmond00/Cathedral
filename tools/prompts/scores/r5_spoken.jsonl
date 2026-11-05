@@ -1,0 +1,92 @@
+{"case": "talk_miller:008:own", "version": "base", "seed": 21, "sid": "S5749", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "\"thine hands are busy with aught else\" (meaning changed)"}
+{"case": "talk_miller:008:own", "version": "base", "seed": 22, "sid": "S2368", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:008:own", "version": "spoken_compact", "seed": 22, "sid": "S1279", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:008:own", "version": "spoken_compact", "seed": 21, "sid": "S6025", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"Gleek\""}
+{"case": "talk_miller:007:own", "version": "base", "seed": 21, "sid": "S7942", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "the race made \"the river\""}
+{"case": "talk_miller:007:own", "version": "spoken_compact", "seed": 22, "sid": "S7212", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"I've had my eye on it for a long time\"; the race made \"the ford\""}
+{"case": "talk_miller:007:own", "version": "spoken_compact", "seed": 21, "sid": "S9684", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"by golly\""}
+{"case": "talk_miller:007:own", "version": "base", "seed": 22, "sid": "S6866", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "the race made \"the stream\""}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "base", "seed": 22, "sid": "S3134", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-\"not long\""}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "spoken_compact", "seed": 22, "sid": "S4145", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+\"a guest in need\", \"my belly knows no bounds\""}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "spoken_compact", "seed": 21, "sid": "S5380", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+a day's ride west, +narration of speaking (\"So, I say to Rachel\")"}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "base", "seed": 21, "sid": "S8283", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"hunger calls to distant lands\""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "base", "seed": 21, "sid": "S1230", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "spoken_compact", "seed": 22, "sid": "S4621", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "+\"from the fields o' high esteem\""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "base", "seed": 22, "sid": "S8455", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "not English"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "spoken_compact", "seed": 21, "sid": "S1405", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "base", "seed": 22, "sid": "S2735", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+\"your weakness but a jest\""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "base", "seed": 21, "sid": "S2405", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "meaning lost"}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "spoken_compact", "seed": 22, "sid": "S9163", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "narration of speaking; +\"no mercy\""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "spoken_compact", "seed": 21, "sid": "S7901", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied (\"It cannot stop me\")"}
+{"case": "talk_blacksmith:006:own", "version": "base", "seed": 22, "sid": "S1320", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "statement made a question"}
+{"case": "talk_blacksmith:006:own", "version": "spoken_compact", "seed": 22, "sid": "S9398", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:006:own", "version": "base", "seed": 21, "sid": "S8066", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"we come from different climes\""}
+{"case": "talk_blacksmith:006:own", "version": "spoken_compact", "seed": 21, "sid": "S6881", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:010:own", "version": "base", "seed": 21, "sid": "S1942", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-\"you stopped to bother me\""}
+{"case": "talk_blacksmith:010:own", "version": "spoken_compact", "seed": 21, "sid": "S4368", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"seeking help\"; \"well met\" for a dismissal"}
+{"case": "talk_blacksmith:010:own", "version": "spoken_compact", "seed": 22, "sid": "S1578", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:010:own", "version": "base", "seed": 22, "sid": "S7047", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "dismissal made a question"}
+{"case": "talk_miller:006:swap:plain_dealing", "version": "spoken_compact", "seed": 22, "sid": "S3816", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied (\"There is a crack, there - look\")"}
+{"case": "talk_miller:006:swap:plain_dealing", "version": "spoken_compact", "seed": 21, "sid": "S4539", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied"}
+{"case": "talk_miller:006:swap:plain_dealing", "version": "base", "seed": 21, "sid": "S6943", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"the flawed, that's my price\""}
+{"case": "talk_miller:006:swap:plain_dealing", "version": "base", "seed": 22, "sid": "S7040", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"there's a crack in it\""}
+{"case": "village_noon_party:011:own", "version": "base", "seed": 22, "sid": "S5608", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:own", "version": "base", "seed": 21, "sid": "S6150", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed; -wall"}
+{"case": "village_noon_party:011:own", "version": "spoken_compact", "seed": 22, "sid": "S2404", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "noticed made heard; +the bench sighs"}
+{"case": "village_noon_party:011:own", "version": "spoken_compact", "seed": 21, "sid": "S8767", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed; +ancient"}
+{"case": "talk_miller:005:own", "version": "base", "seed": 21, "sid": "S3910", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"Day well spent\""}
+{"case": "talk_miller:005:own", "version": "spoken_compact", "seed": 22, "sid": "S8914", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "+\"fellow traveler\""}
+{"case": "talk_miller:005:own", "version": "spoken_compact", "seed": 21, "sid": "S8331", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:005:own", "version": "base", "seed": 22, "sid": "S3680", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:009:own", "version": "base", "seed": 21, "sid": "S3982", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:009:own", "version": "base", "seed": 22, "sid": "S3925", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "\"until next year\""}
+{"case": "talk_miller:009:own", "version": "spoken_compact", "seed": 21, "sid": "S9742", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "\"you know your place\""}
+{"case": "talk_miller:009:own", "version": "spoken_compact", "seed": 22, "sid": "S6298", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:006:own", "version": "spoken_compact", "seed": 22, "sid": "S9520", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+mother's cousin, a tale; -his own name"}
+{"case": "talk_miller:006:own", "version": "spoken_compact", "seed": 21, "sid": "S4204", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "system rule copied (\"where iron and myth reign\"); +mother's cousin"}
+{"case": "talk_miller:006:own", "version": "base", "seed": 22, "sid": "S2872", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+by the grace of my ancestors"}
+{"case": "talk_miller:006:own", "version": "base", "seed": 21, "sid": "S2348", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+by the light of the moon"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "spoken_compact", "seed": 21, "sid": "S2615", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-cold"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "base", "seed": 22, "sid": "S7981", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "spoken_compact", "seed": 22, "sid": "S1637", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:011:swap:courtesy", "version": "base", "seed": 21, "sid": "S5514", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-wall"}
+{"case": "talk_blacksmith:007:swap:rhetoric", "version": "spoken_compact", "seed": 22, "sid": "S5597", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"greet the sun\""}
+{"case": "talk_blacksmith:007:swap:rhetoric", "version": "base", "seed": 21, "sid": "S6419", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:007:swap:rhetoric", "version": "spoken_compact", "seed": 21, "sid": "S2786", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:007:swap:rhetoric", "version": "base", "seed": 22, "sid": "S7056", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "base", "seed": 21, "sid": "S5726", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "spoken_compact", "seed": 22, "sid": "S9882", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "spoken_compact", "seed": 21, "sid": "S5993", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "-the friendlier greeting"}
+{"case": "talk_blacksmith:008:own", "version": "base", "seed": 22, "sid": "S8450", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:008:swap:pride", "version": "spoken_compact", "seed": 21, "sid": "S9994", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:008:swap:pride", "version": "base", "seed": 22, "sid": "S4576", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "not English"}
+{"case": "talk_miller:008:swap:pride", "version": "base", "seed": 21, "sid": "S5233", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "meaning changed"}
+{"case": "talk_miller:008:swap:pride", "version": "spoken_compact", "seed": 22, "sid": "S3449", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"I turn down your offer\" (reminder acted out)"}
+{"case": "village_noon_party:011:swap:cruelty", "version": "spoken_compact", "seed": 22, "sid": "S2755", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:011:swap:cruelty", "version": "base", "seed": 21, "sid": "S2956", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:011:swap:cruelty", "version": "base", "seed": 22, "sid": "S9077", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:011:swap:cruelty", "version": "spoken_compact", "seed": 21, "sid": "S4899", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "stone made \"wooden\""}
+{"case": "talk_miller:008:swap:cruelty", "version": "spoken_compact", "seed": 22, "sid": "S6378", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied; narration of speaking"}
+{"case": "talk_miller:008:swap:cruelty", "version": "base", "seed": 21, "sid": "S9937", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+the king, his court"}
+{"case": "talk_miller:008:swap:cruelty", "version": "base", "seed": 22, "sid": "S3333", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:008:swap:cruelty", "version": "spoken_compact", "seed": 21, "sid": "S2644", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+\"I break thy work\"; style copied"}
+{"case": "talk_miller:006:swap:rhetoric", "version": "spoken_compact", "seed": 21, "sid": "S7275", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "narration of speaking; +\"verdant fields\""}
+{"case": "talk_miller:006:swap:rhetoric", "version": "spoken_compact", "seed": 22, "sid": "S3740", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "reminder copied"}
+{"case": "talk_miller:006:swap:rhetoric", "version": "base", "seed": 21, "sid": "S8361", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "says the addressee is Dennis"}
+{"case": "talk_miller:006:swap:rhetoric", "version": "base", "seed": 22, "sid": "S1553", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "made a question"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "spoken_compact", "seed": 21, "sid": "S1916", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied, meaning lost"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "base", "seed": 22, "sid": "S7819", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "\"there\" for here"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "base", "seed": 21, "sid": "S7445", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "not English"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "spoken_compact", "seed": 22, "sid": "S1382", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "persona prompt copied"}
+{"case": "talk_blacksmith:007:swap:courtesy", "version": "base", "seed": 21, "sid": "S3663", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"Day well done\""}
+{"case": "talk_blacksmith:007:swap:courtesy", "version": "spoken_compact", "seed": 21, "sid": "S4696", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"to your house\""}
+{"case": "talk_blacksmith:007:swap:courtesy", "version": "base", "seed": 22, "sid": "S1208", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:007:swap:courtesy", "version": "spoken_compact", "seed": 22, "sid": "S4640", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"to your house\""}
+{"case": "talk_blacksmith:007:own", "version": "base", "seed": 21, "sid": "S1931", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"How glad to meet you\""}
+{"case": "talk_blacksmith:007:own", "version": "spoken_compact", "seed": 21, "sid": "S9824", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "greeting made a question"}
+{"case": "talk_blacksmith:007:own", "version": "base", "seed": 22, "sid": "S8292", "F": 1, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:007:own", "version": "spoken_compact", "seed": 22, "sid": "S2520", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "greeting made a question"}
+{"case": "talk_blacksmith:009:own", "version": "spoken_compact", "seed": 22, "sid": "S6671", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "narration of speaking"}
+{"case": "talk_blacksmith:009:own", "version": "base", "seed": 21, "sid": "S1261", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:own", "version": "base", "seed": 22, "sid": "S7176", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:009:own", "version": "spoken_compact", "seed": 21, "sid": "S9037", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "narration of speaking"}

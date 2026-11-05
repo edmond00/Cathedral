@@ -56,6 +56,34 @@ public class RoutineRecorder
     /// </summary>
     public static bool IsRecordable(Area area) => !area.IsPrivate;
 
+    /// <summary>
+    /// <see cref="IsRecordable(Area)"/>, widened by one fact the scene keeps for good: a workshop whose
+    /// master has given the player its use. That leave is saved, so unlike a night's lodging it is still
+    /// true on the later visit a routine is walked on.
+    /// </summary>
+    public static bool IsRecordable(Scene.Scene scene, Area area)
+        => !area.IsPrivate || scene.SectionOf(area) is { } s && scene.AuthorizedWorkshops.Contains(s.DisplayName);
+
+    /// <summary>USE succeeded and the crafting menu is opening: the station is a routine worth keeping.</summary>
+    public void OnCraftingOpened(Crafting.CraftingRequest request, Scene.Scene scene, PoV pov, PartyMember actor)
+    {
+        if (actor is not Protagonist) return;   // routines are the protagonist's
+        var trade = actor.ModiMentis.OfType<Crafting.CraftingModusMentis>().FirstOrDefault(m => m.ModusMentisId == request.ModusMentisId);
+        if (trade == null) return;
+        var tool = request.ToolItemId != null && request.ToolItemId != trade.ToolItemId
+            ? ItemRegistry.Instance.All.FirstOrDefault(i => i.ItemId == request.ToolItemId)
+            : null;
+        Record(new CraftRoutine
+        {
+            Name         = $"{trade.DisplayName} at {request.Station.DisplayName}",
+            StationName  = request.Station.DisplayName,
+            TradeId      = trade.ModusMentisId,
+            TradeName    = trade.DisplayName,
+            ToolItemId   = tool?.ItemId ?? "",
+            ToolItemName = tool?.DisplayName ?? "",
+        }, pov, IsRecordable(scene, pov.Where));
+    }
+
     // ── The five moments ──────────────────────────────────────────────────────
 
     /// <summary>
@@ -171,9 +199,9 @@ public class RoutineRecorder
         return routine;
     }
 
-    private void Record(Routine routine, PoV pov)
+    private void Record(Routine routine, PoV pov, bool? recordable = null)
     {
-        if (!IsRecordable(pov.Where))
+        if (!(recordable ?? IsRecordable(pov.Where)))
         {
             Console.WriteLine($"RoutineRecorder: not learning '{routine.Name}' — {pov.Where.DisplayName} is private");
             return;

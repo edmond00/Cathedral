@@ -14,14 +14,15 @@ public class HearthlongingModusMentis : ModusMentis
         "Feels the particular ache of a hearth that belongs to somebody else, and works steadily toward one that does not. Reads a household by its warmth, and is the reason a body eats properly and comes back.";
     public override string SkillMeans       => "the ache a lit window produces at a distance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a homesickness that has never quite been cured and does not want to be";
     public override string PersonaReminder  => "hearth-longing traveller";
-    public override string PersonaReminder2 => "someone who stops at lit windows on the way past";
+    public override string PersonaReminder2 => "someone who is always on the outside of other people's comfort";
     public override string StyleInstruction =>
-        "Warmth seen from outside - the window, the smoke, the smell of a meal that is not yours.";
+        "Wistful and quietly aching - see everything as an outsider sees a comfort that belongs to others.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

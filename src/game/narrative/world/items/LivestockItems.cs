@@ -13,6 +13,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Horseshoe : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "horseshoe";
     public override string DisplayName => "Horseshoe";
     public override string Description => "A worn iron horseshoe, the nail holes ragged";
@@ -20,11 +21,11 @@ public sealed class Horseshoe : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
-    public override int PriceReference => 4;
 }
 
 public sealed class Saddle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Hide });
     public override string ItemId      => "saddle";
     public override string DisplayName => "Saddle";
     public override string Description => "A leather saddle on a wooden tree, the seat polished by long riding";
@@ -32,11 +33,11 @@ public sealed class Saddle : Item
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Heavy;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override int PriceReference => 40;
 }
 
 public sealed class Bridle : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Hide });
     public override string ItemId      => "bridle";
     public override string DisplayName => "Bridle";
     public override string Description => "A headstall and reins of oiled leather with an iron snaffle bit";
@@ -44,11 +45,13 @@ public sealed class Bridle : Item
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override int PriceReference => 18;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "tame", "appease" };
+    public override int UsageLevel => 2;
 }
 
 public sealed class HorseBlanket : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Cloth });
     public override string ItemId      => "horse_blanket";
     public override string DisplayName => "Horse Blanket";
     public override string Description => "A heavy striped wool blanket that smells strongly of horse";
@@ -56,11 +59,11 @@ public sealed class HorseBlanket : Item
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Cloth };
-    public override int PriceReference => 12;
 }
 
 public sealed class Cowbell : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool, ItemKind.Metal });
     public override string ItemId      => "cowbell";
     public override string DisplayName => "Cowbell";
     public override string Description => "A flat iron bell on a leather collar, its clapper a knuckle-bone";
@@ -68,7 +71,8 @@ public sealed class Cowbell : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
-    public override int PriceReference => 5;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "tame", "appease" };
+    public override int UsageLevel => 2;
 }
 
 // ── stock tools ─────────────────────────────────────────────────────────────
@@ -83,7 +87,6 @@ public sealed class Currycomb : Item
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 6;
 }
 
 public sealed class HoofPick : Item
@@ -96,11 +99,11 @@ public sealed class HoofPick : Item
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 3;
 }
 
 public sealed class Lariat : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "lariat";
     public override string DisplayName => "Lariat";
     public override string Description => "A long braided rawhide rope with a running noose at one end";
@@ -109,7 +112,6 @@ public sealed class Lariat : Item
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
-    public override int PriceReference => 10;
 }
 
 public sealed class BrandingIron : Item
@@ -122,7 +124,6 @@ public sealed class BrandingIron : Item
     public override WeightClass Weight => WeightClass.Medium;
     public override int UsageLevel => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 12;
 }
 
 public sealed class StockWhip : Item
@@ -135,11 +136,11 @@ public sealed class StockWhip : Item
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Craftware };
-    public override int PriceReference => 8;
 }
 
 public sealed class Pitchfork : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "pitchfork";
     public override string DisplayName => "Pitchfork";
     public override string Description => "A long-handled fork with two iron tines, for hay and dung";
@@ -148,30 +149,30 @@ public sealed class Pitchfork : Item
     public override WeightClass Weight => WeightClass.Light;
     public override int UsageLevel => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Tool, ItemTag.Ironwork };
-    public override int PriceReference => 10;
 }
 
 // ── what the fold yields ────────────────────────────────────────────────────
 
 public sealed class Fleece : TextileItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Hide, ItemKind.Fibre });
     public override string ItemId      => "fleece";
     public override List<ItemTag> Tags => new() { ItemTag.Textile, ItemTag.Woollens };
     public override string DisplayName => "Fleece";
     public override string Description => "A whole greasy fleece rolled up and tied, lanolin-sticky";
-    public override int PriceReference => 14;
 }
 
 public sealed class Horsehair : TextileItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre });
     public override string ItemId      => "horsehair";
     public override string DisplayName => "Horsehair";
     public override string Description => "A hank of long coarse horsehair from a mane or tail";
-    public override int PriceReference => 6;
 }
 
 public sealed class GoatMilk : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "goat_milk";
     public override string DisplayName => "Goat Milk";
     public override string Description => "A skin of goat milk, rich and a little rank";
@@ -180,14 +181,15 @@ public sealed class GoatMilk : ConsumableItem
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 3;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(40).Add<AquaHumor>(35).Add<BloodHumor>(25);
 }
 
 public sealed class Ham : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "ham";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Ham";
     public override string Description => "A smoked ham in a cloth, its rind dark and hard";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
@@ -195,13 +197,13 @@ public sealed class Ham : ConsumableItem
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 18;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<BloodHumor>(30).Add<SaltHumor>(25);
 }
 
 public sealed class Fowl : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "fowl";
     public override string DisplayName => "Plucked Fowl";
     public override string Description => "A hen killed and plucked, trussed by the feet with a twist of straw";
@@ -210,14 +212,15 @@ public sealed class Fowl : ConsumableItem
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 8;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(60).Add<FatHumor>(40);
 }
 
 public sealed class Bacon : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "bacon";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Bacon";
     public override string Description => "A slab of salted, smoked bacon streaked white and red";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Meat };
@@ -225,13 +228,13 @@ public sealed class Bacon : ConsumableItem
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 9;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(55).Add<SaltHumor>(30).Add<BloodHumor>(15);
 }
 
 public sealed class GooseEgg : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Egg });
     public override string ItemId      => "goose_egg";
     public override string DisplayName => "Goose Egg";
     public override string Description => "A heavy white goose egg, twice the size of a hen's";
@@ -240,13 +243,13 @@ public sealed class GooseEgg : ConsumableItem
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 3;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<PulpHumor>(35).Add<JuvenescenceHumor>(20);
 }
 
 public sealed class DuckEgg : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Egg });
     public override string ItemId      => "duck_egg";
     public override string DisplayName => "Duck Egg";
     public override string Description => "A pale blue-green duck egg, the shell faintly chalky";
@@ -255,14 +258,15 @@ public sealed class DuckEgg : ConsumableItem
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 2;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(40).Add<PulpHumor>(40).Add<JuvenescenceHumor>(20);
 }
 
 public sealed class RabbitStew : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Meat });
     public override string ItemId      => "rabbit_stew";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Plain;
     public override string DisplayName => "Rabbit Stew";
     public override string Description => "A covered pot of rabbit stewed with onion and thyme";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff };
@@ -270,14 +274,15 @@ public sealed class RabbitStew : ConsumableItem
     public override WeightClass Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 6;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<BloodHumor>(40).Add<PulpHumor>(35).Add<LaetitiaHumor>(25);
 }
 
 public sealed class Curds : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Dairy });
     public override string ItemId      => "curds";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Stock;
     public override string DisplayName => "Curds";
     public override string Description => "A bowl of fresh white curds dripping whey";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Dairy };
@@ -285,7 +290,6 @@ public sealed class Curds : ConsumableItem
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
-    public override int PriceReference => 3;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<PhlegmHumor>(35).Add<PulpHumor>(20);
 }

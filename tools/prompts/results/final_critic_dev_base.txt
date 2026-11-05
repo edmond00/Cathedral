@@ -1,0 +1,32 @@
+critic00 climb up the rocky slope / the rope help
+critic01 climb the old oak / the loaf of bread no
+critic02 break open the smithy door / the hammer help
+critic03 break open the smithy door / the feather no
+critic04 cross the stream / the walking staff help
+critic05 cross the stream / the prayer book no
+critic06 unlock the chest / the hairpin help
+critic07 unlock the chest / the apple no
+critic08 calm the frightened horse / the apple help
+critic09 calm the frightened horse / the hammer no
+critic10 swim across the river / the iron pot no
+critic11 gather the spilled grain / the sack help
+critic12 sing a song for the crowd / the shovel no
+critic13 listen at the barn wall / the axe no
+critic14 examine the cave paintings / the lantern help
+critic15 dig the garden bed / the hoe help
+critic16 dig the garden bed / the spade help
+critic17 dig the garden bed / the feather no
+critic18 mine the ore seam / the sledgehammer help
+critic19 mine the ore seam / the loaf of bread no
+critic20 cut wood from the fallen log / the hatchet help
+critic21 cut wood from the fallen log / the rope no
+critic22 fish in the pond / the spear help
+critic23 fish in the pond / the lantern no
+critic24 cut the meat from the deer / the sword help
+critic25 cut the meat from the deer / the wooden spoon no
+critic26 cut the pelt from the wolf / the sickle help
+critic27 cut wood from the stack / the prayer book no
+
+base: right side 117/140 = 83.6%   right side and degree 112/140
+  ItemAppropriateness  72/75 = 96.0%
+  ToolSubstitution     45/65 = 69.2%

@@ -23,4 +23,9 @@ public static class NameGenerator
     public static string GenerateBeast(Random rng)
         => BeastNameData.Adjectives[rng.Next(BeastNameData.Adjectives.Length)]
          + BeastNameData.Nouns[rng.Next(BeastNameData.Nouns.Length)];
+
+    /// <summary>Descriptive great-reptile name, built as the beast's is (Mudjaw, Stonehorn).</summary>
+    public static string GenerateReptile(Random rng)
+        => ReptileNameData.Adjectives[rng.Next(ReptileNameData.Adjectives.Length)]
+         + ReptileNameData.Nouns[rng.Next(ReptileNameData.Nouns.Length)];
 }

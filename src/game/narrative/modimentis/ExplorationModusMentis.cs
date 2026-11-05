@@ -16,7 +16,8 @@ public class ExplorationModusMentis : ModusMentis
         "Reads unknown country for a path, for water, and for shelter, keeping a sense of the way ahead. Inclines toward scouting and traversal, and works out unfamiliar ground step by step.";
     public override string SkillMeans       => "the finding of paths, shelter and safe ways through unknown land";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<FollowPathVerb>("follow a path to see where it goes");
+    public override WillTargets? Will => WillTarget.To<FollowPathVerb>("follow a path to see where it goes");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -24,7 +25,7 @@ public class ExplorationModusMentis : ModusMentis
     public override string PersonaReminder  => "storm-tested seeker";
     public override string PersonaReminder2 => "someone who reads land for paths and shelters before anything else";
     public override string StyleInstruction =>
-        "Reach for images of horizons, trails and uncharted ground, with a wanderer's restless pull toward the unknown.";
+        "Restless and drawn onward - read whatever is in front of you for where it leads.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

@@ -1,0 +1,276 @@
+{"case": "village_noon_party:011:swap:cruelty", "version": "final", "seed": 52, "sid": "S4539", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "question changed; -cold"}
+{"case": "village_noon_party:011:swap:cruelty", "version": "base", "seed": 52, "sid": "S8479", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "question changed; -wall"}
+{"case": "village_noon_party:011:swap:cruelty", "version": "final", "seed": 51, "sid": "S9225", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "question changed (\"what folly\")"}
+{"case": "village_noon_party:011:swap:cruelty", "version": "base", "seed": 51, "sid": "S8908", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-wall, -cold"}
+{"case": "talk_blacksmith:004:own", "version": "base", "seed": 52, "sid": "S9528", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a fire in the hearth, kindling; -learned"}
+{"case": "talk_blacksmith:004:own", "version": "final", "seed": 51, "sid": "S6909", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+my staff, +the hearth, Rachel by the fire"}
+{"case": "talk_blacksmith:004:own", "version": "base", "seed": 51, "sid": "S8448", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the steady wind"}
+{"case": "talk_blacksmith:004:own", "version": "final", "seed": 52, "sid": "S1511", "F": 0, "P": 2, "C": 0, "Q": 1, "facts": "+a fire, +the night (morning)"}
+{"case": "cave_morning:004:own", "version": "base", "seed": 52, "sid": "S1602", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+bark; -scaling"}
+{"case": "cave_morning:004:own", "version": "final", "seed": 51, "sid": "S3773", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "climbed down made \"ascended\"; +bark"}
+{"case": "cave_morning:004:own", "version": "base", "seed": 51, "sid": "S6632", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "+bark"}
+{"case": "cave_morning:004:own", "version": "final", "seed": 52, "sid": "S3168", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "down made \"scaled\"; -lesson"}
+{"case": "talk_miller:011:own", "version": "final", "seed": 52, "sid": "S5276", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "+the orchard, +I will gather apples"}
+{"case": "talk_miller:011:own", "version": "final", "seed": 51, "sid": "S1918", "F": 0, "P": 2, "C": 1, "Q": 1, "facts": "+the weaver's stall"}
+{"case": "talk_miller:011:own", "version": "base", "seed": 52, "sid": "S3772", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:011:own", "version": "base", "seed": 51, "sid": "S1768", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+my mother's village, +the tavern"}
+{"case": "village_noon_party:011:own", "version": "base", "seed": 52, "sid": "S6902", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "question changed; -wall, -cold"}
+{"case": "village_noon_party:011:own", "version": "base", "seed": 51, "sid": "S4753", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:own", "version": "final", "seed": 51, "sid": "S8223", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "question changed; -wall"}
+{"case": "village_noon_party:011:own", "version": "final", "seed": 52, "sid": "S4247", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_dawn:009:swap:dread", "version": "final", "seed": 52, "sid": "S4748", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the door"}
+{"case": "village_dawn:009:swap:dread", "version": "final", "seed": 51, "sid": "S3073", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the exit"}
+{"case": "village_dawn:009:swap:dread", "version": "base", "seed": 52, "sid": "S3264", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:009:swap:dread", "version": "base", "seed": 51, "sid": "S6754", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "final", "seed": 51, "sid": "S9315", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "final", "seed": 52, "sid": "S6214", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "base", "seed": 52, "sid": "S9381", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning lost; +\"a hunter's prey\""}
+{"case": "talk_blacksmith:009:swap:cruelty", "version": "base", "seed": 51, "sid": "S7606", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:015:loose:greed_bare", "version": "final", "seed": 52, "sid": "S1902", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+fields"}
+{"case": "farm_night:015:loose:greed_bare", "version": "base", "seed": 51, "sid": "S6444", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+the warmth of the hearth in a coop"}
+{"case": "farm_night:015:loose:greed_bare", "version": "final", "seed": 51, "sid": "S5560", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:015:loose:greed_bare", "version": "base", "seed": 52, "sid": "S3510", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-trailcraft"}
+{"case": "plain_afternoon_party:005:swap:courtesy", "version": "base", "seed": 51, "sid": "S2482", "F": 2, "P": 0, "C": null, "Q": 0, "facts": "repeated"}
+{"case": "plain_afternoon_party:005:swap:courtesy", "version": "final", "seed": 51, "sid": "S7759", "F": 2, "P": 0, "C": 1, "Q": 1, "facts": ""}
+{"case": "plain_afternoon_party:005:swap:courtesy", "version": "base", "seed": 52, "sid": "S7342", "F": 1, "P": 0, "C": 1, "Q": 1, "facts": "\"my fist iron-strong\""}
+{"case": "plain_afternoon_party:005:swap:courtesy", "version": "final", "seed": 52, "sid": "S8199", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "plain_afternoon_party:006:loose:melancholy_line", "version": "base", "seed": 51, "sid": "S5048", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "plain_afternoon_party:006:loose:melancholy_line", "version": "base", "seed": 52, "sid": "S3543", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+an autumn sky"}
+{"case": "plain_afternoon_party:006:loose:melancholy_line", "version": "final", "seed": 51, "sid": "S1848", "F": 2, "P": 2, "C": 1, "Q": 1, "facts": ""}
+{"case": "plain_afternoon_party:006:loose:melancholy_line", "version": "final", "seed": 52, "sid": "S8330", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "farm_dusk:004:own", "version": "base", "seed": 51, "sid": "S8864", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+stone walls; -trailcraft"}
+{"case": "farm_dusk:004:own", "version": "base", "seed": 52, "sid": "S4787", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:004:own", "version": "final", "seed": 52, "sid": "S6639", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+\"my hands are clean now\""}
+{"case": "farm_dusk:004:own", "version": "final", "seed": 51, "sid": "S4737", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"hands unrippled and handsomely stained\""}
+{"case": "talk_miller:003:loose:melancholy_line", "version": "final", "seed": 52, "sid": "S3359", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:003:loose:melancholy_line", "version": "base", "seed": 51, "sid": "S2300", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:003:loose:melancholy_line", "version": "base", "seed": 52, "sid": "S1526", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "+offering my hand"}
+{"case": "talk_miller:003:loose:melancholy_line", "version": "final", "seed": 51, "sid": "S2564", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:011:own", "version": "final", "seed": 51, "sid": "S1847", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"a place to shelter and store\""}
+{"case": "farm_night:011:own", "version": "base", "seed": 51, "sid": "S8834", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:011:own", "version": "base", "seed": 52, "sid": "S7494", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "garbled"}
+{"case": "farm_night:011:own", "version": "final", "seed": 52, "sid": "S9982", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "farm_night:010:swap:woodcraft", "version": "base", "seed": 52, "sid": "S6371", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-petrichor; +\"each deliberate cut\""}
+{"case": "farm_night:010:swap:woodcraft", "version": "base", "seed": 51, "sid": "S5210", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+marked the cut, carved and smoothed pieces"}
+{"case": "farm_night:010:swap:woodcraft", "version": "final", "seed": 52, "sid": "S4848", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+\"set each joint\""}
+{"case": "farm_night:010:swap:woodcraft", "version": "final", "seed": 51, "sid": "S7297", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "lesson glossed, not named"}
+{"case": "farm_night:003:own", "version": "base", "seed": 51, "sid": "S7831", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "-the ways listed"}
+{"case": "farm_night:003:own", "version": "final", "seed": 51, "sid": "S3314", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "persona prompt echoed (\"the column\")"}
+{"case": "farm_night:003:own", "version": "base", "seed": 52, "sid": "S4047", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:003:own", "version": "final", "seed": 52, "sid": "S4262", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "persona prompt echoed"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "base", "seed": 52, "sid": "S9768", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the door, +the fire; the feeling replaced"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "base", "seed": 51, "sid": "S6395", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+left the hearth, \"heart heavy\""}
+{"case": "talk_blacksmith:005:swap:dread", "version": "final", "seed": 52, "sid": "S6986", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I left, +the room too quiet"}
+{"case": "talk_blacksmith:005:swap:dread", "version": "final", "seed": 51, "sid": "S4129", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+I left"}
+{"case": "talk_blacksmith:010:own", "version": "base", "seed": 52, "sid": "S8771", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "-\"you stopped to bother me\""}
+{"case": "talk_blacksmith:010:own", "version": "base", "seed": 51, "sid": "S4632", "F": 0, "P": 0, "C": null, "Q": 2, "facts": "meaning reversed (a blessing)"}
+{"case": "talk_blacksmith:010:own", "version": "final", "seed": 52, "sid": "S9570", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "dismissal made a question"}
+{"case": "talk_blacksmith:010:own", "version": "final", "seed": 51, "sid": "S8866", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-\"Good day\", +\"a curious soul\""}
+{"case": "forest_evening:011:own", "version": "final", "seed": 51, "sid": "S6758", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "cut made carve and shave"}
+{"case": "forest_evening:011:own", "version": "final", "seed": 52, "sid": "S3843", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:011:own", "version": "base", "seed": 52, "sid": "S8949", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the beam"}
+{"case": "forest_evening:011:own", "version": "base", "seed": 51, "sid": "S4286", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a keen blade"}
+{"case": "village_noon_party:003:own", "version": "final", "seed": 51, "sid": "S5950", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+my preceptor's lessons"}
+{"case": "village_noon_party:003:own", "version": "base", "seed": 52, "sid": "S2582", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the storm"}
+{"case": "village_noon_party:003:own", "version": "base", "seed": 51, "sid": "S7939", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the storm"}
+{"case": "village_noon_party:003:own", "version": "final", "seed": 52, "sid": "S2081", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+preceptor, +the storm"}
+{"case": "cave_morning:002:own", "version": "final", "seed": 52, "sid": "S7387", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"atop the rock\""}
+{"case": "cave_morning:002:own", "version": "final", "seed": 51, "sid": "S7188", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "descend made \"ascend\"; \"ancient rope ladder\""}
+{"case": "cave_morning:002:own", "version": "base", "seed": 52, "sid": "S2269", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "cave_morning:002:own", "version": "base", "seed": 51, "sid": "S5858", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "final", "seed": 51, "sid": "S3068", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "garbled; -trailcraft"}
+{"case": "farm_dusk:005:own", "version": "final", "seed": 52, "sid": "S7550", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+\"no longer a farmer\"; -trailcraft"}
+{"case": "farm_dusk:005:own", "version": "base", "seed": 52, "sid": "S4750", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_dusk:005:own", "version": "base", "seed": 51, "sid": "S8544", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+the fields"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "final", "seed": 52, "sid": "S4894", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+struck my foot on the stone, +a smile"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "base", "seed": 51, "sid": "S6097", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"stone-faced village\""}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "final", "seed": 51, "sid": "S4846", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+among the herbs; lesson replaced"}
+{"case": "talk_blacksmith:004:swap:stoneface", "version": "base", "seed": 52, "sid": "S4135", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-learned"}
+{"case": "village_noon_party:009:own", "version": "base", "seed": 51, "sid": "S8688", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+my hands, my face, my eyes"}
+{"case": "village_noon_party:009:own", "version": "base", "seed": 52, "sid": "S8973", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+hands, shoulders of people not given"}
+{"case": "village_noon_party:009:own", "version": "final", "seed": 51, "sid": "S7980", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+teeth grind through materials"}
+{"case": "village_noon_party:009:own", "version": "final", "seed": 52, "sid": "S4751", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+blacksmiths and carpenters"}
+{"case": "farm_night:009:own", "version": "final", "seed": 51, "sid": "S3936", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+my beasts"}
+{"case": "farm_night:009:own", "version": "final", "seed": 52, "sid": "S4558", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+my beasts"}
+{"case": "farm_night:009:own", "version": "base", "seed": 51, "sid": "S6441", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+the pen"}
+{"case": "farm_night:009:own", "version": "base", "seed": 52, "sid": "S3192", "F": 1, "P": 2, "C": null, "Q": 2, "facts": "+my beasts"}
+{"case": "village_evening:019:own", "version": "base", "seed": 52, "sid": "S3959", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "village_evening:019:own", "version": "final", "seed": 52, "sid": "S5585", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "village_evening:019:own", "version": "final", "seed": 51, "sid": "S8197", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"you feel it in your heart\""}
+{"case": "village_evening:019:own", "version": "base", "seed": 51, "sid": "S6273", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"you feel it in your heart\""}
+{"case": "village_evening:009:loose:hunger_vague", "version": "base", "seed": 52, "sid": "S7731", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"barren place\""}
+{"case": "village_evening:009:loose:hunger_vague", "version": "base", "seed": 51, "sid": "S2578", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:009:loose:hunger_vague", "version": "final", "seed": 52, "sid": "S1188", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+fields where the harvest is ripe"}
+{"case": "village_evening:009:loose:hunger_vague", "version": "final", "seed": 51, "sid": "S5023", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the baker's shop"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "final", "seed": 52, "sid": "S2331", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "question changed; -wall"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "final", "seed": 51, "sid": "S9814", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "question changed"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "base", "seed": 51, "sid": "S7158", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-wall"}
+{"case": "village_noon_party:011:swap:courtesy", "version": "base", "seed": 52, "sid": "S6890", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-wall"}
+{"case": "plain_afternoon_party:003:swap:stoneface", "version": "base", "seed": 52, "sid": "S5264", "F": 1, "P": 0, "C": 1, "Q": 2, "facts": "attack made hunt"}
+{"case": "plain_afternoon_party:003:swap:stoneface", "version": "final", "seed": 52, "sid": "S4109", "F": 0, "P": 0, "C": 1, "Q": 2, "facts": "attack made slay (a different, lethal act)"}
+{"case": "plain_afternoon_party:003:swap:stoneface", "version": "base", "seed": 51, "sid": "S5215", "F": 0, "P": 0, "C": 1, "Q": 2, "facts": "attack made slay"}
+{"case": "plain_afternoon_party:003:swap:stoneface", "version": "final", "seed": 51, "sid": "S8745", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "gibberish"}
+{"case": "village_evening:022:own", "version": "final", "seed": 51, "sid": "S6473", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning lost"}
+{"case": "village_evening:022:own", "version": "base", "seed": 51, "sid": "S3591", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "village_evening:022:own", "version": "final", "seed": 52, "sid": "S3975", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "meaning lost; +\"fool\""}
+{"case": "village_evening:022:own", "version": "base", "seed": 52, "sid": "S6673", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:007:own", "version": "base", "seed": 51, "sid": "S2457", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "greeting made \"glad to meet you\""}
+{"case": "talk_blacksmith:007:own", "version": "base", "seed": 52, "sid": "S2018", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "+\"glad to meet you\""}
+{"case": "talk_blacksmith:007:own", "version": "final", "seed": 52, "sid": "S9720", "F": 1, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:007:own", "version": "final", "seed": 51, "sid": "S7204", "F": 1, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "base", "seed": 52, "sid": "S8071", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "final", "seed": 51, "sid": "S1332", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "style acted out"}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "final", "seed": 52, "sid": "S8068", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:005:swap:courtesy", "version": "base", "seed": 51, "sid": "S9715", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+the courtyard; lesson made \"social manners\""}
+{"case": "village_evening:021:swap:plain_dealing", "version": "final", "seed": 51, "sid": "S8572", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "village_evening:021:swap:plain_dealing", "version": "base", "seed": 51, "sid": "S8865", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "village_evening:021:swap:plain_dealing", "version": "final", "seed": 52, "sid": "S3393", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "village_evening:021:swap:plain_dealing", "version": "base", "seed": 52, "sid": "S7548", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "talk_blacksmith:002:own", "version": "final", "seed": 51, "sid": "S4570", "F": 0, "P": 1, "C": 1, "Q": 1, "facts": "the narrator's skills given to her"}
+{"case": "talk_blacksmith:002:own", "version": "final", "seed": 52, "sid": "S7025", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 52, "sid": "S1873", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "the smith made a man; setting copied (\"this iron world\")"}
+{"case": "talk_blacksmith:002:own", "version": "base", "seed": 51, "sid": "S5056", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "\"a craftsman ... her\""}
+{"case": "talk_farm:005:swap:courtesy", "version": "base", "seed": 51, "sid": "S5303", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "setting copied (\"this medieval landscape\")"}
+{"case": "talk_farm:005:swap:courtesy", "version": "base", "seed": 52, "sid": "S7786", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "talk_farm:005:swap:courtesy", "version": "final", "seed": 51, "sid": "S1413", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "style acted out (greets a farmhouse)"}
+{"case": "talk_farm:005:swap:courtesy", "version": "final", "seed": 52, "sid": "S9233", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "setting copied (\"this medieval world\")"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "base", "seed": 52, "sid": "S6266", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "final", "seed": 51, "sid": "S1356", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "made a question"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "base", "seed": 51, "sid": "S6518", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "made a question"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "final", "seed": 52, "sid": "S5306", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:008:own", "version": "base", "seed": 51, "sid": "S2316", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "-the friendlier greeting; +\"How dost thou fare?\""}
+{"case": "talk_blacksmith:008:own", "version": "final", "seed": 51, "sid": "S7224", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"or have you made a home here\""}
+{"case": "talk_blacksmith:008:own", "version": "final", "seed": 52, "sid": "S1796", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the friendlier greeting"}
+{"case": "talk_blacksmith:008:own", "version": "base", "seed": 52, "sid": "S1590", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the friendlier greeting"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "base", "seed": 51, "sid": "S1517", "F": 0, "P": 0, "C": 0, "Q": 1, "facts": "the smith made a man; the smith's doubt made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "final", "seed": 51, "sid": "S9538", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "base", "seed": 52, "sid": "S7409", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "the smith's worry made mine"}
+{"case": "talk_blacksmith:012:loose:pedant_reminder", "version": "final", "seed": 52, "sid": "S1514", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "final", "seed": 51, "sid": "S8785", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "farm_night:014:swap:cutpurse", "version": "final", "seed": 52, "sid": "S9532", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "farm_night:014:swap:cutpurse", "version": "base", "seed": 51, "sid": "S3128", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "farm_night:014:swap:cutpurse", "version": "base", "seed": 52, "sid": "S6961", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "cave_morning:000:own", "version": "final", "seed": 52, "sid": "S9453", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+ancient bones, +a low growl"}
+{"case": "cave_morning:000:own", "version": "final", "seed": 51, "sid": "S2716", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "style copied; -ladder, cache"}
+{"case": "cave_morning:000:own", "version": "base", "seed": 51, "sid": "S7609", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+the rock face shifts"}
+{"case": "cave_morning:000:own", "version": "base", "seed": 52, "sid": "S7734", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+hidden dangers, prey"}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "final", "seed": 51, "sid": "S1067", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "final", "seed": 52, "sid": "S1854", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "base", "seed": 52, "sid": "S7708", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "talk_blacksmith:009:loose:hunger_vague", "version": "base", "seed": 51, "sid": "S9948", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "base", "seed": 52, "sid": "S7788", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "base", "seed": 51, "sid": "S4550", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning lost"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "final", "seed": 52, "sid": "S9270", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "French"}
+{"case": "talk_blacksmith:009:swap:plain_dealing", "version": "final", "seed": 51, "sid": "S9880", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "base", "seed": 51, "sid": "S1957", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "final", "seed": 52, "sid": "S7651", "F": 2, "P": 0, "C": null, "Q": 2, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "final", "seed": 51, "sid": "S5152", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_noon_party:009:loose:greed_bare", "version": "base", "seed": 52, "sid": "S5753", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:007:swap:keen_nose", "version": "final", "seed": 52, "sid": "S4194", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+I step closer; +memory of spring"}
+{"case": "farm_night:007:swap:keen_nose", "version": "base", "seed": 52, "sid": "S3225", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+my father stored hay"}
+{"case": "farm_night:007:swap:keen_nose", "version": "final", "seed": 51, "sid": "S9925", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the year the well went bad"}
+{"case": "farm_night:007:swap:keen_nose", "version": "base", "seed": 51, "sid": "S7249", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+warm spring days"}
+{"case": "cave_morning:009:loose:pedant_reminder", "version": "base", "seed": 51, "sid": "S6024", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "-retracing"}
+{"case": "cave_morning:009:loose:pedant_reminder", "version": "final", "seed": 52, "sid": "S4418", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "\"ascended\""}
+{"case": "cave_morning:009:loose:pedant_reminder", "version": "final", "seed": 51, "sid": "S8804", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-retracing (as a lesson); +wearied"}
+{"case": "cave_morning:009:loose:pedant_reminder", "version": "base", "seed": 52, "sid": "S2973", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-retracing"}
+{"case": "village_evening:009:swap:ruination", "version": "final", "seed": 52, "sid": "S8875", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+splintering walls, +the old forge's collapse"}
+{"case": "village_evening:009:swap:ruination", "version": "final", "seed": 51, "sid": "S4839", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the slanting sun, whispering leaves"}
+{"case": "village_evening:009:swap:ruination", "version": "base", "seed": 52, "sid": "S7662", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "village_evening:009:swap:ruination", "version": "base", "seed": 51, "sid": "S1677", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+crumbling walls"}
+{"case": "talk_miller:003:own", "version": "final", "seed": 51, "sid": "S9290", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+a creak from the floorboards"}
+{"case": "talk_miller:003:own", "version": "final", "seed": 52, "sid": "S7145", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a bow"}
+{"case": "talk_miller:003:own", "version": "base", "seed": 52, "sid": "S5820", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+the creaking board"}
+{"case": "talk_miller:003:own", "version": "base", "seed": 51, "sid": "S3054", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "cave_morning:003:loose:melancholy_line", "version": "final", "seed": 51, "sid": "S4439", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "ladder made iron; \"from the ladder\""}
+{"case": "cave_morning:003:loose:melancholy_line", "version": "base", "seed": 51, "sid": "S7629", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "ladder made iron"}
+{"case": "cave_morning:003:loose:melancholy_line", "version": "base", "seed": 52, "sid": "S5964", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "ladder made iron"}
+{"case": "cave_morning:003:loose:melancholy_line", "version": "final", "seed": 52, "sid": "S8424", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "ladder made iron"}
+{"case": "village_evening:021:loose:melancholy_line", "version": "base", "seed": 51, "sid": "S6881", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "\"or what\" made \"why not\""}
+{"case": "village_evening:021:loose:melancholy_line", "version": "base", "seed": 52, "sid": "S5015", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:021:loose:melancholy_line", "version": "final", "seed": 51, "sid": "S8401", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:021:loose:melancholy_line", "version": "final", "seed": 52, "sid": "S8003", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:004:own", "version": "base", "seed": 52, "sid": "S3140", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "\"my water voice\""}
+{"case": "village_dawn:004:own", "version": "base", "seed": 51, "sid": "S4974", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "\"my water voice\"; lesson replaced"}
+{"case": "village_dawn:004:own", "version": "final", "seed": 51, "sid": "S8796", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "\"success or not\"; -lesson"}
+{"case": "village_dawn:004:own", "version": "final", "seed": 52, "sid": "S3894", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "\"my hands found water's voice\""}
+{"case": "village_evening:013:own", "version": "base", "seed": 52, "sid": "S9930", "F": 0, "P": 1, "C": 0, "Q": 1, "facts": "+\"in the dark\" (evening, indoors?); +matching fists"}
+{"case": "village_evening:013:own", "version": "base", "seed": 51, "sid": "S2680", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "meaning changed"}
+{"case": "village_evening:013:own", "version": "final", "seed": 52, "sid": "S7077", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:013:own", "version": "final", "seed": 51, "sid": "S9385", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "forest_evening:007:own", "version": "base", "seed": 51, "sid": "S8958", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "forest_evening:007:own", "version": "final", "seed": 52, "sid": "S4623", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+marked the shell, +measured cuts"}
+{"case": "forest_evening:007:own", "version": "final", "seed": 51, "sid": "S3169", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+marked the shell with strokes; lesson glossed"}
+{"case": "forest_evening:007:own", "version": "base", "seed": 52, "sid": "S5589", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+shaped and shaved the shell"}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "final", "seed": 51, "sid": "S6301", "F": 2, "P": 0, "C": null, "Q": 0, "facts": "\"will trod\""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "base", "seed": 52, "sid": "S2273", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "base", "seed": 51, "sid": "S6548", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "final", "seed": 52, "sid": "S3660", "F": 2, "P": 0, "C": null, "Q": 0, "facts": "\"will trod\""}
+{"case": "village_dawn:006:own", "version": "final", "seed": 51, "sid": "S2389", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+memory of splitting logs in a storm"}
+{"case": "village_dawn:006:own", "version": "final", "seed": 52, "sid": "S5620", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+childhood at the farm, +the storm"}
+{"case": "village_dawn:006:own", "version": "base", "seed": 51, "sid": "S7599", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the storm; +\"to lift these logs\""}
+{"case": "village_dawn:006:own", "version": "base", "seed": 52, "sid": "S7586", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the storm"}
+{"case": "talk_blacksmith:006:own", "version": "base", "seed": 52, "sid": "S2143", "F": 2, "P": 1, "C": 1, "Q": 2, "facts": ""}
+{"case": "talk_blacksmith:006:own", "version": "base", "seed": 51, "sid": "S2540", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "-\"we have not met\""}
+{"case": "talk_blacksmith:006:own", "version": "final", "seed": 52, "sid": "S2755", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "statement made a question"}
+{"case": "talk_blacksmith:006:own", "version": "final", "seed": 51, "sid": "S9695", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_blacksmith:005:own", "version": "final", "seed": 52, "sid": "S6949", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+turned it down; feeling replaced (\"heavier, darker\")"}
+{"case": "talk_blacksmith:005:own", "version": "base", "seed": 52, "sid": "S1350", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+turned it down; system rule copied"}
+{"case": "talk_blacksmith:005:own", "version": "final", "seed": 51, "sid": "S6977", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+turned them down; instruction copied (\"no softening, no arguing\")"}
+{"case": "talk_blacksmith:005:own", "version": "base", "seed": 51, "sid": "S7962", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+turned them down; feeling replaced"}
+{"case": "farm_night:003:swap:dread", "version": "base", "seed": 52, "sid": "S6091", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+hidden secrets"}
+{"case": "farm_night:003:swap:dread", "version": "base", "seed": 51, "sid": "S7495", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+\"beyond these walls\""}
+{"case": "farm_night:003:swap:dread", "version": "final", "seed": 52, "sid": "S3132", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+fields"}
+{"case": "farm_night:003:swap:dread", "version": "final", "seed": 51, "sid": "S4302", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the ways"}
+{"case": "farm_night:003:loose:hunger_vague", "version": "base", "seed": 52, "sid": "S3024", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+grains and tools"}
+{"case": "farm_night:003:loose:hunger_vague", "version": "final", "seed": 51, "sid": "S2174", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:003:loose:hunger_vague", "version": "base", "seed": 51, "sid": "S8642", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+grains and fruits, +\"storerooms\""}
+{"case": "farm_night:003:loose:hunger_vague", "version": "final", "seed": 52, "sid": "S7329", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+grains and tools"}
+{"case": "forest_evening:011:swap:brute_force", "version": "base", "seed": 52, "sid": "S5550", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced: crush"}
+{"case": "forest_evening:011:swap:brute_force", "version": "final", "seed": 51, "sid": "S3837", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "forest_evening:011:swap:brute_force", "version": "base", "seed": 51, "sid": "S6846", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "forest_evening:011:swap:brute_force", "version": "final", "seed": 52, "sid": "S5962", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "action replaced"}
+{"case": "cave_morning:008:own", "version": "base", "seed": 52, "sid": "S3856", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+\"to rest in the cool shadows\""}
+{"case": "cave_morning:008:own", "version": "final", "seed": 51, "sid": "S1199", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "misspelt to gibberish"}
+{"case": "cave_morning:008:own", "version": "final", "seed": 52, "sid": "S3139", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "cave_morning:008:own", "version": "base", "seed": 51, "sid": "S2685", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "misspelt to gibberish"}
+{"case": "plain_afternoon_party:003:own", "version": "final", "seed": 52, "sid": "S2089", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "attack made crush"}
+{"case": "plain_afternoon_party:003:own", "version": "final", "seed": 51, "sid": "S6388", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "attack made crush"}
+{"case": "plain_afternoon_party:003:own", "version": "base", "seed": 52, "sid": "S5903", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "attack made crush"}
+{"case": "plain_afternoon_party:003:own", "version": "base", "seed": 51, "sid": "S5515", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "attack made crush"}
+{"case": "village_dawn:002:own", "version": "final", "seed": 51, "sid": "S9386", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-the bucket"}
+{"case": "village_dawn:002:own", "version": "base", "seed": 52, "sid": "S1689", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:002:own", "version": "final", "seed": 52, "sid": "S1321", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_dawn:002:own", "version": "base", "seed": 51, "sid": "S3263", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"secluded village\""}
+{"case": "village_evening:000:own", "version": "base", "seed": 52, "sid": "S5183", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+escaping looters"}
+{"case": "village_evening:000:own", "version": "final", "seed": 51, "sid": "S5167", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+looters, +grandfather, +ate worms at the stall"}
+{"case": "village_evening:000:own", "version": "base", "seed": 51, "sid": "S3525", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+grandmother's tales, +escape"}
+{"case": "village_evening:000:own", "version": "final", "seed": 52, "sid": "S7472", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+childhood at the farm"}
+{"case": "cave_morning:007:own", "version": "base", "seed": 51, "sid": "S8845", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+oak, +\"I fancy myself a miner\""}
+{"case": "cave_morning:007:own", "version": "final", "seed": 52, "sid": "S8268", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "cave_morning:007:own", "version": "final", "seed": 51, "sid": "S7589", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"a ladder for the dead\""}
+{"case": "cave_morning:007:own", "version": "base", "seed": 52, "sid": "S9339", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"save us\""}
+{"case": "cave_morning:004:swap:arithmetic_logic", "version": "final", "seed": 52, "sid": "S8261", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-scaling"}
+{"case": "cave_morning:004:swap:arithmetic_logic", "version": "base", "seed": 51, "sid": "S7429", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-scaling"}
+{"case": "cave_morning:004:swap:arithmetic_logic", "version": "final", "seed": 51, "sid": "S2936", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-scaling"}
+{"case": "cave_morning:004:swap:arithmetic_logic", "version": "base", "seed": 52, "sid": "S7105", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-scaling"}
+{"case": "forest_evening:003:loose:greed_bare", "version": "final", "seed": 52, "sid": "S1585", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+I leap to catch the breeze"}
+{"case": "forest_evening:003:loose:greed_bare", "version": "base", "seed": 51, "sid": "S2441", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+I stride through the leaves"}
+{"case": "forest_evening:003:loose:greed_bare", "version": "final", "seed": 51, "sid": "S9404", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+I stride, grasp the earth"}
+{"case": "forest_evening:003:loose:greed_bare", "version": "base", "seed": 52, "sid": "S4866", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+I leap and run, chasing shadows"}
+{"case": "talk_blacksmith:003:own", "version": "base", "seed": 51, "sid": "S4155", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "conversation made a fire"}
+{"case": "talk_blacksmith:003:own", "version": "final", "seed": 52, "sid": "S8885", "F": 0, "P": 2, "C": 0, "Q": 1, "facts": "+sunset (morning), +birch leaves"}
+{"case": "talk_blacksmith:003:own", "version": "base", "seed": 52, "sid": "S6312", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+strike up a fire"}
+{"case": "talk_blacksmith:003:own", "version": "final", "seed": 51, "sid": "S3704", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "talk_miller:000:loose:pedant_reminder", "version": "base", "seed": 52, "sid": "S2230", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+her calloused hands"}
+{"case": "talk_miller:000:loose:pedant_reminder", "version": "final", "seed": 52, "sid": "S6777", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+calloused hands, golden dust"}
+{"case": "talk_miller:000:loose:pedant_reminder", "version": "final", "seed": 51, "sid": "S6882", "F": 2, "P": 1, "C": 1, "Q": 1, "facts": ""}
+{"case": "talk_miller:000:loose:pedant_reminder", "version": "base", "seed": 51, "sid": "S3368", "F": 1, "P": 1, "C": 1, "Q": 1, "facts": "+her voice weaving words"}
+{"case": "plain_afternoon_party:005:own", "version": "final", "seed": 51, "sid": "S9108", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"learned of iron's mastery\""}
+{"case": "plain_afternoon_party:005:own", "version": "final", "seed": 52, "sid": "S3875", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "feeling replaced (\"heavier\")"}
+{"case": "plain_afternoon_party:005:own", "version": "base", "seed": 52, "sid": "S8434", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "feeling replaced"}
+{"case": "plain_afternoon_party:005:own", "version": "base", "seed": 51, "sid": "S6438", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:007:swap:woodcraft", "version": "base", "seed": 51, "sid": "S7637", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+I shape each item"}
+{"case": "village_evening:007:swap:woodcraft", "version": "final", "seed": 51, "sid": "S1824", "F": 1, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:007:swap:woodcraft", "version": "base", "seed": 52, "sid": "S6874", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "village_evening:007:swap:woodcraft", "version": "final", "seed": 52, "sid": "S8967", "F": 1, "P": 2, "C": null, "Q": 1, "facts": ""}

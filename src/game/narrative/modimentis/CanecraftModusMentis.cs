@@ -14,7 +14,8 @@ public class CanecraftModusMentis : ModusMentis
         "Cuts sugarcane low and fast with a heavy blade, strips it and stacks it before the sun climbs. Keeps a rhythm that saves the back, and knows how close the blade can come to the feet.";
     public override string SkillMeans       => "the cutting of cane low and fast with a heavy blade";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.ToAny("cut cane", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Sugarcane>();
+    public override WillTargets? Will => WillTarget.ToAny("cut cane", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.Sugarcane>();
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.PlantationArea) });
     public override string[] Organs        => new[] { "arms", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;
@@ -23,7 +24,7 @@ public class CanecraftModusMentis : ModusMentis
     public override string PersonaReminder  => "cane-cutter";
     public override string PersonaReminder2 => "someone who never wastes a swing";
     public override string StyleInstruction =>
-        "Narrate in strokes and rhythm - the low cut, the strip, the stack - and the heat climbing.";
+        "Rhythmic and tireless - judge whatever is in front of you by the steady work it would take.";
 
     public override string PersonaPrompt => @"You are the inner voice of CANECRAFT, and the cane is three times your height and there are rows of it to the horizon.
 

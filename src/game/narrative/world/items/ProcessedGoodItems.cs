@@ -6,11 +6,12 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class Flour : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Grain });
     public override string ItemId      => "flour";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Stock;
     public override string DisplayName => "Flour";
     public override string Description => "A cloth sack of stone-ground flour, dust pale on its outside";
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Foodstuff, ItemTag.Bakery, ItemTag.Grain };
-    public override int PriceReference => 6;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -21,11 +22,12 @@ public sealed class Flour : ConsumableItem
 
 public sealed class Ale : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Liquor });
     public override string ItemId      => "ale";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Stock;
     public override string DisplayName => "Ale";
     public override string Description => "A clay jug of dark, yeasty ale";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Ale };
-    public override int PriceReference => 5;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Medium;
     public override ConsumableType ConsumableType => ConsumableType.Drink;
@@ -43,7 +45,6 @@ public sealed class Mug : ContainerItem
     public override int ContentSlots   => 3;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 8;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Light;
 }
@@ -57,7 +58,6 @@ public sealed class Barrel : ContainerItem
     public override int ContentSlots   => 15;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Cooperage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 25;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass    Weight => WeightClass.Heavy;
 }
@@ -71,7 +71,6 @@ public sealed class Keg : ContainerItem
     public override int ContentSlots   => 8;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Cooperage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 14;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Medium;
 }
@@ -85,7 +84,6 @@ public sealed class WoodenBucket : ContainerItem
     public override int ContentSlots   => 6;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Cooperage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 5;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Light;
 }
@@ -99,20 +97,20 @@ public sealed class WashTub : ContainerItem
     public override int ContentSlots   => 10;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Cooperage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 12;
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass    Weight => WeightClass.Medium;
 }
 
 public sealed class Lantern : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Light });
     public override string ItemId      => "lantern";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Fine;
     public override string DisplayName => "Lantern";
     public override string Description => "A pierced-iron lantern with a stub of tallow candle inside";
     public override ItemCategory Category => ItemCategory.Tool;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 30;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Light;
     public override int      UsageLevel => 3;
@@ -127,13 +125,13 @@ public sealed class Sack : ContainerItem
     public override int ContentSlots   => 12;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 8;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Light;
 }
 
 public sealed class Net : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "net";
     public override string DisplayName => "Net";
     public override string Description => "A folded fishing net, weights still tied along its leading edge";
@@ -141,13 +139,13 @@ public sealed class Net : Item
     public override int      UsageLevel => 4;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.FishingGear };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 18;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Medium;
 }
 
 public sealed class Hook : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "hook";
     public override string DisplayName => "Hook";
     public override string Description => "A small barbed iron fish-hook";
@@ -155,13 +153,13 @@ public sealed class Hook : Item
     public override int      UsageLevel => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.FishingGear };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 8;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
 }
 
 public sealed class FishingLine : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Tool });
     public override string ItemId      => "fishing_line";
     public override string DisplayName => "Fishing Line";
     public override string Description => "A coil of waxed linen fishing line";
@@ -169,7 +167,6 @@ public sealed class FishingLine : Item
     public override int      UsageLevel => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.FishingGear };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 8;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass    Weight => WeightClass.Insignificant;
 }
@@ -183,7 +180,6 @@ public sealed class Basket : ContainerItem
     public override int ContentSlots   => 9;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 10;
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Light;
 }

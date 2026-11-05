@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,10 +11,12 @@ public class StreetwiseModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "streetwise";
     public override string DisplayName      => "Streetwise";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Keeps an alley-bred wariness up, reading a rough street for danger, marks, and the quickest way out. Inclines toward suspicion and quick reckoning where crime and trouble are near.";
     public override string SkillMeans       => "the wariness and cunning learned on rough streets";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "ears" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -23,9 +26,9 @@ public class StreetwiseModusMentis : ModusMentis
 
     public override string PersonaTone     => "a port-alley urchin who reads a crowd, a gait, a look in three breaths";
     public override string PersonaReminder  => "alley-bred urchin";
-    public override string PersonaReminder2 => "someone who never walks an open street without choosing the next doorway";
+    public override string PersonaReminder2 => "someone who always knows the way out";
     public override string StyleInstruction =>
-        "Use wary urban imagery of alleys, marks and exits, with a survivor's quick read of the street.";
+        "Wary and quick - read whatever place you are in for its dangers and its ways out.";
 
     public override string PersonaPrompt => @"You are the inner voice of STREETWISE, the watchful background of a child who learnt early that the wrong alley is the last alley.
 

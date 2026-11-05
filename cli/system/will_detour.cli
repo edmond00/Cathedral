@@ -1,0 +1,38 @@
+# will_detour — thinking, a will takes a way a step longer than its shortest, within three acts
+#
+# Lockpicking is a will: its lock is the Test Door off the yard. From the Test Field its shortest way is
+# two acts (walk to the yard, unlock). The Field–Rock Track is no step of that way — it goes past the
+# yard to the rock — but from the rock the yard is one walk, so through the track the lock is three acts
+# off (follow the track, walk to the yard, unlock): within Config.Narrative.WillMaxPathSteps. Thinking
+# with lockpicking on the track therefore proposes following it, where it once refused it as "not on
+# the way". Observing is unchanged: the plan is still the two-act way.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm lockpicking --grant-item hairpin --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+advance 12 180
+expect-state will "will lockpicking steps=2"
+
+click keyword 0
+choose 0
+choose lockpicking
+advance 12 180
+regions
+expect-not but that does nothing for it
+
+strategy succeed
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Rock
+expect-verb follow_path
+quit

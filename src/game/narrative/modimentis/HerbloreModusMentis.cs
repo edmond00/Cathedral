@@ -15,14 +15,18 @@ public class HerbloreModusMentis : ModusMentis
         "Recognizes plants by leaf and habit and holds their uses in mind, for remedy, seasoning, or harm. Inclines toward gathering and preparing herbs, and reads a hedgerow for what it can yield.";
     public override string SkillMeans       => "the knowing and gathering of herbs";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.To<GatherVerb>("gather herbs").YieldingAny("herbs", typeof(World.Items.HerbItem), typeof(Items.Herb));
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("gather herbs", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a herb I lack").Selling(ItemKind.Herb),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a plant for its virtues").Teaching<HerbloreModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Grassland);
     public override string[] Organs        => new[] { "nose", "hands" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
 
     public override string PersonaTone     => "a garden-wise soul who knows each herb by leaf and scent, and what it is good for";
     public override string PersonaReminder  => "herb-knower";
-    public override string PersonaReminder2 => "someone who names a plant by its smell and its leaf";
+    public override string PersonaReminder2 => "someone who knows at once which growing things help and which harm";
     public override string StyleInstruction =>
         // Not "crushed leaf and the herb-bed": listed, they became a leaf crushed and a bed sought.
         "Speak with the quiet certainty of one who knows what each plant does and where it grows.";

@@ -19,9 +19,9 @@ public class HedgecraftModusMentis : ModusMentis
 
     public override string PersonaTone     => "a hedger whose gloved hands weave a stock-proof barrier out of thorn and stake";
     public override string PersonaReminder  => "hedge-layer";
-    public override string PersonaReminder2 => "someone who can spot a gap a sheep would find before the sheep does";
+    public override string PersonaReminder2 => "someone who spots the weak place in any boundary first";
     public override string StyleInstruction =>
-        "Use images of thorn, stake and woven bramble, with the dogged, scratched-hand patience of the boundary.";
+        "Dogged and patient - judge whatever is in front of you by whether it would hold or let something through.";
 
     public override string PersonaPrompt => @"You are the inner voice of HEDGECRAFT, the labour that keeps the boundaries sound so that beasts stay where they belong.
 

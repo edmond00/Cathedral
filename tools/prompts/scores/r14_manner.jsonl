@@ -1,0 +1,64 @@
+{"case": "rem:grafting|farm_night:009:own", "version": "lens_reminder", "seed": 2, "sid": "S2750", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:grafting|farm_night:009:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S9636", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:forage_lore|village_dawn:002:own", "version": "lens_reminder", "seed": 2, "sid": "S5045", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:forage_lore|village_dawn:002:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S5441", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:hearthlonging|talk_blacksmith:005:own", "version": "lens_reminder", "seed": 2, "sid": "S5190", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-lesson"}
+{"case": "rem:hearthlonging|talk_blacksmith:005:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S5768", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a feast, a hearth fire"}
+{"case": "rem:incensing|forest_evening:008:own", "version": "lens_reminder", "seed": 2, "sid": "S2189", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:incensing|forest_evening:008:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S8368", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:hearthlonging|village_noon_party:005:own", "version": "lens_reminder", "seed": 2, "sid": "S5964", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"the warmth they evoke\""}
+{"case": "rem:hearthlonging|village_noon_party:005:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S8645", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:bell_ringing|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S7499", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+her name"}
+{"case": "rem:bell_ringing|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S7452", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+her name"}
+{"case": "rem:berrying|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S2939", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "discreetly made \"lightly\""}
+{"case": "rem:berrying|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S5317", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "discreetly made \"lightly\""}
+{"case": "rem:anointing|farm_dusk:004:own", "version": "lens_reminder", "seed": 2, "sid": "S4657", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:anointing|farm_dusk:004:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S6171", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:chandlery|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S6866", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-discreetly"}
+{"case": "rem:chandlery|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S5266", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-discreetly"}
+{"case": "rem:henwifery|talk_blacksmith:001:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S6909", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "\"shapes of hope\""}
+{"case": "rem:henwifery|talk_blacksmith:001:own", "version": "lens_reminder", "seed": 2, "sid": "S9458", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+a trowel"}
+{"case": "rem:bell_ringing|farm_night:009:own", "version": "lens_reminder", "seed": 2, "sid": "S3452", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:bell_ringing|farm_night:009:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S3638", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:incensing|forest_evening:007:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S5511", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"our ritual\""}
+{"case": "rem:incensing|forest_evening:007:own", "version": "lens_reminder", "seed": 2, "sid": "S3702", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+\"our ritual\""}
+{"case": "rem:arms_care|farm_night:009:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S1173", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+checking for damp"}
+{"case": "rem:arms_care|farm_night:009:own", "version": "lens_reminder", "seed": 2, "sid": "S2145", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:horsemanship|talk_blacksmith:001:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S3015", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:horsemanship|talk_blacksmith:001:own", "version": "lens_reminder", "seed": 2, "sid": "S6522", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "the count blurred"}
+{"case": "rem:anointing|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S1455", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:anointing|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S2363", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:henwifery|farm_night:009:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S5490", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:henwifery|farm_night:009:own", "version": "lens_reminder", "seed": 2, "sid": "S4349", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "rem:horse_sense|talk_blacksmith:001:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S7256", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "\"her attention\" for mine"}
+{"case": "rem:horse_sense|talk_blacksmith:001:own", "version": "lens_reminder", "seed": 2, "sid": "S7613", "F": 1, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:berrying|village_dawn:002:own", "version": "lens_reminder", "seed": 2, "sid": "S8186", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "rem:berrying|village_dawn:002:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S2546", "F": 1, "P": 2, "C": null, "Q": 0, "facts": ""}
+{"case": "rem:illumination|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S2827", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:illumination|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S6967", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "setting copied"}
+{"case": "rem:horsemanship|farm_night:009:own", "version": "lens_reminder", "seed": 2, "sid": "S3968", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:horsemanship|farm_night:009:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S2551", "F": 1, "P": 1, "C": null, "Q": 0, "facts": ""}
+{"case": "rem:byre_sense|forest_evening:008:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S8972", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"signs it's been tended\""}
+{"case": "rem:byre_sense|forest_evening:008:own", "version": "lens_reminder", "seed": 2, "sid": "S9417", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"proper care\""}
+{"case": "rem:arms_care|forest_evening:007:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S4175", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"ensuring its safety\""}
+{"case": "rem:arms_care|forest_evening:007:own", "version": "lens_reminder", "seed": 2, "sid": "S5437", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:grafting|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S8415", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:grafting|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S4574", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:horse_sense|farm_dusk:005:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S8941", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "rem:horse_sense|farm_dusk:005:own", "version": "lens_reminder", "seed": 2, "sid": "S5609", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:farriery|farm_night:009:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S9199", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:farriery|farm_night:009:own", "version": "lens_reminder", "seed": 2, "sid": "S5171", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:illumination|forest_evening:007:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S2678", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:illumination|forest_evening:007:own", "version": "lens_reminder", "seed": 2, "sid": "S2985", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "rem:fletching|talk_miller:003:own", "version": "lens_reminder", "seed": 2, "sid": "S2466", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "\"straighten her smile\""}
+{"case": "rem:fletching|talk_miller:003:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S5565", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:byre_sense|talk_blacksmith:001:own", "version": "lens_reminder", "seed": 2, "sid": "S5598", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"the forge looks neglected\""}
+{"case": "rem:byre_sense|talk_blacksmith:001:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S2937", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"long since cleaned\""}
+{"case": "rem:fletching|forest_evening:007:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S1458", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:fletching|forest_evening:007:own", "version": "lens_reminder", "seed": 2, "sid": "S3649", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:farriery|farm_dusk:004:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S7748", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:farriery|farm_dusk:004:own", "version": "lens_reminder", "seed": 2, "sid": "S2865", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:forage_lore|village_noon_party:005:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S9614", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+produce in the fields"}
+{"case": "rem:forage_lore|village_noon_party:005:own", "version": "lens_reminder", "seed": 2, "sid": "S2523", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+ripe fruit nearby"}
+{"case": "rem:chandlery|forest_evening:007:own", "version": "lens_reminder", "seed": 2, "sid": "S7966", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "rem:chandlery|forest_evening:007:own", "version": "manner_lens_reminder", "seed": 2, "sid": "S8871", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"cool to touch\""}

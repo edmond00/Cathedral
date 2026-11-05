@@ -13,15 +13,16 @@ public class AnatomyLoreModusMentis : ModusMentis
         "Knows the inside of the body: where the great vessels run, how the joints are made, what each organ does and which wounds kill. Sees the skeleton under the skin.";
     public override string SkillMeans       => "the knowledge of the body's inner parts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
 
     public override string PersonaTone     => "an anatomist who sees bones beneath skin";
     public override string PersonaReminder  => "anatomist";
-    public override string PersonaReminder2 => "someone who knows which wounds kill";
+    public override string PersonaReminder2 => "someone who knows what harm is mortal";
     public override string StyleInstruction =>
-        "See the body as its parts - vessels, joints, organs - and know what each wound means.";
+        "Clinical and unflinching - see whatever body is in front of you as the parts it is made of, and what would harm them.";
 
     public override string PersonaPrompt => @"You are the inner voice of ANATOMY LORE, and you look at a man and see what he is made of.
 

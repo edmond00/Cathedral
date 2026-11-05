@@ -8,8 +8,11 @@ namespace Cathedral.Game.Scene;
 /// Wraps an <see cref="INpcEntity"/> with Element identity and scene registration.
 /// Supports both named (<see cref="NpcEntity"/>) and shallow (<see cref="ShallowNpcEntity"/>) entities.
 /// </summary>
-public class SceneNpc : Element, IVerbModusMentisSource
+public class SceneNpc : Element, IVerbModusMentisSource, IPlayable
 {
+    /// <summary>What this creature can be played with — declared per kind, on the archetype, as its lessons are.</summary>
+    public PlayActivity? Play => Entity.Archetype.Play;
+
     /// <summary>
     /// What this creature teaches for a given verb — delegated to the archetype, so the declaration
     /// sits with the kind rather than with each spawned individual. The NPC half of the mechanism a

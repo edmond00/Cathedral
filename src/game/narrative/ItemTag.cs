@@ -75,7 +75,7 @@ public enum ItemTag
     Fuel,
     /// <summary>The woodcutter's: logs, beams, planks, bark — wood not yet made into anything.</summary>
     Timber,
-    /// <summary>The carpenter's: wooden tools and household wares.</summary>
+    /// <summary>The carpenter's: wooden tools and household wares, and the bows, cudgels and shields made of wood.</summary>
     Woodwork,
     /// <summary>The cooper's: barrels, kegs, tubs, buckets, pails.</summary>
     Cooperage,

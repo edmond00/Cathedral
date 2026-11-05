@@ -12,6 +12,7 @@ public static class AnatomyFactoryRegistry
         {
             AnatomyType.Human => HumanAnatomyFactory.Instance,
             AnatomyType.Beast => BeastAnatomyFactory.Instance,
+            AnatomyType.Reptile => ReptileAnatomyFactory.Instance,
             _ => throw new ArgumentOutOfRangeException(nameof(anatomyType), anatomyType, null)
         };
 }

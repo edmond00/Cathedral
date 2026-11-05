@@ -1,0 +1,2 @@
+before  119 tool uses: mean 3.52 s, median 2.72 s, worst 5.92 s, 1.46 requests, 13.6 tokens generated
+now     119 tool uses: mean 4.29 s, median 4.19 s, worst 5.69 s, 2.26 requests, 9.0 tokens generated

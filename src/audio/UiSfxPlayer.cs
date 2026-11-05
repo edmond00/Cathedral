@@ -33,8 +33,10 @@ internal sealed class UiSfxPlayer : IUiSfx
     // ── Pinned WAV buffers ────────────────────────────────────────────────────
     private GCHandle _hoverHandle;
     private GCHandle _clickHandle;
+    private GCHandle _transitionHandle;
     private nint _hoverPtr;
     private nint _clickPtr;
+    private nint _transitionPtr;
     private float _volume = 1f;
     private bool _disposed;
 
@@ -61,13 +63,17 @@ internal sealed class UiSfxPlayer : IUiSfx
         PlaySound(nint.Zero, nint.Zero, 0);
         if (_hoverHandle.IsAllocated) _hoverHandle.Free();
         if (_clickHandle.IsAllocated) _clickHandle.Free();
+        if (_transitionHandle.IsAllocated) _transitionHandle.Free();
 
         var hoverWav = BuildHoverWav(_volume);
         var clickWav = BuildClickWav(_volume);
+        var transitionWav = BuildTransitionWav(_volume);
         _hoverHandle = GCHandle.Alloc(hoverWav, GCHandleType.Pinned);
         _clickHandle = GCHandle.Alloc(clickWav, GCHandleType.Pinned);
+        _transitionHandle = GCHandle.Alloc(transitionWav, GCHandleType.Pinned);
         _hoverPtr    = _hoverHandle.AddrOfPinnedObject();
         _clickPtr    = _clickHandle.AddrOfPinnedObject();
+        _transitionPtr = _transitionHandle.AddrOfPinnedObject();
     }
 
     // Both ticks go through WinMM rather than the MIDI device, so --silent (which works by opening no
@@ -89,7 +95,17 @@ internal sealed class UiSfxPlayer : IUiSfx
     }
 
     /// <summary>
-    /// Writes the two ticks as WAV files (<c>hover.wav</c>, <c>click.wav</c>) — <c>--export-sfx</c>, which
+    /// Play the phase-transition swish. WinMM plays one sound at a time, so this cuts short the click
+    /// that usually caused it; the swish stands in for it.
+    /// </summary>
+    public void PlayTransition()
+    {
+        if (Cathedral.Config.Debug.Silent) return;
+        PlaySound(_transitionPtr, nint.Zero, SND_ASYNC | SND_NODEFAULT | SND_MEMORY);
+    }
+
+    /// <summary>
+    /// Writes the UI sounds as WAV files (<c>hover.wav</c>, <c>click.wav</c>, <c>transition.wav</c>) — <c>--export-sfx</c>, which
     /// is where tools/video gets the click it lays under a recording's cursor. The very bytes the game
     /// plays, so the video's click is the game's click.
     /// </summary>
@@ -98,6 +114,7 @@ internal sealed class UiSfxPlayer : IUiSfx
         Directory.CreateDirectory(directory);
         File.WriteAllBytes(Path.Combine(directory, "hover.wav"), BuildHoverWav());
         File.WriteAllBytes(Path.Combine(directory, "click.wav"), BuildClickWav());
+        File.WriteAllBytes(Path.Combine(directory, "transition.wav"), BuildTransitionWav());
     }
 
     // ── PCM generation ────────────────────────────────────────────────────────
@@ -107,6 +124,9 @@ internal sealed class UiSfxPlayer : IUiSfx
 
     /// <summary>80 ms decaying harmonic tone (520 + 1040 + 1560 Hz) — digital click.</summary>
     private static byte[] BuildClickWav(float amplitude = 1f) => BuildWav(ClickSamples(amplitude), SfxSampleRate);
+
+    /// <summary>170 ms swish of filtered noise — the phase-transition mark.</summary>
+    private static byte[] BuildTransitionWav(float amplitude = 1f) => BuildWav(TransitionSamples(amplitude), SfxSampleRate);
 
     /// <summary>The ticks' sample rate. Shared with the OpenAL player, which plays these same samples.</summary>
     internal const int SfxSampleRate = 22050;
@@ -151,6 +171,54 @@ internal sealed class UiSfxPlayer : IUiSfx
         return samples;
     }
 
+    /// <summary>
+    /// The transition swish as 16-bit mono PCM at <see cref="SfxSampleRate"/>: a breath of air, as of a
+    /// page turned or a curtain drawn. Noise through a gentle band-pass whose centre glides down from
+    /// 2.4 kHz to 900 Hz, its hiss taken off by a low-pass at 2.5 kHz, swelling in over the first 40 ms and dying away by 170 ms. Nothing tonal, so
+    /// it never sounds like the synthesiser and never clashes with the key of the music; quieter than
+    /// the click, since it plays far more often than any outcome. Deterministic (a fixed xorshift, no
+    /// generator), so the bytes are the same on every machine, as the other ticks are.
+    /// </summary>
+    internal static short[] TransitionSamples(float amplitude = 1f)
+    {
+        const int sampleRate = SfxSampleRate;
+        const int durationMs = 170;
+        const float swellSeconds = 0.04f;
+        int n = sampleRate * durationMs / 1000;
+        var samples = new short[n];
+        uint noise = 0x9E3779B9u;
+        float low = 0f, band = 0f;          // state-variable filter state
+        float soft = 0f;                    // one-pole low-pass after it: takes the hiss off the top
+        float softCoeff = 1f - MathF.Exp(-2f * MathF.PI * 2500f / sampleRate);
+        const float damping = 0.8f;         // 1/Q: wide enough to sound like air, not a whistle
+        for (int i = 0; i < n; i++)
+        {
+            float t = (float)i / n;
+            float seconds = (float)i / sampleRate;
+
+            noise ^= noise << 13; noise ^= noise >> 17; noise ^= noise << 5;
+            float white = (noise & 0xFFFF) / 32767.5f - 1f;
+
+            float centre = 2400f * MathF.Pow(900f / 2400f, t);
+            float f = 2f * MathF.Sin(MathF.PI * centre / sampleRate);
+            low  += f * band;
+            float high = white - low - damping * band;
+            band += f * high;
+            soft += (band - soft) * softCoeff;
+
+            // A raised-cosine swell, then a smooth fall to silence at the end.
+            float swell = seconds < swellSeconds
+                ? 0.5f - 0.5f * MathF.Cos(MathF.PI * seconds / swellSeconds)
+                : 1f;
+            float fall = seconds < swellSeconds
+                ? 1f
+                : MathF.Pow(1f - (seconds - swellSeconds) / (durationMs / 1000f - swellSeconds), 2f);
+
+            samples[i] = (short)Math.Clamp(soft * swell * fall * 10000f * amplitude, short.MinValue, short.MaxValue);
+        }
+        return samples;
+    }
+
     private static byte[] BuildWav(short[] samples, int sampleRate)
     {
         int byteCount = samples.Length * 2;
@@ -177,6 +245,7 @@ internal sealed class UiSfxPlayer : IUiSfx
         PlaySound(nint.Zero, nint.Zero, 0); // stop any pending async sound
         if (_hoverHandle.IsAllocated) _hoverHandle.Free();
         if (_clickHandle.IsAllocated) _clickHandle.Free();
+        if (_transitionHandle.IsAllocated) _transitionHandle.Free();
     }
 }
 

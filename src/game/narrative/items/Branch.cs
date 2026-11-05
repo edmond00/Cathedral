@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
@@ -12,13 +13,15 @@ namespace Cathedral.Game.Narrative.Items;
 /// </summary>
 public sealed class Branch : WeaponItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Bludgeon, ItemKind.Wood });
     public override string ItemId         => "branch";
     public override string DisplayName    => "Branch";
     public override string Description    => "A sturdy branch snapped from a tree";
+    public override WeaponSize Bulk       => WeaponSize.Medium;
     public override int    Level          => 0;
+    public override bool   IsImprovised   => true;
     public override string WeaponCategory => "blunt";
     public override int    UsageLevel     => 1;
     // Timber, not the blacksmith's Ironwork, and priced as the wood it is.
     public override List<ItemTag> Tags    => new() { ItemTag.Wood, ItemTag.Timber };
-    public override int PriceReference    => 3;
 }

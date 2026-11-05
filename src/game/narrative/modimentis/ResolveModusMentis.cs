@@ -21,7 +21,7 @@ public class ResolveModusMentis : ModusMentis
     public override string PersonaReminder  => "unstopping will";
     public override string PersonaReminder2 => "someone still going after everybody sensible has stopped";
     public override string StyleInstruction =>
-        "Grind forward - short clauses, the body failing, the next step taken anyway.";
+        "Grinding forward - short clauses, the body failing, the next step taken anyway.";
 
     public override string PersonaPrompt => @"You are the inner voice of RESOLVE, and the sensible moment to stop was some while ago.
 

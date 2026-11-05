@@ -67,6 +67,7 @@ public sealed class JungleFig : FruitItem
 
 public sealed class CacaoPod : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Seed });
     public override string ItemId      => "cacao_pod";
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.CashCrop };
     public override string DisplayName => "Cacao Pod";
@@ -80,6 +81,7 @@ public sealed class CacaoPod : FruitItem
 
 public sealed class PinyonNut : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Nut });
     public override string ItemId      => "pinyon_nut";
     public override string DisplayName => "Pinyon Nut";
     public override string Description => "A small brown pine nut, oily and resin-sweet, prised out of a squat cone";
@@ -90,6 +92,7 @@ public sealed class PinyonNut : FruitItem
 
 public sealed class JuniperBerry : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Berry, ItemKind.Herb });
     public override string ItemId      => "juniper_berry";
     public override string DisplayName => "Juniper Berry";
     public override string Description => "A dusty blue juniper berry, sharp and piney on the tongue";
@@ -100,6 +103,7 @@ public sealed class JuniperBerry : FruitItem
 
 public sealed class Cloudberry : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Berry });
     public override string ItemId      => "cloudberry";
     public override string DisplayName => "Cloudberry";
     public override string Description => "A soft amber cloudberry, like a raspberry gone gold in the cold";
@@ -110,6 +114,7 @@ public sealed class Cloudberry : FruitItem
 
 public sealed class Crowberry : FruitItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Berry });
     public override string ItemId      => "crowberry";
     public override string DisplayName => "Crowberry";
     public override string Description => "A glossy black crowberry off a mat of needle-leaved heath, watery and faintly bitter";
@@ -131,6 +136,7 @@ public sealed class YuccaRoot : VegetableItem
 
 public sealed class WildMillet : VegetableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Grain });
     public override string ItemId      => "wild_millet";
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Grain };
     public override string DisplayName => "Wild Millet";
@@ -144,10 +150,11 @@ public sealed class WildMillet : VegetableItem
 
 public sealed class Myrrh : HerbItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "myrrh";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Myrrh";
     public override string Description => "A tear of red-brown resin bled from a thorny desert shrub, bitter and fragrant";
-    public override int PriceReference => 12;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<EtherHumor>(45).Add<OpiumHumor>(30).Add<VaporHumor>(25);
 }
@@ -172,10 +179,11 @@ public sealed class AcaciaGum : HerbItem
 
 public sealed class Copal : HerbItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Holy });
     public override string ItemId      => "copal";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Copal";
     public override string Description => "A lump of pale jungle resin; burnt, it gives a white smoke heavy as incense";
-    public override int PriceReference => 9;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<EtherHumor>(50).Add<FumeHumor>(30).Add<EuphoraHumor>(20);
 }
@@ -183,19 +191,20 @@ public sealed class Copal : HerbItem
 public sealed class Peppercorn : HerbItem
 {
     public override string ItemId      => "peppercorn";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Peppercorn";
     public override string Description => "A string of red wild peppercorns off a climbing vine, hot enough to water the eyes";
-    public override int PriceReference => 8;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<CholerHumor>(55).Add<VaporHumor>(30).Add<SulfurHumor>(15);
 }
 
 public sealed class Orchid : HerbItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Flower });
     public override string ItemId      => "orchid";
+    public override Rarity Rarity => Rarity.Scarce;
     public override string DisplayName => "Orchid";
     public override string Description => "A waxy orchid flower, speckled like a moth's wing, its scent strongest at dusk";
-    public override int PriceReference => 6;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<VoluptasHumor>(45).Add<EtherHumor>(35).Add<EuphoraHumor>(20);
 }
@@ -213,12 +222,12 @@ public sealed class LabradorTea : HerbItem
 
 public sealed class ReindeerMoss : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Mushroom, ItemKind.Plant, ItemKind.Fodder });
     public override string ItemId      => "reindeer_moss";
     public override string DisplayName => "Reindeer Moss";
     public override string Description => "A spongy grey-white tuft of lichen, branched like antler, crisp in the cold";
     public override List<ItemTag> Tags => new() { ItemTag.Forage };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 2;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -229,119 +238,123 @@ public sealed class ReindeerMoss : ConsumableItem
 
 public sealed class CottonGrass : TextileItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fibre, ItemKind.Plant });
     public override string ItemId      => "cotton_grass";
     public override string DisplayName => "Cotton Grass";
     public override string Description => "A fistful of cotton-grass heads, white tufts that make a poor thread and a good tinder";
     public override WeightClass Weight => WeightClass.Insignificant;
-    public override int PriceReference => 3;
 }
 
 public sealed class Liana : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant, ItemKind.Fibre });
     public override string ItemId      => "liana";
     public override string DisplayName => "Liana";
     public override string Description => "A length of woody jungle vine, tough as rope and nearly as long";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Forage };
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 3;
 }
 
 public sealed class Bamboo : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood, ItemKind.Plant });
     public override string ItemId      => "bamboo";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Bamboo";
-    public override string Description => "A jointed cane of green bamboo, hollow, light and very hard";
+    public override string Description => "A jointed cane of green cane, hollow, light and very hard";
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 4;
 }
 
 public sealed class Thornwood : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Wood });
     public override string ItemId      => "thornwood";
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Timber };
     public override string DisplayName => "Thornwood";
     public override string Description => "A crooked bough of acacia, dense red wood bristling with long white thorns";
-    public override int PriceReference => 4;
 }
 
 public sealed class PalmFrond : WoodRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Plant });
     public override string ItemId      => "palm_frond";
     public override string DisplayName => "Palm Frond";
     public override string Description => "A great fan of dried palm leaf, good for thatch, for shade and for weaving";
     public override ItemSize Size => ItemSize.Large;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Wood, ItemTag.Forage };
-    public override int PriceReference => 2;
 }
 
 // ── Earths and stone ──────────────────────────────────────────────────────────
 
 public sealed class Natron : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "natron";
+    public override Rarity Rarity => Rarity.Uncommon;
     public override string DisplayName => "Natron";
     public override string Description => "A crust of white salt scraped off a dry lake bed, soapy to the touch and bitter";
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 7;
 }
 
 public sealed class DesertRose : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem });
     public override string ItemId      => "desert_rose";
+    public override Rarity Rarity => Rarity.Uncommon;
     public override string DisplayName => "Desert Rose";
     public override string Description => "A cluster of sand-coloured crystal blades grown together like the petals of a rose";
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 14;
 }
 
 public sealed class Ochre : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "ochre";
+    public override Rarity Rarity => Rarity.Uncommon;
     public override string DisplayName => "Ochre";
     public override string Description => "A lump of soft red earth that leaves its colour on everything it touches";
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 6;
 }
 
 public sealed class Sandstone : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "sandstone";
     public override string DisplayName => "Sandstone";
     public override string Description => "A banded block of red sandstone, soft enough to carve and gritty under the thumb";
-    public override int PriceReference => 4;
 }
 
 public sealed class Jasper : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Gem });
     public override string ItemId      => "jasper";
+    public override Rarity Rarity => Rarity.Uncommon;
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Jasper";
     public override string Description => "A water-polished pebble of blood-red jasper, opaque and cold";
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 12;
 }
 
 public sealed class RockFlour : StoneRawItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Stone });
     public override string ItemId      => "rock_flour";
     public override string DisplayName => "Rock Flour";
     public override string Description => "A pinch of grey stone ground finer than meal under the weight of the ice";
     public override WeightClass Weight => WeightClass.Light;
-    public override int PriceReference => 2;
 }
 
 /// <summary>Ice to suck on. Food rather than drink, so it is picked up in the hand like a stone.</summary>
 public sealed class IceShard : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Drink });
     public override string ItemId      => "ice_shard";
     public override string DisplayName => "Ice Shard";
     public override string Description => "A clear wedge of old ice, blue at its heart, numbing the hand that holds it";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral };
     public override CoinType PriceCoin => CoinType.Copper;
-    public override int PriceReference => 1;
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override ConsumableType ConsumableType => ConsumableType.Food;
@@ -357,7 +370,6 @@ public sealed class Catfish : SeaFoodItem
     public override string ItemId      => "catfish";
     public override string DisplayName => "Catfish";
     public override string Description => "A whiskered brown river fish, slimy and broad-headed, muddy in the smell";
-    public override int    PriceReference => 5;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<BloodHumor>(35).Add<PhlegmHumor>(20);
 }
@@ -367,7 +379,6 @@ public sealed class ArcticChar : SeaFoodItem
     public override string ItemId      => "arctic_char";
     public override string DisplayName => "Arctic Char";
     public override string Description => "A red-bellied char out of water barely above freezing, firm and rich";
-    public override int    PriceReference => 7;
     protected override HumorRecipe Recipe => new HumorRecipe()
         .Add<FatHumor>(45).Add<BloodHumor>(40).Add<SaltHumor>(15);
 }

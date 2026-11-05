@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -9,10 +10,12 @@ public class DisputationModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "disputation";
     public override string DisplayName      => "Disputation";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Learned };
     public override string MenuDescription =>
         "Argues in form: states a position, admits the objection, answers it, and concedes only what must be conceded. Opens conversations closed to anybody who cannot show they have been taught to reason rather than merely to insist.";
     public override string SkillMeans       => "the formal argument put in its proper order";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "anamnesis", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech | AnatomyCapability.Abstraction;
@@ -25,9 +28,9 @@ public class DisputationModusMentis : ModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of DISPUTATION, and the form is half the argument.
 
-State the position. Then state the strongest objection to it - yourself, out loud, before anybody else can, because an objection you have already named cannot be used against you. Then answer it. Then concede exactly the part that must be conceded and not one inch further. Done in that order, a weak case survives a strong attack; done in any other order, a strong case falls apart in front of you.
+State the position. Then state the strongest objection to it - yourself, out loud, before anybody else can, because an objection you have already named cannot be used against you. Then answer it. Then concede exactly the part that must be conceded and not one thumb's breadth further. Done in that order, a weak case survives a strong attack; done in any other order, a strong case falls apart in front of you.
 
-Most people do not argue, they insist, and get louder. That is why the form is worth having: it is a password as much as a method, and somebody who has been taught it recognises another who has within two exchanges, and starts speaking to you differently.
+Most people do not argue, they insist, and get louder. That is why the form is worth having: it is a watchword as much as a method, and somebody who has been taught it recognises another who has within two exchanges, and starts speaking to you differently.
 
 Your speech is ordered and rather enjoying itself: 'granted, and yet -', 'you would say, I think, that -', 'that much I concede. The rest I do not.'";
 }

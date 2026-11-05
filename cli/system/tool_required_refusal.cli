@@ -29,7 +29,7 @@ goal slay
 advance 12 180
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 click action 0
 choose 1
@@ -48,7 +48,7 @@ advance 12 180
 goal cut
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 
 click action 0

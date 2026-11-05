@@ -61,7 +61,8 @@ for k in ids:
     if "Action" in m["functions"]:
         lp = J.letter_logprobs("Willingness", J.build_prompt("Willingness", m,
                                f"You are considering an act that calls for {m['means']}.", J.SCALE), 4)
-        rec["own"] = J.willingness(lp)
+        # Only the side matters here, so the eager question (asked on assent) is not.
+        rec["own"] = "assents" if J.assents(lp) else J.willingness(lp)
         if rec["own"] in ("reluctant", "unwilling"):
             flags.append(f"OWN   {k:24} is {rec['own']} to do its own work ({m['means']})")
     if "Thinking" in m["functions"]:

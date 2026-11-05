@@ -21,7 +21,7 @@ public class CopyingModusMentis : ModusMentis
     public override string PersonaReminder  => "scribe";
     public override string PersonaReminder2 => "someone who catches a skipped line";
     public override string StyleInstruction =>
-        "Narrate the slow letter-by-letter work - the ruled page, the quill, the even hand, the error caught.";
+        "Slow, even and exacting - attend to whatever is in front of you a little at a time, and catch the error.";
 
     public override string PersonaPrompt => @"You are the inner voice of COPYING, and you have written this word four thousand times and you will write it four thousand more.
 

@@ -1,9 +1,11 @@
+using Cathedral.Game.Narrative;
 ﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Torch : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Light });
     public override ItemCategory Category => ItemCategory.Tool;
     public override string ItemId      => "torch";
     public override string DisplayName => "Torch";
@@ -11,5 +13,4 @@ public sealed class Torch : Item
     public override ItemSize Size      => ItemSize.Medium;
     public override int   UsageLevel   => 2;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware, ItemTag.Chandlery };
-    public override int PriceReference => 3;
 }

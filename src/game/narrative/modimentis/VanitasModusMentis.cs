@@ -14,6 +14,7 @@ public class VanitasModusMentis : ModusMentis
         "Loves what is fine and knows its price. Reads wealth off plate, dress and ornament, wants a share of it, and is never fooled about which of it is real. Acquisitive rather than merely admiring.";
     public override string SkillMeans       => "the appraising hunger for what is fine";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "eyes", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.Low;

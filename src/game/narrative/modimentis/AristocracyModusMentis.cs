@@ -15,6 +15,7 @@ public class AristocracyModusMentis : ModusMentis
         "Reads a room by rank and precedence, tracking who outranks whom and what a courtesy conceals. Holds conduct to the forms of the highborn: greets each person by the address their station is owed and introduces itself with name and house, marking a forgotten title as a slight.";
     public override string SkillMeans       => "the careful manners of the highborn";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "cerebrum", "tongue" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -25,7 +26,7 @@ public class AristocracyModusMentis : ModusMentis
     public override string PersonaReminder  => "highborn-bred speaker";
     public override string PersonaReminder2 => "someone who notices the slight in a forgotten title";
     public override string StyleInstruction =>
-        "Colour the line with imagery of rank, lineage and propriety, and a faint hauteur toward the common.";
+        "Correct and faintly haughty - judge whatever is in front of you by rank, precedence and propriety.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

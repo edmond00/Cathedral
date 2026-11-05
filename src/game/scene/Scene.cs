@@ -426,33 +426,27 @@ public class Scene
     /// or satisfy the will — the full set is several times slower in a city, for nothing.
     /// </summary>
     public SceneView View(PoV pov, PartyMember? actor, IReadOnlyList<Verb> verbs)
+        => new(pov.Where, pov.When, ViewElements(pov).Select(e => BuildEntry(e, pov, actor, verbs)).ToList(), pov.Focus);
+
+    /// <summary>
+    /// What a view from <paramref name="pov"/> is made of, in its order: the area, its points of
+    /// interest each followed by its items, the people there at that hour, the areas reachable from
+    /// it, and the focus when it is none of those. <see cref="ActionPathPlanner"/> expands verbs over
+    /// these itself, one verb at a time, so that it can keep each expansion.
+    /// </summary>
+    public IReadOnlyList<Element> ViewElements(PoV pov)
     {
-        var entries = new List<SceneViewEntry>();
-
-        // 1. Current area
-        entries.Add(BuildEntry(pov.Where, pov, actor, verbs));
-
-        // 2. Points of interest in current area
+        var elements = new List<Element> { pov.Where };
         foreach (var poi in pov.Where.PointsOfInterest)
         {
-            entries.Add(BuildEntry(poi, pov, actor, verbs));
-            foreach (var itemElement in poi.Items)
-                entries.Add(BuildEntry(itemElement, pov, actor, verbs));
+            elements.Add(poi);
+            elements.AddRange(poi.Items);
         }
-
-        // 3. NPCs present at current area and time
-        foreach (var npc in GetNpcsAt(pov.Where, pov.When))
-            entries.Add(BuildEntry(npc, pov, actor, verbs));
-
-        // 4. Reachable areas (for movement verbs)
-        foreach (var reachable in GetReachableAreas(pov.Where))
-            entries.Add(BuildEntry(reachable, pov, actor, verbs));
-
-        // Always include focused element if not already listed
-        if (pov.Focus != null && entries.All(e => e.Source.Id != pov.Focus.Id))
-            entries.Add(BuildEntry(pov.Focus, pov, actor, verbs));
-
-        return new SceneView(pov.Where, pov.When, entries, pov.Focus);
+        elements.AddRange(GetNpcsAt(pov.Where, pov.When));
+        elements.AddRange(GetReachableAreas(pov.Where));
+        if (pov.Focus != null && elements.All(e => e.Id != pov.Focus.Id))
+            elements.Add(pov.Focus);
+        return elements;
     }
 
     private SceneViewEntry BuildEntry(Element element, PoV pov, PartyMember? actor, IReadOnlyList<Verb> verbs)
@@ -482,6 +476,24 @@ public class Scene
     /// </summary>
     public DialogueRequest? PendingDialogueRequest { get; set; }
 
+    // ── Crafting ──────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Set by <c>CraftingOpenedOutcome</c> when USE succeeds at a station; consumed by
+    /// <see cref="NarrativeController"/> on the next frame to open the crafting menu, as a
+    /// <see cref="PendingDialogueRequest"/> opens a conversation.
+    /// </summary>
+    public Narrative.Crafting.CraftingRequest? PendingCraftingRequest { get; set; }
+
+    /// <summary>
+    /// The workshops (sections, by display name) whose master has let the player use the equipment.
+    /// Shared by reference with <see cref="LocationInstanceState.AuthorizedWorkshops"/>, so a leave
+    /// given is kept for good, and it makes the player's presence in the workshop tolerated
+    /// (<see cref="PrivacyModel.IsTrespassing"/>). Keyed by name because a section's id is minted
+    /// afresh by every build; the name is a pure function of the location id.
+    /// </summary>
+    public HashSet<string> AuthorizedWorkshops { get; set; } = new();
+
     // ── Pending fight request (set by attack verb) ────────────────────────────
 
     /// <summary>
@@ -510,6 +522,15 @@ public class Scene
     /// <see cref="NarrativeController"/> after the action's reports apply.
     /// </summary>
     public int PendingFocusLoss { get; set; }
+
+    /// <summary>
+    /// The will this visit was made for: a trip a will's search on the world map proposed, and the
+    /// party walked. The will (by id) wants that target (by its description, since a will builds its
+    /// targets afresh on every read) first while the visit lasts — see
+    /// <see cref="Cathedral.Game.Narrative.Rules.Choice.WillPriority.TargetsOf"/>. Null for every
+    /// other visit. One visit's business, like everything set on a scene.
+    /// </summary>
+    public (string ModusMentisId, string TargetKey)? WillPursuit { get; set; }
 }
 
 /// <summary>

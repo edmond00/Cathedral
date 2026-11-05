@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System;
 using OpenTK.Mathematics;
 using Cathedral.Audio;
@@ -23,7 +24,7 @@ namespace Cathedral.Fight;
 public class FightLocalizationOverlay
 {
     private static BodyArtData? _humanArtCache;
-    private static BodyArtData? _beastArtCache;
+    private static readonly Dictionary<string, BodyArtData> _creatureArtCache = new();
 
     private readonly TerminalHUD _terminal;
     private readonly Fighter _target;
@@ -47,7 +48,7 @@ public class FightLocalizationOverlay
     private int _hoverTermX = -1, _hoverTermY = -1;
     private bool _cancelHovered;
 
-    private static readonly Vector4 BoxBorder = Config.Colors.Orange;
+    private static readonly Vector4 BoxBorder = Config.Colors.Ochre;
     private static readonly Vector4 XColor    = Config.Colors.BrightYellow;
     private static readonly Vector4 XBg       = new(0.2f, 0.2f, 0.0f, 1.0f);
 
@@ -115,10 +116,12 @@ public class FightLocalizationOverlay
             return _humanArtCache;
         }
 
-        _beastArtCache ??= BodyArtData.Load(
-            member.Species.ArtFolderPath,
-            AnatomyFactoryRegistry.GetFactory(AnatomyType.Beast).GetZoneToBodyPartMapping());
-        return _beastArtCache;
+        // Keyed by the art folder: a beast and a reptile are drawn from different grids.
+        if (!_creatureArtCache.TryGetValue(member.Species.ArtFolderPath, out var art))
+            _creatureArtCache[member.Species.ArtFolderPath] = art = BodyArtData.Load(
+                member.Species.ArtFolderPath,
+                AnatomyFactoryRegistry.GetFactory(member.AnatomyType).GetZoneToBodyPartMapping());
+        return art;
     }
 
     /// <summary>Full redraw of the overlay box on top of the (already-drawn) fight UI.</summary>

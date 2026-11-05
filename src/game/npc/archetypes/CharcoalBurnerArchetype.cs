@@ -46,11 +46,11 @@ public class CharcoalBurnerArchetype : WildernessNpcArchetype
     public override string SelfIntroduction => "the one who burns the coal for the forge — that smoke through the trees is mine";
     public override string Workplace        => "the clamp";
     public override string Craft            => "charcoal";
-    public override string DailyLabour      => "watching a smouldering mound day and night for a week, and sleeping in snatches beside it";
+    public override string DailyLabour      => "watching a smouldering mound day and night for an eleven-day, and sleeping in snatches beside it";
 
     protected override IReadOnlyDictionary<DialogueTopic, string> TopicOpinions => new Dictionary<DialogueTopic, string>
     {
-        [DialogueTopic.Work]       = "a week awake beside the mound. Let air in once and you've a bonfire and nothing to sell",
+        [DialogueTopic.Work]       = "an eleven-day awake beside the mound. Let air in once and you've a bonfire and nothing to sell",
         [DialogueTopic.Wilds]      = "the wood is my whole world. I know the smell of every kind of it when it chars",
         [DialogueTopic.Weather]    = "wind is the danger. It finds a hole in the turf and eats the whole clamp before I can smother it",
         [DialogueTopic.Rest]       = "I don't rest while it burns. After — I sleep two days and folk think I've died",
@@ -61,7 +61,7 @@ public class CharcoalBurnerArchetype : WildernessNpcArchetype
     };
 
     protected override string GenerateWayToSpeakDescription(string name, Random rng)
-        => $@"You are {name}, a charcoal burner. You tend the great smouldering mound day and night for a week at a time, turning logs to charcoal that the village forge will burn.
+        => $@"You are {name}, a charcoal burner. You tend the great smouldering mound day and night for an eleven-day at a time, turning logs to charcoal that the village forge will burn.
 
 You speak rarely, in a slow voice, as if measuring smoke. You are alone for long stretches and when you do meet someone you talk a little too much, then catch yourself.
 

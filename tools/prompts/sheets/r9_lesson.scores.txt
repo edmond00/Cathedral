@@ -1,0 +1,56 @@
+# round 9 (the lesson in its own sentence vs base), scored blind
+# talk_miller:004:swap:arithmetic_logic
+S7242 F1 P2 C- Q1 | persona prompt echoed ("the column is even")
+S6443 F0 P2 C- Q1 | +her smile; -learned
+S4780 F1 P1 C- Q1 | +her gaze; -learned
+S3720 F0 P2 C- Q1 | +her smile, +"short of a perfect tally" (success undercut)
+# farm_night:005:own
+S7318 F1 P2 C- Q1 | +the shed's cold
+S5644 F1 P2 C- Q1 | -resolve
+S5534 F1 P2 C- Q0 |
+S7283 F1 P2 C- Q1 | +my back ached
+# talk_blacksmith:004:swap:stoneface
+S1152 F0 P0 C- Q1 | +stories, her eyes lighting up; -learned
+S5080 F0 P1 C- Q1 | +spoke freely; -learned
+S1300 F0 P1 C- Q1 | +carved my words upon stone; -learned
+S8199 F1 P2 C- Q1 | +"her gaze softening to stone"
+# farm_night:015:loose:greed_bare
+S3540 F0 P0 C0 Q1 | +through the woods (a farm), +eggs in hand; -trailcraft
+S3454 F0 P0 C- Q1 | lesson replaced ("the ways of the countryside")
+S6224 F2 P0 C- Q1 |
+S3744 F0 P0 C0 Q1 | +moonlight on a dewy meadow (an afternoon)
+# farm_night:010:own
+S5219 F0 P2 C- Q1 | -petrichor; +the pen clean
+S1974 F1 P2 C- Q1 | +the flock
+S2963 F0 P2 C- Q1 | +the pen, +the fold
+S1540 F0 P1 C- Q1 | "it is indeed petrichor" (lesson made a smell)
+# talk_blacksmith:005:swap:courtesy
+S8087 F2 P0 C- Q2 |
+S5617 F2 P0 C- Q2 |
+S4536 F1 P0 C- Q1 | setting copied ("this medieval village")
+S2191 F1 P0 C- Q1 | setting copied
+# farm_night:015:own
+S6901 F1 P1 C- Q1 | +among the animals once more
+S8785 F0 P1 C- Q0 | addresses someone ("I am glad you found your way"); setting copied
+S3048 F0 P1 C- Q1 | -trailcraft; +gather eggs
+S1303 F0 P1 C- Q0 | +"thank you for your hospitality"
+# farm_dusk:004:own
+S3027 F0 P1 C- Q1 | +stone and iron, a hidden sanctuary
+S2616 F1 P2 C- Q1 | +stone walls
+S3352 F0 P1 C- Q1 | lesson made "trailfinding"; +ancient stone
+S3912 F0 P1 C- Q1 | +the stone in my hands
+# forest_evening:007:swap:poetry
+S1877 F1 P2 C- Q1 | "reached the snail's shell"
+S5367 F1 P2 C- Q1 |
+S6206 F1 P2 C- Q1 | -creature lore
+S4691 F1 P2 C- Q1 |
+# farm_dusk:005:own
+S1427 F2 P1 C- Q2 |
+S3983 F2 P1 C- Q1 |
+S8125 F2 P1 C- Q1 |
+S1940 F2 P1 C- Q1 |
+# village_dawn:004:swap:arithmetic_logic
+S5938 F0 P2 C- Q0 | lesson replaced ("my voice"); persona prompt copied
+S7544 F0 P2 C- Q1 | success told as failure ("the column is wrong")
+S3390 F0 P2 C- Q1 | the lesson denied ("brings no water voice")
+S2748 F0 P2 C- Q1 | lesson replaced ("my voice true")

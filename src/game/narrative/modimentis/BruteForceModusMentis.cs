@@ -15,7 +15,8 @@ public class BruteForceModusMentis : ModusMentis
         "Approaches obstacles as things to be lifted, broken, or forced by sheer strength. Sets the body to raw exertion and reaches for overwhelming force where a subtler hand would look for leverage.";
     public override string SkillMeans => "overwhelming physical force";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<BreakVerb>("break something open");
+    public override WillTargets? Will => WillTarget.To<BreakVerb>("break something open");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Stronghold, Places.Ruins);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "arms", "legs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
@@ -24,7 +25,7 @@ public class BruteForceModusMentis : ModusMentis
     public override string PersonaReminder => "blunt force advocate";
     public override string PersonaReminder2 => "someone who trusts raw physical power above all else";
     public override string StyleInstruction =>
-        "Reach for heavy images of mass, force and crushing weight, with a blunt contempt for anything delicate.";
+        "Heavy, blunt and contemptuous of anything delicate - judge whatever is in front of you by what force would do to it.";
     
     public override string PersonaPrompt => @"You are the inner voice of BRUTE FORCE, the protagonist's capacity for overwhelming physical power.
 

@@ -122,8 +122,8 @@ public class GatherKnowledgeTree : DialogueTree
             "Who taught you, and how long did it take?",
             "I ask who taught them and how long it took.",
             End("trade_learned", 2, TopicTrade,
-                "Seven years, and I still get it wrong. Here is what I would tell a beginner.",
-                "I tell them it took seven years, that I still get it wrong, and what I would tell a beginner.",
+                "Seven rounds, and I still get it wrong. Here is what I would tell a beginner.",
+                "I tell them it took seven rounds, that I still get it wrong, and what I would tell a beginner.",
                 "Long enough that I will not hand it to you over a fence.",
                 "I tell them it took long enough that I will not hand it over a fence.")));
 

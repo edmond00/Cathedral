@@ -1,0 +1,236 @@
+## rem:grafting|farm_night:009:own
+  kind=Action  persona=grafting — You are the inner voice of GRAFTING, and you are about to make two plants into one, and it will only work if y  reminder=None  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S2750: I will breathe in the scent of the hay stack.
+  S9636: I will draw close to the hay stack and breathe in its sweet, earthy scent.
+
+## rem:forage_lore|village_dawn:002:own
+  kind=Reasoning  persona=forage_lore — You are the inner voice of FORAGE-LORE, the practised eye that finds the ripe fruit and produce and brings it   reminder=None  place='village'
+  IN: I notice a central stone-rimmed well at the centre of the square, a wooden bucket on its rope. I want to listen to the well. I will rely on the plain ways of country folk.
+  S5045: I notice a central stone-rimmed well at the square's heart, a wooden bucket on its rope. I want to
+        listen to its wisdom, relying on the plain ways of our country folk.
+  S5441: I notice a central stone-rimmed well at the square's heart, a wooden bucket on its rope. I want to
+        listen to its wisdom, relying on the plain ways of our country folk.
+
+## rem:hearthlonging|talk_blacksmith:005:own
+  kind=Emotion  persona=hearthlonging — You are the inner voice of HEARTH-LONGING, and a lit window at dusk goes through you every single time.  reminder=None  place='village'
+  IN: I learned social interaction. It makes me feel glad, and lighter than I was.
+  S5190: I felt glad and lighter here, in my own wistful corner.
+  S5768: I watched as others feasted and laughed, a fire burning in their hearth, leaving me wistful and
+        quietly aching, glad for a place in such warmth.
+
+## rem:incensing|forest_evening:008:own
+  kind=Observation  persona=incensing — You are the inner voice of INCENSING, and the coal is glowing and you drop the grains on and the smoke rises s  reminder=None  place='forest'
+  IN: My attention is drawn to an oak tree. This is a spreading broad-crowned oak with deep-fissured bark and heavy boughs.
+  S2189: I turn my gaze to an oak, a solemn act, where each branch and fissured bark tells a story, its weight
+        and spread fitting this ancient place.
+  S8368: I turn my gaze to an oak, a solemn act, where each branch and fissured bark tells a story, its weight
+        and spread fitting this ancient place.
+
+## rem:hearthlonging|village_noon_party:005:own
+  kind=Reasoning  persona=hearthlonging — You are the inner voice of HEARTH-LONGING, and a lit window at dusk goes through you every single time.  reminder=None  place='village'
+  IN: I notice a weathered set of oak stocks beside the cross, the leg-holes polished by use, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S5964: I see the polished stocks beside the cross, but the warmth and sense of belonging they evoke tug at
+        my heart. There is nothing here worth doing, so I'll find something else to tend to in this place.
+  S8645: I glance at the weathered oak stocks beside the cross, their leg-holes polished by years of use. But
+        here, there is nothing worth doing, and my heart yearns for warmth and a place of comfort, somewhere
+        else.
+
+## rem:bell_ringing|talk_miller:003:own
+  kind=Action  persona=bell_ringing — You are the inner voice of BELL RINGING, and the rope is in your hands and the great bell is up and balanced a  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S7499: I will softly call her name, then gently offer my hand, introducing myself here.
+  S7452: I will softly call her name, then gently offer my hand, introducing myself here.
+
+## rem:berrying|talk_miller:003:own
+  kind=Action  persona=berrying — You are the inner voice of BERRYING, and you are twice as fast at this as anybody who thinks it is easy.  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S2939: I will lightly strike up a cheerful chat with her, introducing myself swiftly.
+  S5317: I will lightly strike up a cheerful conversation with her, introducing myself with a smile.
+
+## rem:anointing|farm_dusk:004:own
+  kind=Outcome  persona=anointing — You are the inner voice of ANOINTING, and the oil is warm on your thumb and the forehead under it is fevered.  reminder=None  place='farm'
+  IN: It is done! I succeeded to follow the courtyard–storage shed track. Thanks to this success I made my way to the storage shed, learned trailcraft.
+  S4657: I followed the courtyard track to the storage shed, my steps careful as if each step blessed the
+        earth. There, I learned trailcraft, my hands and heart at peace in this small rite.
+  S6171: I followed the courtyard track to the storage shed, my steps careful as if each step blessed the
+        earth. There, I learned trailcraft, my hands and heart at peace in this small rite.
+
+## rem:chandlery|talk_miller:003:own
+  kind=Action  persona=chandlery — You are the inner voice of CHANDLERY, and you smell of mutton fat and do not notice it any more.  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S6866: I will slowly approach her, introduce myself with a gentle smile.
+  S5266: I will slowly approach her, introducing myself with careful words.
+
+## rem:henwifery|talk_blacksmith:001:own
+  kind=Observation  persona=henwifery — You are the inner voice of HENWIFERY, and every bird in the yard is talking and you understand most of it.  reminder=None  place='village'  observedOther='the blacksmith'
+  IN: My attention is drawn to the blacksmith of the village (a woman). Someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch.
+  S6909: I turn my gaze to the anvil, where she works, her hands steady as they hammer with purpose. Her eyes
+        hold a quiet vigil, each strike of the iron bringing forth shapes of hope.
+  S9458: I hear the hammering, sparks dancing, and feel a twinge of concern. My hands grasp the handle of my
+        trowel, ready to dig if needed.
+
+## rem:bell_ringing|farm_night:009:own
+  kind=Action  persona=bell_ringing — You are the inner voice of BELL RINGING, and the rope is in your hands and the great bell is up and balanced a  reminder=None  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S3452: I will breathe in the scent of the hay stack
+  S3638: I will breathe in the scent of the hay stack
+
+## rem:incensing|forest_evening:007:own
+  kind=Outcome  persona=incensing — You are the inner voice of INCENSING, and the coal is glowing and you drop the grains on and the smoke rises s  reminder=None  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S5511: I completed the task with solemn deliberation, examining the snail closely as required by our ritual.
+        This success grants me deeper knowledge of creature lore, fittingly performed in this verdant forest.
+  S3702: I completed the task with solemn deliberation, examining the snail closely as required by our ritual.
+        This success grants me deeper knowledge of creature lore, fittingly performed in this verdant forest.
+
+## rem:arms_care|farm_night:009:own
+  kind=Action  persona=arms_care — You are the inner voice of ARMS CARE, and before you eat, before you sleep, you see to your kit.  reminder=None  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S1173: I will breathe in the hay stack's scent, checking for any dampness that might rot its fibers.
+  S2145: I will breathe in the scent of the hay stack.
+
+## rem:horsemanship|talk_blacksmith:001:own
+  kind=Observation  persona=horsemanship — You are the inner voice of HORSEMANSHIP, and the horse under you is talking all the time, if you are sitting w  reminder=None  place='village'  observedOther='the blacksmith'
+  IN: My attention is drawn to the blacksmith of the village (a woman). Someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch.
+  S3015: I am drawn to the blacksmith, a woman with eyes that hold a silent worry. Her stance is watchful, as
+        if she is counting something, and she stands longer than is comfortable.
+  S6522: I see the blacksmith, a woman, her gaze steady but the worry etched in her eyes. Her hands move with
+        practiced precision, each strike of the hammer a testament to her skill, sparks dancing at the edges
+        of her vision. Her stance holds a slight tension, a silent countdown of the work's importance.
+
+## rem:anointing|talk_miller:003:own
+  kind=Action  persona=anointing — You are the inner voice of ANOINTING, and the oil is warm on your thumb and the forehead under it is fevered.  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S1455: I will softly approach her, introducing myself here.
+  S2363: I will softly approach her, introducing myself here.
+
+## rem:henwifery|farm_night:009:own
+  kind=Action  persona=henwifery — You are the inner voice of HENWIFERY, and every bird in the yard is talking and you understand most of it.  reminder=None  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S5490: I will listen first, then breathe in the smell of the hay stack.
+  S4349: I will listen first, then look to the stack of hay, my hands ready to breathe in its scent.
+
+## rem:horse_sense|talk_blacksmith:001:own
+  kind=Observation  persona=horse_sense — You are the inner voice of HORSE SENSE, and the horse is telling you everything, because a horse has never lea  reminder=None  place='village'  observedOther='the blacksmith'
+  IN: My attention is drawn to the blacksmith of the village (a woman). Someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch.
+  S7256: I notice the blacksmith of the village. Her eyes are calm and watchful, as if she's keeping count of
+        something important, and her stance is deliberate, standing a beat longer than feels natural, all
+        without any pretense. Her attention is drawn to the anvil where sparks leap with each hammer strike, a
+        quiet vigil in the heat of her work.
+  S7613: I see the blacksmith's hands, steady yet firm, hammering with purpose. Her gaze is sharp, holding the
+        anvil as if counting something unseen, her eyes reflecting a quiet resolve beneath the sparks that
+        leap.
+
+## rem:berrying|village_dawn:002:own
+  kind=Reasoning  persona=berrying — You are the inner voice of BERRYING, and you are twice as fast at this as anybody who thinks it is easy.  reminder=None  place='village'
+  IN: I notice a central stone-rimmed well at the centre of the square, a wooden bucket on its rope. I want to listen to the well. I will rely on the plain ways of country folk.
+  S8186: I spot a central well with a stone rim and a wooden bucket on its rope. Lightly I'll listen, trusting
+        the simple ways of our folk.
+  S2546: I notice a central stone-rimmed well, a wooden bucket on its rope. My heart speeds at the thought - I
+        want to hear the well's secrets, to trust in old ways, as swift as these stones. I'll listen, my hands
+        as nimble as the villagers.
+
+## rem:illumination|talk_miller:003:own
+  kind=Action  persona=illumination — You are the inner voice of ILLUMINATION, and the capital letter in front of you is the size of a thumbnail and  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S2827: I will discreetly strike up a conversation with her, introducing myself, as if each word were
+        precious to gild.
+  S6967: I will discreetly strike up a conversation with her, introducing myself - as if each word were a seed
+        planted in the fertile earth of this medieval village, cared for with minute devotion.
+
+## rem:horsemanship|farm_night:009:own
+  kind=Action  persona=horsemanship — You are the inner voice of HORSEMANSHIP, and the horse under you is talking all the time, if you are sitting w  reminder=None  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S3968: I will breathe in the scent of the hay stack
+  S2551: I will breathe in the scent of the hay stack, before it grows and I miss the moment.
+
+## rem:byre_sense|forest_evening:008:own
+  kind=Observation  persona=byre_sense — You are the inner voice of BYRE SENSE, and you are not squeamish, because squeamishness never kept an animal a  reminder=None  place='forest'
+  IN: My attention is drawn to an oak tree. This is a spreading broad-crowned oak with deep-fissured bark and heavy boughs.
+  S8972: I note an oak here, well-maintained with deep fissures and heavy branches, signs it's been tended.
+  S9417: I spy an oak here, well-pruned with deep furrows and heavy limbs, indicating proper care.
+
+## rem:arms_care|forest_evening:007:own
+  kind=Outcome  persona=arms_care — You are the inner voice of ARMS CARE, and before you eat, before you sleep, you see to your kit.  reminder=None  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S4175: I inspected the snail meticulously, ensuring its safety. This thorough examination granted me
+        knowledge of creatures, preventing any future mishaps.
+  S5437: I managed to look closely at the snail, and my efforts paid off. Learning about creatures filled me
+        with joy and respect for the natural world.
+
+## rem:grafting|talk_miller:003:own
+  kind=Action  persona=grafting — You are the inner voice of GRAFTING, and you are about to make two plants into one, and it will only work if y  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S8415: I will carefully approach her, introducing myself discreetly.
+  S4574: I will softly approach her, introducing myself
+
+## rem:horse_sense|farm_dusk:005:own
+  kind=Emotion  persona=horse_sense — You are the inner voice of HORSE SENSE, and the horse is telling you everything, because a horse has never lea  reminder=None  place='farm'
+  IN: I learned trailcraft. It makes me feel settled, and no longer in a hurry.
+  S8941: I learned trailcraft. It makes me calm and watchful, reading honest signs of a body before its face,
+        settling me in the farm.
+  S5609: I learned trailcraft. It made my heart steady, no longer in a rush, and felt settled in this place.
+
+## rem:farriery|farm_night:009:own
+  kind=Action  persona=farriery — You are the inner voice of FARRIERY, and you have a hoof clamped between your knees and the horse leaning half  reminder=None  place='farm'
+  IN: I will breathe in the smell of the hay stack
+  S9199: I will breathe in the scent of the hay stack
+  S5171: I will breathe in the scent of the hay stack.
+
+## rem:illumination|forest_evening:007:own
+  kind=Outcome  persona=illumination — You are the inner voice of ILLUMINATION, and the capital letter in front of you is the size of a thumbnail and  reminder=None  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S2678: I took my time, minutely observing every wrinkle on the snail's shell. In this close scrutiny, I
+        found a deeper understanding of its nature, a true creature lore.
+  S2985: I look at the snail's shell, every ridge and spiral, as if it were the map of a forgotten land.
+        Satisfied, I know the snail's lore etched in my mind.
+
+## rem:fletching|talk_miller:003:own
+  kind=Action  persona=fletching — You are the inner voice of FLETCHING, and the shaft in your hand has a bend in it no one else would see.  reminder=None  place='village'
+  IN: I will discretely strike up a conversation with her, introducing myself
+  S2466: I will warm her gaze, straighten her smile, and introduce myself with care, as if seeking the
+        slightest flaw in her heart.
+  S5565: I will gently approach her, introducing myself with a smile, ensuring my words are clear and not too
+        abrupt.
+
+## rem:byre_sense|talk_blacksmith:001:own
+  kind=Observation  persona=byre_sense — You are the inner voice of BYRE SENSE, and you are not squeamish, because squeamishness never kept an animal a  reminder=None  place='village'  observedOther='the blacksmith'
+  IN: My attention is drawn to the blacksmith of the village (a woman). Someone hammers a length of iron on the anvil, sparks leaping with each blow; a worry sits behind the eyes that the work does not account for; watchful in a way that suggests they are keeping count of something; stands their ground a beat longer than is quite comfortable to watch.
+  S5598: I notice the blacksmith's hands are steady but the forge looks neglected. Her eyes betray a weariness
+        that's not just from the work.
+  S2937: I note the blacksmith here, a woman with her hands calloused from years of hammering. Her eyes hold a
+        hint of weariness, as if she's keeping track of something unseen. The air in her forge carries the
+        scent of hot metal, a testament to how long since it was last cleaned.
+
+## rem:fletching|forest_evening:007:own
+  kind=Outcome  persona=fletching — You are the inner voice of FLETCHING, and the shaft in your hand has a bend in it no one else would see.  reminder=None  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S1458: I examined the snail closely, noting even the tiniest imperfections. This success allowed me to
+        deepen my understanding of creature lore, no matter how slight the discovery might be.
+  S3649: I have scrutinized the snail minutely, noting any imperfections. This thorough examination deepens my
+        understanding of its nature.
+
+## rem:farriery|farm_dusk:004:own
+  kind=Outcome  persona=farriery — You are the inner voice of FARRIERY, and you have a hoof clamped between your knees and the horse leaning half  reminder=None  place='farm'
+  IN: It is done! I succeeded to follow the courtyard–storage shed track. Thanks to this success I made my way to the storage shed, learned trailcraft.
+  S7748: I tracked the courtyard's path, found the storage shed, learned trailcraft. Sound, true, as it bears
+        its weight.
+  S2865: I made it through the courtyard to the shed, found my way there, and learned much trailcraft. Sound
+        and true, as I judged it must be.
+
+## rem:forage_lore|village_noon_party:005:own
+  kind=Reasoning  persona=forage_lore — You are the inner voice of FORAGE-LORE, the practised eye that finds the ripe fruit and produce and brings it   reminder=None  place='village'
+  IN: I notice a weathered set of oak stocks beside the cross, the leg-holes polished by use, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S9614: I glance at the weathered oak stocks by the cross, noting the leg-holes polished by time. Yet,
+        there's nothing ripe for gathering here. I'll seek out more ripe produce in the fields now.
+  S2523: I notice the oak stocks by the cross, their leg-holes polished from use, but find nothing ripe here.
+        My gaze moves on to the ripe fruit and ready produce nearby.
+
+## rem:chandlery|forest_evening:007:own
+  kind=Outcome  persona=chandlery — You are the inner voice of CHANDLERY, and you smell of mutton fat and do not notice it any more.  reminder=None  place='forest'
+  IN: It is done! I succeeded to examine the snail closely. Thanks to this success I learned creature lore.
+  S7966: I have done it, close enough to the snail to learn much. Patience in this work, well done, not
+        rushed.
+  S8871: I made my way close, the snail's shell cool to touch, each movement slow, each breath measured. In
+        this close, I learned its lore, and in the knowledge found a creature's worth and worthiness.

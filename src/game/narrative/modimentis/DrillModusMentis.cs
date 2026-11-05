@@ -20,7 +20,7 @@ public class DrillModusMentis : ModusMentis
     public override string PersonaReminder  => "drilled man";
     public override string PersonaReminder2 => "someone who turns on the word without thinking";
     public override string StyleInstruction =>
-        "Narrate the movement as a trained reflex - in step, in time, the body answering before thought.";
+        "Crisp and drilled - let the body answer in step and in time, before thought.";
 
     public override string PersonaPrompt => @"You are the inner voice of DRILL, and your feet are doing what they were taught a thousand times on a muddy square.
 

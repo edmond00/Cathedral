@@ -1,3 +1,4 @@
+using Cathedral.Game.Narrative;
 using System;
 using System.Collections.Generic;
 
@@ -5,11 +6,11 @@ namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Egg : ConsumableItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Egg });
     public override string ItemId      => "egg";
     public override string DisplayName => "Egg";
     public override string Description => "A brown hen's egg, warm and faintly spotted";
     public override List<ItemTag> Tags => new() { ItemTag.Foodstuff, ItemTag.Poultry };
-    public override int PriceReference => 1;
     public override ConsumableType ConsumableType => ConsumableType.Food;
     protected override HumorRichness Richness => HumorRichness.Hearty;
     protected override HumorRecipe Recipe => new HumorRecipe()

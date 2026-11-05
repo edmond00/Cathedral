@@ -1,0 +1,61 @@
+# A humor bends a crafting roll
+#
+# Every thing made at a station is rolled in the dice box, like any other roll, and the viscera's humors
+# may bend its dice before the result is accepted. Here a forced miss leaves the nail's dice without a
+# six; the hepar's spendable humor is blood (+1 to a die), spent on a five, and the six it makes turns the
+# spoiled nail into a made one. The blood is gone from the hepar afterwards (the queue moves up one).
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing,bladesmithing --grant-item hammer,smith_tongs,horseshoe --organs hands=2 --location-type test --location-id 0 --start-area "Test Ruin" --period dawn --observe-only "Test Old Anvil"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal use
+means blacksmithing
+advance 12 180
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+click action 0
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+click button
+wait mode Crafting 30
+
+craft break horseshoe
+expect-state crafting pool=2
+
+strategy fail-dice
+craft make nail
+wait
+expect-state crafting rolling item=nail dice=13 needed=1 sixes=0 settled=yes would=spoil humors=yes
+expect-state humors hepar Yellow Bile=23 Phlegm=11 Blood=10
+
+# Blood on the five: the die becomes a six and the roll succeeds.
+click humor hepar
+click die 1
+wait
+expect-state crafting sixes=1 settled=yes would=make humors=yes
+expect-state humors hepar Yellow Bile=23 Phlegm=12 Blood=9
+
+craft settle
+expect-state crafting result=made
+expect-state crafting pool=1
+expect-state items nail
+craft leave
+wait mode LocationInteraction 30
+save roundtrip
+quit

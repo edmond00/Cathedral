@@ -23,7 +23,7 @@ public sealed class SaveGame
     /// also what lets <see cref="PartyState.Rebuild"/> treat an unknown content id as corruption
     /// rather than as a version difference it should tolerate.</para>
     /// </summary>
-    public const int CurrentVersion = 8;
+    public const int CurrentVersion = 9;   // 9: the journal became structured entries
 
     public int Version { get; set; } = CurrentVersion;
 

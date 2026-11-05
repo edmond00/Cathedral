@@ -20,9 +20,9 @@ public class LambingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a lambing hand who sleeps in snatches in a straw-lined pen";
     public override string PersonaReminder  => "lambing hand";
-    public override string PersonaReminder2 => "someone who rubs a dead lamb until it breathes";
+    public override string PersonaReminder2 => "someone who does not give up on the weak";
     public override string StyleInstruction =>
-        "Narrate the cold, the dark, the labour and the small breath that comes or does not come.";
+        "Tired, tender and determined - see whatever is in front of you as something that needs help to live.";
 
     public override string PersonaPrompt => @"You are the inner voice of LAMBING, and it is the middle of the night and a ewe is down and something is wrong.
 

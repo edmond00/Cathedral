@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 using Cathedral.Game.Scene;
 
@@ -10,10 +11,12 @@ public class CourtesyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "courtesy";
     public override string DisplayName      => "Courtesy";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Observes the small forms: the greeting, who goes first, what is offered and to whom. Frictionless where it is present and immediately noticed where it is not, which is what makes it worth having.";
     public override string SkillMeans       => "the observing of the small forms between people";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "tongue", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
@@ -21,7 +24,7 @@ public class CourtesyModusMentis : ModusMentis
 
     public override string PersonaTone     => "an easy correctness of form that makes a stranger comfortable in a sentence";
     public override string PersonaReminder  => "well-mannered greeter";
-    public override string PersonaReminder2 => "someone who gets the first thirty seconds exactly right";
+    public override string PersonaReminder2 => "someone who gets the first thirty heartbeats exactly right";
     public override string StyleInstruction =>
         "Warm, correct and brief - the greeting, the precedence given, the name remembered.";
 
@@ -30,7 +33,7 @@ public class CourtesyModusMentis : ModusMentis
         new(typeof(SleeperRousedOutcome), () => new PudorHumor()),
     };
 
-    public override string PersonaPrompt => @"You are the inner voice of COURTESY, and the first thirty seconds decide most of it.
+    public override string PersonaPrompt => @"You are the inner voice of COURTESY, and the first thirty heartbeats decide most of it.
 
 The forms are small and everybody notices them: greet before you ask, use the name, let the older person go first, take what is offered even if you do not want it, and never be the one who has to be reminded of any of that. None of it is difficult. All of it is remembered.
 

@@ -14,6 +14,7 @@ public class GamblingModusMentis : ModusMentis
         "Weighs dice, coin, and odds, reading the risk folded into a wager. Attends to likelihood and to the bluff, and inclines toward the calculated bet over the sure thing or the wild one.";
     public override string SkillMeans       => "the weighing of dice, coin and odds";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "cerebrum" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -25,7 +26,7 @@ public class GamblingModusMentis : ModusMentis
     public override string PersonaReminder  => "tavern dice-roller";
     public override string PersonaReminder2 => "someone who never lets a long shot pass uncalculated";
     public override string StyleInstruction =>
-        "Use the imagery of odds, stakes and the turning card, with a gambler's thrill at the edge of chance.";
+        "Calculating, with a thrill at the edge - weigh the odds in whatever is in front of you.";
 
     public override string PersonaPrompt => @"You are the inner voice of GAMBLING, the tavern reckoner of odds and stakes that does not flinch when the dice fall but is never reckless without reason.
 

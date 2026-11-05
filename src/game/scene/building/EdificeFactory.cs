@@ -330,7 +330,7 @@ public static class EdificeFactory
     private static void Stair(Area bottom, Area top, string name, string key, int ordinal)
     {
         var stair = new StairPointOfInterest(bottom, top, name,
-            new() { "A turning stair of worn stone, each tread dished in the middle by centuries of feet" })
+            new() { "A turning stair of worn stone, each tread dished in the middle by hundreds of rounds of feet" })
         {
             StableKey = $"stair|{key}|{ordinal}",
         };

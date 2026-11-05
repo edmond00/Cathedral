@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Narrative.Memory;
 
 namespace Cathedral.Game.Narrative.ModiMentis;
@@ -10,6 +11,7 @@ public class DisciplineModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "discipline";
     public override string DisplayName      => "Discipline";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Terse };
     public override string MenuDescription =>
         "Holds a steady line against pain, insult, and temptation, refusing the reaction they invite. Keeps conduct fixed on the chosen course, and treats provocation as something to be outlasted rather than answered.";
     public override string SkillMeans       => "self-control kept under pressure";
@@ -20,7 +22,7 @@ public class DisciplineModusMentis : ModusMentis
 
     public override string PersonaTone     => "a soul ground to patience by long practice, accustomed to outwait impulse and hold the form";
     public override string PersonaReminder  => "form-held practitioner";
-    public override string PersonaReminder2 => "someone who has learnt to keep their hands still and their face flat";
+    public override string PersonaReminder2 => "someone who keeps their feelings held and their face composed";
     public override string StyleInstruction =>
         "Keep imagery restrained and controlled, and let feeling show only as something held tightly in check.";
 

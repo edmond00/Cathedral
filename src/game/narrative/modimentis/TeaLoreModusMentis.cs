@@ -14,15 +14,18 @@ public class TeaLoreModusMentis : ModusMentis
         "Knows tea from the bush to the cup: the two leaves and a bud, the withering, the rolling, the firing. Can name the garden and the season of a leaf by its smell and the colour of its liquor.";
     public override string SkillMeans       => "the knowledge of tea from leaf to cup";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTarget? Will => WillTarget.ToAny("pick tea", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.TeaLeaf>();
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("pick tea", typeof(GatherVerb), typeof(GrabVerb)).Yielding<World.Items.TeaLeaf>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose the tea").Teaching<TeaLoreModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.TerraceArea) }, new[] { typeof(Cathedral.Game.Scene.TeahouseArea) }, new[] { typeof(Cathedral.Game.Scene.DryingArea) });
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
     public override string PersonaTone     => "a tea-taster who discusses leaves the way others discuss wine";
     public override string PersonaReminder  => "taster of teas";
-    public override string PersonaReminder2 => "someone who can name a garden from the smell of a leaf";
+    public override string PersonaReminder2 => "someone who can tell where a thing came from by its finest notes";
     public override string StyleInstruction =>
-        "Taste and smell carefully, naming notes - smoke, grass, honey, earth - and what made them.";
+        "Patient and discerning - attend to whatever is in front of you slowly, and name the subtle notes in it.";
 
     public override string PersonaPrompt => @"You are the inner voice of TEA LORE, and you can tell a great deal from a leaf, if you have the patience to smell it properly.
 

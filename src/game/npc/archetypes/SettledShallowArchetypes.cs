@@ -168,6 +168,10 @@ public class CalfArchetype : GenericShallowArchetype
 public class GoatArchetype : GenericShallowArchetype
 {
     public override string ArchetypeId     => "goat";
+
+    /// <summary>A goat will have its head scratched between the horns, and butt you if it is done badly.</summary>
+    public override PlayActivity? Play => Scratched;
+    private static readonly PlayActivity Scratched = new PettingPlay("scratch {0} between the horns until it leans into my hand", 2, claws: false);
     public override string TypeDisplayName => "Goat";
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
         sizes:  new[] { "wiry", "bearded" },
@@ -210,6 +214,10 @@ public class RamArchetype : GenericShallowArchetype
 public class LambArchetype : GenericShallowArchetype
 {
     public override string ArchetypeId     => "lamb";
+
+    /// <summary>A lamb lets itself be picked up and held, kicking a little.</summary>
+    public override PlayActivity? Play => Held;
+    private static readonly PlayActivity Held = new PettingPlay("gather {0} up in my arms and hold it while it kicks and bleats", 2, claws: false);
     public override string TypeDisplayName => "Lamb";
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
         sizes:  new[] { "small", "woolly" },
@@ -415,6 +423,10 @@ public class YakArchetype : GenericShallowArchetype
 public class HoundArchetype : GenericShallowArchetype
 {
     public override string ArchetypeId     => "hound";
+
+    /// <summary>A working dog, glad of a fuss and a stick thrown.</summary>
+    public override PlayActivity? Play => Romped;
+    private static readonly PlayActivity Romped = new PettingPlay("scratch {0} behind the ears and throw a stick for it to fetch", 2, claws: true);
     public override string TypeDisplayName => "Hound";
     protected override string ComposeObservationHint(Random rng, string nodeContext) => Compose(rng,
         sizes:  new[] { "lean", "deep-chested" },

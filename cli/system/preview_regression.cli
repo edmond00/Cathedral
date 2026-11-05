@@ -28,7 +28,7 @@ expect attention
 strategy succeed
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 wait 45
 
 # Thinking preview: reasoning part first, gated by CONTINUE.
@@ -53,9 +53,10 @@ wait 60
 
 # Outcome preview box: only the true outcome is generated, opening first-person with "I".
 expect CONTINUE
-# "succeeded to" is NeutralNarration.OutcomeSuccess's wording ("It is done! I succeeded to …").
-# This used to expect "tried to", which is now only the childhood-reminescence framing.
-expect succeeded to
+# "managed to" is NeutralNarration.OutcomeSuccess's wording ("It is done! I managed to …").
+# This used to expect "tried to", which is now only the childhood-reminescence framing, and then
+# "succeeded to", the wording before it was made English.
+expect managed to
 click continue
 wait 60
 

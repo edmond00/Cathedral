@@ -1,0 +1,11 @@
+{"case": "farm_dusk:005:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+wind through the trees"}
+{"case": "farm_night:009:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "neutral_fixes", "seed": 1, "sid": "carried", "F": 1, "P": 0, "C": null, "Q": 2, "facts": "track \"to\" both"}
+{"case": "talk_blacksmith:006:own", "version": "neutral_fixes", "seed": 1, "sid": "carried", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "meaning changed: \"we meet but once\""}
+{"case": "talk_blacksmith:008:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 2, "P": 2, "C": null, "Q": 2, "facts": ""}
+{"case": "talk_miller:006:loose:greed_bare", "version": "neutral_fixes", "seed": 1, "sid": "carried", "F": 0, "P": 0, "C": null, "Q": 0, "facts": "says the addressee is Dennis"}
+{"case": "talk_miller:006:loose:greed_bare", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 1, "P": 0, "C": null, "Q": 0, "facts": ""}
+{"case": "village_noon_party:009:own", "version": "neutral_fixes", "seed": 2, "sid": "carried", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_dusk:003:loose:greed_bare", "version": "with_hour", "seed": 2, "sid": "carried", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farm_night:014:swap:cutpurse", "version": "with_hour", "seed": 2, "sid": "carried", "F": 0, "P": 1, "C": 0, "Q": 0, "facts": "style copied"}
+{"case": "talk_blacksmith:006:own", "version": "with_hour", "seed": 2, "sid": "carried", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"Day well spent\" for a greeting"}

@@ -24,7 +24,7 @@ public class MuskMarkingModusMentis : ModusMentis
     public override string PersonaReminder  => "territory-claimer";
     public override string PersonaReminder2 => "someone for whom every place is either mine, theirs, or not yet taken";
     public override string StyleInstruction =>
-        "Frame places as territory — claimed, contested, or open — with a possessive animal bluntness.";
+        "Possessive and blunt - see whatever place you are in as territory: claimed, contested or open.";
 
     public override string PersonaPrompt => @"You are the inner voice of MUSK MARKING, the old territorial law that divides the world into mine, theirs, and not-yet-claimed.
 

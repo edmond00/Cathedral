@@ -34,7 +34,8 @@ namespace Cathedral.Game.Narrative;
 /// things instead of circling the same one. As the pool shrinks, the persona is also given a refusal
 /// option — "let your focus go" — which produces a short in-voice line saying there is nothing more
 /// worth attending to. That option is withheld while the ledger is empty, so the request that opens a
-/// phase always yields at least one keyword to click.
+/// phase always yields at least one keyword to click, and once one persona has taken it, so it is
+/// taken at most once a phase.
 ///
 /// Overall / focus observation structure:
 ///   [0]   Observation of the first object (no transition)
@@ -530,7 +531,7 @@ public class ObservationPhaseController
             string? observedOther = outcome is Cathedral.Game.Scene.SyntheticNpcObservationObject npcObs
                 ? Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npcObs.SceneNpc.Entity)
                 : null;
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, observedOther: observedOther);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, observedOther: observedOther, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
 
             // Keywords are chosen by rule from the final (sanitized) text — the word(s) most related
             // to the object. A long observation gets two distinct keywords, both linked to this same
@@ -544,7 +545,8 @@ public class ObservationPhaseController
             List<string> kws;
             if (turnedAwayFrom == null)
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted,
-                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome));
+                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome),
+                                                       flavourLemmas: Sanitizer.PersonaFlavour.For(modusMentis)?.KeywordLemmas);
             else
             {
                 // The text also names the object turned away from, and a keyword is wired to this
@@ -554,7 +556,8 @@ public class ObservationPhaseController
                         .Split(new[] { ' ', '-', '(', ')', ',' }, StringSplitOptions.RemoveEmptyEntries),
                     StringComparer.OrdinalIgnoreCase);
                 kws = KeywordExtractor.ExtractKeywords(text, GetReferenceLemma(outcome), wanted + 3,
-                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome))
+                                                       ownName: GetShownName(outcome), isPerson: IsPerson(outcome),
+                                                       flavourLemmas: Sanitizer.PersonaFlavour.For(modusMentis)?.KeywordLemmas)
                     .Where(k => !k.Split(' ').Any(w => shunned.Contains(w) || shunned.Contains(w.TrimEnd('s'))))
                     .Take(wanted)
                     .ToList();
@@ -671,7 +674,7 @@ public class ObservationPhaseController
                              .ToList();
 
             var neutral = NeutralNarration.AreaIntroduction(introArea.ContextDescription, period.Phrase(), description, sights);
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: sink, ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
 
             var links = LinkIntroductionKeywords(text, introArea.ContextDescription, pool);
             var kws = links.Select(l => l.Keyword).ToList();
@@ -774,7 +777,7 @@ public class ObservationPhaseController
         var (remaining, _) = NextPool(observed, candidates, ledger, isReminescence, siblingsFirst);
         if (!introduced && remaining.Count > 0)
         {
-            bool declineOffered = !ledger.IsEmpty;
+            bool declineOffered = ledger.MayDecline;
             var second = await SelectObservationObjectAsync(remaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
             // A choice used to be asked on this slot and wiped its history; the rewrite that follows
             // keeps history, so the slot is still cleared here to keep the block's context bounded.
@@ -799,7 +802,7 @@ public class ObservationPhaseController
         if (combinedLength < Config.Narrative.ObservationTriggerThirdThreshold
             && stillRemaining.Count > (zooming ? 0 : Config.Narrative.ObservationThirdMinRemaining))
         {
-            bool declineOffered = !ledger.IsEmpty;
+            bool declineOffered = ledger.MayDecline;
             var third = await SelectObservationObjectAsync(stillRemaining, modusMentis, ledger, locationId, ct, isReminescence, overall, area);
             // A choice used to be asked on this slot and wiped its history; the rewrite that follows
             // keeps history, so the slot is still cleared here to keep the block's context bounded.
@@ -873,7 +876,7 @@ public class ObservationPhaseController
         {
             text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation,
                 modusMentis.PersonaReminder2, keepHistory: true,
-                styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+                styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
             if (string.IsNullOrWhiteSpace(text)) text = neutral;
         }
         catch (Exception ex)
@@ -1240,7 +1243,8 @@ public class ObservationPhaseController
     ///
     /// <para><paramref name="candidates"/> arrives already stripped of everything this narration phase
     /// has observed, so the list shrinks request by request. The refusal option — "let your focus go" —
-    /// is offered exactly when <paramref name="ledger"/> is non-empty: with the pool narrowing, a
+    /// is offered exactly when <paramref name="ledger"/> is non-empty and nobody has taken it yet this
+    /// phase (<see cref="ObservationLedger.Declined"/>): with the pool narrowing, a
     /// persona forced to pick from two leftovers it cares nothing for would attend to them out of
     /// character, and it needs a way to say so. Withholding it while the ledger is empty is what keeps
     /// the request that opens a phase from producing a block with no keyword to click.</para>
@@ -1282,15 +1286,22 @@ public class ObservationPhaseController
         // Each object is offered as the act of attending to it — "focus on the plowman of the field
         // (a woman)" — via GetNeutralPhrase (proper names stay verbatim; common-noun objects gain
         // "a"/"an"). Playground mode never declines (the selector short-circuits to a real option).
-        string? decline = ledger.IsEmpty || !offerDecline || MustCommit()
+        string? decline = !ledger.MayDecline || !offerDecline || MustCommit()
             ? null
             : isReminescence ? "let the recollection go, nothing more is surfacing"
                              : "let your focus go, nothing else here is worth attending to";
-        return await _selector.SelectAsync(
+        var picked = await _selector.SelectAsync(
             ChoiceKind.Focus, modusMentis, candidates,
             c => $"focus on {GetNeutralPhrase(c, locationId)}",
             ThinkingPromptConstructor.SituationLine(overallLocation, areaLocation, null),
             declineOption: decline, ct: ct);
+        // The refusal is spent once taken, like an observed object (ObservationLedger.Declined).
+        if (picked == null && decline != null)
+        {
+            ledger.Decline();
+            Console.WriteLine($"ObservationPhaseController: [{modusMentis.DisplayName}] let its focus go — the refusal is not offered again this phase.");
+        }
+        return picked;
     }
 
     /// <summary>
@@ -1349,7 +1360,7 @@ public class ObservationPhaseController
         string text;
         try
         {
-            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct);
+            text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: modusMentis.StyleInstruction, preview: part?.NextSegment(), ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
         }
         catch (Exception ex)
         {
@@ -1429,7 +1440,7 @@ public class ObservationPhaseController
             string? style = extraStyle == null
                 ? modusMentis.StyleInstruction
                 : $"{(string.IsNullOrWhiteSpace(modusMentis.StyleInstruction) ? Config.Narrative.DefaultStyleInstruction : modusMentis.StyleInstruction.Trim())} {extraStyle}";
-            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: style, preview: sink, ct: ct);
+            var text = await _rewriter.RewriteAsync(slotId, neutral, NarrationKind.Observation, modusMentis.PersonaReminder2, keepHistory: true, styleInstruction: style, preview: sink, ct: ct, flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(modusMentis));
             sentences.Add(new NarrationSentence(text, new List<string>()));
             return true;
         }
@@ -1563,7 +1574,8 @@ public class ObservationPhaseController
                     : NeutralNarration.SpokenReport(companionName, descr),
                 NarrationKind.Speaking,
                 r2, companionName, keepHistory: true, styleInstruction: style,
-                preview: part?.NextSegment(), ct: ct)).Trim().Trim('"');
+                preview: part?.NextSegment(), ct: ct,
+                flavour: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(speakingModusMentis))).Trim().Trim('"');
 
             if (string.IsNullOrWhiteSpace(spoken))
             {
@@ -1590,7 +1602,8 @@ public class ObservationPhaseController
 
             var allExtractedKeywords = new List<string>();
             string? kw = KeywordExtractor
-                .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking)
+                .ExtractKeywords(spoken, GetReferenceLemma(linkedOutcome), KeywordCandidatesForSpeaking,
+                                 flavourLemmas: Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(speakingModusMentis)?.KeywordLemmas)
                 .FirstOrDefault(k => !partyWords.Contains(k));
             if (kw != null)
                 allExtractedKeywords.Add(kw);

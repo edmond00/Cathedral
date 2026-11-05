@@ -20,7 +20,7 @@ public class StevedoringModusMentis : ModusMentis
     public override string PersonaReminder  => "docker";
     public override string PersonaReminder2 => "someone who knows the weight of a load at a glance";
     public override string StyleInstruction =>
-        "Narrate the heavy work - sacks, bales, crane, hold - and the stowing that keeps a ship upright.";
+        "Heavy-handed and practical - judge whatever is in front of you by its weight and where it should go.";
 
     public override string PersonaPrompt => @"You are the inner voice of STEVEDORING, and the hold is empty and the quay is full, and by dark it will be the other way round.
 

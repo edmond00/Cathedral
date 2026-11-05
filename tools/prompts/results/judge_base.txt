@@ -1,0 +1,28 @@
+..........................................................................................
+
+accuracy (game decision rules)
+  Willingness             38/40   95.0%
+  Willingness (crimes)    24/24  100.0%
+  Means                   58/65   89.2%
+  Goal                    85/88   96.6%
+  Focus                   54/54  100.0%
+  KeepFocus               24/24  100.0%
+  Reply                   47/48   97.9%
+  all                    306/319  95.9%
+
+willingness stances: {'eager': 10, 'unwilling': 11, 'willing': 12, 'reluctant': 7}
+
+errors:
+  Willingness  shear the sheep|pugilitas                               -> willing
+  Willingness  dance at the feast|stoneface                            -> willing
+  Means        get past the guard at the gate|cruelty                  -> Sneak Art: stealth and silent movement
+  Means        get past the guard at the gate|cruelty                  -> Bribery: the offering of money that can be taken w
+  Means        make the prisoner talk|cruelty                          -> Bribery: the offering of money that can be taken w
+  Means        cross the river|temerity                                -> Fording: the crossing of water on foot
+  Means        cross the river|temerity                                -> Fording: the crossing of water on foot
+  Means        cross the river|temerity                                -> Fording: the crossing of water on foot
+  Means        cross the river|temerity                                -> Fording: the crossing of water on foot
+  Goal         the bellows|gluttony                                    -> work the bellows
+  Goal         the bellows|gluttony                                    -> work the bellows
+  Goal         the bellows|gluttony                                    -> work the bellows
+  Reply        the chapel|piety                                        -> promise to pay for the roof

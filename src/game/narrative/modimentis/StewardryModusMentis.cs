@@ -25,6 +25,7 @@ public class StewardryModusMentis : ModusMentis
         ModusMentisFunction.Thinking,
         ModusMentisFunction.Speaking,
     };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "cerebrum" };
 
     /// <summary>Words with a person, and the learning behind them.</summary>
@@ -35,7 +36,7 @@ public class StewardryModusMentis : ModusMentis
     public override string PersonaReminder  => "manor-steward";
     public override string PersonaReminder2 => "someone who reckons who owes what work and whether it has been done";
     public override string StyleInstruction =>
-        "Lean on the imagery of tallies, dues, rosters and the chain of authority, and let feeling stay dry and administrative.";
+        "Dry and administrative - judge whatever is in front of you by who owes what and whether it has been done.";
 
     public override string PersonaPrompt => @"You are the inner voice of STEWARDRY, the oversight that keeps a manor's labour and accounts in order.
 

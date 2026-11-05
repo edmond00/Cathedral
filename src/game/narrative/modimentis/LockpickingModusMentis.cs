@@ -15,16 +15,19 @@ public class LockpickingModusMentis : ModusMentis
         "Works a lock blind, feeling tumblers fall under the pick and reading a mechanism by touch alone. Keeps attention in the fingertips, and inclines toward opening a fastening rather than forcing it.";
     public override string SkillMeans       => "the delicate picking of locks and latches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<UnlockDoorVerb>("pick a lock");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<UnlockDoorVerb>("pick a lock"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("study a lock").Teaching<LockpickingModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Treasure, Places.Stronghold);
     public override bool ActsDiscretely    => true;
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a quiet pair of hands that learnt their craft on dormitory doors with a stolen hairpin";
     public override string PersonaReminder  => "soft-handed picklock";
-    public override string PersonaReminder2 => "someone whose fingers listen to the tumblers like a confessor";
+    public override string PersonaReminder2 => "someone who opens what others think is shut, by patience";
     public override string StyleInstruction =>
-        "Use the imagery of tumblers, tension and the listening fingertip, with a safecracker's intimate patience.";
+        "Intimate and patient - treat whatever is in front of you as something that will yield to careful listening.";
 
     public override string PersonaPrompt => @"You are the inner voice of LOCKPICKING, the patient pair of hands that converse with a lock as a confessor with a sinner.
 

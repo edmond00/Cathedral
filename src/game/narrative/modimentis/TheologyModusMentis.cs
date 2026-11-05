@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -10,11 +11,13 @@ public class TheologyModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "theology";
     public override string DisplayName      => "Theology";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Archaic };
     public override string MenuDescription =>
         "Reasons about the divine: the nature of the gods, the problem of evil, the meaning of the texts, the disputed points of doctrine. Can argue either side and knows who argued it first.";
     public override string SkillMeans       => "the reasoning about the divine";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking };
-    public override WillTarget? Will => WillTarget.To<AskTeachingVerb>("be taught the doctrine by somebody who holds it");
+    public override WillTargets? Will => WillTarget.To<AskTeachingVerb>("be taught the doctrine by somebody who holds it");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Learning);
     public override string[] Organs        => new[] { "cerebrum", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction | AnatomyCapability.Speech;

@@ -99,6 +99,17 @@ public sealed class TestSceneFactory : SceneFactory
                          "A pitch of thatch with the whole yard laid out below it");
         room.IsPrivate = true;
 
+        // ── Crafting: a station nobody owns, and a workshop with a master ─────
+        // The ruin's anvil is anybody's (USE without leave); the forge's anvil, hearth and bench are the
+        // smith's, and USE there waits on ask_to_use_workshop. The forge is public ground, so walking in
+        // is lawful — what the leave buys is the equipment, not the floor.
+        var ruin  = Area_("Test Ruin",  "ruin",  "among the test ruin",
+                          "pick your way into the ruin",
+                          "Three walls of a smithy nobody has worked in for years, an anvil rusting by the old hearth");
+        var forge = new ForgeArea("Test Forge", "in the test forge", "step into the forge",
+                                  new List<string> { "A working forge, hot and loud, its master at the anvil" },
+                                  new[] { "hot", "ringing", "smoky" });
+
         var outdoors = new Section("Test Grounds", new List<string> { "the open ground of a test location" },
                                    seed => new NoisyGenerator { Seed = seed, Density = 0.5f });
         foreach (var a in new[] { yard, field, wood, den, shore, rock, ledge, crown })
@@ -109,15 +120,31 @@ public sealed class TestSceneFactory : SceneFactory
         { IsInterior = true };
         foreach (var a in new[] { hall, room, roof }) building.Areas.Add(a);
 
+        // The ruin is a section of its own, so the grounds' map keeps the shape the map scripts pin.
+        var ruins = new Section("Test Ruins", new List<string> { "the shell of an old smithy" },
+                                seed => new NoisyGenerator { Seed = seed, Density = 0.5f });
+        ruins.Areas.Add(ruin);
+
+        var smithy = new Section("Test Smithy", new List<string> { "a smith's forge and its yard" },
+                                 seed => new RoomsGenerator { Seed = seed })
+        { IsInterior = true };
+        smithy.Areas.Add(forge);
+
         scene.Sections.Add(outdoors);
         scene.Sections.Add(building);
+        scene.Sections.Add(ruins);
+        scene.Sections.Add(smithy);
 
         // ── Ways between them ─────────────────────────────────────────────────
         // Neighbours are joined by graph edges, the walk MoveToAreaVerb takes. Everything else is a
         // connector and carries no edge between its ends — a gate, or MoveToAreaVerb would walk around
         // it, and a path, which joins areas two or more steps apart. BuildingAudit enforces both.
-        foreach (var (a, b) in new[] { (yard, field), (yard, wood), (yard, shore), (yard, rock), (wood, den) })
+        foreach (var (a, b) in new[] { (yard, field), (yard, wood), (yard, shore), (yard, rock), (wood, den), (field, ruin) })
             scene.ConnectAreasBidirectional(a, b);
+
+        new DoorPointOfInterest(ruin, forge, "Test Forge Door",
+            new List<string> { "A smithy door propped open with a brick against the heat" }, DoorState.Unlocked)
+            .AttachTo(scene);
 
         // The one path, laid by hand (LaysPaths is off): field to rock, by way of the yard.
         new PathPointOfInterest(field, rock, new[] { yard }, "Field–Rock Track",
@@ -167,10 +194,15 @@ public sealed class TestSceneFactory : SceneFactory
         // ── Things to act on ──────────────────────────────────────────────────
         AddContent(scene, yard, field, wood, shore, rock, hall, room);
 
+        AddWorkshop(scene, ruin, forge);
+
         RegisterAll(scene, outdoors);
         RegisterAll(scene, building);
+        RegisterAll(scene, ruins);
+        RegisterAll(scene, smithy);
 
         AddPeople(scene, yard, hall, room, wood, den, shore, roof);
+        AddSmith(scene, forge, smithy);
 
         Console.WriteLine($"TestSceneFactory: built the test location — {scene.AllAreas.Count} areas, "
                           + $"{scene.Npcs.Count} people, nothing rolled");
@@ -272,10 +304,59 @@ public sealed class TestSceneFactory : SceneFactory
             null, new[] { "ringing", "bright" }, false)
         { Senses = SensoryProfile.Audible });
 
+        // PLAY. Laid by hand, as everything here is: PlayPlacement is off with the paths.
+        shore.PointsOfInterest.Add(new PebblesPointOfInterest("Test Pebbles",
+            new List<string> { "Flat grey pebbles along the waterline, thin as biscuits" }));
+
         yard.PointsOfInterest.Add(new MiddenPointOfInterest("Test Midden",
             new List<string> { "A heap of kitchen waste going over, and announcing it" },
             null, new[] { "rank", "warm" }, true)
         { Senses = SensoryProfile.Odorous });
+    }
+
+    /// <summary>
+    /// Crafting stations. Each is its station TYPE (USE gates on it), and the ruin's scrap is metal to
+    /// break down or to grab — what a crafting will goes for when it has nothing to work. The forge's
+    /// three teach nothing on purpose: a lesson there would be the blacksmith's nearest target (examine
+    /// it, one step) and hide the two-step plan through the master's leave that the scripts assert.
+    /// </summary>
+    private static void AddWorkshop(Scene scene, Area ruin, Area forge)
+    {
+        ruin.PointsOfInterest.Add(new AnvilPointOfInterest("Test Old Anvil",
+            new List<string> { "A pitted anvil on a rotting stump, still true under the rust" })
+            { Senses = SensoryProfile.Examinable, VerbModiMentis = new Dictionary<string, string> { ["examine"] = "blacksmithing" } });
+
+        ruin.PointsOfInterest.Add(Poi_("Test Scrap Heap", "scrap",
+            "Bent nails and an old shoe in a heap of ash",
+            new List<ItemElement> { new(new Nail()), new(new Horseshoe()) }, natural: false));
+
+        forge.PointsOfInterest.Add(new AnvilPointOfInterest("Test Anvil",
+            new List<string> { "The smith's own anvil, its face polished bright by work" })
+            { Senses = SensoryProfile.Examinable });
+
+        forge.PointsOfInterest.Add(new ForgeHearthPointOfInterest("Test Forge Hearth",
+            new List<string> { "A brick hearth with the fire banked, the bellows at its side" })
+            { Senses = SensoryProfile.Examinable });
+
+        forge.PointsOfInterest.Add(new WorkbenchPointOfInterest("Test Workbench",
+            new List<string> { "A bench by the forge wall where handles are fitted" })
+            { Senses = SensoryProfile.Examinable });
+    }
+
+    /// <summary>
+    /// The smith: the forge's master, so its equipment waits on his leave. Spawned from a generator of
+    /// his own after everybody else, so no name drawn before him moves.
+    /// </summary>
+    private static void AddSmith(Scene scene, Area forge, Section smithy)
+    {
+        var names  = new Random(20261102);
+        var entity = new BlacksmithArchetype().Spawn(names, forge.ContextDescription);
+        entity.Combatant.Wounds.RemoveAll(w => w.InflictedOnDay == null);
+        entity.OwnedSectionIds.Add(smithy.Id.ToString());
+        var sceneNpc = new SceneNpc(entity);
+        sceneNpc.Register(scene);
+        scene.Npcs.Add(sceneNpc);
+        scene.NpcSchedules[sceneNpc.Id] = NpcSchedule.Always(forge);
     }
 
     /// <summary>
@@ -363,6 +444,9 @@ public sealed class TestSceneFactory : SceneFactory
     private static void Person_(Scene scene, Random rng, NamedNpcArchetype archetype, Area area, NpcSchedule schedule)
     {
         var entity = archetype.Spawn(rng, area.ContextDescription);
+        // A fixture arrives whole. A trait may give a person an old wound, and which traits are drawn
+        // moves with the catalogue; a test that strikes the brewer reads his hit points before and after.
+        entity.Combatant.Wounds.RemoveAll(w => w.InflictedOnDay == null);
         var sceneNpc = new SceneNpc(entity);
         sceneNpc.Register(scene);
         scene.Npcs.Add(sceneNpc);

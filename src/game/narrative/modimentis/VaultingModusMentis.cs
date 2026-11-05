@@ -15,15 +15,16 @@ public class VaultingModusMentis : ModusMentis
         "Takes fences, ditches, and low walls in stride, planting a hand or a foot and swinging the body over. Judges an obstacle at a glance for the leap it wants, and prefers going over to going around.";
     public override string SkillMeans       => "the leaping over obstacles without breaking stride";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<CrossVerb>("leap across");
+    public override WillTargets? Will => WillTarget.To<CrossVerb>("leap across");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.FreshWater, Places.Heights);
     public override string[] Organs        => new[] { "lower_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a hurdler who has never once broken stride for a fence built to waist height";
     public override string PersonaReminder  => "stride-keeping vaulter";
-    public override string PersonaReminder2 => "someone for whom a fence is a suggestion and a ditch is a rhythm";
+    public override string PersonaReminder2 => "someone for whom obstacles are only a change of rhythm";
     public override string StyleInstruction =>
-        "Use images of the planted hand, the swung leg and the cleared rail, with momentum that refuses to be interrupted.";
+        "Momentum-driven and unstoppable - see whatever is in front of you as something to go over, not around.";
 
     public override string PersonaPrompt => @"You are the inner voice of VAULTING, the split-second arithmetic of legs that refuse to stop for furniture.
 

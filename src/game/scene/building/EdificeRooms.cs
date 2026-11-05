@@ -190,6 +190,11 @@ public static class EdificeRooms
                 pois.Add(Banner(rng));
                 pois.Add(new BenchPointOfInterest("Waiting Bench", new() { "A long bench against the wall for those kept waiting" },
                     moods: new[] { "worn", "hard", "long" }) { Senses = SensoryProfile.Examinable, VerbModiMentis = L(("examine", "whittlecraft")) });
+                // The porter's keys hang inside the gate, where whoever keeps it can reach them: the keys
+                // to the locked rooms beyond, and what a will to open or keep a locked door goes to first.
+                pois.Add(new PegPointOfInterest("Key Pegs", new() { "Pegs by the gate with the house keys hung on them, a ring to each" },
+                    new() { I(new KeyRing()) }, new[] { "iron", "jangling", "kept" })
+                    { Senses = SensoryProfile.Audible, VerbModiMentis = L(("examine", "jailcraft")) });
                 break;
             case EdificeRoom.Corridor:
                 if (rng.NextDouble() < 0.6) pois.Add(Brazier());
@@ -347,7 +352,7 @@ public static class EdificeRooms
             case EdificeRoom.Observatory:
                 pois.Add(new TelescopePointOfInterest("Sighting Tube", new() { "A long tube of hammered brass on a pivot, aimed at the slot in the roof" },
                     moods: new[] { "brass", "precise", "strange" }) { Senses = SensoryProfile.Beautiful, VerbModiMentis = L(("examine", "sky_reading"), ("contemplate", "awe")) });
-                pois.Add(new OrreryPointOfInterest("Orrery", new() { "A clockwork of brass rings and spheres, the world's moons riding wires around it" },
+                pois.Add(new OrreryPointOfInterest("Orrery", new() { "A clockwork of brass rings and spheres, the world's eggmoons riding wires around it" },
                     moods: new[] { "brass", "intricate", "still" }) { Senses = SensoryProfile.Beautiful, VerbModiMentis = L(("examine", "geometric_scheme"), ("contemplate", "philosophy")) });
                 break;
             case EdificeRoom.Battlements:

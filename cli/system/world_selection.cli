@@ -18,7 +18,7 @@ wait mode WorldSelection 20
 
 # Nothing chosen yet: the box is up with both its readings empty, and `regions` reports CONFIRM
 # dead — a disabled button differs only by colour, which `expect` cannot see.
-expect THE MOONS
+expect THE EGGMOONS
 regions
 
 # Backing out costs nothing and returns to the menu.

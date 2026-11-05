@@ -13,6 +13,7 @@ public class OathmakingModusMentis : ModusMentis
         "Makes a promise that means something, and keeps it after it has become expensive. Slow to give a word and immovable once it is given, which is what makes the word worth having.";
     public override string SkillMeans       => "the giving of a word that will be kept";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Speaking, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "tongue", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

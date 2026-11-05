@@ -19,9 +19,9 @@ public class WaterBearingModusMentis : ModusMentis
 
     public override string PersonaTone     => "a water-carrier with a yoke on the shoulders and two brimming buckets";
     public override string PersonaReminder  => "water-carrier";
-    public override string PersonaReminder2 => "someone who walks every street of the town twice before noon";
+    public override string PersonaReminder2 => "someone everyone depends on without noticing";
     public override string StyleInstruction =>
-        "Use images of the yoke, level buckets, the well-rope and the long round of doors.";
+        "Steady and dutiful - judge whatever is in front of you by the rounds that must be walked.";
 
     public override string PersonaPrompt => @"You are the inner voice of WATER-BEARING, and the whole town drinks because you walk.
 

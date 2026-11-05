@@ -33,16 +33,20 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--allow-reentry` | Lets a world-map click on the vertex the avatar already stands on enter that location. **The game refuses it** — arriving somewhere already opens it (`OnProtagonistArrived` starts the interaction itself), so that click is only ever a way back into the place just walked out of, and a visit is meant to cost a journey. `travel here` is exactly that click, and the spawn vertex is the only one a script can name from a cold start, so **`run_tests.sh` passes this on every script** — you do not put it in a `# FLAGS:` header. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of the location's own arrival hour. Every location opens at a fixed daytime period hashed from its id (`SceneFactory.ArrivalPeriodFor`) — never night — so anything period-gated needs this: every building's entry door shuts at `night`, which no arrival reaches otherwise. The dice draw the old random period used is still made and discarded, so seeded rolls did not move. |
 | `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
-| `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `snow leopard`, `white bear`, `white wolf`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
+| `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `snow leopard`, `white bear`, `white wolf`, and the great reptiles `crocodile`, `giant monitor`, `horned lizard`, `cave lizard`, `carnotaurus`, `stegosaurus`, `triceratops`, `ankylosaurus`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
 | `--encounter-on-arrival <creature>` | Forces a travel encounter on the **final step** of the next journey, once. `--start-fight` reaches a fight with no journey under it and a random roll almost always fires mid-path; this reaches the third case, and it is the one that broke. The last step raises `ProtagonistSteppedToVertex` and `ProtagonistArrivedAtLocation` from **one** `UpdateMovement` call and clears the path between them, so the fight begins with the arrival already announced and nothing left to walk. Honoured **ahead of** `--no-encounters`, so a script can suppress the random rolls and still stage this one. |
+| `--encounter-mid-journey <creature>` | Forces a travel encounter on the first step of the next journey that is **not** its last, once — the third staged branch beside `--encounter-on-arrival` and `--start-fight`, and the one every player meets: winning it resumes a walk with path left. Needs a journey of two steps or more (`travel port` at seed 42). Honoured ahead of `--no-encounters`. Under `--playground` the rest of the walk is walked within a frame, so assert it with `inspect overlay`'s `overlay-entry Traveling` line, not a `wait mode Traveling` — see `cli/system/fight_victory_travel_midway.cli`. |
 | `--grant-mm <id[:lvl][,id[:lvl]…]>` | Grants the named modi mentis, each at its own level (default 1), after character creation; the older `a,b:3` still means every id at level 3. Fighting skills are gated behind their modi mentis, so this is what makes a given skill reachable — and since a **buff's cost falls as its level rises**, it is also how you exercise both ends of that curve. Unknown ids are reported on stderr. |
 | `--organs <part\|organ\|body part\|all>=<n>[,…]` | Sets organ part scores when the protagonist is accepted, ignoring the creation point budget — before memory, noetic points and humor queues are derived from them. The scores are otherwise whatever the creation screen rolled, so anything that depends on them (how many thoughts a phase allows, how many humors a roll may spend, which modi mentis can grow) is luck. An unknown id prints every valid one. |
 | `--humors <humor>[,…]` / `--humors <queue>=<humor>,…` | Fills humor queues (paunch, hepar, spleen, pulmones; bare names fill all four, named queues override) with the given humors, after creation rebuilds them. What makes the dice humor layer testable: which humor sits at a queue's tail decides which dice it can change, and that is otherwise rolled. `--black-bile` remains the starvation-specific form. |
-| `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `warthog`, `snow leopard`, `white bear`, `white wolf`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
-| `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. |
+| `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `warthog`, `snow leopard`, `white bear`, `white wolf`, and the great reptiles — `crocodile`, `giant monitor`, `horned lizard`, `cave lizard`, `carnotaurus`, `stegosaurus`, `triceratops`, `ankylosaurus`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
+| `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. **Without `--playground` it narrows the real goal judge's list the same way**, which is how a real-model script reaches a given verb (the item critic is only consulted for a verb that admits a tool). |
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
+| `--no-chronicler` | The journal records as usual, but no background session writes it up: closed visits stay pending, so the queue and its save can be read (`cli/system/journal_capture.cli`), and a real-model run can be timed without it (`tools/journal/latency.cli`). |
+| `--llm-threads <n>` / `--llm-seed <n>` | Real-model runs only: llama-server's `-t` for this run over the saved setting, and a sampler seed on every request so two runs of one script take the same narrative path. What `tools/journal/` measures latency with. |
 | `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
-| `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--organs pineal_gland=<0–3>`, which sets how many retries a thinking gets (and, at 2+, the doubt). See `cli/system/thinking_iterates.cli`. |
+| `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--doubt <low|medium|high>`, which sets every thinking mind's level of doubt: low takes no retry, medium one, high two, and the player may doubt at medium and high. See `cli/system/thinking_iterates.cli`. |
+| `--doubt <low\|medium\|high>` | Every thinking modus mentis thinks at this `DoubtLevel` instead of the one it declares (`ModusMentis.Doubt`): low tries once and is never doubted, medium may try again once, high twice, and the player may doubt at medium and high while a try remains. A script about iterative thinking or doubt pins it, so the mind a popup happens to offer first does not decide its tries. See `cli/system/thinking_iterates.cli` and `thinking_doubt.cli`. |
 | `--penalty-only <kind>` | Narrows a failed act's penalty draw to one kind: `wound`, `get_lost`, `waste_time` or `lose_focus`. Every failure costs something now — one entry is drawn uniformly from a table of one to seven — so a script that means to see the way lost, the hour wasted or a noetic point gone is otherwise asserting on a coin flip. **It also changes what your `fail.cli` does next**: a failed `move`, `follow_path`, `track`, `stalk` or `voyage_toward` may lose the way, and the next footer press then leaves the location; a failed climb, swim or crossing may move the hour on. A table with none of the kind is a `DebugFlagAudit` miss. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
@@ -82,10 +86,10 @@ Run `help` for the authoritative list. The essentials:
                             characters and never colours, so this is how to judge a screen's palette
                             and layout (works under --hidden; the frame is drawn into a target of
                             its own). Not with --record, which already owns the frame
-  doubt <yes|no>            queue the answer to the next doubt of a thinking (pineal gland 2+): the
+  doubt <yes|no>            queue the answer to the next doubt of a thinking (a mind of Medium or High doubt): the
                             preview box asks YES / NO in place of CONTINUE. `advance` answers each
                             with the next queued answer, YES when none is queued — a script that never
-                            says `doubt` runs unchanged. Pin `--organs pineal_gland=…` when it matters
+                            says `doubt` runs unchanged. Pin `--doubt …` when it matters
   regions                   what is actionable right now — the handles `click` accepts
   world                     avatar vertex, biome, location, the region under the avatar, and which
                             world variant this world was built to
@@ -141,6 +145,9 @@ Run `help` for the authoritative list. The essentials:
                             box), panned into view. The location map has no legend: what the
                             pointer is over is named in a label above it, in the mouse-following
                             popup, which `dump` does not see — read it with `inspect pointer-label`
+  point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
+                            left_hand…), so the panel shows that part's derived stats — the
+                            player's hover, reached by id rather than by a cell
   click arrow <direction>   press an arm of the compass rose (left|right|up|down) — the mouse's copy
                             of the arrow keys, drawn top-right on the world map and the selection
                             sky. Reports
@@ -161,6 +168,11 @@ Run `help` for the authoritative list. The essentials:
                             the box by itself, taking the NEXT period when it asks — so a script
                             that only needs to get past a wait does nothing new; one that tests the
                             choice stops after the dice `click continue`, `wait`s, then clicks
+  click humor <queue>       on any settled dice box (narration, conversation, fight, crafting): select
+                            that organ's spendable humor (paunch|hepar|spleen|pulmones). Fails the
+                            run when the body can spend none on this roll
+  click die <n>             spend the selected humor on die n (0-based). `inspect humors` shows the
+                            queue it came from one shorter; cli/system/crafting_humor.cli
   click keyword <name>      a narration keyword
   click action <n>          a narration action
   click option <n>          a dialogue reply
@@ -169,6 +181,10 @@ Run `help` for the authoritative list. The essentials:
                             and you follow with `click fighter`
   click fighter <name>      a fighter's map cell — the target step for an attack
   click end-turn            the fight's END TURN button
+  click memory <button>     a button of the Memory tab's detail box — consolidate, reject,
+                            always-reject, archive — through the player's click path. Select
+                            the slot first (`manage Memory`, `select mm <id>`). `inspect skills`
+                            lists ALWAYS REJECT's ignore list as `skill-rejected <id>` lines
   click engage              the travel encounter prompt's ENGAGE button — its only button, so
                             without this a staged encounter is a dead end and the fight behind
                             it is unreachable
@@ -205,11 +221,36 @@ Run `help` for the authoritative list. The essentials:
                             routine of that kind, and reads that routine out below it;
                             `manage Chorography next|prev` presses the `< n/N >` arrows
                             under the porthole (the map's first routine is shown by default).
-                            On this screen `key <letter>` opens the tab with that initial
+                            On this screen `key <letter>` opens the tab with that initial.
+                            `manage Bellic <skill>` expands a skill on the Bellic tab;
+                            `manage member <name|slot>` picks a party member (0 = protagonist);
+                            `manage Journal pageup|pagedown|newest|<n>` scrolls the journal
+  journal dump <file.json>  the run's journal as JSON (`inspect journal` is the assertable form:
+                            `pending-groups=`, `written-groups=`, one `journal-entry` line each)
+  wait for <secs>           settle, then hold that long — a player reading. The background
+                            chronicler starts only after foreground quiet, which a bare `wait`
+                            (done the moment the game is idle) never gives it
+  when <GameMode> <command> run the command only in that mode — for scripts on a REAL model, whose
+                            path (did the act open a conversation? a fight?) a script cannot know
   select [item name]        show a carried item's info panel; bare `select` lists what
-                            is carried (open `manage Inventory` first). The starting kit
+                            is carried (open `manage Inventory` first). `select mm <id>`
+                            shows a held modus mentis's detail box on the Memory tab
+                            (a will's targets under "Wants"). The starting kit
                             is random but seed-stable, so discover the names on one run
                             and they hold for every later run at that seed
+  click want <n>            press the selected will's n-th "Wants" row on the Memory tab (after
+                            `select mm <id>`). A button only over the world map: it goes back to
+                            the map, checks every place within reach for that target, and plans the
+                            trip to the nearest. `wait` outlasts the search; `inspect will-search`
+                            reads `state=running|proposed|none` (proposed carries vertex= name= text=)
+  click search-cancel       the search box's CANCEL (Escape does the same while it runs)
+  click will-button         the ◎ beside the ☰ on the world map: the will picker, every will the
+                            party holds on the left (scrolling), the selected one's wants on the right
+  click will <mm-id>        select a will in the open picker (scrolled into view first)
+  click picker up|down|close  the picker's ▲ / ▼ rows and CLOSE (Escape closes it too). In the picker,
+                            `click want <n>` presses the selected will's n-th want and starts the
+                            search. `inspect will-picker` reads `will-button shown|hidden` and
+                            `will-picker state=open wills= scroll= selected= shown=…`, one line per want
   scroll up|down [n]        scroll the shared history buffer
 
   clock <days>              push the world clock forward, then run the wound-healing sweep and
@@ -238,6 +279,14 @@ Run `help` for the authoritative list. The essentials:
                             wound a party member OUTSIDE a fight, as a failed act's penalty does.
                             No count means enough to kill. A failed act's penalty is DRAWN from its
                             verb's table, and `--penalty-only wound` is the only way to make one injure
+  hostile <archetype-id|name> <area>
+                            put a person of the scene in an area for the rest of the visit, counting
+                            the party an enemy. Stages somebody standing on the way OUT of a location
+                            (a RUNAWAY rolls in every such area): moving away from an enemy is
+                            refused, so no walk a script makes can leave one behind it. The arrival
+                            and departure walks end by themselves (`wait` outlasts them), and
+                            `inspect map` reads `map walk in to <A>`, `walk out from <A>` or
+                            `walk from <A> to <B> … stopped` for them. cli/system/runaway_route.cli
   click menu-button         the ☰ in the top-right corner, through the player's click path: the
                             main menu, in exactly the phases Escape pauses (one list,
                             PausedPhaseName). Unlike `pause` it backs out of nothing first.
@@ -262,7 +311,8 @@ Run `help` for the authoritative list. The essentials:
                             ConfrontationSelector.Current the exit button reads); `time` the time
                             box (box=none|choosing|passing|settled destination=…); `will` every
                             held will's plan (ActionPathPlanner): `will <id> steps=<n> first="…"
-                            goal="…" target=<archetype-id|name> [tool_step=<k>]`, or `steps=none`
+                            goal="…" target=<archetype-id|name> [tool_step=<k>] aim=<k>/<n> purpose="…"` — aim is which
+                            of the will's targets the plan reaches, by declaration order — or `steps=none`
                             where it cannot be done here. target= is the PLAN's own: any equally
                             short path is accepted too, which is what will_equal_paths.cli asserts.
                             expect-state takes no escaped quotes: assert `steps=2` and the goal's
@@ -275,11 +325,15 @@ Run `help` for the authoritative list. The essentials:
                             above the pointer, the world map's location name), as
                             `pointer-label ground=yellow|grey text=…` — yellow when a click acts
                             on what it names, grey when it only tells;
+                            `overlay` how much of the terminal hides the world, as `overlay world=shown|hidden
+                            visible= opaque=<n>/<total>` — `dump` cannot tell an opaque-black blank from a
+                            transparent one — plus `overlay-entry <Mode> world=…` per mode, the reading taken
+                            as that mode was last entered (for a phase gone before any command can read it);
                             `buttons` whether the two key stand-ins are on screen, as
                             `buttons menu=shown|hidden map=shown|hidden` (the ☰ and the ↹);
                             `gather` the gathering phase's forecast and yield;
                             `music` what the game last asked of the music, as `music tracks=<0-4>
-                            filter=<MusicFilter> cold= fear= mystery= intensity= festivity= night=yes|no` (the
+                            filter=<MusicFilter> cold= fear= mystery= intensity= festivity= night=yes|no sacred= far=` (the
                             target mood, not the glide). Answers under --silent: the engine starts
                             there with no sound and no composing (cli/system/pause_music_resumes.cli).
                             `routines` and `mental-maps` are answerable with NO narration in progress, because a
@@ -604,7 +658,7 @@ every `success.cli` also asserts the chip its outcome puts in the outcome block:
 | `CoinGrantOutcome` | `Coins received:` | pickpocket |
 | `DialogueTriggerOutcome` | `Conversation:` | the eleven verbs that open one |
 | `FirstBlowOutcome` | `First blow:` | attack |
-| the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate — no scene outcome of their own |
+| the modus mentis grant | `Modus mentis` | examine, listen, smell, contemplate, play — no scene outcome of their own |
 | `LostWayOutcome` / `TimeWastedOutcome` / `FocusLostOutcome` | `Lost the way` / `Time wasted:` / `Focus lost:` | a failure's penalty, drawn from the verb's table — assert them with `--penalty-only` |
 | `TrespassToleratedOutcome` / `ShownTheDoorOutcome` | `… lets you stay` / `… shows you the door` | `found_waiting`, the householder who comes in at night — a village pantry at `--period evening` is the reliable stage (see `cli/outcome/trespass_tolerated`) |
 

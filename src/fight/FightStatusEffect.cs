@@ -190,7 +190,7 @@ public sealed class KnockdownEffect : FightStatusEffect
 {
     public override string EffectId      => "knockdown";
     public override string DisplayLabel  => "K";
-    public override Vector4 DisplayColor => Config.Colors.Orange;
+    public override Vector4 DisplayColor => Config.Colors.Ochre;
     public override string DisplayName   => "Knockdown";
     public override string Description   => "Down on the ground. At the start of every turn, roll <heart> d6 — need at least one six to recover and act this turn. Otherwise the turn is skipped and the knockdown persists.";
 

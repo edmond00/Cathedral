@@ -21,7 +21,7 @@ public class BalanceModusMentis : ModusMentis
 
     public override string PersonaTone     => "an upright steadiness that has learned exactly where its own weight lives";
     public override string PersonaReminder  => "steady-footed carrier";
-    public override string PersonaReminder2 => "someone who crosses bad ground without putting a hand down";
+    public override string PersonaReminder2 => "someone who stays upright where others would stumble";
     public override string StyleInstruction =>
         "Keep the line level and unhurried — the felt slope, the settled weight, the step taken shorter than it wants to be.";
 

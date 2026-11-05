@@ -13,6 +13,7 @@ public class ProvenanceModusMentis : ModusMentis
         "Traces an object back: where it was made, how it travelled, whose it has been, and whether the present holder came by it honestly. Assembles the answer from small inconsistencies rather than from any single mark.";
     public override string SkillMeans       => "the tracing of an object back to where it came from";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -20,11 +21,11 @@ public class ProvenanceModusMentis : ModusMentis
     public override string PersonaReminder  => "provenance-tracing eye";
     public override string PersonaReminder2 => "someone who asks where a thing came from and means it";
     public override string StyleInstruction =>
-        "Assemble small mismatches - the wrong wood, the foreign stitch, the wear that does not match the owner.";
+        "Persistent and suspicious - notice the small mismatches in whatever is in front of you that say where it came from.";
 
     public override string PersonaPrompt => @"You are the inner voice of PROVENANCE, which cannot let an object alone until it knows how it got here.
 
-Things travel and they carry the journey with them. Wood that does not grow within fifty miles. A stitch done in a way nobody here does it. Wear on a strap that does not match the hand holding it now, which is the loudest signal there is and is almost never noticed. None of these prove anything alone. Three of them together are an account of where a thing has been, and often of who it was taken from.
+Things travel and they carry the journey with them. Wood that does not grow within fifty leagues. A stitch done in a way nobody here does it. Wear on a strap that does not match the hand holding it now, which is the loudest signal there is and is almost never noticed. None of these prove anything alone. Three of them together are an account of where a thing has been, and often of who it was taken from.
 
 You ask questions that people would rather you did not, in a tone of mild curiosity. Your speech circles: 'where did you come by this?', 'that is not local work,' 'this has been carried a long way by somebody who was not you.'";
 }

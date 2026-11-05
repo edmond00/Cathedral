@@ -17,12 +17,22 @@ public enum SlipKind
 
     /// <summary>A gap where the wall or thatch has failed. Nobody meant it to be a way in.</summary>
     Breach,
+
+    /// <summary>A cleft in living rock, a body's width, opening on somewhere enclosed. Wild ground: lawful.</summary>
+    Crevice,
+
+    /// <summary>A cave passage low enough to be crawled on the belly, often wet. Wild ground: lawful.</summary>
+    Crawlway,
+
+    /// <summary>The split in a hollow tree, a dune's undercut, a gap in a root-mass. Wild ground: lawful.</summary>
+    Hollow,
 }
 
 /// <summary>
 /// A gap too small to be a door, leading somewhere you have not been let into: a chimney from a
-/// roof, a broken window, a delivery hatch, a hole in the thatch. Targeted by
-/// <see cref="Verbs.SlipIntoVerb"/>, which is illegal — that is the point of it.
+/// roof, a broken window, a delivery hatch, a hole in the thatch — or, in the wild, a cleft in the rock,
+/// a crawlway, a hollow trunk. Targeted by <see cref="Verbs.SlipIntoVerb"/>, which is illegal where it
+/// reaches somebody's private ground and lawful anywhere else.
 ///
 /// <para>This is the payoff for <see cref="ScalePointOfInterest"/>: climbing a house wall gets you a
 /// roof, and a roof gets you a chimney, and a chimney gets you inside a locked house without ever
@@ -59,6 +69,12 @@ public class SlipIntoPointOfInterest : ConnectorPointOfInterest
         Kind = kind;
     }
 
+    /// <summary>
+    /// A gap the land made rather than a gap in somebody's building. What a will tells apart: a
+    /// housebreaker wants a way into a house, a caver a way into the rock.
+    /// </summary>
+    public bool IsNaturalGap => Kind is SlipKind.Crevice or SlipKind.Crawlway or SlipKind.Hollow;
+
     /// <summary>How hard the squeeze is.</summary>
     public int Difficulty => Kind switch
     {
@@ -66,6 +82,9 @@ public class SlipIntoPointOfInterest : ConnectorPointOfInterest
         SlipKind.Hatch   => 4,
         SlipKind.Breach  => 5,
         SlipKind.Chimney => 6,
+        SlipKind.Crevice => 4,
+        SlipKind.Crawlway => 5,
+        SlipKind.Hollow  => 3,
         _                => 5,
     };
 
@@ -80,6 +99,12 @@ public class SlipIntoPointOfInterest : ConnectorPointOfInterest
             FailurePenalty.WasteTime, new ScrapeWound(),
             new ContusionWound(), new CutWound(), new ShoulderDislocationLeftWound(),
         },
+        // Wedged in the dark with a mountain on top: the hour goes, and the nerve with it.
+        SlipKind.Crawlway or SlipKind.Crevice => new FailurePenalty[]
+        {
+            FailurePenalty.WasteTime, FailurePenalty.WasteTime, FailurePenalty.LoseFocus, new ScrapeWound(),
+            new ContusionWound(), new ShoulderDislocationLeftWound(),
+        },
         _ => new FailurePenalty[] { FailurePenalty.WasteTime, FailurePenalty.WasteTime, new ScrapeWound(), new CutWound(), new ContusionWound() },
     };
 
@@ -89,6 +114,9 @@ public class SlipIntoPointOfInterest : ConnectorPointOfInterest
         SlipKind.Window  => "window",
         SlipKind.Hatch   => "hatch",
         SlipKind.Breach  => "breach",
+        SlipKind.Crevice => "cleft",
+        SlipKind.Crawlway => "crawlway",
+        SlipKind.Hollow  => "bole",
         _                => "gap",
     };
 }

@@ -21,6 +21,7 @@ public class ExultationModusMentis : ModusMentis
     public override string SkillMeans       => "the fierce gladness of a blow that lands";
     public override ModusMentisFunction[] Functions =>
         new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "spleen", "viscera" };
 
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;

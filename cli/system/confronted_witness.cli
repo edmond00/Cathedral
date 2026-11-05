@@ -5,9 +5,9 @@
 # is refused before any roll — the witness-side twin of an enemy in the room. Walking off to the next
 # area used to end it for the price of one move.
 #
-# --organs pineal_gland=0: one try, no iterative thinking — a retry would step around the refusal
+# --doubt low: one try, no iterative thinking — a retry would step around the refusal
 # this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat" --organs pineal_gland=0
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat" --doubt low
 
 wait
 click menu New
@@ -23,7 +23,7 @@ advance 12 180
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 
@@ -49,7 +49,7 @@ expect RUNAWAY
 goal contemplate
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 regions
 click action 0

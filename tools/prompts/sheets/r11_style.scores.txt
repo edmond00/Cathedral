@@ -1,0 +1,82 @@
+# round 11 (persona rule 1: a style says the manner, not the things; 20 dev personas), scored blind
+# style not shown on the sheet: it is the difference between the versions
+S8411 F0 P2 C- Q1 | feeling replaced; +a weak beast
+S8629 F0 P2 C- Q1 | +dominance over livestock
+S8402 F0 P2 C- Q1 | +rind, marrow (the act)
+S9320 F0 P0 C- Q1 | +a loaf of bread
+S4111 F0 P2 C- Q0 | +blade, mail, strap
+S4025 F1 P1 C- Q1 | +checking the straw
+S9387 F2 P2 C- Q1 |
+S8794 F1 P1 C- Q0 | setting copied
+S4050 F1 P0 C- Q0 | style copied
+S2542 F1 P1 C- Q1 | +the animals fed
+S8316 F0 P2 C- Q0 | +gold leaf, +a monastery
+S5970 F0 P2 C- Q0 | +gold, +a hare in the margin
+S3323 F0 P0 C- Q1 | +the village well, +elders
+S2485 F0 P2 C- Q1 | +coal, grains, frankincense
+S9825 F0 P2 C- Q1 | +a shaft on the moss
+S1686 F0 P1 C- Q1 | success undercut; -lesson
+S7490 F1 P1 C- Q1 | lesson blurred
+S8421 F0 P2 C- Q1 | +a shoe, a hoof
+S3580 F0 P2 C- Q1 | +a shaft; -lesson
+S1245 F0 P2 C- Q1 | +shaft, feathers, head
+S9656 F0 P2 C- Q0 | the stocks made a laden branch
+S2034 F0 P2 C- Q1 | +produce in my garden
+S1975 F2 P1 C- Q1 |
+S1584 F0 P2 C- Q0 | +laden branch, ripe fruit, basket
+S4116 F2 P0 C- Q1 |
+S4963 F2 P0 C- Q2 |
+S1492 F0 P2 C- Q1 | +a bush, +a basket
+S8601 F1 P2 C- Q1 | +the next bush
+S6345 F0 P2 C- Q1 | intent reversed (delve instead of turn away)
+S8217 F0 P2 C- Q1 | +a forgotten ritual; -turn away
+S4200 F1 P2 C- Q1 | "calls for a knell"
+S9505 F0 P2 C- Q0 | +a bell struck
+S4828 F0 P2 C- Q1 | the act made an anointing
+S5819 F1 P2 C- Q1 | "under the scent of olive and balsam"
+S9188 F0 P2 C- Q0 | +a nest, an egg
+S1075 F0 P1 C- Q1 | +a nest; -lesson
+S2392 F0 P1 C- Q0 | +a nest; "I cackle"
+S8492 F0 P2 C- Q0 | +an egg, a nest
+S5557 F0 P2 C- Q1 | +window smoke, a meal
+S7664 F0 P2 C- Q1 | +people gathered; feeling turned wistful
+S2363 F1 P2 C- Q1 | "a solemn toll for those who have passed"
+S5161 F0 P2 C- Q1 | the act made bell ringing
+S6165 F0 P2 C- Q1 | +a graft
+S4762 F0 P2 C- Q1 | +a graft
+S9403 F1 P1 C- Q1 | -lesson
+S5735 F0 P2 C- Q1 | +incense
+S1487 F2 P0 C- Q1 |
+S2150 F1 P0 C- Q1 | worry made weariness
+S2768 F0 P2 C- Q0 | +a nail, a shoe, a hoof
+S7560 F2 P0 C- Q1 |
+S2766 F1 P1 C- Q0 | style copied; "her ears"
+S5766 F0 P2 C- Q0 | +her tail
+S7332 F0 P2 C- Q1 | +a fevered brow; -snail
+S2094 F0 P2 C- Q1 | +oil on the snail
+S1276 F0 P2 C- Q1 | +berries, a basket
+S1008 F1 P1 C- Q2 | discreetly made "lightly"
+S4498 F0 P2 C- Q0 | +a deed, a seal
+S4436 F2 P0 C- Q1 |
+S1857 F0 P2 C- Q0 | the act replaced by riding
+S8700 F1 P1 C- Q0 | style copied
+S7151 F0 P2 C- Q1 | the act replaced by arms care
+S7511 F1 P0 C- Q1 | +the village well
+S7877 F1 P1 C- Q1 | -lesson
+S2196 F0 P2 C- Q1 | +rind, marrow
+S4252 F0 P2 C- Q0 | +a graft
+S5420 F0 P2 C- Q1 | the act replaced by grafting
+S6519 F1 P1 C- Q1 | "well-maintained"
+S2427 F0 P2 C- Q1 | +a byre, +neglect
+S6098 F2 P1 C- Q2 |
+S6449 F0 P2 C- Q1 | +gold, vines
+S1248 F2 P1 C- Q1 |
+S7718 F2 P1 C- Q1 |
+S2933 F2 P2 C- Q1 |
+S3205 F0 P2 C- Q0 | style copied; +a window, smoke, a meal
+S5036 F1 P2 C- Q1 | +deeds to draw up
+S2655 F2 P0 C- Q1 |
+S1179 F2 P0 C- Q1 |
+S1981 F0 P2 C- Q0 | +a horse
+S8617 F1 P0 C- Q1 | -discreetly
+S8976 F0 P2 C- Q1 | +a wick, fat

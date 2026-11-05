@@ -159,8 +159,8 @@ public class MeetStrangerTree : DialogueTree
             End("warm_hard_work", 3,
                 "It is. Few people say so. Thank you.",
                 "I tell them few people say so, and thank them.",
-                "Do not pity me. I have done it thirty years and will do thirty more.",
-                "I tell them not to pity me, since I have done it thirty years.",
+                "Do not pity me. I have done it thirty rounds and will do thirty more.",
+                "I tell them not to pity me, since I have done it thirty rounds.",
                 typeof(DiligenceModusMentis))),
 
         new PlayerOption("ask_about_craft", "ask them to tell you more about their trade",
@@ -178,8 +178,8 @@ public class MeetStrangerTree : DialogueTree
             "How did you learn it?",
             "I ask them how they learned it.",
             End("warm_how_learned", 4,
-                "Badly, for years, until one day it was not badly. I am glad to be asked.",
-                "I tell them I learned it badly for years until one day it was not badly.",
+                "Badly, for rounds, until one day it was not badly. I am glad to be asked.",
+                "I tell them I learned it badly for rounds until one day it was not badly.",
                 "That is a long story, and I do not know you well enough to tell it.",
                 "I tell them it is a long story and I do not know them well enough to tell it.",
                 typeof(RoteModusMentis))),
@@ -272,9 +272,9 @@ public class MeetStrangerTree : DialogueTree
 
     private static NpcLineNode IntroHowLong() => new(
         nodeId:          "intro_how_long",
-        replica:         "Long enough that I no longer count the years. {npc:opinion_seasons}",
-        replicaIndirect: "I tell {you:name} I no longer count the years, and that of the seasons I think {npc:opinion_seasons}.",
-        replicaHeard:    "{npc:name} says they no longer count the years, and tells me what they think of the seasons.",
+        replica:         "Long enough that I no longer count the rounds. {npc:opinion_seasons}",
+        replicaIndirect: "I tell {you:name} I no longer count the rounds, and that of the seasons I think {npc:opinion_seasons}.",
+        replicaHeard:    "{npc:name} says they no longer count the rounds, and tells me what they think of the seasons.",
 
         new PlayerOption("say_rooted", "remark that they sound well rooted here",
             "You sound settled where you are.",

@@ -20,7 +20,7 @@ public class PatrolModusMentis : ModusMentis
     public override string PersonaReminder  => "patrolman";
     public override string PersonaReminder2 => "someone who notices the stranger on a familiar street";
     public override string StyleInstruction =>
-        "Walk the beat - the places trouble starts, the faces that belong, the one that does not.";
+        "Watchful and familiar - judge whatever is in front of you by what belongs and what does not.";
 
     public override string PersonaPrompt => @"You are the inner voice of PATROL, and you have walked this road a hundred times and today something is different.
 

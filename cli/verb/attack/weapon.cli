@@ -25,7 +25,7 @@ advance 12 180
 
 click keyword 0
 choose 0
-choose 0
+choose ripelore
 advance 12 180
 
 # Combining does not execute: it rewrites the action to include the weapon and offers THAT as a new

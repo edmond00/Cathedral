@@ -1,9 +1,11 @@
+using Cathedral.Game.Narrative;
 ﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class Hay : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fodder, ItemKind.Plant });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId      => "hay";
     public override string DisplayName => "Hay";
@@ -11,5 +13,6 @@ public sealed class Hay : Item
     public override string Description => "A tied bundle of dried grass, rough and dust-smelling";
     public override ItemSize Size      => ItemSize.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Crop, ItemTag.Fodder };
-    public override int PriceReference => 3;
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "tame", "appease" };
+    public override int UsageLevel => 2;
 }

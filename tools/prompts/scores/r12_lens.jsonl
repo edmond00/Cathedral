@@ -1,0 +1,80 @@
+{"case": "clerkship|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S8775", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "clerkship|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S5407", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "byre_sense|forest_evening:008:own", "version": "style_manner", "seed": 2, "sid": "S9669", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"well-maintained\""}
+{"case": "byre_sense|forest_evening:008:own", "version": "style_lens", "seed": 2, "sid": "S6730", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "\"well-pruned\""}
+{"case": "encipherment|village_dawn:002:own", "version": "style_manner", "seed": 2, "sid": "S3336", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "setting copied"}
+{"case": "encipherment|village_dawn:002:own", "version": "style_lens", "seed": 2, "sid": "S7252", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "hearthlonging|farm_dusk:005:own", "version": "style_lens", "seed": 2, "sid": "S1177", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-lesson; feeling made longing for home"}
+{"case": "hearthlonging|farm_dusk:005:own", "version": "style_manner", "seed": 2, "sid": "S7139", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "anointing|talk_miller:003:own", "version": "style_lens", "seed": 2, "sid": "S8905", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+an anointed thumb, a holy touch"}
+{"case": "anointing|talk_miller:003:own", "version": "style_manner", "seed": 2, "sid": "S5490", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"under the scent of olive and balsam\""}
+{"case": "forage_lore|village_noon_party:005:own", "version": "style_manner", "seed": 2, "sid": "S8540", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+produce in my garden"}
+{"case": "forage_lore|village_noon_party:005:own", "version": "style_lens", "seed": 2, "sid": "S4729", "F": 2, "P": 2, "C": null, "Q": 1, "facts": ""}
+{"case": "farriery|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S1027", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farriery|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S3380", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "clerkship|farm_dusk:004:own", "version": "style_manner", "seed": 2, "sid": "S8209", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "clerkship|farm_dusk:004:own", "version": "style_lens", "seed": 2, "sid": "S7023", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "horse_sense|forest_evening:008:own", "version": "style_manner", "seed": 2, "sid": "S3658", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "horse_sense|forest_evening:008:own", "version": "style_lens", "seed": 2, "sid": "S6565", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "illumination|forest_evening:008:own", "version": "style_manner", "seed": 2, "sid": "S4444", "F": 2, "P": 1, "C": null, "Q": 2, "facts": ""}
+{"case": "illumination|forest_evening:008:own", "version": "style_lens", "seed": 2, "sid": "S1963", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "farriery|forest_evening:007:own", "version": "style_lens", "seed": 2, "sid": "S4270", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "farriery|forest_evening:007:own", "version": "style_manner", "seed": 2, "sid": "S2222", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "lesson blurred"}
+{"case": "incensing|talk_miller:003:own", "version": "style_manner", "seed": 2, "sid": "S9413", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+the village well, +elders"}
+{"case": "incensing|talk_miller:003:own", "version": "style_lens", "seed": 2, "sid": "S6521", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "anointing|forest_evening:007:own", "version": "style_manner", "seed": 2, "sid": "S7629", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+oil on the snail"}
+{"case": "anointing|forest_evening:007:own", "version": "style_lens", "seed": 2, "sid": "S2431", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+the snail anointed"}
+{"case": "illumination|farm_dusk:004:own", "version": "style_lens", "seed": 2, "sid": "S1304", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"breathed on the last detail\""}
+{"case": "illumination|farm_dusk:004:own", "version": "style_manner", "seed": 2, "sid": "S1995", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+gold, +a hare in the margin"}
+{"case": "fletching|farm_dusk:004:own", "version": "style_manner", "seed": 2, "sid": "S9338", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a shaft; -lesson"}
+{"case": "fletching|farm_dusk:004:own", "version": "style_lens", "seed": 2, "sid": "S4657", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "-lesson; \"the bend in the wood\""}
+{"case": "gnawing|farm_dusk:004:own", "version": "style_manner", "seed": 2, "sid": "S2490", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-lesson"}
+{"case": "gnawing|farm_dusk:004:own", "version": "style_lens", "seed": 2, "sid": "S7943", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"the marrow waiting\""}
+{"case": "horsemanship|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S8270", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "horsemanship|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S2843", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "fletching|forest_evening:007:own", "version": "style_lens", "seed": 2, "sid": "S7933", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "fletching|forest_evening:007:own", "version": "style_manner", "seed": 2, "sid": "S3212", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "success undercut; -lesson"}
+{"case": "henwifery|forest_evening:007:own", "version": "style_manner", "seed": 2, "sid": "S9839", "F": 0, "P": 1, "C": null, "Q": 1, "facts": "+a nest; -lesson"}
+{"case": "henwifery|forest_evening:007:own", "version": "style_lens", "seed": 2, "sid": "S6120", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "horsemanship|forest_evening:007:own", "version": "style_manner", "seed": 2, "sid": "S3679", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "horsemanship|forest_evening:007:own", "version": "style_lens", "seed": 2, "sid": "S1841", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "grafting|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S3805", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "the act made grafting"}
+{"case": "grafting|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S9310", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a graft"}
+{"case": "bell_ringing|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S2369", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "+a knell"}
+{"case": "bell_ringing|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S7562", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"a solemn toll for those who have passed\""}
+{"case": "berrying|village_noon_party:005:own", "version": "style_lens", "seed": 2, "sid": "S7862", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "the stocks made ripe; +a basket"}
+{"case": "berrying|village_noon_party:005:own", "version": "style_manner", "seed": 2, "sid": "S8693", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a bush, +a basket"}
+{"case": "gnawing|talk_miller:003:own", "version": "style_lens", "seed": 2, "sid": "S8811", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "gnawing|talk_miller:003:own", "version": "style_manner", "seed": 2, "sid": "S7300", "F": 0, "P": 0, "C": null, "Q": 1, "facts": "+a loaf of bread"}
+{"case": "horse_sense|talk_blacksmith:001:own", "version": "style_manner", "seed": 2, "sid": "S9866", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied; \"her ears\""}
+{"case": "horse_sense|talk_blacksmith:001:own", "version": "style_lens", "seed": 2, "sid": "S1499", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"her ears twitch\""}
+{"case": "cruelty|village_noon_party:011:own", "version": "style_manner", "seed": 2, "sid": "S2354", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "cruelty|village_noon_party:011:own", "version": "style_lens", "seed": 2, "sid": "S4143", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"this relic\""}
+{"case": "cruelty|farm_dusk:005:own", "version": "style_lens", "seed": 2, "sid": "S5285", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "-lesson; +\"took what I could\""}
+{"case": "cruelty|farm_dusk:005:own", "version": "style_manner", "seed": 2, "sid": "S6838", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "feeling replaced; +a weak beast"}
+{"case": "byre_sense|talk_blacksmith:001:own", "version": "style_lens", "seed": 2, "sid": "S6949", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"far from well-kept\""}
+{"case": "byre_sense|talk_blacksmith:001:own", "version": "style_manner", "seed": 2, "sid": "S7317", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "chandlery|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S6077", "F": 1, "P": 1, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "chandlery|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S2865", "F": 1, "P": 0, "C": null, "Q": 0, "facts": "style copied"}
+{"case": "berrying|talk_miller:003:own", "version": "style_manner", "seed": 2, "sid": "S5134", "F": 1, "P": 1, "C": null, "Q": 2, "facts": "discreetly made \"lightly\""}
+{"case": "berrying|talk_miller:003:own", "version": "style_lens", "seed": 2, "sid": "S4849", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "discreetly made \"lightly\""}
+{"case": "chandlery|talk_miller:003:own", "version": "style_manner", "seed": 2, "sid": "S6492", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "-discreetly"}
+{"case": "chandlery|talk_miller:003:own", "version": "style_lens", "seed": 2, "sid": "S6952", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a wick, a vat of grease"}
+{"case": "hearthlonging|talk_blacksmith:005:own", "version": "style_lens", "seed": 2, "sid": "S7082", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "\"warmth in others' eyes\""}
+{"case": "hearthlonging|talk_blacksmith:005:own", "version": "style_manner", "seed": 2, "sid": "S9377", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+people gathered; feeling turned wistful"}
+{"case": "arms_care|talk_miller:003:own", "version": "style_manner", "seed": 2, "sid": "S9192", "F": 1, "P": 0, "C": null, "Q": 1, "facts": "+the village well"}
+{"case": "arms_care|talk_miller:003:own", "version": "style_lens", "seed": 2, "sid": "S3939", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "forage_lore|forest_evening:008:own", "version": "style_lens", "seed": 2, "sid": "S1461", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "forage_lore|forest_evening:008:own", "version": "style_manner", "seed": 2, "sid": "S7240", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}
+{"case": "henwifery|forest_evening:008:own", "version": "style_manner", "seed": 2, "sid": "S8047", "F": 0, "P": 1, "C": null, "Q": 0, "facts": "+a nest; \"I cackle\""}
+{"case": "henwifery|forest_evening:008:own", "version": "style_lens", "seed": 2, "sid": "S1535", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a nest, +hoots"}
+{"case": "incensing|farm_dusk:004:own", "version": "style_manner", "seed": 2, "sid": "S9503", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "-lesson"}
+{"case": "incensing|farm_dusk:004:own", "version": "style_lens", "seed": 2, "sid": "S1421", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+smoke rising"}
+{"case": "grafting|forest_evening:007:own", "version": "style_lens", "seed": 2, "sid": "S4639", "F": 0, "P": 2, "C": null, "Q": 0, "facts": "+a graft"}
+{"case": "grafting|forest_evening:007:own", "version": "style_manner", "seed": 2, "sid": "S7999", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "+a graft"}
+{"case": "arms_care|farm_night:009:own", "version": "style_manner", "seed": 2, "sid": "S1712", "F": 1, "P": 1, "C": null, "Q": 1, "facts": "+checking the straw"}
+{"case": "arms_care|farm_night:009:own", "version": "style_lens", "seed": 2, "sid": "S7361", "F": 2, "P": 0, "C": null, "Q": 1, "facts": ""}
+{"case": "encipherment|village_noon_party:005:own", "version": "style_lens", "seed": 2, "sid": "S4348", "F": 1, "P": 2, "C": null, "Q": 0, "facts": "setting copied; \"tales of old in the stones\""}
+{"case": "encipherment|village_noon_party:005:own", "version": "style_manner", "seed": 2, "sid": "S2681", "F": 0, "P": 2, "C": null, "Q": 1, "facts": "intent reversed"}
+{"case": "bell_ringing|farm_dusk:004:own", "version": "style_manner", "seed": 2, "sid": "S4614", "F": 1, "P": 2, "C": null, "Q": 1, "facts": "\"calls for a knell\""}
+{"case": "bell_ringing|farm_dusk:004:own", "version": "style_lens", "seed": 2, "sid": "S3917", "F": 2, "P": 1, "C": null, "Q": 1, "facts": ""}

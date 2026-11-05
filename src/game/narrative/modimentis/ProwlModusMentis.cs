@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,18 +12,20 @@ public class ProwlModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "prowl";
     public override string DisplayName      => "Prowl";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Feral };
     public override string MenuDescription =>
         "Moves through ground low, slow, and silent, keeping to shadow and cover while cataloguing everything that stirs. Patrols rather than travels, and prefers to see the whole place before the place sees it.";
     public override string SkillMeans       => "the silent patrolling that spots others before being seen";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<StalkVerb>("stalk unseen");
+    public override WillTargets? Will => WillTarget.To<StalkVerb>("stalk unseen");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland, Places.Streets);
     public override string[] Organs        => new[] { "limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override bool ActsDiscretely => true;
 
     public override string PersonaTone     => "a low-moving shadow that patrols its ground and is never seen doing it";
     public override string PersonaReminder  => "shadow-patroller";
-    public override string PersonaReminder2 => "someone who has seen the whole room before the room notices the door";
+    public override string PersonaReminder2 => "someone who has noticed everything before anyone notices them";
     public override string StyleInstruction =>
         "Keep the line low and gliding — shadow, cover, the silent circuit — with everything noticed and nothing disturbed.";
 

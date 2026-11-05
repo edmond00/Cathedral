@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Reminescence;
 using Cathedral.Game.Scene.Verbs;
@@ -37,8 +38,11 @@ public sealed class ReminescenceSceneFactory : SceneFactory
             descriptions:          new List<string>(_data.ContentLines),
             moods:                 new[] { "fuzzy", "fading", "half-remembered", "shimmering", "veiled", "hazy" });
 
-        // Wire the fragments as PoIs.
-        foreach (var fragment in _data.Fragments)
+        // Wire the fragments as PoIs, in an order drawn from the world's seed: the catalogue order
+        // put the same fragment first in every run. The `rng` handed in is seeded from the location
+        // id alone, so it would shuffle every world the same way.
+        var order = GameRng.For($"reminescence-order:{_data.Id}");
+        foreach (var fragment in _data.Fragments.OrderBy(_ => order.Next()))
             area.PointsOfInterest.Add(new FragmentPointOfInterest(fragment));
 
         var section = new Section("Reminescence", new List<string> { "the threshold of memory" },
@@ -50,7 +54,8 @@ public sealed class ReminescenceSceneFactory : SceneFactory
         scene.Phase                 = NarrationPhase.ChildhoodReminescence;
         scene.CurrentReminescenceId = _data.Id;
 
-        Console.WriteLine($"ReminescenceSceneFactory: built scene for reminescence '{_data.Id}' with {_data.Fragments.Count} fragment(s)");
+        Console.WriteLine($"ReminescenceSceneFactory: built scene for reminescence '{_data.Id}' with {_data.Fragments.Count} fragment(s): "
+            + string.Join(", ", area.PointsOfInterest.Select(p => $"'{p.DisplayName}'")));
     }
 
     /// <summary>

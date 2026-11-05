@@ -14,6 +14,7 @@ public class OpenMindednessModusMentis : ModusMentis
         "Holds several possibilities open at once, weighing alternative views without settling early. Inclines toward reconsidering and adapting, and gives an unexpected answer a hearing.";
     public override string SkillMeans => "flexible, open-ended thinking";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs => new[] { "hippocampus", "heart" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -22,7 +23,7 @@ public class OpenMindednessModusMentis : ModusMentis
     public override string PersonaReminder => "curious belief explorer";
     public override string PersonaReminder2 => "someone who holds every idea lightly and provisionally";
     public override string StyleInstruction =>
-        "Use images that hold possibilities open, with a light, curious readiness to entertain any new idea.";
+        "Light and curious - hold whatever is in front of you open to more than one meaning.";
     
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

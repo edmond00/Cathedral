@@ -56,6 +56,35 @@ public enum RoomRole
     Pantry,
     Store,
     Landing,
+    /// <summary>A ground-floor room worked in: a dwelling with a trade under the living rooms.</summary>
+    Workroom,
+    /// <summary>The beasts' end of a byre-house, under the same roof as the family.</summary>
+    Byre,
+    /// <summary>A loft under the roof: hay, apples, a garret.</summary>
+    Loft,
+    /// <summary>A town house's best room, kept for company.</summary>
+    Parlour,
+    /// <summary>A cellar under the house.</summary>
+    Cellar,
+    /// <summary>A walled yard behind the house, entered through it.</summary>
+    Yard,
+}
+
+/// <summary>
+/// What sort of dwelling a private house is, which decides its rooms instead of the generic roll: a
+/// cottage with a yard, a byre-house with its beasts under the roof, a tall tenement with a garret, a
+/// workshop-house with a trade on the ground floor, a town house with a parlour and a cellar. Every
+/// house used to be the same hall, kitchen, pantry and bedroom, so a town of fifty houses was fifty of
+/// one house, and two towns were the same town wherever their trades differed.
+/// </summary>
+public enum DwellingStyle
+{
+    Plain,
+    Cottage,
+    ByreHouse,
+    Tenement,
+    WorkshopHouse,
+    TownHouse,
 }
 
 /// <summary>
@@ -110,6 +139,9 @@ public sealed record BuildingSpec
     /// the name and the prose agree.
     /// </summary>
     public string? ExteriorWear { get; init; }
+
+    /// <summary>The dwelling's style, for a private house; null keeps the generic roll.</summary>
+    public DwellingStyle? Style { get; init; }
 
     public BuildingKind Kind => (Access, Occupancy) switch
     {

@@ -245,6 +245,7 @@ public class Fighter
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
                 if (CurrentCineticPoints < skill.CineticPointsCost) continue;
+                if (Member.IsModusMentisRejected(skill.RequiredModusMentisId)) continue; // ALWAYS REJECT
                 if (Member.LearnedModiMentis.Any(m =>
                     m.ModusMentisId == skill.RequiredModusMentisId ||
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
@@ -267,6 +268,7 @@ public class Fighter
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
                 if (CurrentCineticPoints < skill.CineticPointsCost) continue;
+                if (Member.IsModusMentisRejected(skill.RequiredModusMentisId)) continue; // ALWAYS REJECT
                 if (Member.LearnedModiMentis.Any(m =>
                     m.ModusMentisId == skill.RequiredModusMentisId ||
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId)))
@@ -278,10 +280,7 @@ public class Fighter
         }
 
         // ── Weapon-medium learnable skills ────────────────────────────
-        var equippedWeapons = Member.EquippedItems[EquipmentAnchor.RightHold]
-            .Concat(Member.EquippedItems[EquipmentAnchor.LeftHold])
-            .OfType<IWeaponItem>()
-            .ToList();
+        var equippedWeapons = Member.WieldedWeapons().ToList();
 
         var weaponLearnables = new List<FightingSkill>();
         var seenCategories   = new HashSet<string>();
@@ -295,6 +294,7 @@ public class Fighter
             {
                 var skill = registry.GetById(skillId);
                 if (skill == null) continue;
+                if (Member.IsModusMentisRejected(skill.RequiredModusMentisId)) continue; // ALWAYS REJECT
                 if (Member.LearnedModiMentis.Any(m =>
                     m.ModusMentisId == skill.RequiredModusMentisId ||
                     skill.SecondaryModusMentisIds.Contains(m.ModusMentisId))) continue;

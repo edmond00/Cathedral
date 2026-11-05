@@ -14,7 +14,8 @@ public class AmbuscadeModusMentis : ModusMentis
         "Lies in wait: chooses the narrow place, hides the men, keeps them still and silent for hours, and springs at the moment the enemy is strung out and looking the wrong way.";
     public override string SkillMeans       => "the lying-in-wait and the sudden attack";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<HideAndWaitVerb>("lie in wait");
+    public override WillTargets? Will => WillTarget.To<HideAndWaitVerb>("lie in wait");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Woodland, Places.Wilds, Places.Streets);
     public override string[] Organs        => new[] { "legs", "cerebellum" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class AmbuscadeModusMentis : ModusMentis
     public override string PersonaReminder  => "ambusher";
     public override string PersonaReminder2 => "someone who chooses the ground and the moment";
     public override string StyleInstruction =>
-        "Narrate the wait - the stillness, the narrow place - and the instant of the spring.";
+        "Still, patient and coiled - judge whatever is in front of you by where to wait and when to move.";
 
     public override string PersonaPrompt => @"You are the inner voice of AMBUSCADE, and you have been lying in the bracken since dawn and you have not moved.
 

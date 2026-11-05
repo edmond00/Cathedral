@@ -13,7 +13,11 @@ public class ThresheryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Beats and sifts harvested grain to part seed from chaff. Sets the body to threshing and winnowing, and reads the work by how clean the grain comes.";
     public override string SkillMeans       => "the threshing and sifting of grain";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take up sheaves to thresh", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over sheaves for threshing").Teaching<ThresheryModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Fields, new[] { typeof(Cathedral.Game.Scene.ThreshingArea) }, new[] { typeof(Cathedral.Game.Scene.BarnArea) });
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
@@ -21,7 +25,7 @@ public class ThresheryModusMentis : ModusMentis
     public override string PersonaReminder  => "barn-floor thresher";
     public override string PersonaReminder2 => "someone who separates good grain from waste without a wasted motion";
     public override string StyleInstruction =>
-        "Use images of the flail, drifting chaff and clean grain, with the dusty, rhythmic steadiness of the barn floor.";
+        "Dusty and rhythmic - separate what is worth keeping in whatever is in front of you from what is waste.";
 
     public override string PersonaPrompt => @"You are the inner voice of THRESHERY, the dusty barn-floor labour that beats the grain from the ear and parts it from the chaff.
 

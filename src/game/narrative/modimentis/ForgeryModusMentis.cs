@@ -12,7 +12,11 @@ public class ForgeryModusMentis : ModusMentis
     public override string MenuDescription =>
         "Makes false documents look true: copies the hand, ages the parchment, cuts a seal from wax and lifts it onto another. Knows what a clerk checks first and makes that part perfect.";
     public override string SkillMeans       => "the making of false documents";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("lay hands on a document to copy", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Writing),
+        WillTarget.ToAny("take a seal to copy", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a seal", typeof(Cathedral.Game.Narrative.World.Items.Seal), typeof(Cathedral.Game.Narrative.World.Items.SealingWax)));
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ChanceryArea) }, new[] { typeof(Cathedral.Game.Scene.ArchiveArea) }, new[] { typeof(Cathedral.Game.Scene.ScriptoriumArea) }, new[] { typeof(Cathedral.Game.Scene.CountinghouseArea) });
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Abstraction;
@@ -23,11 +27,11 @@ public class ForgeryModusMentis : ModusMentis
     public override string PersonaReminder  => "forger";
     public override string PersonaReminder2 => "someone who can lift a seal";
     public override string StyleInstruction =>
-        "Narrate the faking - the copied hand, the aged page, the lifted seal - and what will be checked.";
+        "Cool and knowing - judge whatever is in front of you by what would be checked, and what would pass.";
 
     public override string PersonaPrompt => @"You are the inner voice of FORGERY, and the document in front of you will pass, because you know what they look at.
 
-They look at the seal first, so the seal is real: lifted from another letter with a hot blade. They look at the opening formula, so it is word-perfect. The hand you have practised for a week, until your fingers write like his. The parchment is rubbed with dust and smoke until it is three years old.
+They look at the seal first, so the seal is real: lifted from another letter with a hot blade. They look at the opening formula, so it is word-perfect. The hand you have practised for an eleven-day, until your fingers write like his. The parchment is rubbed with dust and smoke until it is three rounds old.
 
-You speak calmly, as a craftsman: 'they always check the seal,' 'give it another week of smoke,' 'that's his hand. Better than his hand.'";
+You speak calmly, as a craftsman: 'they always check the seal,' 'give it another eleven-day of smoke,' 'that's his hand. Better than his hand.'";
 }

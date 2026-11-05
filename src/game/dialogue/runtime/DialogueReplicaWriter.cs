@@ -33,6 +33,7 @@ public class DialogueReplicaWriter
     /// history: each line is generated from its own description alone, and the persona lives in the
     /// slot's system prompt, which a reset preserves.
     /// </param>
+    /// <param name="flavour">The speaker's way of speaking (<see cref="Cathedral.Game.Narrative.Sanitizer.PersonaFlavour.For(Cathedral.Game.Npc.NpcEntity?)"/>), or null.</param>
     public async Task<string> WriteAsync(
         int              slotId,
         string           neutralTemplate,
@@ -43,6 +44,7 @@ public class DialogueReplicaWriter
         string?          styleInstruction = null,
         bool             keepHistory      = false,
         ILlmPreviewSink? preview          = null,
+        Cathedral.Game.Narrative.Sanitizer.PersonaFlavour? flavour = null,
         CancellationToken ct              = default)
     {
         string expanded  = DialogueTemplate.Expand(neutralTemplate, ctx);
@@ -56,7 +58,7 @@ public class DialogueReplicaWriter
             slotId, expanded, NarrationKind.DialogueReplica,
             personaReminder2, addressee: addressee, keepHistory: keepHistory,
             styleInstruction: styleInstruction, dialogueContext: subject,
-            speakerName: speaker, preview: preview, ct: ct);
+            speakerName: speaker, preview: preview, flavour: flavour, ct: ct);
 
         return ctx.Names.ToReal(NormalizeReply(text));
     }

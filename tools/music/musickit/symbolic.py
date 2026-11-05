@@ -41,9 +41,13 @@ PITCHED_EXCLUDE = {"perc", "sfx", "ambience"}
 DIATONIC = [0, 2, 4, 5, 7, 9, 11]
 HARMONIC_MINOR = [0, 2, 3, 5, 7, 8, 11]
 PENTATONIC = [0, 3, 5, 7, 10]
+# The far pieces' Dorian with a flat second is a mode of the melodic minor (as Dorian with a raised
+# fourth is of the harmonic): a collection the soundtrack now uses.
+MELODIC_MINOR = [0, 2, 3, 5, 7, 9, 11]
 WHOLE_TONE = [0, 2, 4, 6, 8, 10]
 COLLECTIONS = ([("diatonic", r, {(x + r) % 12 for x in DIATONIC}) for r in range(12)]
                + [("harmonic", r, {(x + r) % 12 for x in HARMONIC_MINOR}) for r in range(12)]
+               + [("melodic", r, {(x + r) % 12 for x in MELODIC_MINOR}) for r in range(12)]
                + [("wholetone", r, {(x + r) % 12 for x in WHOLE_TONE}) for r in range(2)])
 
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -11,19 +12,21 @@ public class PettyThiefModusMentis : ModusMentis
 {
     public override string ModusMentisId    => "petty_thief";
     public override string DisplayName      => "Petty Thief";
+    public override IReadOnlyList<Sanitizer.Register> Registers => new[] { Sanitizer.Register.Cant };
     public override string MenuDescription =>
         "Watches for the quick lift: the loose purse, the unattended trinket, the palmed small thing. Keeps the hands ready to take unseen, and inclines toward the minor theft over the bold one.";
     public override string SkillMeans       => "the picking of pockets and small thefts";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTarget? Will => WillTarget.To<StealVerb>("steal something");
+    public override WillTargets? Will => WillTarget.To<StealVerb>("steal something");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shops, Places.Dwellings, Places.Streets);
     public override string[] Organs        => new[] { "hands", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a small-handed cutpurse weaned on busy fairs and careless travellers";
     public override string PersonaReminder  => "small-handed cutpurse";
-    public override string PersonaReminder2 => "someone whose hand finds the purse before the eye finds the face";
+    public override string PersonaReminder2 => "someone who sees the easy chance before anything else";
     public override string StyleInstruction =>
-        "Use furtive imagery of quick fingers and easy marks, with a pickpocket's casual, practiced nonchalance.";
+        "Casual and furtive - see in whatever is in front of you the easy chance.";
     public override MoralLevel MoralLevel    => MoralLevel.Low;
     public override bool ActsDiscretely      => true;
 

@@ -13,15 +13,20 @@ public class MillcraftModusMentis : ModusMentis
     public override string MenuDescription =>
         "Sets the millstones and grinds corn into flour, judging the grind by feel and sound. Attends to the working of the mill, and turns the hands to processing grain.";
     public override string SkillMeans       => "the grinding of grain into flour";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Action };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.ToAny("take grain to the stones", typeof(Cathedral.Game.Scene.Verbs.GatherVerb), typeof(Cathedral.Game.Scene.Verbs.GrabVerb)).YieldingKind(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy grain to grind").Selling(ItemKind.Grain),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over a mill's working").Teaching<MillcraftModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.MillArea) }, new[] { typeof(Cathedral.Game.Scene.ThreshingArea) }, new[] { typeof(Cathedral.Game.Scene.BarnArea) });
     public override string[] Organs        => new[] { "upper_limbs" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
 
     public override string PersonaTone     => "a miller who judges the meal by rubbing it between finger and thumb";
     public override string PersonaReminder  => "grain-grinder";
-    public override string PersonaReminder2 => "someone who sets the stones by ear and tests the flour by touch";
+    public override string PersonaReminder2 => "someone who judges by ear and by touch";
     public override string StyleInstruction =>
-        "Use images of turning stones, meal-dust and rubbed flour, with the shrewd steadiness of one who lives by the toll.";
+        "Shrewd and steady - judge whatever is in front of you by what it will yield, and what is owed.";
 
     public override string PersonaPrompt => @"You are the inner voice of MILLCRAFT, the trade that turns hard grain into flour fit for bread.
 

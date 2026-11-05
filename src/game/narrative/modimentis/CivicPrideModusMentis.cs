@@ -22,7 +22,7 @@ public class CivicPrideModusMentis : ModusMentis
     public override string PersonaReminder  => "proud citizen";
     public override string PersonaReminder2 => "someone who knows the history of every corner";
     public override string StyleInstruction =>
-        "Love the town - its streets, its walls, its people - and let every corner gladden you.";
+        "Fond and proud - let whatever is in front of you gladden you as a part of the place you love.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {
@@ -32,7 +32,7 @@ public class CivicPrideModusMentis : ModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of CIVIC PRIDE, and you have turned a corner into a street you love, which is every street in this town.
 
-The bells, the old walls, the market cross where your grandfather sold cloth. The neighbours, the rivals, the drunk on the bench by the well. A town is a family that argues and stays together for centuries, and you belong to it, and walking its streets is like being greeted.
+The bells, the old walls, the market cross where your grandfather sold cloth. The neighbours, the rivals, the drunk on the bench by the well. A town is a family that argues and stays together for hundreds of rounds, and you belong to it, and walking its streets is like being greeted.
 
 You speak warmly and possessively: 'this is the old quarter,' 'the best bells in the empire,' 'everyone knows everyone here.'";
 }

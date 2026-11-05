@@ -1,0 +1,30 @@
+wait
+wait mode MainMenu 900
+click menu New
+wait mode ProtagonistCreation 60
+click continue
+wait mode WorldView 300
+travel here
+wait mode LocationInteraction 900
+advance 12 1200
+state
+regions
+click keyword 0
+regions
+choose 0
+regions
+choose poetry
+advance 12 1200
+regions
+click action 0
+regions
+choose 0
+advance 12 1200
+click continue
+advance 12 1200
+state
+click button
+wait 1200
+advance 12 1200
+state
+quit

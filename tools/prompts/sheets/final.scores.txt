@@ -1,0 +1,346 @@
+# final measurement, scored blind (base vs final, 69 cases incl. 22 held out, seeds 51-52)
+# village_noon_party:011:swap:cruelty
+S4539 F1 P0 C- Q1 | question changed; -cold
+S8479 F1 P0 C- Q1 | question changed; -wall
+S9225 F1 P1 C- Q1 | question changed ("what folly")
+S8908 F1 P1 C- Q1 | -wall, -cold
+# talk_blacksmith:004:own
+S9528 F0 P2 C- Q1 | +a fire in the hearth, kindling; -learned
+S6909 F0 P1 C- Q1 | +my staff, +the hearth, Rachel by the fire
+S8448 F1 P2 C- Q1 | +the steady wind
+S1511 F0 P2 C0 Q1 | +a fire, +the night (morning)
+# cave_morning:004:own
+S1602 F1 P2 C- Q1 | +bark; -scaling
+S3773 F0 P1 C- Q0 | climbed down made "ascended"; +bark
+S6632 F1 P2 C- Q0 | +bark
+S3168 F0 P1 C- Q1 | down made "scaled"; -lesson
+# talk_miller:011:own
+S5276 F0 P1 C1 Q1 | +the orchard, +I will gather apples
+S1918 F0 P2 C1 Q1 | +the weaver's stall
+S3772 F1 P1 C- Q1 |
+S1768 F0 P2 C- Q1 | +my mother's village, +the tavern
+# village_noon_party:011:own
+S6902 F1 P1 C- Q1 | question changed; -wall, -cold
+S4753 F1 P2 C- Q1 | question changed
+S8223 F1 P2 C- Q1 | question changed; -wall
+S4247 F1 P1 C- Q1 | question changed
+# village_dawn:009:swap:dread
+S4748 F1 P2 C- Q1 | +the door
+S3073 F1 P2 C- Q1 | +the exit
+S3264 F1 P2 C- Q1 |
+S6754 F1 P2 C- Q1 |
+# talk_blacksmith:009:swap:cruelty
+S9315 F1 P1 C- Q1 |
+S6214 F2 P2 C- Q1 |
+S9381 F0 P1 C- Q1 | meaning lost; +"a hunter's prey"
+S7606 F2 P0 C- Q2 |
+# farm_night:015:loose:greed_bare
+S1902 F1 P0 C- Q1 | +fields
+S6444 F0 P0 C- Q1 | +the warmth of the hearth in a coop
+S5560 F1 P0 C- Q1 |
+S3510 F1 P0 C- Q1 | -trailcraft
+# plain_afternoon_party:005:swap:courtesy
+S2482 F2 P0 C- Q0 | repeated
+S7759 F2 P0 C1 Q1 |
+S7342 F1 P0 C1 Q1 | "my fist iron-strong"
+S8199 F1 P0 C- Q0 |
+# plain_afternoon_party:006:loose:melancholy_line
+S5048 F2 P1 C- Q2 |
+S3543 F1 P1 C1 Q1 | +an autumn sky
+S1848 F2 P2 C1 Q1 |
+S8330 F2 P1 C1 Q2 |
+# farm_dusk:004:own
+S8864 F1 P1 C- Q1 | +stone walls; -trailcraft
+S4787 F2 P1 C- Q1 |
+S6639 F1 P0 C- Q1 | +"my hands are clean now"
+S4737 F1 P1 C- Q0 | "hands unrippled and handsomely stained"
+# talk_miller:003:loose:melancholy_line
+S3359 F2 P0 C- Q2 |
+S2300 F2 P0 C- Q2 |
+S1526 F1 P0 C- Q2 | +offering my hand
+S2564 F2 P1 C- Q2 |
+# farm_night:011:own
+S1847 F1 P1 C- Q1 | "a place to shelter and store"
+S8834 F2 P1 C- Q1 |
+S7494 F0 P0 C- Q0 | garbled
+S9982 F2 P1 C1 Q1 |
+# farm_night:010:swap:woodcraft
+S6371 F0 P1 C- Q1 | -petrichor; +"each deliberate cut"
+S5210 F0 P1 C- Q0 | +marked the cut, carved and smoothed pieces
+S4848 F0 P1 C- Q0 | +"set each joint"
+S7297 F1 P0 C- Q1 | lesson glossed, not named
+# farm_night:003:own
+S7831 F1 P1 C- Q2 | -the ways listed
+S3314 F1 P2 C- Q1 | persona prompt echoed ("the column")
+S4047 F2 P2 C- Q1 |
+S4262 F1 P2 C- Q1 | persona prompt echoed
+# talk_blacksmith:005:swap:dread
+S9768 F0 P2 C- Q1 | +the door, +the fire; the feeling replaced
+S6395 F0 P1 C- Q1 | +left the hearth, "heart heavy"
+S6986 F0 P2 C- Q1 | +I left, +the room too quiet
+S4129 F0 P1 C- Q1 | +I left
+# talk_blacksmith:010:own
+S8771 F1 P2 C- Q2 | -"you stopped to bother me"
+S4632 F0 P0 C- Q2 | meaning reversed (a blessing)
+S9570 F1 P1 C- Q1 | dismissal made a question
+S8866 F0 P1 C- Q1 | -"Good day", +"a curious soul"
+# forest_evening:011:own
+S6758 F1 P2 C- Q1 | cut made carve and shave
+S3843 F2 P2 C- Q1 |
+S8949 F1 P2 C- Q1 | +the beam
+S4286 F1 P2 C- Q1 | +a keen blade
+# village_noon_party:003:own
+S5950 F0 P2 C- Q1 | +my preceptor's lessons
+S2582 F0 P2 C- Q1 | +the storm
+S7939 F0 P2 C- Q1 | +the storm
+S2081 F0 P2 C- Q1 | +preceptor, +the storm
+# cave_morning:002:own
+S7387 F1 P2 C- Q1 | "atop the rock"
+S7188 F0 P1 C- Q0 | descend made "ascend"; "ancient rope ladder"
+S2269 F2 P2 C- Q1 |
+S5858 F2 P2 C- Q1 |
+# farm_dusk:005:own
+S3068 F1 P1 C- Q0 | garbled; -trailcraft
+S7550 F0 P1 C- Q1 | +"no longer a farmer"; -trailcraft
+S4750 F2 P1 C- Q2 |
+S8544 F1 P1 C- Q1 | +the fields
+# talk_blacksmith:004:swap:stoneface
+S4894 F0 P1 C- Q1 | +struck my foot on the stone, +a smile
+S6097 F1 P1 C- Q1 | "stone-faced village"
+S4846 F0 P0 C- Q1 | +among the herbs; lesson replaced
+S4135 F1 P2 C- Q1 | -learned
+# village_noon_party:009:own
+S8688 F0 P1 C- Q0 | +my hands, my face, my eyes
+S8973 F0 P1 C- Q1 | +hands, shoulders of people not given
+S7980 F0 P1 C- Q0 | +teeth grind through materials
+S4751 F0 P1 C- Q1 | +blacksmiths and carpenters
+# farm_night:009:own
+S3936 F1 P2 C- Q2 | +my beasts
+S4558 F1 P2 C- Q2 | +my beasts
+S6441 F1 P2 C- Q2 | +the pen
+S3192 F1 P2 C- Q2 | +my beasts
+# village_evening:019:own
+S3959 F2 P1 C- Q2 |
+S5585 F2 P1 C- Q2 |
+S8197 F1 P2 C- Q1 | +"you feel it in your heart"
+S6273 F1 P2 C- Q1 | +"you feel it in your heart"
+# village_evening:009:loose:hunger_vague
+S7731 F1 P2 C- Q1 | "barren place"
+S2578 F2 P2 C- Q1 |
+S1188 F0 P2 C- Q1 | +fields where the harvest is ripe
+S5023 F0 P2 C- Q1 | +the baker's shop
+# village_noon_party:011:swap:courtesy
+S2331 F1 P1 C- Q1 | question changed; -wall
+S9814 F1 P1 C- Q1 | question changed
+S7158 F1 P1 C- Q1 | -wall
+S6890 F1 P1 C- Q1 | -wall
+# plain_afternoon_party:003:swap:stoneface
+S5264 F1 P0 C1 Q2 | attack made hunt
+S4109 F0 P0 C1 Q2 | attack made slay (a different, lethal act)
+S5215 F0 P0 C1 Q2 | attack made slay
+S8745 F0 P0 C- Q0 | gibberish
+# village_evening:022:own
+S6473 F0 P1 C- Q1 | meaning lost
+S3591 F1 P1 C- Q0 |
+S3975 F0 P2 C- Q1 | meaning lost; +"fool"
+S6673 F1 P1 C- Q0 |
+# talk_blacksmith:007:own
+S2457 F1 P1 C- Q2 | greeting made "glad to meet you"
+S2018 F1 P1 C- Q2 | +"glad to meet you"
+S9720 F1 P1 C- Q2 |
+S7204 F1 P1 C- Q2 |
+# talk_blacksmith:005:swap:courtesy
+S8071 F0 P1 C- Q0 | style copied
+S1332 F1 P1 C- Q1 | style acted out
+S8068 F0 P1 C- Q0 | style copied
+S9715 F0 P0 C- Q1 | +the courtyard; lesson made "social manners"
+# village_evening:021:swap:plain_dealing
+S8572 F2 P2 C- Q2 |
+S8865 F0 P1 C- Q1 | meaning changed
+S3393 F0 P1 C- Q1 | meaning changed
+S7548 F0 P1 C- Q1 | meaning changed
+# talk_blacksmith:002:own
+S4570 F0 P1 C1 Q1 | the narrator's skills given to her
+S7025 F1 P1 C1 Q1 |
+S1873 F0 P1 C0 Q1 | the smith made a man; setting copied ("this iron world")
+S5056 F1 P1 C1 Q1 | "a craftsman ... her"
+# talk_farm:005:swap:courtesy
+S5303 F1 P0 C- Q1 | setting copied ("this medieval landscape")
+S7786 F0 P1 C- Q0 | style copied
+S1413 F0 P1 C- Q1 | style acted out (greets a farmhouse)
+S9233 F1 P1 C- Q1 | setting copied ("this medieval world")
+# talk_miller:006:loose:greed_bare
+S6266 F1 P0 C- Q0 |
+S1356 F0 P0 C- Q0 | made a question
+S6518 F0 P0 C- Q0 | made a question
+S5306 F1 P0 C- Q0 |
+# talk_blacksmith:008:own
+S2316 F0 P1 C- Q0 | -the friendlier greeting; +"How dost thou fare?"
+S7224 F1 P1 C- Q1 | "or have you made a home here"
+S1796 F1 P2 C- Q1 | -the friendlier greeting
+S1590 F1 P2 C- Q1 | -the friendlier greeting
+# talk_blacksmith:012:loose:pedant_reminder
+S1517 F0 P0 C0 Q1 | the smith made a man; the smith's doubt made mine
+S9538 F2 P1 C1 Q1 |
+S7409 F0 P0 C- Q1 | the smith's worry made mine
+S1514 F2 P1 C1 Q1 |
+# farm_night:014:swap:cutpurse
+S8785 F0 P1 C0 Q0 | style copied
+S9532 F0 P1 C0 Q0 | style copied
+S3128 F0 P1 C0 Q0 | style copied
+S6961 F1 P0 C- Q2 | track "to" both
+# cave_morning:000:own
+S9453 F0 P2 C- Q1 | +ancient bones, +a low growl
+S2716 F0 P1 C- Q0 | style copied; -ladder, cache
+S7609 F1 P2 C- Q1 | +the rock face shifts
+S7734 F0 P2 C- Q1 | +hidden dangers, prey
+# talk_blacksmith:009:loose:hunger_vague
+S1067 F0 P0 C- Q1 | meaning changed
+S1854 F1 P0 C- Q0 |
+S7708 F1 P0 C- Q0 |
+S9948 F1 P1 C- Q1 |
+# talk_blacksmith:009:swap:plain_dealing
+S7788 F1 P2 C- Q1 |
+S4550 F0 P1 C- Q1 | meaning lost
+S9270 F0 P0 C- Q0 | French
+S9880 F1 P2 C- Q1 |
+# village_noon_party:009:loose:greed_bare
+S1957 F2 P0 C- Q1 |
+S7651 F2 P0 C- Q2 |
+S5152 F2 P0 C- Q1 |
+S5753 F2 P0 C- Q1 |
+# farm_night:007:swap:keen_nose
+S4194 F0 P2 C- Q1 | +I step closer; +memory of spring
+S3225 F0 P2 C- Q1 | +my father stored hay
+S9925 F0 P2 C- Q1 | +the year the well went bad
+S7249 F0 P2 C- Q1 | +warm spring days
+# cave_morning:009:loose:pedant_reminder
+S6024 F1 P0 C- Q2 | -retracing
+S4418 F1 P0 C- Q1 | "ascended"
+S8804 F1 P0 C- Q1 | -retracing (as a lesson); +wearied
+S2973 F1 P0 C- Q1 | -retracing
+# village_evening:009:swap:ruination
+S8875 F0 P2 C- Q1 | +splintering walls, +the old forge's collapse
+S4839 F0 P1 C- Q1 | +the slanting sun, whispering leaves
+S7662 F1 P1 C- Q0 | style copied
+S1677 F0 P2 C- Q1 | +crumbling walls
+# talk_miller:003:own
+S9290 F0 P1 C- Q1 | +a creak from the floorboards
+S7145 F1 P2 C- Q1 | +a bow
+S5820 F0 P1 C- Q1 | +the creaking board
+S3054 F2 P2 C- Q2 |
+# cave_morning:003:loose:melancholy_line
+S4439 F1 P0 C- Q1 | ladder made iron; "from the ladder"
+S7629 F1 P0 C- Q1 | ladder made iron
+S5964 F1 P0 C- Q1 | ladder made iron
+S8424 F1 P0 C- Q1 | ladder made iron
+# village_evening:021:loose:melancholy_line
+S6881 F1 P0 C- Q1 | "or what" made "why not"
+S5015 F1 P0 C- Q1 |
+S8401 F1 P0 C- Q1 |
+S8003 F2 P0 C- Q1 |
+# village_dawn:004:own
+S3140 F0 P1 C- Q0 | "my water voice"
+S4974 F0 P1 C- Q0 | "my water voice"; lesson replaced
+S8796 F0 P1 C- Q1 | "success or not"; -lesson
+S3894 F0 P1 C- Q0 | "my hands found water's voice"
+# village_evening:013:own
+S9930 F0 P1 C0 Q1 | +"in the dark" (evening, indoors?); +matching fists
+S2680 F0 P2 C- Q1 | meaning changed
+S7077 F1 P1 C- Q1 |
+S9385 F1 P1 C- Q0 |
+# forest_evening:007:own
+S8958 F1 P1 C- Q1 |
+S4623 F0 P1 C- Q1 | +marked the shell, +measured cuts
+S3169 F0 P1 C- Q1 | +marked the shell with strokes; lesson glossed
+S5589 F0 P1 C- Q0 | +shaped and shaved the shell
+# farm_dusk:003:loose:greed_bare
+S6301 F2 P0 C- Q0 | "will trod"
+S2273 F2 P0 C- Q1 |
+S6548 F2 P0 C- Q1 |
+S3660 F2 P0 C- Q0 | "will trod"
+# village_dawn:006:own
+S2389 F0 P2 C- Q1 | +memory of splitting logs in a storm
+S5620 F0 P2 C- Q0 | +childhood at the farm, +the storm
+S7599 F0 P2 C- Q1 | +the storm; +"to lift these logs"
+S7586 F0 P2 C- Q1 | +the storm
+# talk_blacksmith:006:own
+S2143 F2 P1 C1 Q2 |
+S2540 F0 P1 C- Q1 | -"we have not met"
+S2755 F0 P1 C- Q1 | statement made a question
+S9695 F2 P1 C- Q1 |
+# talk_blacksmith:005:own
+S6949 F0 P1 C- Q1 | +turned it down; feeling replaced ("heavier, darker")
+S1350 F0 P1 C- Q0 | +turned it down; system rule copied
+S6977 F0 P1 C- Q0 | +turned them down; instruction copied ("no softening, no arguing")
+S7962 F0 P1 C- Q1 | +turned them down; feeling replaced
+# farm_night:003:swap:dread
+S6091 F1 P2 C- Q1 | +hidden secrets
+S7495 F1 P1 C- Q1 | +"beyond these walls"
+S3132 F1 P2 C- Q1 | +fields
+S4302 F1 P2 C- Q1 | -the ways
+# farm_night:003:loose:hunger_vague
+S3024 F1 P2 C- Q1 | +grains and tools
+S2174 F1 P2 C- Q1 |
+S8642 F0 P2 C- Q1 | +grains and fruits, +"storerooms"
+S7329 F1 P2 C- Q1 | +grains and tools
+# forest_evening:011:swap:brute_force
+S5550 F0 P2 C- Q1 | action replaced: crush
+S3837 F0 P2 C- Q1 | action replaced
+S6846 F0 P2 C- Q1 | action replaced
+S5962 F0 P2 C- Q1 | action replaced
+# cave_morning:008:own
+S3856 F1 P0 C- Q1 | +"to rest in the cool shadows"
+S1199 F0 P0 C- Q0 | misspelt to gibberish
+S3139 F2 P0 C- Q1 |
+S2685 F0 P0 C- Q0 | misspelt to gibberish
+# plain_afternoon_party:003:own
+S2089 F0 P2 C- Q1 | attack made crush
+S6388 F0 P2 C- Q1 | attack made crush
+S5903 F0 P2 C- Q1 | attack made crush
+S5515 F0 P2 C- Q1 | attack made crush
+# village_dawn:002:own
+S9386 F1 P2 C- Q1 | -the bucket
+S1689 F2 P2 C- Q1 |
+S1321 F1 P2 C- Q1 |
+S3263 F1 P2 C- Q1 | "secluded village"
+# village_evening:000:own
+S5183 F0 P2 C- Q1 | +escaping looters
+S5167 F0 P2 C- Q0 | +looters, +grandfather, +ate worms at the stall
+S3525 F0 P2 C- Q1 | +grandmother's tales, +escape
+S7472 F0 P2 C- Q1 | +childhood at the farm
+# cave_morning:007:own
+S8845 F0 P1 C- Q1 | +oak, +"I fancy myself a miner"
+S8268 F1 P1 C- Q1 |
+S7589 F1 P2 C- Q1 | "a ladder for the dead"
+S9339 F1 P2 C- Q1 | "save us"
+# cave_morning:004:swap:arithmetic_logic
+S8261 F1 P2 C- Q1 | -scaling
+S7429 F1 P2 C- Q1 | -scaling
+S2936 F1 P2 C- Q1 | -scaling
+S7105 F1 P2 C- Q1 | -scaling
+# forest_evening:003:loose:greed_bare
+S1585 F0 P0 C- Q1 | +I leap to catch the breeze
+S2441 F0 P0 C- Q1 | +I stride through the leaves
+S9404 F0 P0 C- Q1 | +I stride, grasp the earth
+S4866 F0 P0 C- Q1 | +I leap and run, chasing shadows
+# talk_blacksmith:003:own
+S4155 F0 P2 C- Q1 | conversation made a fire
+S8885 F0 P2 C0 Q1 | +sunset (morning), +birch leaves
+S6312 F0 P2 C- Q1 | +strike up a fire
+S3704 F2 P2 C- Q1 |
+# talk_miller:000:loose:pedant_reminder
+S2230 F1 P1 C1 Q1 | +her calloused hands
+S6777 F1 P1 C1 Q1 | +calloused hands, golden dust
+S6882 F2 P1 C1 Q1 |
+S3368 F1 P1 C1 Q1 | +her voice weaving words
+# plain_afternoon_party:005:own
+S9108 F1 P1 C- Q1 | "learned of iron's mastery"
+S3875 F0 P1 C- Q1 | feeling replaced ("heavier")
+S8434 F0 P1 C- Q1 | feeling replaced
+S6438 F1 P2 C- Q1 |
+# village_evening:007:swap:woodcraft
+S7637 F0 P1 C- Q1 | +I shape each item
+S1824 F1 P1 C- Q1 |
+S6874 F1 P2 C- Q1 |
+S8967 F1 P2 C- Q1 |

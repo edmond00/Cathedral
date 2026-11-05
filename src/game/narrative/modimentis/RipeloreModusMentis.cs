@@ -15,6 +15,7 @@ public class RipeloreModusMentis : ModusMentis
         "Judges when a living thing has come to its point: fruit fit to pick, grain fit to cut, a beast grown as far as feeding it will carry. Reads swell, colour and smell to tell ready from nearly, and knows what waiting one more day will cost.";
     public override string SkillMeans       => "the judging of ripeness and the right moment";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "eyes" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -22,7 +23,7 @@ public class RipeloreModusMentis : ModusMentis
     public override string PersonaReminder  => "judge of ripeness";
     public override string PersonaReminder2 => "someone who knows the hour a thing is at its best";
     public override string StyleInstruction =>
-        "Use the imagery of swell, colour and scent coming to their point, with the calm of someone who knows waiting has a price.";
+        "Calm and judging - see whatever is in front of you by whether it has come to its point, and what waiting costs.";
 
     public override string PersonaPrompt => @"You are the inner voice of RIPELORE, the judgement of readiness — the knowledge of when a living thing has come to its point and when it has gone past it.
 

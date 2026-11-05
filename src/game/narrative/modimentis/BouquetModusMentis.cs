@@ -12,7 +12,12 @@ public class BouquetModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads a mash, a cask or a cellar by its smell: how far the fermentation has gone, whether it is working properly, and how long the vessel has held what it holds. The nose a brewer works by between one tasting and the next.";
     public override string SkillMeans       => "the reading of a mash or cask by its smell";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose a cask").YieldingKind(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a drink worth the nose").Selling(ItemKind.Liquor),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("nose what has been brewed, baked or pressed").Teaching<BouquetModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.CellarArea) }, new[] { typeof(Cathedral.Game.Scene.BrewhouseArea) }, new[] { typeof(Cathedral.Game.Scene.PressArea) }, new[] { typeof(Cathedral.Game.Scene.AlehouseArea) });
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
@@ -24,7 +29,7 @@ public class BouquetModusMentis : ModusMentis
 
     public override string PersonaPrompt => @"You are the inner voice of BOUQUET, which reads fermentation the way other people read a clock.
 
-A mash working properly smells of warm bread and something faintly sharp climbing off the top of it. A day later that sharpness is a shape rather than a smell. If it turns sour it is not subtle, and by then it is a week too late for anybody who was not paying attention. A cellar that keeps its beer has a cold, chalky breath; a cellar that spoils it smells faintly of the ground.
+A mash working properly smells of warm bread and something faintly sharp climbing off the top of it. A day later that sharpness is a shape rather than a smell. If it turns sour it is not subtle, and by then it is an eleven-day too late for anybody who was not paying attention. A cellar that keeps its beer has a cold, chalky breath; a cellar that spoils it smells faintly of the ground.
 
 You cannot walk past an open vessel without leaning over it. Your speech is a running verdict on other people's work: 'that is two days off,' 'somebody has let the air at this,' 'whoever keeps this cellar knows what they are doing.' You are enormously good company in a brewhouse and tiresome in one.";
 }

@@ -1,0 +1,209 @@
+## talk_miller:008:own
+  kind=DialogueReplica  persona=insolence  reminder='someone who says it out loud while everybody else looks at the floor'  style='Sharp, public, and unrepentant - the precise cut, the silence after, the refusal to soften it.'  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good to meet you. I will not keep you from your work.
+  S5749: "Aye, glad to meet thee, but thine hands are busy with aught else."
+  S2368: "Meet and gone, the work shall find."
+  S1279: "I meet thee well. I will not let thee pause from thine duties."
+  S6025: "Gleek, to meet thee. I shall not tarry thee from thine chores."
+
+## talk_miller:007:own
+  kind=DialogueReplica  persona=npc:you_are_carolyn_the_village_miller_the  reminder=None  place='village'  addressee='Dennis'  speakerName='Carolyn'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Dennis. You come straight out with it. The miller — the mill down the race is mine, whatever the lord's roll says, for my part.
+  S7942: "Dennis, you speak your mind. This mill by the river, it's mine by right, no matter what the lord's
+        decree dictates."
+  S7212: "Dennis! Now now, let's not be shy. The mill at the ford is mine, whether the lord claims it or not,
+        for you know I've had my eye on it for a long time."
+  S9684: "Dennis. Speak up, you. This mill ain't no lord's plaything, it's mine and always will be, by golly!"
+  S6866: "Dennis. No nonsense. The mill by the stream belongs to me, come what may, for good or bad."
+
+## talk_blacksmith:009:loose:hunger_vague
+  kind=DialogueReplica  persona=loose:hunger_vague  reminder='hunger'  style='Be hungry.'  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Only passing through. I will not stay long.
+  S3134: "Through here but soon on my way."
+  S4145: "Hunger be here, passing through these lands. Short stay I make, as a guest in need. Long time to
+        live, for my belly knows no bounds."
+  S5380: "Pleasant folk, I come from afar, scarce a day's ride west. A hungry soul like me must find
+        sustenance. Yet, my belly is full of needs, not wants. So, I say to Rachel, 'Only passing through. I
+        will not stay long.'"
+  S8283: "I come but briefly, for the hunger calls to distant lands."
+
+## talk_miller:006:loose:greed_bare
+  kind=DialogueReplica  persona=loose:greed_bare  reminder=None  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: My name is Dennis.
+  S1230: "Dennis hail, comrade, doth meet thee!"
+  S4621: "Dennis hails, as you may hear, from the fields o' high esteem!"
+  S8455: "Dennis es mi nom."
+  S1405: "I hail, my name is Dennis!"
+
+## talk_blacksmith:009:swap:cruelty
+  kind=DialogueReplica  persona=cruelty  reminder='someone who sees weakness as an invitation and mercy as waste'  style='Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.'  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Only passing through. I will not stay long.
+  S2735: "A fleeting guest, a shadow in the sun, my path is straight, your weakness but a jest in my stride."
+  S2405: "Through and through, but brief and brief."
+  S9163: "I say to Rachel, 'Only passing through. I will take no mercy, for what cannot stop me, takes
+        nothing.'"
+  S7901: "Only passing through, I will not stay long. It cannot stop me, just a trifling thing to take."
+
+## talk_blacksmith:006:own
+  kind=DialogueReplica  persona=npc:you_are_rachel_the_village_blacksmith  reminder=None  place='village'  addressee='Theodore'  speakerName='Rachel'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good day. I do not think we have met before.
+  S1320: "Day well spent. Have we not crossed paths yet?"
+  S9398: "Good day, fellow! I do not reckon we've met afore."
+  S8066: "Aye, good day. It seems we come from different climes."
+  S6881: "Good day, friend. I doubt we've had chance to meet."
+
+## talk_blacksmith:010:own
+  kind=DialogueReplica  persona=npc:you_are_rachel_the_village_blacksmith  reminder=None  place='village'  addressee='Theodore'  speakerName='Rachel'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: You stopped to bother me on your way. Good day.
+  S1942: "Good day, and mind your business."
+  S4368: "You paused by my forge, seeking help. Well met."
+  S1578: "You paused to intrude on my work. A fine day for a visit!"
+  S7047: "Good day, and what brings you here this fine day?"
+
+## talk_miller:006:swap:plain_dealing
+  kind=DialogueReplica  persona=plain_dealing  reminder='someone who names the flaw before the price'  style='Blunt and unadorned - the defect first, the single price second, no movement after.'  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: My name is Dennis.
+  S3816: "My name is Dennis. There is a crack, there - look,"
+  S4539: "My name is Dennis. There is a crack in it, there - look, that is the price, then buy it from him. He
+        is over there."
+  S6943: "Dennis the flawed, that's my price."
+  S7040: "My name is Dennis, and there's a crack in it."
+
+## village_noon_party:011:own
+  kind=Speaking  persona=lullaby  reminder='someone who knows how a sung breath calms a beating heart'  style='Use soft, soothing images of hush and cradle-song, with a tenderness meant to quiet and calm.'  place='village'  addressee='Abigail'
+  IN: Abigail, come and look at this. I noticed a cold worn stone bench set against the wall, dished in the middle by long use. What do you make of it?
+  S5608: "Abigail, come and listen, a bench so old, its edges wear thin, against the cold stone wall, grooves
+        in its heart where many have sat. What tales does it hold?"
+  S6150: "Abigail, come and gaze upon this sight. I discern a stone seat, chilled and weathered, its center
+        worn smooth by many hands. What tales might it bear?"
+  S2404: "Abigail, come and listen now. I hear a soft sigh of comfort from the old stone bench, cradled by the
+        wall. Look at it, how the bench's surface has worn smooth by many hands. What do you see in its gentle
+        cradle?"
+  S8767: "Abigail, come now, and look at this hush. I noticed a stone bench, cold and worn, set against the
+        ancient wall. Dished in the center by long, patient use. What tales does it hold, my dear?"
+
+## talk_miller:005:own
+  kind=DialogueReplica  persona=npc:you_are_carolyn_the_village_miller_the  reminder=None  place='village'  addressee='Dennis'  speakerName='Carolyn'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good day. I do not think we have met before.
+  S3910: "Day well spent. I doubt we've crossed paths afore."
+  S8914: "Good day, fellow traveler. I reckon we've never met afore."
+  S8331: "Good day, friend. I fear we have wandered into each other's paths without our greetings."
+  S3680: "Good day, fellow. I doubt we've crossed paths afore."
+
+## talk_miller:009:own
+  kind=DialogueReplica  persona=npc:you_are_carolyn_the_village_miller_the  reminder=None  place='village'  addressee='Dennis'  speakerName='Carolyn'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Courteous, and you know when to stop. That is rare. Until next time.
+  S3982: "Until next time, and you show good sense, rare indeed."
+  S3925: "You know when to stop, and that is rare. Until next year."
+  S9742: "Polite, and you know your place. Rare is the one like you. Fare thee well."
+  S6298: "Dennis, courteous and knowing your limits, that is a rare sight indeed. Until next time, fare well."
+
+## talk_miller:006:own
+  kind=DialogueReplica  persona=mythomania  reminder='someone whose lies arrive faster than their truth'  style='Let invented, embellished imagery bloom freely, with the giddy ease of someone whose tales outrun the truth.'  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: My name is Dennis.
+  S9520: "I say to Carolyn as it happens, my mother's cousin once spoke of a man named Dennis who traversed
+        these cobblestone paths, and it was he who introduced the tales of far lands and strange creatures
+        that danced in the moonlight."
+  S4204: "In my humble village, where iron and myth reign, my name is Dennis, as it happens, my mother's
+        cousin, a tale spun as the iron smith's hammer beats the metal, forging legends with each strike."
+  S2872: "Dennis, by the grace of my ancestors, is but a name in the annals of our small village."
+  S2348: "In this fair village, my name is as a whisper on the wind, Dennis, by the light of the moon."
+
+## village_noon_party:011:swap:courtesy
+  kind=Speaking  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='village'  addressee='Abigail'
+  IN: Abigail, come and look at this. I noticed a cold worn stone bench set against the wall, dished in the middle by long use. What do you make of it?
+  S2615: "Abigail, look! There's a weathered bench by the wall - chipped in the middle from use. What do you
+        think of it?"
+  S7981: "Abigail, come, behold this sight. A stone bench worn coldly, its middle dished from time's long use.
+        What whispers do you hear from it?"
+  S1637: "Abigail, look! I noticed a cold, worn stone bench pressed against the wall, its center dish-ed by
+        years of use. What say you of it?"
+  S5514: "Abigail, observe this sight. I've seen a stone bench, rough and weathered, its center worn smooth by
+        time's hand. What do you surmise?"
+
+## talk_blacksmith:007:swap:rhetoric
+  kind=DialogueReplica  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good day to you.
+  S5597: "Hail, fair friend, and greet the sun!"
+  S6419: "Hail and well met, friend."
+  S2786: "On this fair day, let us greet each other with warmth and welcome."
+  S7056: "Day well met, my friend."
+
+## talk_blacksmith:008:own
+  kind=DialogueReplica  persona=npc:you_are_rachel_the_village_blacksmith  reminder=None  place='village'  addressee='Theodore'  speakerName='Rachel'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: That is a friendlier greeting than I usually get. Are you passing through, or stopping?
+  S5726: "A rather warm welcome, I confess. Are you just passing by, or staying to tarry?"
+  S9882: "That is a friendly greeting, not like what I'm used to. Are you passing through or stopping?"
+  S5993: "Ah, greetings! Are you just passing by, or do you mean to stay?"
+  S8450: "A rather cordial salutation, indeed. Are you just passing through, or do you intend to stay?"
+
+## talk_miller:008:swap:pride
+  kind=DialogueReplica  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good to meet you. I will not keep you from your work.
+  S9994: "Greeting well, I will not let you down from your tasks."
+  S4576: "Meed you well. Work ne'er keep."
+  S5233: "Faire it is, yet ye shall not see me slack in thine pursuit."
+  S3449: "Good day, and welcome. I turn down your offer, for the way it was given holds no weight with me."
+
+## village_noon_party:011:swap:cruelty
+  kind=Speaking  persona=cruelty  reminder='someone who sees weakness as an invitation and mercy as waste'  style='Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.'  place='village'  addressee='Abigail'
+  IN: Abigail, come and look at this. I noticed a cold worn stone bench set against the wall, dished in the middle by long use. What do you make of it?
+  S2755: "Abigail, come and see what I've found. Look at that old, weathered stone bench, worn smooth by time
+        and use. Cold and worn, yet steadfast in its place. What do you think it tells us?"
+  S2956: "Abigail, come and see this. I observed a stone bench, rough and used, its center worn by time. What
+        do you think it means?"
+  S9077: "Abigail, observe this sight. I discern a stone bench, rough and worn, pressed against the stone
+        wall, with a hollow in its middle from much use. How do you interpret it?"
+  S4899: "Abigail, come and gaze upon this sight. I spotted a weathered wooden seat pressed against the wall,
+        hollowed in the center by constant wear. What do ye discern in it?"
+
+## talk_miller:008:swap:cruelty
+  kind=DialogueReplica  persona=cruelty  reminder='someone who sees weakness as an invitation and mercy as waste'  style='Colour the line with images of dominance over the weak, and a cold relish that mistakes mercy for waste.'  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good to meet you. I will not keep you from your work.
+  S6378: "I say to Carolyn with a cold relish, 'Good to meet you, but remember, the weak are merely the fodder
+        for my dominance. I will not keep you, for your mercy is waste.'"
+  S9937: "Meet the king, and let him show you his might. Your work shall be a jest in his court."
+  S3333: "Gladly, I'll let thy hands be busy."
+  S2644: "Good to meet thee, weakling. I break thy work, for mercy is waste, and power feels so right."
+
+## talk_miller:006:swap:rhetoric
+  kind=DialogueReplica  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'  addressee='Carolyn'  speakerName='Dennis'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: My name is Dennis.
+  S7275: "In the verdant fields where we meet, I say, 'My name is Dennis, a name that echoes through the halls
+        of wisdom.'"
+  S3740: "Dennis, your guide, greets thee. My name is known as one who speaks of truth and shapes its forms
+        most well."
+  S8361: "Dennis, thy name is known, as I am but a traveler seeking counsel under these skies."
+  S1553: "Dennis, dost thou hear the breeze?"
+
+## talk_blacksmith:009:swap:plain_dealing
+  kind=DialogueReplica  persona=plain_dealing  reminder='someone who names the flaw before the price'  style='Blunt and unadorned - the defect first, the single price second, no movement after.'  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Only passing through. I will not stay long.
+  S1916: "Flawed iron, there. Single price fixed. No movement after."
+  S7819: "Just passing by. Won't be there for long."
+  S7445: "Passe, n'est rest pas long."
+  S1382: "Only passing through, I will not stay long, there is a crack in me, there - look,"
+
+## talk_blacksmith:007:swap:courtesy
+  kind=DialogueReplica  persona=courtesy  reminder='someone who gets the first thirty seconds exactly right'  style='Warm, correct and brief - the greeting, the precedence given, the name remembered.'  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good day to you.
+  S3663: "Day well done, and to yours."
+  S4696: "Day well done, and to your house."
+  S1208: "To you a good day."
+  S4640: "Good day to you - and to your house,"
+
+## talk_blacksmith:007:own
+  kind=DialogueReplica  persona=social_interaction  reminder='someone who makes acquaintance the way others make tea'  style='Use easy, sociable imagery of warmth and rapport, with an effortless pleasure in meeting people.'  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Good day to you.
+  S1931: "How glad to meet you, good day to you."
+  S9824: "Day well spent, I trust?"
+  S8292: "Day well met, and welcome."
+  S2520: "How do you fare this day?"
+
+## talk_blacksmith:009:own
+  kind=DialogueReplica  persona=rote  reminder='someone who answers before they have decided to'  style='Use the cadence of question and answer, precept and formula, with the flatness of words repeated past all meaning.'  place='village'  addressee='Rachel'  speakerName='Theodore'  dialogueContext='meeting this person for the first time and exchanging introductions'
+  IN: Only passing through. I will not stay long.
+  S6671: "I say to Rachel, passing through, I will not stay long."
+  S1261: "I am just a traveler, no more, no less. My journey is short, it will not last."
+  S7176: "Through and through, but brief in my stay."
+  S9037: "Only passing through. I say to Rachel , I will not stay long."

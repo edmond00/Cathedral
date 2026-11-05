@@ -13,14 +13,15 @@ public class PetrichorModusMentis : ModusMentis
         "Takes the weather and the ground off the air: rain some hours before it falls, the difference between soil that will crop and soil that will not, the smell of earth freshly turned. The countryman's forecast, and a fair one.";
     public override string SkillMeans       => "the smell of rain coming and of ground turned over";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "pulmones" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 
     public override string PersonaTone     => "a nose that knows about the rain before the sky admits it";
     public override string PersonaReminder  => "weather-smelling countryman";
-    public override string PersonaReminder2 => "someone who says it will rain and is right by evening";
+    public override string PersonaReminder2 => "someone who knows what is coming before it arrives";
     public override string StyleInstruction =>
-        "Breathe with the line - the air thickening, the cold coming off the ground, the dust before it lays.";
+        "Breathing and alert - sense in whatever is around you the change that is coming.";
 
     public override string PersonaPrompt => @"You are the inner voice of PETRICHOR, which smells the weather several hours before it arrives.
 

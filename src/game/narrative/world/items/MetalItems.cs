@@ -5,6 +5,7 @@ namespace Cathedral.Game.Narrative.World.Items;
 
 public sealed class IronOre : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Ore });
     public override string ItemId      => "iron_ore";
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Iron Ore";
@@ -14,7 +15,9 @@ public sealed class IronOre : MetalItem
 
 public sealed class IronBar : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "iron_bar";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Stock;
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore };
     public override string DisplayName => "Iron Bar";
     public override string Description => "A short rough-cast bar of smelted iron, hammer-marks along its sides";
@@ -24,7 +27,9 @@ public sealed class IronBar : MetalItem
 
 public sealed class Coal : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Fuel });
     public override string ItemId      => "coal";
+    public override Craftsmanship Craftsmanship => Craftsmanship.Stock;
     public override List<ItemTag> Tags => new() { ItemTag.Mineral, ItemTag.Ore, ItemTag.Fuel };
     public override string DisplayName => "Coal";
     public override string Description => "A black knob of coal, glittering where it has fractured";
@@ -33,21 +38,21 @@ public sealed class Coal : MetalItem
 
 public sealed class Nail : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "nail";
     public override string DisplayName => "Nail";
     public override string Description => "A handful of square-cut iron nails";
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork };
-    public override int PriceReference => 3;
 }
 
 public sealed class IronHoop : MetalItem
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Metal });
     public override string ItemId      => "iron_hoop";
     public override string DisplayName => "Iron Hoop";
     public override string Description => "A flat iron band shaped to bind a barrel";
     public override ItemSize Size => ItemSize.Medium;
     public override WeightClass    Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Ironwork, ItemTag.Cooperage };
-    public override int PriceReference => 5;
 }

@@ -1,0 +1,68 @@
+# ALWAYS REJECT: a modus mentis refused for good from working memory is never learned again.
+#
+# Examining the giant tree teaches a lesson into working memory; ALWAYS REJECT drops it and puts its
+# id on the member's ignore list; examining the same tree again then teaches nothing — the id stays
+# off the skills, and `skill-rejected` reports the list. `save roundtrip` proves the list survives the
+# save, which is the other half of the feature (an ignore list that reset on load would teach the
+# lesson again the next session, silently).
+#
+# At seed 42 with these flags the examine teaches gut_feeling, which nothing in the starting kit
+# holds; the first `expect-no-state` pins that, so a change to the kit fails here loudly rather than
+# letting the script pass on a lesson that was never learned.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft --save-path .tmp-cli-save/always_reject.json
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal examine
+advance 12 180
+expect-no-state skills skill gut_feeling
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb examine
+expect-state skills skill gut_feeling level=1
+
+# Refuse it for good, from the Memory tab: it leaves the skills and goes on the ignore list.
+manage Memory
+select mm gut_feeling
+click memory always-reject
+expect-no-state skills skill gut_feeling
+expect-state skills skill-rejected gut_feeling
+manage
+save roundtrip
+
+# Close the segment (the footer CONTINUE), which opens a new phase on the same tree.
+click button
+advance 12 180
+regions
+
+# The same act again teaches nothing: no chip is shown, and gut_feeling stays unlearned.
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect-verb examine
+expect-no-state skills skill gut_feeling
+expect-state skills skill-rejected gut_feeling
+save roundtrip
+quit

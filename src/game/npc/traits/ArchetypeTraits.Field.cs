@@ -19,7 +19,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new CoinPurse() },
                 Appearance  = "keeps the tally stick turned away from anyone who might read it",
                 Persona     = "You take a little off the top of every account and you have done it so long it feels like wages. You are terrified of an audit.",
-                Opinions    = new[] { (DialogueTopic.Trade, "The accounts balance. They've always balanced. I'd not have held this post twenty years otherwise") },
+                Opinions    = new[] { (DialogueTopic.Trade, "The accounts balance. They've always balanced. I'd not have held this post twenty rounds otherwise") },
             },
             new PersonalityTrait
             {
@@ -54,7 +54,7 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "topographia", "rote", "heraldry" },
                 Items       = new Func<Item>[] { () => new TallyStick() },
                 Appearance  = "gives the impression of mentally re-measuring the ground you are standing on",
-                Persona     = "You know the position and history of every boundary marker for miles and you have won three disputes on it. You bring it up often.",
+                Persona     = "You know the position and history of every boundary marker for leagues and you have won three disputes on it. You bring it up often.",
                 Opinions    = new[] { (DialogueTopic.Neighbours, "There's a stone on the west margin been moved twice in my lifetime. I know exactly who by, both times") },
             },
             new PersonalityTrait
@@ -105,7 +105,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new LeatherGloves() },
                 Appearance  = "hands criss-crossed with thorn scratches, old and new together",
                 Persona     = "Your laid hedges are genuinely fine work and people come to look at them. It is the only thing about the post you actually love.",
-                Opinions    = new[] { (DialogueTopic.Work, "A hedge properly laid will still be stock-proof in thirty years. That's a thing to leave behind") },
+                Opinions    = new[] { (DialogueTopic.Work, "A hedge properly laid will still be stock-proof in thirty rounds. That's a thing to leave behind") },
             },
             new PersonalityTrait
             {
@@ -136,7 +136,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "You report every infraction without exception, including from friends and family. It has cost you nearly every relationship you had.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Neighbours, "I reported my own brother's beasts in the corn. He's not spoken to me in four years. I'd do it again"),
+                    (DialogueTopic.Neighbours, "I reported my own brother's beasts in the corn. He's not spoken to me in four rounds. I'd do it again"),
                     (DialogueTopic.Work,       "The post is the post. You do it for everyone or you do it for nobody"),
                 },
             },
@@ -150,7 +150,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "The deer coming out of the wood are your personal enemy. You hunt them beyond what the post allows and you are cagey about it.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Wilds,  "They come out at dusk and take a family's year in one night. Somebody has to answer that"),
+                    (DialogueTopic.Wilds,  "They come out at dusk and take a family's round in one night. Somebody has to answer that"),
                     (DialogueTopic.Beasts, "Don't talk to me about deer. Not unless you've a few hours") ,
                 },
             });
@@ -166,7 +166,7 @@ public sealed partial class PersonalityTraitRegistry
                 Persona     = "Your oxen work for you as they do for nobody else. You talk to them all day and you are more comfortable doing that than talking to people.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Beasts, "They know my voice before they know the goad. That took years and it's worth every one"),
+                    (DialogueTopic.Beasts, "They know my voice before they know the goad. That took rounds and it's worth every one"),
                     (DialogueTopic.Kin,    "I talk more to the team than to my own household. That's been said to me and it's fair"),
                 },
             },
@@ -177,7 +177,7 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new BrokenBackboneWound() },
                 ModiMentis  = new[] { "clenched_grit", "endurance" },
                 Appearance  = "straightens up in stages, with a hand pressed to the base of the spine",
-                Persona     = "Your back is finished and you are not old. You can still do the day but every hour of it hurts and you know how few years are left in you.",
+                Persona     = "Your back is finished and you are not old. You can still do the day but every hour of it hurts and you know how few rounds are left in you.",
                 Opinions    = new[] { (DialogueTopic.Health, "The stilts did it. Everyone who holds them long enough ends the same. I just got there early") },
             },
             new PersonalityTrait
@@ -238,7 +238,7 @@ public sealed partial class PersonalityTraitRegistry
                 Items       = new Func<Item>[] { () => new Sickle(), () => new Whetstone() },
                 Organs      = new[] { ("right_arm", 1) },
                 Appearance  = "a sickle kept far sharper than the others in the row",
-                Persona     = "You cut faster than anyone and you race the row without being asked. It is competitive, exhausting, and the high point of your year.",
+                Persona     = "You cut faster than anyone and you race the row without being asked. It is competitive, exhausting, and the high point of your round.",
                 Opinions    = new[] { (DialogueTopic.Harvest, "I take the outside of the row and I'm three lengths clear by noon. Ask anyone who's tried to hold my pace") },
             },
             new PersonalityTrait
@@ -262,7 +262,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Harvest, "The last sheaf is cut a particular way and kept a particular way. It matters. It has always mattered"),
-                    (DialogueTopic.Omens,   "You do it right or the year notices. Laugh — everyone laughs until a bad year"),
+                    (DialogueTopic.Omens,   "You do it right or the round notices. Laugh — everyone laughs until a bad round"),
                 },
             },
             new PersonalityTrait
@@ -272,8 +272,8 @@ public sealed partial class PersonalityTraitRegistry
                 ModiMentis  = new[] { "wayfaring", "topographia", "survivalism" },
                 Items       = new Func<Item>[] { () => new TravelersBackpack() },
                 Appearance  = "carrying everything they own, which is not much and is well packed",
-                Persona     = "You walk from harvest to harvest and are only here for the season. You know the roads and every farm's reputation for miles.",
-                SelfIntroduction = "here for the cutting and gone after — I follow the harvest and I've done it fifteen years",
+                Persona     = "You walk from harvest to harvest and are only here for the season. You know the roads and every farm's reputation for leagues.",
+                SelfIntroduction = "here for the cutting and gone after — I follow the harvest and I've done it fifteen rounds",
                 Opinions    = new[] { (DialogueTopic.Roads, "I've cut in six counties. You learn quick which farms feed you properly and which ones don't") },
             },
             new PersonalityTrait
@@ -283,10 +283,10 @@ public sealed partial class PersonalityTraitRegistry
                 Wounds      = new Func<Wound>[] { () => new ConcussionsWound() },
                 ModiMentis  = new[] { "wayfaring" },
                 Appearance  = "keeps to the shade oddly deliberately, with a rag tied over the head",
-                Persona     = "You collapsed in a field one August and were not right for a month. Your head still swims in the heat and you are frightened of it happening again.",
+                Persona     = "You collapsed in a field one Drought and were not right for thirty days. Your head still swims in the heat and you are frightened of it happening again.",
                 Opinions    = new[]
                 {
-                    (DialogueTopic.Weather, "Heat. Everyone worries about the rain. It's the heat that put me on my back for a month"),
+                    (DialogueTopic.Weather, "Heat. Everyone worries about the rain. It's the heat that put me on my back for thirty days"),
                     (DialogueTopic.Health,  "My head's not been quite right since. I lose words sometimes. It comes back"),
                 },
             },
@@ -359,7 +359,7 @@ public sealed partial class PersonalityTraitRegistry
                 Opinions    = new[]
                 {
                     (DialogueTopic.Kin,     "My grandfather worked this strip. My father. Me. It isn't ours and there's nobody knows it better"),
-                    (DialogueTopic.Harvest, "I could tell you what this ground did in every year since before I was born"),
+                    (DialogueTopic.Harvest, "I could tell you what this ground did in every round since before I was born"),
                 },
             },
             new PersonalityTrait

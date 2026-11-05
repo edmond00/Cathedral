@@ -84,7 +84,7 @@ namespace Cathedral.Game
             _terminal.CenteredText(Config.WorldSelectionUI.TitleRow, "CHOOSE  A  WORLD",
                 Config.WorldSelectionUI.TitleColor, Colors.Transparent);
             _terminal.CenteredText(Config.WorldSelectionUI.HintRow,
-                $"·  {moonCount} moons hang above you — click one, and you will wake beneath it  ·",
+                $"·  {moonCount} eggmoons hang above you — click one, and you will wake beneath it  ·",
                 Config.WorldSelectionUI.HintColor, Colors.Transparent);
             _terminal.CenteredText(Config.WorldSelectionUI.HintRow + 2,
                 "the compass turns the sky  ·  click the empty dark to unchoose",
@@ -122,7 +122,7 @@ namespace Cathedral.Game
 
             // The header is drawn in every state, including the empty one — a box that grows a title
             // only once something is chosen jumps as the player makes up their mind.
-            const string title = "── THE MOONS ──";
+            const string title = "── THE EGGMOONS ──";
             _terminal.Text(_boxX + (_boxW - title.Length) / 2, contentY, title,
                 Config.WorldSelectionUI.TitleColor, Config.WorldSelectionUI.BackgroundColor);
 

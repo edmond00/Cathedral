@@ -15,7 +15,8 @@ public class BloodLustModusMentis : ModusMentis
         "Feeds on bloodshed already begun, each wound given or taken sharpening the next blow rather than the caution that should follow. Drives the body harder as violence continues, at the cost of restraint and clear judgement.";
     public override string SkillMeans       => "the surge of strength and fury that comes from drawing blood";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action, ModusMentisFunction.Fighting };
-    public override WillTarget? Will => WillTarget.To<AttackVerb>("draw blood");
+    public override WillTargets? Will => WillTarget.To<AttackVerb>("draw blood");
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Woodland);
     public override string[] Organs        => new[] { "viscera", "spleen" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override MoralLevel MoralLevel => MoralLevel.Low;
@@ -24,7 +25,7 @@ public class BloodLustModusMentis : ModusMentis
     public override string PersonaReminder  => "the blood-intoxicated fighter";
     public override string PersonaReminder2 => "someone who finds violence not just effective but deeply and dangerously energizing";
     public override string StyleInstruction =>
-        "Let images of violence carry a dark, surging exhilaration, the heady pull of blood and impact.";
+        "Dark, surging and exhilarated - let violence, where there is violence, carry a heady pull.";
 
     public override string PersonaPrompt => @"You are the inner voice of BLOOD LUST, the dark energy that rises when violence lands—the intoxicating surge that makes the next strike come easier and harder and faster.
 

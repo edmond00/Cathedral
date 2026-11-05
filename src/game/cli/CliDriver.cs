@@ -262,6 +262,16 @@ public sealed class CliDriver
             switch (cmd)
             {
                 case "help":        CmdHelp();                        break;
+                // `when <GameMode> <command…>`: run the command only in that mode. For scripts driving a
+                // real model, whose path a script cannot know in advance (an act may open a conversation).
+                case "when":
+                    if (rest.Length >= 2 && Enum.TryParse<GameMode>(rest[0], ignoreCase: true, out var whenMode))
+                    {
+                        if (_game.CurrentMode == whenMode) Execute(string.Join(' ', rest.Skip(1)));
+                        else CliMode.Emit($"skipped: not in {whenMode}");
+                    }
+                    else CliMode.Emit("error: when <GameMode> <command…>");
+                    break;
                 case "state":       CmdState();                       break;
                 case "dump":        CmdDump(rest);                    break;
                 case "snap":        CmdSnap(rest);                    break;
@@ -282,6 +292,7 @@ public sealed class CliDriver
                 case "routines":    CmdRoutines(rest);                break;
                 case "gather":      CmdGather(rest);                  break;
                 case "trade":       CmdTrade(rest);                   break;
+                case "craft":       CmdCraft(rest);                   break;
                 case "manage":      CmdManage(rest);                  break;
                 case "select":      CmdSelect(rest);                  break;
                 case "key":         CmdKey(rest);                     break;
@@ -297,6 +308,7 @@ public sealed class CliDriver
                 case "wound":       CmdWound(rest);                   break;
                 case "cripple":     CmdCripple(rest);                 break;
                 case "starve":      CmdStarve(rest);                  break;
+                case "hostile":     CmdHostile(rest);                 break;
                 case "clock":       CmdClock(rest);                   break;
                 case "wait":        CmdWait(rest);                    break;
                 case "advance":     CmdAdvance(rest);                 break;
@@ -312,6 +324,9 @@ public sealed class CliDriver
                 case "allow-flag-miss": CmdAllowFlagMiss(rest);       break;
                 case "save":        CmdSave(rest);                    break;
                 case "crash-report": CmdCrashReport(rest);            break;
+                case "journal":     Report(rest.Length == 2 && rest[0] == "dump" && _game.CliDumpJournal(rest[1])
+                                               ? null : "journal dump <file.json> — needs a run and a writable path",
+                                           $"journal written to {(rest.Length > 1 ? rest[1] : "")}"); break;
                 case "pause":       Report(_game.CliOpenPauseMenu() ? null : "could not open the pause menu",
                                            "opened the pause menu"); break;
                 case "quit":        CmdQuit();                        break;
@@ -434,6 +449,8 @@ public sealed class CliDriver
           click skill <name>        use a fighting skill by name (see `regions` in a fight)
           click fighter <name>      click a fighter's map cell — the target step for an attack
           click end-turn            end the active fighter's turn (the END TURN button)
+          click memory <button>     a Memory-tab detail button: consolidate, reject,
+                                    always-reject, archive (`select mm <id>` first)
           click engage              the travel encounter prompt's ENGAGE button
           click companion-death     the companion-death notice's CONTINUE — modal over every mode
           click menu <label>        press a main-menu button (New, Continue, …)
@@ -449,6 +466,8 @@ public sealed class CliDriver
           point card <area>         hover an area's card on the menu map shown (the Chorography tab, the
                                     routine box), panned into view; `inspect pointer-label` reads
                                     the label it puts above the pointer, and on what ground
+          point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
+                                    left_hand…), so the panel shows that part's stats
           click world <confirm|cancel>  the world-selection screen's two buttons
           click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
                                     mouse's copy of the arrow keys
@@ -476,8 +495,12 @@ public sealed class CliDriver
                                     routine of that kind, with that routine read out;
                                     `manage Chorography lock newest|oldest` toggles a map's lock;
                                     `manage Chorography next|prev` steps through the routines
-                                    of the map shown. `key <letter>` opens a tab by its initial
+                                    of the map shown. `manage Bellic <skill>` expands a skill;
+                                    `manage member <name|slot>` picks a party member (0 = you).
+                                    `manage Journal pageup|pagedown|newest|<n>` scrolls the journal.
+                                    `key <letter>` opens a tab by its initial
           select [item name]        show a carried item's info panel; bare `select` lists them
+          select mm <id>            show a held modus mentis's detail box on the Memory tab
           key <escape|…>            send a key
           scroll up|down [n]        scroll the shared history buffer
         Control
@@ -488,7 +511,7 @@ public sealed class CliDriver
           means <mm-id|none>        pin the playground's choice of means — the action modus mentis
                                     that carries the goal out — the way `goal` pins the goal
           doubt <yes|no>            queue the answer to the next doubt of a thinking (the preview box's
-                                    YES / NO, with a pineal gland of 2+). `advance` answers each doubt
+                                    YES / NO, for a mind of Medium or High doubt). `advance` answers each doubt
                                     with the next queued answer, YES when none is queued, so a script
                                     that never says `doubt` runs as if the question were not asked
           fight-end <victory|death|runaway>
@@ -505,6 +528,11 @@ public sealed class CliDriver
           starve [protagonist|companions|<name>]
                                     sour every humor queue to critical — the other lethal state a
                                     visit can arrive at (default: protagonist)
+          hostile <archetype-id|name> <area>
+                                    put a person of this scene in an area, counting the party an
+                                    enemy — somebody standing on the way out of the location, which
+                                    a RUNAWAY must roll to get past. Moving away from an enemy is
+                                    refused, so no walk a script can make stages that otherwise
           cripple <mm-id> [protagonist|companions|<name>]
                                     High-wound every organ/region a modus mentis draws on, until it
                                     is BROKEN — effective level 0 or below, so it rolls nothing and
@@ -519,6 +547,10 @@ public sealed class CliDriver
                                     a timeout is reported as FAIL
           wait embeddings [secs]    block until the word vectors have loaded, so a later phase's
                                     keyword ranking is the same on every --playground run
+          when <GameMode> <command> run the command only in that mode (scripts on a real model)
+          journal dump <file.json>  write the run's journal as JSON — material for tools/journal/
+          wait for <secs>           settle, then hold that long — a player reading, which is the quiet
+                                    the background chronicler waits for
           expect <text>             assert text is on screen; failure sets a non-zero exit code
           expect-not <text>         assert text is absent
           quit                      close the game (exit 1 if any expect failed)
@@ -556,6 +588,7 @@ public sealed class CliDriver
             // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
             // pressing CONTINUE would sit out its whole timeout with nothing to say why.
             if (n.HasDeferredFight) sb.Append(" fight-held=yes");
+            if (n.HasDeferredCrafting) sb.Append(" crafting-held=yes");
             sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
             sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");
@@ -675,6 +708,28 @@ public sealed class CliDriver
                 CliMode.Emit($"  click world \"{label}\"{(enabled ? "" : "  (disabled)")}");
             CliMode.Emit("  click arrow left|right|up|down  (turn the sky)");
             return;
+        }
+
+        // A will's "Wants" rows on the Memory tab, while they are buttons (over the world map).
+        foreach (var want in _game.CliWantRows)
+        {
+            CliMode.Emit($"  click want {want}  (seek this target in every place within reach)");
+            any = true;
+        }
+        if (_game.CliWillButtonCell != null)
+        {
+            CliMode.Emit("  click will-button  (the ◎: every will the party holds, and what each wants)");
+            any = true;
+        }
+        if (_game.CliWillPickerLines() is { Count: > 1 } picker && picker[1].Contains("state=open"))
+        {
+            CliMode.Emit("  click will <mm-id>  (select a will in the picker)  ·  click picker up|down|close");
+            any = true;
+        }
+        if (_game.CurrentMode == GameMode.WorldView && _game.CliWillSearchLines()[0].Contains("state=running"))
+        {
+            CliMode.Emit("  click search-cancel  (end the will's search)");
+            any = true;
         }
 
         if (_game.CliMenuButtons() is { } menu)
@@ -959,6 +1014,38 @@ public sealed class CliDriver
                 Report(f.CliClickSkill(name), $"used skill \"{name}\"");
                 break;
             }
+            case "want":
+            {
+                // A will's "Wants" row on the Memory tab (after `select mm <id>`): seeks that target in
+                // every place within reach, and proposes the journey to the nearest.
+                if (a.Length < 2 || !int.TryParse(a[1], out int want)) { CliMode.Emit("error: click want <n>"); return; }
+                Report(_game.CliClickWant(want), $"pressed want {want}");
+                return;
+            }
+            case "will-button":
+                // The ◎ beside the ☰ on the world map: the will picker.
+                Report(_game.CliPress(_game.CliWillButtonCell, "will button"), "pressed the will button");
+                return;
+            case "will":
+            {
+                // A will's row in the open picker, by id (scrolled into view first).
+                if (a.Length < 2) { CliMode.Emit("error: click will <mm-id>"); return; }
+                Report(_game.CliPress(_game.CliPickerWillCell(a[1]), $"will \"{a[1]}\" in the picker"), $"selected will {a[1]}");
+                return;
+            }
+            case "picker":
+            {
+                // The picker's ▲ / ▼ rows and its CLOSE.
+                string which = a.Length > 1 ? a[1].ToLowerInvariant() : "";
+                if (which is not ("up" or "down" or "close")) { CliMode.Emit("error: click picker up|down|close"); return; }
+                Report(_game.CliPress(_game.CliPickerCell(which), $"picker {which}"), $"pressed picker {which}");
+                return;
+            }
+            case "search-cancel":
+            {
+                Report(_game.CliCancelWillSearch() ? null : "no will's search under way", "cancelled the will's search");
+                return;
+            }
             case "menu-button":
             {
                 // The ☰: the player's way to the menu without Escape. `pause` is Escape's.
@@ -1008,6 +1095,18 @@ public sealed class CliDriver
                 Report(f.CliClickFighter(name), $"clicked fighter \"{name}\"");
                 break;
             }
+            case "memory":
+            {
+                // `click memory <button>`: a button of the Memory tab's detail box, pressed through
+                // the player's click path. Select the slot first with `select mm <id>`.
+                if (a.Length < 2) { CliMode.Emit("error: click memory <consolidate|reject|always-reject|archive>"); return; }
+                var cell = _game.CliMemoryButtonCell(a[1]);
+                if (cell is not { } c) { CliMode.Emit($"error: no memory button '{a[1]}' on screen (`manage Memory`, then `select mm <id>`)"); return; }
+                if (!c.Enabled) { CliMode.Emit($"error: memory button '{a[1]}' is disabled"); return; }
+                _game.CliClickCell(c.X, c.Y);
+                CliMode.Emit($"ok: pressed memory button {a[1]}");
+                break;
+            }
             case "button":
             {
                 var dc = _game.CliDialogue?.Controller;
@@ -1029,6 +1128,12 @@ public sealed class CliDriver
                     _game.CliClickCell(cc.X, cc.Y);
                     CliMode.Emit("ok: accepted protagonist");
                     return;
+                }
+                // A make's dice box at a crafting station: its Continue settles the roll.
+                if (_game.CurrentMode == GameMode.Crafting && _game.CliCrafting is { } cm)
+                {
+                    if (cm.IsRolling) { CmdCraft(new[] { "settle" }); return; }
+                    CliMode.Emit("error: no dice continue button on screen"); return;
                 }
                 // A fight's dice box has its own Continue, and it blocks the turn until pressed.
                 if (_game.CurrentMode == GameMode.Fighting && _game.CliFight is { } cf)
@@ -1184,6 +1289,32 @@ public sealed class CliDriver
                 CliMode.Emit($"ok: clicked cell {x},{y}");
                 break;
             }
+            case "humor":
+            {
+                // Select an organ's spendable humor on a settled roll — any dice box, in any mode; then
+                // `click die <n>` spends it on that die. The same buttons a player clicks.
+                var dice = _game.CliActiveDice;
+                if (dice == null) { CliMode.Emit("error: no dice roll on screen"); CliMode.HasFailedAssertion = true; return; }
+                string arg = a.Length > 1 ? a[1] : "";
+                int q = Array.FindIndex(DiceRollComponent.CliQueueNames, n => n.Equals(arg, StringComparison.OrdinalIgnoreCase));
+                if (q < 0 && !int.TryParse(arg, out q)) { CliMode.Emit("error: click humor paunch|hepar|spleen|pulmones"); return; }
+                if (dice.CliHumorButton(q) is not { } hb)
+                { CliMode.Emit("error: no humor buttons on this roll (still rolling, or the body can spend none)"); CliMode.HasFailedAssertion = true; return; }
+                _game.CliHoverCell(hb.X, hb.Y);
+                _game.CliClickCell(hb.X, hb.Y);
+                CliMode.Emit($"ok: selected humor {DiceRollComponent.CliQueueNames[q]}");
+                break;
+            }
+            case "die":
+            {
+                var dice = _game.CliActiveDice;
+                if (dice == null || a.Length < 2 || !int.TryParse(a[1], out int di)) { CliMode.Emit("error: click die <n> (on a dice box)"); CliMode.HasFailedAssertion = true; return; }
+                if (dice.CliDieCell(di) is not { } dc) { CliMode.Emit($"error: no die {di} on screen"); CliMode.HasFailedAssertion = true; return; }
+                _game.CliHoverCell(dc.X, dc.Y);
+                _game.CliClickCell(dc.X, dc.Y);
+                CliMode.Emit($"ok: clicked die {di}");
+                break;
+            }
             default:
                 CliMode.Emit($"error: unknown click target '{a[0]}'");
                 break;
@@ -1205,8 +1336,13 @@ public sealed class CliDriver
             Report(_game.CliPointAtCard(name), $"pointed at the card {name}");
             return;
         }
+        if (a.Length >= 2 && a[0].Equals("organ", StringComparison.OrdinalIgnoreCase))
+        {
+            Report(_game.CliPointAtOrganPart(a[1]), $"pointed at the organ part {a[1]}");
+            return;
+        }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal> | point card <area>"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id>"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;
@@ -1484,6 +1620,60 @@ public sealed class CliDriver
     }
 
     /// <summary>
+    /// The crafting menu: <c>craft break &lt;item&gt;</c> destroys a carried item for the station's
+    /// material, <c>craft make &lt;item&gt;</c> makes one recipe from the pool, <c>craft leave</c> closes the
+    /// menu (what is left in hand is thrown away). Items are named by id or display name. A refusal
+    /// fails the run, since a script that asked to make something and could not is asserting it can.
+    /// </summary>
+    private void CmdCraft(string[] a)
+    {
+        var menu = _game.CliCrafting;
+        if (menu == null) { CliMode.Emit($"error: craft — no crafting menu open (currently {_game.CurrentMode})"); CliMode.HasFailedAssertion = true; return; }
+        string sub  = a.Length > 0 ? a[0].ToLowerInvariant() : "";
+        string name = string.Join(' ', a.Skip(1)).Trim();
+        bool Named(Cathedral.Game.Narrative.Item i) => string.Equals(i.ItemId, name, StringComparison.OrdinalIgnoreCase)
+                           || string.Equals(i.DisplayName, name, StringComparison.OrdinalIgnoreCase);
+        switch (sub)
+        {
+            case "leave":
+                menu.Leave();
+                CliMode.Emit($"ok: craft leave (pool {menu.Pool} thrown away)");
+                return;
+            case "break":
+                if (menu.Breakables().FirstOrDefault(Named) is { } item && menu.BreakDown(item))
+                { CliMode.Emit($"ok: craft break {item.ItemId} → pool {menu.Pool} {menu.Material}"); return; }
+                break;
+            case "make":
+                // Casts the dice and leaves them on the table, so a humor may bend them (click humor/die)
+                // before `craft settle` (or `click continue`) accepts the roll.
+                if (menu.Recipes.FirstOrDefault(Named) is { } recipe
+                    && menu.BeginMake(recipe, instant: true) == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Rolling)
+                {
+                    var d = menu.CliDice!;
+                    CliMode.Emit($"ok: craft make {recipe.ItemId} → rolled {d.FinalPrimaryValues.Count(v => v == 6)}/{d.Difficulty} sixes on {d.NumberOfDice} dice "
+                               + $"({(d.IsCurrentlySuccess ? "would make" : "would spoil")}; craft settle to accept) pool {menu.Pool} {menu.Material}");
+                    return;
+                }
+                break;
+            case "settle":
+            {
+                var made = menu.Settle();
+                if (made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Refused) break;
+                var roll = menu.LastRoll!;
+                CliMode.Emit($"ok: craft settle → {(made == Cathedral.Game.Management.CraftingMenuRenderer.MakeResult.Made ? "made" : "spoiled")} "
+                           + $"({roll.Sixes}/{roll.Difficulty} sixes on {roll.Dice} dice) pool {menu.Pool} {menu.Material}");
+                return;
+            }
+            default:
+                CliMode.Emit("error: craft break|make <item> | craft settle | craft leave");
+                CliMode.HasFailedAssertion = true;
+                return;
+        }
+        CliMode.Emit($"error: craft {sub} {name} — refused ({string.Join(" | ", menu.CliLines().Where(l => l.StartsWith("crafting message")))})");
+        CliMode.HasFailedAssertion = true;
+    }
+
+    /// <summary>
     /// Opens the protagonist-management screen, or closes it if already open; with a tab name,
     /// opens it and switches to that tab. This is the only way a script can reach the inventory —
     /// in play the screen sits behind the main-menu overlay, which is not clickable from narration.
@@ -1491,6 +1681,17 @@ public sealed class CliDriver
     private void CmdManage(string[] a)
     {
         string? tab = a.Length > 0 ? a[0] : null;
+
+        // `manage member <name|slot>` — the P A R T Y list on the left, which every tab but the
+        // protagonist-only ones follows. The screen must already be open on the tab wanted.
+        if (tab != null && tab.Equals("member", StringComparison.OrdinalIgnoreCase))
+        {
+            string who = string.Join(' ', a.Skip(1));
+            if (!_game.CliSelectManagementMember(who))
+            { CliMode.Emit($"error: manage member — nobody called '{who}' on this tab (open the screen first)"); return; }
+            CliMode.Emit($"ok: management member {who}");
+            return;
+        }
 
         if (tab != null && _game.CliManagementTabs.Count == 0)
         {
@@ -1524,6 +1725,25 @@ public sealed class CliDriver
             if (!_game.CliToggleMapLock(a[2]))
             { CliMode.Emit($"error: manage Chorography lock newest|oldest — no map to lock ('{a[2]}')"); return; }
             CliMode.Emit($"ok: toggled the lock of the {a[2]} mental map");
+            return;
+        }
+
+        // The Journal tab reads back: `manage Journal pageup|pagedown|newest|<lines>`.
+        if (a.Length > 1 && tab!.Equals("Journal", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_game.CliScrollJournal(a[1].ToLowerInvariant()))
+            { CliMode.Emit("error: manage Journal pageup|pagedown|newest|<lines>"); return; }
+            CliMode.Emit($"ok: management tab Journal, scrolled {a[1]}");
+            return;
+        }
+
+        // A skill on the Bellic tab, expanded below the list: `manage Bellic Punch`.
+        if (a.Length > 1 && tab!.Equals("Bellic", StringComparison.OrdinalIgnoreCase))
+        {
+            string skill = string.Join(' ', a.Skip(1));
+            if (!_game.CliSelectBellicSkill(skill))
+            { CliMode.Emit($"error: manage Bellic — no skill '{skill}' on the tab for this member"); return; }
+            CliMode.Emit($"ok: management tab Bellic, skill {skill}");
             return;
         }
 
@@ -1561,6 +1781,18 @@ public sealed class CliDriver
             var carried = _game.CliCarriedItemNames;
             if (carried.Count == 0) { CliMode.Emit("error: open the protagonist screen first (`manage Inventory`)"); return; }
             foreach (var n in carried) CliMode.Emit($"  select \"{n}\"");
+            return;
+        }
+
+        // `select mm <id>`: a held modus mentis on the Memory tab, whose detail box then shows.
+        if (a.Length == 2 && a[0].Equals("mm", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!_game.CliSelectModusMentis(a[1]))
+            {
+                CliMode.Emit($"error: no held modus mentis '{a[1]}' (open the protagonist screen first: `manage Memory`)");
+                return;
+            }
+            CliMode.Emit($"ok: selected modus mentis {a[1]}");
             return;
         }
 
@@ -1776,6 +2008,15 @@ public sealed class CliDriver
         Report(_game.CliStarve(who), $"humors soured: {who}");
     }
 
+    private void CmdHostile(string[] a)
+    {
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: no narration in progress"); return; }
+        if (a.Length < 2) { CliMode.Emit("error: hostile <archetype-id|name> <area>"); return; }
+        string who = a[0].Trim('"'), area = string.Join(' ', a.Skip(1)).Trim('"');
+        Report(n.CliMakeHostile(who, area), $"{who} stands in {area}, hostile");
+    }
+
     private void CmdFightWound(string[] a)
     {
         var fight = _game.CliFight;
@@ -1850,6 +2091,18 @@ public sealed class CliDriver
             _waitDescription = Cathedral.Config.Debug.NoEmbeddings ? "embeddings (none: --no-embeddings)" : "embeddings loaded";
             if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
+        }
+        // `wait for <secs>`: settle, then hold for that long — a player reading. What lets a script give
+        // the background chronicler the quiet it waits for, which a bare `wait` (done the moment the
+        // game is idle) never does.
+        else if (a.Length >= 2 && a[0].Equals("for", StringComparison.OrdinalIgnoreCase)
+                 && double.TryParse(a[1], System.Globalization.NumberStyles.Float,
+                                    System.Globalization.CultureInfo.InvariantCulture, out double hold))
+        {
+            var until = DateTime.UtcNow + TimeSpan.FromSeconds(hold);
+            _waitCondition = () => DateTime.UtcNow >= until;
+            _waitDescription = $"held {hold:F0}s";
+            timeout = TimeSpan.FromSeconds(hold + 120);
         }
         else if (a.Length >= 1 && int.TryParse(a[0], out int secs))
         {

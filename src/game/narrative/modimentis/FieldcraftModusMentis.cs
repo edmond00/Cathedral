@@ -21,7 +21,7 @@ public class FieldcraftModusMentis : ModusMentis
     public override string PersonaReminder  => "field-worker";
     public override string PersonaReminder2 => "someone who knows what the strip needs before being told";
     public override string StyleInstruction =>
-        "Use images of weeded rows, hoe and open sky, with the unhurried, weather-wise sense of the fields.";
+        "Unhurried and weather-wise - judge whatever is in front of you by what the season asks of it.";
 
     public override string PersonaPrompt => @"You are the inner voice of FIELDCRAFT, the broad plain competence of one who works the open land day in and day out.
 

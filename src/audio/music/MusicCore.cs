@@ -151,7 +151,9 @@ internal sealed class MusicCore : IScoreObserver
             _active.Fear + (_target.Fear - _active.Fear) * k,
             _active.Mystery + (_target.Mystery - _active.Mystery) * k,
             _active.Intensity + (_target.Intensity - _active.Intensity) * k,
-            _active.Festivity + (_target.Festivity - _active.Festivity) * k);
+            _active.Festivity + (_target.Festivity - _active.Festivity) * k,
+            _active.Sacred + (_target.Sacred - _active.Sacred) * k,
+            _active.Far + (_target.Far - _active.Far) * k);
         _composer.Mood = _active;
 
         double now = Seconds;
@@ -178,7 +180,7 @@ internal sealed class MusicCore : IScoreObserver
                 continue;
             }
             if (_gate[p] <= 0.01f) continue;   // a layer the track count has silenced: not even composed into sound
-            Synth.NoteOn(e.Part, e.Inst, e.Midi, e.Vel, e.Dur, e.Pan);
+            Synth.NoteOn(e.Part, e.Inst, e.Midi + e.Inflect, e.Vel, e.Dur, e.Pan, e.Glide);
             Log?.Note(now, e);
             if (MidiClock != null) CaptureMidi(e);
         }
@@ -203,6 +205,7 @@ internal sealed class MusicCore : IScoreObserver
             (int tracks, float a, float b) = part switch
             {
                 Part.Ambience => (0, -1f, 0f),
+                Part.Cantus => (1, -1f, 0.10f),
                 Part.Drone => (0, -1f, 0.10f),
                 Part.Pad => (1, -1f, 0.10f),
                 Part.Melody or Part.Bell => (2, 0.25f, 0.35f),
@@ -228,7 +231,7 @@ internal sealed class MusicCore : IScoreObserver
     private static int Channel(Part p) => p switch
     {
         Part.Drone => 0, Part.Melody => 1, Part.Counter => 2, Part.Ostinato => 3, Part.Pad => 4,
-        Part.Bass => 5, Part.Bell => 6, Part.Ambience => 7, Part.Perc => 9, Part.Fight => 8, _ => 14,
+        Part.Bass => 5, Part.Bell => 6, Part.Ambience => 7, Part.Perc => 9, Part.Fight => 8, Part.Cantus => 10, _ => 14,
     };
 
     /// <summary>A General MIDI program that stands in for each instrument, for tools that read the MIDI.</summary>
@@ -239,7 +242,9 @@ internal sealed class MusicCore : IScoreObserver
         Instrument.Harp => 46, Instrument.Lute => 24, Instrument.Bell => 14, Instrument.Timpani => 47,
         Instrument.HandDrum => 116, Instrument.Bourdon => 19, Instrument.Horn => 60, Instrument.SquareLead => 80,
         Instrument.Wind => 122, Instrument.Fiddle => 110, Instrument.Whistle => 78, Instrument.Pipes => 109,
-        Instrument.Bodhran => 116, Instrument.Distortion => 30, Instrument.PowerChord => 30, _ => 0,
+        Instrument.Bodhran => 116, Instrument.Distortion => 30, Instrument.PowerChord => 30, Instrument.Staccato => 48,
+        Instrument.Metallophone => 11, Instrument.BuzzString => 104, Instrument.Reed => 69, Instrument.Glass => 92,
+        Instrument.BentDrum => 117, _ => 0,
     };
 
     private void CaptureMidi(ScoreEvent e)

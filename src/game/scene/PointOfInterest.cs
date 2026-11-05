@@ -20,8 +20,16 @@ public static class ResourceRegen
 /// For example: a tree, a boulder, a patch of flowers, a piece of furniture.
 /// Contains <see cref="Narrative.Item"/>s that can be collected by interacting with this point of interest.
 /// </summary>
-public class PointOfInterest : Element, IVerbModusMentisSource
+public class PointOfInterest : Element, IVerbModusMentisSource, IPlayable
 {
+    /// <summary>
+    /// What this can be played at (<see cref="Verbs.PlayVerb"/>), or null for nothing. Set by the
+    /// factory that builds the thing when the play belongs to that one object (the hanging lianas, a
+    /// heap of hay under the rafters), by a play kind's own constructor, or by
+    /// <see cref="PlayPlacement"/> for the plays it lays over a finished scene.
+    /// </summary>
+    public PlayActivity? Play { get; set; }
+
     /// <summary>
     /// Per-verb modus mentis overrides, keyed by <c>VerbId</c> — see
     /// <see cref="IVerbModusMentisSource"/>. Left null by the great majority of builders, which are

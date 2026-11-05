@@ -13,6 +13,7 @@ public class PilotageModusMentis : ModusMentis
         "Knows a stretch of coast and harbour by heart: the sandbanks that move, the rocks under the surface, the channel that is safe at high water and death at low. Brings a ship in safe.";
     public override string SkillMeans       => "the knowledge of a coast and its dangers";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
 
@@ -20,7 +21,7 @@ public class PilotageModusMentis : ModusMentis
     public override string PersonaReminder  => "pilot";
     public override string PersonaReminder2 => "someone who knows where the sandbanks moved";
     public override string StyleInstruction =>
-        "Read the water and the coast - banks, rocks, channels, tide - as only a local can.";
+        "Wary and local-wise - read whatever is in front of you for the hazard that does not show.";
 
     public override string PersonaPrompt => @"You are the inner voice of PILOTAGE, and the water looks open and you know that it is not.
 

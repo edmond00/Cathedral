@@ -40,6 +40,8 @@ public class DiceRollComponent
 
     // ── Animation timing ──────────────────────────────────────────────
     private DateTime _lastFrameUpdate = DateTime.MinValue;
+    /// <summary>Milliseconds between glyph changes while tumbling.</summary>
+    private const double TickMs = 40;
     private int _spinnerFrame;
 
     // ── Public state ─────────────────────────────────────────────────
@@ -50,6 +52,11 @@ public class DiceRollComponent
     public bool IsRolling { get; private set; }
     public bool IsVisible { get; private set; }
     public bool IsDual    { get; private set; }
+    /// <summary>
+    /// Dual mode only: whether a tie goes to the primary group. True when the primary group is the
+    /// defense (an enemy attacking the player), because an attack hits only on strictly more sixes.
+    /// </summary>
+    public bool PrimaryWinsTies { get; private set; }
 
     public (int X, int Y, int Width) ContinueButtonRegion { get; private set; }
 
@@ -191,15 +198,18 @@ public class DiceRollComponent
     }
 
     /// <summary>
-    /// Begin a dual-dice animation (attack vs defense): success = primary sixes &gt; secondary sixes.
+    /// Begin a dual-dice animation (attack vs defense): success = primary sixes &gt; secondary sixes,
+    /// or ≥ when <paramref name="primaryWinsTies"/> is set.
     /// Either group can be zero; an empty group rolls instantly to "0 sixes".
     /// </summary>
     public void StartDual(int primaryDice, int secondaryDice,
                            string primaryLabel, string secondaryLabel,
                            string? subtitle = null,
-                           Vector4? accentColor = null)
+                           Vector4? accentColor = null,
+                           bool primaryWinsTies = false)
     {
         NumberOfDice          = Math.Max(0, primaryDice);
+        PrimaryWinsTies       = primaryWinsTies;
         SecondaryNumberOfDice = Math.Max(0, secondaryDice);
         Difficulty            = 0; // ignored in dual mode
         IsRolling             = true;
@@ -286,7 +296,7 @@ public class DiceRollComponent
         if (IsDual)
         {
             int secondarySixes = _finalSecondary?.Count(v => v == 6) ?? 0;
-            return primarySixes > secondarySixes;
+            return PrimaryWinsTies ? primarySixes >= secondarySixes : primarySixes > secondarySixes;
         }
         return primarySixes >= Difficulty;
     }
@@ -303,9 +313,14 @@ public class DiceRollComponent
     public void Advance()
     {
         if (!IsRolling) return;
-        if ((DateTime.Now - _lastFrameUpdate).TotalMilliseconds <= 80) return;
+        var now = DateTime.Now;
+        double sinceLast = (now - _lastFrameUpdate).TotalMilliseconds;
+        if (sinceLast < TickMs) return;
 
-        _lastFrameUpdate = DateTime.Now;
+        // Carry the remainder over rather than restarting from now, so the tick rate is TickMs
+        // on average and not rounded up to the next whole frame. A stall (or the first tick)
+        // resyncs instead of firing a burst to catch up.
+        _lastFrameUpdate = sinceLast < 2 * TickMs ? _lastFrameUpdate.AddMilliseconds(TickMs) : now;
         _spinnerFrame++;
 
         bool anyChanged = AdvanceGroup(_primaryFrames, _primaryFaces, _primaryCounters, _primaryWaits);
@@ -389,7 +404,8 @@ public class DiceRollComponent
         int diffY = centerY - 8;
         if (IsDual)
         {
-            string vsLine = $"{PrimaryLabel} vs {SecondaryLabel}  (more sixes wins)";
+            string tieWinner = PrimaryWinsTies ? PrimaryLabel : SecondaryLabel;
+            string vsLine = $"{PrimaryLabel} vs {SecondaryLabel}  (more sixes wins, tie: {tieWinner})";
             terminal.Text(centerX - vsLine.Length / 2, diffY, vsLine, diffLineCol, Config.Colors.Black);
         }
         else

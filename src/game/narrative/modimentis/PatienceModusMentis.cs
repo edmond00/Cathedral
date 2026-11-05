@@ -15,6 +15,7 @@ public class PatienceModusMentis : ModusMentis
         "Holds out calmly through delay and tedium, enduring the long wait without strain. Keeps effort steady over slow spans, and treats time itself as something to be outlasted.";
     public override string SkillMeans => "waiting and endurance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs => new[] { "pineal_gland", "backbone" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
@@ -23,7 +24,7 @@ public class PatienceModusMentis : ModusMentis
     public override string PersonaReminder => "serene strategist of timing";
     public override string PersonaReminder2 => "someone who knows that waiting is itself a kind of action";
     public override string StyleInstruction =>
-        "Reach for slow images of ripening and tide, with the unhurried calm of one content to wait.";
+        "Unhurried and content to wait - meet whatever is in front of you knowing it will come in its time.";
     
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

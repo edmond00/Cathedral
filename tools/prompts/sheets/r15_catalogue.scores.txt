@@ -1,0 +1,62 @@
+# round 15: 30 personas drawn at random from the 313 rewritten (not the worst), old fields vs the
+# catalogue rewrite, one probe each, seed 1; style and reminder hidden
+S4423 F0 P2 C- Q1 | +a barn
+S1190 F0 P2 C- Q0 | +a forge, anvils
+S9541 F1 P1 C- Q1 | "chose the timber"
+S1592 F0 P2 C- Q0 | +ribs, planks, caulking
+S3588 F0 P0 C- Q1 | +the market
+S4914 F0 P2 C- Q1 | +the smith's hands
+S1276 F1 P2 C- Q1 |
+S1900 F0 P2 C- Q1 | +the salt failing
+S3412 F0 P2 C- Q1 | +a column passing
+S7017 F0 P2 C- Q1 | +a column, a strike
+S4927 F1 P1 C- Q0 | +on my toes
+S2919 F2 P2 C- Q1 |
+S6539 F2 P0 C- Q1 |
+S8640 F0 P2 C- Q1 | +endive roots, sand
+S6828 F2 P1 C- Q1 |
+S5597 F1 P0 C- Q1 | +a smile
+S7427 F0 P2 C- Q1 | +a pen, a trough
+S5314 F1 P2 C- Q1 | +checking for spoilage
+S6641 F1 P1 C- Q1 |
+S4745 F0 P1 C- Q1 | +the forge
+S4381 F2 P0 C- Q1 |
+S6819 F0 P2 C- Q1 | +shrouds, a yard
+S6134 F1 P1 C- Q0 |
+S4660 F0 P2 C- Q1 | the oak made a coin
+S6007 F1 P0 C- Q1 | -discreetly
+S9378 F2 P0 C- Q1 |
+S7888 F2 P0 C- Q1 |
+S4791 F0 P2 C- Q1 | +oil, a sick creature
+S8463 F0 P2 C- Q0 | +oil, fruit
+S7879 F2 P0 C- Q1 |
+S9021 F1 P1 C- Q1 |
+S2293 F0 P2 C- Q1 | the act made a blow
+S8554 F1 P2 C- Q0 |
+S6897 F2 P1 C- Q1 |
+S8197 F1 P1 C- Q0 | style copied
+S6163 F2 P0 C- Q1 |
+S8382 F1 P1 C- Q1 | her made "their"
+S7637 F0 P2 C- Q1 | +an egg laid
+S2078 F2 P1 C- Q1 |
+S9032 F2 P1 C- Q1 |
+S1307 F2 P0 C- Q1 |
+S4206 F2 P0 C- Q1 |
+S3298 F0 P2 C- Q1 | +night, a candle, a dog
+S9748 F0 P1 C- Q1 | +a candle
+S3821 F1 P2 C- Q1 |
+S1284 F1 P2 C- Q1 |
+S5695 F1 P1 C- Q1 | lesson garbled
+S9683 F2 P1 C- Q1 |
+S9109 F1 P1 C- Q1 | -lesson
+S3485 F2 P2 C- Q1 |
+S2636 F2 P2 C- Q1 |
+S2904 F1 P2 C- Q1 | +underbrush
+S7477 F0 P1 C- Q1 | +sheaves
+S1776 F2 P0 C- Q1 |
+S2205 F2 P0 C- Q1 |
+S8678 F2 P0 C- Q1 |
+S5846 F0 P2 C- Q1 | +the coast
+S7577 F0 P2 C- Q1 | +a map
+S9225 F2 P1 C- Q1 |
+S4807 F1 P0 C- Q1 |

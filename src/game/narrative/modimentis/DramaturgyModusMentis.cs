@@ -14,6 +14,7 @@ public class DramaturgyModusMentis : ModusMentis
         "Treats a social moment as a scene to be staged and played to an audience. Attends to presentation, timing, and effect, shaping how one is perceived rather than merely how one acts.";
     public override string SkillMeans => "theatrical social performance";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Speaking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "eyes", "heart" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>
@@ -24,7 +25,7 @@ public class DramaturgyModusMentis : ModusMentis
     public override string PersonaReminder => "theatrical performance analyst";
     public override string PersonaReminder2 => "someone who sees every moment as a scene being performed";
     public override string StyleInstruction =>
-        "Frame events as theatre, with staging, entrances and the turn of a scene, in a director's eye for the dramatic.";
+        "Theatrical and appraising - see whatever is happening in front of you as a scene, with its entrances and its turn.";
     
     public override string PersonaPrompt => @"You are the inner voice of Dramaturgy, the consciousness that cannot help but see life as theater, every interaction as performance, every space as a stage with entrances, exits, and blocking.
 

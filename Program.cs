@@ -187,6 +187,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --cpu                              Run LLM on CPU only, overriding the setting and the first-run probe");
     Console.WriteLine("  --gpu                              Run LLM on the installed GPU backend (models/llama/backends/), same override");
     Console.WriteLine("  --no-llm-probe                     Skip first-run compute-device detection; use whatever is already saved");
+    Console.WriteLine("  --llm-threads <n>                  DEBUG: llama-server's -t for this run, over the saved setting — to measure at a");
+    Console.WriteLine("                                     player's thread count on a machine with more cores");
+    Console.WriteLine("  --llm-seed <n>                     DEBUG: send a sampler seed with every request, so two measured runs of one");
+    Console.WriteLine("                                     script take the same narrative path");
+    Console.WriteLine("  --no-chronicler                    DEBUG: record the journal but never write it up in the background — the");
+    Console.WriteLine("                                     'without' half of measuring what the chronicler costs");
     Console.WriteLine("  --developer-keys                   Enable the developer keyboard shortcuts (D/M/F/G/H/J, R/K, C/V, W/S zoom,");
     Console.WriteLine("                                     Tab outside exploration). Off by default, as in a shipped build,");
     Console.WriteLine("                                     which ignores this flag");
@@ -212,17 +218,24 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --allow-reentry                    DEBUG: let a world-map click on your own vertex re-enter that location.");
     Console.WriteLine("                                     The game refuses it — arriving somewhere already opens it, so a visit");
     Console.WriteLine("                                     costs a journey. Scripts need it: `travel here` is how they get in");
-    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand).");
+    Console.WriteLine("  --start-fight <creature>           DEBUG: begin a fight on reaching the world map (wolf, bear, bandit, brigand,");
+    Console.WriteLine("                                     the climate beasts, and the great reptiles: crocodile, giant monitor, horned");
+    Console.WriteLine("                                     lizard, cave lizard, carnotaurus, stegosaurus, triceratops, ankylosaurus).");
     Console.WriteLine("                                     The only way a script can reach fight mode: the real routes in are a random");
     Console.WriteLine("                                     travel encounter (which scripts disable) or provoking an NPC through dialogue");
     Console.WriteLine("  --encounter-on-arrival <creature>  DEBUG: force a travel encounter on the FINAL step of the next journey, once.");
     Console.WriteLine("                                     That step raises the step and arrival events from one call, so the fight begins");
     Console.WriteLine("                                     with no path left to walk — the case that stranded the run in Traveling");
-    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox) in the opening");
+    Console.WriteLine("  --encounter-mid-journey <creature> DEBUG: force a travel encounter on the first step of the next journey that is");
+    Console.WriteLine("                                     not its last, once. Winning it resumes the walk — the case that walked the rest of");
+    Console.WriteLine("                                     the way over a black screen. Needs a journey of two steps or more");
+    Console.WriteLine("  --spawn-beast <name>               DEBUG: put a beast (wolf, boar, bear, black bear, stray dog, fox, the climate");
+    Console.WriteLine("                                     beasts, or a great reptile such as crocodile or stegosaurus) in the opening");
     Console.WriteLine("                                     area of every scene, at every period. A wilderness factory only rolls one in");
     Console.WriteLine("                                     10-40% of the time and then lets it roam, so appease/tame are otherwise luck");
     Console.WriteLine("  --goal-only <verb-id>              DEBUG: the playground's goal choice must land on this verb (e.g. tame). Without");
     Console.WriteLine("                                     it --playground draws uniformly over every goal the observed object offers.");
+    Console.WriteLine("                                     Without --playground it narrows the goal judge's list the same way.");
     Console.WriteLine("                                     The CLI's `goal` command sets the same thing, for a script that needs to change it");
     Console.WriteLine("  --means-only <mm-id>               DEBUG: the playground's choice of means (which action modus mentis carries the");
     Console.WriteLine("                                     goal out) must land on this one. Examining is refused by any action modus mentis");
@@ -231,6 +244,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --doubt <low|medium|high>          DEBUG: every thinking modus mentis thinks at this level of doubt instead of its");
+    Console.WriteLine("                                     own: low takes no retry and never doubts, medium one, high two");
     Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
     Console.WriteLine("                                     wound, get_lost, waste_time or lose_focus. The draw is otherwise uniform,");
     Console.WriteLine("                                     so this is how a script reaches one. A table with none of it is a miss");
@@ -250,7 +265,12 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     e.g. all=3,encephalon=5,viscera=5. Memory, noetic points and humors follow from them");
     Console.WriteLine("  --humors <humor>[,…] | <queue>=<humor>[,…]  DEBUG: fill humor queues (paunch, hepar, spleen, pulmones, or all)");
     Console.WriteLine("                                     with these humors, e.g. voluptas or hepar=juvenescence,spleen=laetitia");
+    Console.WriteLine("  --craft-audit [out.json]           Print the crafting audit (materials, trades, stations, supply) and exit");
     Console.WriteLine("  --mm-audit                         Print the modus-mentis content audit (hard-rule violations, coverage, soft stats) and exit");
+    Console.WriteLine("  --will-audit [out.json]            Plan every will across the location kinds and its own places: coverage, related coverage, breadth");
+    Console.WriteLine("  --will-trace <will-id> [location]  Why a will has or lacks something to do: its plans and every action its verbs are offered on");
+    Console.WriteLine("  --play-audit                       Print the PLAY audit (share of areas holding a play, kinds of play, lessons) and exit");
+    Console.WriteLine("  --will-lesson-audit                Every object that teaches a will must be one that will acts on or passes through on its way");
     Console.WriteLine("  --verb-audit                       Print the verb-coverage audit (verbs per observable vs targets, dead verbs,");
     Console.WriteLine("                                     unresolvable modus-mentis and tool ids, landmark counts) and exit");
     Console.WriteLine("  --outcome-audit                    Print the outcome catalogue (every consequence, who produces it, what produces nothing) and exit");
@@ -265,6 +285,10 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --demo-max-runs <n>                Demo mode with n runs instead of the configured number");
     Console.WriteLine("  --demo-state-dir <dir>             Demo mode with both run-count copies kept under <dir> instead of AppData");
     Console.WriteLine("  --demo-reset                       With --demo-state-dir: start from a fresh installation (for CLI scripts)");
+    Console.WriteLine("  --forbidden-words-audit            Check the Layer 1 word list (placeholder names, re-replaced forms, known rewrites) and exit");
+    Console.WriteLine("  --forbidden-words-dump <file.tsv>  Write the Layer 1 word list (category, form, replacement) as TSV and exit");
+    Console.WriteLine("  --persona-flavour-scan <file>      Apply Layer 1 then each line's modus mentis flavour (lines: Class<TAB>text), print the changes and exit");
+    Console.WriteLine("  --forbidden-words-scan <file>      Apply the Layer 1 word list to each line of a text file, print every change and exit");
     Console.WriteLine("  --demo-audit                       Check the demo run limit (tampering, missing/corrupt/inconsistent copies, the limit) and exit");
     Console.WriteLine("  --help, -h                         Show this help message");
     return;
@@ -431,6 +455,14 @@ if (args.Length >= 1 && args[0] == "--npc-audit")
 
 // Item catalogue audit: report identity clashes, unreachable liquids, unweighed items and thin
 // trade tags, then exit. Headless — reads ItemRegistry only, so no LLM, no window, no world.
+// Crafting audit: materials, trades, where every station stands and what there is to work. Headless.
+if (args.Length >= 1 && args[0] == "--craft-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.Crafting.CraftAudit.BuildReport(
+        args.Length >= 2 && !args[1].StartsWith("--") ? args[1] : null));
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--item-audit")
 {
     Console.WriteLine(Cathedral.Game.Narrative.ItemAudit.BuildReport());
@@ -443,6 +475,16 @@ if (args.Length >= 1 && args[0] == "--item-audit")
 if (args.Length >= 1 && args[0] == "--building-audit")
 {
     Console.WriteLine(Cathedral.Game.Scene.Building.BuildingAudit.BuildReport());
+    return;
+}
+
+// Biome audit: build a sample of every wilderness location and score it for diversity (three of a kind
+// should be three different places), layout coherence (the map reads as the land) and exploration (the
+// ways of moving besides a walk). Headless. An optional second argument narrows it to one biome.
+if (args.Length >= 1 && args[0] == "--biome-audit")
+{
+    var report = Cathedral.Game.Scene.BiomeAudit.BuildReport(args.Length >= 2 ? args[1] : null);
+    Console.WriteLine(report);
     return;
 }
 
@@ -474,6 +516,13 @@ if (args.Length >= 1 && args[0] == "--verb-audit")
     return;
 }
 
+// Play audit: where PLAY is offered (a quarter of the areas is the aim), what is played, what it teaches.
+if (args.Length >= 1 && args[0] == "--play-audit")
+{
+    Console.WriteLine(Cathedral.Game.Scene.PlayAudit.BuildReport());
+    return;
+}
+
 // Verb probe: for each verb, the exact flags that reach it from a cold start. What a CLI test for
 // that verb has to open with. Headless: builds scenes and asks every verb; no LLM, no window.
 // Outcome audit: the catalogue of consequences, who produces each, and the two silent faults —
@@ -486,9 +535,44 @@ if (args.Length >= 1 && args[0] == "--outcome-audit")
 
 // Demo run limit: tampering, missing and corrupted copies, inconsistent copies and the limit itself,
 // against throwaway folders. Headless; never touches the real state files.
+// Layer 1 word list: its structural rules and the sentences whose rewrite is known. Headless.
+if (args.Length >= 1 && args[0] == "--forbidden-words-audit")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Run();
+    return;
+}
+
+// --forbidden-words-dump <file.tsv>: the whole Layer 1 list, by category.
+if (args.Length >= 2 && args[0] == "--forbidden-words-dump")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Dump(args[1]);
+    return;
+}
+
+// --persona-flavour-scan <file>: lines of "ModusMentisClass<TAB>text", rewritten as the rewriter does.
+if (args.Length >= 2 && args[0] == "--persona-flavour-scan")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.ScanFlavour(args[1]);
+    return;
+}
+
+// --forbidden-words-scan <file>: apply the Layer 1 list to each line of a text file, print the changes.
+if (args.Length >= 2 && args[0] == "--forbidden-words-scan")
+{
+    Cathedral.Game.Narrative.Sanitizer.ForbiddenWordsAudit.Scan(args[1]);
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--demo-audit")
 {
     Cathedral.DemoLimitAudit.Run();
+    return;
+}
+
+// --journal-prompts <journals-dir> <out.jsonl>: the chronicler's prompts for tools/journal/ (see ChroniclerBench)
+if (args.Length >= 3 && args[0] == "--journal-prompts")
+{
+    Cathedral.Game.Narrative.ChroniclerBench.Run(args[1], args[2]);
     return;
 }
 
@@ -502,7 +586,7 @@ if (args.Length >= 1 && args[0] == "--save-audit")
 if (args.Length >= 2 && args[0] == "--export-sfx")
 {
     Cathedral.Audio.UiSfxPlayer.ExportWavs(args[1]);
-    Console.WriteLine($"--export-sfx: hover.wav and click.wav written to {args[1]}");
+    Console.WriteLine($"--export-sfx: hover.wav, click.wav and transition.wav written to {args[1]}");
     return;
 }
 
@@ -516,6 +600,12 @@ if (args.Length >= 1 && args[0] == "--export-music")
 
 // --render-music <out.wav> [--seconds n] [--mood m] [--seed n] [--tracks n] [--journey j.json]: the music,
 // rendered faster than real time with its score beside it — what tools/music measures.
+if (args.Length >= 1 && args[0] == "--music-census")
+{
+    Environment.ExitCode = Cathedral.Audio.Music.Orchestra.Census(args);
+    return;
+}
+
 if (args.Length >= 1 && args[0] == "--render-music")
 {
     Environment.ExitCode = Cathedral.Audio.Music.OfflineRender.Run(args);
@@ -567,9 +657,34 @@ if (args.Length >= 1 && args[0] == "--crime-audit")
     return;
 }
 
+// Will coverage audit: plan every will from every sampled location kind and from the places it
+// belongs in, and report where it has something to do. Headless. An optional argument writes the
+// numbers as JSON (reports/multi-target-wills.html is built from two such files).
+if (args.Length >= 1 && args[0] == "--will-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.BuildReport(args.Length >= 2 && !args[1].StartsWith('-') ? args[1] : null));
+    return;
+}
+
+// Will lesson audit: every object that teaches a will must be something that will acts on, or on its
+// way — else picking the mind the object taught refuses the object. Headless.
+if (args.Length >= 1 && args[0] == "--will-lesson-audit")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillLessonAudit.BuildReport());
+    return;
+}
+
+if (args.Length >= 2 && args[0] == "--will-trace")
+{
+    Console.WriteLine(Cathedral.Game.Narrative.WillCoverageAudit.Trace(args[1], args.Length >= 3 && !args[2].StartsWith('-') ? args[2] : null));
+    return;
+}
+
 // Modus-mentis content audit mode: print the report (violations are listed, not fatal) and exit.
 if (args.Length >= 1 && args[0] == "--mm-audit")
 {
+    // The persona-wording section tells a concrete noun by its word vector (PersonaLint).
+    Cathedral.Game.Narrative.WordEmbedding.InitializeAsync().GetAwaiter().GetResult();
     Console.WriteLine(Cathedral.Game.Narrative.ModusMentisRuleValidator.BuildAuditReport());
     return;
 }
@@ -842,6 +957,24 @@ if (args.Any(a => a == "--gpu"))
     Console.WriteLine();
 }
 
+// --llm-threads <n>: llama-server's thread count for this run (measuring at a player's core count)
+{
+    int i = Array.IndexOf(args, "--llm-threads");
+    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out int n) && n > 0)
+        Cathedral.Config.Debug.ForcedLlmThreads = n;
+}
+
+// --llm-seed <n>: a sampler seed on every request, so two measured runs follow one path
+{
+    int i = Array.IndexOf(args, "--llm-seed");
+    if (i >= 0 && i + 1 < args.Length && int.TryParse(args[i + 1], out int n))
+        Cathedral.Config.Debug.LlmSeed = n;
+}
+
+// --no-chronicler: record the journal but never write it up in the background
+if (args.Any(a => a == "--no-chronicler"))
+    Cathedral.Config.Debug.ChroniclerDisabled = true;
+
 // Check for --no-llm-probe (skip first-run hardware detection)
 if (args.Any(a => a == "--no-llm-probe"))
 {
@@ -895,6 +1028,9 @@ for (int i = 0; i < args.Length; i++)
     if (args[i] == "--encounter-on-arrival" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.EncounterOnArrival = args[i + 1];
 
+    if (args[i] == "--encounter-mid-journey" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+        Cathedral.Config.Debug.EncounterMidJourney = args[i + 1];
+
     if (args[i] == "--spawn-beast" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
         Cathedral.Config.Debug.SpawnBeast = args[i + 1];
 
@@ -917,6 +1053,15 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
+
+    if (args[i] == "--doubt" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Enum.TryParse<Cathedral.Game.Narrative.DoubtLevel>(args[i + 1], ignoreCase: true, out var doubt)
+            && Enum.IsDefined(doubt))
+            Cathedral.Config.Debug.DoubtOverride = doubt;
+        else
+            Console.Error.WriteLine($"--doubt: unknown level '{args[i + 1]}' (low, medium, high)");
+    }
 
     if (args[i] == "--advance-days" && i + 1 < args.Length &&
         double.TryParse(args[i + 1], System.Globalization.NumberStyles.Float,

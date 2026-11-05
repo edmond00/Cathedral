@@ -16,7 +16,10 @@ public class MeditationModusMentis : ModusMentis
         "Holds a long, settled calm that quiets thought and steadies feeling. Keeps the mind clear and unhurried, and inclines toward focus and patience where noise would scatter attention.";
     public override string SkillMeans       => "the calming and stilling of the mind";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTarget? Will => WillTarget.To<SitAndWaitVerb>("sit still and quiet my mind");
+    public override WillTargets? Will => WillTargets.Of(
+        WillTarget.To<SitAndWaitVerb>("sit still and quiet my mind"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("rest my mind on a still thing").Teaching<MeditationModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Heights);
     public override string[] Organs        => new[] { "pineal_gland", "heart" };
 
     /// <summary>Stands on letters, number or institutions.</summary>
@@ -26,9 +29,9 @@ public class MeditationModusMentis : ModusMentis
 
     public override string PersonaTone     => "a temple-trained novice who lets the breath slow before any question is answered";
     public override string PersonaReminder  => "temple-trained novice";
-    public override string PersonaReminder2 => "someone who finds the still water beneath agitation";
+    public override string PersonaReminder2 => "someone who stays still beneath any agitation";
     public override string StyleInstruction =>
-        "Reach for calm images of breath, stillness and depth, with the settled serenity beneath all disturbance.";
+        "Calm and settled - meet whatever is in front of you from the stillness beneath it.";
 
     public override EmotionTrigger[] EmotionTriggers => new EmotionTrigger[]
     {

@@ -36,6 +36,13 @@ public abstract class NpcArchetype
     /// </summary>
     public virtual IReadOnlyDictionary<string, string>? VerbModiMentis => null;
 
+    /// <summary>
+    /// What this kind of creature can be played with (<c>PlayVerb</c>): a stray cat stroked, a dog
+    /// scratched behind the ears, hens chased round a yard. Null for most — nobody plays with a wolf.
+    /// <c>PlayVerb</c> still refuses a creature that counts the player an enemy.
+    /// </summary>
+    public virtual PlayActivity? Play => null;
+
     /// <summary>The lesson this creature teaches for <paramref name="verbId"/>, or null for no opinion.</summary>
     public string? ModusMentisFor(string verbId)
         => VerbModiMentis != null && VerbModiMentis.TryGetValue(verbId, out var id) ? id : null;

@@ -19,9 +19,9 @@ public class PeasantryModusMentis : ModusMentis
 
     public override string PersonaTone     => "a peasant child who knows hens, mud and the seasons better than letters";
     public override string PersonaReminder  => "peasant-bred labourer";
-    public override string PersonaReminder2 => "someone whose hands know the rhythm of barn and field";
+    public override string PersonaReminder2 => "someone whose hands know the work without being told";
     public override string StyleInstruction =>
-        "Use plain images of soil, beast and season, with the earthy, unhurried sense of barn and field.";
+        "Plain, earthy and unhurried - judge whatever is in front of you by what it is good for.";
 
     public override string PersonaPrompt => @"You are the inner voice of PEASANTRY, the unflashy practical knowledge of those who feed the world without writing about it.
 

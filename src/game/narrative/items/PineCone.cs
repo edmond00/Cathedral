@@ -1,13 +1,14 @@
+using Cathedral.Game.Narrative;
 ﻿using System.Collections.Generic;
 
 namespace Cathedral.Game.Narrative.Items;
 
 public sealed class PineCone : Item
 {
+    public override System.Collections.Generic.IEnumerable<ItemKind> DeclaredKinds => System.Linq.Enumerable.Concat(base.DeclaredKinds, new[] { ItemKind.Seed, ItemKind.Wood });
     public override ItemCategory Category => ItemCategory.Crafting;
     public override string ItemId => "pine_cone";
     public override string DisplayName => "Pine Cone";
     public override string Description => "A dry, open pine cone dropped from the tree";
     public override List<ItemTag> Tags => new() { ItemTag.Wood };
-    public override int PriceReference => 1;
 }
