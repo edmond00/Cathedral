@@ -306,14 +306,74 @@ def score(paths, show):
     return rows
 
 
+# ── Split: one neutral line rewritten as two requests on one slot ──────────────────────────────────
+# The second request carries the first exchange in its history, as a slot with keepHistory does in
+# the game. The point is that the fact a single rewrite drops (the lock, the missing tool) is then the
+# whole of a request of its own.
+
+def split_contexts(form):
+    """(id, verb, kind, [part1, part2], personas). form 'one' joins the parts into a single request."""
+    out = []
+    for i, d in enumerate(DOOR_DESCS):
+        out.append((f"door_obs_{i}", "unlock_door", "Observation",
+                    [f"My attention is drawn to a door. This is {d}.", "The door is locked."], OBSERVERS))
+    out.append(("door_unwilling", "unlock_door", "Outcome",
+                [refusal(UNLOCK), "The door stays shut and locked, and I leave it so."], DOOR_ACTORS))
+    out.append(("door_tool_refusal", "unlock_door", "Outcome",
+                [f"I wanted to {UNLOCK}, but my bare hands could not do it.",
+                 f"It takes {PICKS}, and my hands held none for it. So I left it undone."], DOOR_ACTORS))
+    return out
+
+
+def run_split(args):
+    T = T_LIVE
+    only = set(args.only.split(",")) if args.only else None
+    done = set()
+    if os.path.exists(args.out):
+        for l in open(args.out):
+            d = json.loads(l); done.add((d["context"], d["persona"], d["seed"]))
+    with open(args.out, "a") as fo:
+        for cid, verb, kind, parts, pids in split_contexts(args.form):
+            if only and not any(cid.startswith(o) for o in only):
+                continue
+            for pid in pids:
+                mm = MMS[pid]
+                for s in range(args.n):
+                    seed = 1000 + s
+                    if (cid, pid, seed) in done:
+                        continue
+                    if args.form == "one":
+                        r = record(kind, " ".join(parts), mm, "village")
+                        msgs = r["history"] + [{"role": "user", "content": P.build_prompt(T, r)}]
+                        outs = [P.generate(msgs, P.grammar(r), seed)["text"]]
+                    else:
+                        hist = record(kind, parts[0], mm, "village")["history"]
+                        outs = []
+                        for k, part in enumerate(parts):
+                            r = record(kind, part, mm, "village"); r["history"] = hist
+                            user = {"role": "user", "content": P.build_prompt(T, r)}
+                            text = P.generate(hist + [user], P.grammar(r), seed + 100 * k)["text"]
+                            outs.append(text)
+                            hist = hist + [user, {"role": "assistant", "content": text}]
+                    fo.write(json.dumps(dict(variant=f"split_{args.form}", context=cid, verb=verb, kind=kind,
+                                             persona=pid, seed=seed, parts=parts, outputs=outs,
+                                             neutral=" ".join(parts), output=" ".join(outs))) + "\n")
+                    fo.flush()
+                    print(f"{cid:20} {pid:12} | {' || '.join(o[:70] for o in outs)}", flush=True)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run"); r.add_argument("--out", required=True); r.add_argument("--variant", default="base")
     r.add_argument("--n", type=int, default=6); r.add_argument("--only", default="")
+    sp = sub.add_parser("split"); sp.add_argument("--out", required=True); sp.add_argument("--form", default="two",
+                        choices=["one", "two"]); sp.add_argument("--n", type=int, default=6); sp.add_argument("--only", default="")
     s = sub.add_parser("score"); s.add_argument("paths", nargs="+"); s.add_argument("--show", action="store_true")
     a = ap.parse_args()
     if a.cmd == "run":
         run(a)
+    elif a.cmd == "split":
+        run_split(a)
     else:
         score(a.paths, a.show)
