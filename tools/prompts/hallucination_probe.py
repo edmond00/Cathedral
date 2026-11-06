@@ -85,6 +85,7 @@ TOOL_WORDS = {
 def contexts(V):
     """(context id, verb, kind, neutral, persona ids, place). V rewords neutral lines (see VARIANTS)."""
     tr, fl, unl = V.get("tool_required", tool_required), V.get("failure", failure), V.get("unlock", UNLOCK)
+    imp, ref = V.get("impossible", impossible), V.get("refusal", refusal)
     hint_l = V.get("hint_locked", "the door seems locked")
     obs, rsn = V.get("observation", observation), V.get("reasoning", reasoning)
     out = [
@@ -92,8 +93,8 @@ def contexts(V):
         ("door_failure_focus", "unlock_door", "Outcome", fl(unl, ["lost the thread of my thoughts"]), DOOR_ACTORS, "village"),
         ("door_failure_time", "unlock_door", "Outcome", fl(unl, ["lost the time over it until noon"]), DOOR_ACTORS, "village"),
         ("door_witness", "unlock_door", "Outcome",
-         impossible(unl, "the weaver is right here — I would be caught red-handed."), DOOR_ACTORS, "village"),
-        ("door_unwilling", "unlock_door", "Outcome", refusal(unl), DOOR_ACTORS, "village"),
+         imp(unl, "the weaver is right here — I would be caught red-handed."), DOOR_ACTORS, "village"),
+        ("door_unwilling", "unlock_door", "Outcome", ref(unl), DOOR_ACTORS, "village"),
     ]
     for i, d in enumerate(DOOR_DESCS):
         out.append((f"door_obs_{i}", "unlock_door", "Observation", obs("a door", d, hint_l), OBSERVERS, "village"))
@@ -130,6 +131,18 @@ def tool_required_v2(act, tool):
     return (f"I wanted to {act}, but I have nothing to do it with: it takes {tool}, and I carry none. "
             f"So I did not {act}.")
 
+def tool_v3(act, tool):
+    # True whether or not the tool is carried: RequiredToolRule refuses when nothing is COMBINED with
+    # the act, so "I have none" would be false for a player with a hairpin in the pack.
+    return (f"I wanted to {act}, but my bare hands could not do it: it takes {tool}, "
+            f"and my hands held none for it. So I left it undone.")
+
+def impossible_undone(act, reason):
+    return f"I cannot {act}: {reason} So I leave it undone."
+
+def refusal_undone(act):
+    return f"I don't want to {act}, so I leave it undone."
+
 def failure_v1(act, effects):
     return f"Alas, I failed to {act}; it did not happen." + (f" Due to this failure I {', '.join(effects)}." if effects else "")
 
@@ -149,6 +162,8 @@ VARIANTS = {
     "unlock_only": {"unlock": "unlock the door"},
     "tool_v1": {"tool_required": tool_required_v1},
     "tool_v2": {"tool_required": tool_required_v2},
+    "tool_v3": {"tool_required": tool_v3},
+    "refusal_undone": {"impossible": impossible_undone, "refusal": refusal_undone},
     "combo": {"unlock": "pick the lock of the door", "tool_required": tool_required_v2, "failure": failure_v1,
               "hint_locked": "the door is locked"},
     "hint_is": {"hint_locked": "the door is locked"},
