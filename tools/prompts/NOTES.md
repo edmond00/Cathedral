@@ -599,6 +599,27 @@ went further and handed the model two acts to narrate, "find" and "take it in ha
 - `DoorPointOfInterest.DescribeFrom`: a locked door seen from its back reads "the door can be opened
   from this side" — it said "seems locked" while `open_door` offered the way out through it.
 
+### Splitting a line into two requests
+
+Asked after the above: does the dropped fact survive when it is the whole of a request of its own?
+`hallucination_probe.py split` rewrites two neutral parts in sequence on one slot, the second carrying
+the first exchange in its history as a `keepHistory` slot does; `--form one` sends the same parts as
+one request, the control for the wording (`results/halluc_split_{two,one}.jsonl`, 6 seeds a persona).
+
+| line | parts | split | one request |
+|---|---|---|---|
+| door observation (keywise, poetry) | "…This is {desc}." / "The door is locked." | lock kept **39/48**; 1 contradiction ("leaving the door unlocked for easy access") | lock kept 21/48 |
+| unwilling refusal (6 action personas) | "I don't want to unlock and open the door." / "The door stays shut and locked, and I leave it so." | "I close the door and lock it", "I lock it tight": **12/36** | 10/36 |
+| missing tool (6 action personas) | "…my bare hands could not do it." / "It takes {tool}, and my hands held none for it. So I left it undone." | the tool **used or sought**: "I tried with a hairpin", "I searched for…", "I found nothing but a bone needle": **24/36** | 0/36 |
+
+**Splitting works where the second part is a description, and fails where it is the end of an act.**
+A lone "The door is locked." is a perception and stays one. A lone "It takes a hairpin, and my hands
+held none" has lost the act it belonged to, and the model supplies one: trying with the hairpin. A
+state put in an act's mouth ("the door stays shut and locked, and I leave it so") is read as the act
+of locking it, split or not. So the missing-tool refusal stays one request (`ToolRequired` as
+shipped), the unwilling refusal is still open, and the door's lock is best said by a short second
+rewrite after the observation — at the price of one more request per locked door observed.
+
 ### Not solved by wording, and where it would be
 
 - **The locked state of a door is dropped by 6 rewrites in 10**, whatever the wording, and the
