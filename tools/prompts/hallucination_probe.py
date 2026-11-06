@@ -86,6 +86,7 @@ def contexts(V):
     """(context id, verb, kind, neutral, persona ids, place). V rewords neutral lines (see VARIANTS)."""
     tr, fl, unl = V.get("tool_required", tool_required), V.get("failure", failure), V.get("unlock", UNLOCK)
     hint_l = V.get("hint_locked", "the door seems locked")
+    obs, rsn = V.get("observation", observation), V.get("reasoning", reasoning)
     out = [
         ("door_tool_refusal", "unlock_door", "Outcome", tr(unl, PICKS), DOOR_ACTORS, "village"),
         ("door_failure_focus", "unlock_door", "Outcome", fl(unl, ["lost the thread of my thoughts"]), DOOR_ACTORS, "village"),
@@ -95,10 +96,10 @@ def contexts(V):
         ("door_unwilling", "unlock_door", "Outcome", refusal(unl), DOOR_ACTORS, "village"),
     ]
     for i, d in enumerate(DOOR_DESCS):
-        out.append((f"door_obs_{i}", "unlock_door", "Observation", observation("a door", d, hint_l), OBSERVERS, "village"))
+        out.append((f"door_obs_{i}", "unlock_door", "Observation", obs("a door", d, hint_l), OBSERVERS, "village"))
     for i, d in enumerate(DOOR_DESCS[:2]):
         out.append((f"door_reason_{i}", "unlock_door", "Reasoning",
-                    reasoning(d, hint_l, unl, "the delicate picking of locks and latches"), THINKERS, "village"))
+                    rsn(d, hint_l, unl, "the delicate picking of locks and latches"), THINKERS, "village"))
     for vid, act, tool, actors in TOOL_VERBS:
         out.append((f"{vid}_tool_refusal", vid, "Outcome", tr(act, tool), actors, "village"))
     # Other verbatims that bundle a second, unearned result after "and" — the same shape as
@@ -135,6 +136,13 @@ def failure_v1(act, effects):
 def strip_article(np):
     return re.sub(r"\b(a|an) ", "", np)
 
+def observation_sentence(name, desc, hint):
+    # The lock state as a sentence of its own, not a clause trailing an em dash.
+    return f"My attention is drawn to {name}. This is {desc}. The door is locked."
+
+def reasoning_sentence(desc, hint, goal, means):
+    return f"I notice {desc}. The door is locked. I want to {goal}. I will rely on {means}."
+
 VARIANTS = {
     "base": {},
     # the verb's Verbatim without "and open": the act named is the unlocking alone
@@ -144,6 +152,7 @@ VARIANTS = {
     "combo": {"unlock": "pick the lock of the door", "tool_required": tool_required_v2, "failure": failure_v1,
               "hint_locked": "the door is locked"},
     "hint_is": {"hint_locked": "the door is locked"},
+    "hint_sentence": {"observation": observation_sentence, "reasoning": reasoning_sentence},
 }
 
 
@@ -198,6 +207,8 @@ OPEN_RE = re.compile(
 
 def clauses(text):
     return [c for c in re.split(r"[.;!?]|,\s*(?:but|and|yet)\b|\bbut\b", text) if c.strip()]
+
+LOCK_KEPT = re.compile(r"\b(locked|sealed|shut|barred|held fast|locks in place|lock(ed)? tight)\b", re.I)
 
 def door_open(text):
     """Clauses asserting the door opened / was unlocked / was passed, with no hedge in the clause."""
@@ -255,17 +266,19 @@ def score(paths, show):
         if tf and d["kind"] == "Outcome": flags["tool_found"] = tf
         ad = act_done(t, d["verb"]) if d["kind"] == "Outcome" else []
         if ad: flags["act_done"] = ad
+        if d["kind"] in ("Observation", "Reasoning") and d["verb"] == "unlock_door" and not LOCK_KEPT.search(t):
+            flags["lock_dropped"] = ["(the locked state is not said)"]
         k = (d["variant"], d["context"])
-        a = agg.setdefault(k, dict(n=0, door_open=0, tool_found=0, tool_sought=0, act_done=0, any=0))
+        a = agg.setdefault(k, dict(n=0, door_open=0, tool_found=0, tool_sought=0, act_done=0, lock_dropped=0, any=0))
         a["n"] += 1
         for f in flags: a[f] += 1
-        a["any"] += bool(set(flags) - {"tool_sought"})   # a search invented is reported, not counted
+        a["any"] += bool(set(flags) - {"tool_sought", "lock_dropped"})   # reported, not counted as invented
         d["flags"] = flags
         if flags and show:
             print(f"[{d['variant']}/{d['context']}/{d['persona']}/{d['seed']}] {list(flags)}\n   {t}\n")
-    print(f"{'variant':12} {'context':22} {'n':>4} {'open':>5} {'tool':>5} {'srch':>5} {'done':>5} {'bad%':>6}")
+    print(f"{'variant':12} {'context':22} {'n':>4} {'open':>5} {'tool':>5} {'srch':>5} {'done':>5} {'nolock':>6} {'bad%':>6}")
     for (v, c), a in sorted(agg.items(), key=lambda x: (x[0][1], x[0][0])):
-        print(f"{v:12} {c:22} {a['n']:4} {a['door_open']:5} {a['tool_found']:5} {a['tool_sought']:5} {a['act_done']:5} {100*a['any']/a['n']:5.0f}%")
+        print(f"{v:12} {c:22} {a['n']:4} {a['door_open']:5} {a['tool_found']:5} {a['tool_sought']:5} {a['act_done']:5} {a['lock_dropped']:6} {100*a['any']/a['n']:5.0f}%")
     return rows
 
 
