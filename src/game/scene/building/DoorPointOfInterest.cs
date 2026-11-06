@@ -120,9 +120,15 @@ public class DoorPointOfInterest : ConnectorPointOfInterest, IContextualDescript
 
         // Em-dash, not a full stop: NeutralNarration.NounPhrase trims trailing .,;:!? and would
         // otherwise eat the hint before the sentence is ever assembled.
-        var hint = EffectiveState(when) == DoorState.Locked
-            ? "the door seems locked"
-            : "the door seems open";
+        //
+        // From the back the door is always passable (OpenDoorVerb: "exit back through"), so a locked
+        // door must not read as locked from there: the player was told "seems locked" and offered
+        // the way out through it in the same breath.
+        var hint = viewingArea.Id == BackArea.Id && EffectiveState(when) == DoorState.Locked
+            ? "the door can be opened from this side"
+            : EffectiveState(when) == DoorState.Locked
+                ? "the door seems locked"
+                : "the door seems open";
 
         return $"{body} — {hint}";
     }

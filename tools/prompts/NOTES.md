@@ -545,6 +545,76 @@ change, the variant called `now` is `iron`.
   has begun, and the first observation throws `ChoiceJudge is not ready` (the scripts here hold 150 s on
   the main menu, `wait for 150`).
 
+## State hallucinations: the open door and the found needle
+
+Reported in play: a **locked door narrated as open**, and a lockpicking refusal narrated as having
+**found the needle** it was refused for. Both are one failure — the rewrite states a world state the
+neutral line only names as wanted, needed or seemed — so `hallucination_probe.py` measures it wherever
+the game hands the model such a line: the missing-tool refusal of all seven tool-gated verbs, the
+door's observation and the reasoning about it, its failure, the witness refusal and the unwilling
+refusal, and the failures of the other verbatims that bundle a second result after "and" (open and
+step through, tame and keep, follow and see, hide and watch).
+
+Prompts are built by `prompt_lib` with the **live** wording (`T0` is frozen at the overhaul's base and
+differs in the rule and the reminder) in the personas likely to act on each line, the game's sampling,
+seeds 1000+. Every neutral line was checked against a `--playground` run, where the rewriter returns
+it verbatim: the door refusal in the test yard read exactly *"I wanted to unlock and open the test door,
+but I cannot do that with my bare hands. I would need to find a hairpin or a bone needle for that, and
+take it in hand to do this work."* The probe's regex is a recall screen only; **every count below is
+from reading the samples**.
+
+### Baseline (402 samples)
+
+| line | what goes wrong | count |
+|---|---|---|
+| missing-tool refusal, 7 verbs | the tool found, taken up or used: "Found a bone needle, took it to pry open the door", "Found one, took it, and laboured", "I found a sturdy blade to begin this work" | **8/144** (+ ~12 that echo "take it in hand" as a plan, 3 invented searches) |
+| locked door, observation + reasoning | the locked state not said at all | **25/42** |
+| the same, "pale where an older lock was prised away" | read as no lock: "where the lock was removed", "forced", "pulled free", "hinges creaking in the breeze" | 3/3 keywise, 2/3 poetry |
+| "I don't want to unlock and open the door." | the door already open: "I close the door quickly, unnoticed, and lock it tight", "draw back the latch, let the door close" | **4/36** |
+| witness refusal | the unlock narrated anyway ("the lock's mechanism yielding to a gentle touch"), or slipping through | **4/36** |
+| door failure, and the failures of the four compound verbatims | the result claimed | **0/144** |
+
+The last row is the finding the rest turns on: **a failure says "Alas, I failed to …", and that one
+word is never overridden**. A refusal never says the act did not happen, and the missing-tool refusal
+went further and handed the model two acts to narrate, "find" and "take it in hand".
+
+### Variants, same seeds
+
+| variant | change | result |
+|---|---|---|
+| `tool_v1` | "…and I have no {tool} with me. Without one I left it undone." | tool found **0/96**; door always shut; but the game's sentence is **false** when the tool is carried and not combined (`RequiredToolRule` reads only the combination) |
+| `tool_v2` | "it takes {tool}, and I carry none. So I did not {act}." | brute force does the act another way: "So I crushed the lock with my bare hands until it crumbled", 2/4 |
+| **`tool_v3`** (kept) | "…but my bare hands could not do it: it takes {tool}, and my hands held none for it. So I left it undone." | tool found **0/96**, brute force leaves the door 4/4, true whether or not the tool is carried. Tool named 77% (base 84%) |
+| `unlock_only` | `UnlockDoorVerb.Verbatim` "unlock the door", without "and open" | unwilling "close the door" 0/24, but "the lock is unobstructed", "hinges creaking" remain; tool refusals unchanged. A minor lever — not kept |
+| `combo` | verbatim "pick the lock of", `tool_v2`, "failed …; it did not happen", "is locked" | **brute force smashes through 4/4** (a method named invites another method); unwilling opens the door 3/24. Lost |
+| **`refusal_undone`** (witness kept) | `ActionImpossible` + " So I leave it undone." | witness **0/36** (base 4/36) |
+| `refusal_undone`, `refusal_left` (unwilling) | `ActionRefusal` + "so I leave it undone" / "so I leave things as they are" | unwilling unchanged (~5/36), and brute force smashes the door down 4/6 under the second. Lost |
+| `hint_is` / `hint_sentence` / `name_locked` | "is locked" / the state in its own sentence / "drawn to a locked door" | lock kept 14/24 / 9/24 / **4/24** against 11/24. No wording carries it |
+
+### Ported
+
+- `NeutralNarration.ToolRequired` ← `tool_v3`; `ActionImpossible` ends "So I leave it undone."
+  `cli/system/tool_required_refusal.cli` asserts the new sentence and the absence of "would need to find".
+- `BuildingDescriptions.DoorDetail`: the prised-away lock replaced by a lock-plate streaking rust.
+- `DoorPointOfInterest.DescribeFrom`: a locked door seen from its back reads "the door can be opened
+  from this side" — it said "seems locked" while `open_door` offered the way out through it.
+
+### Not solved by wording, and where it would be
+
+- **The locked state of a door is dropped by 6 rewrites in 10**, whatever the wording, and the
+  observation is the only place the player learns it short of trying the door. The fix is outside the
+  prose: append the state to the rewritten observation when the rewrite lacks it (the game knows it,
+  as it knows the "you" the observation guard catches), or mark it in the UI.
+- **The unwilling refusal is a persona inversion**: lockpicking "closes the door", brute force
+  "smashes it down". It is one clause long and the persona swamps it. A guard on the rewrite (a door
+  verb's refusal mentioning close/open/smash) or keeping a refusal's neutral text unvoiced are the
+  options; neither was tried.
+- `DoorPointOfInterest` calls an unlocked, **closed** door "the door seems open". Not measured;
+  `BuildingAudit` asserts the phrase.
+- Side faults seen and not counted: failures moved in time ("until noon" read "before noon"), roles
+  reversed ("I faltered in his grasp" taming), the act replaced ("I labored in the fields" stalking),
+  and stealth's floorboards in half its rewrites.
+
 ## To check by hand on Windows
 
 1. Play an outcome that teaches something new and read the narration: the lesson now comes in its own

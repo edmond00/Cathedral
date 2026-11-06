@@ -6,7 +6,8 @@
 # second Execute was the same refusal charged again. Three things are asserted here:
 #
 #   * the refusal sentence is the longer, explicit one (NeutralNarration.ToolRequired): what was
-#     wanted, that bare hands cannot do it, and which tool to find. Under --playground the rewrite
+#     wanted, that bare hands cannot do it, which tool it takes, and that it was left undone —
+#     never "find" or "take it in hand", which came back as done. Under --playground the rewrite
 #     is a stand-in, so this asserts the neutral text the persona is handed — the half a test can see;
 #   * clicking the action again offers "Use Tool" only — Execute is disabled;
 #   * "Use Tool" with the knife then carries the cut through.
@@ -54,9 +55,11 @@ advance 12 180
 click action 0
 choose 0
 advance 12 180
-# Split in two because the line wraps between "find" and "a knife" — `expect` matches one row.
-expect with my bare hands. I would need to find
-expect a knife for that
+# Short fragments, because `expect` matches one row and the sentence wraps.
+expect my bare hands could not do it
+expect it takes a knife
+expect So I left it undone
+expect-not I would need to find
 
 # ── The action is still the way on, and only through a tool ──────────────────
 click action 0

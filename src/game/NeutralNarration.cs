@@ -527,12 +527,21 @@ public static class NeutralNarration
     /// Refusal for a coded-rule block: the character declines an action they cannot take, with a
     /// first-person reason (e.g. a witness present, an enemy at hand). Re-expressed in the acting
     /// modus mentis's voice as the [IMPOSSIBLE] narration.
+    ///
+    /// <para><b>It ends by saying the act was left undone.</b> A refusal, unlike a failure, never
+    /// said the act did not happen — "Alas, I failed to …" does, and a failure was never once
+    /// narrated as achieved (0 of 144 samples) — so the rewrite was free to carry on past the
+    /// reason: "the lock's mechanism yielding to a gentle touch", "so I slip past unnoticed", about
+    /// a door a witness had just stopped (4 of 36). With this sentence: 0 of 36
+    /// (tools/prompts/hallucination_probe.py, variant refusal_undone; NOTES "State hallucinations").</para>
     /// </summary>
     public static string ActionImpossible(string actionDisplay, string reason)
     {
         var r = (reason ?? "").Trim();
-        if (r.Length == 0) return $"I cannot {FirstPerson(actionDisplay)} here.";
-        return $"I cannot {FirstPerson(actionDisplay)}: {FirstPerson(r)}";
+        if (r.Length == 0) return $"I cannot {FirstPerson(actionDisplay)} here, so I leave it undone.";
+        r = FirstPerson(r);
+        if (!r.EndsWith('.') && !r.EndsWith('!') && !r.EndsWith('?')) r += ".";
+        return $"I cannot {FirstPerson(actionDisplay)}: {r} So I leave it undone.";
     }
 
     /// <summary>
@@ -540,11 +549,23 @@ public static class NeutralNarration
     /// literal than <see cref="ActionImpossible"/> on purpose: the re-voicing keeps only what it
     /// cannot avoid, and a strongly-styled modus mentis given "I cannot cut a heart: I would need a
     /// knife" handed back "I hold still, waiting. It breaks." — with the knife gone. Saying the want,
-    /// the bare hands and the missing tool in three separate clauses leaves it nothing to drop.
+    /// the bare hands and the missing tool in separate clauses leaves it nothing to drop.
+    ///
+    /// <para><b>It names no act the character could be narrated doing.</b> It used to end "I would
+    /// need to find {tool} for that, and take it in hand to do this work" — and "find" and "take it
+    /// in hand" came back as things done: "Found a bone needle, took it to pry open the door", "Found
+    /// one, took it, and laboured", in 8 of 144 samples over the seven tool-gated verbs, a player's
+    /// report among them. Now: 0 of 96. The tool is still named in 77% of rewrites against 84%.</para>
+    ///
+    /// <para><b>It says the hands held no tool, never that none is carried.</b> The rule refuses when
+    /// nothing is <i>combined</i> with the act, a hairpin in the pack included, so "I have none with
+    /// me" would be the game's own sentence lying. And it closes on "I left it undone", not "so I did
+    /// not {act}": that ending let brute force do the act another way — "so I smashed through it with
+    /// my fists" in 2 of 4, and 4 of 4 once the act was named as a method ("pick the lock").</para>
     /// </summary>
     public static string ToolRequired(string actionDisplay, string tool)
-        => $"I wanted to {FirstPerson(actionDisplay)}, but I cannot do that with my bare hands. " +
-           $"I would need to find {tool} for that, and take it in hand to do this work.";
+        => $"I wanted to {FirstPerson(actionDisplay)}, but my bare hands could not do it: it takes {tool}, " +
+           $"and my hands held none for it. So I left it undone.";
 
     // ── A modus mentis the body can no longer carry ────────────────────────────
 

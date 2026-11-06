@@ -189,7 +189,10 @@ public static class BuildingDescriptions
         "banded with rust-pitted iron",
         "its planks shrunk apart enough to see light through",
         "swollen in the frame and hard to shift",
-        "pale where an older lock was prised away",
+        // Was "pale where an older lock was prised away": read as a door with no lock, every time a
+        // keywise rewrite met it ("where the lock was removed", "forced"), of a door the next line
+        // calls locked (tools/prompts/hallucination_probe.py, door_obs_2).
+        "its iron lock-plate streaking rust down the wood",
         "hung crooked, catching on the sill",
         "smoke-blackened along the top edge",
         "patched with a fresher board at the foot",

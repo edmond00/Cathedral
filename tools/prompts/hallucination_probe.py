@@ -156,6 +156,13 @@ def observation_sentence(name, desc, hint):
 def reasoning_sentence(desc, hint, goal, means):
     return f"I notice {desc}. The door is locked. I want to {goal}. I will rely on {means}."
 
+def observation_named(name, desc, hint):
+    # The state carried by the name the attention line gives the object, which every rewrite keeps.
+    return f"My attention is drawn to a locked door. This is {desc}."
+
+def refusal_left(act):
+    return f"I don't want to {act}, so I leave things as they are."
+
 VARIANTS = {
     "base": {},
     # the verb's Verbatim without "and open": the act named is the unlocking alone
@@ -167,6 +174,8 @@ VARIANTS = {
     "combo": {"unlock": "pick the lock of the door", "tool_required": tool_required_v2, "failure": failure_v1,
               "hint_locked": "the door is locked"},
     "hint_is": {"hint_locked": "the door is locked"},
+    "name_locked": {"observation": observation_named},
+    "refusal_left": {"refusal": refusal_left, "impossible": impossible_undone},
     "hint_sentence": {"observation": observation_sentence, "reasoning": reasoning_sentence},
 }
 
