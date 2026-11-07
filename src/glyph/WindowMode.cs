@@ -32,7 +32,15 @@ public static class WindowMode
     {
         if (window == null || fullscreen == _isFullscreen) return;
 
-        if (fullscreen)
+        if (GlfwErrors.OnWayland)
+        {
+            // Wayland lets no client place its own window, so the borderless-window trick cannot
+            // work there: the window would be the monitor's size wherever the compositor put it.
+            // A compositor's fullscreen changes no display mode either, so it costs neither of the
+            // things exclusive fullscreen costs on Windows.
+            window.WindowState = fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+        }
+        else if (fullscreen)
         {
             // Remember where the window was before it stops being a window.
             _windowedSize     = window.ClientSize;
