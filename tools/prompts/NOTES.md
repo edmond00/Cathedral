@@ -620,6 +620,36 @@ of locking it, split or not. So the missing-tool refusal stays one request (`Too
 shipped), the unwilling refusal is still open, and the door's lock is best said by a short second
 rewrite after the observation — at the price of one more request per locked door observed.
 
+### A judge to catch it
+
+Asked next: could a judge slot, neutral and specialised, catch these after the rewrite?
+`tools/judge/halluc_judge.py` puts each rewrite with its neutral line to the shipped model, read as
+`ChoiceJudge` reads a decision (first-token letter log-probabilities, one forward pass, ~1.0–1.4 s and
+~200 prompt tokens on 4 CPU cores). Cases: `judge_halluc_cases.jsonl`, 229 rewrites labelled by hand
+before any judge saw them, 50 positive — a stratified draw (half from a broad keyword screen, half at
+random) plus the positives found earlier, with the near misses kept as hard negatives ("an older lock
+was forcibly removed" restates its line; "I close the door on my thoughts" is an idiom).
+
+| phrasing | AUC | at even odds: precision / recall / false alarms | best F1 |
+|---|---|---|---|
+| generic ("…happened, was done, found or used, or is in a state the original does not say?") | 0.65 | 0.50 / 0.24 / 7% | 0.42 |
+| checklist (the act done; a tool held, found or tried; a thing opened, closed, locked, broken) | **0.72** | 0.69 / 0.18 / 2% | 0.48 |
+| consistent ("could both be true at once?") | 0.56 | answers one letter whatever the case | 0.39 |
+
+(Both letter orders averaged; one order alone moved the generic judge's recall from 56% to 4%.)
+
+**It does not work.** The best phrasing catches the blatant (a door smashed, 5 of 7) and almost nothing
+else: a door closed or locked by the character 0 of 17, a tool found, taken or tried 3 of 20, the lock
+gone 1 of 5. At the rate these occur in play (~5% of the affected rewrites), its even-odds setting
+would catch about one in five and be wrong about two flags in three; lowered to catch more, it flags a
+third of faithful rewrites. The model that writes the hallucination does not see it when asked.
+
+What the cases do show is that the forms are few and fixed — "found one", "took it", "tried with a",
+"I close the door", "smashed through" — and the game knows which tool is missing and that the door is
+locked. A pattern check keyed to those facts, on refusals only, found 47 of 50 with 7 false alarms
+here; it was written from these cases, so that number is fitted, not measured, and it would need a
+fresh set to mean anything. Falling back to the neutral line on a hit would be its whole cost.
+
 ### Not solved by wording, and where it would be
 
 - **The locked state of a door is dropped by 6 rewrites in 10**, whatever the wording, and the
