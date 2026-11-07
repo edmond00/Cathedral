@@ -16,9 +16,11 @@ public class CrueltyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads others for their fear and their weak points, and takes an advantage without the check of mercy. Inclines toward intimidation, domination and pain, pressing where another would ease off.";
     public override string SkillMeans    => "cruelty and predatory instinct";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<CrushVerb>("crush something small");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wilds, Places.Stock, Places.Dwellings);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted to crush small things and refused the intimidation and domination its description names; cruelty is a manner of pressing any advantage, and something small to crush is offered almost everywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "spleen", "heart" };
 

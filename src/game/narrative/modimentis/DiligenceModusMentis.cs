@@ -16,6 +16,7 @@ public class DiligenceModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<RequestJobVerb>("find work"),
+        WillTarget.To<AskToUseWorkshopVerb>("ask for a bench to work at"),
         WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("take in honest work waiting to be done").Teaching<DiligenceModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Shops, Places.Fields, Places.Stock);
     public override string[] Organs        => new[] { "hands", "backbone" };

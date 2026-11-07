@@ -18,6 +18,8 @@ public class GregariousnessModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<ProposeToJoinVerb>("gather company about me"),
+        WillTarget.To<SingAlongVerb>("join the company in a song"),
+        WillTarget.To<HearGossipVerb>("join the talk of the place"),
         WillTarget.To<Cathedral.Game.Scene.Verbs.ContemplateVerb>("take in a place where people gather").Teaching<GregariousnessModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Taverns, Places.Streets);
     public override string[] Organs        => new[] { "tongue", "heart" };

@@ -16,9 +16,13 @@ public class SlothModusMentis : ModusMentis
     public override string MenuDescription =>
         "Looks for the path of least work in any task, an artful laziness that spares effort. Inclines reasoning and action toward the result reached with the least exertion, distrusting labour for its own sake.";
     public override string SkillMeans       => "the clever avoidance of unnecessary effort";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<SitAndWaitVerb>("sit down and do nothing");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Taverns, Places.Grassland);
+    /// <summary>
+    /// An ordinary mind, not a will. It was a will to sit, and so refused every task its own description
+    /// says it does lazily: the least effort is a manner of doing anything, and what it wanted (a seat)
+    /// is offered everywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "trunk" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

@@ -15,9 +15,11 @@ public class ExplorationModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads unknown country for a path, for water, and for shelter, keeping a sense of the way ahead. Inclines toward scouting and traversal, and works out unfamiliar ground step by step.";
     public override string SkillMeans       => "the finding of paths, shelter and safe ways through unknown land";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<FollowPathVerb>("follow a path to see where it goes");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Wild);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted to follow paths and refused the scouting, the water and the shelter its description reads country for; working out unknown ground is a manner of moving anywhere wild, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

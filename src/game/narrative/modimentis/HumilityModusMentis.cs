@@ -14,11 +14,11 @@ public class HumilityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Claims less than is due, takes the lower seat, and lets others be right. Greets people modestly and puts them at ease; costs nothing, disarms almost everybody, and leaves considerable room to be more than expected.";
     public override string SkillMeans       => "the taking of the low place on purpose";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTargets.Of(
-        WillTarget.To<BegForCoinVerb>("ask for alms"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look upon a humble thing").Teaching<HumilityModusMentis>());
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Sacred);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted to beg and refused the modest greeting and the lower seat its description names; humility is a manner of dealing with anybody, and begging is offered almost everywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.High;
     public override string[] Organs        => new[] { "heart", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;

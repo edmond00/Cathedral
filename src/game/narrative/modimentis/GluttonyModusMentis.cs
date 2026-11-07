@@ -14,9 +14,11 @@ public class GluttonyModusMentis : ModusMentis
     public override string MenuDescription =>
         "Keeps appetite forward in the mind, with a nose for where a good meal is to be had. Inclines reasoning and action toward food, drink and indulgence, and finds little worth the trouble that cannot be eaten or drunk.";
     public override string SkillMeans       => "the keen love of food";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.ToAny("lay hands on something to eat", typeof(GrabVerb), typeof(GatherVerb), typeof(StealVerb)).Yielding<ConsumableItem>();
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Taverns, Places.Shops);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted one way to food; appetite colours any act that ends in a meal, and something to eat is offered almost everywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "nose", "tongue" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     public override MoralLevel MoralLevel => MoralLevel.Low;

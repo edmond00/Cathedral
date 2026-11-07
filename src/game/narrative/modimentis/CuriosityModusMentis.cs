@@ -14,9 +14,13 @@ public class CuriosityModusMentis : ModusMentis
     public override string MenuDescription =>
         "Cannot leave a closed thing closed. Opens, looks in, goes round the back, and asks the question everyone else decided not to. The engine of most discoveries and a fair number of disasters.";
     public override string SkillMeans       => "the need to find out what is behind it";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<ExamineVerb>("find out what is behind something");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Ruins, Places.Learning);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will to examine it refused the doors, the boxes and the
+    /// questions its own description says it cannot leave alone; finding out is a bent toward anything,
+    /// and examining is offered everywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "encephalon" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
 

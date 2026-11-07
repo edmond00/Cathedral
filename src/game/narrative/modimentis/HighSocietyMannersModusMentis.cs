@@ -15,9 +15,13 @@ public class HighSocietyMannersModusMentis : ModusMentis
     public override string MenuDescription =>
         "Holds conduct to the polished customs of city society, tracking fine address and refined manner. Reads a genteel room for its unspoken rules, and inclines toward the courteous, well-bred move.";
     public override string SkillMeans       => "refined manners and polite conversation";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<IntroduceMeVerb>("be introduced to somebody of standing");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Streets, Places.Taverns);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted an introduction and refused the courteous move
+    /// its description says it makes in any genteel room; manners are a way of dealing with anybody, so
+    /// no list of targets could make them a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Thinking, ModusMentisFunction.Speaking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs        => new[] { "tongue", "ears" };
 
     /// <summary>Words with a person, not a voice in the air.</summary>

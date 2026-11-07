@@ -15,9 +15,11 @@ public class TopographiaModusMentis : ModusMentis
     public override string MenuDescription =>
         "Reads terrain by elevation, slope, and the lie of the land. Holds attention on ground and high places, and inclines toward understanding a landscape by its form.";
     public override string SkillMeans => "terrain and landscape reading";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<ExamineVerb>("read the lie of the land").On<LandscapePointOfInterest>();
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Heights, Places.Wild);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted to examine landscapes; reading terrain by its form is a way of looking at any ground, like the senses and appraisal, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "eyes", "feet" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Sensory;
     

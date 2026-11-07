@@ -14,9 +14,11 @@ public class AestheticModusMentis : ModusMentis
     public override string MenuDescription =>
         "Resolves a scene into composition before meaning: proportion, colour, balance, the play of light and space. Registers harmony as pleasing and disorder as a mild offence, and attends to craftsmanship whether it is present or absent.";
     public override string SkillMeans => "keen aesthetic sense";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will };
-    public override WillTargets? Will => WillTarget.To<ContemplateVerb>("contemplate something beautiful");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred, Places.Woodland, Places.Heights, Places.Shore);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted to contemplate; seeing composition before meaning is a way of looking at anything, and contemplation is offered everywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking };
+    public override DoubtLevel? Doubt => DoubtLevel.Medium;
     public override string[] Organs => new[] { "eyes", "pineal_gland" };
 
     /// <summary>Stands on letters, number or institutions.</summary>

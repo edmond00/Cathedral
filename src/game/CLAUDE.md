@@ -853,6 +853,16 @@ the senses, stealth, athletics, surefoot, nerve, cold_blood, beast_sense, apprai
 serves any act is better as a means many wills can call on. Of the fourteen, woodcraft and husbandry
 became wills again; hunt stayed ordinary because a childhood grants it (see rule C3 below).
 
+**A disposition of general meaning is the same case.** Greed wanted only to steal, gluttony one way to
+food, sloth a seat, curiosity to examine, cruelty to crush something small, humility to beg — each refused
+everything else its own description covers. Every one of their acts was already offered in 84–100% of
+location kinds, so a second target would only have made a general mind the audit fails, not a desire:
+greed, gluttony, sloth, curiosity, cruelty, aesthetic, reverence, exploration, topographia, humility and
+high_society_manners are ordinary minds (Observation and/or Thinking, keeping their Emotion and Speaking).
+**The test is breadth**: a general disposition whose acts are narrow takes several targets instead —
+friendship (a friend made, a companion taken along, a quarrel mended), gregariousness (company gathered,
+a song joined, the talk joined), diligence (work found, a bench asked for).
+
 **What a will wants decides where it idles, so each declares where it belongs**: `ModusMentis.WillPlaces`,
 area kinds grouped in `Places` (`Places.Woodland`, `Places.Damp`, `Places.Shops`…), required by R19.
 `--will-audit` plans every will from each and reports the share that has a way to a target (see the
@@ -956,8 +966,8 @@ GrantArchetypeSkills`), so a catalogue change moves only skills, never the trait
 drawn after them. Before, it moved everything, and every location id built different people.
 
 **`--mm-audit` holds two shares** (`WillAudit`, ✗ outside either): wills in the catalogue at 36–44%
-(39% — 186 of 477, from 29.6% before wills had several targets), and wills among the lessons the offered
-acts teach at 28–42% (30%, from 27%) — what a played character comes to hold. It also lists every target
+(42% — 233 of 556, from 29.6% before wills had several targets), and wills among the lessons the offered
+acts teach at 28–42% (28.3%, from 27%; 30.7% before the general dispositions above were made ordinary) — what a played character comes to hold. It also lists every target
 of every will, each ✗ where no location offers it.
 It once read 56%: the obvious will to unlock is the mind unlocking teaches, so nearly every verb's
 default lesson had been made a will of that verb. The general ones were made ordinary again (finesse,
@@ -1046,7 +1056,7 @@ Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R23, fatal): **L
 is never doubted, **Medium** may try again once, **High** twice — a try spent by a refusal or by the
 player's NO, never by a YES — and the player may doubt at Medium and High while a try remains. It is
 the mind's own, chosen for its persona (questioning, weighing, checking minds High; minds that know
-at a glance, sense, feel, follow a code or act on instinct Low, half the catalogue; 24 / 48 / 72 High / Medium / Low), not the body's: it was the
+at a glance, sense, feel, follow a code or act on instinct Low, half the catalogue; 25 / 53 / 77 High / Medium / Low), not the body's: it was the
 pineal gland's score once (`ThinkingIterationsStat`, `DoubtStat`), and every mind of one body
 second-guessed itself alike. A will declares none and is Medium: it never doubts (its goal is set by
 its course) and keeps one more try of a step on its way. Both live in

@@ -14,9 +14,11 @@ public class ReverenceModusMentis : ModusMentis
     public override string MenuDescription =>
         "Recognises what has been set apart - a shrine, a grave, an oath, a threshold - and observes it. Lowers the voice, uncovers the head, does not take what is there. Costs nothing and is noticed by everybody.";
     public override string SkillMeans       => "the observing of what has been set apart";
-    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
-    public override WillTargets? Will => WillTarget.To<ContemplateVerb>("contemplate what has been set apart");
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Sacred);
+    /// <summary>
+    /// An ordinary mind, not a will. As a will it wanted to contemplate, and contemplation is offered everywhere, so it was never narrowed to what is set apart; recognising and keeping what is sacred is a manner of acting anywhere, so no list of targets could make it a desire.
+    /// </summary>
+    public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Observation, ModusMentisFunction.Thinking, ModusMentisFunction.Emotion };
+    public override DoubtLevel? Doubt => DoubtLevel.Low;
     public override string[] Organs        => new[] { "heart", "hippocampus" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Semantic;
     public override MoralLevel MoralLevel => MoralLevel.High;
