@@ -46,8 +46,15 @@ expect-state skills skill-rejected gut_feeling
 manage
 save roundtrip
 
-# Close the segment (the footer CONTINUE), which opens a new phase on the same tree.
+# A new phase on the same tree. The footer CONTINUE no longer opens one — the examine changed neither
+# the area nor the hour, so the phase carries on, and in it the examine already offered is not offered
+# again. Leaving and coming back does: a new visit opens a new phase.
 click button
+wait 60
+click button
+wait mode WorldView 90
+travel here
+wait mode LocationInteraction 90
 advance 12 180
 regions
 

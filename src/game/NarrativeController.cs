@@ -229,6 +229,9 @@ public class NarrativeController
     /// <summary>The action whose outcome the pending CONTINUE follows; spent if the phase carries on.</summary>
     private ParsedNarrativeAction? _pendingAttempted;
 
+    /// <summary>What was in view before the pending action's reports applied (<see cref="PresenceAt"/>).</summary>
+    private HashSet<Guid>? _pendingPresence;
+
     /// <summary>
     /// The live observations whose keywords no longer answer a click, because what they were about
     /// left the scene while the phase carried on past an action. Read by the UI
@@ -746,17 +749,28 @@ public class NarrativeController
     /// Things leaving the scene do not stop it; their keywords and buttons are greyed instead.
     /// </summary>
     private bool CanCarryOn(ActionExecutionResult result, Cathedral.Game.Scene.Area? areaBefore,
-                            TimePeriod? periodBefore, bool lostWay, HashSet<Guid>? presentBefore)
+                            TimePeriod? periodBefore, bool lostWay)
     {
         if (_scene == null || _pov == null || _scene.Phase != NarrationPhase.Exploration) return false;
         if (lostWay || IsMovementAction(result.Action)) return false;
         if (areaBefore == null || areaBefore.Id != _pov.Where.Id) return false;
         if (periodBefore != _pov.When) return false;
+        return true;
+    }
+
+    /// <summary>
+    /// The half of <see cref="CanCarryOn"/> asked again on the CONTINUE itself, since the scene can
+    /// change between the outcome and the press: a companion dead of a wound the act dealt leaves a
+    /// body, and nobody to narrate as. Nothing come into view since <paramref name="presentBefore"/>,
+    /// no body fallen, nobody drawn in, no focus handed on, and the acting member still in the party.
+    /// </summary>
+    private bool SceneStillStands(HashSet<Guid>? presentBefore)
+    {
+        if (_scene == null || _pov == null || presentBefore == null) return false;
         if (_scene.PendingCorpseObservations.Count > 0 || _scene.PendingArrivalObservations.Count > 0
             || _scene.PendingOpeningFocus != null) return false;
         if (_activePartyMember != _protagonist && !_protagonist.CompanionParty.Contains(_activePartyMember)) return false;
-        if (presentBefore == null || PresenceAt(_pov)!.Any(id => !presentBefore.Contains(id))) return false;
-        return true;
+        return !PresenceAt(_pov)!.Any(id => !presentBefore.Contains(id));
     }
 
     /// <summary>Everything in view where <paramref name="pov"/> stands, by id: points of interest, the items in them, the people.</summary>
@@ -3017,6 +3031,7 @@ public class NarrativeController
         var presentBefore = PresenceAt(_pov);
         _pendingContinuity = false;
         _pendingAttempted  = null;
+        _pendingPresence   = null;
 
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
@@ -3226,8 +3241,9 @@ public class NarrativeController
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
-            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay, presentBefore);
+            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay);
             _pendingAttempted  = result.Action;
+            _pendingPresence   = presentBefore;
         }
         else
         {
@@ -3237,8 +3253,9 @@ public class NarrativeController
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
-            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay, presentBefore);
+            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay);
             _pendingAttempted  = result.Action;
+            _pendingPresence   = presentBefore;
         }
 
         // Refresh debug window to reflect any state changes
@@ -5586,10 +5603,11 @@ public class NarrativeController
     private void HandleContinueClicked()
     {
         // Read once and forgotten, whichever branch below this press takes.
-        bool carryOn   = _pendingContinuity;
+        bool carryOn   = _pendingContinuity && SceneStillStands(_pendingPresence);
         var  attempted = _pendingAttempted;
         _pendingContinuity = false;
         _pendingAttempted  = null;
+        _pendingPresence   = null;
 
         // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
         // because the segment it closes is the one the fight itself will grey into history.

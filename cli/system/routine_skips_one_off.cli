@@ -32,11 +32,17 @@ advance 12 180
 expect-verb catch
 expect Caught:
 
-# The walk after it. The footer closes the segment and opens the next phase, pinned to the track.
+# The walk after it, on a visit of its own. The catch changed neither the area nor the hour, so its
+# CONTINUE carries the phase on rather than opening the next one; leaving and coming back opens a
+# phase pinned to the field. Leaving from the area the visit opened in records nothing.
 observe "Test Field"
 goal move
 click button
 wait 60
+click button
+wait mode WorldView 90
+travel here
+wait mode LocationInteraction 90
 advance 12 180
 click keyword 0
 choose 0

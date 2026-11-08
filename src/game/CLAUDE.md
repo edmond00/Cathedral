@@ -1054,8 +1054,11 @@ budget reaches, and they were designed together — changing one alone re-breaks
 **An action in place does not end the phase.** The CONTINUE after an act that left the party where
 and when it was — exploration, same area, same period, the visit not lost, nothing new in view (no
 point of interest, item or person present that was not before, no corpse, no arrival, no opening focus
-handed on: `CanCarryOn`, read in `CommitOutcomeResult` against `PresenceAt` taken before the reports
-apply) — calls `ContinueNarrationSegment` instead of `BeginNarrationSegment`. Nothing greys into
+handed on, the acting member still in the party) — calls `ContinueNarrationSegment` instead of
+`BeginNarrationSegment`. Two halves: `CanCarryOn` (area, period, the visit) in `CommitOutcomeResult`,
+and `SceneStillStands` on the press itself, against `PresenceAt` taken before the reports applied —
+the scene can change between the outcome and the CONTINUE (a companion dead of the act's wound leaves
+a body and nobody to narrate as: `companion_death_acting.cli`). Nothing greys into
 history and no observation is made; **both ledgers are kept**, so nothing already observed or offered
 is observed or offered again. What the act changed is read back onto the live text: the act tried is
 `NoLongerPossible`, succeeded or failed (an introduction is made once); every other button whose

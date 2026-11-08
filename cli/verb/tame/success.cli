@@ -37,7 +37,7 @@ click continue
 advance 12 180
 expect Appeasement
 
-# --- close the segment; the beast is still in the scene and still observable ------
+# --- the phase carries on past the appease; the beast is still observable -------
 click button
 wait 60
 advance 12 180
@@ -53,7 +53,9 @@ click keyword 0
 choose 0
 choose beast_sense
 advance 12 180
-click action 0
+# Action 1: the appease above (action 0) is still on screen, spent — the appease changed neither
+# the area nor the hour, so the phase carried on past it and its buttons kept their numbers.
+click action 1
 choose 0
 advance 12 180
 click continue
