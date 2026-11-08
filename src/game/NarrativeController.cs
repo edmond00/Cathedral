@@ -1772,6 +1772,9 @@ public class NarrativeController
                     CanLoseTheWay: _scene?.Phase == NarrationPhase.Exploration);
                 _pendingEval      = evalResult;
                 _pendingSucceeded = true;
+                // As a settled roll leaves it: not loading. The paths that generate the outcome set it
+                // again themselves; a wait's or a backtrack's question must not sit under a loading state.
+                _narrationState.IsLoadingAction = false;
                 OnDiceRollContinue();
                 return;
             }
