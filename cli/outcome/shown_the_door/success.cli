@@ -39,16 +39,20 @@ expect-outcome time_shift
 expect-state where "period=Night"
 expect-state where "confronted=FoundWaiting"
 
-# The next phase opens on them. Going up to them is one of the few acts a confrontation permits,
+# The phase carries on, and they are observed in the live text as they come in. Going up to them is one of the few acts a confrontation permits,
 # and it opens found_waiting rather than caught-red-handed.
 click button
 advance 12 180
 goal explain_myself
-click keyword 0
+# The phase carried on, and whoever came in is observed in the live text below what was there —
+# so their keyword is not keyword 0 (that is still the first thing observed), and is named instead.
+click keyword woman
 choose 0
 choose ripelore
 advance 12 180
-click action 0
+# The phase carried on past the first act (NarrativeController.ContinueNarrationSegment): its
+# buttons are still on screen, spent, and keep their numbers, so the next act's button follows them.
+click action 1
 choose 0
 advance 12 180
 click continue

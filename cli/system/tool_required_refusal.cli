@@ -52,7 +52,9 @@ choose 0
 choose ripelore
 advance 12 180
 
-click action 0
+# The phase carried on past the first act (NarrativeController.ContinueNarrationSegment): its
+# buttons are still on screen, spent, and keep their numbers, so the next act's button follows them.
+click action 2
 choose 0
 advance 12 180
 # Short fragments, because `expect` matches one row and the sentence wraps.
@@ -62,14 +64,14 @@ expect So I left it undone
 expect-not I would need to find
 
 # ── The action is still the way on, and only through a tool ──────────────────
-click action 0
+click action 2
 inspect popup
 expect-state popup Execute(disabled)
 expect-no-state popup Use Tool(disabled)
 choose 1
 choose 0
 advance 12 180
-click action 1
+click action 3
 choose 0
 advance 12 180
 click continue
