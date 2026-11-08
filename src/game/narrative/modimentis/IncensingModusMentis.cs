@@ -15,7 +15,8 @@ public class IncensingModusMentis : ModusMentis
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
         WillTarget.To<Cathedral.Game.Scene.Verbs.GrabVerb>("take up incense and censer").YieldingKind(ItemKind.Holy),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.SingAlongVerb>("sing through the rite"));
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SingAlongVerb>("sing through the rite"),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.SmellVerb>("breathe in what the censer burns").Teaching<IncensingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(new[] { typeof(Cathedral.Game.Scene.ChapelArea) }, new[] { typeof(Cathedral.Game.Scene.SanctumArea) });
     public override string[] Organs        => new[] { "nose", "arms" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;

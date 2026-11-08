@@ -234,7 +234,8 @@ every will planned from the entry area and from the first area of a kind it decl
 - **breadth** — the share of location kinds where the will has something to do. **✗ above 75% for a
   will with several targets**: added targets are how a desire grows into a general mind (`cross`,
   `scale_up`, `provoke`, fuel or wood as a second target did exactly that). A single target whose act
-  is everywhere (to sit, to smell) is marked `~`, not failed. Breadth is judged on the will's **own**
+  is everywhere (to sit, to smell) is marked `~`, not failed. A buy target and a sell target count as one
+  (R24 makes a will to trade write them apart). Breadth is judged on the will's **own**
   targets: one bound to its lesson (`.Teaching<…>()`, below) reaches only what the content already says
   teaches the will, so it neither counts toward "several" nor toward the breadth that fails.
 

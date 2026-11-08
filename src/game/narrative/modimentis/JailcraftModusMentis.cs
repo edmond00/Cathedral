@@ -1,3 +1,4 @@
+using System.Linq;
 using Cathedral.Game.Scene.Verbs;
 using Cathedral.Game.Narrative.Memory;
 
@@ -15,9 +16,13 @@ public class JailcraftModusMentis : ModusMentis
     public override string SkillMeans       => "the keeping of prisoners and their keys";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
     public override WillTargets? Will => WillTargets.Of(
-        WillTarget.To<UnlockDoorVerb>("open a locked door"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a ring of keys").SellingAny("keys", typeof(Cathedral.Game.Narrative.World.Items.KeyRing)));
-    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold, Places.Dwellings);
+        // A keeper's doors, not every door: any lock anywhere made it a general burglar's mind.
+        WillTarget.To<UnlockDoorVerb>("open a door of the keep").Where(e => e is Cathedral.Game.Scene.Building.ConnectorPointOfInterest c
+            && (Places.Stronghold.Any(t => t.IsInstanceOfType(c.AreaA)) || Places.Stronghold.Any(t => t.IsInstanceOfType(c.AreaB))), "into a stronghold"),
+        WillTarget.ToAny("take the keys in hand", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).Yielding<Cathedral.Game.Narrative.World.Items.KeyRing>(),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("buy a ring of keys").SellingAny("keys", typeof(Cathedral.Game.Narrative.World.Items.KeyRing)),
+        WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("look over the keys and the locks").Teaching<JailcraftModusMentis>());
+    public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Stronghold);
     public override string[] Organs        => new[] { "hands", "ears" };
     public override ModusMentisMemoryType MemoryType => ModusMentisMemoryType.Procedural;
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Handcraft;

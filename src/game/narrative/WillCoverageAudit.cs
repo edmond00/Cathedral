@@ -52,6 +52,20 @@ public static class WillCoverageAudit
     /// </summary>
     public const double MinRelated = 0.60, MinRelatedOverall = 0.60, MaxBreadth = 0.75;
 
+    /// <summary>
+    /// How many desires a will's targets are: every target but those bound to its lesson, with a buy and a
+    /// sell counted once. R24 makes a will that trades write the two as separate targets, so to count them
+    /// as two would call a will to trade a desire grown general merely for being written as the rule asks.
+    /// </summary>
+    public static int DesiresOf(WillTargets? will)
+    {
+        if (will == null) return 0;
+        var own = will.Where(t => t.Teaches == null).ToList();
+        bool Only<TVerb>(WillTarget t) => t.VerbTypes.All(v => typeof(TVerb).IsAssignableFrom(v));
+        bool trades = own.Any(Only<ProposeToBuyVerb>) && own.Any(Only<ProposeToSellVerb>);
+        return own.Count - (trades ? 1 : 0);
+    }
+
     /// <summary>One will's numbers.</summary>
     public sealed class Row
     {
@@ -89,7 +103,7 @@ public static class WillCoverageAudit
             Id          = m.ModusMentisId,
             Targets     = WillAudit.Describe(m),
             TargetCount = WillAudit.TargetCount(m),
-            DesireCount = m.Will?.Count(t => t.Teaches == null) ?? 0,
+            DesireCount = DesiresOf(m.Will),
             Places      = m.WillPlaces.Select(t => t.Name).ToArray(),
         });
         var perKind = wills.ToDictionary(m => m, _ => new Dictionary<string, (int Starts, int Planned)>());

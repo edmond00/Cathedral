@@ -874,8 +874,14 @@ a shovel and a pruning hook, every edifice gatehouse its key pegs, the slip sail
 **A target offered almost everywhere makes a will general.** `cross`, `scale_up`, `climb_down`,
 `provoke`, fuel, wood, clay, stone are in nearly every place; added as a second target they turned a
 desire into a general mind, and the audit fails a will with several targets that reaches more than 75%
-of location kinds. A single target whose act is everywhere (sloth sits, scenting smells) was the design
-before and is only noted. Brawling wants somebody hostile (`OnHostile`: an enemy-on-sight kind, or a
+of location kinds. A single target whose act is everywhere (spadework digs, scenting smells) is only
+noted. **A buy and a sell count as one desire** (`WillCoverageAudit.DesiresOf`): R24 makes a will to trade
+write them apart, and counted as two they failed every trade will at 78%, the share of kinds with a
+trader. **A tool is not a target**: the planner fetches a goal verb's implement on its own, so "lay hands
+on a spade" beside `dig` only widened the will (removed from five); a dig will is narrowed by what the
+ground holds instead (peat, loam, a grave). Two more that had grown general were narrowed to what their
+description names: jailcraft to the doors of a stronghold and its keys (it wanted any lock anywhere),
+foul_play to the cheat (murdering a sleeper reached 81% alone). Brawling wants somebody hostile (`OnHostile`: an enemy-on-sight kind, or a
 person who counts somebody an enemy) or a weapon to buy, not a passer-by: struck at in a street, a
 peaceful citizen was a refusal waiting at the click, and the will idled in every town.
 

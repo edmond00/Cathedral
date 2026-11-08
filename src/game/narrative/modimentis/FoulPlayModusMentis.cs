@@ -18,10 +18,12 @@ public class FoulPlayModusMentis : ModusMentis
         "Looks for the unfair edge in any contest: the cheat, the distraction, the rule that can be broken unseen. Inclines toward deception and sabotage, and treats scruple as a handicap.";
     public override string SkillMeans => "dirty tricks and deception";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Action };
-    public override WillTargets? Will => WillTargets.Of(
-        WillTarget.To<MurderVerb>("kill by foul means"),
-        WillTarget.To<Cathedral.Game.Scene.Verbs.ProposeToBuyVerb>("get a blade for the deed").Selling(ItemKind.Blade),
-        WillTarget.To<PlayVerb>("cheat at knucklebones").Playing("knucklebones", typeof(KnucklebonesPlay)));
+    /// <summary>
+    /// The cheat in a contest, which is what its description is about. It also wanted to murder a sleeper,
+    /// and somebody sleeps in nearly every settled place: with that, it reached 81% of location kinds and
+    /// read as a general killer's mind. Murder is still a crime it carries out without demur (Low morality).
+    /// </summary>
+    public override WillTargets? Will => WillTarget.To<PlayVerb>("cheat at knucklebones").Playing("knucklebones", typeof(KnucklebonesPlay));
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Dwellings, Places.Streets, Places.Taverns);
     public override MoralLevel MoralLevel => MoralLevel.Low;
     public override string[] Organs => new[] { "cerebrum", "heart" };

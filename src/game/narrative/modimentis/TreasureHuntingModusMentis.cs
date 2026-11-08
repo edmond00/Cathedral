@@ -17,9 +17,8 @@ public class TreasureHuntingModusMentis : ModusMentis
     public override string SkillMeans       => "the hunting of hidden treasure and lost riches";
     public override ModusMentisFunction[] Functions => new[] { ModusMentisFunction.Will, ModusMentisFunction.Emotion };
     public override WillTargets? Will => WillTargets.Of(
-        WillTarget.To<DigVerb>("dig for what is hidden"),
+        WillTarget.To<DigVerb>("dig for what lies buried").On<Cathedral.Game.Scene.GravePointOfInterest>(),
         WillTarget.ToAny("pick up something of worth", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingKind(ItemKind.Valuable),
-        WillTarget.ToAny("lay hands on a spade", typeof(Cathedral.Game.Scene.Verbs.GrabVerb), typeof(Cathedral.Game.Scene.Verbs.StealVerb)).YieldingAny("a spade", typeof(Cathedral.Game.Narrative.World.Items.Shovel), typeof(Cathedral.Game.Narrative.World.Items.GraveSpade)),
         WillTarget.To<Cathedral.Game.Scene.Verbs.ExamineVerb>("search where something of worth may lie").Teaching<TreasureHuntingModusMentis>());
     public override System.Collections.Generic.IReadOnlyList<System.Type> WillPlaces => Places.Of(Places.Ruins, Places.Desert, Places.Shore);
     public override string[] Organs        => new[] { "eyes", "anamnesis" };
