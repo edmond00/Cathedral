@@ -580,6 +580,18 @@ public static class Config
         public static int RefuseMeans { get; set; } = 0;
 
         /// <summary>
+        /// What the playground's willingness stand-in answers in place of "willing": eager (−1 difficulty)
+        /// or reluctant (+1). Set by <c>--willingness &lt;eager|willing|reluctant&gt;</c>; null (the default)
+        /// answers "willing" every time. Narrowed like a real answer to the stances the rules leave on offer,
+        /// and <c>--refuse-means</c> still answers first.
+        ///
+        /// <para>The difficulty of an action is the verb's base plus this modifier, and difficulty 0 rolls
+        /// no dice, so this is how a script reaches both ends of it: an eager means taking a difficulty-1 act
+        /// to 0 (no roll), and a reluctant one raising a difficulty-0 act to 1 (rolled, and so able to fail).</para>
+        /// </summary>
+        public static Cathedral.Game.Narrative.Willingness? WillingnessOverride { get; set; } = null;
+
+        /// <summary>
         /// Every thinking modus mentis's <see cref="Cathedral.Game.Narrative.DoubtLevel"/>, in place of
         /// the one it declares. Set by <c>--doubt &lt;low|medium|high&gt;</c>. Null (the default) leaves
         /// each mind its own. A script about iterative thinking or doubt pins it, so that which mind the
@@ -1414,6 +1426,9 @@ public static class Config
         
         // Difficulty level glyphs (1-10)
         public static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
+
+        // Difficulty 0: an act that cannot fail, and rolls no dice (REMEMBER, and any plain act)
+        public const char AutomaticDifficultyGlyph = '○';
 
         // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
         public const char GoldCoinSymbol   = '⎊'; // yellow

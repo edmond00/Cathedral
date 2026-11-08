@@ -244,6 +244,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --willingness <eager|reluctant>    DEBUG: under --playground, willingness answers this instead of \"willing\" (difficulty");
+    Console.WriteLine("                                     -1 / +1). Eager takes a difficulty-1 act to 0, which rolls no dice; reluctant raises 0 to 1");
     Console.WriteLine("  --doubt <low|medium|high>          DEBUG: every thinking modus mentis thinks at this level of doubt instead of its");
     Console.WriteLine("                                     own: low takes no retry and never doubts, medium one, high two");
     Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
@@ -1053,6 +1055,15 @@ for (int i = 0; i < args.Length; i++)
 
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
+
+    if (args[i] == "--willingness" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Enum.TryParse<Cathedral.Game.Narrative.Willingness>(args[i + 1], ignoreCase: true, out var willingness)
+            && Enum.IsDefined(willingness) && willingness != Cathedral.Game.Narrative.Willingness.Unwilling)
+            Cathedral.Config.Debug.WillingnessOverride = willingness;
+        else
+            Console.Error.WriteLine($"--willingness: unknown stance '{args[i + 1]}' (eager, willing, reluctant; a refusal is --refuse-means)");
+    }
 
     if (args[i] == "--doubt" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
     {

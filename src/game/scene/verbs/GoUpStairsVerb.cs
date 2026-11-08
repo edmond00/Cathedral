@@ -19,7 +19,8 @@ public class GoUpStairsVerb : Verb
     {
         FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new ContusionWound(),
     };
-    public override int    BaseDifficulty => 1;
+    /// <summary>A stair is built to be walked: not rolled (difficulty 0). The stumble above is a reluctant means's, at 1.</summary>
+    public override int    BaseDifficulty => 0;
 
     /// <summary>A stair is built to be walked up. The climbs, which are not, keep their implements.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;

@@ -1,0 +1,39 @@
+# Difficulty 0 — an eager means takes a difficulty-1 act to 0
+#
+# move has a base difficulty of 1. The action modus mentis's willingness adds −1 (eager), 0 or +1
+# (reluctant); --willingness eager pins the playground's answer, so the walk is difficulty 0 — the ○
+# glyph — and succeeds with no roll, `strategy fail-dice` notwithstanding. cli/verb/move/fail.cli is
+# the same walk at a willing means, which rolls and misses.
+#
+# FLAGS: --playground --willingness eager --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Yard"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal move
+advance 12 180
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+
+expect ○
+expect-not ①
+
+click action 0
+choose 0
+advance 12 180
+
+expect SUCCESS
+expect-not FAILURE
+expect-verb move
+expect Moved to:
+expect-outcome area_move
+quit

@@ -1129,6 +1129,44 @@ that stopped left the player hunting for a keyword that reached the rest.
 intended shape, not an oversight — but it is why LEAVE must stay ungated by anything except a Visual
 threat.
 
+### Difficulty 0: the act that is not rolled
+
+An action's difficulty is `Verb.ActionDifficulty`: `DifficultyFor(target)` plus the willingness
+modifier (eager −1, willing 0, reluctant +1), clamped to **0–10**. It used to be clamped to 1–10, and 0
+existed only for the childhood reminescence. **Difficulty 0 now means what it means there: no dice, no
+humor layer, success.** `ExecuteActionPhaseAsync` checks it after the coded rules and the evaluation
+and goes straight to the success path (`OnDiceRollContinue` with `_pendingSucceeded = true`), so the
+wait and backtrack questions, the outcome preview and the lessons are the ordinary ones. `strategy
+fail-dice` cannot fail it — there is no roll to force. The action line shows `○`
+(`Config.Symbols.AutomaticDifficultyGlyph`); an action not yet evaluated is `NotEvaluated` (−1), no
+longer 0.
+
+Two ways in:
+
+- **Base 0** — acts with nothing in them to go wrong: `open_door` (unlocked), `go_up_stairs`,
+  `go_down_stairs`, `sit_and_wait`, and the plain conversation openers whose stakes are the tree's
+  (`meet_stranger`, `strengthen_relationship`, `propose_to_buy`, `propose_to_sell`, `request_job`,
+  `introduce_me`, `ask_to_use_workshop`). Their failure tables stay: a reluctant means raises them to 1.
+- **An eager means on a base-1 act** — `move`, `grab`, `gather`, the senses, the other social
+  openers. A will carrying out its own act is eager, so its plain acts are free.
+
+Kept at 1 on purpose: `move` (getting lost is what failing to walk means, and `follow_path` is priced
+one above it), the senses (a failure is "looked and saw nothing", designed), `grab`/`gather` (they
+yield resources and are intrusive conduct), `wake_up`, `crush`, `reconcile` (approaching an enemy),
+the `SocialDialogueVerb` family (asking, begging, provoking, bribing — the approach is the delicate
+part), and `explain_myself` (failing it is a slip in front of the confronter, which opens the
+ordinary tree).
+
+**A crime is never 0.** `ActionDifficulty` floors an illegal act (`Verb.IsIllegal`, trespass
+included) at 1: the whole crime chain — the Audio witness drawn in, the confronter, found waiting via
+`TimeWastedOutcome` — hangs off a failed roll, and an act that cannot fail could never be heard. Do not
+lift that floor for a verb without giving its crime another way to be caught.
+
+`--willingness <eager|reluctant>` pins the playground's willingness answer (it is otherwise always
+"willing"), which is how scripts reach both ends: the `fail.cli` of every base-0 verb runs reluctant,
+`cli/system/difficulty_zero_eager.cli` takes `move` to 0, `difficulty_zero_no_roll.cli` shows a base-0
+verb surviving `fail-dice`, and `difficulty_zero_crime_floor.cli` the trespass floor.
+
 ### What a failure costs
 
 **No failed act is free.** `Verb.FailurePenalties(target)` is a table of `FailurePenalty` entries,

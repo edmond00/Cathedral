@@ -26,7 +26,11 @@ public class OpenDoorVerb : Verb
     {
         FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, FailurePenalty.LoseFocus, new StrainWound(),
     };
-    public override int    BaseDifficulty => 1;
+    /// <summary>
+    /// Pushing an unlocked door open cannot go wrong, so it is not rolled (difficulty 0). The
+    /// shoulder above is what a reluctant means risks, at 1; a trespasser's door is 1 as any crime is.
+    /// </summary>
+    public override int    BaseDifficulty => 0;
 
     /// <summary>Pushing an unlocked door open. Forcing a shut one is BREAK and picking a fastened one is UNLOCK DOOR; both take implements, and this is neither.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;

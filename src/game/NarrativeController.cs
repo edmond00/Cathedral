@@ -1758,6 +1758,24 @@ public class NarrativeController
                 }
             }
             
+            // === DIFFICULTY 0: NO ROLL ===
+            // An act that cannot fail (a plain verb, or a difficulty-1 one an eager means took on)
+            // succeeds outright, the way REMEMBER does in the childhood reminescence: no dice, no
+            // humor layer, no failure penalty, and no strategy override — `fail-dice` cannot fail
+            // what is not rolled. Everything after the roll is the ordinary success path: the same
+            // wait / backtrack questions, the same outcome preview, the same lessons.
+            if (evalResult.DifficultyLevel == 0)
+            {
+                Console.WriteLine($"NarrativeController: difficulty 0 — '{action.ActionText}' succeeds with no roll");
+                evalResult.Situation = new FailureSituation(
+                    _activePartyMember, _pov, _narrationState.ThinkingAttemptsRemaining,
+                    CanLoseTheWay: _scene?.Phase == NarrationPhase.Exploration);
+                _pendingEval      = evalResult;
+                _pendingSucceeded = true;
+                OnDiceRollContinue();
+                return;
+            }
+
             // === PHASE 2: DICE ROLL (dice rolling animation) ===
             Console.WriteLine($"NarrativeController: VerbAction passed plausibility, starting dice roll phase");
 

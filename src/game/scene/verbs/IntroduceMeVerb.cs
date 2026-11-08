@@ -24,7 +24,7 @@ public class IntroduceMeVerb : DialogueVerb
 {
     public override string VerbId         => "introduce_me";
     public override string DisplayName    => "Ask for an Introduction";
-    public override int    BaseDifficulty => 1;   // the action only opens the conversation
+    public override int    BaseDifficulty => 0;   // the action only opens the conversation, which is not rolled
 
     protected override string DialogueTreeId => "introduce_me";
 

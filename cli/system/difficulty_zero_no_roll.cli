@@ -1,0 +1,39 @@
+# Difficulty 0 — an act that cannot fail is not rolled
+#
+# open_door has a base difficulty of 0 (pushing an unlocked door). At a willing means it stays 0:
+# the action line opens on the ○ glyph, no dice are rolled, and it succeeds — even under
+# `strategy fail-dice`, which forces every ROLL to fail and so proves there was none. This is how the
+# childhood reminescence's REMEMBER has always resolved, now open to any plain act.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "Test Door"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal open_door
+advance 12 180
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+
+# The action line carries the difficulty-0 glyph, not ①.
+expect ○
+expect-not ①
+
+click action 0
+choose 0
+advance 12 180
+
+expect SUCCESS
+expect-not FAILURE
+expect-verb open_door
+expect-outcome area_move
+quit

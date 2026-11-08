@@ -245,8 +245,21 @@ source lowers the ceiling, and the ceiling binds the level
 ([Chapter II §3](02-memory.md#3-level-and-its-ceiling)). An injured body therefore casts fewer dice,
 and one injured past a certain point casts none at all with that manner of the mind.
 
-**The difficulty is the number of sixes required**, from one to ten: the difficulty inherent in that
-manner of acting upon that thing, adjusted by the acting modus mentis's degree of willingness.
+**The difficulty is the number of sixes required**, from nought to ten: the difficulty inherent in that
+manner of acting upon that thing, adjusted by the acting modus mentis's degree of willingness — one
+less when it is eager, one more when it is reluctant.
+
+**An act of difficulty nought is not rolled.** Some manners of acting have nothing in them that can
+go wrong, and are of difficulty nought by nature: to open a door that is not fastened, to go up or
+down a stair, to sit and let the hour pass, and to go over to a person to speak — to present oneself,
+to propose a trade, to ask for work, the use of a workshop or an introduction, or simply to talk; what
+is at stake in those lies in the conversation that follows ([Chapter VII](07-social.md)). An act of
+difficulty one carried out by an eager modus mentis falls to nought likewise. Such an act casts no
+dice and succeeds, as a recollection does; it therefore never fails, and draws none of the
+consequences of failure (§8). A reluctant modus mentis raises it to one, and it is rolled as any
+other. **A crime is never of difficulty nought**: an act that is unlawful where and upon whom it is
+done (§7) is of difficulty one at the least, whatever its manner and however eager its means, since
+what a crime risks is the failure that is overheard, and an act that cannot fail could never be.
 
 **Each die is cast independently; the act succeeds when the count of sixes reaches the difficulty.**
 Nothing else enters the roll. Organs do not nudge it; they set the ceilings that let a modus mentis

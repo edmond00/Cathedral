@@ -25,8 +25,7 @@ choose ripelore
 advance 12 180
 click action 0
 choose 0
-advance 12 180
-click continue
+# Difficulty 0 at a willing means: no dice, so no dice box to confirm — the outcome comes straight on.
 advance 12 180
 
 expect SUCCESS
