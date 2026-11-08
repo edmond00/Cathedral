@@ -90,6 +90,24 @@ public sealed class ObservationLedger
     public List<NarrativeAnchor> Remaining(IEnumerable<NarrativeAnchor> outcomes)
         => outcomes.Where(o => !_observed.Contains(o)).ToList();
 
+    /// <summary>
+    /// Makes whatever <paramref name="released"/> accepts observable again within the phase, together
+    /// with every group holding one of them (forgotten too, so it is rebuilt from the scene as it now
+    /// stands). For a phase that carries on past an action: a person who walked out and came back, or
+    /// a thing the action changed, is something new to look at (<c>NarrativeController.ContinueNarrationSegment</c>).
+    /// Returns how many observed objects were released.
+    /// </summary>
+    public int ReleaseWhere(Func<NarrativeAnchor, bool> released)
+    {
+        var groups = _groups.Where(kv => kv.Value.Members.Any(released)).ToList();
+        foreach (var (key, group) in groups)
+        {
+            _groups.Remove(key);
+            _observed.Remove(group);
+        }
+        return _observed.RemoveWhere(o => released(o));
+    }
+
     /// <summary>Forgets everything — a new narration phase begins.</summary>
     public void Clear()
     {

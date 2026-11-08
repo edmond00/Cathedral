@@ -18,6 +18,15 @@ namespace Cathedral.Game;
 /// </summary>
 public static class NeutralNarration
 {
+    // ── The hour ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// The line that marks the hour moving on inside a phase that carries on past an action (a wait,
+    /// an hour wasted): the text above it was written at the earlier hour and stays live, so the
+    /// reader is told the time it describes is past. Shown as it stands, never re-voiced.
+    /// </summary>
+    public static string HourComeRound(Cathedral.Game.Narrative.TimePeriod now) => $"It is {now.ToString().ToLowerInvariant()} now.";
+
     // ── Observation ────────────────────────────────────────────────────────────
 
     /// <summary>

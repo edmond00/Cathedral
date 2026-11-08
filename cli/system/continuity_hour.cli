@@ -1,0 +1,70 @@
+# continuity — the hour moves on, and the phase carries on
+#
+# A wait on the Test Bench moves the hour, but not the party, so its CONTINUE does not close the phase
+# (NarrativeController.ContinueNarrationSegment): a line marks the new hour, and the text above stays
+# live. The wait is spent at the hour it was made, and can be offered again at the next — the bench
+# is thought about twice, and a second wait is offered.
+#
+# The farmer is the Test Yard's one walker: here at dawn, in the wood through the morning and noon,
+# back at afternoon. Waited out to the afternoon, he comes into view while the phase carries on, and
+# is observed then, in a block added to the live text — nobody narrated him at dawn, since
+# --observe-only pins the opening to the bench.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Bench"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal sit_and_wait
+advance 12 180
+
+# --- the first wait: dawn to morning (advance takes the next hour when the box asks) ---------
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Time passes:
+
+click button
+wait
+advance 12 180
+expect-not after trying to
+expect It is morning now.
+expect-state actions action 0 verb=sit_and_wait state=spent
+expect-not farmer
+
+# --- the second wait, offered again at the new hour: morning to afternoon --------------------
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+expect-state actions action 1 verb=sit_and_wait state=live
+click action 1
+choose 0
+wait
+click continue
+wait
+click period afternoon
+advance 12 180
+expect Time passes:
+
+click button
+wait
+advance 12 180
+expect-not after trying to
+expect It is afternoon now.
+expect-state actions action 1 verb=sit_and_wait state=spent
+# The farmer, back from the wood, observed as he comes into view.
+expect farmer
+quit

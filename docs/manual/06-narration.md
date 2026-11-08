@@ -75,20 +75,26 @@ played at.
 
 Narration proceeds in **phases**. A phase opens with an observation, and within it the acting body
 may attend to further things, deliberate, and act. The phase closes when the live text is set aside
-into history — on moving to another area, on a fight, on a conversation, on a hand-off, or on the
-acceptance of an outcome that changed the scene.
+into history, and that happens only when the whole view is replaced: on moving to another area, on a
+fight, on a conversation, a trade or a stint of work, on a hand-off, on the way being lost, and on
+leaving.
 
-**An act that leaves the scene standing does not close the phase.** Where the outcome is accepted
-in the same area and the same period, the visit not lost, and nothing come into view that was not
-there before — no point of interest, item or person newly present, no body fallen, nobody drawn in —
-the phase carries on. The text before the act and the account after it remain live; whatever was
-attended to may be deliberated upon again; and every act already deliberated upon may still be
-attempted, so long as it remains possible. Its possibility is asked again upon the scene as it now
-stands: an act the scene no longer admits — the thing seized is gone, the stranger is a stranger no
-more — can no longer be attempted, and a thing that has left the scene can no longer be attended
-to. **The act just attempted is spent**, whether it succeeded or failed: it is not attempted twice
-in one phase. Things leaving the scene do not close the phase; things entering it do, for they must
-be observed.
+**Every other act leaves the phase standing**, whatever it changed. The text before the act and the
+account after it remain live; whatever was attended to may be deliberated upon again; and every act
+already deliberated upon may still be attempted, so long as it remains possible. What the act changed
+is read back upon what stands written:
+
+- **What left is spent.** An act the scene no longer admits can no longer be attempted — the thing
+  seized is gone, the stranger is a stranger no more, the man slain — and a thing that has left the
+  scene can no longer be attended to, until it returns.
+- **The act just attempted is spent**, whether it succeeded or failed: it is not attempted twice in
+  the same hour of a phase. Once the hour has moved on it may be deliberated upon and offered anew.
+- **What changed, or came, is new.** A thing that now admits other acts than it did, and anything come
+  into view — a body fallen, somebody drawn in by a noise, somebody whom the hour brings, a sleeper now
+  in the bed — counts as unobserved and unoffered again (§4). What came into view is observed at once,
+  and the observation is added to the live text.
+- **The hour is marked.** Where the act moved the hour on — a wait, an hour wasted — a line records the
+  hour now come, since what stands above it was written at the earlier one.
 
 The budget of a phase is its **noetic points**, being the **encephalon's** measure. One point is
 spent by each of the following:
@@ -102,7 +108,8 @@ spent by each of the following:
 The pool **refills at every phase boundary but one**: it is *not* refilled by the boundary that
 closes a phase after an act has failed upon the dice. A miss must cost something; were the budget
 handed back, the very next attempt would be free. The same holds where the phase carries on past an
-act: a success refills the pool as a boundary would, and a failure leaves it where it stood.
+act, which is the common case: a success refills the pool as a boundary would, and a failure leaves
+it where it stood.
 
 Two things are deliberately outside the budget. **An implement accepted costs nothing** — it is
 part of an act already deliberated upon, and to charge for it would put the acts that require an
@@ -117,7 +124,9 @@ or a witness confronting the body (§7).
 ## 4. The two ledgers
 
 Within one phase, nothing is offered twice. Two records enforce this, and both are cleared at the
-phase boundary.
+phase boundary. Where a phase carries on past an act, a thing the act changed, or one newly come into
+view, is struck from both records (§3): what was offered about it was offered about something no
+longer as it was.
 
 **What has been attended to** is recorded **by instance**. Two birch trees are two things, and
 looking at the first must leave the second available. Objects so recorded are withheld from every
@@ -610,7 +619,9 @@ them and refused.
 made for having been of the party. What is cut from a companion who was a beast is what would be cut
 from any beast of that kind.
 
-**A corpse opens the next phase, alone**, each body in the order it fell. Anything the game creates
+**A corpse is observed as soon as narration resumes**, each body in the order it fell: in the live
+text, when the phase carries on past the killing (§3), and alone, opening the next phase, after a
+fight. Anything the game creates
 during play must be reconciled with the scene's map of what may be attended to before it can be
 observed at all — a thing may exist in an area and still be invisible to attention until that
 reconciliation happens.

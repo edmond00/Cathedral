@@ -1051,25 +1051,40 @@ budget reaches, and they were designed together — changing one alone re-breaks
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
 
-**An action in place does not end the phase.** The CONTINUE after an act that left the party where
-and when it was — exploration, same area, same period, the visit not lost, nothing new in view (no
-point of interest, item or person present that was not before, no corpse, no arrival, no opening focus
-handed on, the acting member still in the party) — calls `ContinueNarrationSegment` instead of
-`BeginNarrationSegment`. Two halves: `CanCarryOn` (area, period, the visit) in `CommitOutcomeResult`,
-and `SceneStillStands` on the press itself, against `PresenceAt` taken before the reports applied —
-the scene can change between the outcome and the CONTINUE (a companion dead of the act's wound leaves
-a body and nobody to narrate as: `companion_death_acting.cli`). Nothing greys into
-history and no observation is made; **both ledgers are kept**, so nothing already observed or offered
-is observed or offered again. What the act changed is read back onto the live text: the act tried is
-`NoLongerPossible`, succeeded or failed (an introduction is made once); every other button whose
-action the current node no longer offers after `RefreshSceneVerbs` is greyed too (`RecheckLiveActions`,
-`StillOffers`); and a keyword whose object left the scene stops answering (`_goneAnchors`, read by
-`NarrativeUI.GoneAnchors`). The noetic rule is the boundary's: a success refills, a failure keeps what
-is left. Anything else — a move, an hour passed, a fight, a conversation, a body fallen, somebody drawn
-in — closes the phase as before. Re-placing the people on that CONTINUE is why `SceneNpcPlacement`
-reuses a sleeper's point of interest (`_sleeperCache`): a fresh one each time stopped the sleeper's
-keyword answering. `inspect actions` reads each button as `live`, `spent` or `superseded`;
-`cli/system/continuity_in_place.cli` and `continuity_failed_introduction.cli`.
+**An action in place does not end the phase.** The phase closes only when the whole view is
+replaced: a move to another area, a fight, a conversation, a trade or a work stint, the way lost,
+leaving — and the two opening phases keep their own loop. Every other CONTINUE after an action
+(`CanCarryOn`: exploration, same area, the visit not lost; `PartyStillStands` asked again on the press,
+since a companion can die of the act's wound in between — `companion_death_acting.cli`) calls
+`ContinueNarrationSegment` instead of `BeginNarrationSegment`, **whether or not the hour moved or the
+scene changed**. Nothing greys into history; the two ledgers are kept. What the act changed is read
+against a `SceneSnapshot` taken in `CommitOutcomeResult` before the reports apply — what is present by
+id (`PresenceAt`), the hour, and what each observation of the area offered (`OffersOf`, a signature of
+its acts):
+
+- **spent**: the act tried, succeeded or failed (`NoLongerPossible`, an introduction is made once), and
+  every other button the node no longer offers after `RefreshSceneVerbs` (`RecheckLiveActions`,
+  `StillOffers`); a keyword whose subject left stops answering, and answers again if it comes back
+  (`_goneAnchors`, read by `NarrativeUI.GoneAnchors`);
+- **released**: what is new in view (a body, somebody drawn in, somebody whose day brings them here, a
+  sleeper now in the bed) and what offers other acts than it did (the rack after its bar, the stranger
+  now an acquaintance) leave both ledgers — `ObservationLedger.ReleaseWhere` (with their parts and the
+  groups holding them), `ActionProposalLedger.Release` (acts on them, refusals, declines);
+- **the hour**: `NeutralNarration.HourComeRound` adds a line, since the text above was written at the
+  earlier hour, and every spent act is `Forget`-ed from the proposal ledger — an act is not tried twice
+  *in one hour* of a phase, and without this a second wait could never be offered;
+- **observed**: what came into view gets one block in the live text (`GenerateCatchUpObservationAsync`),
+  with the openers' precedence — a drawn-in arrival, else a newcomer who is a Visual threat, else the
+  bodies and every other newcomer together (`GenerateCorpseObservationAsync` takes any anchors), else a
+  focus handed on. Every pending list is drained either way; what one opener took the others leave,
+  released and observable.
+
+The noetic rule is the boundary's: a success refills, a failure keeps what is left. Re-placing the
+people on every such CONTINUE is why `SceneNpcPlacement` reuses a sleeper's point of interest
+(`_sleeperCache`). `inspect actions` reads each button as `live`, `spent` or `superseded`. Scripts:
+`cli/system/continuity_in_place.cli`, `continuity_failed_introduction.cli`, `continuity_hour.cli` (the
+farmer gone at morning and observed coming back at afternoon), `continuity_corpse.cli`. A script that
+needs a fresh phase in the same place leaves and comes back (`memory_always_reject.cli`).
 
 **Iterative thinking and doubt: a thinking mind's second thoughts.** Every modus mentis with the
 Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R23, fatal): **Low** thinks once and

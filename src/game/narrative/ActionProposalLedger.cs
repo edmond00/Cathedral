@@ -146,6 +146,32 @@ public sealed class ActionProposalLedger
     /// </summary>
     public static (string VerbId, Element? Target, object? Variant) IdentityOf(VerbAction action) => KeyOf(action);
 
+    /// <summary>
+    /// Forgets what was offered, refused and declined about <paramref name="targets"/> — the elements
+    /// an action changed, within a phase that carries on past it — so they may be offered again: what
+    /// the player was given before was given about a thing that is no longer as it was.
+    /// <paramref name="observations"/> are the observations of those things, whose declines go too.
+    /// </summary>
+    public void Release(IReadOnlySet<Element> targets, IReadOnlySet<NarrativeAnchor> observations)
+    {
+        bool Hit(Element? target) => target != null && targets.Contains(target);
+        _proposed.RemoveWhere(k => Hit(k.Target));
+        _proposedWording.RemoveWhere(k => Hit(k.Target));
+        _refused.RemoveWhere(k => Hit(k.Target));
+        foreach (var refused in _refusedFor.Values) refused.RemoveWhere(k => Hit(k.Target));
+        _declined.RemoveWhere(d => observations.Contains(d.Observed));
+    }
+
+    /// <summary>
+    /// Forgets that <paramref name="action"/> was offered, so a later thought may offer it again —
+    /// an act already tried, once the hour has moved on within a phase that carries on.
+    /// </summary>
+    public void Forget(VerbAction action)
+    {
+        _proposed.Remove(KeyOf(action));
+        _proposedWording.Remove(WordingOf(action));
+    }
+
     /// <summary>Forgets everything — a new narration phase begins.</summary>
     public void Clear()
     {

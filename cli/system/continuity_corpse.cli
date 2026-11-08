@@ -1,0 +1,48 @@
+# continuity — a body fallen, and the phase carries on
+#
+# The brewer is slain where he stands. The party has not moved and the hour has not passed, so the
+# CONTINUE does not close the phase (NarrativeController.ContinueNarrationSegment). What left is
+# greyed: both slay buttons (the bare one, never pressed, can no longer be done either) and the
+# brewer's keyword. What came is observed at once, in a block added to the live text: the body, and
+# what he carried beside it.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal slay
+advance 12 180
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+click action 0
+choose 1
+choose 0
+advance 12 180
+click action 1
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+expect Slain:
+
+click button
+wait
+advance 12 180
+state
+regions
+expect-not after trying to
+expect-state actions action 0 verb=slay state=spent
+expect-state actions action 1 verb=slay state=spent
+expect-state pois Remains
+quit

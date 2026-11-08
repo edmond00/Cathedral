@@ -229,8 +229,8 @@ public class NarrativeController
     /// <summary>The action whose outcome the pending CONTINUE follows; spent if the phase carries on.</summary>
     private ParsedNarrativeAction? _pendingAttempted;
 
-    /// <summary>What was in view before the pending action's reports applied (<see cref="PresenceAt"/>).</summary>
-    private HashSet<Guid>? _pendingPresence;
+    /// <summary>What stood in view before the pending action's reports applied (<see cref="SnapshotScene"/>).</summary>
+    private SceneSnapshot? _pendingBefore;
 
     /// <summary>
     /// The live observations whose keywords no longer answer a click, because what they were about
@@ -595,22 +595,56 @@ public class NarrativeController
     }
 
     /// <summary>
-    /// The CONTINUE after an action that changed nothing about where and when the party stands: the
-    /// phase carries on instead of closing. Nothing greys into history and no observation is made —
-    /// the text before the action and the outcome after it stay live, every keyword still opens its
-    /// popup, and every action button still offered is still clickable. The two ledgers are kept, so
-    /// nothing already observed or offered in the phase is observed or offered again.
-    ///
-    /// <para>What the action did change is read back onto what is on screen: the action just tried
-    /// is spent, succeeded or failed (an introduction is made once); every other action the scene
-    /// no longer offers is greyed (the apple grabbed, the door already open); and a keyword about
-    /// something that has left the scene stops answering. All of it renders greyed and ignores
-    /// clicks, like a reconsidered action.</para>
-    ///
-    /// <para>The noetic rule is the segment boundary's: a success refills the pool, a failure keeps
-    /// what is left.</para>
+    /// What stood in view before an action's consequences applied, so the CONTINUE that follows can
+    /// tell what the action changed (<see cref="ContinueNarrationSegment"/>): the elements present, by
+    /// id; the hour; and what each observation of the area offered, as a signature of its acts.
     /// </summary>
-    private void ContinueNarrationSegment(bool refillNoetic, ParsedNarrativeAction? attempted)
+    private sealed record SceneSnapshot(HashSet<Guid> Presence, TimePeriod Period,
+                                        Dictionary<ObservationObject, string> Offers);
+
+    /// <summary>The scene as it stands now, where the party stands; null outside a scene.</summary>
+    private SceneSnapshot? SnapshotScene()
+    {
+        if (_scene == null || _pov == null) return null;
+        var offers = new Dictionary<ObservationObject, string>(ReferenceEqualityComparer.Instance);
+        foreach (var obs in _currentNode.PossibleOutcomes.OfType<ObservationObject>())
+            offers[obs] = OffersOf(obs);
+        return new SceneSnapshot(PresenceAt(_pov)!, _pov.When, offers);
+    }
+
+    /// <summary>
+    /// What an observation offers, as one string: every act on it, by verb, target, payload and
+    /// wording. Two readings differ exactly when the thing changed in a way that changes what may be
+    /// done with it — the bar taken from the rack, the stranger now an acquaintance, the door unlocked.
+    /// </summary>
+    private static string OffersOf(ObservationObject obs)
+        => string.Join("\n", obs.SubOutcomes.OfType<VerbAction>()
+                                .Select(v => $"{v.Verb.VerbId}|{v.Target?.Id}|{v.Variant}|{v.Verbatim}")
+                                .OrderBy(k => k, StringComparer.Ordinal));
+
+    /// <summary>
+    /// The CONTINUE after an action that left the party in the same area: the phase carries on
+    /// instead of closing. Nothing greys into history and the text before the action and the outcome
+    /// after it stay live. Every keyword still opens its popup, and every action button still offered
+    /// is still clickable.
+    ///
+    /// <para>What the action changed is read back against <paramref name="before"/>:</para>
+    /// <list type="bullet">
+    /// <item>the action just tried is spent, succeeded or failed (an introduction is made once);</item>
+    /// <item>every other button the scene no longer offers is greyed, and a keyword about something that
+    /// has left stops answering — a person walked out at the change of the hour, the apple taken;</item>
+    /// <item>what is changed (it offers other acts than it did) or newly come into view (a body fallen,
+    /// somebody drawn in, somebody whose day brings them here, a sleeper now in the bed) is released
+    /// from both ledgers, so it may be observed and acted on again;</item>
+    /// <item>a change of the hour is marked by a line of its own, since the text above it was written
+    /// at the earlier one;</item>
+    /// <item>what came into view is observed at once, in a block added to the live text.</item>
+    /// </list>
+    ///
+    /// <para>The noetic rule is the boundary's: a success refills the pool, a failure keeps what is
+    /// left.</para>
+    /// </summary>
+    private void ContinueNarrationSegment(bool refillNoetic, ParsedNarrativeAction? attempted, SceneSnapshot before)
     {
         _narrationState.ShowContinueButton      = false;
         _narrationState.IsContinueButtonHovered = false;
@@ -626,19 +660,170 @@ public class NarrativeController
         }
 
         // The scene changed under the plans and the verb lists: re-place the people (one slain or
-        // taken into the party is gone) and re-expand every verb, exactly as before a thinking.
+        // taken into the party is gone, one whose day brings them here has come) and re-expand every
+        // verb, exactly as before a thinking.
         Cathedral.Game.Scene.ActionPathPlanner.Forget();
         _npcPlacement?.PlaceForPeriod(_graph.CurrentPeriod);
         RefreshSceneVerbs();
 
+        // What came into view, and what changed: both are released from the ledgers.
+        var newcomers = _currentNode.PossibleOutcomes.OfType<ObservationObject>()
+                                    .Where(o => SubjectOf(o) is { } id && !before.Presence.Contains(id))
+                                    .ToList();
+        var changed   = _currentNode.PossibleOutcomes.OfType<ObservationObject>()
+                                    .Where(o => before.Offers.TryGetValue(o, out var was) && was != OffersOf(o))
+                                    .ToList();
+        int released  = ReleaseFromLedgers(newcomers.Concat(changed).Distinct().ToList());
+
         if (attempted != null) attempted.NoLongerPossible = true;
         int spent = RecheckLiveActions();
         int gone  = RecheckLiveKeywords();
+
+        // The hour moved on: the text above was written at the earlier one, and an act already tried
+        // may be tried again at the new hour — a second wait, an introduction attempted at dawn and
+        // again at noon. Its old button stays spent; a new thought offers it anew.
+        bool hourChanged = _pov != null && _pov.When != before.Period;
+        if (hourChanged)
+        {
+            _introducedPeriod = _pov!.When;
+            foreach (var block in _narrationState.Blocks)
+                if (block.Type == NarrationBlockType.Thinking && block.Actions != null)
+                    foreach (var action in block.Actions)
+                        if (action.NoLongerPossible && action.PreselectedOutcome != null)
+                            _proposalLedger.Forget(action.PreselectedOutcome);
+            AppendPhaseNote(NeutralNarration.HourComeRound(_pov.When));
+        }
         if (_pov != null) SceneDebugManager.UpdatePoV(_pov);
 
         Console.WriteLine($"NarrativeController: CONTINUE — the phase carries on in place ({spent} action(s) no longer possible, "
-                        + $"{gone} observation(s) gone, {_narrationState.ThinkingAttemptsRemaining} noetic point(s)"
+                        + $"{gone} observation(s) gone, {newcomers.Count} come into view, {changed.Count} changed, {released} released"
+                        + (hourChanged ? $", now {_pov!.When}" : "")
+                        + $", {_narrationState.ThinkingAttemptsRemaining} noetic point(s)"
                         + (refillNoetic ? ")" : ", failed action — not refilled)"));
+
+        // Whatever came into view is observed now, in the live text.
+        bool pending = _scene != null && (_scene.PendingArrivalObservations.Count > 0
+                                       || _scene.PendingCorpseObservations.Count > 0
+                                       || _scene.PendingOpeningFocus != null);
+        if (newcomers.Count > 0 || pending)
+        {
+            _narrationState.IsLoadingObservations = true;
+            _narrationState.LoadingMessage        = ObservationLoadingMessage();
+            _ = GenerateCatchUpObservationAsync(newcomers);
+        }
+    }
+
+    /// <summary>
+    /// The id of the element an observation is of — a point of interest or a person — for reading it
+    /// against <see cref="SceneSnapshot.Presence"/>; null for what is not either (an area, a group).
+    /// </summary>
+    private static Guid? SubjectOf(ObservationObject obs) => obs switch
+    {
+        SyntheticObservationObject poi       => poi.PointOfInterest.Id,
+        SyntheticNpcObservationObject person => person.SceneNpc.Id,
+        _                                    => null,
+    };
+
+    /// <summary>
+    /// Releases <paramref name="observations"/> from both ledgers: they, the parts of them and the
+    /// groups holding them may be observed again, and the acts on what they are of may be offered
+    /// again. Returns how many observed objects were released.
+    /// </summary>
+    private int ReleaseFromLedgers(List<ObservationObject> observations)
+    {
+        if (observations.Count == 0) return 0;
+        var set = new HashSet<NarrativeAnchor>(observations, ReferenceEqualityComparer.Instance);
+        int released = _observationLedger.ReleaseWhere(a =>
+            set.Contains(a) || (a is SyntheticItemObservationObject part && set.Contains(part.Container)));
+
+        var targets = new HashSet<Element>();
+        foreach (var obs in observations)
+            switch (obs)
+            {
+                case SyntheticObservationObject poi:
+                    targets.Add(poi.PointOfInterest);
+                    foreach (var item in poi.PointOfInterest.Items) targets.Add(item);
+                    break;
+                case SyntheticNpcObservationObject person:
+                    targets.Add(person.SceneNpc);
+                    break;
+            }
+        _proposalLedger.Release(targets, set);
+        foreach (var obs in observations)
+            Console.WriteLine($"NarrativeController: '{obs.DisplayName}' is new or changed — released from the ledgers");
+        return released;
+    }
+
+    /// <summary>
+    /// The observation that follows a CONTINUE which carried the phase on, when something came into
+    /// view: added to the live text as a phase opener would open a phase, with the same precedence.
+    /// Somebody drawn in by a noise comes first, with the caution or notice the arrival opener gives;
+    /// else a newcomer who is a threat in plain sight; else the bodies fallen and every other newcomer,
+    /// in one block; else a focus the action handed on. One block, so what one opener took the others
+    /// leave — released, and observable as anything else is. Every pending list is drained whether or
+    /// not it was used, as the openers drain them.
+    /// </summary>
+    private async Task GenerateCatchUpObservationAsync(List<ObservationObject> newcomers)
+    {
+        try
+        {
+            _previewSession.Reset();
+            void Commit(List<NarrationBlock> blocks)
+            {
+                foreach (var block in blocks)
+                {
+                    _scrollBuffer.AddBlock(block);
+                    _narrationState.AddBlock(block);
+                }
+                _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
+                _scrollBuffer.ScrollToBottom();
+                _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
+            }
+
+            var arrivals = _scene?.PendingArrivalObservations.ToList() ?? new List<SceneNpc>();
+            _scene?.PendingArrivalObservations.Clear();
+            var corpses = _scene?.PendingCorpseObservations.ToList()
+                          ?? new List<Cathedral.Game.Npc.Corpse.CorpsePointOfInterest>();
+            _scene?.PendingCorpseObservations.Clear();
+            var focus = _scene?.PendingOpeningFocus;
+            if (_scene != null) _scene.PendingOpeningFocus = null;
+
+            bool handled = arrivals.Count > 0 && await TryGenerateArrivalObservationAsync(arrivals, Commit);
+
+            if (!handled && _scene != null && _pov != null && _protagonist != null)
+            {
+                var threat = ThreatSelector.ComputeContext(_scene, _pov, _protagonist);
+                if (threat.Level == ThreatLevel.Visual && threat.Threat != null
+                    && newcomers.OfType<SyntheticNpcObservationObject>().Any(o => ReferenceEquals(o.NpcEntity, threat.Threat)))
+                    handled = await TryGenerateThreatObservationAsync(Commit);
+            }
+
+            if (!handled)
+            {
+                // The bodies in the order they fell, then the rest of what came, in the node's order.
+                var bodies = corpses
+                    .Select(c => newcomers.OfType<SyntheticObservationObject>().FirstOrDefault(o => ReferenceEquals(o.PointOfInterest, c)))
+                    .Where(o => o != null).Cast<NarrativeAnchor>();
+                var seen = bodies.Concat(newcomers).Distinct().ToList();
+                if (seen.Count > 0)
+                    handled = (await _observationController.GenerateCorpseObservationAsync(
+                        seen, _protagonist.CurrentLocationId, _activePartyMember,
+                        ledger: _observationLedger, preview: _previewSession, commit: Commit)).Count > 0;
+            }
+
+            if (!handled && focus != null)
+                handled = await TryGenerateFocusObservationAsync(focus, null, Commit);
+
+            _narrationState.IsLoadingObservations = false;
+            _narrationState.ErrorMessage = null;
+            Console.WriteLine($"NarrativeController: catch-up observation {(handled ? "made" : "had nothing to say")}");
+        }
+        catch (Exception ex)
+        {
+            _previewSession.Reset();
+            _narrationState.IsLoadingObservations = false;
+            _narrationState.ErrorMessage = ReportPhaseFailure("observing what came into view", ex);
+        }
     }
 
     /// <summary>
@@ -697,7 +882,9 @@ public class NarrativeController
 
     /// <summary>
     /// Marks the keywords of live observations whose subject has left the scene, so they stop
-    /// answering a click (<see cref="_goneAnchors"/>). Returns how many anchors were newly marked.
+    /// answering a click (<see cref="_goneAnchors"/>), and lets a keyword answer again when its
+    /// subject has come back (somebody gone at noon and home by evening). Returns how many anchors
+    /// were newly marked.
     /// </summary>
     private int RecheckLiveKeywords()
     {
@@ -711,12 +898,16 @@ public class NarrativeController
                 if (sentence.KeywordAnchors != null) anchors.AddRange(sentence.KeywordAnchors);
             }
             foreach (var anchor in anchors)
-                if (anchor != null && !_goneAnchors.Contains(anchor) && !IsStillThere(anchor))
+            {
+                if (anchor == null) continue;
+                bool there = IsStillThere(anchor);
+                if (there) { _goneAnchors.Remove(anchor); continue; }
+                if (_goneAnchors.Add(anchor))
                 {
-                    _goneAnchors.Add(anchor);
                     count++;
                     Console.WriteLine($"NarrativeController: '{anchor.DisplayName}' has left the scene — its keyword no longer answers");
                 }
+            }
         }
         return count;
     }
@@ -743,35 +934,25 @@ public class NarrativeController
 
     /// <summary>
     /// Whether the action just resolved leaves the phase to carry on (see
-    /// <see cref="_pendingContinuity"/>): exploration, the same area and hour, the visit not ended,
-    /// and nothing come into view that the next phase would have to open on — no body fallen, nobody
-    /// drawn in, no focus handed on, no point of interest, item or person present that was not before.
-    /// Things leaving the scene do not stop it; their keywords and buttons are greyed instead.
+    /// <see cref="_pendingContinuity"/>): exploration, the same area, the visit not ended. The hour may
+    /// have moved and the scene may have changed — what left is greyed, what came is observed.
     /// </summary>
-    private bool CanCarryOn(ActionExecutionResult result, Cathedral.Game.Scene.Area? areaBefore,
-                            TimePeriod? periodBefore, bool lostWay)
+    private bool CanCarryOn(ActionExecutionResult result, Cathedral.Game.Scene.Area? areaBefore, bool lostWay)
     {
         if (_scene == null || _pov == null || _scene.Phase != NarrationPhase.Exploration) return false;
         if (lostWay || IsMovementAction(result.Action)) return false;
         if (areaBefore == null || areaBefore.Id != _pov.Where.Id) return false;
-        if (periodBefore != _pov.When) return false;
         return true;
     }
 
     /// <summary>
-    /// The half of <see cref="CanCarryOn"/> asked again on the CONTINUE itself, since the scene can
-    /// change between the outcome and the press: a companion dead of a wound the act dealt leaves a
-    /// body, and nobody to narrate as. Nothing come into view since <paramref name="presentBefore"/>,
-    /// no body fallen, nobody drawn in, no focus handed on, and the acting member still in the party.
+    /// The half of <see cref="CanCarryOn"/> asked again on the CONTINUE itself, since the party can
+    /// change between the outcome and the press: a companion dead of a wound the act dealt leaves
+    /// nobody to narrate as, and a narration hand-off needs the full segment boundary.
     /// </summary>
-    private bool SceneStillStands(HashSet<Guid>? presentBefore)
-    {
-        if (_scene == null || _pov == null || presentBefore == null) return false;
-        if (_scene.PendingCorpseObservations.Count > 0 || _scene.PendingArrivalObservations.Count > 0
-            || _scene.PendingOpeningFocus != null) return false;
-        if (_activePartyMember != _protagonist && !_protagonist.CompanionParty.Contains(_activePartyMember)) return false;
-        return !PresenceAt(_pov)!.Any(id => !presentBefore.Contains(id));
-    }
+    private bool PartyStillStands()
+        => _scene != null && _pov != null
+        && (_activePartyMember == _protagonist || _protagonist.CompanionParty.Contains(_activePartyMember));
 
     /// <summary>Everything in view where <paramref name="pov"/> stands, by id: points of interest, the items in them, the people.</summary>
     private HashSet<Guid>? PresenceAt(PoV? pov)
@@ -3028,10 +3209,10 @@ public class NarrativeController
         // just MoveToArea); the period drives re-placing NPCs for the new time of day.
         var areaBefore    = _pov?.Where;
         var periodBefore  = _pov?.When;
-        var presentBefore = PresenceAt(_pov);
+        var sceneBefore = SnapshotScene();
         _pendingContinuity = false;
         _pendingAttempted  = null;
-        _pendingPresence   = null;
+        _pendingBefore     = null;
 
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
@@ -3241,9 +3422,9 @@ public class NarrativeController
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
-            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay);
+            _pendingContinuity = CanCarryOn(result, areaBefore, lostWay);
             _pendingAttempted  = result.Action;
-            _pendingPresence   = presentBefore;
+            _pendingBefore     = sceneBefore;
         }
         else
         {
@@ -3253,9 +3434,9 @@ public class NarrativeController
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
-            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay);
+            _pendingContinuity = CanCarryOn(result, areaBefore, lostWay);
             _pendingAttempted  = result.Action;
-            _pendingPresence   = presentBefore;
+            _pendingBefore     = sceneBefore;
         }
 
         // Refresh debug window to reflect any state changes
@@ -5603,11 +5784,12 @@ public class NarrativeController
     private void HandleContinueClicked()
     {
         // Read once and forgotten, whichever branch below this press takes.
-        bool carryOn   = _pendingContinuity && SceneStillStands(_pendingPresence);
+        var  before    = _pendingBefore;
+        bool carryOn   = _pendingContinuity && before != null && PartyStillStands();
         var  attempted = _pendingAttempted;
         _pendingContinuity = false;
         _pendingAttempted  = null;
-        _pendingPresence   = null;
+        _pendingBefore     = null;
 
         // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
         // because the segment it closes is the one the fight itself will grey into history.
@@ -5673,10 +5855,10 @@ public class NarrativeController
         // a labelled separator, refill noetic points, and open a fresh observation of the scene as it
         // now stands (the outcome may have changed it: item gone, state shifted). This makes CONTINUE
         // behave identically for in-place actions and transitions.
-        // The action changed nothing about where and when the party stands: the phase carries on.
+        // The action left the party in the same area: the phase carries on.
         if (carryOn)
         {
-            ContinueNarrationSegment(refillNoetic: _pendingSegmentSucceeded, attempted);
+            ContinueNarrationSegment(refillNoetic: _pendingSegmentSucceeded, attempted, before!);
             _pendingSegmentLabel     = null;
             _pendingSegmentSucceeded = true;
             return;
