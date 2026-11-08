@@ -355,6 +355,18 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public bool Superseded { get; set; } = false;
 
     /// <summary>
+    /// Set when the phase carried on past an action in place (see
+    /// <c>NarrativeController.ContinueNarrationSegment</c>) and this action can no longer be taken:
+    /// it was the action just attempted, whether it succeeded or failed, or the scene no longer
+    /// offers it (the apple was grabbed, the stranger is a stranger no more). Rendered greyed and
+    /// ignores clicks, like <see cref="Superseded"/>.
+    /// </summary>
+    public bool NoLongerPossible { get; set; } = false;
+
+    /// <summary>Whether a click on this action does anything at all.</summary>
+    public bool IsSpent => Superseded || NoLongerPossible;
+
+    /// <summary>
     /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.
     /// Holds a SyntheticItemModusMentis whose DisplayName = item name and Level = item.UsageLevel,
     /// so that the UI shows the item name as the action button prefix and the chain is:

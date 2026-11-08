@@ -1,0 +1,44 @@
+# continuity — a failed introduction is spent, and the phase carries on
+#
+# The introduction to the brewer fails its roll. Nothing about the hall changed, so the CONTINUE does
+# not close the phase (NarrativeController.ContinueNarrationSegment): the text stays live, and the
+# introduction's button is greyed — it was tried, and is not tried twice in a phase, whether it landed
+# or not. A failure keeps the noetic pool where it was (no refill), as it did when it closed a phase.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal meet_stranger
+advance 12 180
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+state
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect FAILURE
+expect-verb meet_stranger
+expect-no-outcome dialogue_trigger
+
+click button
+wait
+advance 12 180
+state
+regions
+expect-not after trying to
+expect-state actions action 0 verb=meet_stranger state=spent
+quit

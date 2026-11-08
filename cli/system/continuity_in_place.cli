@@ -1,0 +1,61 @@
+# continuity — an action in place does not end the phase
+#
+# A grab in the Test Yard changes neither the area nor the hour, and brings nothing new into view, so
+# its CONTINUE carries the phase on (NarrativeController.ContinueNarrationSegment): nothing greys into
+# history, no observation is made, the button just tried is spent ("[no longer possible]"), and the
+# keyword it came from still answers a click. Thinking about the rack again offers something other
+# than the grab already offered — the proposal ledger is not cleared.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Rack" --organs arms=2 --grant-mm woodcraft
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal grab
+advance 12 180
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+state
+regions
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+expect-verb grab
+expect Item received:
+
+click button
+wait
+advance 12 180
+state
+regions
+# The phase carried on: no separator, no fresh observation, the grab spent.
+expect-not after trying to
+expect-state actions action 0 verb=grab state=spent
+
+# The keyword still answers; another thought offers something new. Examining is pinned, with a
+# means that has the Observation function, since any other refuses to examine (WillingnessRules).
+goal examine
+means woodcraft
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+regions
+# A second button beside the spent one: the keyword answered, and the new act is live.
+expect-state actions action 0 verb=grab state=spent
+expect-state actions action 1 verb=examine state=live
+expect-not after trying to
+quit

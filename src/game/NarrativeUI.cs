@@ -16,6 +16,13 @@ public class NarrativeUI : TerminalPanelUI
 {
     private readonly KeywordRenderer _keywordRenderer;
     private List<KeywordRegion> _keywordRegions = new();
+
+    /// <summary>
+    /// Observations whose keywords no longer answer a click: what they were about has left the scene
+    /// while the phase carried on past an action (the apple grabbed, the hare gone). Their words are
+    /// drawn as plain text. Owned by <c>NarrativeController</c>, emptied when a segment closes.
+    /// </summary>
+    public IReadOnlySet<NarrativeAnchor>? GoneAnchors { get; set; }
     private List<ActionRegion> _actionRegions = new();
 
     /// <summary>Clickable keyword regions in the current frame (used by --cli to list handles).</summary>
@@ -539,13 +546,19 @@ public class NarrativeUI : TerminalPanelUI
         {
             if (segment.IsKeyword)
             {
-                // Only highlight keywords if thinking attempts remain and content is not dimmed
-                if (thinkingAttemptsRemaining > 0 && !dimContent)
+                string kw = segment.KeywordValue!;
+                seenPerKeyword.TryGetValue(kw, out int highlightedSoFar);
+                seenPerKeyword[kw] = highlightedSoFar + 1;
+                int occurrence = segment.Occurrence ?? highlightedSoFar;
+                var anchor = AnchorFor(kw, occurrence, keywords, keywordOccurrenceIndices, keywordAnchors);
+                bool gone = GoneAnchors != null
+                         && (anchor ?? sourceBlock?.LinkedOutcome) is { } resolved
+                         && GoneAnchors.Contains(resolved);
+
+                // Only highlight keywords if thinking attempts remain, content is not dimmed and what
+                // the word is about is still there
+                if (thinkingAttemptsRemaining > 0 && !dimContent && !gone)
                 {
-                    string kw = segment.KeywordValue!;
-                    seenPerKeyword.TryGetValue(kw, out int highlightedSoFar);
-                    seenPerKeyword[kw] = highlightedSoFar + 1;
-                    int occurrence = segment.Occurrence ?? highlightedSoFar;
 
                     // Track keyword region for click detection, including source block for modusMentis
                     // chain and the anchor this occurrence acts on.
@@ -555,7 +568,7 @@ public class NarrativeUI : TerminalPanelUI
                         currentX,
                         currentX + segment.Text.Length - 1,
                         sourceBlock,
-                        AnchorFor(kw, occurrence, keywords, keywordOccurrenceIndices, keywordAnchors));
+                        anchor);
                     _keywordRegions.Add(keywordRegion);
                     
                     // Check if this specific region is hovered
@@ -624,9 +637,10 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     private void RenderActionLine(string text, ParsedNarrativeAction action, int actionIndex, int y, int lineIndex, ActionRegion? hoveredAction, bool dimContent = false)
     {
-        // A reconsidered action, replaced by the one below it, is rendered greyed-out. A refused one is
-        // not: it can still be reconsidered, and greying read as a dead end.
-        dimContent = dimContent || action.Superseded;
+        // A reconsidered action, replaced by the one below it, is rendered greyed-out, and so is one the
+        // phase carried on past (attempted, or no longer offered by the scene). A refused one is not:
+        // it can still be reconsidered, and greying read as a dead end.
+        dimContent = dimContent || action.IsSpent;
 
         // Check if this action is hovered
         bool isHovered = hoveredAction != null && hoveredAction.ActionIndex == actionIndex;

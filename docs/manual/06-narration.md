@@ -76,7 +76,19 @@ played at.
 Narration proceeds in **phases**. A phase opens with an observation, and within it the acting body
 may attend to further things, deliberate, and act. The phase closes when the live text is set aside
 into history — on moving to another area, on a fight, on a conversation, on a hand-off, or on the
-acceptance of an act's outcome.
+acceptance of an outcome that changed the scene.
+
+**An act that leaves the scene standing does not close the phase.** Where the outcome is accepted
+in the same area and the same period, the visit not lost, and nothing come into view that was not
+there before — no point of interest, item or person newly present, no body fallen, nobody drawn in —
+the phase carries on. The text before the act and the account after it remain live; whatever was
+attended to may be deliberated upon again; and every act already deliberated upon may still be
+attempted, so long as it remains possible. Its possibility is asked again upon the scene as it now
+stands: an act the scene no longer admits — the thing seized is gone, the stranger is a stranger no
+more — can no longer be attempted, and a thing that has left the scene can no longer be attended
+to. **The act just attempted is spent**, whether it succeeded or failed: it is not attempted twice
+in one phase. Things leaving the scene do not close the phase; things entering it do, for they must
+be observed.
 
 The budget of a phase is its **noetic points**, being the **encephalon's** measure. One point is
 spent by each of the following:
@@ -89,7 +101,8 @@ spent by each of the following:
 
 The pool **refills at every phase boundary but one**: it is *not* refilled by the boundary that
 closes a phase after an act has failed upon the dice. A miss must cost something; were the budget
-handed back, the very next attempt would be free.
+handed back, the very next attempt would be free. The same holds where the phase carries on past an
+act: a success refills the pool as a boundary would, and a failure leaves it where it stood.
 
 Two things are deliberately outside the budget. **An implement accepted costs nothing** — it is
 part of an act already deliberated upon, and to charge for it would put the acts that require an
@@ -501,7 +514,7 @@ afterwards. Nothing is written down, and no authority pursues you beyond the roo
 
 A failed act costs, in order:
 
-1. **The budget**, which is not refilled at the phase boundary that follows.
+1. **The budget**, which is not refilled after it, whether the phase then closes or carries on.
 2. **A social consequence**, read off effective proximity as §7 describes: at most one of caught,
    attacked, or approached. These are three rungs of one ladder, not a set of independent flags.
 3. **A penalty**, drawn at hazard from what that manner of acting risks. No failure goes without one.
@@ -516,7 +529,7 @@ A penalty is of four kinds:
 - **The hour wasted**, for the hard and the slow — a climb, a swim, a crossing, a labour. The period
   of the day advances by one, and all that follows the hour follows it.
 - **The thread lost**: one noetic point beyond the point the act already spent. Since the budget is
-  not refilled after a failure, the point stays lost into the phase that follows. It is what the
+  not refilled after a failure, the point stays lost into what follows. It is what the
   manners of acting that hazard nothing else — the senses, speech, waiting — cost when they fail.
 
 **A penalty that cannot take hold is drawn again** from the rest of the manner's risks. The way

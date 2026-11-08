@@ -32,6 +32,15 @@ public class SceneNpcPlacement
     /// </summary>
     private readonly Dictionary<System.Guid, SleepingNpcPointOfInterest> _sleepers = new();
 
+    /// <summary>
+    /// Every sleeper ever made, by person, so that putting the same person back into the same bed
+    /// reuses the same point of interest. A fresh one per placement gave the sleeper a fresh
+    /// observation object each time, and a phase that carries on past an action
+    /// (<c>NarrativeController.ContinueNarrationSegment</c>) re-places everyone: the sleeper the
+    /// player had just read about would have stopped answering its keyword.
+    /// </summary>
+    private readonly Dictionary<System.Guid, SleepingNpcPointOfInterest> _sleeperCache = new();
+
     public SceneNpcPlacement(Scene scene, IEnumerable<NarrationNode> nodes)
     {
         _scene = scene;
@@ -85,7 +94,8 @@ public class SceneNpcPlacement
         var bed = Building.BuildingRooms.BedsIn(area).FirstOrDefault();
         if (bed == null) return false;   // IsSleeping already checks this; belt and braces
 
-        var sleeper = new SleepingNpcPointOfInterest(npc, bed);
+        if (!_sleeperCache.TryGetValue(npc.Id, out var sleeper) || !ReferenceEquals(sleeper.Bed, bed))
+            _sleeperCache[npc.Id] = sleeper = new SleepingNpcPointOfInterest(npc, bed);
         area.PointsOfInterest.Remove(bed);
         area.PointsOfInterest.Add(sleeper);
         sleeper.Register(_scene);

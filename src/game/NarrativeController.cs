@@ -217,6 +217,26 @@ public class NarrativeController
     /// </summary>
     private bool _pendingSegmentSucceeded = true;
 
+    /// <summary>
+    /// Whether the action that closed the current segment left the scene standing as it was — same
+    /// area, same hour, nobody and nothing new in view, the phase not ended by it. Then its CONTINUE
+    /// does not close the segment: the phase carries on (<see cref="ContinueNarrationSegment"/>), the
+    /// text stays live, and what was already observed and offered stays so. Set by
+    /// <see cref="CommitOutcomeResult"/>, consumed by <see cref="HandleContinueClicked"/>.
+    /// </summary>
+    private bool _pendingContinuity;
+
+    /// <summary>The action whose outcome the pending CONTINUE follows; spent if the phase carries on.</summary>
+    private ParsedNarrativeAction? _pendingAttempted;
+
+    /// <summary>
+    /// The live observations whose keywords no longer answer a click, because what they were about
+    /// left the scene while the phase carried on past an action. Read by the UI
+    /// (<see cref="NarrativeUI.GoneAnchors"/>); emptied with the ledgers in
+    /// <see cref="CloseNarrationSegment"/>.
+    /// </summary>
+    private readonly HashSet<NarrativeAnchor> _goneAnchors = new(ReferenceEqualityComparer.Instance);
+
     // ── Narration footer button (single button, three values) ────────────────────
     // The one bottom button in narration. In normal exploration it is LEAVE (or RUNAWAY when a
     // visible enemy/witness makes leaving risky) while idle, and CONTINUE while a succeeded action
@@ -379,7 +399,7 @@ public class NarrativeController
             throw new ArgumentNullException(nameof(actionExecutor));
         
         _ambianceEngine = ambianceEngine;
-        _ui = new NarrativeUI(terminal);
+        _ui = new NarrativeUI(terminal) { GoneAnchors = _goneAnchors };
         _dice.OnDiceTick      = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         _dice.OnButtonHover   = PlayHoverSound;
         _dice.OnButtonClick   = PlayClickSound;
@@ -555,6 +575,7 @@ public class NarrativeController
         _observationLedger.Clear();
         Cathedral.Game.Scene.ActionPathPlanner.Forget();
         _proposalLedger.Clear();
+        _goneAnchors.Clear();
         _narrationState.ScrollOffset = _scrollBuffer.ScrollOffset;
     }
 
@@ -568,6 +589,188 @@ public class NarrativeController
     {
         CloseNarrationSegment(separatorLabel, refillNoetic);
         StartObservationPhaseWithHistory(refillNoetic);
+    }
+
+    /// <summary>
+    /// The CONTINUE after an action that changed nothing about where and when the party stands: the
+    /// phase carries on instead of closing. Nothing greys into history and no observation is made —
+    /// the text before the action and the outcome after it stay live, every keyword still opens its
+    /// popup, and every action button still offered is still clickable. The two ledgers are kept, so
+    /// nothing already observed or offered in the phase is observed or offered again.
+    ///
+    /// <para>What the action did change is read back onto what is on screen: the action just tried
+    /// is spent, succeeded or failed (an introduction is made once); every other action the scene
+    /// no longer offers is greyed (the apple grabbed, the door already open); and a keyword about
+    /// something that has left the scene stops answering. All of it renders greyed and ignores
+    /// clicks, like a reconsidered action.</para>
+    ///
+    /// <para>The noetic rule is the segment boundary's: a success refills the pool, a failure keeps
+    /// what is left.</para>
+    /// </summary>
+    private void ContinueNarrationSegment(bool refillNoetic, ParsedNarrativeAction? attempted)
+    {
+        _narrationState.ShowContinueButton      = false;
+        _narrationState.IsContinueButtonHovered = false;
+        _narrationState.ShouldExitOnContinue    = false;
+        _narrationState.PendingTransitionNode   = null;
+        _narrationState.HoveredAction           = null;
+        _narrationState.HoveredKeyword          = null;
+
+        if (refillNoetic)
+        {
+            _memberNoeticPoints.Clear();
+            _narrationState.ThinkingAttemptsRemaining = _activePartyMember.MaxNoeticPoints;
+        }
+
+        // The scene changed under the plans and the verb lists: re-place the people (one slain or
+        // taken into the party is gone) and re-expand every verb, exactly as before a thinking.
+        Cathedral.Game.Scene.ActionPathPlanner.Forget();
+        _npcPlacement?.PlaceForPeriod(_graph.CurrentPeriod);
+        RefreshSceneVerbs();
+
+        if (attempted != null) attempted.NoLongerPossible = true;
+        int spent = RecheckLiveActions();
+        int gone  = RecheckLiveKeywords();
+        if (_pov != null) SceneDebugManager.UpdatePoV(_pov);
+
+        Console.WriteLine($"NarrativeController: CONTINUE — the phase carries on in place ({spent} action(s) no longer possible, "
+                        + $"{gone} observation(s) gone, {_narrationState.ThinkingAttemptsRemaining} noetic point(s)"
+                        + (refillNoetic ? ")" : ", failed action — not refilled)"));
+    }
+
+    /// <summary>
+    /// Greys every live action button the scene no longer offers, read against the verb lists the
+    /// current node's observations hold after <see cref="RefreshSceneVerbs"/> — the same lists a
+    /// thinking draws its goals from. Returns how many were newly greyed.
+    /// </summary>
+    private int RecheckLiveActions()
+    {
+        var offered = OfferedActions();
+        int count = 0;
+        foreach (var block in _narrationState.Blocks)
+        {
+            if (block.Type != NarrationBlockType.Thinking || block.Actions == null) continue;
+            foreach (var action in block.Actions)
+            {
+                if (action.IsSpent || action.PreselectedOutcome is not { } wanted) continue;
+                if (offered.Any(o => StillOffers(o, wanted))) continue;
+                action.NoLongerPossible = true;
+                count++;
+                Console.WriteLine($"NarrativeController: '{action.ActionText}' is no longer possible");
+            }
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="offered"/>, an action the scene offers now, is still
+    /// <paramref name="wanted"/>, an action on screen. The same verb on the same thing with the same
+    /// payload — or with the same wording, or with a payload the thinking settled on top of an
+    /// expansion that carries none (a will's wait "until dawn").
+    /// </summary>
+    private static bool StillOffers(VerbAction offered, VerbAction wanted)
+        => Cathedral.Game.Scene.ActionPathPlanner.SameAction(offered, wanted)
+        || (offered.Verb.GetType() == wanted.Verb.GetType()
+            && offered.Target?.Id == wanted.Target?.Id
+            && (offered.Verbatim == wanted.Verbatim || offered.Variant == null));
+
+    /// <summary>Every action the current node's observations offer, groups and containers included.</summary>
+    private List<VerbAction> OfferedActions()
+    {
+        var actions = new List<VerbAction>();
+        var seen    = new HashSet<NarrativeAnchor>(ReferenceEqualityComparer.Instance);
+        void Walk(NarrativeAnchor anchor)
+        {
+            if (!seen.Add(anchor)) return;
+            switch (anchor)
+            {
+                case VerbAction va:        actions.Add(va); break;
+                case ObservationObject oo: foreach (var sub in oo.SubOutcomes) Walk(sub); break;
+            }
+        }
+        foreach (var outcome in _currentNode.PossibleOutcomes.OfType<NarrativeAnchor>()) Walk(outcome);
+        return actions;
+    }
+
+    /// <summary>
+    /// Marks the keywords of live observations whose subject has left the scene, so they stop
+    /// answering a click (<see cref="_goneAnchors"/>). Returns how many anchors were newly marked.
+    /// </summary>
+    private int RecheckLiveKeywords()
+    {
+        int count = 0;
+        foreach (var block in _narrationState.Blocks)
+        {
+            var anchors = new List<NarrativeAnchor?> { block.LinkedOutcome };
+            foreach (var sentence in block.Sentences ?? new List<NarrationSentence>())
+            {
+                anchors.Add(sentence.Anchor);
+                if (sentence.KeywordAnchors != null) anchors.AddRange(sentence.KeywordAnchors);
+            }
+            foreach (var anchor in anchors)
+                if (anchor != null && !_goneAnchors.Contains(anchor) && !IsStillThere(anchor))
+                {
+                    _goneAnchors.Add(anchor);
+                    count++;
+                    Console.WriteLine($"NarrativeController: '{anchor.DisplayName}' has left the scene — its keyword no longer answers");
+                }
+        }
+        return count;
+    }
+
+    /// <summary>
+    /// Whether what an observation is about is still where the party stands. Only the scene-backed
+    /// kinds are judged — a point of interest, a person, an item in a container, a group of them;
+    /// anything else is taken to be there.
+    /// </summary>
+    private bool IsStillThere(NarrativeAnchor anchor)
+    {
+        if (_scene == null || _pov == null) return true;
+        return anchor switch
+        {
+            SyntheticObservationObject poi       => _pov.Where.PointsOfInterest.Contains(poi.PointOfInterest),
+            SyntheticNpcObservationObject person => person.SceneNpc.IsAlive
+                                                    && _currentNode.PossibleOutcomes.Contains(person),
+            SyntheticItemObservationObject item  => IsStillThere(item.Container)
+                                                    && item.Container.PointOfInterest.Items.Contains(item.Item),
+            ObservationGroup group               => group.Members.Any(IsStillThere),
+            _                                    => true,
+        };
+    }
+
+    /// <summary>
+    /// Whether the action just resolved leaves the phase to carry on (see
+    /// <see cref="_pendingContinuity"/>): exploration, the same area and hour, the visit not ended,
+    /// and nothing come into view that the next phase would have to open on — no body fallen, nobody
+    /// drawn in, no focus handed on, no point of interest, item or person present that was not before.
+    /// Things leaving the scene do not stop it; their keywords and buttons are greyed instead.
+    /// </summary>
+    private bool CanCarryOn(ActionExecutionResult result, Cathedral.Game.Scene.Area? areaBefore,
+                            TimePeriod? periodBefore, bool lostWay, HashSet<Guid>? presentBefore)
+    {
+        if (_scene == null || _pov == null || _scene.Phase != NarrationPhase.Exploration) return false;
+        if (lostWay || IsMovementAction(result.Action)) return false;
+        if (areaBefore == null || areaBefore.Id != _pov.Where.Id) return false;
+        if (periodBefore != _pov.When) return false;
+        if (_scene.PendingCorpseObservations.Count > 0 || _scene.PendingArrivalObservations.Count > 0
+            || _scene.PendingOpeningFocus != null) return false;
+        if (_activePartyMember != _protagonist && !_protagonist.CompanionParty.Contains(_activePartyMember)) return false;
+        if (presentBefore == null || PresenceAt(_pov)!.Any(id => !presentBefore.Contains(id))) return false;
+        return true;
+    }
+
+    /// <summary>Everything in view where <paramref name="pov"/> stands, by id: points of interest, the items in them, the people.</summary>
+    private HashSet<Guid>? PresenceAt(PoV? pov)
+    {
+        if (_scene == null || pov == null) return null;
+        var ids = new HashSet<Guid>();
+        foreach (var poi in pov.Where.PointsOfInterest)
+        {
+            ids.Add(poi.Id);
+            foreach (var item in poi.Items) ids.Add(item.Id);
+        }
+        foreach (var npc in _scene.GetNpcsAt(pov.Where, pov.When)) ids.Add(npc.Id);
+        return ids;
     }
 
     /// <summary>
@@ -2809,8 +3012,11 @@ public class NarrativeController
         // Remember where and when we were before reports apply. The area drives continuing narration
         // at the destination node (any area-moving verb — move, follow path, stairs, climb, door — not
         // just MoveToArea); the period drives re-placing NPCs for the new time of day.
-        var areaBefore   = _pov?.Where;
-        var periodBefore = _pov?.When;
+        var areaBefore    = _pov?.Where;
+        var periodBefore  = _pov?.When;
+        var presentBefore = PresenceAt(_pov);
+        _pendingContinuity = false;
+        _pendingAttempted  = null;
 
         // Apply every report's game-state change in order — to the acting member, so a companion's
         // loot, learned skills, and suffered wounds land on the companion, not the protagonist.
@@ -3020,6 +3226,8 @@ public class NarrativeController
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
+            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay, presentBefore);
+            _pendingAttempted  = result.Action;
         }
         else
         {
@@ -3029,6 +3237,8 @@ public class NarrativeController
             _narrationState.ShowContinueButton = true;
             _pendingSegmentLabel = SegmentLabelFor(result);
             _pendingSegmentSucceeded = result.Succeeded;
+            _pendingContinuity = CanCarryOn(result, areaBefore, periodBefore, lostWay, presentBefore);
+            _pendingAttempted  = result.Action;
         }
 
         // Refresh debug window to reflect any state changes
@@ -4023,9 +4233,11 @@ public class NarrativeController
             if (clickedAction.ActionIndex < allActions.Count)
             {
                 var action = allActions[clickedAction.ActionIndex];
-                if (action.Superseded)
+                if (action.IsSpent)
                 {
-                    Console.WriteLine($"NarrativeController: '{action.ActionText}' was reconsidered — it no longer answers a click.");
+                    Console.WriteLine(action.Superseded
+                        ? $"NarrativeController: '{action.ActionText}' was reconsidered — it no longer answers a click."
+                        : $"NarrativeController: '{action.ActionText}' is no longer possible — it no longer answers a click.");
                     return;
                 }
 
@@ -4446,7 +4658,8 @@ public class NarrativeController
     /// <summary>Clickable action lines in the current frame as (index, text) pairs.</summary>
     public IReadOnlyList<(int Index, string Text)> CliActions()
         => _ui.ActionRegions
-            .Select(r => (r.ActionIndex, r.Action?.ActionText ?? "?"))
+            .Select(r => (r.ActionIndex, (r.Action?.ActionText ?? "?")
+                                         + (r.Action?.NoLongerPossible == true ? "  [no longer possible]" : "")))
             .Distinct()
             .ToList();
 
@@ -4753,6 +4966,19 @@ public class NarrativeController
 
         if (All("opening"))
             outp.Add(_lastOpeningFocus ?? "opening focus=none");
+
+        // Every action button of the live text, in click order: whether it still answers a click.
+        // A phase that carries on past an action in place greys the one tried and every one the
+        // scene no longer offers, which on screen differs only by colour.
+        if (All("actions"))
+        {
+            int index = 0;
+            foreach (var block in _narrationState.Blocks)
+                if (block.Type == NarrationBlockType.Thinking && block.Actions != null)
+                    foreach (var action in block.Actions)
+                        outp.Add($"action {index++} verb={action.PreselectedOutcome?.Verb.VerbId ?? "?"} "
+                               + $"state={(action.Superseded ? "superseded" : action.NoLongerPossible ? "spent" : "live")}");
+        }
 
         // Which conversation was last queued, by tree id — the confrontation's id carries the crime it
         // accuses you of (caught_red_handed_murderer), which nothing on screen states plainly.
@@ -5359,6 +5585,12 @@ public class NarrativeController
 
     private void HandleContinueClicked()
     {
+        // Read once and forgotten, whichever branch below this press takes.
+        bool carryOn   = _pendingContinuity;
+        var  attempted = _pendingAttempted;
+        _pendingContinuity = false;
+        _pendingAttempted  = null;
+
         // A fight held back so its opening blow could be read (see _deferredFightOutcome). First,
         // because the segment it closes is the one the fight itself will grey into history.
         if (_deferredCrafting != null)
@@ -5423,6 +5655,15 @@ public class NarrativeController
         // a labelled separator, refill noetic points, and open a fresh observation of the scene as it
         // now stands (the outcome may have changed it: item gone, state shifted). This makes CONTINUE
         // behave identically for in-place actions and transitions.
+        // The action changed nothing about where and when the party stands: the phase carries on.
+        if (carryOn)
+        {
+            ContinueNarrationSegment(refillNoetic: _pendingSegmentSucceeded, attempted);
+            _pendingSegmentLabel     = null;
+            _pendingSegmentSucceeded = true;
+            return;
+        }
+
         Console.WriteLine("NarrativeController: CONTINUE — closing segment after action, restarting observations"
                         + (_pendingSegmentSucceeded ? "" : " (failed action — noetic points not refilled)"));
         BeginNarrationSegment(_pendingSegmentLabel, refillNoetic: _pendingSegmentSucceeded);

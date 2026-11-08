@@ -563,6 +563,9 @@ public class SyntheticItemObservationObject : ObservationObject
     /// <summary>The item observed.</summary>
     public ItemElement Item => _item;
 
+    /// <summary>The container the item lies in.</summary>
+    public SyntheticObservationObject Container => _container;
+
     public SyntheticItemObservationObject(ItemElement item, SyntheticObservationObject container)
     {
         _item      = item;

@@ -1051,6 +1051,23 @@ budget reaches, and they were designed together — changing one alone re-breaks
     branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
     action modus mentis and no flag removes one.
 
+**An action in place does not end the phase.** The CONTINUE after an act that left the party where
+and when it was — exploration, same area, same period, the visit not lost, nothing new in view (no
+point of interest, item or person present that was not before, no corpse, no arrival, no opening focus
+handed on: `CanCarryOn`, read in `CommitOutcomeResult` against `PresenceAt` taken before the reports
+apply) — calls `ContinueNarrationSegment` instead of `BeginNarrationSegment`. Nothing greys into
+history and no observation is made; **both ledgers are kept**, so nothing already observed or offered
+is observed or offered again. What the act changed is read back onto the live text: the act tried is
+`NoLongerPossible`, succeeded or failed (an introduction is made once); every other button whose
+action the current node no longer offers after `RefreshSceneVerbs` is greyed too (`RecheckLiveActions`,
+`StillOffers`); and a keyword whose object left the scene stops answering (`_goneAnchors`, read by
+`NarrativeUI.GoneAnchors`). The noetic rule is the boundary's: a success refills, a failure keeps what
+is left. Anything else — a move, an hour passed, a fight, a conversation, a body fallen, somebody drawn
+in — closes the phase as before. Re-placing the people on that CONTINUE is why `SceneNpcPlacement`
+reuses a sleeper's point of interest (`_sleeperCache`): a fresh one each time stopped the sleeper's
+keyword answering. `inspect actions` reads each button as `live`, `spent` or `superseded`;
+`cli/system/continuity_in_place.cli` and `continuity_failed_introduction.cli`.
+
 **Iterative thinking and doubt: a thinking mind's second thoughts.** Every modus mentis with the
 Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R23, fatal): **Low** thinks once and
 is never doubted, **Medium** may try again once, **High** twice — a try spent by a refusal or by the
