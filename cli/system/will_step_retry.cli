@@ -31,11 +31,11 @@ advance 12 180
 click think "yard"
 choose lockpicking
 advance 12 180
-expect To get there I must first
+expect-state texts "To get there I must first"
 expect [Bushcraft
-expect That will not do, and I think again
-expect another way
-expect ] discreetly walk back out into the yard
+expect-state texts "That will not do, and I think again"
+expect-state texts "another way"
+expect-state texts "] discreetly walk back out into the yard"
 
 allow-flag-miss --means-only
 quit

@@ -9,21 +9,23 @@ wait mode LocationInteraction 900
 advance 12 1200
 state
 regions
-click keyword 0
+click observe thing
 regions
 choose 0
+advance 12 1200
+click think last
 regions
 choose poetry
 advance 12 1200
 regions
-click action 0
+click act 0
 regions
 choose 0
 advance 12 1200
 click continue
 advance 12 1200
 state
-click button
+click continue
 wait 1200
 advance 12 1200
 state

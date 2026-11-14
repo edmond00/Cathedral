@@ -35,20 +35,20 @@ advance 12 180
 click think "bush"
 choose lockpicking
 advance 12 180
-expect I want to pick a lock: to unlock
-expect but that does nothing for it, and I leave it be
+expect-state texts "I want to pick a lock: to unlock"
+expect-state texts "but that does nothing for it, and I leave it be"
 expect-not to get there
 
 # Not this way, with a person at the end of it: named, not pronounced.
 click think "bush"
 choose pugilitas
 advance 12 180
-expect : to attack the
+expect-state texts ": to attack the"
 expect-not attack him
 
 # Not in this place: the focus is refused, and why.
 click observe "bush"
 choose winnowing
 advance 12 180
-expect have to leave it
+expect-state texts "have to leave it"
 quit

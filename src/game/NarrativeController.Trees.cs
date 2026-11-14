@@ -105,6 +105,12 @@ public partial class NarrativeController
     // ── Building a tree ──────────────────────────────────────────────────────
 
     /// <summary>
+    /// The element each member's trees took in last. A script on the real model cannot know which
+    /// element a mind will choose to look at, and names it "last" (<see cref="CliFindSymbol"/>).
+    /// </summary>
+    private readonly Dictionary<PartyMember, ThoughtNode> _lastRooted = new();
+
+    /// <summary>
     /// Roots a tree on <paramref name="anchor"/> for <paramref name="mind"/>: under the container that
     /// holds it, for what a container holds; else among the member's roots. <paramref name="text"/> is
     /// the observation (null for what nobody observed, with <paramref name="note"/> said in its place).
@@ -124,6 +130,7 @@ public partial class NarrativeController
         };
         if (container != null) container.Add(node);
         else mind.Roots.Add(node);
+        _lastRooted[mind.Member] = node;
         return node;
     }
 

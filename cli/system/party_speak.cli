@@ -25,34 +25,33 @@ advance 12 180
 expect [KENRYC GREYGATE]
 inspect party
 
-# Something to speak of.
-click observe "Test Bench"
+# Something to speak of: the chicken in the yard.
+click observe "chicken"
 choose childhood_memory
 advance 12 180
 expect-state noetic points=2/3
 
-# Speak: the speech mark under the bench, then a speaking modus mentis. One companion is in reach,
+# Speak: the speech mark under the chicken, then a speaking modus mentis. One companion is in reach,
 # so nobody is asked whom.
 regions
-click speak "Test Bench"
+click speak "chicken"
 choose friendship
 advance 12 180
 expect-state trees speech
 expect-state noetic points=1/3
 expect [KENRYC GREYGATE]
 
-# The hyena has the bench on its own trees now, with its own full pool.
+# The hyena has the chicken on its own trees now, with its own full pool.
 click member Brindletail
 wait
 expect [BRINDLETAIL]
-expect-state trees "Test Bench"
-expect-state noetic points=
+expect-state trees chicken
 
 # The companion thinks and acts for itself. The goal is pinned: a beast's action modus mentis
 # refuses to examine, and the playground's draw over the goals moves whenever an earlier draw does.
 strategy succeed
 goal smell
-click think "Test Bench"
+click think "chicken"
 choose birdsong
 advance 12 180
 click act 0

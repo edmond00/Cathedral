@@ -429,7 +429,9 @@ public sealed class CliDriver
                                     element or a container's content — or, for a script only,
                                     something not yet known, which pins the observation to it
                                     as --observe-only does for a whole run
-          click think <name>        the ? after an observed element: think about it
+          click think <name|last>   the ? after an observed element: think about it. `last` is
+                                    whatever was observed last, for a script on the real model,
+                                    where the mind chooses what it looks at (`speak` takes it too)
           click speak <name>        the speech mark after an observed element: speak of it to the
                                     members within reach
           click act <n|word>        a waiting act, by position (the order proposed) or by a word of
@@ -2298,7 +2300,11 @@ public sealed class CliDriver
             if (n == null) { CliMode.Emit("error: not in narration"); return; }
             lines = n.CliInspect(subject);
         }
-        bool   found   = lines.Any(l => l.Contains(needle, StringComparison.OrdinalIgnoreCase));
+        // Quotes are not compared. The lines put them round names, and the text of an assertion
+        // reaches here with its own stripped by the tokenizer, so `area="Test Yard"` could never
+        // be asserted on as it reads.
+        static string Bare(string s) => s.Replace("\"", "");
+        bool   found   = lines.Any(l => Bare(l).Contains(Bare(needle), StringComparison.OrdinalIgnoreCase));
 
         if (found == want)
         {

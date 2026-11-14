@@ -2,7 +2,7 @@
 
 A playthrough boots, enters the location underfoot and then plays a list of phases. Every phase is a
 block of ordinary CLI commands copied from known-good scripts (cli/outcome/emotion/success.cli,
-cli/system/companion_handoff.cli, cli/system/dialogue_success.cli). With the real model nothing is
+cli/system/party_speak.cli, cli/system/dialogue_success.cli). With the real model nothing is
 pinned — the judge picks the goal and the means — so the blocks are tolerant: a command that does
 not apply in the state the model left (no dialogue opened, no action offered) reports an error and
 the script moves on. The point is a corpus of real requests, not an assertion.
@@ -26,18 +26,27 @@ advance 12 {W}
 """
 
 
-def think(mm, keyword="0"):
-    """Think about something with `mm`, act on what it proposes, read the outcome and any emotion,
-    and play out a conversation if the act opened one."""
-    return f"""click keyword {keyword}
+def look(kind="thing"):
+    """Look at something of a kind with the first observing mind the popup lists. Which thing is the
+    mind's choice, so what follows names it `last`."""
+    return f"""click observe {kind}
 choose 0
+advance 12 {W}
+"""
+
+
+def think(mm, kind="thing"):
+    """Look at something, think about it with `mm`, act on what it proposes, read the outcome and any
+    emotion, close the result, and play out a conversation if the act opened one."""
+    return look(kind) + f"""click think last
 choose {mm}
 advance 12 {W}
-click action 0
+click act 0
 choose 0
 advance 12 {W}
 click continue
 advance 12 {W}
+click continue
 advance 12 {W}
 {dialogue()}"""
 
@@ -56,29 +65,27 @@ advance 20 {W}
 """
 
 
-def observe(mm, keyword="1"):
-    return f"""click keyword {keyword}
-choose 1
+def observe(mm, kind="thing"):
+    return f"""click observe {kind}
 choose {mm}
 advance 12 {W}
 """
 
 
-def speak_about(keyword="0"):
-    return f"""click keyword {keyword}
-choose 2
-choose 0
+def speak_about():
+    return look() + f"""click speak last
 choose 0
 advance 12 {W}
 """
 
 
 def next_phase():
-    """Closes the segment. When the thinking proposed nothing the footer is LEAVE and the party walks
-    out — then it walks straight back in (`travel here`, a fresh arrival), and in narration that
-    command is a harmless error."""
-    return f"""click button
-wait {W}
+    """A fresh visit: the party walks out and straight back in (`travel here`), so the trees are
+    empty and every pool is full whatever the last act came to. A leftover result box is closed
+    first; where there is none that command is a harmless error."""
+    return f"""click continue
+click exit
+wait mode WorldView {W}
 travel here
 wait mode LocationInteraction {W}
 advance 12 {W}
@@ -88,11 +95,11 @@ advance 12 {W}
 RUNS = [
     # conversations: opened in the room where a tradesman stands, attention narrowed to them
     ("talk_blacksmith", "--seed 31 --start-at village --start-area Forge --npc-static --observe-only blacksmith --period morning --grant-mm rhetoric,pride,flattery,cruelty",
-     [think("rhetoric"), next_phase(), think("pride")]),
+     [think("rhetoric", "person"), next_phase(), think("pride", "person")]),
     ("talk_miller", "--seed 32 --start-at village --start-area Mill --npc-static --observe-only miller --period evening --grant-mm courtesy,mythomania,plain_dealing,insolence",
-     [think("courtesy"), next_phase(), think("mythomania")]),
+     [think("courtesy", "person"), next_phase(), think("mythomania", "person")]),
     ("talk_farm", "--seed 33 --start-at farm --npc-static --period noon --grant-mm homily,disputation,humility,gossip",
-     [think("homily"), next_phase(), think("disputation")]),
+     [think("homily", "person"), next_phase(), think("disputation", "person")]),
     # name, flags, phases
     ("village_dawn", "--seed 21 --start-at village --period dawn --grant-mm poetry,rhetoric,cutpurse,avarice,keen_ear",
      [think("poetry"), next_phase(), observe("keen_ear"), think("rhetoric"), next_phase(), think("avarice")]),

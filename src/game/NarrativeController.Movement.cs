@@ -417,12 +417,19 @@ public partial class NarrativeController
     }
 
     /// <summary>
+    /// The members who have walked out during a LEAVE still under way: in the party, and no longer
+    /// in the place — so the roster does not stand them back in it (<see cref="SyncRoster"/>).
+    /// </summary>
+    private readonly HashSet<PartyMember> _goneOut = new();
+
+    /// <summary>
     /// <paramref name="mind"/>'s member is out of the place: no longer on the map, and not to come
     /// back this visit. When nobody is left the visit is over; else somebody still inside is played.
     /// </summary>
     private void GoneOut(MemberMind mind)
     {
         _minds.Remove(mind.Member);
+        _goneOut.Add(mind.Member);
         if (_minds.Count == 0)
         {
             _minds[mind.Member] = mind;   // the visit ends with somebody to read it from

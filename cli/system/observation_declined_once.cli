@@ -1,0 +1,44 @@
+# observation — a mind may decline once, and asked again it must attend
+#
+# A click on a kind asks the mind chosen to look at one thing of that kind, of its own choosing —
+# or to say that nothing there draws it. The declining costs its point like any observation, stands
+# on the map as a refusal, and is spent: the same mind asked again about the same kind in the same
+# area has to attend to something. Another mind still has its own declining.
+#
+# --refuse-focus stands in for the choice judge answering "nothing here", which --playground never
+# does: it forces the decline wherever one is allowed.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --refuse-focus
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Childhood Memory is asked to look at a thing, and declines.
+click observe thing
+choose childhood_memory
+advance 12 180
+expect-state texts "Nothing here draws my attention"
+expect-state trees refusal area="Test Yard" mind=childhood_memory
+expect-no-state trees element
+expect-state noetic points=2/3
+
+# Asked again, it may not: something is observed.
+click observe thing
+choose childhood_memory
+advance 12 180
+expect-state trees element
+expect-state trees observer=childhood_memory
+expect-state noetic points=1/3
+
+# Another mind has a declining of its own.
+click observe thing
+choose comradeship
+advance 12 180
+expect-state trees refusal area="Test Yard" mind=comradeship
+quit

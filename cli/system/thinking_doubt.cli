@@ -30,9 +30,9 @@ click think "Test Giant Tree"
 choose ripelore
 advance 12 180
 # Expected text is matched line by line on the wrapped screen, hence the short fragments.
-expect But is it truly wise to
-expect and it holds
-expect another way
-expect does not hold
-expect I am resolved to
+expect-state texts "But is it truly wise to"
+expect-state texts "and it holds"
+expect-state texts "another way"
+expect-state texts "does not hold"
+expect-state texts "I am resolved to"
 quit

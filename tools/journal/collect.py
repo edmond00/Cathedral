@@ -29,25 +29,28 @@ SCENARIOS = {
     "den_beast":     ("--seed 49 --location-type test --location-id 0 --npc-static --start-area \"Test Den\" --period noon --observe-only wolf", "succeed", ""),
 }
 
-# Leaving: the footer may first have to close a phase (END, CONTINUE) before it reads LEAVE.
+# Leaving: a result box may first have to be closed before the way out answers.
 LEAVE = """
-when LocationInteraction click button
+when LocationInteraction click continue
 wait 900
 advance 20 1200
-when LocationInteraction click button
-wait 900
-advance 20 1200
-when LocationInteraction click button
+when LocationInteraction click exit
 wait mode WorldView 900
 """
 
+# One thing looked at (which one is the mind's choice, so it is named `last`), thought about and
+# acted on; then whatever the act opened is played out.
 CYCLE = """
-when LocationInteraction click keyword 0
-when LocationInteraction choose 0
+when LocationInteraction click observe thing
 when LocationInteraction choose 0
 advance 20 1200
-when LocationInteraction click action 0
+when LocationInteraction click think last
 when LocationInteraction choose 0
+advance 20 1200
+when LocationInteraction click act 0
+when LocationInteraction choose 0
+advance 20 1200
+when LocationInteraction click continue
 advance 20 1200
 when LocationInteraction click continue
 advance 20 1200

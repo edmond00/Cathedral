@@ -89,7 +89,7 @@ Two exceptions, both deliberate: the "Broken X" replacement takes its lemma from
 and modus mentis ids stay strings because every one of them is checked (fatally at startup by R5/R10,
 or by `--verb-audit`, `--npc-audit`, `--dialogue-audit` and `JobRegistry`).
 
-**Name things, never coordinates.** `click keyword hearth` survives layout changes and reads as
+**Name things, never coordinates.** `click think hearth` survives layout changes and reads as
 intent; `click cell 34 12` breaks on the next UI tweak. Use `regions` to discover handles rather
 than reading a `dump` and counting rows. (`click cell` exists as an escape hatch for UI that has no
 region support yet.)
@@ -151,7 +151,7 @@ folder of the verb or outcome you changed, and any `cli/system/` script whose su
 which reaches the code path (grep `cli/` for the feature, the flag or the expected text):
 
 ```bash
-./run_tests.sh cli examine cli/system/focus_turned_away.cli   # folders and single scripts mix
+./run_tests.sh cli examine cli/system/narration_map.cli   # folders and single scripts mix
 ```
 
 Say which scripts you ran, and that the full suite was not.
@@ -170,7 +170,7 @@ every line that left is the same text, moved.
 
 | | loads | what is in it |
 |---|---|---|
-| `src/game/CLAUDE.md` | when working with files under `src/game/` | saving and the save contract; `HandleEscape` and the phases it must answer; fights, the first blow, victory, death, companion death; wounds and healing and the modi mentis a wound takes away; verbs/actions/outcomes; the noetic economy; tools and the four gates; emotions; corpses; crime; landscapes; recruiting; what survives a visit; what a body can do; the senses; the affinity ladder; circumstance and dialogue lessons |
+| `src/game/CLAUDE.md` | when working with files under `src/game/` | saving and the save contract; `HandleEscape` and the phases it must answer; fights, the first blow, victory, death, companion death; wounds and healing and the modi mentis a wound takes away; **narration played on the location map** (elements, symbols, thought trees, the reconciler, free walking, confrontation, the independent party, the two opening phases); verbs/actions/outcomes; the noetic economy; tools and the four gates; emotions; corpses; crime; landscapes; recruiting; what survives a visit; what a body can do; the senses; the affinity ladder; circumstance and dialogue lessons |
 | `src/game/history/CLAUDE.md` | when working with files under `src/game/history/` | the world history generator: the empire's lore as data, sow and sprout, the rules that keep a generated past coherent, lore moons and their profiles, realms over regions, why history is regenerated and not saved |
 | `verifying` skill | on invocation | `--cli`, the reproducibility flags, the command vocabulary, forcing outcomes, the test suite and `cli/` layout, `--verb-probe`, extending the CLI, adding a debug flag, what `--cli` cannot check |
 | `playtest` skill | on invocation | launching the game for the user to play by hand: the baseline command, which debug flags reach which feature, the CPU/GPU rule, when `--playground` belongs on |

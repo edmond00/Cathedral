@@ -79,6 +79,12 @@ public partial class NarrativeController
                 _ = ReconsiderAsync(chosen, reconsider.Act);
                 break;
 
+            case SpeakPending { Listeners.Count: 1 } speak:
+                // One companion within reach: nobody is asked whom.
+                _loading = Config.LoadingMessages.Speaking;
+                _ = SpeakAsync(speak.Element, chosen, speak.Listeners[0]);
+                break;
+
             case SpeakPending speak:
                 // The speaking mind is chosen: now, whom to address.
                 _pending = speak with { Mind = chosen };

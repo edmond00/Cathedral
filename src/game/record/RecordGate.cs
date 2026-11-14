@@ -363,7 +363,7 @@ public sealed class RecordGate
                 string? area = null;
                 int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
                 if (what == "observe" && at > 0) { area = rest[(at + 4)..].Trim().Trim('"'); name = rest[..at].Trim().Trim('"'); }
-                var (symbol, error) = narration.CliFindSymbol(what, name, area);
+                var (symbol, error) = narration.CliFindSymbol(what, name, area, playerOnly: true);
                 if (symbol == null) return Fail(error ?? "no such symbol");
                 return narration.CliSymbolCell(symbol) is { } sc0 ? At(sc0, $"{what} {name}") : Fail($"'{name}' is not drawn on the map");
             }

@@ -14,6 +14,11 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
+
+# Something read, for the journal to hold: arriving writes no text of its own.
+click observe thing
+choose childhood_memory
+advance 12 180
 expect-state journal kind=Narration state=Raw
 
 # Leaving closes the visit; the chronicler takes it up on the next frame.

@@ -108,7 +108,8 @@ public partial class NarrativeController
     /// member's name; <paramref name="areaName"/> narrows an observation to an area, which is
     /// otherwise the one the played member stands in when it offers any.
     /// </summary>
-    public (MapSymbol? Symbol, string? Error) CliFindSymbol(string what, string name, string? areaName = null)
+    public (MapSymbol? Symbol, string? Error) CliFindSymbol(string what, string name, string? areaName = null,
+                                                             bool playerOnly = false)
     {
         var frame = _overlay.Frame;
         if (frame == null) return (null, "the map has not been drawn yet");
@@ -128,6 +129,10 @@ public partial class NarrativeController
                     return (known, null);
                 var contents = Mind.ElementNodes.SelectMany(n => ContentsOf(n).Select(p => new ContentSymbol(n, p)));
                 if (Best(contents, c => MatchRank(NamesOf(c.Part), name)) is { } content) return (content, null);
+                // Naming the holder asks for whatever it holds first: a memory's fragments are not
+                // something a script on the real model can name ahead.
+                if (Best(Mind.ElementNodes.Where(n => ContentsOf(n).Count > 0), n => MatchRank(NamesOf(n), name)) is { } holder)
+                    return (new ContentSymbol(holder, ContentsOf(holder)[0]), null);
 
                 // A script may name what a player cannot: something not yet known. The symbol is the
                 // anonymous one of its kind, and the observation that follows is pinned to it — the
@@ -137,12 +142,19 @@ public partial class NarrativeController
                     .Select(u => (u.Area, u.Anchor, u.Kind, Rank: MatchRank(NamesOf(u.Anchor), name)))
                     .Where(u => u.Rank != int.MaxValue).OrderBy(u => u.Rank).ToList();
                 if (unknown.Count == 0) return (null, $"nothing unobserved named '{name}'");
+                // A recording takes only what a player can do, and a player cannot name what they
+                // have not learned: on camera the anonymous symbol is clicked by its kind.
+                if (playerOnly) return (null, $"'{name}' is not known yet — observe by kind (way, person, hostile, thing)");
                 _cliObservePin = unknown[0].Anchor;
                 return (trays.First(t => t.Known == null && t.Kind == unknown[0].Kind && t.Area.Id == unknown[0].Area.Id), null);
             }
             case "think" or "speak":
             {
-                var element = Best(Mind.ElementNodes.Where(n => Locate(n) != null), n => MatchRank(NamesOf(n), name));
+                // "last" is whatever this member's trees took in last: on the real model the mind
+                // chooses what it looks at, and a script has no name to give.
+                var element = name.Equals("last", StringComparison.OrdinalIgnoreCase)
+                    ? _lastRooted.TryGetValue(_active, out var latest) && Locate(latest) != null ? latest : null
+                    : Best(Mind.ElementNodes.Where(n => Locate(n) != null), n => MatchRank(NamesOf(n), name));
                 if (element == null) return (null, $"no observed element named '{name}'");
                 var stub = what == "think" ? StubKind.Think : StubKind.Speak;
                 return StubsOf(element).Contains(stub) ? (new StubSymbol(element, stub), null)

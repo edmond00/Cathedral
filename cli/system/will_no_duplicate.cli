@@ -30,18 +30,18 @@ advance 12 180
 click think "poultry_keeper"
 choose bargaining
 advance 12 180
-expect I must first
+expect-state texts "I must first"
 
 click think "poultry_keeper"
 choose bargaining
 advance 12 180
-expect ask him to take me to the coop
-expect follow him at a distance
+expect-state texts "ask him to take me to the coop"
+expect-state texts "follow him at a distance"
 expect-not nothing else comes to mind
 
 click think "poultry_keeper"
 choose bargaining
 advance 12 180
-expect nothing else comes to mind
+expect-state texts "nothing else comes to mind"
 expect-not that does nothing for it
 quit

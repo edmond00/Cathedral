@@ -1,13 +1,17 @@
 # confronted — a witness who came for you blocks every act but the few that answer them
 #
 # A crime on the Test Roof fails within earshot of the hall, and the brewer comes up to look. He came
-# because of you, so he confronts you: the exit is RUNAWAY, and a lawful act (contemplating him)
-# is refused before any roll — the witness-side twin of an enemy in the room. Walking off to the next
-# area used to end it for the price of one move.
+# because of you, so he confronts you: he is on the map already observed, the way out reads RUNAWAY,
+# nothing but him may be looked at or thought about, and a lawful act (contemplating him) is refused
+# on the click before any roll — the witness-side twin of an enemy in the room. Walking off to the
+# next area used to end it for the price of one move.
 #
-# --doubt low: one try, no iterative thinking — a retry would step around the refusal
-# this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat" --doubt low
+# --doubt low: one try, no iterative thinking — a retry would step around the refusal this script is
+# about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
+# --organs encephalon=2: a look, a thought, a failed act and a second thought are more points than
+# the seed's own pool holds.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item knife --grant-mm brute_force --means-only brute_force --location-type test --location-id 0 --start-area "Test Roof" --period noon --observe-only "goat" --doubt low --organs encephalon=2
 
 wait
 click menu New
@@ -34,28 +38,35 @@ choose 1
 regions
 choose 0
 advance 12 180
-
 regions
 click act 1
 choose 0
 advance 12 180
 click continue
 advance 12 180
-
 expect-outcome npc_drawn_in
 
-# The brewer opens the next phase. Now try something lawful.
+# The result closed, the brewer stands on the roof, observed by nobody and confronting.
 click continue
 advance 12 180
-expect RUNAWAY
+expect-state where confronted=CameForYou:brewer exit=RUNAWAY
+expect-state trees the brewer
+
+# Nothing else answers: not the ways off the roof, not the goat already thought about.
+inspect symbols
+expect-state symbols click observe way in Test Roof x8 (disabled)
+expect-state symbols click think the goat (disabled)
+
+# He does. Now try something lawful about him.
 goal contemplate
-click think "goat"
+click think "brewer"
 choose ripelore
 advance 12 180
 regions
-click act 0
+
+click act contemplate
 choose 0
 advance 12 180
-expect watching me
+expect-state texts "watching me"
 expect-no-outcome dialogue_trigger
 quit

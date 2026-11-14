@@ -18,22 +18,24 @@ travel here
 wait mode LocationInteraction 600
 advance 20 900
 wait for 6
-click keyword 0
+click observe "brewer"
 choose 0
+advance 20 900
+click think "brewer"
 choose 0
 advance 20 900
 wait for 6
-click action 0
+click act 0
 choose 0
 advance 20 900
 click continue
 advance 20 900
 wait for 6
 state
-click button
+click continue
 wait 600
 advance 20 900
-click button
+click exit
 wait mode WorldView 600
 
 # --- the chronicler takes visit 1 up while the player reads the map ------------------------
@@ -44,21 +46,23 @@ travel here
 wait mode LocationInteraction 600
 advance 20 900
 wait for 6
-click keyword 0
+click observe "brewer"
 choose 0
+advance 20 900
+click think "brewer"
 choose 0
 advance 20 900
 wait for 6
-click action 0
+click act 0
 choose 0
 advance 20 900
 click continue
 advance 20 900
 wait for 8
-click button
+click continue
 wait 600
 advance 20 900
-click button
+click exit
 wait mode WorldView 600
 wait for 240
 inspect journal

@@ -31,13 +31,15 @@ clip end arrive
 
 regions
 clip act
-click keyword 0
+click observe thing
 choose 0
+advance 12 900
+click think last
 choose 0
 advance 12 900
 hold 2
 regions
-click action 0
+click act 0
 choose 0
 advance 12 900
 hold 1
@@ -47,7 +49,7 @@ hold 4
 clip end act
 
 clip next
-click button
+click continue
 wait 900
 advance 12 900
 hold 4

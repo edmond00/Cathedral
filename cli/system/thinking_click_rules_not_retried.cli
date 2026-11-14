@@ -18,7 +18,7 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-expect wolf
+expect-state texts "wolf"
 
 strategy succeed
 goal examine
@@ -35,5 +35,5 @@ regions
 click act 0
 choose 0
 advance 12 180
-expect while under the threat of
+expect-state texts "while under the threat of"
 quit

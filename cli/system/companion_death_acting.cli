@@ -33,10 +33,10 @@ expect [BRINDLETAIL]
 # the playground's draw over the goals moves whenever an earlier draw does.
 strategy succeed
 goal smell
-click observe "Test Bench"
+click observe "chicken"
 choose birdsong
 advance 12 180
-click think "Test Bench"
+click think "chicken"
 choose birdsong
 advance 12 180
 click act 0
@@ -44,6 +44,7 @@ choose 0
 advance 12 180
 click continue
 advance 12 180
+expect SUCCESS
 click continue
 advance 12 180
 

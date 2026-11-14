@@ -49,7 +49,7 @@ saved. Add it when repeated launches are spending time re-probing and the device
 ## `--playground` on or off
 
 `--playground` replaces every LLM call with instant placeholder text. No model load, no server, no
-waiting — the game reaches its first observation in about two seconds instead of the better part of
+waiting — the game reaches the first place's map in about two seconds instead of the better part of
 a minute.
 
 **Turn it on** when the session's work does not depend on generated prose: UI and layout, the glyph
@@ -58,7 +58,7 @@ fight-mode mechanics, save/load, the party panel. The user gets to the screen in
 seconds, and the placeholder text is beside the point.
 
 **Leave it off** when the prose *is* the thing: prompt changes, persona rewriting, the narration
-preview box's content, dialogue text, keyword extraction and ranking, anything under `src/LLM/`, and
+preview box's content, dialogue text, which element a mind chooses to look at, anything under `src/LLM/`, and
 any judgement about whether the writing is good. A `--playground` run can never answer that — see
 "What `--cli` cannot check" in `verifying`, which applies identically to a hand-played run.
 
@@ -72,7 +72,10 @@ should not have to walk to the feature.
 
 | If the session touched… | Add |
 |---|---|
-| A village/farm/cave-specific scene, an area, a building | `--start-at <biome>` and `--start-area <room>` — spawn in the location *and* the room. Without the second one it is an observation, a think and an action per step to walk there. |
+| A village/farm/cave-specific scene, an area, a building | `--start-at <biome>` and `--start-area <room>` — spawn in the location *and* the room. Without the second one it is an observation, a thought and an act per step to walk there the first time (a way once taken is then walked for nothing, by clicking the area's card). |
+| The narration map itself: symbols, trees, the result box, walking, the way out | `--location-type test --location-id 0 --start-area "Test Yard"` — the kitchen-sink place, with people, things, ways, a door and a wolf two areas off. Tell the user the screen has no text to scroll: each card carries one symbol per kind of thing not yet looked at; click one and pick a mind to observe, click the `?` it leaves to think, click the act the thought comes to; point at any symbol to read it again; the `⎆` in the margin is the way out. `--observe-only <name>` steers which element a mind picks; `--refuse-focus` shows a mind declining. |
+| The party in a place: tokens, switching, speaking to a companion | `--fill-party` (a beast with a heart of 1; raise the heart on the creation screen for humans). Each member has a token on the map — click one to play them; the speech mark under an observed element speaks of it to a companion in the same or the next area. |
+| The childhood and the get-up | Drop `--skip-childhood`. Both are played "Under the Tree": the memories, then the body's weariness, hang from "myself" on the map. |
 | A scene factory regardless of biome | `--location-type <name>` — builds every location with that factory whatever the terrain. `--location-id <n>` pins the exact scene. |
 | A verb that is tool-gated | `--grant-item axe,pick,shovel,fishing_rod` — the starting kit is random, so the verb is otherwise refused outright. |
 | A verb or skill behind a modus mentis | `--grant-mm <id>[:lvl]` when a *specific* one is wanted; `--mm` (already in the baseline) when any will do. |
@@ -87,7 +90,7 @@ should not have to walk to the feature.
 | The world-selection sky | Drop `--seed` — the flag names the world outright and skips that screen. The sky is drawn from a constant, so it is still the same sky. The box names the moon's world variant beside its seed, so this is also how to browse the ten of them. |
 | A particular kind of world (more sea, more mountains, more farms) | `--world-variant <id>` — one of `temperate`, `drowned`, `continental`, `insular`, `montane`, `eroded`, `sylvan`, `arable`, `desolate`, `littoral`. Only one seed in ten names any given variant, so hunting the sky for one is exactly the lucky-seed hunt this table exists to avoid. Pair it with **R** to see how the regions fall in that shape. **A save written under this flag will not continue without it**, so do not leave it on across a session meant to be resumed. |
 | A save-format change | `--save-path <file>` against a scratch file. Never let a playtest write the real save while a format change is in flight. |
-| The developer shortcuts | `--developer-keys` — D/M/F/G/H/J, R/K, C/V, W/S and Tab outside exploration are off by default, as in a shipped build. Several of these letters are also the management screen's tab keys, so with the flag on, pressing them there does both. |
+| The developer shortcuts | `--developer-keys` — D/M/F/G/H/J, R/K, C/V and W/S are off by default, as in a shipped build. Several of these letters are also the management screen's tab keys, so with the flag on, pressing them there does both. |
 
 `dotnet run -- --help` is the full list and is authoritative; the table above is what tends to
 matter for a hands-on look.

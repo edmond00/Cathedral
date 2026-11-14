@@ -28,7 +28,7 @@ advance 12 180
 click observe "crate"
 choose banter
 advance 12 180
-expect shifts to the brewer
+expect-state texts "shifts to the brewer"
 
 # Rhetoric thinks about the brewer: a conversation, carried out by Boasting.
 strategy succeed

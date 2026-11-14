@@ -4,9 +4,10 @@
 # Room, which is private, makes ANY act trespass, and an illegal act is floored at 1
 # (Verb.ActionDifficulty): what a failed crime costs (the witness who hears it and comes) is the whole
 # crime chain, and an act that cannot fail could never be heard. So the door out is rolled, at ①, and
-# `strategy fail-dice` makes it miss.
+# `strategy fail-dice` makes it miss. By night: the weaver is asleep in it, and awake she would confront
+# whoever walked in before anything else could be looked at.
 #
-# FLAGS: --playground --willingness eager --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Room Door"
+# FLAGS: --playground --willingness eager --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period night --observe-only "Test Room Door"
 
 wait
 click menu New
@@ -29,8 +30,8 @@ click think "Test Room Door"
 choose ripelore
 advance 12 180
 
-expect ①
-expect-not ○
+expect-state trees difficulty=1
+expect-no-state trees difficulty=0
 
 click act 0
 choose 0

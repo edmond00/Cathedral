@@ -73,7 +73,7 @@ target that cannot be located on screen is refused, never performed some other w
 
 | kind | commands |
 |---|---|
-| pointer (animated, clicked) | `click keyword/action/option/skill/fighter/end-turn/engage/button/continue/menu/world/moon/sky/arrow/companion-death/end-run/cell`, `click humor <queue>` and `click die <n>` (spending humors on a settled roll; `dice` shows it), `choose <n>` (scrolls a long list to the row first), `travel here/<name>/<vertex>/neighbour/back`, `travel-go`, `point moon`, `scroll up/down [n]`, and the presses `advance` makes |
+| pointer (animated, clicked) | on a place's map `click observe <kind\|known name>`, `click think/speak <name>`, `click act <n\|word>`, `click member <name>`, `click area <name>`, `click exit`; elsewhere `click option/skill/fighter/end-turn/engage/button/continue/menu/world/moon/sky/arrow/companion-death/end-run/cell`, `click humor <queue>` and `click die <n>` (spending humors on a settled roll; `dice` shows it), `choose <n>` (scrolls a long list to the row first), `travel here/<name>/<vertex>/neighbour/back`, `travel-go`, `point moon`, `scroll up/down [n]`, and the presses `advance` makes |
 | keyboard | `key <name>`, `pause` |
 | menus and screens | `pause` (Escape: opens the menu), `click menu <label>` (Continue, Protagonist, Settings…), `click tab <name>` and `click back` on the protagonist screen, `click element <id>` for any named control (settings rows, trade, work). `elements` lists the ids on screen |
 | directing the film | `clip <name>` … `clip end` (a span to cut), `mark <label>`, `note <text>`, `hold <secs>` (let the shot breathe), `cursor rest/hide/show` |
@@ -111,19 +111,25 @@ otherwise misleading in promotional material).
 
 ### Getting through a scene — the levers a player has
 
-- **Think more, act once.** Each keyword click → Think spends one noetic point and can add an action
-  to the list. With 8 points, think on several words (or one word with several modi mentis) before
-  acting: more options, and a better one among them.
+- **Look, think more, act once.** A place is played on its map: `click observe <kind>` looks at one
+  thing of that kind (a point), `click think <name>` on what was observed spends another and can
+  leave an act waiting on its tree. With 8 points, think about several things (or one thing with
+  several modi mentis) before acting: more options, and a better one among them. A successful act
+  refills the pool. Observe **by kind** on camera — naming something nobody has looked at yet pins
+  the mind's choice, which a player cannot do.
 - **Choose the way of thinking for the goal.** The thinking modus mentis decides *what* is wanted
   (Vantage proposes heights and views, Ripelore food, Rhetoric talk); pick one whose nature fits.
 - **The acting mind can refuse** ("I won't go to the chandler's lane"). That costs a point, not the
-  scene: think again, with another modus mentis or another word.
+  scene: think again, with another modus mentis or about something else.
 - **A failed roll is not final.** Read it with `dice` (the faces, SUCCESS/failing, each queue's humor
   and which dice it applies to), then `click humor <queue>` and `click die <n>`, as many times as the
   viscera allow, then `click continue`. Spend the humor on camera — it is one of the game's best
   moments to show.
-- **Observe** instead of Think looks closer and lights new words; **Use Tool** needs a carried item.
-- When nothing on screen leads anywhere, `click button` (LEAVE / CONTINUE) moves the story on.
+- **A container** shows what it holds once observed, each thing a symbol to look at in its turn;
+  **Use Tool** (the act's second row) needs a carried item.
+- **Walking by ways already taken is free**: `click area <name>`. When nothing on the map leads
+  anywhere, `click exit` leaves the place (it reads RUNAWAY, and rolls, while somebody confronts
+  the character). `click continue` closes an act's result box.
 
 ### Live takes: decide as you go (preferred with the real model)
 
@@ -134,7 +140,7 @@ commands a batch at a time and read the answers between batches, exactly like a 
 make_video.py live build/rec_x --flags "--skip-childhood --seed 42 --start-at city --organs …"   # run_in_background
 make_video.py send build/rec_x "wait mode MainMenu 900" "click menu New" … "regions"
 make_video.py send build/rec_x dump                       # read the prose before choosing
-make_video.py send build/rec_x "click keyword gaps" "choose 0" "regions"
+make_video.py send build/rec_x "click observe way" "choose 0" "advance 12 900" "regions"
 make_video.py send build/rec_x quit
 ```
 
@@ -149,8 +155,8 @@ around the stretches worth keeping as you go. A live take cannot be regenerated 
 
 **Invoke `verifying` first and copy a known-good sequence** (`productions/cities/city.cli`, or any
 `cli/verb/*/success.cli` minus its `strategy`/`goal` lines). Composing a narration sequence from the
-docs stalls on preview boxes — `advance` drains them, and is needed before the first keyword and
-again before `click button` to leave.
+docs stalls on preview boxes — `advance` drains them, and is needed after every `choose` that
+starts a text; it stops at an act's result box, which `click continue` closes.
 
 Direct it like footage: `hold 2`–`3` after anything the viewer must read, `clip <name>` around every
 span the storyboard will use, `cursor rest` before a long read so the arrow is not on the text.
@@ -167,8 +173,8 @@ Tune with `"fast_forward": {"speed": 8, "min": 1.5}` in the storyboard, or per s
 
 Because the model writes the prose, **the footage is only known after the take**: record first, read
 the take (`inspect`, a contact sheet, `grep '^\[cli\]' game.log` for what was clicked), and only then
-write the narration over the game segments. Index-based commands (`click keyword 0`, `click action
-0`, `choose 0`) survive whatever the model writes.
+write the narration over the game segments. Commands that name a kind or a position (`click observe
+thing`, `click act 0`, `choose 0`) survive whatever the model writes.
 
 ### Checking a take
 

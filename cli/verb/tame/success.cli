@@ -103,7 +103,6 @@ state
 # phase's `--observe-only wolf` matching nothing is this script's whole point — the observable count
 # dropping across the tame is the assertion. Declared expected so the strict flag check does not
 # read the success as a misfire.
-allow-flag-miss --observe-only
 # The outcome TYPE, asserted by its stable id rather than by chip wording. `expect <chip>`
 # proves what the player was told; this proves what actually ran. See --outcome-audit.
 expect-outcome recruited

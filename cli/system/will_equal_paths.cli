@@ -29,7 +29,7 @@ choose pugilitas
 advance 12 180
 # The sentence is "Here I could attack the plowman, which is what I want."; its tail is asserted, since
 # the head moves with the prose before it and wraps.
-expect which is what I want
+expect-state texts "which is what I want"
 
 # Thinking on him: the attack is proposed, carried out by Pugilitas itself.
 click think "?"

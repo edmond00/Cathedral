@@ -48,15 +48,14 @@ expect-state skills "woodcraft level=3 xp=0 effective=0 max=0 broken=True"
 
 # Choosing a broken modus mentis for an observation is offered and refused, not hidden. The refusal
 # is narrated in that modus mentis's own voice and names the organs and the wounds behind them.
-click observe "?"
+click observe thing
 choose ripelore
 advance 8 90
-expect "will not answer"
-expect "cannot look at anything"
+expect-state texts "will not answer"
+expect-state texts "cannot look at anything"
 
 # It cost a point, exactly as an action refused by a coded rule does.
-state
-expect "NOETIC"
+expect-state noetic points=2/3
 
 # A broken modus mentis is a derived state, so nothing about it reaches the file.
 save roundtrip

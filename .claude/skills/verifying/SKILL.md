@@ -27,28 +27,28 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--skip-childhood` | Skips the childhood + get-up phases and fills starting skills/items randomly — from the master seed, so the same seed gives the same kit. |
 | `--debug` | Lets `strategy` force action outcomes. Under `--cli` it never prompts — see below. |
 | `--start-at <name>` | Spawns the protagonist on the first biome or location matching `<name>` (`village`, `farm`, `wheat field`, `castle`, `cave`…). Without it you get wherever the seed puts you, which is usually plain or forest — testing anything village-specific otherwise means hunting for a lucky seed.  It searches the spawn candidates first and then any land, so a climate biome (`desert`, `glacier`, `sea ice`…) is reachable even in a world whose temperate ground outranks it as a waking place — pair it with `--world-variant arid` or the like so there is one to find. |
-| `--start-area <name>` | Opens narration in the first area of the location whose name matches `<name>` (`pigsty`, `smithy`, `hall`…). `--start-at` picks the location, this picks the room. Without it you arrive in whichever area the factory built first — a farm's courtyard — and reaching any other one costs an observation, a think and an action **per step**, with the persona choosing what is observable at each. Anything that lives in one room (a pigsty's pigs, a smithy's anvil) is otherwise a long walk away. Inert when the location has no such area, so it can be left on across a multi-location run. |
-| `--observe-only <name>` | Restricts what an observation phase may look at to objects matching `<name>`. **This is what makes a specific object reachable at all.** A phase opens on ONE object the persona chose out of a dozen, so without it a script that wants to act on the pig is waiting on a coin flip it cannot influence — and re-rolling seeds until the right object comes up first is not a test. Whole words match before substrings (`pig` means the pig, not the Orchard–Pigsty Track), and a phase where nothing matches falls back to the whole scene rather than narrating nothing. |
+| `--start-area <name>` | Opens narration in the first area of the location whose name matches `<name>` (`pigsty`, `smithy`, `hall`…). `--start-at` picks the location, this picks the room. Without it you arrive in whichever area the factory built first — a farm's courtyard — and reaching any other one costs an observation, a think and an act **per step** the first time (a way once taken is walked for nothing), with a mind choosing which way it looks at. It also moves the way out: the exit glyph joins the map at the area the place is entered by. Anything that lives in one room (a pigsty's pigs, a smithy's anvil) is otherwise a long walk away. Inert when the location has no such area, so it can be left on across a multi-location run. |
+| `--observe-only <name>` | Narrows which element an observation attends to: a click on an anonymous symbol asks a mind to look at *something of that kind*, and the mind picks — with this flag, only among the elements matching `<name>`. Without it a script that wants the pig is waiting on a draw among every person on the card. Whole words match before substrings (`pig` means the pig, not the Orchard–Pigsty Track), and where nothing of the clicked kind matches the mind chooses among them all — **silently**: unlike the other narrowing flags this one records no `DebugFlagAudit` miss, since a run that pins "brewer" must still be able to look at a way. **A script has a second, sharper tool**: `click observe "<name>"` pins that one observation to the element named, whatever kind it is, so most scripts name the thing at the click and keep this flag only as a belt for the run. It still matters by hand (`playtest`), where there is no such click. |
 | `--no-encounters` | Suppresses random travel encounters. **Pass this in every script that travels.** An encounter puts the game in `EncounterPrompt`, where a script waiting for `LocationInteraction` sits until its timeout and reports a failure that has nothing to do with what it was testing. |
 | `--allow-reentry` | Lets a world-map click on the vertex the avatar already stands on enter that location. **The game refuses it** — arriving somewhere already opens it (`OnProtagonistArrived` starts the interaction itself), so that click is only ever a way back into the place just walked out of, and a visit is meant to cost a journey. `travel here` is exactly that click, and the spawn vertex is the only one a script can name from a cold start, so **`run_tests.sh` passes this on every script** — you do not put it in a `# FLAGS:` header. |
 | `--period <name>` | Pins the arrival time of day (`dawn`…`night`) instead of the location's own arrival hour. Every location opens at a fixed daytime period hashed from its id (`SceneFactory.ArrivalPeriodFor`) — never night — so anything period-gated needs this: every building's entry door shuts at `night`, which no arrival reaches otherwise. The dice draw the old random period used is still made and discarded, so seeded rolls did not move. |
-| `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
+| `--fill-party` | Fills the companion roster to its heart-derived ceiling (`max_companions`) right after the childhood phase, with NPCs generated from random archetypes — the **last** slot a beast, every slot before it a human. Recruiting even one companion in play takes a conversation and a check (or an appease *and* a tame), which is a long approach for anything that just needs a populated party. Every member enters a place at its entry area with a token of their own; `click member <name>` plays one, and each has their own area, pool and trees (`inspect party`). Note the ceiling is the *heart* score, and a protagonist accepted straight out of creation has a heart of 1 — so a plain script gets one beast and nothing else. For humans too, raise the heart first (`click cell 94 24` on the creation screen bumps it, four presses reaching 5). |
 | `--start-fight <creature>` | Drops straight into a fight on reaching the world map (`wolf`, `bear`, `bandit`, `brigand`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `snow leopard`, `white bear`, `white wolf`, and the great reptiles `crocodile`, `giant monitor`, `horned lizard`, `cave lizard`, `carnotaurus`, `stegosaurus`, `triceratops`, `ankylosaurus`). **The only way a script can reach fight mode at all** — the real routes in are a random travel encounter (which every script disables with `--no-encounters`, precisely because it fires unpredictably) and provoking a location NPC through a conversation and a check. |
 | `--encounter-on-arrival <creature>` | Forces a travel encounter on the **final step** of the next journey, once. `--start-fight` reaches a fight with no journey under it and a random roll almost always fires mid-path; this reaches the third case, and it is the one that broke. The last step raises `ProtagonistSteppedToVertex` and `ProtagonistArrivedAtLocation` from **one** `UpdateMovement` call and clears the path between them, so the fight begins with the arrival already announced and nothing left to walk. Honoured **ahead of** `--no-encounters`, so a script can suppress the random rolls and still stage this one. |
 | `--encounter-mid-journey <creature>` | Forces a travel encounter on the first step of the next journey that is **not** its last, once — the third staged branch beside `--encounter-on-arrival` and `--start-fight`, and the one every player meets: winning it resumes a walk with path left. Needs a journey of two steps or more (`travel port` at seed 42). Honoured ahead of `--no-encounters`. Under `--playground` the rest of the walk is walked within a frame, so assert it with `inspect overlay`'s `overlay-entry Traveling` line, not a `wait mode Traveling` — see `cli/system/fight_victory_travel_midway.cli`. |
 | `--grant-mm <id[:lvl][,id[:lvl]…]>` | Grants the named modi mentis, each at its own level (default 1), after character creation; the older `a,b:3` still means every id at level 3. Fighting skills are gated behind their modi mentis, so this is what makes a given skill reachable — and since a **buff's cost falls as its level rises**, it is also how you exercise both ends of that curve. Unknown ids are reported on stderr. |
 | `--organs <part\|organ\|body part\|all>=<n>[,…]` | Sets organ part scores when the protagonist is accepted, ignoring the creation point budget — before memory, noetic points and humor queues are derived from them. The scores are otherwise whatever the creation screen rolled, so anything that depends on them (how many thoughts a phase allows, how many humors a roll may spend, which modi mentis can grow) is luck. An unknown id prints every valid one. |
 | `--humors <humor>[,…]` / `--humors <queue>=<humor>,…` | Fills humor queues (paunch, hepar, spleen, pulmones; bare names fill all four, named queues override) with the given humors, after creation rebuilds them. What makes the dice humor layer testable: which humor sits at a queue's tail decides which dice it can change, and that is otherwise rolled. `--black-bile` remains the starvation-specific form. |
-| `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `warthog`, `snow leopard`, `white bear`, `white wolf`, and the great reptiles — `crocodile`, `giant monitor`, `horned lizard`, `cave lizard`, `carnotaurus`, `stegosaurus`, `triceratops`, `ankylosaurus`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
-| `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal in a phase matches, which then draws as usual. **Without `--playground` it narrows the real goal judge's list the same way**, which is how a real-model script reaches a given verb (the item critic is only consulted for a verb that admits a tool). |
+| `--spawn-beast <name>` | Puts a beast (`wolf`, `boar`, `bear`, `black bear`, `stray dog`, `fox`, `cat`, and the climate beasts `lion`, `hyena`, `jaguar`, `tiger`, `puma`, `warthog`, `snow leopard`, `white bear`, `white wolf`, and the great reptiles — `crocodile`, `giant monitor`, `horned lizard`, `cave lizard`, `carnotaurus`, `stegosaurus`, `triceratops`, `ankylosaurus`) in the **opening area** of every scene, at every period, flagged an enemy by the same first-contact pass that flags a rolled one. An enemy where the visit opens **confronts the party at once**: only it can be looked at, and the way out is RUNAWAY — which is what a script about a beast wants, and what any other script must avoid. Everything a script does *to* a beast — appease, tame, track — starts with one being where the script opens, and no factory guarantees that: a wolf is rolled 10–20% of the time, a boar 25–40%, and whichever is rolled then roams between areas with the hour. Follows `--start-area`, since it spawns into whichever area narration opens in. |
+| `--goal-only <verb-id>` | Forces the playground's goal choice onto one verb. `--playground` replaces the persona's "what do you want to do?" with a **uniform draw over every goal the observed object offers**, so a script meaning to `appease` a beast — and then `tame` it — is otherwise picking out of a dozen. The CLI's `goal` command sets the same switch, which is what a script that needs two different goals in one run should use. Inert when no goal of a thinking matches, which then draws as usual. **Without `--playground` it narrows the real goal judge's list the same way**, which is how a real-model script reaches a given verb (the item critic is only consulted for a verb that admits a tool). |
 | `--means-only <mm-id>` | Forces the playground's choice of **means** — which action modus mentis carries the goal out — onto one modus mentis. The draw is otherwise uniform over every action modus mentis held, and willingness rules now refuse by kind of mind: **examining is refused by any action modus mentis without the Observation function**, so a script that means to examine grants one and pins it (`--grant-mm woodcraft --means-only woodcraft`). The CLI's `means` command sets the same switch. A miss goes through `DebugFlagAudit`. |
 | `--no-chronicler` | The journal records as usual, but no background session writes it up: closed visits stay pending, so the queue and its save can be read (`cli/system/journal_capture.cli`), and a real-model run can be timed without it (`tools/journal/latency.cli`). |
 | `--llm-threads <n>` / `--llm-seed <n>` | Real-model runs only: llama-server's `-t` for this run over the saved setting, and a sampler seed on every request so two runs of one script take the same narrative path. What `tools/journal/` measures latency with. |
-| `--refuse-focus` | Makes every focus observation's modus mentis turn away from the clicked object, as if the choice judge had answered "turn elsewhere". It then picks another unobserved object and one text dismisses the first and observes the second, carrying its keyword. `--playground` never declines a choice, so this is the only way a script reaches that branch. |
+| `--refuse-focus` | Makes an observing modus mentis decline wherever it is still allowed to: asked about a kind it "lets its focus go", asked about a named element it is "not interested". The refusal is a text and a `✗` on the map, and costs its point. **A mind may decline once** about a given thing — asked again it must observe, flag or no flag — so the second identical click succeeds; that pair is the test. `--playground` never declines a choice, so this is the only way a script reaches the branch. No effect in the two opening phases or on a speaking mind asked about a person, which never decline. |
 | `--refuse-means <n>` | Under `--playground`, the first `n` willingness questions answer "unwilling" (only those that offer a refusal at all). The playground otherwise answers "willing" every time, so an action modus mentis's refusal — and the retries of iterative thinking after one — is unreachable from a script. Pair it with `--doubt <low|medium|high>`, which sets every thinking mind's level of doubt: low takes no retry, medium one, high two, and the player may doubt at medium and high. See `cli/system/thinking_iterates.cli`. |
 | `--willingness <eager\|willing\|reluctant>` | Under `--playground`, the willingness question answers this instead of "willing" (narrowed to what the rules offer; `--refuse-means` answers first). An action's difficulty is the verb's base plus −1 / 0 / +1 for it, and **difficulty 0 rolls no dice and succeeds**, so this is how a script reaches both ends: `eager` takes a difficulty-1 act to 0 (`cli/system/difficulty_zero_eager.cli`), `reluctant` raises a difficulty-0 act to 1 so it can fail — every base-0 verb's `fail.cli` runs with it. |
 | `--doubt <low\|medium\|high>` | Every thinking modus mentis thinks at this `DoubtLevel` instead of the one it declares (`ModusMentis.Doubt`): low tries once and is never doubted, medium may try again once, high twice, and the player may doubt at medium and high while a try remains. A script about iterative thinking or doubt pins it, so the mind a popup happens to offer first does not decide its tries. See `cli/system/thinking_iterates.cli` and `thinking_doubt.cli`. |
-| `--penalty-only <kind>` | Narrows a failed act's penalty draw to one kind: `wound`, `get_lost`, `waste_time` or `lose_focus`. Every failure costs something now — one entry is drawn uniformly from a table of one to seven — so a script that means to see the way lost, the hour wasted or a noetic point gone is otherwise asserting on a coin flip. **It also changes what your `fail.cli` does next**: a failed `move`, `follow_path`, `track`, `stalk` or `voyage_toward` may lose the way, and the next footer press then leaves the location; a failed climb, swim or crossing may move the hour on. A table with none of the kind is a `DebugFlagAudit` miss. |
+| `--penalty-only <kind>` | Narrows a failed act's penalty draw to one kind: `wound`, `get_lost`, `waste_time` or `lose_focus`. Every failure costs something now — one entry is drawn uniformly from a table of one to seven — so a script that means to see the way lost, the hour wasted or a noetic point gone is otherwise asserting on a coin flip. **It also changes what your `fail.cli` does next**: a failed `move`, `follow_path`, `track`, `stalk` or `voyage_toward` may lose the way, and the `click continue` that closes the result box then leaves the location; a failed climb, swim or crossing may move the hour on. A table with none of the kind is a `DebugFlagAudit` miss. |
 | `--advance-days <n>` | Pushes the world clock forward `n` days on first arrival at the world map. The clock only moves on travel arrival and work stints while a wound needs 100–1000 days to close, so without this nothing about healing is observable. Fires once, before anything has happened — for healing *a wound taken in play*, use the `clock` command instead. |
 | `--location-type test` | Builds the **test location** (`TestSceneFactory`) — a kitchen sink holding one of everything, under names that never change. This is what the whole CLI suite runs in; see "The test location" below. It is attached to no biome, so this flag is the only way in. |
 | `--log-file <path>` | Writes the run's log to `<path>` instead of `log.txt`. `run_tests.sh` gives every run its own, which is what lets instances run in parallel (`log.txt` is opened for exclusive writing) and keeps the suite off the developer's `log.txt`. Not honoured by a shipped build. |
@@ -57,8 +57,8 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--location-type <name>` | Forces which scene factory builds every location (`village`, `forest`, `cave`…), ignoring the biome underfoot. **Prefer this to `--start-at` in a test.** `--start-at` searches the *generated world* and shrugs when it finds nothing — at seed 42 there is no forest in reach, so every forest test silently ran in a plain. This builds one regardless, so a test does not depend on world generation at all. |
 | `--location-id <n>` | Builds every scene as location id `n`. A scene is a pure function of its id (`CreateSeededRandom(locationId)`), so the id decides the layout, the room names, the objects and the people — a village rolls a Chain or a Hub with entirely different rooms. Together with `--location-type` it determines the whole scene, which is what makes `--verb-probe`'s reported rooms actually exist in the run. |
 | `--npc-static` | Pins every NPC to the area they spend most of the day in, instead of following their schedule. Where somebody stands at a given hour is drawn from the location seed across six periods, so an NPC verb's test cannot otherwise name the room — and a test that names the wrong one finds it empty. `--verb-probe` sets the same flag, so its rooms and the run's agree by construction. |
-| `--auto-dialogue` | Settles every conversation as an immediate success instead of holding one. A dozen verbs only *open* a dialogue and the tree decides what follows, so without this a **verb** test has to walk somebody else's tree to reach its own assertion — and breaks whenever that tree is re-authored. `DialogueAutoResolve` performs exactly the writes a won conversation makes, so nothing reading the world afterwards can tell. The trees themselves are covered by `cli/_systems/dialogue_*.cli`. |
-| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`, `knife`…). Seven verbs are `ToolUsage.Required` and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the action (`click action 0` → `choose 1` → pick the item → `click action 1`). Grant the verb's own **reference tool**, which auto-passes with no critic call: under `--playground` the item critic picks its verdict at random, so a substitute makes the test a coin flip. |
+| `--auto-dialogue` | Settles every conversation as an immediate success instead of holding one. A dozen verbs only *open* a dialogue and the tree decides what follows, so without this a **verb** test has to walk somebody else's tree to reach its own assertion — and breaks whenever that tree is re-authored. `DialogueAutoResolve` performs exactly the writes a won conversation makes, so nothing reading the world afterwards can tell. The conversation still starts on the CONTINUE of the act's result box, so assert its outcomes *after* that press. The trees themselves are covered by `cli/system/dialogue_*.cli`. |
+| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`, `knife`…). Seven verbs are `ToolUsage.Required` and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the act (`click act 0` → `choose 1` → `choose` the item → `advance` → `click act 1`, the combined act, which waits beside the plain one; or `click act <a word of it>`). Grant the verb's own **reference tool**, which auto-passes with no critic call: under `--playground` the item critic picks its verdict at random, so a substitute makes the test a coin flip. |
 
 A typical invocation:
 
@@ -77,11 +77,13 @@ script doubles as a regression test.
 Run `help` for the authoritative list. The essentials:
 
 ```
-  state                     mode + phase flags (loading, dice, noetic, history/total lines)
-                            plus carry[cur/max] and the travel blocker when overloaded, and
-                            observed[done/total] — objects this narration phase has already
-                            looked at, which are withheld from every later observation choice
-                            of the phase and released again when the phase ends
+  state                     mode, plus carry[cur/max] and the travel blocker when overloaded. In a
+                            narration it carries `narration[loading= dice=none|rolling|settled
+                            result=none|shown noetic=<cur>/<max> observed=<n> unobserved=<n>
+                            preview=none|generating|ready time=… walk=none|walking exit=LEAVE|RUNAWAY]`
+                            — observed is what the played member has looked at this visit,
+                            unobserved what still stands unlooked-at where they are; result=shown
+                            means an act's result box is up and waiting for `click continue`
   dump [--color]            the terminal grid as text; --color tags each row dim/mix/lit
   snap <file.png>           the next frame drawn, written as a PNG, then Read it. `dump` sees
                             characters and never colours, so this is how to judge a screen's palette
@@ -121,9 +123,9 @@ Run `help` for the authoritative list. The essentials:
                             keyboard would not deliver in the current mode FAILS the run instead of
                             reaching the controller anyway, which once let `key K` pass while K did
                             nothing for a player. A new key the game should answer on the map has to
-                            be added there, or it works in scripts only. The developer keys (R, K,
-                            Tab outside exploration…) are off unless the script's FLAGS carry
-                            `--developer-keys`
+                            be added there, or it works in scripts only. The developer keys (R, K…)
+                            are off unless the script's FLAGS carry `--developer-keys`. In a
+                            narration the arrow keys pan the map
   destinations              vertices bordering the avatar
   destinations all [filter] every vertex inside the (stat-derived) travel range, not just the
                             neighbours; filter by biome/location name — `destinations all village`
@@ -154,16 +156,36 @@ Run `help` for the authoritative list. The essentials:
                             sky. Reports
                             the yaw and pitch either side of the press, which is the only way a
                             script can observe the camera at all
-  click continue            protagonist-creation Continue, a settled dice overlay, the time
-                            box once the hours have passed, or the walk on the map once the party
-                            has arrived (every move in exploration shows one, after the time box
-                            when both apply). Under `--cli` the walk settles at once, `advance`
-                            presses through it, `state` carries `walk=none|walking|settled`, and
-                            `inspect map` ends on `map walk from <A> to <B> steps=<n> via=line|jump`
-  click area <name>         the area a successful backtrack goes back to, while the location map
-                            asks (a card off the view is panned into it first). `advance` takes the
-                            first on offer by name; `state` carries `backtrack=none|choosing`, and
-                            `regions` lists the offer
+  click continue            the CONTINUE of whatever box is up: protagonist creation, a settled
+                            dice overlay, the time box once the hours have passed, the preview box,
+                            or an act's RESULT box (SUCCESS / FAILURE and its chips). A walk on the
+                            map needs none: every walk ends by itself, at once under `--cli`
+                            (`wait` outlasts it; `state` carries `walk=none|walking`, and
+                            `inspect map` ends on `map walk from <A> to <B> … via=line|jump`)
+  click observe <kind|name> [in <area>]
+                            an unobserved symbol on the narration map. A KIND (way, person,
+                            hostile, thing) is the anonymous symbol of it on a card, and the mind
+                            then chosen picks which element of that kind it looks at. A NAME is a
+                            remembered element or a container's content — or, for a script only,
+                            something not yet known: the click then lands on its kind's symbol and
+                            that one observation is pinned to it, as `--observe-only` pins a run.
+                            Follow with `choose <observation mm-id>` and `advance`
+  click think <name>        the ? after an observed element: think about it. Then `choose <mm-id>`
+  click speak <name>        the speech mark after an observed element: speak of it to a companion
+                            in the same or an adjacent area. Then `choose <speaking mm-id>` (and a
+                            `choose` of the listener when more than one is in reach)
+  click act <n|word>        a waiting act: by position (the order proposed), or by a word of its
+                            text or its verb id (`click act explain_myself`). PREFER THE WORD once
+                            more than one act waits — a combined act leaves the uncombined one
+                            waiting beside it, so indexes shift. Opens Execute / Use Tool /
+                            Reconsider: `choose 0|1|2`
+  click member <name>       play another member of the party (their token on a card)
+  click area <name>         walk the played member to an area by ways the party knows — a click on
+                            its card (panned into view first). Free: no point, no roll. Refused
+                            when no known way leads there, or while they are confronted
+  click exit                the way out of the place, the glyph in the map's margin: LEAVE (the
+                            whole party walks out), or RUNAWAY while somebody confronts the played
+                            member (a roll). `inspect where` says which, as exit=
   click period <name>       the hour a successful sit_and_wait lasts until, while the time box
                             asks (dawn…night, the five other than now). `advance` presses through
                             the box by itself, taking the NEXT period when it asks — so a script
@@ -174,8 +196,6 @@ Run `help` for the authoritative list. The essentials:
                             run when the body can spend none on this roll
   click die <n>             spend the selected humor on die n (0-based). `inspect humors` shows the
                             queue it came from one shorter; cli/system/crafting_humor.cli
-  click keyword <name>      a narration keyword
-  click action <n>          a narration action
   click option <n>          a dialogue reply
   click skill <name>        a fighting skill, by name. Self-targeting skills (every buff, and
                             parry/dodge/the postures) execute at once; an attack arms targeting
@@ -189,7 +209,9 @@ Run `help` for the authoritative list. The essentials:
   click engage              the travel encounter prompt's ENGAGE button — its only button, so
                             without this a staged encounter is a dead end and the fight behind
                             it is unreachable
-  click button              the footer button (LEAVE / INTERRUPT / END / CONTINUE)
+  click button              a CONVERSATION's footer button (END / CONTINUE). The narration has
+                            no footer button: its way out is `click exit`, and an act's result
+                            closes with `click continue`
   choose <n|mm-id>          answer the visible popup by index — or a modus mentis popup by the
                             modus mentis's id (`choose lockpicking`), which survives the popup's order
   travel here               enter the location the avatar is standing on — what most scripts
@@ -207,9 +229,9 @@ Run `help` for the authoritative list. The essentials:
                             back into the location it is trying to leave
   routines                  list the routines the planned destination offers (opens the box),
                             each with its kind and, when greyed, why
-  routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet, gather,
-                            buy, sell, work) — and set out. Entered on arrival: narration (goto,
-                            meet), the trade or work menu, or the gathering phase.
+  routines <n|kind>         pick routine n — or the first walkable of a kind (goto, gather, buy,
+                            sell, work, craft) — and set out. Entered on arrival: narration (goto),
+                            the trade, work or crafting menu, or the gathering phase.
   routines next|prev|confirm  press the box's `< n/N >` arrows or CONFIRM (the first walkable is selected
                             to begin with; the status line reads the selected one out;
                             an icon click selects too, and only CONFIRM sets out)
@@ -252,7 +274,7 @@ Run `help` for the authoritative list. The essentials:
                             `click want <n>` presses the selected will's n-th want and starts the
                             search. `inspect will-picker` reads `will-button shown|hidden` and
                             `will-picker state=open wills= scroll= selected= shown=…`, one line per want
-  scroll up|down [n]        scroll the shared history buffer
+  scroll up|down [n]        scroll a conversation's history buffer
 
   clock <days>              push the world clock forward, then run the wound-healing sweep and
                             report how many wounds closed. The clock otherwise only moves on
@@ -260,8 +282,8 @@ Run `help` for the authoritative list. The essentials:
                             wound taken in play heal within a script
   strategy <succeed|fail-dice|fail-plausibility|auto>
   goal <verb-id|none>       pin the playground's goal draw to one verb, the way `strategy` pins
-                            the dice — set it BEFORE the keyword click whose thinking phase
-                            should land on it. `goal none` hands the choice back to the RNG.
+                            the dice — set it BEFORE the `click think` whose thinking should
+                            land on it. `goal none` hands the choice back to the RNG.
                             Same switch as `--goal-only`; a command because a script that
                             appeases a beast and then tames it needs two different goals
   means <mm-id|none>        pin the playground's choice of means (the action modus mentis that
@@ -292,24 +314,31 @@ Run `help` for the authoritative list. The essentials:
                             main menu, in exactly the phases Escape pauses (one list,
                             PausedPhaseName). Unlike `pause` it backs out of nothing first.
                             Fails when it is not drawn — `wait` a frame after entering a phase
-  click map-button          the narration header's ↹: the map and back, as Tab. Exploration only
   click companion-death     the companion-death notice's CONTINUE. Modal over every mode, so a
                             script that does not press it cannot get past a companion dying;
                             `state` reports `companion-death=shown`
-  advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone.
-                            USE THIS, not a bare `click continue`, to get from a keyword click
-                            to the action list — see the trap below
-  wait [secs] | wait mode <GameMode> [secs] | wait embeddings [secs]
-                            `wait embeddings` blocks until the ~6s word-vector load is done.
-                            Put it before the footer press that opens a SECOND phase you will
-                            click a keyword in: whether the vectors have arrived decides which
-                            keyword that phase highlights, so without it the script races the load
+  advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone,
+                            answering a wait's hour and a doubt on the way. USE THIS, not a bare
+                            `click continue`, after every `choose` that starts a text — see the
+                            trap below. It STOPS at an act's result box, which is then read
+                            (`expect SUCCESS`, its chips) and closed with `click continue`
+  wait [secs] | wait mode <GameMode> [secs]
   inspect [subject]         the game state an outcome can change, by STABLE id — items, coins,
                             where, party, wounds, skills, npcs, pois, routines, or all. What
                             cli/outcome/ reads: `expect` scans the SCREEN, this reads the world.
                             `where` carries trespass=yes|no (the header's ◆ TRESPASSING ◆),
-                            day=<n> (the calendar) and confronted=<Kind:archetype>|none (the
-                            ConfrontationSelector.Current the exit button reads); `time` the time
+                            day=<n> (the calendar), confronted=<Kind:archetype>|none
+                            (ConfrontationSelector.Current) and exit=LEAVE|RUNAWAY; `party` one
+                            `member "<name>" area="…" noetic=<cur>/<max> played=yes|no` line each;
+                            `trees` the played member's thought trees, node by node (`tree element
+                            "<name>" kind= area= observer=`, `tree act state=waiting|done|
+                            superseded|lapsed verb= means= difficulty= text=`, …); `known` what
+                            the place remembers (`known npc|…`, `known poi|…`); and two asked for
+                            BY NAME ONLY, not part of `inspect all`: `texts` what every node says
+                            (`text <kind> mind=<id> "<text>"`) — the way to assert prose, since
+                            a text is on screen only while its preview box is up — and `symbols`
+                            what `regions` lists, for asserting what is or is NOT offered
+                            (`expect-no-state symbols think`). `time` the time
                             box (box=none|choosing|passing|settled destination=…); `will` every
                             held will's plan (ActionPathPlanner): `will <id> steps=<n> first="…"
                             goal="…" target=<archetype-id|name> [tool_step=<k>] aim=<k>/<n> purpose="…"` — aim is which
@@ -318,8 +347,7 @@ Run `help` for the authoritative list. The essentials:
                             short path is accepted too, which is what will_equal_paths.cli asserts.
                             expect-state takes no escaped quotes: assert `steps=2` and the goal's
                             words separately;
-                            `opening` what the phase's first observation was put on (a Meet
-                            routine's person); `mental-maps` each map remembered, oldest first
+                            `mental-maps` each map remembered, oldest first
                             (`mental-map location= name= locked= routines= visited= seen=`)
                             and `mental-maps used= usable= grid=`;
                             `pointer-label` what the mouse-following popup shows (a map's label
@@ -330,8 +358,7 @@ Run `help` for the authoritative list. The essentials:
                             visible= opaque=<n>/<total>` — `dump` cannot tell an opaque-black blank from a
                             transparent one — plus `overlay-entry <Mode> world=…` per mode, the reading taken
                             as that mode was last entered (for a phase gone before any command can read it);
-                            `buttons` whether the two key stand-ins are on screen, as
-                            `buttons menu=shown|hidden map=shown|hidden` (the ☰ and the ↹);
+                            `buttons` whether the ☰ is on screen, as `buttons menu=shown|hidden`;
                             `gather` the gathering phase's forecast and yield;
                             `music` what the game last asked of the music, as `music tracks=<0-4>
                             filter=<MusicFilter> cold= fear= mystery= intensity= festivity= night=yes|no sacred= far=` (the
@@ -403,7 +430,7 @@ both ends of fleeing a witness or an enemy. `inspect dialogue` names the tree of
 conversation queued — `caught_red_handed_murderer` says which crime a confrontation accuses you of.
 
 **A forced narration success caps the difficulty at the dice pool.** A verb harder than the chain
-that reached it — `tame` is difficulty 4, and a keyword→think→act chain of three unlevelled modi
+that reached it — `tame` is difficulty 4, and an observe→think→act chain of three unlevelled modi
 mentis rolls three dice — needs more sixes than there are dice, so no arrangement of the pool
 succeeds. `strategy succeed` asking for one used to **hang the game outright** (the forced-values
 generator spinning for a six it had nowhere left to put, window alive and answering nothing). The
@@ -417,13 +444,17 @@ contributing modus mentis rolls an empty pool, which would otherwise miss no mat
 for — and every consequence downstream of a hit (wounds, bleeding, knockdown, healing) would be
 unreachable.
 
-### A worked example
+### A worked example: the shape of every act
 
-This is the script that verified the phase-transition refactor. The assertion is in the `state`
-lines either side of the transition: `history` must go from 0 to non-zero (old text greyed into
-history) and `noetic` must return to full.
+A visit is played on a map of the location. Nothing is observed on arrival: each card carries one
+symbol per kind of thing not yet looked at, and everything a script does is one of three clicks —
+**observe** something, **think** about what was observed, carry out the **act** the thought came to.
+Each of the first two costs a noetic point and writes a text that is read in the preview box (drain
+it with `advance`); the act rolls, narrates, and ends on a result box.
 
 ```
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Ford"
+
 wait
 click menu New
 wait mode ProtagonistCreation 20
@@ -434,21 +465,57 @@ travel here                 # enters the location under your feet; never hard-co
 wait mode LocationInteraction 60
 
 strategy succeed
-click keyword attention     # keyword -> Think -> pick a modus mentis
-choose 0
-choose 0
-advance 8 120               # drain the preview box; the action list is behind it
-state                       # → preview=none, and `regions` now lists actions
+goal gather                 # pin the thinking's goal BEFORE the thought
+regions                     # what the map offers: observe / think / act / member / exit lines
 
-click action 0              # execute -> dice -> confirm
-choose 0
-advance 10 150
-click continue
-advance 10 150
-expect Skill learned        # every successful verb teaches a modus mentis
-dump
+click observe "Test Ford"   # the symbol → which mind looks
+choose childhood_memory     # an observation modus mentis, by id (never by position: wills sort among them)
+advance 12 180              # the observation's text; CONTINUE roots the element's tree
+click think "Test Ford"     # its ? → which mind thinks
+choose ripelore
+advance 12 180              # goal, means, reasoning, willingness → an act now waits on the tree
+
+click act 0                 # or by a word: click act gather
+choose 0                    # Execute  (1 = Use Tool, then `choose` the item; 2 = Reconsider)
+advance 12 180
+click continue              # the dice — ABSENT at difficulty 0, where there is no roll to confirm
+advance 12 180              # the outcome's text (and an emotion's, when one is stirred)
+
+expect SUCCESS              # the result box, with its chips
+expect Item received:
+expect-verb gather
+expect-outcome item_acquisition
+click continue              # closes it — a fight, a conversation or a crafting menu the act
+                            # opened starts HERE, not before
 quit
 ```
+
+Things this shape depends on, each of which has cost a script:
+
+- **`expect` reads the screen, and a text is on screen only while its preview box is up.** Once
+  CONTINUE is pressed the text lives on its node and is shown again only under the pointer. Assert
+  prose with `expect-state texts <fragment>`, never `expect`. The result box's title and chips *are*
+  on screen until its CONTINUE, which is why `advance` stops there.
+- **Every phase an act opens waits for the result's CONTINUE.** After `expect-outcome
+  dialogue_trigger`, nothing the conversation does has happened yet: `click continue`, `advance`,
+  then assert. The same for `wait mode Fighting` and `wait mode Crafting`.
+- **Difficulty 0 has no dice.** `open_door`, the stairs, `sit_and_wait` and the plain conversation
+  openers go from `choose 0` straight to the outcome: one `advance`, then `expect SUCCESS`. A
+  `click continue` written there for dice that are not coming closes the result box instead.
+- **Observing costs a point, so a pool of 3 is observe + think + one more.** A script that fails an
+  act and then needs to think again runs out one step earlier than it used to; give it room with
+  `--organs encephalon=2` (as `cli/verb/explain_myself/` does) rather than rearranging its steps. A
+  successful act refills the pool; a failed one does not.
+- **A second act on the same element needs no second observation**: `click think "<name>"` again.
+  Somebody who walked in (drawn by a noise, a householder at nightfall) and a body that has just
+  fallen are on the map *already observed* — think about them directly.
+- **Private ground, by day.** Arriving in a private room whose householder is awake means being
+  confronted at once (`inspect where` → `confronted=NoBusinessHere:…`, `exit=RUNAWAY`), and a
+  confronted member may look only at the confronter. Scripts about what is *in* such a room run at
+  `--period night`: asleep, the householder witnesses nothing (`cli/verb/steal/`).
+- **`expect-state` takes no escaped quotes.** The tokenizer has no `\"`, and `inspect symbols` and
+  `inspect trees` print names in quotes — so assert a fragment that holds none (`expect-state trees
+  wolf`, `expect-no-state symbols click think`), or two fragments separately.
 
 ### The test suite
 
@@ -457,7 +524,7 @@ quit
 ./run_tests.sh audits       # the headless audits only (seconds)
 ./run_tests.sh cli          # the CLI scripts only
 ./run_tests.sh cli gather   # just cli/verb/gather/
-./run_tests.sh cli examine cli/system/focus_turned_away.cli   # several folders and/or single scripts
+./run_tests.sh cli examine cli/system/narration_map.cli   # several folders and/or single scripts
 ```
 
 Exit code is the number of failures. `--playground` makes every animation instant
@@ -479,8 +546,9 @@ independent, and must stay true of anything a script writes:
 
 A `--hidden` window runs at a fixed 60 frames a second and draws one frame in six (see
 `Config.Debug.HiddenWindow`): a dozen instances drawing every frame contended for the driver until
-each ran six times slower than alone. A development build also caches the parsed word vectors under
-`%LOCALAPPDATA%\Cathedral\cache\` (the runner warms it first with `tests/warm_cache.cli`).
+each ran six times slower than alone. (The runner used to warm a word-vector cache before the pool
+started; keywords were the vectors' only reader in a played game, and the step — which, once nothing
+loaded them, sat out a four-minute timeout on every invocation — is gone with them.)
 
 **So the full suite runs before a release, not after every change.** It takes about a quarter of an
 hour; the
@@ -491,9 +559,9 @@ run the audits plus the scripts that reach what you touched:
 - **an outcome** — its `cli/outcome/<id>/` folder, and the folders of the verbs that produce it;
 - **a system** — the `cli/system/` scripts about it. Grep `cli/` for the feature's name, the flag
   that reaches it and the text it prints; a script whose `expect` lines quote that text is affected;
-- **anything every phase passes through** (narration, observation, keywords, the preview box) —
-  also the `cli/system/` scripts that do **not** pass `--observe-only`, since those are the ones that
-  see a whole scene: `grep -L -- --observe-only $(grep -rl '^# FLAGS:' cli/system)`.
+- **anything every visit passes through** (the map, observation, the trees, the preview box, the
+  result box) — also the `cli/system/` scripts that do **not** pass `--observe-only`, since those
+  are the ones in which a mind chooses among a whole card: `grep -L -- --observe-only $(grep -rl '^# FLAGS:' cli/system)`.
 
 Report which scripts ran and that the full suite did not. When a targeted run turns up a failure,
 read the script before changing it: a script that is right about the old behaviour and wrong about
@@ -507,8 +575,8 @@ cli/verb/<verb-id>/fail.cli       the verb attempted, missed (strategy fail-dice
 cli/verb/<verb-id>/success2.cli   a second script where the verb has genuinely different outcomes
 cli/outcome/<outcome-id>/success.cli   one per entry in the outcome catalogue
 cli/system/                       scripts that test a system rather than a verb or an outcome —
-                                  the preview box, the Speak-About hand-off, the crime chain,
-                                  routine recording and replay
+                                  the map, the preview box, speaking to a companion, the crime
+                                  chain, routine recording and replay
 ```
 
 `./run_tests.sh cli verb` runs a whole range; `./run_tests.sh cli gather` runs one folder inside one.
@@ -575,25 +643,26 @@ is attached to its instance state, long after the factory build the probe inspec
 Four things that are not obvious until a script hits them, all of them learned by a test failing for
 a reason that had nothing to do with its verb:
 
-- **A hostile beast opens the next observation phase wherever it stands**, ahead of `--observe-only`.
-  A wolf in the wood therefore hijacked every phase that started there, and `cut_wood`, `scale_up` and
-  `stalk` all ran `appease` on it instead of the verb they name. The wolf has a den of its own now, and
-  only the scripts that want it go in.
+- **An enemy in the room confronts whoever stands there, whatever `--observe-only` says.** A
+  confronted member may look only at the confronter and think only about them, and the way out reads
+  RUNAWAY. A wolf in the wood would therefore lock every script that started there out of the thing
+  it came for. The wolf has a den of its own, and only the scripts that want it go in.
 - **A verb that produces an item is refused by the carry rule before it reaches the dice** if nothing
   carried can hold the result — "I have nowhere left to put a log", with no roll and no banner. A `Log`
-  is `ItemSize.Large` and needs a container, so `cli/cut_wood/` grants `axe,sack`. This is not about a
+  is `ItemSize.Large` and needs a container, so `cli/verb/cut_wood/` grants `axe,sack`. This is not about a
   full pack: emptying it changes nothing.
-- **A landed `attack` prints no outcome banner.** It starts a fight, and the fight screen replaces the
-  narration before the banner can be read, so `wait mode Fighting` is the assertion. `expect SUCCESS`
-  is right for the *failed* attack, which stays in narration.
+- **A landed `attack` shows its result like any act, and the fight waits behind it.** `expect
+  SUCCESS` and the blow's chips are read off the result box; `click continue` then opens the fight,
+  and `wait mode Fighting` asserts it. A missed attack is the same with FAILURE and the enemy's
+  initiative.
 - **Never `--observe-only` a generated name.** `--verb-probe` reports an NPC's display name because
   that is what it has, but names come from the name generator — content, free to change. Use the
   archetype id (`brewer`, `weaver`, `plowman`), which is what `TargetingAliases` accepts — including
   for a **sleeper**, who is observable only as the merged `SleepingNpcPointOfInterest` and now hands
   through the species and archetype id of the person inside it. Same for assertions:
-  `cli/tame/success.cli` asserts the `P A R T Y` header rather than the beast's name.
+  `cli/verb/tame/success.cli` asserts the `P A R T Y` header rather than the beast's name.
 
-**Adding a verb? Add what it needs to the test location, and its `cli/<verb>/` folder.**
+**Adding a verb? Add what it needs to the test location, and its `cli/verb/<verb>/` folder.**
 
 **Each script carries its own flags** on a `# FLAGS:` header line, which is what the runner executes:
 
@@ -624,14 +693,15 @@ Two things about that output are load-bearing:
   or a Hub layout with different rooms — so a combination found in one id opens somewhere else on
   another seed. Prefer the ubiquitous ones; anything thin is a script that will fail when something
   upstream of spawn changes.
-- **It reports the observable, not the target.** An item is never observed in its own right
+- **It reports the observable, not the target.** An item is acted on through what holds it
   (`SceneViewAdapter` folds an item's verbs into its holding PoI's action list), so `--observe-only`
-  only ever matches the holder. Pinning to `"Rock"` when the rock lives in a `"Boulder"` matches
-  nothing and silently opens on the whole scene.
+  and `click observe` name the holder, and `click think` is on the holder. Pinning to `"Rock"` when
+  the rock lives in a `"Boulder"` matches nothing, and the mind then chooses among everything of
+  that kind on the card.
 
 It also lists the verbs no cold start reaches, with the reason (`tame` needs an appeased beast, `cut`
 needs a corpse, `request_job` needs an acquaintance). Those need a script that builds the situation
-first — `cli/tame/success.cli` appeases before it tames — or a debug flag that sets it up.
+first — `cli/verb/tame/success.cli` appeases before it tames — or a debug flag that sets it up.
 
 **Assert the verb, never the banner.** `expect SUCCESS` matches the outcome banner of *any* action,
 so a script aimed at `break` that opened on a path, followed the path and succeeded, passed. Sixty of
@@ -642,7 +712,7 @@ what it recorded), so anything crossing a location boundary must assert some oth
 **And assert the outcome, not just the roll.** The banner is printed from `result.Succeeded` — the
 dice — and says nothing about what the verb *did*. A verb whose `SuccessReports` stopped returning
 anything would still roll, still print SUCCESS, still satisfy `expect-verb`, and gather nothing. So
-every `success.cli` also asserts the chip its outcome puts in the outcome block:
+every `success.cli` also asserts the chip its outcome puts in the result box:
 
 | outcome | chip | verbs |
 |---|---|---|
@@ -673,18 +743,21 @@ fight screen replaced the narration before any chip could be read, so `wait mode
 only assertion available. It now holds the fight for the CONTINUE, so its chips are readable like
 anything else and `wait mode Fighting` comes *after* that press.
 
-**Put the assertion after the verb under test, not after the setup.** `expect` scans the whole
-terminal, greyed history included, so a chip left by an earlier action reads exactly like the one you
-meant. `cli/cut/success.cli` slays before it cuts and asserts `Slain:` on the kill and `Item
-received:` on the cut — putting both after the first action would have passed while proving nothing
-about the verb the folder is named for.
+**Put the assertion after the verb under test, not after the setup.** A result box shows only its
+own act's chips, so `expect <chip>` is safe while that box is up — but `expect-outcome` remembers
+every outcome applied in the run, and `expect-state texts` every text on the trees.
+`cli/verb/cut/success.cli` slays before it cuts and asserts `Slain:` on the kill and `Item
+received:` on the cut, each while its own result is on screen — asserting both at the end would pass
+while proving nothing about the verb the folder is named for.
 
 **A narrowing flag that narrows nothing fails the run.** `--start-at`, `--start-area`,
-`--observe-only` and `--goal-only` all *fall back* when they match nothing — open where the factory
-did, offer the whole scene, draw from every goal. That is right for a person poking at the game and
+`--goal-only`, `--means-only` and `--penalty-only` all *fall back* when they match nothing — open
+where the factory did, draw from every goal. (`--observe-only` is the exception: it falls back
+without a miss, see its row. A script that must have *that* element names it at the click, and
+`click observe "<name>"` reports an error when nothing answers to it.) That is right for a person poking at the game and
 disastrous for a test, which then exercises something else and reports whatever that did. Every miss
 now goes through `DebugFlagAudit` and fails the run naming the flag. A script that is testing an
-**absence** (`cli/gather/beast_barred.cli` checks a beast is *not* offered `gather`) declares it with
+**absence** (`cli/verb/gather/beast_barred.cli` checks a beast is *not* offered `gather`) declares it with
 `allow-flag-miss <flag>`.
 
 **Dialogue.** `--playground` stubs `DialogueTreeAdapter`'s LLM slot — it was the one place in the
@@ -693,31 +766,26 @@ under playground: `Setup` threw, the conversation "completed" instantly, and a v
 dialogue open and close without a word being said. `advance` drains whichever preview box is up
 (narration's or the conversation's), and `strategy` now reaches the resolution roll, which it never
 did — so the failure branch of a tree is finally testable. Verb tests pass `--auto-dialogue` and
-assert about their verb; `cli/_systems/dialogue_*.cli` drive a real tree and assert on the branch's
+assert about their verb; `cli/system/dialogue_*.cli` drive a real tree and assert on the branch's
 success vs failure replica.
 
-**`click keyword <n>` for pinned phases.** Which word an observation highlights comes from the prose,
-not from the display name: the object's own word is preferred, so `"Brew Barrel"` usually highlights
-`barrel` — but only when the persona wrote that word and the POS tagger read it as a noun, and
-neither is a script's to guarantee. (Catalyst loads on a background task, so a script that runs
-early gets the rule-based fallback and a different word.) Clicking by index means "whatever this
-phase opened on". Name-matching stays right for hand-written scripts: it reads as intent and
-survives reordering.
-
-**Except after an area introduction.** A phase that opens on its bearings (a new area or period, no
-`--observe-only` narrowing it to one object) links a keyword to **every** object the introduction
-names, and those keywords come first — under `--playground` the introduction echoes its list of
-sights verbatim, so that is up to five. `keyword 0` is then the first thing the introduction named,
-not the object the phase observed. Each of those objects is also crossed off, so a small area can be
-left with nothing unobserved: `cli/system/focus_turned_away.cli` moved from the four-object Test Room
-to the Test Yard for that reason.
+**Naming what a script looks at.** `click observe "<name>"` matches as `--observe-only` does: the
+whole name first, then a whole word of one, then any part ("pig" is the pig, not the Pigsty Track).
+For a person use the archetype id (`brewer`), never the generated name. Naming something not yet
+known pins that one observation to it — a player cannot do that, a script may — and a script that
+wants the *mind's* choice clicks the kind instead (`click observe thing`). After the observation the
+same name finds the element for `click think` and `click speak`; `regions` prints the exact names
+when in doubt (a person is "the brewer" until introduced, a way is "the way to Test Field").
 
 ### Extending the CLI for a new feature
 
 When you add UI, add its handles too, or it will not be testable:
 
 1. Expose the hit regions your renderer already tracks (see `MainMenuRenderer.CliButtons`,
-   `NarrativeUI.KeywordRegions`, `DialogueTreeController.CliOptions`).
+   `DialogueTreeController.CliOptions`). On the narration map a clickable thing is a `MapSymbol`
+   record tagged on its cell (`MapCanvas.Hit`): add the record, give it a line in
+   `NarrativeController.CliSymbols` (what `regions` and `inspect symbols` print) and a case in
+   `CliFindSymbol`, and its click goes through `ClickSymbol` exactly as the mouse's does.
 2. Surface them on `LocationTravelGameController` as a `Cli*` member — that class is the single
    seam the driver talks to.
 3. List them in `CliDriver.CmdRegions` and handle them in `CmdClick`.
@@ -725,16 +793,17 @@ When you add UI, add its handles too, or it will not be testable:
 If the new phase is asynchronous, make sure `LocationTravelGameController.CliIsIdle()` accounts for
 it, otherwise `wait` will return while the phase is still building.
 
-**The trap that bites first**: the narration **preview box** sits between a keyword click and the
-action list. It is generated in segments — the goal, the modus mentis chosen for it, the persona's
-willingness — and its CONTINUE clears *one segment per press*. A script that presses once lands
-mid-stack, and `click action 0` then reports "no action 0 on screen" with nothing to say why. Use
-`advance`, which settles and presses until the box is gone. `state` reports
-`preview=none|generating|ready` so a stuck script can be diagnosed from its own output.
+**The trap that bites first**: the narration **preview box** sits between a `click think` and the
+act it comes to. It is generated in parts — the reasoning, a refusal and a second try, the doubt's
+question — and its CONTINUE commits *one part per press*: only then does that text's node hang on
+the tree. A script that presses once lands mid-stack, and `click act 0` then reports "no waiting act
+'0' (0 waiting)" with nothing to say why. Use `advance`, which settles and presses until the box is
+gone. `state` reports `preview=none|generating|ready` so a stuck script can be diagnosed from its
+own output, and the map answers no click while a box is up ("the map does not answer a click now").
 
-**A second trap**: `NarrativeState.IsDiceRolling` rests at `true` when no roll is active
-(`ClearDiceRoll` sets it that way), so always gate it behind `IsDiceRollActive` when testing for
-business. This already caused one bug in `CliIsIdle`.
+**A second trap**: a dice box's "rolling" flag says nothing when no box is up — `state` reads
+`dice=none` from the box's visibility first, and `CliIsIdle` must do the same when testing for
+business. Reading the rolling flag alone already caused one bug there.
 
 ### Adding a debug flag when a feature is hard to reach
 
@@ -772,13 +841,10 @@ bordering the spawn point, while travel range reaches far further.
   while the game becomes unclickable. Keep one manual click-through in your release routine.
 - **Narration quality**: `--playground` produces placeholder prose. A passing script proves flow,
   state and layout — never that the prompts still produce good writing.
-- **The keyword ranking.** The *first* keyword is the object's own word wherever the prose contains
-  it (`pig` for the pig), so that much is the same under `--playground` and is scriptable. What a
-  script cannot see is the ranking behind it — the second keyword of a long observation, and the
-  whole of any sentence that named its object some other way. Two reasons: placeholder prose is one
-  frame reused for every object, so there is no real vocabulary to rank; and the ~6s `WordEmbedding`
-  load, which a real run hides behind the model load (it is started in the controller's constructor
-  precisely so it can), has nothing to hide behind under `--playground` — a script reaches its first
-  observation in ~2s and ranks by word length instead. That second one is inherent to the mode, not
-  a defect. Verify a ranking change against the vectors directly, not through a script.
-
+- **Which element a mind picks.** Under `--playground` the Focus choice is a seeded draw over the
+  unobserved elements of the clicked kind — never a decline, never a preference. A script proves
+  the flow around the choice (the kinds on a card, the one decline `--refuse-focus` forces, a will's
+  rule-based refusal), not that Beast Sense looks at the wolf. That is the choice judge's, measured
+  by `tools/judge/` against the shipped model.
+- **How the trees look.** `inspect trees` and `inspect symbols` say what is on the map and what a
+  click would do; whether the panel, the trunk and the shelf read well is `snap` and an eye.

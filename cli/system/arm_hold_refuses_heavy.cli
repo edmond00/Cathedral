@@ -32,7 +32,7 @@ advance 12 180
 
 # Refused before any roll: no banner, no item, nothing applied.
 expect-not SUCCESS
-expect too heavy for my arms
+expect-state texts "too heavy for my arms"
 expect-not Item received:
 expect-no-outcome item_acquisition
 expect-no-state items iron_bar

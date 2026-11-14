@@ -7,7 +7,7 @@ agreed. A live take lets the agent decide each next move from the screen, the wa
     make_video.py live build/rec_x --flags "--skip-childhood --seed 42 --start-at city"   (run in background)
     make_video.py send build/rec_x "wait mode MainMenu 900" "click menu New" ...
     make_video.py send build/rec_x regions
-    make_video.py send build/rec_x "click keyword 1" "choose 0" "regions"
+    make_video.py send build/rec_x "click observe person" "choose 0" "regions"
     make_video.py send build/rec_x quit
 
 The game reads `commands.txt` in the recording directory as its stdin (this module feeds it), and

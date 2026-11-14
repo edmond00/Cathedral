@@ -30,15 +30,15 @@ expect-state will "unlock and open the test door"
 click observe "yard"
 choose lockpicking
 advance 12 180
-expect Through it I could
+expect-state texts "Through it I could"
 
 # Thinking with the will on the yard: the first step, voiced as the way to the goal, by the judged means.
 means woodcraft
 click think "yard"
 choose lockpicking
 advance 12 180
-expect To get there I must first
-expect so I will
+expect-state texts "To get there I must first"
+expect-state texts "so I will"
 expect [Woodcraft
 
 strategy succeed
@@ -73,6 +73,6 @@ advance 12 180
 click continue
 advance 12 180
 
-expect Door unlocked
+expect-state texts "Door unlocked"
 expect-verb unlock_door
 quit

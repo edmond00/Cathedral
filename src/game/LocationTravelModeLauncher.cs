@@ -32,9 +32,8 @@ public static class LocationTravelModeLauncher
     /// <summary>
     /// Whether the window passes <paramref name="key"/> on to the controller in <paramref name="mode"/>,
     /// once Escape, F11 and the D/G dumps have had their turn. R and K (the region and realm overlays)
-    /// go everywhere, since a fight's own R ("run away") is decided inside the controller, and so does
-    /// Tab (the narration's debug map), which the controller answers only in narration. The arrow
-    /// keys reach it in narration while the map is up, to pan it. A management tab's letter goes
+    /// go everywhere, since a fight's own R ("run away") is decided inside the controller. The arrow
+    /// keys reach it in narration, to pan the map. A management tab's letter goes
     /// everywhere, since it opens that tab from any phase that allows it (with developer keys on, D and
     /// G are taken by the dumps first, which no tab begins with today). Every other key reaches only a
     /// fight, a dialogue or the management screen.

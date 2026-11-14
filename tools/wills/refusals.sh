@@ -4,8 +4,7 @@
 #   tools/wills/refusals.sh <path-to-Cathedral-binary> <out-dir>
 #
 # Each run arrives in a location (--location-type, --location-id) holding the same eight wills, and has
-# three of them think about the first keyword of the opening block (`click keyword 0`, Think, the will
-# by id). Every thinking a will does ends one of three ways, which ThinkingExecutor logs:
+# one thing is looked at and three of them think about it (`click think last`, the will by id). Every thinking a will does ends one of three ways, which ThinkingExecutor logs:
 #   "wills '…' — no way here."          nothing it wants can be done in this place
 #   "wills '…' — '…' is not on the way." something can, but not through what it was asked about
 #   "wills it — proposing '…'"          a step toward something it wants
@@ -24,9 +23,11 @@ for place in "${PLACES[@]}"; do
         echo wait; echo "click menu New"; echo "wait mode ProtagonistCreation 20"; echo "click continue"
         echo "wait mode WorldView 60"; echo "travel here"; echo "wait mode LocationInteraction 60"; echo "advance 12 180"
         echo "inspect will"
+        # One thing looked at, by whichever mind the popup lists first; the wills then think about it.
+        echo "click observe thing"; echo "choose 0"; echo "advance 12 180"
         for k in 0 1 2; do
           w=${WILLS[$(( (start + k) % ${#WILLS[@]} ))]}
-          echo "click keyword 0"; echo "choose 0"; echo "choose $w"; echo "advance 12 180"
+          echo "click think last"; echo "choose $w"; echo "advance 12 180"
         done
         echo quit
       } > "$OUT/$tag.cli"

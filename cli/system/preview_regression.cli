@@ -1,6 +1,6 @@
 # Regression script for the LLM generation-preview box (see src/game/narrative/preview/).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Field" --period noon --observe-only "Test Berry Bush"
 
 wait
 click menu New
@@ -10,26 +10,25 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 wait
+strategy succeed
 
-# Observation preview: both sentences stream into ONE box (opener names "attention"), one CONTINUE.
+# Observation preview: the text streams into ONE box (the opener names "attention"), one CONTINUE.
+# The bush is pinned, with gathering from it as the goal: an act no means of the kit refuses.
+goal gather
+click observe "Test Berry Bush"
+choose childhood_memory
+wait 45
 expect CONTINUE
 expect attention
 click continue
 wait
 
-# Observation committed: its text is now in the log and the keyword is live.
-#
-# Clicked by INDEX, not by name. The clickable keyword is the observed object's own noun, which
-# depends on what the phase opened on — this script pins nothing with --observe-only, so it cannot
-# know the word. It used to say `click keyword attention`, from an older rule where every
-# observation came out as "attention"; when that changed the script kept passing its `expect`s (the
-# word is still in the prose, "My attention is drawn to…") and silently stopped clicking anything.
-expect attention
-strategy succeed
-click observe "?"
-choose childhood_memory
-advance 12 180
-click think "?"
+# Observation committed: the box is gone, and the text is on the element's node, read again under
+# the pointer.
+expect-not CONTINUE
+expect-state texts "attention"
+
+click think "Test Berry Bush"
 choose ripelore
 wait 45
 
@@ -43,8 +42,10 @@ expect I will
 click continue
 wait
 
-# Thinking committed: the action button is live.
-expect I want to
+# Thinking committed: the act hangs under the thought.
+expect-state texts "I want to"
+expect-state trees act state=waiting
+
 click act 0
 choose 0
 wait 60
@@ -62,6 +63,7 @@ expect managed to
 click continue
 wait 60
 
-# Outcome committed: the success line is in the log and the footer CONTINUE is shown.
+# Outcome committed: the result box is up, and the outcome is a node under its act.
 expect SUCCESS
+expect-state trees success
 quit

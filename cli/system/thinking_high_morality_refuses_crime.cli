@@ -34,7 +34,7 @@ advance 12 180
 click think "Test Chest"
 choose ripelore
 advance 12 180
-expect against every principle I hold
+expect-state texts "against every principle I hold"
 expect-not ] steal
 
 # Learned Research: still offered stealing, carried out by a means that would not refuse. At seed 42
@@ -43,6 +43,6 @@ means none
 click think "Test Chest"
 choose scientific_research
 advance 12 180
-expect ] discreetly steal
+expect-state texts "] discreetly steal"
 
 quit

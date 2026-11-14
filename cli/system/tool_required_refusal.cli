@@ -57,9 +57,9 @@ click act 0
 choose 0
 advance 12 180
 # Short fragments, because `expect` matches one row and the sentence wraps.
-expect my bare hands could not do it
-expect it takes a knife
-expect So I left it undone
+expect-state texts "my bare hands could not do it"
+expect-state texts "it takes a knife"
+expect-state texts "So I left it undone"
 expect-not I would need to find
 
 # ── The action is still the way on, and only through a tool ──────────────────

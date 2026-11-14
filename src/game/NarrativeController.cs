@@ -204,6 +204,8 @@ public partial class NarrativeController
         var entry = SceneSyntheticGraphFactory.ResolveEntryArea(scene)
                     ?? throw new InvalidOperationException("Scene has no areas — nothing to narrate");
         _minds.Clear();
+        _goneOut.Clear();
+        _lastRooted.Clear();
         _minds[_protagonist] = new MemberMind(_protagonist, new PoV(entry, TimePeriod.Morning));
         // Companions take part in a real place only: the opening phases are the protagonist's alone.
         if (scene.Phase == NarrationPhase.Exploration)
@@ -238,7 +240,7 @@ public partial class NarrativeController
         if (_scene.Phase != NarrationPhase.Exploration) return false;
         bool changed = false;
         foreach (var companion in _protagonist.CompanionParty)
-            if (!_minds.ContainsKey(companion))
+            if (!_minds.ContainsKey(companion) && !_goneOut.Contains(companion))
             {
                 _minds[companion] = new MemberMind(companion, new PoV(_pov.Where, Period));
                 changed = true;
