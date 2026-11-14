@@ -36,16 +36,16 @@ goes, and what it does when it arrives.
 
 **The Conduct of a Visit**
 
-6. [Narration](06-narration.md) — the phase and its budget; observation, deliberation and act; the
-   composition of the die pool; implements; the lending of narration to a companion; the wages of
-   failure.
+6. [Narration](06-narration.md) — the visit and its budget; what is unknown, known and observed; observation,
+   deliberation and act; the composition of the die pool; implements; the party in a place; the
+   wages of failure.
 7. [Social Intercourse](07-social.md) — the ladder of affinity; the single check that settles a
    conversation; introduction, barter and hire.
 8. [Combat](08-fighting.md) — the turn and its cinetic points; mediums and the skills they bear; the
    blow that opens a fight; the attack and defence pools; wounds, status, terrain and flight; the two
    ways to fall and what decides the field.
 9. [Mental Maps and Routines](09-routines.md) — what is remembered of a place and for how long, and
-   the ways into it the body already knows: the seven kinds, where none is learned, what each
+   the ways into it the body already knows: the six kinds, where none is learned, what each
    requires, and the gathering stay.
 10. [Crafting](10-crafting.md) — materials and their units; stations and the one material each works;
     trades, their implements and their wants; a master's leave; setting to work, taking apart and

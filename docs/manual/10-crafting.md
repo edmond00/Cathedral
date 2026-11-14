@@ -131,7 +131,7 @@ station, that trade is the one at work, whichever was proposed; otherwise the tr
 
 Success puts the body to work at the station (§6) and teaches the trade at work. Failure costs one of
 three things, drawn as every failure's cost is ([VI §8](06-narration.md)): a scrape upon the hands,
-the hour lost, or a point of the phase's budget.
+the hour lost, or a noetic point.
 
 ## 6. At the station
 

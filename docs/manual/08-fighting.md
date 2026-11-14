@@ -220,8 +220,14 @@ them starts it again.
 
 ## 9. The ending of a fight
 
-A fight ends when one side has nobody left standing. Every member of the party counts for the party,
-and every enemy for the other side; nothing else is weighed, and no count of the fallen decides it
+**Who fights.** On the road the whole party fights together. In a place the members of a party stand
+each where it was taken ([Chapter VI §10](06-narration.md#10-the-party-in-a-place)), and a fight
+there is fought by those standing in the area where it breaks out, and by no others: the rest are
+elsewhere, and the protagonist may be among them. A fight lost without the protagonist in it costs
+the companions who fought it, and nothing more.
+
+A fight ends when one side has nobody left standing. Every member of the party who fights counts for
+the party, and every enemy for the other side; nothing else is weighed, and no count of the fallen decides it
 short of the last of them.
 
 Two things follow that are easily mistaken. **A companion's fall does not end a fight** while

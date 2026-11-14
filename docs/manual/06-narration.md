@@ -20,21 +20,26 @@ never across a gate, so that it is never a way round either. Not every location 
 of areas two steps apart is joined by a path with a chance of 30 in 100, each pair three steps apart
 with 15 in 100, and no area has more than two.
 
-**Going back.** A way out already known — a neighbouring area already stood in, or a door, stair,
-path or climb already gone by — is not walked again but **gone back by**, and the narration says
-so when it takes such a way in. Going back is a single act of difficulty 2, whatever the distance,
-and it reaches any area already visited that known ways join to the one stood in: the destination
-is chosen once the act has succeeded, from all of them. It never passes a door locked against the
-comer, and never steps from other ground into private, so the private rooms it may return to are
-only those of the private ground the body already stands in. A will that goes back as a step of its
-course goes to the area its course needs, and nothing is chosen. What going back teaches follows
-from how it was done: with an enemy in sight, by night, or on private ground, each teaches its own;
-otherwise it teaches the retracing of known ways.
+**Known ways.** A way out already known — a neighbouring area already stood in, or a door, stair,
+path or climb already gone by — is no longer an act. It is simply walked: a body goes, at no cost
+and upon no roll, to any area already visited that known ways join to the one it stands in. Such a
+walk never passes a door locked against the comer, and never steps from other ground into private,
+so the private rooms it may return to are only those of the private ground the body already stands
+in. It is not for that a walk through an empty place. Every area on the way is weighed as though the
+body stood in it, the areas a path runs past among them, and in the first where an enemy or a
+witness would confront it (§7) it stops and stands confronted; whatever it had set out to do there
+is dropped. No roll is made at such a stop: flight alone is rolled.
 
-What is known of a place — the areas stood in, the ways gone by, what an observation took in — is the
-place's **mental map**, and lasts only as long as the map is remembered (see
-[IX §1](09-routines.md)). A place forgotten is unknown again: none of its ways is known, and none is
-gone back by.
+A way *not* yet gone by remains an act, at its own difficulty. When such a way — a door, a stair, a
+path, a climb or a crossing never taken — comes out upon ground already stood on, what the act
+teaches is how the place joins together, in the stead of its ordinary lesson: taken with an enemy in
+sight, by night, or on private ground, each teaches its own; otherwise it teaches the retracing of
+known ways, or to a beast the following of its own trail.
+
+What is known of a place — the areas stood in, the ways gone by, the things and persons an
+observation took in — is the place's **mental map**, and lasts only as long as the map is remembered
+(see [IX §1](09-routines.md)). A place forgotten is unknown again: none of its ways is known, and
+nothing in it has a name.
 
 A **point of view** is a pair: *where* the acting body stands, and *when* — the period of the day.
 Both are scene state, and both decide what may be attempted. Moving between areas changes the first;
@@ -71,25 +76,28 @@ that play's own — the skipping of stones teaches the skipping of stones — an
 can hold, a general playfulness. About a quarter of the areas of the world hold something to be
 played at.
 
-## 3. The phase and its budget
+## 3. The visit and its budget
 
-Narration proceeds in **phases**. A phase opens with an observation, and within it the acting body
-may attend to further things, deliberate, and act. The phase closes when the live text is set aside
-into history — on moving to another area, on a fight, on a conversation, on a hand-off, or on the
-acceptance of an act's outcome.
+Narration is not divided into turns. For the length of a visit the place lies open before the acting
+body: what it has attended to stays attended to, what it has resolved to do waits to be done, and
+nothing is set aside until the place is left. What limits it is its **noetic points**, being the
+**encephalon's** measure. One point is spent by each of the following:
 
-The budget of a phase is its **noetic points**, being the **encephalon's** measure. One point is
-spent by each of the following:
-
-- an **observation** beyond the phase's opening one;
-- a **deliberation**;
+- an **observation**, the first of a visit like any other;
+- a **deliberation**, with all its second thoughts (§5);
+- a **reconsideration** (§5);
 - an act **refused by a coded rule** (§6);
 - an act found **implausible**;
-- an implement **offered to an act and refused** (see [Chapter IV §7](04-items.md#7-implements)).
+- an implement **offered to an act and refused** (see [Chapter IV §7](04-items.md#7-implements));
+- a thing **spoken of to a companion** (§10).
 
-The pool **refills at every phase boundary but one**: it is *not* refilled by the boundary that
-closes a phase after an act has failed upon the dice. A miss must cost something; were the budget
-handed back, the very next attempt would be free.
+To attempt an act already resolved upon costs nothing, and neither does walking by known ways (§1).
+
+**The pool is restored by success.** An act that succeeds returns the whole pool to the body that
+performed it, there and then. It is restored likewise when a fight, a conversation, a bargain or a
+spell of work has been had and the narration is taken up again, to every member of the party
+standing where that took place. An act that **fails** restores nothing. A miss must cost something;
+were the budget handed back, the very next attempt would be free.
 
 Two things are deliberately outside the budget. **An implement accepted costs nothing** — it is
 part of an act already deliberated upon, and to charge for it would put the acts that require an
@@ -97,106 +105,100 @@ implement beyond a small pool altogether. Only the refusal is charged, and the r
 therefore not upon reaching for a thing but upon reaching for the wrong one. And **a successful
 act's own resolution** costs nothing beyond the deliberation that produced it.
 
-A body that has spent the pool without succeeding can only leave. That is the intended shape, and it
-is why departure is gated on nothing except somebody in the room with a reason to stop it — an enemy,
-or a witness confronting the body (§7).
+A body that has spent the pool may neither attend to nor deliberate upon anything further until an
+act of its own succeeds. It may still attempt whatever it has already resolved upon, walk where it
+knows the way, and leave. That is the intended shape, and it is why departure is gated on nothing
+except somebody with a reason to stop it — an enemy, or a witness confronting the body (§7).
 
-## 4. The two ledgers
+## 4. What a visit keeps
 
-Within one phase, nothing is offered twice. Two records enforce this, and both are cleared at the
-phase boundary.
+**Every thing in a place stands, to a given body, in one of three conditions.** It is **unknown**
+when nothing of it is had but its kind — a way onward, a person, one who means harm, or a thing. It
+is **known** when an earlier visit observed it and the place is still remembered
+([IX §1](09-routines.md)): it then has its name, and may be attended to in particular. It is
+**observed** when it has been attended to on this visit, by this body. Only what is observed may be
+deliberated upon. What a body has observed stays observed for the rest of the visit, and is its own:
+each member of a party keeps a separate account (§10). When the place is left the account is closed,
+and what was observed in it remains known for as long as the place is remembered.
 
-**What has been attended to** is recorded **by instance**. Two birch trees are two things, and
-looking at the first must leave the second available. Objects so recorded are withheld from every
-later *choice* of what to attend to in that phase, so each observation must reach for something new.
+**The account is kept as it was made.** Each observation, each deliberation with its refusals and
+second thoughts, each act and what it came to is set down under the thing it concerned, in the order
+it happened, and may be read again at any time. An act resolved upon and not yet attempted **waits**:
+it may be attempted at any later moment of the visit, so long as the world still allows it. When the
+world no longer does — the thing taken, the person gone to bed, the way since walked — the act lapses
+and is withdrawn.
 
-**What has been offered as an act** is recorded by what the actor perceives — *this manner of
-acting, upon this thing* — together with the particular form it took, where the act admits of
-several (which trade was asked for, which third party one asked to be presented to). An act is
-recorded when it is actually offered. A goal that deliberation settled upon and the acting modus
-mentis then *refused* was never offered, and so remains available: the refusal was that mind's, and
-asking again with another mind is precisely the move that ought to work.
+**The account follows the world.** A person who moves takes with them all that was thought about
+them, and is lost to sight while they stand where the body has never been. One who is killed is
+struck from it, and the body they leave lies in it already observed, for every member standing where
+it fell (§11). One who comes in at a noise, and one who confronts the body, are in it likewise
+without having been looked at (§7).
+
+**Nothing is offered twice while it waits.** What has been offered as an act is recorded by what the
+actor perceives — *this manner of acting, upon this thing* — together with the particular form it
+took, where the act admits of several (which trade was asked for, which third party one asked to be
+presented to). An act is recorded when it is actually offered, and struck from the record once it
+has been attempted or has lapsed, so that it may be resolved upon anew. A goal that deliberation
+settled upon and the acting modus mentis then *refused* was never offered, and so remains available:
+the refusal was that mind's, and asking again with another mind is precisely the move that ought to
+work.
 
 It remains available to every thinking modus mentis **but the one that chose it**. That mind is not
-offered the same act again within the phase, for asked about the same object it would settle on the
-same goal and meet the same refusal. A companion's modus mentis of the same name is a different mind,
-and is not bound by it.
+offered the same act again, for asked about the same object it would settle on the same goal and
+meet the same refusal. A companion's modus mentis of the same name is a different mind, and is not
+bound by it.
 
-**An act once refused is not refused a second time.** Before it is offered again within the phase, it
-is tested against the rules of choice that refuse outright: if no acting modus mentis the body holds
-could carry it out under them — an examination where none of them observes — it is offered to no mind
-for the rest of the phase. If some can, the next mind to choose it is offered only those as the means,
-and the one chosen answers only with a degree of assent; it may not refuse.
+**An act once refused is not refused a second time.** Before it is offered again, it is tested
+against the rules of choice that refuse outright: if no acting modus mentis the body holds could
+carry it out under them — an examination where none of them observes — it is offered to no mind. If
+some can, the next mind to choose it is offered only those as the means, and the one chosen answers
+only with a degree of assent; it may not refuse.
 
-**A mind that wanted nothing of an object is not asked twice.** A thinking modus mentis may judge that
-nothing an object affords is worth doing, and say so. Its judgement does not vary — the same mind
-asked about the same object returns the same answer — so to ask it again within the phase is to
-insist: the second time, it may not decline, and settles on one of the goals offered. Another mind
-asked about the same object may still decline it.
+**A mind that wanted nothing of an object is not asked twice.** A thinking modus mentis may judge
+that nothing an object affords is worth doing, and say so. Its judgement does not vary — the same
+mind asked about the same object returns the same answer — so to ask it again is to insist: the
+second time, it may not decline, and settles on one of the goals offered. Another mind asked about
+the same object may still decline it.
 
-A new phase in the same place sees the whole scene, and every act in it, afresh.
+**The restoring of the pool wipes these slates.** Every refusal and every declining recorded since
+the pool was last full is forgotten with it (§3), and each mind may be asked again as though for the
+first time. The acts that wait are untouched.
 
 ## 5. The three steps of an act
 
-**Observation.** An observing modus mentis is asked what is worth attending to among the things
-present that have not yet been attended to, and renders what it finds. One object is chosen; the
-rest wait.
+**Observation.** To observe is to ask an observing modus mentis to attend to *one thing of a given
+kind in a given area*. Which thing, among those of that kind there that the body has neither
+observed nor remembers, is the mind's own choice; it renders what it finds, and that one thing is
+thenceforth observed. A thing that is known is asked for in particular, and no other is chosen in
+its place. Nothing is rendered of the area at large, and nothing is observed unasked: an arrival
+attends to nothing. Observation requires presence — the body walks to the area first, by known
+ways, and what it cannot so reach it cannot observe.
 
-Once something has been attended to within the phase, an observing modus mentis choosing what to
-attend to next may instead decline to attend to anything further, and its account closes on that
-declaration. **The declining is spent once taken.** It is open to one modus mentis in a phase, and
-every modus mentis that observes after it must attend to something present: were each free to decline
-in turn, a thing in plain view could go unattended for the whole phase. A will's turning from what
-does not begin its course (§6) is a rule of its nature, not this declining, and is not spent.
+**The declining is spent once taken.** A mind asked to attend may answer instead that nothing of
+that kind there draws it, or that the thing named does not. The answer costs its point as an
+observation does, and stands in the account. The same mind asked again about the same kind in the
+same area, or about the same thing, may not decline a second time, and must attend to something:
+were each asking free to end in a declining, a thing in plain view could go unattended for a whole
+visit. Another mind has a declining of its own. A will's turning from what does not begin its course
+(§6) is a rule of its nature, not this declining, and is never spent. In recollection and in the
+rising from exhaustion no mind declines at all.
 
-Attention may also be directed: a thing already rendered may be given to an observing modus mentis
-to attend to closely. That modus mentis may decline it, and if so turns to another thing of its own
-choosing among those not yet attended to — the refusal and the new observation rendered as one
-movement, the new thing available for closer attention like any other. Only when nothing is left
-unattended does the refusal stand alone, and lead nowhere.
-
-The opening observation of a phase may first take its **bearings**: where the body stands and at
-what period of the day, rendered in the observing modus mentis's own voice. This is done only when
-the area or the period has changed since the bearings were last taken, so that a run of phases in
-one place does not open on the same account each time; and it is done only in the waking world,
-never in recollection nor in the rising from exhaustion. The bearings close by naming, briefly and in
-no particular order, up to five of the things present that have not yet been attended to. Every
-thing present that the account names outright — a thing by its own name, a person by role, name or
-sex — is rendered available for closer attention through the word that names it, and counts
-thereafter as attended to, so that no later observation of the phase returns to it. A word naming
-the area itself names no thing in it, and a word several things share goes to the one whose name
-surrounds it, or to none. One thing present is always left unnamed, for the observation that
-follows. The opening
-observation attends to at most three things in all, the later ones only while what has been rendered
-remains brief; the bearings count as the first of the three, so that at least one object, and at
-most two, is attended to after them.
-
-**Wholes, kinds and contents.** Things are not offered to observation one by one when they belong
-together. The parts of one whole — the door and the outside wall of a building, seen from the street
-— are offered as that whole; and three or more things of one kind in the same place — buildings,
-ways onward (the neighbouring areas and the paths together), doors leading on, the distant
-places seen from a height, or things bearing the same name of kind — are offered as their kind.
-Persons are never so gathered, nor is the door by which a building is left. Observing a gathering
-renders the whole; the next observation of the same account then turns to one of its parts not yet
-attended to, rather than to anything else present, and the same holds of a thing that holds two or
-more different things, whose contents are its parts. Attention directed to a gathering or to such a
-holder renders its parts in turn, each available for closer attention by its own word. Deliberation
-upon a gathering is offered every act its parts afford; upon a part, only that part's.
-
-**An arrival notices the living.** The observation that opens a visit to a location must render a
-living person when one stands in the area unattended. Should its own choices, bearings included,
-have reached nobody, one observation more is added by the same modus mentis: it chooses among the
-people present only, and may not let its focus go. Should it have declined to attend to anything further,
-the declaration is not rendered, the person being attended to in its place. The rule
-holds for the arrival alone; every later phase in the place chooses freely.
+**Contents.** A thing that holds two or more different things discloses them when it is observed:
+each becomes known, though not observed, and is attended to in its own turn and at the cost of its
+own point. Deliberation upon the holder is offered every act its contents afford beside its own;
+upon one of its contents, only that one's.
 
 **Deliberation.** A thinking modus mentis is asked what to want, among the acts the observed object
-affords and that have not already been offered, nor already chosen by it and refused, nor refused
-once and beyond every acting modus mentis held. Its moral level and its speech narrow the list before
+affords as the world now stands and that are not already waiting, nor already chosen by it and
+refused, nor refused once and beyond every acting modus mentis held. Deliberation requires no
+presence: a thing observed may be thought about from anywhere in the place, and is offered for
+thought only while it affords some act. Its moral level and its speech narrow the list before
 it is asked (§6).
 Its answer is a goal, and the goal produces the act.
 
-**Execution.** An acting modus mentis is asked whether it is willing, and how willingly. Its degrees
+**Execution.** An act is attempted where its object is: the body walks there first, by known ways,
+and an act whose walk is stopped is not attempted (§1). An acting modus mentis is asked whether it
+is willing, and how willingly. Its degrees
 of assent map to a modifier upon the difficulty, and its refusal cancels the act outright. Its moral
 level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse
 one (see §7); and one that speaks may not refuse a conversation (§6).
@@ -231,7 +233,7 @@ other. Holding to it, it gives the act to an acting modus mentis other than the 
 it, and only to one that no rule of choice forbids and no coded rule (§6) would refuse when the act
 is attempted — so that an act which a witness in sight or an enemy in the room would forbid passes
 to a discreet modus mentis, where one is held. That modus mentis does not decline it. The new act
-takes the place of the old, which may no longer be attempted. When the mind wants no part of it, or
+takes the place of the old, which is kept in the account and may no longer be attempted. When the mind wants no part of it, or
 no other acting modus mentis could carry it out, the act offered before stands as it was. It is not
 offered in recollection nor in the rising from exhaustion, whose one act has one means.
 
@@ -282,7 +284,9 @@ of what it came to in the one who did it. The doctrine of it is in [Chapter III
 
 Two things follow that are worth stating here. The sentiment is settled **after** the consequences
 and **before** anything the act may have set in motion, so a body that has struck the first blow of
-a fight is moved by the blow before the fight begins. And it is **silent by default**: most acts come
+a fight is moved by the blow before the fight begins. What an act sets in motion — a fight, a conversation, a spell at a bench, the losing of the way —
+begins only when the account of the act has been taken in, the next thing being apt to bury it. And
+the sentiment is **silent by default**: most acts come
 to nothing any disposition answers, and a body that holds no disposition at all is never moved.
 
 ## 6. The two families of rule
@@ -330,13 +334,11 @@ out by whichever acting modus mentis is chosen.
 **Principle refuses a crime before it is offered.** A high-moral acting modus mentis chosen to carry
 out a crime refuses at once and is not asked, while the act is still being deliberated — no act is
 offered, and no point is spent on an attempt. The refusal is remembered as any other (see §4): the
-same thinking modus mentis is not offered that goal again in the phase, and another that chooses it is
+same thinking modus mentis is not offered that goal again, and another that chooses it is
 offered as means only those that would not refuse it.
 
 **Speech turns toward people.** A modus mentis bearing the Speaking function puts conversation
-first, at every step of the chain it takes part in. Observing, it attends to a living person before
-any other thing present, and does not decline a person given to it to attend to closely; the ledger
-of what has been attended to returns the rest of the scene to it once the people are seen. Thinking,
+first, at every step of the chain it takes part in. Observing, it does not decline when what it is asked to attend to is a person. Thinking,
 when the observed object affords any conversation, only the conversations are offered — save that a
 low-moral mind already narrowed to crimes keeps the crimes, its morality being consulted first.
 When the goal is a conversation, the acting modi mentis that speak are the only means offered, if any
@@ -348,16 +350,15 @@ left to say — still applies. Where nobody can be spoken to, none of this narro
 is reckoned the shortest course of acts from where the body stands to an act of the kind it wants,
 and at every step of the chain it attends only to the first act of such a course — of several
 equally short, any. In what it says, a person on its course is named as the narration names them
-elsewhere. It never opens a
-phase while any other observing modus mentis is held. Given an object to attend to closely, it keeps
-it if the object affords that first act, turns from it to the object that does if one remains
-unattended this phase, and otherwise declines it, naming the act that would begin the course.
+elsewhere. Asked to attend to a thing in particular, it does so if the thing affords that first act, and
+otherwise declines, naming the act that would begin the course; asked to attend to one of a kind, it
+attends to the first of that kind which affords it, and to none where none does.
 Deliberating, it is less strict than in attending. Of the acts the object affords, those that begin a
 course to what it wants of at most three acts, the wanted act included — or of one no longer than the
 shortest course the place offers, however long that is — are its candidates; it is offered only the
 candidate whose course is shortest, and where several courses are equally short it chooses among
-their first acts itself. An act already offered within the phase is no candidate
-([§4](#4-the-two-ledgers)), so a second deliberation upon the same object takes the next course through
+their first acts itself. An act already waiting is no candidate
+([§4](#4-what-a-visit-keeps)), so a second deliberation upon the same object takes the next course through
 it, within the same bounds, and with none left the will proposes nothing and lets the object go. On an
 object that affords no candidate it proposes nothing, saying only
 what it wants; it admits no doubt, its goal being set by its course, and
@@ -373,7 +374,7 @@ places within range: they are examined in order of the cost of the road to each,
 and the first in which the course to that want exists from the place's way in, at the hour of
 arrival, is proposed as the journey's end. A visit reached by that journey is made for that want, and
 while it lasts the will reckons its course to that want alone, however long — the course it
-attends by, the object it opens a phase on, the one it keeps in attending. Deliberating, it takes
+attends by, and the things it will attend to. Deliberating, it takes
 first a course through the object to that want, whatever its length; only where the object affords
 none are its other wants candidates, and then only by a course of at most three acts. Where no
 course to the sought want remains in the place — the thing done, or gone — the will reckons by all
@@ -386,7 +387,7 @@ were stopped from completing, and you pay for the attempt.
 
 **Legality is contextual.** No manner of acting is a crime in itself. Standing in another's private
 space makes *anything* done there a trespass, and that test applies to everything at once. It is
-never hidden: throughout a phase the narration declares whether the ground underfoot is private, and
+never hidden: throughout a visit the narration declares whether the ground underfoot is private, and
 private ground teaches no routine (see [IX](09-routines.md)). Beyond
 it, each act that can be a crime has its own condition — striking someone who already counts you an
 enemy is not a crime, for the quarrel was declared before the blow; forcing the lock of a public
@@ -456,8 +457,9 @@ The middle rung is an approach, not a verdict. Nothing is yet said; what it cost
 now stands in the room, having come on the body's account, and that is a confrontation (below).
 Earshot is not the walkable graph but the whole **section** an area belongs to — a building, or the
 stretch of open ground it lies in, for a door is a gate and not a wall. Being heard is announced as
-a consequence of the failed act, and the one who came opens the next observation: an enemy as the
-one who came looking, a witness as the one who came to see what the noise was.
+a consequence of the failed act, and the one who came stands thereafter in the account of every
+member in that area, observed without having been looked at: an enemy as the one who came looking,
+a witness as the one who came to see what the noise was.
 
 **Under threat, and confronted.** Two presences in the area stop a body short, and they are kept
 deliberately alike. An **enemy** in the area permits only the acts that answer them — to strike, to
@@ -474,9 +476,19 @@ Fumbling the approach is itself a slip before the witness, and one is collared a
 for the permission to act at close quarters is what discretion buys; it does not buy safety, and a
 discreet act that fails in the same room is seen.
 
+**What a confrontation closes.** While either presence stands over a body, that body may attend to
+nobody and nothing but the one confronting it — who is in its account already, without having been
+looked at — may deliberate upon them alone, may not walk away, and speaks to no companion. The acts
+it had resolved upon before, in the area where it stands, still wait and may still be attempted, to
+be judged as above. Somebody asleep confronts nobody and witnesses nothing: a sleeper is woken, or
+stepped past. The other members of a party, standing elsewhere, are not confronted by it.
+
 **Departure.** A place is left as it was entered, by its one way in, which lies beyond the area the
 place was entered by. To leave is to walk there: from the area stood in, back along the ways already
-known, to that area and out. A free departure is not stopped on the way.
+known, to that area and out. Every member of a party leaves by it, each from where it stands, those
+standing together going together; and the departure is a walk like any other, so that a member who
+would be confronted on the way is stopped there (§1), and the party is then divided between those
+already out and those still within.
 
 **Flight.** While either presence stands in the area the free departure becomes a **runaway**: one
 roll of as many dice as the feet's runaway score, needing a single six, which the humors may bend
@@ -486,8 +498,8 @@ out: every further area it passes through — the areas a path runs past among t
 though the body stood in it, and wherever an enemy or a witness would confront it there, it is
 stopped and rolls again on the same terms. Each success carries it on to the next such area, or out
 of the place when none is left. A failure at such a stop forces nothing: the body stays in the area
-where it was stopped, the noetic points are not restored, and the next phase opens on whoever
-stopped it — who now stands in the area with it, so that leaving is a runaway once more.
+where it was stopped, the noetic points are not restored, and whoever stopped it stands in its
+account — and in the area with it, so that leaving is a runaway once more.
 
 A confrontation ends with the conversation it opens: a witness who came on the body's account then
 returns to the day they were drawn from, unless the conversation has made an enemy of them.
@@ -514,7 +526,7 @@ afterwards. Nothing is written down, and no authority pursues you beyond the roo
 
 A failed act costs, in order:
 
-1. **The budget**, which is not refilled at the phase boundary that follows.
+1. **The budget**, which a failure does not restore (§3).
 2. **A social consequence**, read off effective proximity as §7 describes: at most one of caught,
    attacked, or approached. These are three rungs of one ladder, not a set of independent flags.
 3. **A penalty**, drawn at hazard from what that manner of acting risks. No failure goes without one.
@@ -529,7 +541,7 @@ A penalty is of four kinds:
 - **The hour wasted**, for the hard and the slow — a climb, a swim, a crossing, a labour. The period
   of the day advances by one, and all that follows the hour follows it.
 - **The thread lost**: one noetic point beyond the point the act already spent. Since the budget is
-  not refilled after a failure, the point stays lost into the phase that follows. It is what the
+  not restored by a failure, the point stays lost until an act succeeds. It is what the
   manners of acting that hazard nothing else — the senses, speech, waiting — cost when they fail.
 
 **A penalty that cannot take hold is drawn again** from the rest of the manner's risks. The way
@@ -561,20 +573,39 @@ Four facts are:
 Corpses, wounds dealt, and forced doors are deliberately **not** recorded. They are one visit's
 business.
 
-## 10. Companions, and the lending of narration
+## 10. The party in a place
 
-A companion may be handed the narration. What is spoken about is passed to them, and thereafter
-**they** observe, deliberate, choose goals and act — spending **their own** noetic points, which are
-tracked separately, and drawing upon **their own** modi mentis.
+**Each member of a party is its own body in the place.** All enter by the same area; thereafter each
+stands where it was last taken, and a move moves only the one who made it. Each observes,
+deliberates and acts for itself — spending **its own** noetic points, drawing upon **its own** modi
+mentis, and keeping **its own** account of what it has observed (§4). Which member is attended to
+may be changed at any moment and at no cost. Time alone is common: the hour is one hour for all.
 
 A companion may be a beast, and this is where the capabilities of [Chapter I
 §5](01-anatomy.md#5-the-three-capabilities) bite hardest. Every gate consults **the acting body**,
-not the protagonist. A beast handed the narration is offered no conversation, no lock, no implement
-and no letters — about half of everything there is to do — while tracking, scenting, going places
-and fighting remain open to it. Two acts consult the protagonist regardless, being the two that
-concern the party itself: the taming of a beast and the proposal that someone join.
+not the protagonist. A beast is offered no conversation, no lock, no implement and no letters —
+about half of everything there is to do — while tracking, scenting, going places and fighting remain
+open to it.
 
-Handing over costs the speaker a point of their own budget.
+**A conversation with the people of a place is the protagonist's.** No companion, of whatever kind,
+opens one: its replies, the regard it earns and whatever it settles are the protagonist's. Two acts
+besides consult the protagonist regardless of who performs them, being the two that concern the
+party itself: the taming of a beast and the proposal that someone join.
+
+**Speech between members.** A member holding a speaking modus mentis may speak of a thing it has
+observed to a companion standing in the same area or in one adjoining it. It costs the speaker a
+point. What was said is set down under the thing in the speaker's account, and the thing enters the
+listener's account as observed, with those words in the place of an observation of its own: the
+listener deliberates upon it from what it was told. Speaking does not change which member is
+attended to.
+
+**A fight takes those who stand where it breaks out**, and nobody else; whoever is fought counts
+those members enemies thereafter. The protagonist may be absent from it. Lost with the protagonist
+in it, it ends everything ([Chapter VIII](08-fighting.md)); lost by companions fighting alone, they
+are dead, and the protagonist goes on.
+
+**The party is kept current.** One who joins in the course of a visit stands where the member who
+won them stands, having observed nothing. One who dies leaves their body where they stood (§11).
 
 ## 11. What a killing leaves
 
@@ -610,10 +641,10 @@ them and refused.
 made for having been of the party. What is cut from a companion who was a beast is what would be cut
 from any beast of that kind.
 
-**A corpse opens the next phase, alone**, each body in the order it fell. Anything the game creates
-during play must be reconciled with the scene's map of what may be attended to before it can be
-observed at all — a thing may exist in an area and still be invisible to attention until that
-reconciliation happens.
+**A body is observed where it falls.** It needs no looking for: it enters the account of every
+member standing in the area, already observed, each body in the order it fell, and may be
+deliberated upon at once. No mind observed it, and none is therefore counted in a roll made upon it
+beyond those that deliberate and act.
 
 ---
 

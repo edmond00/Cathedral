@@ -125,7 +125,7 @@ learned, and the reach returns of its own accord when the wound closes.
 
 **A modus mentis whose reach has fallen to nought or beneath cannot be used at all.** It is not
 merely a weak manner of the mind but an unusable one: there is no die left to cast with it, and every
-phase that might have called upon it refuses instead, naming the parts of the frame that failed and
+step that might have called upon it refuses instead, naming the parts of the frame that failed and
 the wounds responsible. The terms of that refusal are set out in
 [Chapter VI §6](06-narration.md#6-the-two-families-of-rule) and, for combat,
 [Chapter VIII §4](08-fighting.md#4-fighting-skills).
@@ -212,7 +212,7 @@ The catalogue itself is content and is not enumerated here. What matters structu
 function a modus mentis bears, since that decides where in the machinery it is consulted:
 
 - An **observation** modus mentis is asked what is worth attending to, and renders what it finds.
-  Its choice is constrained by what has already been attended to this phase.
+  It chooses among the things of the kind asked for that the body has not yet attended to.
 - A **thinking** modus mentis is asked what to want. It settles on a goal from what the observed
   object affords, and its moral level decides whether crimes are offered to it at all.
 - An **action** modus mentis is asked whether it is willing, and how willingly. Its moral level

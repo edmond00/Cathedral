@@ -223,7 +223,7 @@ Whence a practised hand is not one that draws more from an implement, but one th
 things serve as implements. A body at **None** — its hands at nought, or disabled by a High wound —
 can use nothing for anything, however well chosen.
 
-**A refused combination costs a noetic point** (see [Chapter VI](06-narration.md#3-the-phase-and-its-budget)),
+**A refused combination costs a noetic point** (see [Chapter VI](06-narration.md#3-the-visit-and-its-budget)),
 and this is true of every refusal alike: the wrong implement, an act that admits none, an implement
 held to work it was not made for, and a hand too unpractised for the verdict returned. An accepted
 one costs nothing, being part of an act already deliberated upon. Choosing well is therefore the

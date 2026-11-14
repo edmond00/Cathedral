@@ -190,6 +190,10 @@ What the draft and the interview left open, and how it was filled.
   them over stands; somebody dead is gone with their trees, and their body lies where they stood.
 - **When trees outgrow their room** (eleven rows under a card), the elements with something left to
   do are drawn first and the last row counts the finished ones not shown.
+- **Whoever confronts a member is on their map already observed** — the enemy in the room walked
+  into, the householder who sees them, whoever stopped a walk or an escape. Confronted, nothing else
+  may be looked at, so the confronter is not left to cost a point before they can be answered.
+- **One listener within reach is spoken to without asking whom.**
 - **A stalked quarry's locked door is marked seen** rather than opening a text about it.
 - **`--no-embeddings` and the word vectors' runtime load are gone**: keywords were their only
   reader. `--mm-audit`'s persona lint still reads the file when it is there.

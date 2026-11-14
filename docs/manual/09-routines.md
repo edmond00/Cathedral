@@ -1,13 +1,13 @@
 # IX. Of Mental Maps and Routines
 
 A **mental map** is what the body remembers of one location: the areas it has stood in, the ways it
-has gone by, what its observations took in from where it stood (see [VI](06-narration.md)), and the
-routines learned there. Memory of a place is the body's, not the place's, and it is held only as
+has gone by, the ways, things and persons its observations took in (see [VI](06-narration.md)), and
+the routines learned there. Memory of a place is the body's, not the place's, and it is held only as
 long as the map is.
 
 A **routine** is a way into a place the body already knows. It is not a record of what was done but
 of where the body ended up, and when, and what it was there for: an **area**, a **period of the
-day**, and the **phase** that opens there. Walking a routine sets the body down in that area at that
+day**, and the **business** that opens there. Walking a routine sets the body down in that area at that
 hour, past every path, door, climb and crossing between the location's edge and the spot — the way is
 known, and is not walked again.
 
@@ -18,12 +18,18 @@ at a human's full score of five. The maps are held in order of the last visit.
 
 **A visit makes its place's map the newest.** A place already remembered keeps its map, and only
 moves to the head of the order. A place not remembered is given a fresh map, and when every map is
-taken the **oldest** is forgotten to make room — its areas and ways unknown again, its routines gone
-with it.
+taken the **oldest** is forgotten to make room — its areas and ways unknown again, the things and
+persons in it nameless again, its routines gone with it.
+
+**A thing or a person once observed is remembered with the place.** On a later visit it is known
+([VI §4](06-narration.md#4-what-a-visit-keeps)): it has its name, and is attended to in particular
+rather than chosen among its kind. What it was thought to afford, and all that was deliberated about
+it, is not kept — only that it is there. Nothing made in the course of a visit is so remembered: a
+body fallen there, a sleeper in their bed.
 
 A map may be **locked**: a locked map is never forgotten to make room, and the oldest map not locked
 is forgotten in its stead. When every map held is locked, or when the anamnesis holds none, the
-visit keeps a map of its own while it lasts — its walks are drawn and its known ways gone back by as
+visit keeps a map of its own while it lasts — its walks are drawn and its known ways walked as
 any other — and forgets it when the visit ends, routines and all.
 
 Should the anamnesis shrink, the maps over the count are forgotten at the next visit, oldest first,
@@ -32,20 +38,16 @@ the locked excepted.
 Routines have no number of their own. A place holds every routine learned there, and they are
 forgotten only with its map.
 
-## 2. The seven kinds
+## 2. The six kinds
 
 | Kind | Learned when | Walking it opens |
 |---|---|---|
 | **Go to** | the body walks into an area other than the one its visit opened in — every such area, at the hour it is reached — and the area a location is left from | narration, in that area |
-| **Meet** | a conversation is opened with someone | narration in their area, its first observation upon them |
 | **Gather** | an item is successfully gathered, dug, mined, fished or cut | the gathering stay (§5) |
 | **Buy** | a merchant agrees to sell | the barter, buying, with no conversation before it; the body returns to the world when it closes |
 | **Sell** | a merchant agrees to buy | the barter, selling, with no conversation before it; the body returns to the world when it closes |
 | **Work** | a master agrees to take the body on | the stint of work, with no conversation before it |
 | **Craft** | the body successfully sets to work at a station (see [X](10-crafting.md)) | the work at that station, with no act rolled; the body returns to the world when it closes |
-
-A conversation that came to the body unbidden — a confrontation over something seen — teaches
-nothing: nobody goes back to be caught again.
 
 Each routine is bound to its location, its area and the period in which it was learned. The same
 thing learned twice, at the same place and hour, is kept once. The same thing learned at another hour
@@ -76,9 +78,8 @@ still be open ground.
 | Kind | Cannot be walked when |
 |---|---|
 | Go to | — |
-| Meet | the person is gone for good, is elsewhere at that hour, or counts the body an enemy |
-| Buy, Sell | as Meet; or the area is not the merchant's premises; or the merchant would no longer trade (see [VII](07-social.md)); or an enemy stands in the area |
-| Work | as Meet; or the work is no longer offered, or the master would not take the body on; or an enemy stands in the area |
+| Buy, Sell | the person is gone for good, is elsewhere at that hour, or counts the body an enemy; or the area is not the merchant's premises; or the merchant would no longer trade (see [VII](07-social.md)); or an enemy stands in the area |
+| Work | the master is gone for good, is elsewhere at that hour, or counts the body an enemy; or the work is no longer offered, or the master would not take the body on; or an enemy stands in the area |
 | Gather | the source is gone; nothing of the item grows there at all; the body's anatomy cannot perform the manner of taking it; the implement it was learned with is not carried; or an enemy stands in the area |
 | Craft | the station is gone; the trade is no longer held; its implement — or the one it was learned with — is not carried; the station may no longer be used; or an enemy stands in the area |
 
@@ -92,7 +93,7 @@ Walking a routine is a visit like any other, and makes its place's map the newes
 
 ## 5. The gathering stay
 
-A Gather routine opens a phase reached by no other means: a **stay** of a chosen number of days at
+A Gather routine opens a business reached by no other means: a **stay** of a chosen number of days at
 the source, from one to three hundred and sixty.
 
 **The source has slots, and each regrows.** They are the same item slots that are picked by hand,

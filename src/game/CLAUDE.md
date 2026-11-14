@@ -721,7 +721,7 @@ anything about the world — the scene is the truth and the trees are an account
    another.
 5. Dead people lose their trees (their waiting acts withdrawn from the ledger).
 6. Waiting acts of the played member that the element no longer affords become `Lapsed`.
-7. `AdoptCorpses`, `AdoptArrivals` — below.
+7. `AdoptCorpses`, `AdoptArrivals`, `AdoptConfronters` — below.
 
 It runs after every outcome (`CommitOutcomeResult`), every change of hour (`ApplyTimePeriod`), every
 free walk (`WalkTo`), every switch of member, and from `Update` whenever the roster changed under
@@ -735,8 +735,15 @@ phase. A body made in front of a member is rooted on their map already observed 
 draining `Scene.PendingCorpseObservations`, for every member standing where it fell, with a `Note`
 in place of a text — nobody has to look for what they have just killed, and no mind is counted in
 a roll made on it). Somebody who heard an act go wrong and walked in is rooted the same way
-(`AdoptArrivals`, with `NeutralNarration.ArrivalEnemyCaution` or `ArrivalWitnessNotice`). An enemy
-simply is a `☠`.
+(`AdoptArrivals`, with `NeutralNarration.ArrivalEnemyCaution` or `ArrivalWitnessNotice`). And
+**whoever confronts a member is on that member's map already observed** (`AdoptConfronters`, with
+`NeutralNarration.ConfrontedBy(kind)`): the enemy in the room walked into, the householder who sees
+them where they have no business, whoever stopped a walk or an escape. Confronted, a member may look
+at nobody else, so leaving the confronter to be looked at first made answering them cost a point
+more than anything else in the place — and with the pool at zero, impossible: the only symbol that
+answered was RUNAWAY. An enemy who confronts nobody (asleep, appeased, in another area) is simply a
+`☠` in the tray. A script therefore thinks about a beast that opens on it without observing it
+first.
 
 #### An act, its result, and what it sets going
 
@@ -858,7 +865,7 @@ skill for the whole of it):
 | | |
 |---|---|
 | `click observe <kind\|name> [in <area>]` | a kind (`way`, `person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element or a container's content — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run |
-| `click think <name>` / `click speak <name>` | the stubs of an observed element |
+| `click think <name>` / `click speak <name>` | the stubs of an observed element. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
 | `click act <n\|word>` | a waiting act by position, or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it |
 | `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
 | `click continue` | the dice's, the preview's or the result box's CONTINUE |
@@ -866,7 +873,12 @@ skill for the whole of it):
 | `inspect where` | carries `confronted=` and `exit=LEAVE\|RUNAWAY` |
 
 `expect` reads the **screen**, and a text is on screen only while its preview box is up: prose is
-asserted with `expect-state texts <fragment>`. `advance` drains the preview and the time box and
+asserted with `expect-state texts <fragment>`. State assertions compare **with double quotes
+ignored on both sides** (`CmdExpectState`): the inspect lines put quotes round names and the
+tokenizer strips an assertion's own, so `area="Test Yard"` could never be asserted on as it reads.
+Naming an observed container in `click observe` asks for whatever it holds first (`click observe
+Myself`), and a recording (`--record`) refuses a name nobody has learned (`CliFindSymbol(…,
+playerOnly: true)`) — on camera an unknown thing is clicked by its kind. `advance` drains the preview and the time box and
 **stops at the result box**, which is what lets `expect SUCCESS` and the chip expects read it.
 
 ### Verbs, actions and outcomes — the three types, and what each is for
