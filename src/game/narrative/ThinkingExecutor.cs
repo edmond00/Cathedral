@@ -66,7 +66,6 @@ public class ThinkingExecutor
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         ModusMentis thinkingModusMentis,
         NarrativeAnchor targetOutcome,
-        string keyword,
         NarrationNode node,
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
@@ -414,7 +413,6 @@ public class ThinkingExecutor
                 DisplayText         = bareAction,
                 NeutralActionText   = goalPhrase,
                 ThinkingModusMentis = thinkingModusMentis,
-                Keyword             = keyword,
                 DifficultyLevel     = difficultyLevel
             };
 
@@ -581,7 +579,6 @@ public class ThinkingExecutor
                 DisplayText         = goalPhrase,
                 NeutralActionText   = goalPhrase,
                 ThinkingModusMentis = thinkingModusMentis,
-                Keyword             = previous.Keyword,
             };
             if (clickProbe(probe) is { } reason) { firstReason ??= reason; continue; }
             able.Add(m);
@@ -622,7 +619,6 @@ public class ThinkingExecutor
             DisplayText         = bareAction,
             NeutralActionText   = goalPhrase,
             ThinkingModusMentis = thinkingModusMentis,
-            Keyword             = previous.Keyword,
             DifficultyLevel     = goal.Verb.ActionDifficulty(goal.Target, fit.DifficultyModifier, scene, pov, actingMember),
         });
     }

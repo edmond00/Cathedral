@@ -68,6 +68,12 @@ public sealed class ThoughtNode
     /// </summary>
     public Area? SeenFrom { get; init; }
 
+    /// <summary>
+    /// What is said of a node no mind wrote: a body just made, somebody who came at a noise. Read
+    /// where the text of a mind would be.
+    /// </summary>
+    public string? Note { get; init; }
+
     public ActState State { get; set; } = ActState.Waiting;
 
     public ThoughtNode? Parent { get; private set; }

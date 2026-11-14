@@ -18,10 +18,10 @@ public static class ThreatSelector
     /// Computes the threat context for an action about to be taken at <paramref name="pov"/>.
     /// Returns <see cref="ThreatContext.None"/> when no enemy is nearby.
     /// </summary>
-    public static ThreatContext ComputeContext(Scene scene, PoV pov, Protagonist protagonist)
-        => ComputeContext(scene, pov, protagonist.AffinityKey);
+    public static ThreatContext ComputeContext(Scene scene, PoV pov, PartyMember member)
+        => ComputeContext(scene, pov, member.AffinityKey);
 
-    /// <summary>As above, for an affinity key — what a choice rule holds instead of the protagonist.</summary>
+    /// <summary>As above, for an affinity key — what a choice rule holds instead of the member.</summary>
     public static ThreatContext ComputeContext(Scene scene, PoV pov, string affinityKey)
     {
         // 1. Visual threat: same area

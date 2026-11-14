@@ -441,7 +441,6 @@ public class DialogueTreeController
         Type: NarrationBlockType.Speaking,
         ModusMentis: null!,
         Text: $"{Cathedral.Game.Npc.NpcLabelResolver.ShortLabelCapitalized(_npc)}: {text}",
-        Keywords: null,
         Actions: null,
         SpeakerName: _npc.DisplayName));
 
@@ -450,7 +449,6 @@ public class DialogueTreeController
         Type: NarrationBlockType.Outcome,
         ModusMentis: null!,
         Text: text,
-        Keywords: null,
         Actions: null));
 
     /// <summary>
@@ -467,7 +465,6 @@ public class DialogueTreeController
             Type: NarrationBlockType.Outcome,
             ModusMentis: null!,
             Text: "",
-            Keywords: null,
             Actions: null,
             OutcomeReports: reports));
         if (reports.Count > 0)
@@ -567,7 +564,6 @@ public class DialogueTreeController
                 Type: NarrationBlockType.DialogueOptions,
                 ModusMentis: null!,
                 Text: "",
-                Keywords: null,
                 Actions: null,
                 DialogueOptions: options
                     .Select(o => new DialogueOptionItem(o.Skill.DisplayName, o.Skill.Level, o.ReplicaText))
@@ -891,7 +887,6 @@ public class DialogueTreeController
                     Type:        NarrationBlockType.Emotion,
                     ModusMentis: emotion.ModusMentis,
                     Text:        text,
-                    Keywords:    null,
                     Actions:     null,
                     OutcomeReports: new List<Outcome> { chip }));
                 Console.WriteLine($"DialogueTreeController: emotion — {emotion.ModusMentis.ModusMentisId} felt "

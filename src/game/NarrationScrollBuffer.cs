@@ -8,9 +8,9 @@ using Cathedral.Game.Narrative;
 namespace Cathedral.Game;
 
 /// <summary>
-/// Manages scrollable narration blocks with viewport rendering.
-/// Stores full narration history and renders only visible portion.
-/// Supports keeping previous narration nodes as grayed-out history.
+/// The scrollable text of the conversations held during a visit: blocks wrapped into lines, the
+/// visible window of them, and the earlier conversations kept above as greyed history. The narration
+/// itself keeps no text here — its texts are on the thought trees.
 /// </summary>
 public class NarrationScrollBuffer
 {
@@ -70,9 +70,8 @@ public class NarrationScrollBuffer
 
         // Create a new block with cleaned text if it was modified, preserving all properties
         var blockToAdd = cleanedText != block.Text
-            ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Keywords, block.Actions, block.ChainOrigin,
-                block.SourceObservationType, block.LinkedOutcome, block.Sentences, block.SpeakerName,
-                block.OutcomeReports, block.DialogueOptions)
+            ? new NarrationBlock(block.Type, block.ModusMentis, cleanedText, block.Actions, block.ChainOrigin,
+                block.LinkedOutcome, block.SpeakerName, block.OutcomeReports, block.DialogueOptions)
             : block;
 
         lock (_gate)
@@ -207,26 +206,12 @@ public class NarrationScrollBuffer
                 if (line.IsHistory)
                     continue;
 
-                // VerbAction lines are drawn live from their ParsedNarrativeAction: RenderActionLine
-                // paints the "⑤ [MODUS MENTIS ⟐⟐] " prefix piece by piece and the buffer stores only
-                // the wrapped text. History lines drop the action reference, so the prefix has to be
-                // baked into the text here — otherwise the header vanishes when the segment greys
-                // out. GlobalActionIndex separates real action lines from Action-block prose.
-                string historyText = line.Text;
-                if (line.Type == LineType.Action && line.GlobalActionIndex >= 0)
-                    historyText = line.Actions is { Count: > 0 }
-                        ? line.Actions[0].DisplayPrefix + historyText
-                        : "    " + historyText;      // continuation line: the live 4-space indent
-
                 // Create new line with IsHistory=true, and clear interactive elements
                 var historyLine = new RenderedLine(
-                    Text: historyText,
+                    Text: line.Text,
                     Type: line.Type,
                     BlockType: line.BlockType,
-                    Keywords: null,  // Remove keywords to disable interactivity
-                    Actions: null,   // Remove actions to disable interactivity
                     IsHistory: true,
-                    GlobalActionIndex: -1,
                     SourceBlock: null  // Clear source block for history
                 );
                 _historyLines.Add(historyLine);
@@ -242,10 +227,7 @@ public class NarrationScrollBuffer
                 Text: "",
                 Type: LineType.Empty,
                 BlockType: NarrationBlockType.Observation,
-                Keywords: null,
-                Actions: null,
                 IsHistory: true,
-                GlobalActionIndex: -1,
                 SourceBlock: null
             ));
 
@@ -296,10 +278,7 @@ public class NarrationScrollBuffer
             Text: text,
             Type: LineType.Separator,
             BlockType: NarrationBlockType.Observation, // Doesn't matter for separator
-            Keywords: null,
-            Actions: null,
             IsHistory: true,
-            GlobalActionIndex: -1,
             SourceBlock: null
         );
     }
@@ -316,9 +295,6 @@ public class NarrationScrollBuffer
         // First, add all history lines (from previous narration nodes)
         _renderedLines.AddRange(_historyLines);
         
-        // Track global action index across all thinking blocks
-        int globalActionIndex = 0;
-
         foreach (var block in _blocks)
         {
             // Add modusMentis name header (if present)
@@ -335,10 +311,7 @@ public class NarrationScrollBuffer
                     Text: headerText,
                     Type: LineType.Header,
                     BlockType: block.Type,
-                    Keywords: null,
-                    Actions: null,
                     IsHistory: false,
-                    GlobalActionIndex: -1,
                     SourceBlock: block
                 ));
                 
@@ -347,10 +320,7 @@ public class NarrationScrollBuffer
                     Text: "",
                     Type: LineType.Empty,
                     BlockType: block.Type,
-                    Keywords: null,
-                    Actions: null,
                     IsHistory: false,
-                    GlobalActionIndex: -1,
                     SourceBlock: block
                 ));
             }
@@ -359,7 +329,6 @@ public class NarrationScrollBuffer
             // Determine line type based on block type
             LineType lineType = block.Type switch
             {
-                NarrationBlockType.Action => LineType.Action,
                 NarrationBlockType.Outcome => LineType.Outcome,
                 NarrationBlockType.Speaking => LineType.Content,
                 NarrationBlockType.PlayerSpeaking => LineType.Content, // colour comes from BlockType
@@ -386,61 +355,14 @@ public class NarrationScrollBuffer
                             Text: ln == 0 ? optPrefix + wrapped[ln] : "    " + wrapped[ln],
                             Type: LineType.DialogueOption,
                             BlockType: block.Type,
-                            Keywords: null,
-                            Actions: null,
                             IsHistory: false,
-                            GlobalActionIndex: -1,
                             SourceBlock: block,
                             DialogueOptionIndex: i));
                     }
                 }
             }
-            // Wrap block.Text as one continuous paragraph (preserving natural word-flow).
-            // When per-sentence data is available, compute which character range each sentence
-            // occupies in block.Text and assign each wrapped line only the keywords from the
-            // sentence(s) that overlap its character range — preventing cross-sentence highlighting.
-            else if (block.Sentences != null && block.Sentences.Count > 0)
-            {
-                var sentenceRanges = ComputeSentenceRanges(block.Text, block.Sentences);
-                var linesWithOffsets = WrapTextWithOffsets(block.Text, _maxWidth);
-                foreach (var (lineText, lineStart) in linesWithOffsets)
-                {
-                    int lineEnd = lineStart + lineText.Length;
-                    var lineKeywords = new List<string>();
-                    var lineOccurrences = new List<int>();
-                    var lineAnchors = new List<NarrativeAnchor?>();
-                    foreach (var (sentStart, sentEnd, kwsWithOffsets) in sentenceRanges)
-                    {
-                        if (sentStart >= lineEnd || sentEnd <= lineStart) continue;
-                        foreach (var (kw, absOffset, anchor) in kwsWithOffsets)
-                        {
-                            if (absOffset >= lineStart && absOffset < lineEnd)
-                            {
-                                // Count how many times kw appears in the line before this position
-                                int occIndexInLine = CountOccurrencesUpTo(lineText, kw, absOffset - lineStart);
-                                lineKeywords.Add(kw);
-                                lineOccurrences.Add(occIndexInLine);
-                                lineAnchors.Add(anchor);
-                            }
-                        }
-                    }
-                    _renderedLines.Add(new RenderedLine(
-                        Text: lineText,
-                        Type: lineType,
-                        BlockType: block.Type,
-                        Keywords: lineKeywords.Count > 0 ? lineKeywords : null,
-                        Actions: null,
-                        IsHistory: false,
-                        GlobalActionIndex: -1,
-                        SourceBlock: block,
-                        KeywordOccurrenceIndices: lineKeywords.Count > 0 ? lineOccurrences : null,
-                        KeywordAnchors: lineKeywords.Count > 0 ? lineAnchors : null
-                    ));
-                }
-            }
             else
             {
-                // Fallback for blocks without sentence data: wrap whole text with all keywords.
                 var wrappedLines = WrapText(block.Text, _maxWidth);
                 foreach (var line in wrappedLines)
                 {
@@ -448,65 +370,9 @@ public class NarrationScrollBuffer
                         Text: line,
                         Type: lineType,
                         BlockType: block.Type,
-                        Keywords: block.Keywords,
-                        Actions: null,
                         IsHistory: false,
-                        GlobalActionIndex: -1,
                         SourceBlock: block
                     ));
-                }
-            }
-
-            // Add action lines if this is a Thinking block
-            if (block.Type == NarrationBlockType.Thinking && block.Actions != null && block.Actions.Count > 0)
-            {
-                // Add empty line before actions
-                _renderedLines.Add(new RenderedLine(
-                    Text: "",
-                    Type: LineType.Empty,
-                    BlockType: block.Type,
-                    Keywords: null,
-                    Actions: null,
-                    IsHistory: false,
-                    GlobalActionIndex: -1,
-                    SourceBlock: block
-                ));
-                
-                // Pre-wrap each action to match actual rendered lines
-                foreach (var action in block.Actions)
-                {
-                    // Calculate wrapped lines for this action
-                    // Format: "> [ModusMentisName ◼◼◼] action text" - need to account for level indicators
-                    string prefix = "> ";
-                    string modusMentisName = action.ChainModusMentis?.DisplayName ?? action.ActionModusMentisId;
-                    int modusMentisLevel = action.ChainModusMentis?.Level ?? 1;
-                    string levelIndicators = new string(Config.Symbols.ModusMentisLevelIndicator, modusMentisLevel);
-                    string fullModusMentisBracket = $"[{modusMentisName} {levelIndicators}] ";
-                    
-                    int firstLinePrefix = prefix.Length + fullModusMentisBracket.Length;
-                    int firstLineWidth = _maxWidth - firstLinePrefix;
-                    int continuationWidth = _maxWidth - 4; // 4-space indent
-                    
-                    var wrappedActionLines = WrapActionText(action.DisplayText, firstLineWidth, continuationWidth);
-                    
-                    // Store the global action index for this action
-                    int thisActionIndex = globalActionIndex;
-                    globalActionIndex++;
-                    
-                    // Add a RenderedLine for each wrapped line of this action
-                    for (int i = 0; i < wrappedActionLines.Count; i++)
-                    {
-                        _renderedLines.Add(new RenderedLine(
-                            Text: wrappedActionLines[i],
-                            Type: LineType.Action,
-                            BlockType: block.Type,
-                            Keywords: null,
-                            Actions: i == 0 ? new List<ParsedNarrativeAction> { action } : null, // Only first line has action reference
-                            IsHistory: false,
-                            GlobalActionIndex: thisActionIndex,  // Store global index for all wrapped lines of this action
-                            SourceBlock: block
-                        ));
-                    }
                 }
             }
 
@@ -517,10 +383,7 @@ public class NarrationScrollBuffer
                     Text: "",
                     Type: LineType.Empty,
                     BlockType: block.Type,
-                    Keywords: null,
-                    Actions: null,
                     IsHistory: false,
-                    GlobalActionIndex: -1,
                     SourceBlock: block
                 ));
 
@@ -534,12 +397,8 @@ public class NarrationScrollBuffer
                         Text: chipText,
                         Type: LineType.Report,
                         BlockType: block.Type,
-                        Keywords: null,
-                        Actions: null,
                         IsHistory: false,
-                        GlobalActionIndex: -1,
                         SourceBlock: block,
-                        KeywordOccurrenceIndices: null,
                         Report: report
                     ));
                 }
@@ -550,165 +409,10 @@ public class NarrationScrollBuffer
                 Text: "",
                 Type: LineType.Empty,
                 BlockType: block.Type,
-                Keywords: null,
-                Actions: null,
                 IsHistory: false,
-                GlobalActionIndex: -1,
                 SourceBlock: block
             ));
         }
-    }
-
-    /// <summary>
-    /// Computes the character range [start, end) of each sentence within blockText, and for each
-    /// keyword finds its absolute char offset within blockText (first occurrence inside the sentence
-    /// range). Returns (start, end, [(keyword, absOffset, anchor)]) per sentence.
-    ///
-    /// <para>The anchor is carried through so each rendered occurrence can be wired to the object
-    /// its own sentence was about — or, in a sentence naming several objects, its own keyword
-    /// (<see cref="NarrationSentence.AnchorOf"/>). Because the offsets are resolved <i>within the sentence range</i>,
-    /// two sentences using the same word produce two distinct offsets and therefore two distinct
-    /// regions — which is what lets both men in a block be clickable as "man".</para>
-    /// </summary>
-    private static List<(int Start, int End, List<(string Keyword, int AbsOffset, NarrativeAnchor? Anchor)> Keywords)>
-        ComputeSentenceRanges(string blockText, List<NarrationSentence> sentences)
-    {
-        var ranges = new List<(int, int, List<(string, int, NarrativeAnchor?)>)>();
-        int searchFrom = 0;
-        foreach (var sentence in sentences)
-        {
-            int idx = blockText.IndexOf(sentence.Text, searchFrom, StringComparison.Ordinal);
-            if (idx < 0)
-                idx = blockText.IndexOf(sentence.Text, StringComparison.Ordinal);
-            if (idx < 0) continue;
-
-            int sentEnd = idx + sentence.Text.Length;
-            var kwsWithOffsets = new List<(string, int, NarrativeAnchor?)>();
-            for (int k = 0; k < sentence.Keywords.Count; k++)
-            {
-                var kw = sentence.Keywords[k];
-                // Match on a WHOLE WORD, exactly as the renderer's \b…\b highlighting does. A plain
-                // substring search would land on the keyword hidden inside a larger word (e.g. "man"
-                // inside "commanding"), and the occurrence index derived from it then fails to line up
-                // with the renderer's word-boundary matches, so nothing gets highlighted.
-                int kwPos = FirstWholeWord(blockText, kw, idx, sentEnd);
-                if (kwPos >= 0)
-                    kwsWithOffsets.Add((kw, kwPos, sentence.AnchorOf(k)));
-            }
-            ranges.Add((idx, sentEnd, kwsWithOffsets));
-            searchFrom = sentEnd;
-        }
-        return ranges;
-    }
-
-    /// <summary>
-    /// Counts how many whole-word occurrences of <paramref name="keyword"/> appear (case-insensitive)
-    /// in <paramref name="text"/> strictly before <paramref name="upToIndex"/>. Matches on word
-    /// boundaries (like the renderer) so the occurrence index it produces lines up with the
-    /// renderer's <c>\b…\b</c> matches — a substring count would miscount keywords buried inside
-    /// longer words (e.g. "man" in "commanding") and mis-target the highlight.
-    /// </summary>
-    private static int CountOccurrencesUpTo(string text, string keyword, int upToIndex)
-    {
-        if (string.IsNullOrEmpty(keyword)) return 0;
-        int count = 0;
-        foreach (Match m in Regex.Matches(text, WholeWordPattern(keyword), RegexOptions.IgnoreCase))
-        {
-            if (m.Index >= upToIndex) break;
-            count++;
-        }
-        return count;
-    }
-
-    /// <summary>
-    /// Returns the index of the first whole-word (word-boundary) occurrence of
-    /// <paramref name="keyword"/> in <paramref name="text"/> within [<paramref name="start"/>,
-    /// <paramref name="end"/>), or -1 if none. Iterates over full-text matches and filters by range
-    /// so word boundaries are evaluated against the real neighbouring characters.
-    /// </summary>
-    private static int FirstWholeWord(string text, string keyword, int start, int end)
-    {
-        if (string.IsNullOrEmpty(keyword)) return -1;
-        foreach (Match m in Regex.Matches(text, WholeWordPattern(keyword), RegexOptions.IgnoreCase))
-        {
-            if (m.Index >= start && m.Index < end) return m.Index;
-            if (m.Index >= end) break;
-        }
-        return -1;
-    }
-
-    private static string WholeWordPattern(string keyword) => @"\b" + Regex.Escape(keyword) + @"\b";
-
-    /// <summary>
-    /// Same word-wrap logic as WrapText but also returns the start character offset of each
-    /// line within the original text, so callers can map lines back to sentence ranges.
-    /// </summary>
-    private List<(string Line, int StartOffset)> WrapTextWithOffsets(string text, int maxWidth)
-    {
-        var result = new List<(string, int)>();
-        if (string.IsNullOrEmpty(text)) { result.Add(("", 0)); return result; }
-
-        int globalOffset = 0;
-        var paragraphs = text.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
-
-        foreach (var paragraph in paragraphs)
-        {
-            if (string.IsNullOrWhiteSpace(paragraph))
-            {
-                result.Add(("", globalOffset));
-                globalOffset += paragraph.Length + 1;
-                continue;
-            }
-
-            var sb = new StringBuilder();
-            int lineStartInParagraph = 0;
-            int pos = 0;
-
-            while (pos < paragraph.Length)
-            {
-                // Skip spaces
-                while (pos < paragraph.Length && paragraph[pos] == ' ') pos++;
-                if (pos >= paragraph.Length) break;
-
-                int wordStart = pos;
-                while (pos < paragraph.Length && paragraph[pos] != ' ') pos++;
-                string word = paragraph.Substring(wordStart, pos - wordStart);
-
-                string testLine = sb.Length == 0 ? word : sb + " " + word;
-                if (testLine.Length <= maxWidth)
-                {
-                    if (sb.Length == 0) lineStartInParagraph = wordStart;
-                    else sb.Append(' ');
-                    sb.Append(word);
-                }
-                else
-                {
-                    if (sb.Length > 0)
-                    {
-                        result.Add((sb.ToString(), globalOffset + lineStartInParagraph));
-                        sb.Clear();
-                    }
-                    if (word.Length > maxWidth)
-                    {
-                        result.Add((word[..maxWidth], globalOffset + wordStart));
-                        sb.Append(word[maxWidth..]);
-                        lineStartInParagraph = wordStart + maxWidth;
-                    }
-                    else
-                    {
-                        lineStartInParagraph = wordStart;
-                        sb.Append(word);
-                    }
-                }
-            }
-
-            if (sb.Length > 0)
-                result.Add((sb.ToString(), globalOffset + lineStartInParagraph));
-
-            globalOffset += paragraph.Length + 1;
-        }
-
-        return result;
     }
 
     /// <summary>
@@ -853,15 +557,10 @@ public record RenderedLine(
     string Text,
     LineType Type,
     NarrationBlockType BlockType,
-    List<string>? Keywords,
-    List<ParsedNarrativeAction>? Actions,  // Actions for rendering (only for VerbAction lines)
-    bool IsHistory = false,  // True if this line is part of history (from previous narration nodes)
-    int GlobalActionIndex = -1,  // Global action index (0-based) across all thinking blocks, -1 if not an action line
-    NarrationBlock? SourceBlock = null,  // The narration block this line comes from (for modusMentis chain tracking)
-    List<int>? KeywordOccurrenceIndices = null,  // Parallel to Keywords: which occurrence (0-based) within this line to highlight
+    bool IsHistory = false,  // True if this line is part of history (an earlier conversation)
+    NarrationBlock? SourceBlock = null,  // The block this line comes from
     Outcome? Report = null,  // Set only for LineType.Report lines; null for all other types
-    int DialogueOptionIndex = -1,  // 0-based index into SourceBlock.DialogueOptions for LineType.DialogueOption lines, -1 otherwise
-    List<NarrativeAnchor?>? KeywordAnchors = null  // Parallel to Keywords: what each one acts on. Null for blocks with no per-sentence data, which fall back to SourceBlock.LinkedOutcome
+    int DialogueOptionIndex = -1  // 0-based index into SourceBlock.DialogueOptions for LineType.DialogueOption lines, -1 otherwise
 );
 
 /// <summary>
@@ -871,7 +570,6 @@ public enum LineType
 {
     Header,         // ModusMentis name header
     Content,        // Narration text
-    Action,         // Action line (for Thinking blocks)
     Outcome,        // Outcome narration (for Action/Outcome blocks)
     Report,         // Prewritten outcome chip (item received, wound, …)
     Empty,          // Spacing

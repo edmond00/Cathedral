@@ -1,6 +1,6 @@
-// DebugLocationMap.cs — a development view of the location the narration is standing in: every area
-// as a box, every section as a panel round its areas, every way between them as a routed line. Drawn
-// in the narration panel in place of the text, toggled with Tab. Developer keys only.
+// LocationMap.cs — the map of a location: every area as a card, every section as a panel round its
+// areas, every way between them as a routed line. The narration is played on it; the mental maps and
+// the routine box show it too.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,14 +13,20 @@ using Cathedral.Game.Scene.Building;
 namespace Cathedral.Game;
 
 /// <summary>
-/// The map of a scene, as a debug overlay on the narration panel.
+/// The map of a scene.
 ///
-/// <para><b>What it draws.</b> An <see cref="Area"/> is a card (name, people present this period,
-/// tenure), a <see cref="Section"/> is a tinted, framed panel round its areas with its name on a tab. A
-/// <b>solid</b> line is an <see cref="Scene.Scene.AreaGraph"/> edge — the areas are neighbours and
-/// <c>move</c> walks it. A <b>dashed</b> line is a <see cref="ConnectorPointOfInterest"/> — a door, a
-/// stair, a path, a cliff — with a letter on it naming which. A landscape (a one-way view from a roof
-/// or a crown) is drawn only when it touches the area the party stands in, whose card is yellow.</para>
+/// <para><b>What it draws.</b> An <see cref="Area"/> is a card (its name on a band coloured by whose
+/// ground it is), a <see cref="Section"/> is a tinted, framed panel round its areas with its name on a
+/// tab. A <b>solid</b> line is an <see cref="Scene.Scene.AreaGraph"/> edge — the areas are neighbours
+/// and <c>move</c> walks it. A <b>dashed</b> line is a <see cref="ConnectorPointOfInterest"/> — a
+/// door, a stair, a path, a cliff — with a letter on it naming which. A landscape (a one-way view from
+/// a roof or a crown) is drawn only when it touches the area stood in, whose card is yellow.</para>
+///
+/// <para><b>Two users, two pitches.</b> A menu's map (the Chorography tab, the routine box) is the
+/// compact one, with a row of detail under each name and its routines' icons. The narration's
+/// (<see cref="Narration"/>) leaves that row and the ground under every card to whoever draws over it
+/// (<see cref="IMapOverlay"/>): the symbols of what stands in the area, the party's tokens and the
+/// thought trees hanging under the card, for which its rows are set further apart.</para>
 ///
 /// <para><b>Lines are routed, not drawn.</b> Every line runs on the cell grid, horizontally and
 /// vertically only, round the boxes, by a shortest-path search that charges for turns, for running
@@ -33,49 +39,35 @@ namespace Cathedral.Game;
 /// <para><b>Layout.</b> Greedy and deterministic, with no generator at all: areas are placed on a
 /// grid within their section, each next to the neighbours already placed, and the sections are then
 /// placed on a coarser grid the same way, by how many ways run between them. Nothing here is drawn
-/// from <see cref="GameRng"/>, so opening the map changes no seeded run.</para>
+/// from <see cref="GameRng"/>, so showing the map changes no seeded run. It is laid out once per
+/// scene and does not move while the scene lasts.</para>
 ///
 /// <para><b>Panning.</b> The map is usually larger than the panel. The pad in the panel's top-right
-/// corner moves the view a step at a time, and its centre puts the party's area back in the middle;
-/// the arrow keys move it too, in smaller steps, and turn no camera while the map is up. The view is
-/// centred on the party each time the map is opened or a new scene is shown. The footer button reads
-/// RETURN, back to the narration: leaving the location from a map is not a thing to do by accident.</para>
+/// corner moves the view a step at a time, and its centre puts the area stood in back in the middle;
+/// the arrow keys move it too, in smaller steps.</para>
 ///
 /// <para><b>No legend.</b> What a thing on the map is, is said where it is: the pointer over a card,
-/// a line or an icon puts a short label just above it (<see cref="LabelAt"/>, drawn by
+/// a line or a symbol puts a short label just above it (<see cref="LabelAt"/>, drawn by
 /// <see cref="ShowLabel"/> in the mouse-following popup) — black on yellow for what a click acts on,
 /// black on grey for what is only told.</para>
 ///
-/// <para>Shown or not is static: it stays on from one visit to the next until Tab turns it off.</para>
-///
-/// <para><b>Walks.</b> Every move in exploration is also shown on it, to every player and whatever
-/// the toggle: <see cref="Walk"/> turns the ways a move took into cells, and the narration draws the
-/// party's glyph on them a step at a time (<c>NarrativeController.ShowWalk</c>).</para>
+/// <para><b>Walks.</b> A move is shown walked: <see cref="Walk"/> turns the ways it took into cells,
+/// and the narration draws the walker's glyph on them a step at a time.</para>
 /// </summary>
-public sealed class DebugLocationMap
+public sealed class LocationMap
 {
-    /// <summary>Whether the map replaces the narration text. Toggled by Tab or the header's ↹ in exploration; elsewhere by Tab under --developer-keys.</summary>
-    public static bool Visible { get; private set; }
-
     /// <summary>
-    /// A walk has ended on the map and waits for its Continue: the pad and the arrow keys pan it, as
-    /// they do the map opened by hand.
+    /// The narration's map: the card's third row and the ground under each card are left to the
+    /// <see cref="IMapOverlay"/>, and the rows of cards stand <see cref="TreeRoom"/> apart for the
+    /// thought trees that hang there.
     /// </summary>
-    public static bool WalkPannable { get; set; }
-
-    /// <summary>
-    /// This map is a menu's (the mental maps, the routine replay): always panned by its pad, whatever
-    /// the Tab toggle says.
-    /// </summary>
-    public bool AlwaysPannable { get; set; }
+    public bool Narration { get; init; }
 
     /// <summary>
     /// The ground under everything drawn: the narration's translucent black by default, which lets the
     /// world show faintly through; a modal box over the world sets it opaque.
     /// </summary>
     public Vector4 Canvas { get; init; } = CanvasBg;
-
-    private bool Pannable => Visible || WalkPannable || AlwaysPannable;
 
     /// <summary>
     /// A routine drawn on a card: a black letter on yellow, in the card's detail row, right-aligned.
@@ -90,7 +82,10 @@ public sealed class DebugLocationMap
     // Box and spacing, in cells. An area is a card: two rows of name on a coloured band, one of
     // detail under it. The gaps leave a lane or two for lines between the margin a box keeps clear.
     private const int BoxW = 18, BoxH = 3;
-    private const int AreaPitchX = BoxW + 10, AreaPitchY = BoxH + 4;
+    private const int AreaPitchX = BoxW + 10;
+    /// <summary>Rows left under a card of the narration's map for the trees hanging from it.</summary>
+    private const int TreeRoom = 12;
+    private int AreaPitchY => BoxH + (Narration ? TreeRoom : 4);
     private const int SectionPadX = 4, SectionPadTop = 3, SectionPadBottom = 3;
     private const int SectionGapX = 8, SectionGapY = 4;
     private const int CanvasMargin = 4;
@@ -212,7 +207,6 @@ public sealed class DebugLocationMap
     private readonly Dictionary<Link, Known> _paintedLinkKnown = new();
     private Link?[] _lineAt = Array.Empty<Link?>();
     private Area? _paintedHere;
-    private IReadOnlySet<Area>? _paintedChoosable;
 
     /// <summary>How much the party knows of an area or a way, which is how it is drawn.</summary>
     private enum Known
@@ -300,14 +294,6 @@ public sealed class DebugLocationMap
     private readonly List<(int X, int Y, PadArrow Arrow)> _padCells = new();
     private PadArrow _hovered = PadArrow.None;
 
-    /// <summary>Turns the map on or off. Turning it on re-centres it on the party.</summary>
-    public void Toggle()
-    {
-        Visible = !Visible;
-        if (Visible) _recentre = true;
-        Console.WriteLine($"DebugLocationMap: {(Visible ? "shown" : "hidden")}");
-    }
-
     /// <summary>Centres the view on the next render's <c>focus</c> (or <c>here</c>), as the pad's centre does.</summary>
     public void Recentre() => _recentre = true;
 
@@ -316,7 +302,7 @@ public sealed class DebugLocationMap
     /// </summary>
     public bool SetHover(int cellX, int cellY)
     {
-        var arrow = Pannable ? ArrowAt(cellX, cellY) : PadArrow.None;
+        var arrow = ArrowAt(cellX, cellY);
         if (arrow == _hovered) return false;
         _hovered = arrow;
         return arrow != PadArrow.None;
@@ -331,7 +317,6 @@ public sealed class DebugLocationMap
     /// </summary>
     public bool HandleClick(int cellX, int cellY)
     {
-        if (!Pannable) return false;
         switch (ArrowAt(cellX, cellY))
         {
             case PadArrow.Up:     Pan(0, -PanStepY); break;
@@ -345,12 +330,11 @@ public sealed class DebugLocationMap
     }
 
     /// <summary>
-    /// An arrow key while the map is up: a smaller step than the pad's, since a held key repeats.
-    /// Returns false for any other key, or with the map hidden, so the key is not swallowed.
+    /// An arrow key: a smaller step than the pad's, since a held key repeats. Returns false for any
+    /// other key, so the key is not swallowed.
     /// </summary>
     public bool HandleKey(OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
     {
-        if (!Pannable) return false;
         switch (key)
         {
             case OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up:    Pan(0, -KeyStepY); return true;
@@ -390,13 +374,15 @@ public sealed class DebugLocationMap
     /// it is left where it is, for the pad and the arrows). What the walk has yet to reach is drawn as
     /// it was before the move: <paramref name="withheld"/> are the visit keys it recorded and has not
     /// come to yet.</para>
+    /// <para>The narration passes <paramref name="overlay"/>, which draws over the finished map and
+    /// names what it drew for <see cref="IconAt"/>.</para>
     public void Render(TerminalHUD terminal, Scene.Scene? scene, Area? here, TimePeriod period,
                        int left, int top, int width, int height, (int X, int Y)? party = null,
                        bool follow = true, IReadOnlySet<string>? withheld = null,
-                       IReadOnlySet<Area>? choosable = null, Area? hovered = null,
                        IReadOnlyList<MapIcon>? icons = null, object? hoveredIcon = null,
                        object? selectedIcon = null, Area? focus = null,
-                       int footRows = 3, bool selectedLit = true)
+                       int footRows = 0, bool selectedLit = true, IMapOverlay? overlay = null,
+                       char partyGlyph = Config.GlyphSphere.ProtagonistChar)
     {
         _padCells.Clear();
         if (scene == null || scene.Sections.Count == 0)
@@ -409,9 +395,8 @@ public sealed class DebugLocationMap
         if (_overlay == null || !ReferenceEquals(_overlayFor, here))
             RouteViewsFrom(here);
 
-        // The pad floats over the map's top-right corner; the footer button (LEAVE / CONTINUE) is
-        // drawn over the narration panel's last rows, so the map stops short of them there
-        // (footRows; a menu has no footer).
+        // The pad floats over the map's top-right corner. A caller that draws a button over the
+        // panel's last rows stops the map short of them (footRows).
         int mapTop = top;
         int mapH = height - footRows;
 
@@ -433,7 +418,7 @@ public sealed class DebugLocationMap
         _viewX = ClampView(_viewX, _canvasW, width);
         _viewY = ClampView(_viewY, _canvasH, mapH);
 
-        var (glyphs, fgs, bgs) = Paint(scene, here, period, withheld, choosable, hovered, icons, hoveredIcon, selectedIcon, selectedLit);
+        var (glyphs, fgs, bgs) = Paint(scene, here, period, withheld, icons, hoveredIcon, selectedIcon, selectedLit, overlay);
         _shownAt = (left, mapTop, width, mapH);
 
         for (int y = 0; y < mapH; y++)
@@ -453,7 +438,7 @@ public sealed class DebugLocationMap
         {
             int px = at.X - _viewX, py = at.Y - _viewY;
             if (px >= 0 && px < width && py >= 0 && py < mapH)
-                terminal.SetCell(left + px, mapTop + py, Config.GlyphSphere.ProtagonistChar, PartyInk,
+                terminal.SetCell(left + px, mapTop + py, partyGlyph, PartyInk,
                                  bgs[at.Y * _canvasW + at.X]);
         }
 
@@ -469,13 +454,11 @@ public sealed class DebugLocationMap
 
     private (char[], Vector4[], Vector4[]) Paint(Scene.Scene scene, Area? here, TimePeriod period,
                                                  IReadOnlySet<string>? withheld,
-                                                 IReadOnlySet<Area>? choosable, Area? hovered,
                                                  IReadOnlyList<MapIcon>? icons, object? hoveredIcon,
-                                                 object? selectedIcon, bool selectedLit)
+                                                 object? selectedIcon, bool selectedLit, IMapOverlay? overlay)
     {
         _iconCells.Clear();
         _paintedHere = here;
-        _paintedChoosable = choosable;
         var iconsOf = (icons ?? Array.Empty<MapIcon>()).GroupBy(i => i.Area)
                                                         .ToDictionary(g => g.Key, g => g.ToList());
         var grid = _overlay ?? _grid;
@@ -589,24 +572,20 @@ public sealed class DebugLocationMap
                 // Not even whose ground it is: an unknown private room looks like any other.
                 band = UnknownBand; fill = UnknownFill; ink = UnknownInk;
             }
-            // While a way back is chosen: what may be gone back to lit, the one under the cursor
-            // as a keyword is when hovered.
-            if (choosable != null && choosable.Contains(area))
-            {
-                bool hot = hovered != null && area.Id == hovered.Id;
-                band = hot ? Config.NarrativeUI.KeywordHoverBackgroundColor : Lift(band, 0.35f);
-                fill = hot ? Lift(Config.NarrativeUI.KeywordHoverBackgroundColor, -0.4f) : Lift(fill, 0.25f);
-                ink  = hot ? DarkText : Config.Colors.White;
-            }
-
             for (int y = by; y < by + BoxH; y++)
                 for (int x = bx; x < bx + BoxW; x++)
                     Put(x, y, ' ', DarkText, y < by + 2 ? band : fill);
 
-            var name = known == Known.Unknown ? new List<string> { "???" } : Wrap(area.DisplayName, BoxW - 2, 2);
+            // The overlay's tokens stand at the right of the name's first row.
+            int tokenRoom = overlay?.BandRoom(area) ?? 0;
+            var name = known == Known.Unknown ? new List<string> { "???" }
+                     : WrapName(area.DisplayName, BoxW - 2 - (tokenRoom > 0 ? tokenRoom + 1 : 0), BoxW - 2);
             for (int line = 0; line < name.Count; line++)
                 for (int i = 0; i < name[line].Length; i++)
                     Put(bx + 1 + i, by + line, name[line][i], ink);
+
+            // The narration's third row is the overlay's: what stands in the area.
+            if (Narration) continue;
 
             // Who is about is only known where you stand: a count anywhere else would be a sighting
             // nobody made.
@@ -621,8 +600,7 @@ public sealed class DebugLocationMap
             int detailRoom = BoxW - 2 - (iconRoom > 0 ? iconRoom + 1 : 0);
             if (detail.Length > detailRoom) detail = detail[..Math.Max(0, detailRoom)];
             for (int i = 0; i < detail.Length; i++)
-                Put(bx + 1 + i, by + 2, detail[i], choosable != null && choosable.Contains(area) ? ink
-                                                  : isHere ? Config.Colors.DarkYellowGrey
+                Put(bx + 1 + i, by + 2, detail[i], isHere ? Config.Colors.DarkYellowGrey
                                                   : known == Known.Seen ? UnknownInk : Config.Colors.MediumGray50);
 
             for (int i = 0; i < iconRoom; i++)
@@ -659,6 +637,8 @@ public sealed class DebugLocationMap
             else
                 Put(at % w, at / w, link.Kind, DarkText, known == Known.Seen ? Shade(badge, 0.5f) : badge);
         }
+
+        overlay?.Paint(new MapCanvas(this, glyphs, fgs, bgs));
 
         return (glyphs, fgs, bgs);
     }
@@ -700,6 +680,29 @@ public sealed class DebugLocationMap
             wv | n | e              => '┻',
             _                       => '╋',
         };
+    }
+
+    /// <summary>A card's name on its two rows, the first of them only <paramref name="firstWidth"/> wide.</summary>
+    private static List<string> WrapName(string text, int firstWidth, int width)
+    {
+        var lines = new List<string>();
+        string line = "";
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            int limit = Math.Max(1, lines.Count == 0 ? firstWidth : width);
+            string w = word.Length > limit ? word[..limit] : word;
+            if (line.Length == 0) line = w;
+            else if (line.Length + 1 + w.Length <= limit) line += " " + w;
+            else { lines.Add(line); line = word.Length > width ? word[..width] : word; }
+        }
+        if (line.Length > 0) lines.Add(line);
+        if (lines.Count > 2)
+        {
+            lines = lines.Take(2).ToList();
+            string last = lines[^1];
+            lines[^1] = (last.Length >= width ? last[..(width - 1)] : last) + "…";
+        }
+        return lines;
     }
 
     private static List<string> Wrap(string text, int width, int maxLines)
@@ -746,6 +749,102 @@ public sealed class DebugLocationMap
         Arm(x + 2, y + 1, '●', PadArrow.Centre);
         Arm(x + 4, y + 1, '►', PadArrow.Right);
         Arm(x + 2, y + 2, '▼', PadArrow.Down);
+    }
+
+    // ── Drawing over the map ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// The finished map, handed to an <see cref="IMapOverlay"/> to draw over: cells are the map's own
+    /// canvas cells, so what is drawn pans with it. A cell given a <see cref="Hit"/> tag answers
+    /// <see cref="IconAt"/> with it, which is how a symbol is found under the pointer.
+    /// </summary>
+    public sealed class MapCanvas
+    {
+        private readonly LocationMap _map;
+        private readonly char[] _glyphs;
+        private readonly Vector4[] _fgs, _bgs;
+
+        internal MapCanvas(LocationMap map, char[] glyphs, Vector4[] fgs, Vector4[] bgs)
+        {
+            _map = map; _glyphs = glyphs; _fgs = fgs; _bgs = bgs;
+        }
+
+        public int Width => _map._canvasW;
+        public int Height => _map._canvasH;
+
+        /// <summary>A card's width and height in cells.</summary>
+        public int CardWidth => BoxW;
+        public int CardHeight => BoxH;
+
+        /// <summary>The top-left cell of <paramref name="area"/>'s card, or null when the map has none.</summary>
+        public (int X, int Y)? CardOf(Area area) => _map._boxAt.TryGetValue(area, out var at) ? at : null;
+
+        /// <summary>The cell of the way out's glyph, or null when none was laid.</summary>
+        public (int X, int Y)? Exit => _map.ExitCell;
+
+        public bool InBounds(int x, int y) => x >= 0 && y >= 0 && x < Width && y < Height;
+
+        /// <summary>The ground colour of a cell as the map painted it.</summary>
+        public Vector4 GroundAt(int x, int y) => InBounds(x, y) ? _bgs[y * Width + x] : _map.Canvas;
+
+        /// <summary>Draws a glyph; <paramref name="bg"/> null keeps the ground under it.</summary>
+        public void Put(int x, int y, char ch, Vector4 fg, Vector4? bg = null)
+        {
+            if (!InBounds(x, y)) return;
+            int c = y * Width + x;
+            _glyphs[c] = ch; _fgs[c] = fg;
+            if (bg is { } b) _bgs[c] = b;
+        }
+
+        /// <summary>Names what stands on a cell, for <see cref="IconAt"/>.</summary>
+        public void Hit(int x, int y, object tag)
+        {
+            if (InBounds(x, y)) _map._iconCells.Add((x, y, tag));
+        }
+    }
+
+    /// <summary>What draws over the narration's map: the symbols on each card and the trees under it.</summary>
+    public interface IMapOverlay
+    {
+        /// <summary>How many cells at the right of <paramref name="area"/>'s name the overlay will draw on.</summary>
+        int BandRoom(Area area);
+
+        void Paint(MapCanvas canvas);
+    }
+
+    /// <summary>The screen cell a canvas cell was last drawn at, or null when it is off the view.</summary>
+    public (int X, int Y)? ScreenCellOf(int canvasX, int canvasY)
+    {
+        var (left, top, w, h) = _shownAt;
+        int x = left + canvasX - _viewX, y = top + canvasY - _viewY;
+        return x >= left && y >= top && x < left + w && y < top + h ? (x, y) : null;
+    }
+
+    /// <summary>The canvas cell of the symbol tagged <paramref name="tag"/> as last painted, or null.</summary>
+    public (int X, int Y)? CellOf(Func<object, bool> tag)
+    {
+        foreach (var (x, y, t) in _iconCells)
+            if (tag(t)) return (x, y);
+        return null;
+    }
+
+    /// <summary>Every symbol the last paint named, with its canvas cell.</summary>
+    public IReadOnlyList<(int X, int Y, object Tag)> Symbols => _iconCells;
+
+    /// <summary>Puts a canvas cell in the middle of the view at the next render.</summary>
+    public void CentreOnCell(int canvasX, int canvasY)
+    {
+        _viewX = ClampView(canvasX - _shownAt.W / 2, _canvasW, _shownAt.W);
+        _viewY = ClampView(canvasY - _shownAt.H / 2, _canvasH, _shownAt.H);
+        _recentre = false;
+    }
+
+    /// <summary>Whether screen cell (<paramref name="x"/>, <paramref name="y"/>) is the way out's glyph as last drawn.</summary>
+    public bool IsExitAt(int x, int y)
+    {
+        var (left, top, w, h) = _shownAt;
+        if (x < left || y < top || x >= left + w || y >= top + h) return false;
+        return ExitCell is { } exit && exit.X == _viewX + x - left && exit.Y == _viewY + y - top;
     }
 
     // ── Layout ───────────────────────────────────────────────────────────────
@@ -883,7 +982,7 @@ public sealed class DebugLocationMap
         foreach (var link in _links) SetPath(_grid, link);
         LayExit(scene);
 
-        Console.WriteLine($"DebugLocationMap: laid out {_boxAt.Count} areas in {_sectionBoxes.Count} sections, " +
+        Console.WriteLine($"LocationMap: laid out {_boxAt.Count} areas in {_sectionBoxes.Count} sections, " +
                           $"{_links.Count} lines ({failed} unroutable), {_viewLinks.Count} views, canvas {_canvasW}x{_canvasH}");
     }
 
@@ -1179,7 +1278,7 @@ public sealed class DebugLocationMap
         }
         if (found < 0)
         {
-            Console.WriteLine($"DebugLocationMap: no way out could be laid from '{_entryArea.DisplayName}'");
+            Console.WriteLine($"LocationMap: no way out could be laid from '{_entryArea.DisplayName}'");
             return;
         }
 
@@ -1313,11 +1412,12 @@ public sealed class DebugLocationMap
     /// <summary>
     /// What is under screen cell (<paramref name="x"/>, <paramref name="y"/>) as last drawn, in a few
     /// words, or null over bare canvas. An icon is the caller's to name (<paramref name="iconLabel"/>,
-    /// handed its tag); the pad, a card and a line are named here.
+    /// handed its tag); the pad, a card and a line are named here. The narration names the way out
+    /// (<paramref name="exitLabel"/>: LEAVE or RUNAWAY), which a click there then takes.
     /// </summary>
-    public HoverLabel? LabelAt(int x, int y, Func<object, HoverLabel?>? iconLabel = null)
+    public HoverLabel? LabelAt(int x, int y, Func<object, HoverLabel?>? iconLabel = null, string? exitLabel = null)
     {
-        switch (Pannable ? ArrowAt(x, y) : PadArrow.None)
+        switch (ArrowAt(x, y))
         {
             case PadArrow.Up:     return new("pan up", true);
             case PadArrow.Down:   return new("pan down", true);
@@ -1333,7 +1433,7 @@ public sealed class DebugLocationMap
         if (cx < 0 || cy < 0 || cx >= _canvasW || cy >= _canvasH) return null;
         int c = cy * _canvasW + cx;
         if (ExitCell is { } exit && exit.X == cx && exit.Y == cy)
-            return new("the way out of this place", false);
+            return new(exitLabel ?? "the way out of this place", exitLabel != null);
         if (_exitCells.Contains(c)) return new($"the way in: {_entryArea?.DisplayName}", false);
         return c < _lineAt.Length && _lineAt[c] is { } link ? LinkLabel(link) : null;
     }
@@ -1349,8 +1449,6 @@ public sealed class DebugLocationMap
     private HoverLabel AreaLabel(Area area)
     {
         var known = _paintedKnown.TryGetValue(area, out var k) ? k : Known.Unknown;
-        if (_paintedChoosable != null && _paintedChoosable.Contains(area))
-            return new($"go back to {area.DisplayName}", true);
         if (known == Known.Unknown) return new("an unknown area", false);
         string tenure = TenureLabel(_laidOut, area);
         string state = _paintedHere != null && area.Id == _paintedHere.Id ? "you are here"

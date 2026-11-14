@@ -211,7 +211,7 @@ public interface IVerbRefreshable
 /// Items inside the PoI are NOT separate observations — their applicable verbs are folded
 /// in as SubOutcomes (e.g. "grab the apple", "grab the leaf").
 /// </summary>
-public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable, IObservationGroup
+public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable
 {
     private readonly PointOfInterest _poi;
 
@@ -387,7 +387,7 @@ public class SyntheticAreaObservationObject : ObservationObject, IVerbRefreshabl
     public void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null)
     {
         SubOutcomes.Clear();
-        foreach (var verb in scene.Verbs.Where(v => v is Verbs.MoveToAreaVerb or Verbs.BacktrackVerb))
+        foreach (var verb in scene.Verbs.Where(v => v is Verbs.MoveToAreaVerb))
             foreach (var vv in verb.ExpandViews(scene, pov, _area, actor))
                 SubOutcomes.Add(vv);
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_area));

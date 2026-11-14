@@ -21,21 +21,15 @@ public static class NeutralNarration
     // ── Observation ────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Builds the attention sentence that opens an observation, naming the object by a simple noun
-    /// phrase (e.g. "a straw figure", "Hugh Furrow"). The first object of a phase is "drawn to";
-    /// any later object is "shifts to". During the childhood reminescence phase
-    /// (<paramref name="isReminescence"/>) both are reworded as memory surfacing/drifting rather
-    /// than attention being drawn/shifted. The richer detail follows in
-    /// <see cref="ObservationDetail"/>.
+    /// Builds the attention sentence that opens an observation, naming the element by a simple noun
+    /// phrase (e.g. "a straw figure", "Hugh Furrow"). During the childhood reminescence
+    /// (<paramref name="isReminescence"/>) it is a memory surfacing rather than attention being drawn.
+    /// The richer detail follows in <see cref="ObservationDetail"/>.
     /// </summary>
-    public static string ObservationAttention(bool isFirst, string simpleName, bool isReminescence = false)
+    public static string ObservationAttention(string simpleName, bool isReminescence = false)
     {
         var s = NounPhrase(FirstPerson(simpleName));
-        if (isFirst)
-            return isReminescence ? $"A memory surfaces: {s}."
-                                  : $"My attention is drawn to {s}.";
-        return isReminescence ? $"My memory drifts to {s}."
-                              : $"My attention shifts to {s}.";
+        return isReminescence ? $"A memory surfaces: {s}." : $"My attention is drawn to {s}.";
     }
 
     /// <summary>
@@ -74,9 +68,9 @@ public static class NeutralNarration
     /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
     /// request that yields two or three short styled sentences.
     /// </summary>
-    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false,
+    public static string Observation(string simpleName, string description, bool isReminescence = false,
                                      bool descriptionIsClause = false)
-        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence, descriptionIsClause)}";
+        => $"{ObservationAttention(simpleName, isReminescence)} {ObservationDetail(description, isReminescence, descriptionIsClause)}";
 
     /// <summary>
     /// Neutral meaning of the area introduction that opens an observation sequence when the area or

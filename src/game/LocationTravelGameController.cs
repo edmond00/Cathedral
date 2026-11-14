@@ -9,7 +9,6 @@ using Cathedral.Glyph;
 using Cathedral.Glyph.Microworld;
 using Cathedral.Glyph.Microworld.LocationSystem;
 using Cathedral.Glyph.Microworld.LocationSystem.Generators;
-using Cathedral.Glyph.Interaction;
 using Cathedral.LLM;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Items;
@@ -37,7 +36,6 @@ public class LocationTravelGameController : IDisposable
     // Core systems
     private readonly GlyphSphereCore _core;
     private readonly MicroworldInterface _interface;
-    private TerminalLocationUI? _terminalUI;
     private readonly AmbianceEngine? _ambianceEngine;
     private string? _lastHoveredElementId; // fires hover sound only when element identity changes
     private int _mouseCellX = -1;
@@ -265,7 +263,6 @@ public class LocationTravelGameController : IDisposable
     private readonly Dictionary<string, LocationFeatureGenerator> _generators = new();
     
     // Narration graph factories for different biomes
-    private readonly Dictionary<string, NarrationGraphFactory> _narrationFactories = new();
 
     // Scene factories for biomes that use the Scene system directly (not graph-based). Constructors,
     // not instances: a factory carries working state while it builds and must not be reused.
@@ -910,7 +907,7 @@ public class LocationTravelGameController : IDisposable
             var dlg = _dialogueAdapter?.Controller;
             return _dialogueAdapter != null && (dlg == null || dlg.CliSnapshot().Loading);
         }
-        return _narrativeController != null && _narrativeController.CliSnapshot().AnyLoading;
+        return _narrativeController != null && _narrativeController.CliSnapshot().Busy;
     }
 
     public bool CliIsIdle()
@@ -951,13 +948,11 @@ public class LocationTravelGameController : IDisposable
             // then presses CONTINUE on the parts in front until the question is shown.
             if (_narrativeController.CliPreviewAwaitsAnswer()) return true;
             var s = _narrativeController.CliSnapshot();
-            if (s.AnyLoading || (s.DiceActive && s.DiceRolling)) return false;
+            if (s.Busy || (s.DiceActive && s.DiceRolling)) return false;
             // The hours rolling by in the time box: an animation, like the dice tumbling.
             if (_narrativeController.CliTimeBoxState() == "passing") return false;
-            // And the party walking on the map after a move.
-            if (_narrativeController.CliWalkState() == "walking") return false;
-            // A walk in or out of the location goes on by itself: busy until it has.
-            if (_narrativeController.CliWalkGoesOn) return false;
+            // Somebody walking on the map goes on by themselves: busy until they have arrived.
+            if (_narrativeController.CliWalking) return false;
         }
         return true;
     }
@@ -1047,7 +1042,7 @@ public class LocationTravelGameController : IDisposable
         // calls); a --playground one loses it every time, which is every script in the suite. So
         // the effect was invisible where it was measurable and unpredictable where it was not.
         _keywordInitTask = Task.Run(() =>
-            Cathedral.Game.Narrative.KeywordExtractor.InitializeAsync(CatalystModelPath));
+            Cathedral.Game.Narrative.NounExtractor.InitializeAsync(CatalystModelPath));
 
         // Initialize with WorldView as default (SetMode(MainMenu) will transition properly)
         _currentMode = GameMode.WorldView;
@@ -1066,7 +1061,7 @@ public class LocationTravelGameController : IDisposable
 
         // The arrow keys turn the camera everywhere but over the location map, where they pan it.
         // Nor on a menu screen: there is no world to turn, and on the Chorography tab they pan its map.
-        _core.Camera.ArrowKeysTaken = () => IsDebugMapShowing || _travelRoutinesBox != null
+        _core.Camera.ArrowKeysTaken = () => IsLocationMapShowing || _travelRoutinesBox != null
             || _currentMode is GameMode.MainMenu or GameMode.Settings or GameMode.ProtagonistManagement;
 
         // The sky's own hover and click, raised only while the core is in sky-selection mode.
@@ -1725,8 +1720,6 @@ public class LocationTravelGameController : IDisposable
         
         try
         {
-            _terminalUI = new TerminalLocationUI(_core.Terminal);
-            
             // Wire up terminal events for action selection
             _core.Terminal.CellClicked += OnTerminalCellClicked;
             _core.Terminal.CellRightClicked += OnTerminalCellRightClicked;
@@ -1739,7 +1732,6 @@ public class LocationTravelGameController : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"LocationTravelGameController: Failed to initialize terminal UI - {ex.Message}");
-            _terminalUI = null;
         }
     }
     
@@ -2072,11 +2064,6 @@ public class LocationTravelGameController : IDisposable
             return;
         }
         
-        // Only handle in Phase 6 narrative mode
-        if (_isInNarrativeMode && _narrativeController != null)
-        {
-            _narrativeController.OnRightClick(x, y);
-        }
     }
 
     /// <summary>
@@ -4476,14 +4463,10 @@ public class LocationTravelGameController : IDisposable
                 .Concat(_cliOverlayOnEntry.OrderBy(e => e.Key.ToString()).Select(e => $"overlay-entry {e.Key} {e.Value}"))
                 .ToList();
 
-        // The two buttons that stand in for keys: the ☰ (Escape) and the narration header's ↹ (Tab).
-        // Whether each is on screen, which a press alone cannot say when the answer is no.
+        // The button that stands in for a key: the ☰ (Escape). Whether it is on screen, which a
+        // press alone cannot say when the answer is no.
         if (subject == "buttons")
-            return new List<string>
-            {
-                $"buttons menu={(CliMenuButtonShown ? "shown" : "hidden")}"
-                + $" map={(_narrativeController?.MapButtonCell != null && _currentMode == GameMode.LocationInteraction ? "shown" : "hidden")}"
-            };
+            return new List<string> { $"buttons menu={(CliMenuButtonShown ? "shown" : "hidden")}" };
 
         // What the mouse-following popup shows — the world map's location name, a map's pointer label —
         // and on what ground: yellow when a click acts on what it names, grey when it only tells.
@@ -5105,30 +5088,6 @@ public class LocationTravelGameController : IDisposable
         // Note: RenderLocationUI was removed - Phase 6 narrative mode handles all rendering via NarrativeController
     }
     
-    /// <summary>
-    /// Prints the current narration graph structure to console (debug command).
-    /// Only works when in narrative mode.
-    /// </summary>
-    public void PrintNarrativeGraph()
-    {
-        if (_isInNarrativeMode && _narrativeController != null)
-        {
-            _narrativeController.PrintGraphStructure();
-        }
-        else
-        {
-            Console.WriteLine("No active narrative graph (not in narrative mode)");
-        }
-    }
-    
-    /// <summary>
-    /// Registers a narration graph factory for a specific biome.
-    /// </summary>
-    public void RegisterNarrationFactory(string biomeName, NarrationGraphFactory factory)
-    {
-        _narrationFactories[biomeName.ToLowerInvariant()] = factory;
-        Console.WriteLine($"LocationTravelGameController: Registered narration factory for biome '{biomeName}'");
-    }
 
     /// <summary>
     /// Registers a scene factory for a specific biome (Scene system, not graph-based).
@@ -5237,7 +5196,7 @@ public class LocationTravelGameController : IDisposable
         // The routine box is modal over the world: its map's label, not a location name.
         if (_travelRoutinesBox != null)
         {
-            DebugLocationMap.ShowLabel(_core.PopupTerminal, _travelRoutinesBox.HoverLabel);
+            LocationMap.ShowLabel(_core.PopupTerminal, _travelRoutinesBox.HoverLabel);
             return;
         }
 
@@ -5385,7 +5344,7 @@ public class LocationTravelGameController : IDisposable
             _narrativePhase    = GameMode.ChildhoodReminescence;
             _interface.SetWorldInteractionsEnabled(false);
             _core.SetWorldInteractionsEnabled(false);
-            _narrativeController.StartObservationPhase();
+            _narrativeController.StartVisit();
 
             Console.WriteLine("LocationTravelGameController: Childhood reminescence started");
         }
@@ -5477,7 +5436,7 @@ public class LocationTravelGameController : IDisposable
             _narrativePhase    = GameMode.GetUp;
             _interface.SetWorldInteractionsEnabled(false);
             _core.SetWorldInteractionsEnabled(false);
-            _narrativeController.StartObservationPhase();
+            _narrativeController.StartVisit();
 
             Console.WriteLine("LocationTravelGameController: Get-Up scene started");
         }
@@ -5495,16 +5454,16 @@ public class LocationTravelGameController : IDisposable
     /// Starts Phase 6 Chain-of-Thought narrative interaction.
     /// </summary>
     private void StartNarrativeInteraction(int vertexIndex, string? startAreaKey = null,
-        Cathedral.Game.Narrative.TimePeriod? startTime = null, string? focusNpcId = null)
+        Cathedral.Game.Narrative.TimePeriod? startTime = null)
     {
         if (!EstablishNarrativeContext(vertexIndex)) return;
 
-        // Start observation phase (async). A Go to or Meet routine opens at its own area and hour,
-        // and a Meet routine's first observation is of its person.
+        // A Go to routine opens at its own area and hour; any other visit where the place is entered,
+        // at the place's own hour.
         if (startAreaKey != null && startTime != null)
-            _narrativeController!.StartAtArea(startAreaKey, startTime.Value, focusNpcId);
+            _narrativeController!.StartAtArea(startAreaKey, startTime.Value);
         else
-            _narrativeController!.StartObservationPhase(arrivalPeriod: _narrativeController.Scene?.ArrivalPeriod);
+            _narrativeController!.StartVisit(arrivalPeriod: _narrativeController.Scene.ArrivalPeriod);
 
         Console.WriteLine("LocationTravelGameController: Phase 6 narrative interaction started");
     }
@@ -5587,63 +5546,37 @@ public class LocationTravelGameController : IDisposable
                 vertexIndex
             );
 
-            // Lookup key: prefer location type name (e.g. "farm") over biome name (e.g. "field")
-            var lookupKey = locationName ?? biomeName;
-
-            if (!_narrationFactories.TryGetValue(lookupKey, out var graphFactory) &&
-                !_narrationFactories.TryGetValue(biomeName, out graphFactory))
+            // Build via the shared helper (factory selection + per-location state get-or-create +
+            // item-depletion application).
+            var scene = BuildSceneForLocation(vertexIndex, out var locState, visit: true);
+            // A place is first visited once, whatever the mental maps later forget.
+            JournalRecorder.Milestone($"First came to the {worldContext.DisplayName.ToLowerInvariant()}", null,
+                $"visit:{vertexIndex}", (vertexIndex, worldContext.DisplayName, ""));
+            if (scene == null)
             {
-                // Scene system path: build via the shared helper (factory selection + per-location
-                // state get-or-create + item-depletion application).
-                var scene = BuildSceneForLocation(vertexIndex, out var locState, visit: true);
-                // A place is first visited once, whatever the mental maps later forget.
-                JournalRecorder.Milestone($"First came to the {worldContext.DisplayName.ToLowerInvariant()}", null,
-                    $"visit:{vertexIndex}", (vertexIndex, worldContext.DisplayName, ""));
-                if (scene == null)
-                {
-                    Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting Phase 6");
-                    _isInNarrativeMode = false;
-                    _narrativeController = null;
-                    return false;
-                }
-                _currentLocationState = locState;
+                Console.Error.WriteLine("LocationTravelGameController: scene build failed - aborting the visit");
+                _isInNarrativeMode = false;
+                _narrativeController = null;
+                return false;
+            }
+            _currentLocationState = locState;
 
-                _narrativeController = new NarrativeController(
-                    _core.Terminal,
-                    _core.PopupTerminal,
-                    _core,
-                    _llamaServer,
-                    _modusMentisSlotManager,
-                    inputHandler,
-                    _thinkingExecutor,
-                    actionExecutor,
-                    scene,
-                    vertexIndex,
-                    worldContext,
-                    _protagonist,
-                    _ambianceEngine
-                );
-            }
-            else
-            {
-                // Create Phase 6 controller with graph factory and vertex as location ID
-                _narrativeController = new NarrativeController(
-                    _core.Terminal,
-                    _core.PopupTerminal,
-                    _core,
-                    _llamaServer,
-                    _modusMentisSlotManager,
-                    inputHandler,
-                    _thinkingExecutor,
-                    actionExecutor,
-                    graphFactory,
-                    vertexIndex,               // Use vertex index as location ID seed
-                    worldContext,              // Typed world context for flavor and display
-                    _protagonist,              // run-owned protagonist
-                    _ambianceEngine
-                );
-            }
-            
+            _narrativeController = new NarrativeController(
+                _core.Terminal,
+                _core.PopupTerminal,
+                _core,
+                _llamaServer,
+                _modusMentisSlotManager,
+                inputHandler,
+                _thinkingExecutor,
+                actionExecutor,
+                scene,
+                vertexIndex,
+                worldContext,
+                _protagonist,
+                _ambianceEngine
+            );
+
             // Mark as active
             _isInNarrativeMode = true;
             _narrativePhase    = GameMode.LocationInteraction;
@@ -5949,15 +5882,6 @@ public class LocationTravelGameController : IDisposable
 
     /// <summary>Whether the ☰ is on screen, for <c>state</c>.</summary>
     public bool CliMenuButtonShown => _menuButton?.Cell != null;
-
-    /// <summary>Presses the narration header's ↹ where it is drawn, through the player's click path.</summary>
-    public string? CliPressMapButton()
-    {
-        if (_currentMode != GameMode.LocationInteraction || _narrativeController == null) return "not in a location's narration";
-        if (_narrativeController.MapButtonCell is not { } cell) return "no map button on screen";
-        OnTerminalCellClicked(cell.X, cell.Y);
-        return null;
-    }
 
     /// <summary>
     /// The CLI's <c>pause</c>. Escape is handled in the launcher's own key hook rather than in
@@ -6401,24 +6325,17 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // The area matters as much as the period: the sub-phase rebuilds the scene at its default
-        // opening area, so without it the player walks out of the trade menu into the square rather
-        // than the forge the routine names.
-        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
-
-        var npc = _narrativeController.Scene is { } scene
-            ? routine.FindNpc(scene)?.Entity as Cathedral.Game.Npc.NpcEntity
-            : null;
-
-        if (npc == null)
+        if (routine.FindNpc(_narrativeController!.Scene)?.Entity is not Cathedral.Game.Npc.NpcEntity npc)
         {
             Console.Error.WriteLine($"StartRoutineSubPhase: '{routine.NpcName}' not found in the rebuilt scene — exiting to travel");
             ExitNarrativeMode();
             return;
         }
 
-        // The menu opens once the walk in from the location's entry has been shown.
-        _narrativeController.WalkTheApproach(() => open(npc));
+        // The area matters as much as the hour: without it the player walks out of the trade menu
+        // into the square rather than the forge the routine names. The menu opens once the walk in
+        // from the place's entry has been shown.
+        _narrativeController.StartAtArea(routine.AreaName, routine.Time, () => open(npc));
     }
 
     /// <summary>
@@ -6433,8 +6350,7 @@ public class LocationTravelGameController : IDisposable
             ReturnToWorldView();
             return;
         }
-        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
-        var area    = _narrativeController.Scene is { } scene ? routine.FindArea(scene) : null;
+        var area    = routine.FindArea(_narrativeController!.Scene);
         var station = area != null ? routine.FindStation(area) : null;
         if (station == null)
         {
@@ -6444,7 +6360,7 @@ public class LocationTravelGameController : IDisposable
         }
         var request = new Cathedral.Game.Narrative.Crafting.CraftingRequest(
             station, routine.TradeId, routine.ToolItemId.Length > 0 ? routine.ToolItemId : null);
-        _narrativeController.WalkTheApproach(() => StartCraftingMode(request, fromRoutine: true));
+        _narrativeController.StartAtArea(routine.AreaName, routine.Time, () => StartCraftingMode(request, fromRoutine: true));
     }
 
     /// <summary>Tears down any narrative context and returns to the world-travel view.</summary>
@@ -6543,10 +6459,6 @@ public class LocationTravelGameController : IDisposable
                 StartNarrativeInteraction(vertex, routine.AreaName, routine.Time);
                 break;
 
-            case Cathedral.Game.Narrative.Routines.MeetRoutine meet:
-                StartNarrativeInteraction(vertex, meet.AreaName, meet.Time, focusNpcId: meet.NpcId);
-                break;
-
             case Cathedral.Game.Narrative.Routines.TradeRoutine trade:
                 StartRoutineSubPhase(vertex, trade, npc => StartTradeMode(npc, trade.Mode, fromRoutine: true));
                 break;
@@ -6585,8 +6497,6 @@ public class LocationTravelGameController : IDisposable
             ReturnToWorldView();
             return;
         }
-        _narrativeController!.PrepareForRoutineSubPhase(routine.Time, routine.AreaName);
-
         var scene  = BuildSceneForLocation(vertex, out _, applyDepletion: false);
         var verb   = Cathedral.Game.Scene.Verbs.VerbRegistry.Instance.Get(routine.VerbId);
         var area   = scene == null ? null : routine.FindArea(scene);
@@ -6600,11 +6510,9 @@ public class LocationTravelGameController : IDisposable
 
         var terminal = _core.Terminal;
         var protagonist = _protagonist;
-        var narration = _narrativeController;
-        narration.WalkTheApproach(() =>
+        _narrativeController!.StartAtArea(routine.AreaName, routine.Time, () =>
         {
             _gatherAdapter = new GatherMenuAdapter(terminal, protagonist, routine, verb, source, scene);
-            narration.CloseNarrationSegment($"gathering at {source.DisplayName}");
             SetMode(GameMode.Gathering);
         });
     }
@@ -6866,11 +6774,6 @@ public class LocationTravelGameController : IDisposable
             setMusicFilter: f => _ambianceEngine?.SetFilter(f),
             enemyInitiative: fightOutcome.EnemyInitiative);
 
-        // Grey the narration so far into history under a labelled rule. Deliberately after every
-        // early-return guard above — bailing out with the panel already greyed would strand the
-        // player on dead text.
-        _narrativeController.CloseNarrationSegment($"fight with {mainEnemy.DisplayName}");
-
         SetMode(GameMode.Fighting);
     }
     
@@ -6882,12 +6785,6 @@ public class LocationTravelGameController : IDisposable
         if (_core.Terminal == null || _narrativeController == null ||
             _llamaServer == null || _modusMentisSlotManager == null)
             return;
-
-        // Opening a conversation with somebody is what teaches a Meet routine. Only a registered
-        // tree, which is one the player chose to open: a prebuilt one is a confrontation that
-        // came to them (caught red-handed), and nobody goes back to be caught again.
-        if (dialogueOutcome.Tree == null)
-            _narrativeController.RecordConversationRoutine(dialogueOutcome.Target);
 
         // --auto-dialogue settles the conversation where it stands and never enters Dialogue mode, so
         // a verb test asserts about its verb rather than about somebody else's dialogue tree. The
@@ -6934,10 +6831,9 @@ public class LocationTravelGameController : IDisposable
             prebuiltTree: dialogueOutcome.Tree,
             ambianceEngine: _ambianceEngine);
 
-        // Grey the narration into history BEFORE the adapter starts: setup is async and appends the
-        // NPC's first line when it completes, which must land live rather than be swept into history.
-        _narrativeController.CloseNarrationSegment(
-            $"conversation with {dialogueOutcome.Target.DisplayName}");
+        // What earlier conversations wrote greys into history BEFORE the adapter starts: setup is
+        // async and appends the NPC's first line when it completes, which must land live.
+        _narrativeController.BeginConversation($"conversation with {dialogueOutcome.Target.DisplayName}");
 
         _dialogueAdapter.Start();
         SetMode(GameMode.Dialogue);
@@ -7040,10 +6936,7 @@ public class LocationTravelGameController : IDisposable
         // ── Narrative-session fight path ──────────────────────────────────────
         if (_narrativeController == null) return;
 
-        // Snapshot the combat log before the adapter is dropped — it is the fight's only text trace.
-        var combatLog = _fightAdapter.ActionLog.Select(e => e.Text).ToList();
-
-        _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs, combatLog);
+        _narrativeController.OnFightCompleted(result, npc, allEnemyNpcs);
         _fightAdapter = null;
         _core.Terminal?.Clear();
 
@@ -7069,11 +6962,9 @@ public class LocationTravelGameController : IDisposable
             return;
         }
 
-        // Victory: re-enter narration first so the fresh observation task isn't racing
-        // OnEnterLocationInteraction's redraw, then open a new segment. The scene is untouched, so
-        // the corpses spawned by OnFightCompleted are described by the new observation pass.
+        // Victory: back on the map, where the bodies OnFightCompleted left are already observed.
         SetMode(GameMode.LocationInteraction);
-        _narrativeController.BeginNarrationSegment($"after the fight with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
+        _narrativeController.ResumeNarration();
     }
     
     /// <summary>
@@ -7183,7 +7074,7 @@ public class LocationTravelGameController : IDisposable
         // footer would otherwise bleed through into the narration frame.
         _core.Terminal?.Clear();
         SetMode(GameMode.LocationInteraction);
-        _narrativeController.BeginNarrationSegment($"after talking with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
+        _narrativeController.ResumeNarration();
     }
 
     /// <summary>
@@ -7269,7 +7160,6 @@ public class LocationTravelGameController : IDisposable
 
         _craftingFromRoutine = fromRoutine;
         _craftingAdapter = new CraftingMenuAdapter(member, request.Station, trade, _core.Terminal);
-        _narrativeController.CloseNarrationSegment($"working at the {request.Station.DisplayName.ToLowerInvariant()}");
         if (!fromRoutine)
             _narrativeController.RecordCraftRoutine(request);
         SetMode(GameMode.Crafting);
@@ -7305,8 +7195,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         SetMode(GameMode.LocationInteraction);
-        _narrativeController?.AppendPhaseNote(note);
-        _narrativeController?.BeginNarrationSegment($"after working at the {station}");
+        _narrativeController?.ResumeNarration();
     }
 
     private void StartTradeMode(Cathedral.Game.Npc.NpcEntity npc, Cathedral.Game.Npc.Trade.TradeMode mode,
@@ -7322,7 +7211,6 @@ public class LocationTravelGameController : IDisposable
             mode:        mode,
             terminal:    _core.Terminal);
 
-        _narrativeController.CloseNarrationSegment($"trading with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
         _tradeAdapter.Start();
         SetMode(GameMode.Trading);
     }
@@ -7349,11 +7237,7 @@ public class LocationTravelGameController : IDisposable
         }
 
         SetMode(GameMode.LocationInteraction);
-
-        // The trade menu draws no narration text of its own, so leave a one-line trace before the
-        // segment closes, then re-observe the scene.
-        _narrativeController?.AppendPhaseNote($"You finished trading with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}.");
-        _narrativeController?.BeginNarrationSegment($"after trading with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
+        _narrativeController?.ResumeNarration();
     }
 
     /// <summary>
@@ -7370,7 +7254,6 @@ public class LocationTravelGameController : IDisposable
             job:         job,
             terminal:    _core.Terminal);
 
-        _narrativeController.CloseNarrationSegment($"working for {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(npc)}");
         _workAdapter.Start();
         SetMode(GameMode.Working);
     }
@@ -7559,35 +7442,23 @@ public class LocationTravelGameController : IDisposable
         {
             _interface.ToggleRealmOverlay();
         }
-        // Tab swaps the narration text for a map of the location (DebugLocationMap), as the header's
-        // ↹ does. Narration only: a player's key in exploration, where the ↹ is drawn, and the
-        // developer's in the childhood and the get-up, where it is not.
-        else if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.Tab
-                 && _isInNarrativeMode && _narrativeController != null
-                 && (_narrativeController.CanToggleMap || Config.Debug.DeveloperKeys))
-        {
-            _narrativeController.ToggleDebugMap();
-        }
         // The routine box's map, the same way, on the world map.
         else if (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
                  && _currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
             _travelRoutinesBox.PanMap(key);
         }
-        // Arrows pan the map while it is up (the camera leaves them alone then: see the hook set in
-        // the constructor). The launcher delivers them here only in that case.
+        // Arrows pan the narration's map (the camera leaves them alone then: see the hook set in
+        // the constructor).
         else if (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
                  && _isInNarrativeMode && _narrativeController != null)
         {
-            _narrativeController.PanDebugMap(key);
+            _narrativeController.PanMap(key);
         }
     }
 
-    /// <summary>
-    /// Whether the narration panel is showing the location map: the toggle is on and a narration
-    /// phase is what is on screen. The toggle alone outlives the visit, so it says nothing on the map.
-    /// </summary>
-    public bool IsDebugMapShowing => (DebugLocationMap.Visible || DebugLocationMap.WalkPannable) && _isInNarrativeMode
+    /// <summary>Whether the narration's map is what is on screen: the arrow keys are its, not the camera's.</summary>
+    public bool IsLocationMapShowing => _isInNarrativeMode
         && _currentMode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp;
 
     public void Dispose()

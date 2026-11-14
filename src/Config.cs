@@ -90,7 +90,7 @@ public static class Config
         /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
         /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
         /// window's diagnostic dumps (D, G), the narration's location map (Tab,
-        /// <see cref="Game.DebugLocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
+        /// <see cref="Game.LocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
         ///
         /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
         /// frames its own camera — narration, travel and fights each set a distance — and a player

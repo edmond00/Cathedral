@@ -46,9 +46,8 @@ public static class AreaVisits
     /// <summary>
     /// An observation made from <paramref name="here"/> took in <paramref name="observed"/>. A
     /// neighbouring area looked at is seen, and so is the way to it; a door, a stair, a path, a climb
-    /// or a view looked at is a way seen, and the area at its far end with it. A group (the ways out,
-    /// taken in together) sees each of its members. Anything else teaches the map nothing. What is
-    /// seen is drawn named but dimmed until it is visited or gone by.
+    /// or a view looked at is a way seen, and the area at its far end with it. Anything else teaches
+    /// the map nothing. What is seen is drawn named but dimmed until it is visited or gone by.
     /// </summary>
     public static void See(Scene scene, Area here, NarrativeAnchor observed)
     {
@@ -65,10 +64,6 @@ public static class AreaVisits
                 foreach (var end in new[] { connector.AreaA, connector.AreaB })
                     if (end.Id != here.Id && scene.SeenAreas.Add(end.StableKey))
                         Console.WriteLine($"AreaVisits: {end.DisplayName} seen from {here.DisplayName} by {connector.DisplayName}");
-                break;
-
-            case ObservationGroup group:
-                foreach (var member in group.Members) See(scene, here, member);
                 break;
         }
     }

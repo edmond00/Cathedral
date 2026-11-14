@@ -168,24 +168,6 @@ public sealed class CliDriver
                         return;
                     }
 
-                    // A backtrack asking where to: the first area on offer, by name.
-                    if (_drainPressesLeft > 0 && _game.CliNarration is { } bn && bn.CliBacktrackState() == "choosing")
-                    {
-                        _drainPressesLeft--;
-                        CmdClick(new[] { "area", bn.CliBacktrackChoices()[0].Name });
-                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
-                        return;
-                    }
-
-                    // The walk on the map after a move, the same way.
-                    if (_drainPressesLeft > 0 && _game.CliNarration is { } wn && wn.CliWalkContinue().Present)
-                    {
-                        _drainPressesLeft--;
-                        CmdClick(new[] { "continue" });
-                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
-                        return;
-                    }
-
                     var pv = ActivePreview();
                     if (pv is { Active: true, Complete: true } && _drainPressesLeft > 0)
                     {
@@ -573,26 +555,18 @@ public sealed class CliDriver
         if (_game.CliNarration is { } n)
         {
             var s = n.CliSnapshot();
-            sb.Append($" narration[loading={s.AnyLoading} dice={(s.DiceActive ? (s.DiceRolling ? "rolling" : "settled") : "none")}");
-            sb.Append($" continue={s.ShowContinue} noetic={s.Noetic}/{s.MaxNoetic}");
-            // Objects this narration phase has already observed, out of what the node offers. They are
-            // withheld from every later choice list of the phase, so a stuck-looking observation that
-            // keeps naming the same thing is diagnosable from here.
-            sb.Append($" observed={s.Observed}/{s.Observable}");
+            sb.Append($" narration[loading={s.Busy} dice={(s.DiceActive ? (s.DiceRolling ? "rolling" : "settled") : "none")}");
+            sb.Append($" result={(s.Result ? "shown" : "none")} noetic={s.Noetic}/{s.MaxNoetic}");
+            // What the played member has observed this visit, and what stands unobserved where they are.
+            sb.Append($" observed={s.Observed} unobserved={s.Unobserved}");
             // The preview box hides the action list while it is up, which is the commonest reason
             // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
             var pv = n.CliPreview();
             sb.Append($" preview={(pv.Active ? (pv.Complete ? "ready" : "generating") : "none")}");
-            sb.Append($" time={n.CliTimeBoxState()} walk={n.CliWalkState()} backtrack={n.CliBacktrackState()}");
-            // A fight decided but held for the CONTINUE that shows its opening blow. On screen it is
-            // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
-            // pressing CONTINUE would sit out its whole timeout with nothing to say why.
-            if (n.HasDeferredFight) sb.Append(" fight-held=yes");
-            if (n.HasDeferredCrafting) sb.Append(" crafting-held=yes");
-            sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
-            sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
+            sb.Append($" time={n.CliTimeBoxState()} walk={(n.CliWalking ? "walking" : "none")}");
+            if (n.CliExitLabel is { } exit) sb.Append($" exit={exit}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");
-            if (s.AnyLoading)    sb.Append($" msg=\"{s.LoadingMessage}\"");
+            if (s.Busy)          sb.Append($" msg=\"{s.Loading}\"");
             sb.Append(']');
         }
 
@@ -766,22 +740,9 @@ public sealed class CliDriver
             {
                 CliMode.Emit("time box: (the hours passing…)");
             }
-            else if (n.CliBacktrackState() == "choosing")
+            else if (n.CliWalking)
             {
-                CliMode.Emit("backtrack: go back to…");
-                foreach (var (name, cell) in n.CliBacktrackChoices())
-                    CliMode.Emit($"  click area {name}" + (cell == null ? "  (off the view)" : ""));
-                any = true;
-            }
-            else if (n.CliWalkState() == "settled")
-            {
-                CliMode.Emit("walk: the party has arrived");
-                CliMode.Emit("  click continue  (walk)");
-                any = true;
-            }
-            else if (n.CliWalkState() == "walking")
-            {
-                CliMode.Emit("walk: (the party walking…)");
+                CliMode.Emit("walk: (somebody walking…)");
             }
             else if (pv.Active)
             {
@@ -796,23 +757,26 @@ public sealed class CliDriver
                     CliMode.Emit($"  choose {i}  {popup.Labels[i]}");
                 any = true;
             }
+            else if (n.CliDiceContinue().Present)
+            {
+                CliMode.Emit("  click continue  [ Continue ]  (dice)");
+                any = true;
+            }
+            else if (n.CliResult() is { } result)
+            {
+                CliMode.Emit($"result: {result.Title}");
+                foreach (var chip in result.Chips) CliMode.Emit($"  chip {chip}");
+                CliMode.Emit("  click continue  (result)");
+                any = true;
+            }
             else
             {
-                var keywords = n.CliKeywords();
-                if (keywords.Count > 0)
+                // The map's symbols, each by what it stands for: the handle after `click`.
+                foreach (var line in n.CliSymbols())
                 {
-                    CliMode.Emit("keywords: " + string.Join(", ", keywords.Select(k => $"\"{k}\"")));
+                    CliMode.Emit($"  {line}");
                     any = true;
                 }
-                foreach (var (idx, text) in n.CliActions())
-                {
-                    CliMode.Emit($"  click action {idx}  {text}");
-                    any = true;
-                }
-                var dice = n.CliDiceContinue();
-                if (dice.Present) { CliMode.Emit("  click continue  [ Continue ]  (dice)"); any = true; }
-                var exit = n.CliExitButton();
-                if (exit.Present) { CliMode.Emit("  click button  (footer)"); any = true; }
             }
         }
 
@@ -977,24 +941,43 @@ public sealed class CliDriver
 
     private void CmdClick(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|engage|menu|menu-button|map-button|button|continue|cell> …"); return; }
+        if (a.Length == 0) { CliMode.Emit("error: click <observe|think|speak|act|member|exit|area|option|skill|fighter|end-turn|engage|menu|menu-button|button|continue|cell> …"); return; }
 
         switch (a[0].ToLowerInvariant())
         {
-            case "keyword":
+            case "observe" or "think" or "speak" or "act" or "member":
             {
-                if (a.Length < 2) { CliMode.Emit("error: click keyword <name|index>"); return; }
+                // A symbol of the location map, by what it stands for:
+                //   click observe person [in <area>]     one of a kind, the observing mind's to choose
+                //   click observe <name> [in <area>]     an element remembered, or disclosed by a container
+                //   click think <name> | click speak <name>   an element already observed
+                //   click act <n|word>                    an act waiting on a tree, by index or by its words
+                //   click member <name>                   play another member of the party
+                if (a.Length < 2) { CliMode.Emit($"error: click {a[0]} <what>"); return; }
                 var n = _game.CliNarration;
                 if (n == null) { CliMode.Emit("error: not in narration"); return; }
-                Report(n.CliClickKeyword(a[1]), $"clicked keyword \"{a[1]}\"");
+                string what = a[0].ToLowerInvariant();
+                string rest = string.Join(' ', a[1..]);
+                string? area = null;
+                int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
+                if (what == "observe" && at > 0)
+                {
+                    area = rest[(at + 4)..].Trim().Trim('"');
+                    rest = rest[..at];
+                }
+                string name = rest.Trim().Trim('"');
+                var (symbol, error) = n.CliFindSymbol(what, name, area);
+                if (symbol == null) { CliMode.Emit($"error: {error}"); return; }
+                Report(n.CliClickSymbol(symbol), $"clicked {what} \"{name}\"");
                 break;
             }
-            case "action":
+            case "exit":
             {
-                if (a.Length < 2 || !int.TryParse(a[1], out int idx)) { CliMode.Emit("error: click action <n>"); return; }
+                // The way out of the place: LEAVE, or RUNAWAY while somebody confronts the member played.
                 var n = _game.CliNarration;
                 if (n == null) { CliMode.Emit("error: not in narration"); return; }
-                Report(n.CliClickAction(idx), $"clicked action {idx}");
+                string? label = n.CliExitLabel;
+                Report(n.CliClickExit(), $"clicked the way out ({label})");
                 break;
             }
             case "option":
@@ -1052,11 +1035,6 @@ public sealed class CliDriver
                 Report(_game.CliPressMenuButton(), "pressed the menu button");
                 return;
             }
-            case "map-button":
-            {
-                Report(_game.CliPressMapButton(), "pressed the map button");
-                return;
-            }
             case "end-run":
             {
                 // The death screen's only button. Without a handle here a script can reach a death
@@ -1111,12 +1089,7 @@ public sealed class CliDriver
             {
                 var dc = _game.CliDialogue?.Controller;
                 if (dc != null) { dc.CliPressExitButton(); CliMode.Emit("ok: pressed dialogue footer button"); return; }
-                var n = _game.CliNarration;
-                if (n == null) { CliMode.Emit("error: no footer button here"); return; }
-                var btn = n.CliExitButton();
-                if (!btn.Present) { CliMode.Emit("error: no footer button on screen"); return; }
-                _game.CliClickCell(btn.X, btn.Y);
-                CliMode.Emit("ok: pressed narration footer button");
+                CliMode.Emit("error: no footer button here (the narration's way out is `click exit`)");
                 break;
             }
             case "continue":
@@ -1159,13 +1132,6 @@ public sealed class CliDriver
                     CliMode.Emit("ok: time box continue");
                     return;
                 }
-                var walkContinue = n.CliWalkContinue();
-                if (walkContinue.Present)
-                {
-                    _game.CliClickCell(walkContinue.X, walkContinue.Y);
-                    CliMode.Emit("ok: walk continue");
-                    return;
-                }
                 var preview = n.CliPreviewContinue();
                 if (preview.Present)
                 {
@@ -1174,34 +1140,29 @@ public sealed class CliDriver
                     return;
                 }
                 var dice = n.CliDiceContinue();
-                if (!dice.Present) { CliMode.Emit("error: no dice continue button on screen"); return; }
-                _game.CliClickCell(dice.X, dice.Y);
-                CliMode.Emit("ok: confirmed dice");
+                if (dice.Present)
+                {
+                    _game.CliClickCell(dice.X, dice.Y);
+                    CliMode.Emit("ok: confirmed dice");
+                    return;
+                }
+                if (n.CliResult() is { Width: > 0 } result)
+                {
+                    _game.CliClickCell(result.X, result.Y);
+                    CliMode.Emit("ok: result continue");
+                    return;
+                }
+                CliMode.Emit("error: no continue button on screen");
                 break;
             }
             case "area":
             {
-                // A card on the location map while a backtrack asks where to go back to. One off the
-                // view is brought into it first, as a player would pan to it.
+                // A card on the location map: the member played walks there, by ways the party knows.
                 if (a.Length < 2) { CliMode.Emit("error: click area <name>"); return; }
                 var n = _game.CliNarration;
-                if (n == null || n.CliBacktrackState() != "choosing") { CliMode.Emit("error: no backtrack is asking where to"); return; }
+                if (n == null) { CliMode.Emit("error: not in narration"); return; }
                 string name = string.Join(' ', a[1..]).Trim('"');
-                var choice = n.CliBacktrackChoices().FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-                if (choice.Name == null)
-                {
-                    CliMode.Emit($"error: '{name}' is not on offer (offered: {string.Join(", ", n.CliBacktrackChoices().Select(c => c.Name))})");
-                    return;
-                }
-                if (choice.Cell == null)
-                {
-                    n.CliShowBacktrackChoice(choice.Name);
-                    choice = n.CliBacktrackChoices().First(c => c.Name == choice.Name);
-                }
-                if (choice.Cell is not { } cell) { CliMode.Emit($"error: '{choice.Name}' cannot be brought into view"); return; }
-                _game.CliHoverCell(cell.X, cell.Y);
-                _game.CliClickCell(cell.X, cell.Y);
-                CliMode.Emit($"ok: go back to {choice.Name}");
+                Report(n.CliWalkTo(name), $"walking to {name}");
                 break;
             }
             case "period":

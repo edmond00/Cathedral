@@ -98,65 +98,6 @@ public abstract class ModusMentisChainElement
 }
 
 /// <summary>
-/// Tracks the current state of narration flow.
-/// Manages history of narration blocks, current node, thinking attempts, etc.
-/// </summary>
-public class NarrationState
-{
-    public string CurrentNodeId { get; set; } = "";
-    public int ThinkingAttemptsRemaining { get; set; } = 3;
-    public string? SelectedKeyword { get; set; }
-    public ModusMentis? SelectedThinkingModusMentis { get; set; }
-    public List<NarrationBlock> NarrationHistory { get; } = new();
-    
-    public void AddBlock(NarrationBlock block)
-    {
-        NarrationHistory.Add(block);
-    }
-    
-    public void ClearHistory()
-    {
-        NarrationHistory.Clear();
-    }
-    
-    public List<string> GetAllKeywords()
-    {
-        return NarrationHistory
-            .Where(b => b.Keywords != null)
-            .SelectMany(b => b.Keywords!)
-            .Distinct()
-            .ToList();
-    }
-}
-
-/// <summary>
-/// A single observation sentence, its keyword(s), and the thing they act on.
-/// Stored on an observation NarrationBlock so the scroll buffer can assign each keyword
-/// only to the wrapped lines of its own sentence, preventing cross-sentence highlighting.
-///
-/// <para><b>The anchor lives here, not in a per-block table keyed by the word.</b> It used to be
-/// resolved at click time through a <c>Dictionary&lt;string, NarrativeAnchor&gt;</c>, which can hold
-/// one object per word — so two sentences about two men could not both say "man", and the second
-/// was pushed onto whatever its associated words offered ("thing"). Every object needed a supply of
-/// second-best words purely to keep that table's keys distinct. Carrying the anchor on the sentence
-/// that produced it removes the constraint: the keyword is resolved by <i>which occurrence was
-/// clicked</i>, which the renderer has always known, so identical words in different sentences are
-/// simply different links.</para>
-///
-/// <para><paramref name="KeywordAnchors"/>, when given, is parallel to <paramref name="Keywords"/> and
-/// overrides <paramref name="Anchor"/> word by word. An area introduction is the sentence that needs
-/// it: it names several objects at once, each keyword linked to its own
-/// (<see cref="IntroductionKeywordLinker"/>).</para>
-/// </summary>
-public record NarrationSentence(string Text, List<string> Keywords, NarrativeAnchor? Anchor = null,
-                                IReadOnlyList<NarrativeAnchor>? KeywordAnchors = null)
-{
-    /// <summary>What the <paramref name="index"/>-th keyword acts on.</summary>
-    public NarrativeAnchor? AnchorOf(int index)
-        => KeywordAnchors != null && index < KeywordAnchors.Count ? KeywordAnchors[index] : Anchor;
-}
-
-/// <summary>
 /// One selectable player reply carried by a <see cref="NarrationBlockType.DialogueOptions"/> block.
 /// A display-only projection of the dialogue session's PlayerReplicaOption: the scroll buffer only
 /// needs what it renders (skill prefix + text); selection routing stays in the dialogue controller.
@@ -173,27 +114,9 @@ public class NarrationBlock : ModusMentisChainElement
     public NarrationBlockType Type { get; init; }              // Observation, Thinking, VerbAction, Outcome
     public ModusMentis ModusMentis { get; init; } = null!;                 // Which modusMentis generated this block
     public string Text { get; init; } = "";                    // The narration text
-    public List<string>? Keywords { get; init; }               // Highlighted keywords (if observation, max 1 per sentence)
     public List<ParsedNarrativeAction>? Actions { get; init; } // Clickable actions (if thinking)
 
-    /// <summary>
-    /// Per-sentence breakdown for observation blocks. When set, each sentence's keyword is
-    /// highlighted only within that sentence's wrapped lines — not across the whole block text.
-    /// Parallel to <see cref="Keywords"/>: Sentences[i].Keyword == Keywords[i].
-    /// </summary>
-    public List<NarrationSentence>? Sentences { get; init; } = null;
-    
-    /// <summary>
-    /// For observation blocks, indicates if this is an overall or focus observation.
-    /// </summary>
-    public ObservationType? SourceObservationType { get; init; } = null;
-
-    /// <summary>
-    /// The concrete outcome this whole block is about, for blocks that are about exactly one thing
-    /// and carry no <see cref="Sentences"/>. A multi-sentence observation puts the anchor on each
-    /// <see cref="NarrationSentence"/> instead, and a click resolves through the region it landed
-    /// on; this is the fallback for everything that has no per-sentence breakdown.
-    /// </summary>
+    /// <summary>What this block is about, for an observation and for what is said of one: the element observed.</summary>
     public NarrativeAnchor? LinkedOutcome { get; init; } = null;
 
     /// <summary>
@@ -242,12 +165,9 @@ public class NarrationBlock : ModusMentisChainElement
         NarrationBlockType Type,
         ModusMentis ModusMentis,
         string Text,
-        List<string>? Keywords,
         List<ParsedNarrativeAction>? Actions,
         ModusMentisChainElement? ChainOrigin = null,
-        ObservationType? SourceObservationType = null,
         NarrativeAnchor? LinkedOutcome = null,
-        List<NarrationSentence>? Sentences = null,
         string? SpeakerName = null,
         IReadOnlyList<Outcome>? OutcomeReports = null,
         IReadOnlyList<DialogueOptionItem>? DialogueOptions = null)
@@ -255,12 +175,9 @@ public class NarrationBlock : ModusMentisChainElement
         this.Type = Type;
         this.ModusMentis = ModusMentis;
         this.Text = Text;
-        this.Keywords = Keywords;
         this.Actions = Actions;
         this.ChainOrigin = ChainOrigin;
-        this.SourceObservationType = SourceObservationType;
         this.LinkedOutcome = LinkedOutcome;
-        this.Sentences = Sentences;
         this.SpeakerName = SpeakerName;
         this.OutcomeReports = OutcomeReports;
         this.DialogueOptions = DialogueOptions;
@@ -284,18 +201,6 @@ public enum NarrationBlockType
 
 /// <summary>What an action's outcome block is about: the act in plain words, and how it went.</summary>
 public sealed record ActionAttempt(string Act, bool Succeeded);
-
-/// <summary>
-/// Types of observation blocks in the narration system.
-/// Used to determine if a keyword came from an overall or focus observation.
-/// </summary>
-public enum ObservationType
-{
-    /// <summary>The first observation generated when entering a node.</summary>
-    Overall,
-    /// <summary>A detailed observation generated by right-clicking a keyword.</summary>
-    Focus
-}
 
 /// <summary>
 /// Represents an action generated by a thinking modusMentis.
@@ -323,7 +228,6 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public ModusMentis ThinkingModusMentis { get; set; } = null!;         // Which thinking modusMentis generated this
     public VerbAction PreselectedOutcome { get; set; } = null!;  // Success outcome chosen by thinking modusMentis
     public Verb Verb => PreselectedOutcome.Verb;
-    public string Keyword { get; set; } = "";                 // Keyword this action relates to
 
     /// <summary>
     /// Item combined with this action via the action popup's "Use Tool" row.
@@ -354,13 +258,6 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     /// executing it bare-handed again would be the same refusal, charged again.
     /// </summary>
     public bool NeedsTool { get; set; } = false;
-
-    /// <summary>
-    /// Set when this action was reconsidered and a new one, carried out by another means, took its
-    /// place. It renders greyed and no longer answers a click — the one action that does: a refused
-    /// one stays lit, since Reconsider may still find it a means.
-    /// </summary>
-    public bool Superseded { get; set; } = false;
 
     /// <summary>
     /// When set (item-combined actions), acts as the chain leaf instead of ActionModusMentis.

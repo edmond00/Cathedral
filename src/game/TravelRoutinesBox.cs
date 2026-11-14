@@ -45,7 +45,7 @@ public class TravelRoutinesBox
     private readonly List<Entry> _entries;
     private readonly MentalMap _mentalMap;
     private readonly Scene.Scene? _scene;
-    private readonly DebugLocationMap _map = new() { AlwaysPannable = true, Canvas = Config.Colors.Black };
+    private readonly LocationMap _map = new() { Canvas = Config.Colors.Black };
 
     private (int X, int Y) _hover = (-1, -1);
 
@@ -135,7 +135,7 @@ public class TravelRoutinesBox
         // Below the map: a blank row, the status (two rows), a blank row, the stepper, a blank row,
         // and the buttons.
         int mapTop = _boxY + 3, mapH = _boxH - 11;
-        var icons = _scene == null ? new List<DebugLocationMap.MapIcon>()
+        var icons = _scene == null ? new List<LocationMap.MapIcon>()
                   : MentalMapsPanelRenderer.Icons(_mentalMap, _scene, r => EntryOf(r.Id)?.Available ?? false)
                         .Where(i => EntryOf(i.Tag) != null).ToList();
         var hovered = EntryOf(_map.IconAt(_hover.X, _hover.Y));
@@ -160,7 +160,7 @@ public class TravelRoutinesBox
     /// What the pointer is over on the map, for the label above it: a routine that can be walked is
     /// clickable, one that cannot says why; a card, a line or the pad as the map names them.
     /// </summary>
-    public DebugLocationMap.HoverLabel? HoverLabel
+    public LocationMap.HoverLabel? HoverLabel
         => _map.LabelAt(_hover.X, _hover.Y, tag => EntryOf(tag) is not { } e ? null
               : e.Available ? new($"{e.Routine.Category.Label()}: {e.Routine.DisplayName} · {e.Routine.Time.Label().ToLowerInvariant()}", true)
               : new($"{e.Routine.DisplayName}: {e.Reason}", true));

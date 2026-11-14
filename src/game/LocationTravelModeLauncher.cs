@@ -45,12 +45,10 @@ public static class LocationTravelModeLauncher
     /// </summary>
     public static bool DeliversToController(GameMode mode, OpenTK.Windowing.GraphicsLibraryFramework.Keys key)
         => key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.R or OpenTK.Windowing.GraphicsLibraryFramework.Keys.K
-                or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Tab
         || mode is GameMode.Fighting or GameMode.Dialogue or GameMode.ProtagonistManagement
         || Management.ManagementMenuRenderer.TabForKey(key) != null
         || (key is OpenTK.Windowing.GraphicsLibraryFramework.Keys.Left or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Right or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Up or OpenTK.Windowing.GraphicsLibraryFramework.Keys.Down
-            && ((DebugLocationMap.Visible || DebugLocationMap.WalkPannable)
-                    && mode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp
+            && (mode is GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp
                 // On the world map they pan the routine box's map while it is open (the controller
                 // answers them only then).
                 || mode is GameMode.WorldView));
@@ -435,22 +433,6 @@ public static class LocationTravelModeLauncher
                 if (gameController != null)
                 {
                     Console.WriteLine("\n" + gameController.GetDebugInfo());
-                }
-            }
-            else if (args.Key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.G
-                     && Cathedral.Config.Debug.DeveloperKeys)
-            {
-                // Dump narration graph structure (only works in narrative mode)
-                if (gameController?.CurrentMode == GameMode.LocationInteraction)
-                {
-                    if (gameController is LocationTravelGameController ltgc)
-                    {
-                        ltgc.PrintNarrativeGraph();
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("G key: Graph visualization only available in narrative mode (enter a location first)");
                 }
             }
             // R paints the world by region instead of by biome. Forwarded in every mode rather than

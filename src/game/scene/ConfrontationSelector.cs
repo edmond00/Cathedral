@@ -29,7 +29,7 @@ public static class ConfrontationSelector
     /// The confrontation the actor is in, if any: an enemy in sight first, else a witness with a
     /// reason to stop them. What the exit button and the rules of action read.
     /// </summary>
-    public static Confrontation? Current(Scene scene, PoV pov, Protagonist? protagonist)
+    public static Confrontation? Current(Scene scene, PoV pov, PartyMember? protagonist)
     {
         if (protagonist != null)
         {
@@ -40,7 +40,7 @@ public static class ConfrontationSelector
         return Witness(scene, pov, protagonist?.AffinityKey);
     }
 
-    public static NpcEntity? Confronter(Scene scene, PoV pov, Protagonist? protagonist)
+    public static NpcEntity? Confronter(Scene scene, PoV pov, PartyMember? protagonist)
         => Confronter(scene, pov, protagonist?.AffinityKey);
 
     /// <summary>As above, for whichever body's affinity key is asking (a companion narrating).</summary>
@@ -171,7 +171,7 @@ public static class ConfrontationSelector
     /// to their day. An enemy stays where they stand — what the conversation turned into is a fight
     /// to be had, not a reason to walk off.
     /// </summary>
-    public static void Release(Scene scene, NpcEntity npc, Protagonist protagonist)
+    public static void Release(Scene scene, NpcEntity npc, PartyMember protagonist)
     {
         var sceneNpc = scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, npc));
         if (sceneNpc == null || !scene.DisplacedNpcs.ContainsKey(sceneNpc.Id)) return;

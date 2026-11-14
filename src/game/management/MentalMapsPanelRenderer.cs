@@ -22,9 +22,9 @@ namespace Cathedral.Game.Management;
 /// <para>Layout, one zone per question:</para>
 /// <list type="bullet">
 /// <item><b>Top</b>, from the left nav to the right rule — that location's map
-///   (<see cref="DebugLocationMap"/>), as much of it as is remembered, with a yellow icon on its card
+///   (<see cref="LocationMap"/>), as much of it as is remembered, with a yellow icon on its card
 ///   for every routine learned there. The pad pans it; clicking an icon shows that routine below. The
-///   pointer over anything on it puts a label above the pointer (<see cref="DebugLocationMap.LabelAt"/>),
+///   pointer over anything on it puts a label above the pointer (<see cref="LocationMap.LabelAt"/>),
 ///   which is all the map's key there is.</item>
 /// <item><b>Right column</b>, under the map (col 70+) — the locations remembered, newest first, so the
 ///   lowest one not locked is the next forgotten. Every slot the anamnesis could ever hold is drawn: a
@@ -42,7 +42,7 @@ public class MentalMapsPanelRenderer
 {
     private readonly TerminalHUD _terminal;
     private readonly PopupTerminalHUD? _popup;
-    private readonly DebugLocationMap _map = new() { AlwaysPannable = true };
+    private readonly LocationMap _map = new();
 
     // Top: the map, across the centre and the right column both.
     private const int MapLeft = 17;
@@ -254,10 +254,10 @@ public class MentalMapsPanelRenderer
     }
 
     /// <summary>What the pointer is over on the map, as its label says it; null over nothing.</summary>
-    private DebugLocationMap.HoverLabel? Label()
+    private LocationMap.HoverLabel? Label()
         => _shownMap is { } map ? _map.LabelAt(_hover.X, _hover.Y, tag => IconLabel(map, tag)) : null;
 
-    private static DebugLocationMap.HoverLabel? IconLabel(MentalMap map, object tag)
+    private static LocationMap.HoverLabel? IconLabel(MentalMap map, object tag)
         => map.Routines.FirstOrDefault(r => Equals(r.Id, tag)) is { } r
             ? new($"{r.Category.Label()}: {r.DisplayName} · {r.Time.Label().ToLowerInvariant()}", true)
             : null;
@@ -269,7 +269,7 @@ public class MentalMapsPanelRenderer
         var label = Label();
         if (label?.Text == _labelText) return;
         _labelText = label?.Text;
-        DebugLocationMap.ShowLabel(_popup, label);
+        LocationMap.ShowLabel(_popup, label);
     }
 
     /// <summary>The locations remembered, newest first, then the slots still free and those beyond reach.</summary>
@@ -331,7 +331,7 @@ public class MentalMapsPanelRenderer
         CenteredText(0, map.LocationName.ToUpperInvariant(), Config.Colors.BrightYellow, bg, MapLeft, MapWidth);
 
         var scene = SceneFor?.Invoke(map.LocationId);
-        var icons = scene == null ? new List<DebugLocationMap.MapIcon>() : Icons(map, scene);
+        var icons = scene == null ? new List<LocationMap.MapIcon>() : Icons(map, scene);
         var selected = SelectedRoutine(map);
         var focus = (scene == null ? null : selected?.FindArea(scene))
                   ?? scene?.AllAreas.FirstOrDefault(a => map.VisitedAreas.Contains(a.StableKey));
@@ -379,12 +379,12 @@ public class MentalMapsPanelRenderer
          : 0;
 
     /// <summary>An icon per routine on its area's card, kind by kind; a routine whose area is gone has none.</summary>
-    public static List<DebugLocationMap.MapIcon> Icons(MentalMap map, Scene.Scene scene,
+    public static List<LocationMap.MapIcon> Icons(MentalMap map, Scene.Scene scene,
                                                        Func<Routine, bool>? enabled = null)
         => Ordered(map)
               .Select(r => (Routine: r, Area: r.FindArea(scene)))
               .Where(x => x.Area != null)
-              .Select(x => new DebugLocationMap.MapIcon(x.Area!, x.Routine.Category.Icon(),
+              .Select(x => new LocationMap.MapIcon(x.Area!, x.Routine.Category.Icon(),
                                                         enabled?.Invoke(x.Routine) ?? true, x.Routine.Id))
               .ToList();
 

@@ -169,33 +169,6 @@ public static class ForbiddenWordsAudit
             Console.WriteLine($"  {(swaps.Count > 0 ? "voiced" : "plain ")}: \"{whole}\"");
         }
 
-        // A flavoured noun keeps the keyword of the noun it replaced.
-        var archaic = PersonaFlavour.Of(100, Register.Archaic);
-        // "the", not "a": with no tagger loaded (as here) the rule-based noun finder skips a word after "a".
-        // "gatehouse" outranks "steed" on every ground but naming the horse, so only the lemma map picks it.
-        string text = archaic.Apply("I spy the horse tethered by the gatehouse, the rope at its neck.");
-        var keywords = KeywordExtractor.ExtractKeywords(text, "horse", 1, ownName: "Horse",
-                                                        flavourLemmas: archaic.KeywordLemmas);
-        var unmapped = KeywordExtractor.ExtractKeywords(text, "horse", 1, ownName: "Horse");
-        if (unmapped.FirstOrDefault() == "steed")
-            failures.Add($"keyword test no longer discriminates: \"{text}\" picks 'steed' without the lemma map");
-        if (keywords.FirstOrDefault() != "steed")
-            failures.Add($"keyword of \"{text}\" for a horse is '{keywords.FirstOrDefault()}', expected 'steed'");
-        else
-            Console.WriteLine($"  keyword kept: \"{text}\" → 'steed' names the horse");
-
-        // A kenning keeps it too, whether the tagger reads "bite-iron" as one word or as two: the
-        // lemma map holds the whole and its last part. Read with the tagger the game loads.
-        NounExtractor.InitializeAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "catalyst-models"))
-                     .GetAwaiter().GetResult();
-        var feral = PersonaFlavour.Of(100, Register.Feral);
-        string kenning = feral.Apply("I smell the knife left by the gatehouse, under the rain.");
-        var kennKeys = KeywordExtractor.ExtractKeywords(kenning, "knife", 1, flavourLemmas: feral.KeywordLemmas);
-        if (kennKeys.FirstOrDefault() is not ("bite-iron" or "iron"))
-            failures.Add($"keyword of \"{kenning}\" for a knife is '{kennKeys.FirstOrDefault()}', expected the kenning");
-        else
-            Console.WriteLine($"  keyword kept: \"{kenning}\" → '{kennKeys[0]}' names the knife");
-
         // People speak in their standing's register (NamedNpcArchetype.Registers).
         var speakers = typeof(Npc.NamedNpcArchetype).Assembly.GetTypes()
             .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(Npc.NamedNpcArchetype)) && t.GetConstructor(Type.EmptyTypes) != null)

@@ -88,7 +88,7 @@ public static class ActionPathPlanner
         typeof(GoUpStairsVerb), typeof(GoDownStairsVerb), typeof(ClimbUpVerb), typeof(ClimbDownVerb),
         typeof(ScaleUpVerb), typeof(ScaleDownVerb), typeof(CrossVerb), typeof(SwimAcrossVerb),
         typeof(SlipIntoVerb), typeof(FollowPathVerb), typeof(TrackVerb), typeof(StalkVerb),
-        typeof(SitAndWaitVerb), typeof(HideAndWaitVerb), typeof(BacktrackVerb), typeof(AskToBeLedVerb),
+        typeof(SitAndWaitVerb), typeof(HideAndWaitVerb), typeof(AskToBeLedVerb),
     };
 
     private readonly record struct State(Guid Area, TimePeriod When, string? Tool, string? Leave = null);
@@ -204,8 +204,11 @@ public static class ActionPathPlanner
         var start = new State(pov.Where.Id, pov.When, obtained, pov.PlannedLeave);
         var prev  = new Dictionary<State, (State From, VerbAction? Step)> { [start] = (start, null) };
         var depth = new Dictionary<State, int> { [start] = 0 };
-        var queue = new Queue<State>();
-        queue.Enqueue(start);
+        // Steps cost one and a walk by known ways costs nothing, so the search keeps what costs
+        // nothing at the front: a state is settled the first time it is taken off.
+        var queue = new LinkedList<State>();
+        var settled = new HashSet<State>();
+        queue.AddLast(start);
 
         // The nearest goal, and among goals equally near the one whose target is declared first. The
         // search does not stop at the first goal it meets: it finishes that depth, since a target
@@ -215,9 +218,15 @@ public static class ActionPathPlanner
 
         while (queue.Count > 0)
         {
-            var s     = queue.Dequeue();
+            var s     = queue.First!.Value;
+            queue.RemoveFirst();
+            if (!settled.Add(s)) continue;
             if (best is { } b && depth[s] > depth[b.At]) break;
             var here  = new PoV(areas[s.Area], s.When) { PlannedLeave = s.Leave };
+
+            // Every area known ways lead to is as near as this one: the body walks there for nothing.
+            foreach (var to in KnownReach(scene, here.Where, s.When))
+                Push(s with { Area = to }, null);
             // Every verb is read only while an implement is still to be found: it is the one search
             // in which a grab or a purchase is a step on the way.
             var verbs = wanted.Count > 0 && s.Tool == null ? scene.Verbs : narrow;
@@ -251,12 +260,14 @@ public static class ActionPathPlanner
                     Push(s with { Area = area.Id, When = when }, action);
             }
 
-            void Push(State next, VerbAction step)
+            void Push(State next, VerbAction? step)
             {
-                if (prev.ContainsKey(next)) return;
-                prev[next] = (s, step);
-                depth[next] = depth[s] + 1;
-                queue.Enqueue(next);
+                int d = depth[s] + (step == null ? 0 : 1);
+                if (depth.TryGetValue(next, out int known) && known <= d) return;
+                prev[next]  = (s, step);
+                depth[next] = d;
+                if (step == null) queue.AddFirst(next);
+                else queue.AddLast(next);
             }
         }
         return best is { } found
@@ -270,15 +281,6 @@ public static class ActionPathPlanner
     /// </summary>
     private static IEnumerable<(Area Area, TimePeriod When)> Destinations(Scene scene, PoV here, PartyMember actor, VerbAction action)
     {
-        if (action.Verb is BacktrackVerb)
-        {
-            // A backtrack already settled on an area goes there; otherwise anywhere known ways reach.
-            if (action.Variant is Area settledTo) { yield return (settledTo, here.When); yield break; }
-            foreach (var to in AreaVisits.BackReach(scene, here.Where, here.When).Keys)
-                yield return (to, here.When);
-            yield break;
-        }
-
         if (action.Verb is SitAndWaitVerb)
         {
             // A wait already settled on an hour lasts until that one; otherwise the sitter chooses.
@@ -368,7 +370,7 @@ public static class ActionPathPlanner
         foreach (var action in actions.Where(a => TransitVerbTypes.Any(t => t.IsInstanceOfType(a.Verb))))
             foreach (var (area, when) in Destinations(scene, pov, actor, action))
                 if (Plan(scene, new PoV(area, when) { PlannedLeave = pov.PlannedLeave }, actor, will) is { } rest && rest.Steps.Count == path.Steps.Count - 1)
-                    return new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, area, when))).ToList(),
+                    return new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, when))).ToList(),
                                           rest.ToolStep < 0 ? -1 : rest.ToolStep + 1, rest.Target);
         return null;
     }
@@ -440,7 +442,7 @@ public static class ActionPathPlanner
         foreach (var (area, when) in Destinations(scene, pov, actor, action))
             if (Plan(scene, new PoV(area, when) { PlannedLeave = pov.PlannedLeave }, actor, will) is { } rest
                 && (best == null || rest.Steps.Count + 1 < best.Steps.Count))
-                best = new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, area, when))).ToList(),
+                best = new ActionPath(rest.Steps.Prepend(new PathStep(action, SettledOf(action, when))).ToList(),
                                       rest.ToolStep < 0 ? -1 : rest.ToolStep + 1, rest.Target);
         return best;
     }
@@ -476,21 +478,32 @@ public static class ActionPathPlanner
         return null;
     }
 
-    /// <summary>What a step on the path is settled on: the hour a sit reaches, the area a backtrack does.</summary>
-    private static object? SettledOf(VerbAction step, Area reached, TimePeriod when) => step.Verb switch
+    /// <summary>What a step on the path is settled on: the hour a sit reaches.</summary>
+    private static object? SettledOf(VerbAction step, TimePeriod when) => step.Verb is SitAndWaitVerb ? when : null;
+
+    /// <summary>
+    /// The areas the body may walk to for nothing from <paramref name="from"/>: those ways it knows
+    /// reach (<see cref="AreaVisits.BackReach"/>). Kept as long as the plans are.
+    /// </summary>
+    private static IReadOnlyList<Guid> KnownReach(Scene scene, Area from, TimePeriod when)
     {
-        SitAndWaitVerb => when,
-        BacktrackVerb  => reached,
-        _              => null,
-    };
+        var key = (scene, from.Id, when);
+        if (!_reach.TryGetValue(key, out var reach))
+            _reach[key] = reach = AreaVisits.BackReach(scene, from, when).Keys.Select(a => a.Id).ToList();
+        return reach;
+    }
+
+    private static readonly Dictionary<(Scene, Guid, TimePeriod), IReadOnlyList<Guid>> _reach = new();
 
     private static ActionPath Unwind(Scene scene, Dictionary<State, (State From, VerbAction? Step)> prev, State at, VerbAction goal, bool toolWanted)
     {
         var steps = new List<PathStep> { new(goal) };
         int toolStep = -1;
-        for (var s = at; prev[s].Step is { } step; s = prev[s].From)
+        // A link with no step is a walk by known ways: it is on the way and is no step of it.
+        for (var s = at; !prev[s].From.Equals(s); s = prev[s].From)
         {
-            steps.Add(new PathStep(step, SettledOf(step, scene.GetArea(s.Area)!, s.When)));
+            if (prev[s].Step is not { } step) continue;
+            steps.Add(new PathStep(step, SettledOf(step, s.When)));
             if (toolWanted && s.Tool != null && prev[s].From.Tool == null) toolStep = steps.Count - 1;
         }
         steps.Reverse();
