@@ -43,9 +43,7 @@ expect-state routines Test Ford
 expect-state routines Test Field
 expect-state routines time=Dawn
 
-# Two presses: the first closes the segment the gather left pending (CONTINUE) and opens the next
-# phase, whose preview is drained before the footer becomes LEAVE.
-observe none
+# The result is closed, then the place is left by its way out.
 click continue
 wait 60
 advance 12 180

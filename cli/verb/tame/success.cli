@@ -36,7 +36,7 @@ click continue
 advance 12 180
 expect Appeasement
 
-# --- close the segment; the beast is still in the scene and still observable ------
+# --- close the result; the beast is still in the scene, and still on the map --------
 click continue
 wait 60
 advance 12 180
@@ -46,8 +46,6 @@ expect-state trees wolf
 # Difficulty 4 off a three-modus-mentis chain: `strategy succeed` asks for more sixes
 # than there are dice, which used to hang the game outright (NarrativeController caps it).
 goal tame
-# By index: the wolf is the phase's only object, but which of its words is drawn as the keyword
-# ("wolf", "limp", "rolling"...) is a shuffle among equally related words, not a fixed choice.
 click think "wolf"
 choose beast_sense
 advance 12 180
@@ -59,15 +57,9 @@ advance 12 180
 expect Joined you
 
 # --- after: gone from the scene, present in the party ----------------------------
-# The next segment re-applies the period (StartObservationPhaseWithHistory → ApplyTimePeriod),
-# which re-places the scene's NPCs — the tamed beast is no longer among them, so it cannot be
-# observed or acted on again.
-#
-# That half is NOT asserted on screen: `expect` scans the whole terminal, and the beast's name
-# is all over the greyed history of the two segments that just tamed it. The signal is on stdout
-# instead — with --observe-only still pinned to the beast, this phase prints
-#   [debug] --observe-only 'wolf': nothing here matches — offering the whole scene.
-# and `state` drops one observable (observed=1/10 before the tame, 3/9 after).
+# The trees are reconciled with the scene after the outcome, which re-places its people — the
+# tamed beast is no longer among them, so its tree is gone from the map and it cannot be thought
+# about or acted on again. It stands in the party instead, with a token of its own.
 goal none
 click continue
 wait 60

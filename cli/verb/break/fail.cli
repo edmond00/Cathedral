@@ -35,7 +35,7 @@ choose 0
 advance 12 180
 
 # Combining does not execute: it rewrites the action to include the tool and offers THAT as a new
-# button. Executing the reformulated one is what puts CombinedItem on the action.
+# act. Executing the reformulated one is what puts CombinedItem on the action.
 regions
 click act 1
 choose 0

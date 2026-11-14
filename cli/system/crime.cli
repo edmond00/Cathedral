@@ -37,7 +37,7 @@ expect-not IMPOSSIBLE
 advance 12 180
 regions
 
-# The keyword opens thinking. The goal choice runs here, behind the choice rules.
+# The thought: the goal choice runs here, behind the choice rules.
 click observe "chest"
 choose childhood_memory
 advance 12 180

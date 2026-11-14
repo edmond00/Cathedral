@@ -45,7 +45,7 @@ expect-outcome focus_lost
 # --- after: the point is gone ---
 expect-state noetic points=0/3
 
-# --- and stays gone across the CONTINUE that closes the segment ---
+# --- and stays gone across the result's CONTINUE ---
 click continue
 advance 12 180
 expect-state noetic points=0/3

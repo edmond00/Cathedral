@@ -2,7 +2,7 @@
 #
 # The other half of "does victory end the fight phase". A narration fight returns through
 # NarrativeController.OnFightCompleted rather than through travel: the enemy leaves play, a corpse is
-# spawned into the area, and a fresh narration segment opens on it. Reaching LocationInteraction is
+# spawned into the area, and the map comes back with that body on it, already observed. Reaching LocationInteraction is
 # only the first half of that — a run that came back to a scene still holding a live enemy would pass
 # a mode check and be wrong, so the corpse is asserted too.
 #
@@ -36,7 +36,7 @@ click continue
 advance 12 180
 
 # The landed attack HOLDS the fight so its first blow can be read (see "Opening a fight: the first
-# blow"). The fight opens on the press that closes the segment, not on the swing.
+# blow"). The fight opens on the result's CONTINUE, not on the swing.
 click continue
 wait mode Fighting 90
 fight-end victory

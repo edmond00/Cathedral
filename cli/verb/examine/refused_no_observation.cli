@@ -31,7 +31,7 @@ click think "Test Giant Tree"
 choose ripelore
 advance 12 180
 
-# No action button: the means refused, so the thought ends on the refusal.
+# No act: the means refused, so the thought ends on the refusal.
 # Asserted on the half that fits one row; the sentence wraps before "observe".
 expect-state texts "I want to act, not to stand and"
 expect-not SUCCESS

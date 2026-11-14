@@ -40,7 +40,7 @@ expect-no-outcome area_move
 # --- the outcome really ran ---
 expect-outcome lost_way
 
-# --- after: still standing in the place until the press that closes the segment ---
+# --- after: still standing in the place until the result's CONTINUE ---
 expect-state where Test Field
 click continue
 wait mode WorldView 60

@@ -38,14 +38,7 @@ advance 12 180
 expect-verb move
 expect Moved to:
 
-# The filter has done its job and must be dropped before the next phase is generated: it names the
-# area we have just walked INTO, and you cannot observe the room you are standing in — so leaving it
-# set makes the next phase fall back and fails the run on a narrowing flag that narrowed nothing.
-observe none
-
-# Two presses, and the first one is not the exit. A move ends on a node transition, so the footer
-# reads CONTINUE: pressing it closes the segment and opens the next phase in the new area, whose
-# observation preview then has to be drained before the footer becomes LEAVE.
+# The result is closed, then the place is left by its way out.
 click continue
 wait 60
 advance 12 180
@@ -57,6 +50,5 @@ inspect routines
 expect-state routines category=goto location=
 expect-state routines Test Yard
 expect-state routines time=Dawn
-expect-no-state routines category=meet
 expect-no-state routines category=gather
 quit

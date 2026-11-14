@@ -51,7 +51,7 @@ choose 0
 advance 12 180
 
 # No reformulated action was offered: the combination was refused, so there is no action 1 and the
-# original button stands alone.
+# original act stands alone.
 regions
 inspect noetic
 

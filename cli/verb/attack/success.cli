@@ -55,7 +55,7 @@ expect Modus mentis
 expect-outcome first_blow
 expect-outcome fight_trigger
 
-# And only now the fight, on the press that closes the segment.
+# And only now the fight, on the result's CONTINUE.
 click continue
 wait mode Fighting 60
 quit

@@ -41,7 +41,7 @@ expect-outcome time_shift
 expect-state where "period=Night"
 expect-state where "confronted=FoundWaiting"
 
-# The next phase opens on them. Going up to them is one of the few acts a confrontation permits,
+# They are on the map already observed. Going up to them is one of the few acts a confrontation permits,
 # and it opens found_waiting rather than caught-red-handed.
 click continue
 advance 12 180

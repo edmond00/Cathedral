@@ -14,7 +14,7 @@
 #   * it is accepted with NO critic call and NO noetic cost, so the budget is unchanged across it.
 #
 # The proof of acceptance is the reformulated action: a combination that is accepted rewrites the
-# act to incorporate the implement and offers THAT as a second button. Refusal leaves one button,
+# act to incorporate the implement and offers THAT as a second act. Refusal leaves one act,
 # which is what the excluded script asserts.
 #
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-item reading_lenses --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --observe-only "Test Rack" --grant-mm woodcraft --means-only woodcraft
@@ -47,7 +47,7 @@ regions
 choose 0
 advance 12 180
 
-# Accepted: the reformulated act is on screen as a second button, and the budget did not move.
+# Accepted: the reformulated act hangs under the first as a second act, and the budget did not move.
 regions
 inspect noetic
 

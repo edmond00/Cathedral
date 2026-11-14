@@ -170,7 +170,11 @@ Run `help` for the authoritative list. The essentials:
                             something not yet known: the click then lands on its kind's symbol and
                             that one observation is pinned to it, as `--observe-only` pins a run.
                             Follow with `choose <observation mm-id>` and `advance`
-  click think <name>        the ? after an observed element: think about it. Then `choose <mm-id>`
+  click think <name|last>   the ? after an observed element: think about it. Then `choose <mm-id>`.
+                            `last` is whatever was observed last — for a script on the real
+                            model, where the mind chooses what it looks at (`speak` takes it too).
+                            Naming an observed holder in `click observe` asks for whatever it
+                            holds first (`click observe Myself`)
   click speak <name>        the speech mark after an observed element: speak of it to a companion
                             in the same or an adjacent area. Then `choose <speaking mm-id>` (and a
                             `choose` of the listener when more than one is in reach)
@@ -345,8 +349,9 @@ Run `help` for the authoritative list. The essentials:
                             of the will's targets the plan reaches, by declaration order — or `steps=none`
                             where it cannot be done here. target= is the PLAN's own: any equally
                             short path is accepted too, which is what will_equal_paths.cli asserts.
-                            expect-state takes no escaped quotes: assert `steps=2` and the goal's
-                            words separately;
+                            state assertions ignore double quotes on both sides, so
+                            `expect-state will will lockpicking steps=2` and
+                            `expect-state trees area=Test Yard` both read as written;
                             `mental-maps` each map remembered, oldest first
                             (`mental-map location= name= locked= routines= visited= seen=`)
                             and `mental-maps used= usable= grid=`;
@@ -507,15 +512,17 @@ Things this shape depends on, each of which has cost a script:
   `--organs encephalon=2` (as `cli/verb/explain_myself/` does) rather than rearranging its steps. A
   successful act refills the pool; a failed one does not.
 - **A second act on the same element needs no second observation**: `click think "<name>"` again.
-  Somebody who walked in (drawn by a noise, a householder at nightfall) and a body that has just
-  fallen are on the map *already observed* — think about them directly.
+  Somebody who walked in (drawn by a noise, a householder at nightfall), whoever **confronts** the
+  member (the wolf in the den the visit opens in, whoever stopped a walk) and a body that has just
+  fallen are on the map *already observed* — think about them directly, with no `click observe`.
 - **Private ground, by day.** Arriving in a private room whose householder is awake means being
   confronted at once (`inspect where` → `confronted=NoBusinessHere:…`, `exit=RUNAWAY`), and a
   confronted member may look only at the confronter. Scripts about what is *in* such a room run at
   `--period night`: asleep, the householder witnesses nothing (`cli/verb/steal/`).
-- **`expect-state` takes no escaped quotes.** The tokenizer has no `\"`, and `inspect symbols` and
-  `inspect trees` print names in quotes — so assert a fragment that holds none (`expect-state trees
-  wolf`, `expect-no-state symbols click think`), or two fragments separately.
+- **State assertions ignore double quotes.** The tokenizer has no `\"`, and `inspect symbols` and
+  `inspect trees` print names in quotes — so `expect-state` compares with the quotes taken out of
+  both sides: write the line as it reads without them (`expect-state trees refusal area=Test Yard
+  mind=comradeship`, `expect-state symbols click think the goat (disabled)`).
 
 ### The test suite
 

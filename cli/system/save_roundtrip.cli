@@ -40,9 +40,6 @@ save roundtrip
 travel here
 wait mode LocationInteraction 45
 
-# Drain the opening observation's preview box FIRST. The footer only becomes LEAVE once it is gone,
-# so pressing the button before this sits on the preview until the wait times out — the stall
-# cli/system/routine_movement_only.cli documents at its own exit.
 advance 12 90
 save roundtrip
 

@@ -34,7 +34,7 @@ advance 12 180
 click continue
 advance 12 180
 
-# The fight is decided but HELD, waiting on the press that closes the segment — so that the first
+# The fight is decided but HELD, waiting on the result's CONTINUE — so that the first
 # blow's chips can be read before the fight screen paints over them. `state` says fight-held=yes;
 # `expect-outcome fight_trigger` already passes here, because the outcome ran (it wrote the request
 # on the scene) even though the mode has not changed yet.

@@ -48,7 +48,7 @@ expect-state skills skill-rejected gut_feeling
 manage
 save roundtrip
 
-# Close the segment (the footer CONTINUE), which opens a new phase on the same tree.
+# Close the result; the tree is still on the map, and may be thought about again.
 click continue
 advance 12 180
 regions

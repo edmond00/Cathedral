@@ -654,7 +654,7 @@ is `ThoughtNode`s:
 | `ThoughtNodeKind` | glyph | holds |
 |---|---|---|
 | `Element` | its kind's | the observation's `NarrationBlock`, or a `Note` for what nobody observed |
-| `Thought` | `≡` | a thinking's text; a tool's reasoning |
+| `Thought` | `¶` | a thinking's text; a tool's reasoning |
 | `Refusal` | `✗` | a mind that declined, a means that refused, a broken faculty, a refused implement |
 | `Act` | its difficulty glyph | a `ParsedNarrativeAction`, in an `ActState`: `Waiting` (the one state a click executes), `Done`, `Superseded` (reconsidered), `Lapsed` (no longer possible) |
 | `Success` / `Failure` | `✓` / `✗` | the outcome's block, with its chips |

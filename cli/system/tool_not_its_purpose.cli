@@ -46,7 +46,7 @@ regions
 choose 0
 advance 12 180
 
-# Refused: no reformulated act, so there is no action 1 and the original button stands alone.
+# Refused: no reformulated act, so there is no second act and the original stands alone.
 regions
 inspect noetic
 

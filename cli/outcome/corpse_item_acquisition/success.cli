@@ -49,7 +49,7 @@ expect Slain:
 expect-verb slay
 
 # ── Now cut it ───────────────────────────────────────────────────────────────
-# The corpse opens the phase on its own, so the keyword is whatever it left behind.
+# The body is on the map already observed: nobody has to look for what was just killed.
 click continue
 advance 12 180
 regions

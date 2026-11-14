@@ -28,7 +28,7 @@ click menu Continue
 wait mode WorldView 20
 
 # ── The ☰ ─────────────────────────────────────────────────────────────────────
-# The same menu by mouse, from the corner, in every phase Escape pauses. No map button off narration.
+# The same menu by mouse, from the corner, in every phase Escape pauses. 
 wait
 expect-state buttons menu=shown map=hidden
 click menu-button
@@ -39,7 +39,7 @@ wait mode WorldView 20
 
 # ── Narration ─────────────────────────────────────────────────────────────────
 # The menu opens as an OVERLAY: narration is not torn down, and Continue resumes the same scene.
-# Leaving a location is the footer LEAVE button's job, not Escape's.
+# Leaving a location is the way out's job, not Escape's.
 travel here
 wait mode LocationInteraction 60
 pause
