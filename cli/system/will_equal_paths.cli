@@ -16,7 +16,6 @@ click menu New
 wait mode ProtagonistCreation 20
 click continue
 wait mode WorldView 60
-observe plowman
 travel here
 wait mode LocationInteraction 60
 advance 12 180
@@ -24,7 +23,7 @@ expect-state will "will pugilitas steps=1"
 expect-state will "target=farmer"
 
 # Observing the other man: he is on the way too, so the focus is kept and the reason is the goal here.
-click observe "?"
+click observe "plowman"
 choose pugilitas
 advance 12 180
 # The sentence is "Here I could attack the plowman, which is what I want."; its tail is asserted, since
@@ -32,10 +31,10 @@ advance 12 180
 expect-state texts "which is what I want"
 
 # Thinking on him: the attack is proposed, carried out by Pugilitas itself.
-click think "?"
+click think "plowman"
 choose pugilitas
 advance 12 180
-expect [Pugilitas
-expect-not does nothing for it
+expect-state trees means=pugilitas
+expect-no-state texts "does nothing for it"
 
 quit

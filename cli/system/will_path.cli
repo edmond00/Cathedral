@@ -18,7 +18,6 @@ click menu New
 wait mode ProtagonistCreation 20
 click continue
 wait mode WorldView 60
-observe "Test Yard"
 travel here
 wait mode LocationInteraction 60
 
@@ -27,19 +26,19 @@ expect-state will "will lockpicking steps=2 first="
 expect-state will "unlock and open the test door"
 
 # Observing with the will: the yard is on its way, so it keeps it, and the reason is the path.
-click observe "yard"
+click observe "Test Yard"
 choose lockpicking
 advance 12 180
 expect-state texts "Through it I could"
 
 # Thinking with the will on the yard: the first step, voiced as the way to the goal, by the judged means.
 means woodcraft
-click think "yard"
+click think "Test Yard"
 choose lockpicking
 advance 12 180
 expect-state texts "To get there I must first"
 expect-state texts "so I will"
-expect [Woodcraft
+expect-state trees means=woodcraft
 
 strategy succeed
 click act 0
@@ -50,29 +49,28 @@ advance 12 180
 expect-state where Test Yard
 expect-state will "will lockpicking steps=1"
 
-observe "Test Door"
 click continue
 wait 60
 advance 12 180
 
 # In the yard the door is the goal itself.
-click observe "?"
+click observe "Test Door"
 choose childhood_memory
 advance 12 180
-click think "?"
+click think "Test Door"
 choose lockpicking
 advance 12 180
-expect [Lockpicking
-click act 0
+expect-state trees means=lockpicking
+click act unlock_door
 choose 1
 choose 0
 advance 12 180
-click act 1
+click act hairpin
 choose 0
 advance 12 180
 click continue
 advance 12 180
 
-expect-state texts "Door unlocked"
+expect Door unlocked
 expect-verb unlock_door
 quit
