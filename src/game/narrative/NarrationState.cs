@@ -76,25 +76,6 @@ public abstract class ModusMentisChainElement
         return modiMentis;
     }
     
-    /// <summary>
-    /// Checks if a specific ModusMentisChainElement is an ancestor in this element's chain.
-    /// This checks the actual element instances, not just matching modiMentis.
-    /// </summary>
-    public bool IsElementInChain(ModusMentisChainElement? element)
-    {
-        if (element == null) return false;
-        
-        var current = this;
-        while (current != null)
-        {
-            if (ReferenceEquals(current, element))
-            {
-                return true;
-            }
-            current = current.ChainOrigin;
-        }
-        return false;
-    }
 }
 
 /// <summary>
@@ -284,13 +265,4 @@ public class ParsedNarrativeAction : ModusMentisChainElement
                ? Config.Symbols.DifficultyGlyphs[Math.Clamp(DifficultyLevel, 1, 10) - 1]
                : DifficultyLevel == 0 ? Config.Symbols.AutomaticDifficultyGlyph : '>');
 
-    /// <summary>
-    /// The full <c>"⑤ [MODUS MENTIS ⟐⟐] "</c> prefix an action line is drawn with. The live renderer
-    /// paints it piece by piece so each part can take its own colour; history lines carry no action
-    /// reference and bake this string in instead. Both must agree, or a line shifts (and loses its
-    /// header) the moment its segment greys out.
-    /// </summary>
-    public string DisplayPrefix
-        => $"{DifficultyGlyph} [{ChainModusMentis?.DisplayName ?? ActionModusMentisId} " +
-           $"{new string(Config.Symbols.ModusMentisLevelIndicator, ChainModusMentis?.Level ?? 1)}] ";
 }

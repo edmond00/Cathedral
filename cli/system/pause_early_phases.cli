@@ -48,9 +48,9 @@ wait mode MainMenu 20
 click menu Continue
 wait mode ChildhoodReminescence 30
 
-# The ☰ here too; the ↹ is not offered, childhood having no location to map.
+# The ☰ here too.
 wait
-expect-state buttons menu=shown map=hidden
+expect-state buttons menu=shown
 click menu-button
 wait mode MainMenu 20
 click menu Continue

@@ -1,0 +1,86 @@
+# party — members stand apart, and a fight takes only those standing where it breaks out
+#
+# Each member of the party has their own area in a place: a move moves the member who made it and
+# nobody else. The hyena is sent out to the field alone, by an act of its own, while the protagonist
+# stays in the yard; each is then where it was left, with its own token on its own card.
+#
+# A fight is fought by the members standing in the area where it begins. The protagonist strikes the
+# farmer in the yard: the hyena, a field away, is not on the board — and is still in the field, and
+# in the party, when the fight is over.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Both enter by the yard.
+expect-state party member Kenryc Greygate area=Test Yard
+expect-state party member Brindletail area=Test Yard
+
+# The hyena walks out to the field, by an act of its own.
+click member Brindletail
+wait
+expect [BRINDLETAIL]
+strategy succeed
+goal move
+click observe "Test Field"
+choose birdsong
+advance 12 180
+click think "Test Field"
+choose birdsong
+advance 12 180
+click act move
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Field
+click continue
+advance 12 180
+
+# Only the hyena moved.
+expect-state party member Brindletail area=Test Field
+expect-state party member Kenryc Greygate area=Test Yard
+
+# The protagonist, still in the yard, picks a fight there.
+click member Kenryc
+wait
+expect [KENRYC GREYGATE]
+expect-state where Test Yard
+goal attack
+# The plowman is watching: only a discreet means may try a blow in front of him.
+means stealth
+click observe "farmer"
+choose childhood_memory
+advance 12 180
+click think "farmer"
+choose ripelore
+advance 12 180
+click act attack
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect First blow:
+click continue
+wait mode Fighting 60
+
+# The hyena is a field away: it is not on the board.
+regions
+expect-not Brindletail
+
+fight-end victory
+wait mode LocationInteraction 60
+advance 12 180
+
+# The fight over, each is where it was, and the hyena is still of the party.
+expect-state party member Brindletail area=Test Field
+expect-state party member Kenryc Greygate area=Test Yard
+expect-state party companion Brindletail
+quit

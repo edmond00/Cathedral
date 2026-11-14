@@ -39,11 +39,6 @@ public class NarrationScrollBuffer
     public event Action<NarrationBlock>? BlockAdded;
     public int TotalLines { get { lock (_gate) return _renderedLines.Count; } }
 
-    /// <summary>
-    /// Number of lines that are history (from previous phases or narration nodes).
-    /// </summary>
-    public int HistoryLineCount { get { lock (_gate) return _historyLines.Count; } }
-
     public NarrationScrollBuffer(int maxWidth, NarrativeLayout layout)
     {
         _maxWidth = maxWidth;
@@ -153,20 +148,6 @@ public class NarrationScrollBuffer
     {
         lock (_gate)
             return Math.Max(0, _layout.CalculateMaxScrollOffset(_renderedLines.Count));
-    }
-
-    /// <summary>
-    /// Can we scroll up?
-    /// </summary>
-    public bool CanScrollUp() => _scrollOffset > 0;
-
-    /// <summary>
-    /// Can we scroll down?
-    /// </summary>
-    public bool CanScrollDown(int visibleLines)
-    {
-        lock (_gate)
-            return _scrollOffset + visibleLines < _renderedLines.Count;
     }
 
     /// <summary>
@@ -541,13 +522,6 @@ public class NarrationScrollBuffer
         return lines;
     }
 
-    /// <summary>
-    /// Get all blocks for external access.
-    /// </summary>
-    public IReadOnlyList<NarrationBlock> GetBlocks()
-    {
-        lock (_gate) return _blocks.ToList();
-    }
 }
 
 /// <summary>

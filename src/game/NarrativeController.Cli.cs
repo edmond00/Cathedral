@@ -28,9 +28,6 @@ public partial class NarrativeController
         Mind.ElementNodes.Count(),
         Unobserved(_pov.Where).Count());
 
-    /// <summary>Whether nothing holds the screen and no popup is up: the map answers a click.</summary>
-    public bool CliIdle => !Busy && !IsPopupVisible;
-
     // ── Symbols by name ──────────────────────────────────────────────────────
 
     /// <summary>
@@ -71,10 +68,6 @@ public partial class NarrativeController
 
     /// <summary>The acts waiting on the played member's trees, in the order they were proposed.</summary>
     private List<ThoughtNode> CliActs() => Mind.WaitingActs.Where(a => Locate(a.ElementNode) != null).ToList();
-
-    /// <summary>The waiting acts as a script counts them: index and text.</summary>
-    public IReadOnlyList<(int Index, string Text)> CliActions()
-        => CliActs().Select((a, i) => (i, a.Action!.ActionText)).ToList();
 
     /// <summary>
     /// Whether <paramref name="name"/> names something that answers to <paramref name="names"/>: the
@@ -536,8 +529,6 @@ public partial class NarrativeController
                        + $"noetic={mind.Noetic}/{mind.Member.MaxNoeticPoints} played={(ReferenceEquals(mind.Member, _active) ? "yes" : "no")}");
         }
 
-        // The played member's thought trees: every observed element with where it now is, and under
-        // each every node in order. What the screen draws as symbols, as lines a script can assert on.
         // What the map offers a click now, as `regions` lists it: the tray symbols of each card, the
         // stubs and the waiting acts. Asked for by name only, for an assertion on what is NOT offered.
         if (subject == "symbols")
@@ -551,6 +542,8 @@ public partial class NarrativeController
                 if ((node.Block?.Text ?? node.Note) is { Length: > 0 } said)
                     outp.Add($"text {node.Kind.ToString().ToLowerInvariant()} mind={node.Mind?.ModusMentisId ?? "-"} \"{said}\"");
 
+        // The played member's thought trees: every observed element with where it now is, and under
+        // each every node in order. What the screen draws as symbols, as lines a script can assert on.
         if (All("trees"))
         {
             foreach (var root in Mind.Roots) Describe(root, 0);

@@ -788,9 +788,6 @@ public sealed class LocationMap
 
         public bool InBounds(int x, int y) => x >= 0 && y >= 0 && x < Width && y < Height;
 
-        /// <summary>The ground colour of a cell as the map painted it.</summary>
-        public Vector4 GroundAt(int x, int y) => InBounds(x, y) ? _bgs[y * Width + x] : _map.Canvas;
-
         /// <summary>Draws a glyph; <paramref name="bg"/> null keeps the ground under it.</summary>
         public void Put(int x, int y, char ch, Vector4 fg, Vector4? bg = null)
         {
@@ -1533,13 +1530,6 @@ public sealed class LocationMap
         var (left, top, w, h) = _shownAt;
         int x = left + mx - _viewX, y = top + my - _viewY;
         return x >= left && y >= top && x < left + w && y < top + h ? (x, y) : null;
-    }
-
-    /// <summary>The canvas cell of the middle of <paramref name="area"/>'s card, laying the scene out first; null when it has none.</summary>
-    public (int X, int Y)? CardMiddle(Scene.Scene scene, Area area)
-    {
-        EnsureLayout(scene);
-        return _boxAt.ContainsKey(area) ? Middle(area) : null;
     }
 
     /// <summary>Puts <paramref name="area"/>'s card in the middle of the view at the next render.</summary>

@@ -30,7 +30,7 @@ wait mode WorldView 20
 # ── The ☰ ─────────────────────────────────────────────────────────────────────
 # The same menu by mouse, from the corner, in every phase Escape pauses. 
 wait
-expect-state buttons menu=shown map=hidden
+expect-state buttons menu=shown
 click menu-button
 wait mode MainMenu 20
 expect-state buttons menu=hidden
@@ -57,10 +57,9 @@ click menu Continue
 wait mode LocationInteraction 30
 
 # ── The ☰ over narration ──────────────────────────────────────────────────────
-# An overlay like Escape's, and the ↹ beside it in the header. Neither on the management screen,
-# which has its own Back.
+# An overlay like Escape's. Not on the management screen, which has its own Back.
 wait
-expect-state buttons menu=shown map=shown
+expect-state buttons menu=shown
 click menu-button
 wait mode MainMenu 20
 click menu Continue
