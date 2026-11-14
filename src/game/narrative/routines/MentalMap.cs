@@ -45,6 +45,13 @@ public sealed class MentalMap
     /// <summary>Ways an observation took in. See <see cref="Scene.Scene.SeenLinks"/>.</summary>
     public HashSet<string> SeenLinks { get; set; } = new();
 
+    /// <summary>
+    /// The things and the people an observation has taken in here, by <c>ElementMemory.KeyOf</c>:
+    /// remembered, they are named on the map of a later visit and a click attends to them and no
+    /// other. Ways need no entry of their own — a way seen is in <see cref="SeenLinks"/>.
+    /// </summary>
+    public HashSet<string> KnownElements { get; set; } = new();
+
     /// <summary>The routines learned here, oldest first. No cap: the map is what is limited.</summary>
     public List<Routine> Routines { get; set; } = new();
 
@@ -58,6 +65,7 @@ public sealed class MentalMap
         scene.TakenLinks   = TakenLinks;
         scene.SeenAreas    = SeenAreas;
         scene.SeenLinks    = SeenLinks;
+        scene.KnownElements = KnownElements;
     }
 
     /// <summary>

@@ -144,6 +144,27 @@ public sealed class ActionProposalLedger
     /// their own record of actions across a re-expansion of the verb lists — iterative thinking's
     /// crossed-off pairs.
     /// </summary>
+    /// <summary>
+    /// The act is no longer waiting on a tree — carried out, reconsidered, or gone with the world that
+    /// allowed it — so it may be proposed again.
+    /// </summary>
+    public void Withdraw(VerbAction action)
+    {
+        _proposed.Remove(KeyOf(action));
+        _proposedWording.Remove(WordingOf(action));
+    }
+
+    /// <summary>
+    /// Forgets what minds refused and declined, keeping what is proposed: the member's pool has
+    /// refilled, and every mind may be asked again.
+    /// </summary>
+    public void ForgetRefusals()
+    {
+        _refusedFor.Clear();
+        _refused.Clear();
+        _declined.Clear();
+    }
+
     public static (string VerbId, Element? Target, object? Variant) IdentityOf(VerbAction action) => KeyOf(action);
 
     /// <summary>Forgets everything — a new narration phase begins.</summary>

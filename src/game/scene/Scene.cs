@@ -102,6 +102,12 @@ public class Scene
     public HashSet<string> SeenLinks { get; set; } = new();
 
     /// <summary>
+    /// The things and people an observation has taken in (<c>ElementMemory</c>). Shared with the
+    /// protagonist's <c>MentalMap</c>, as <see cref="VisitedAreas"/>.
+    /// </summary>
+    public HashSet<string> KnownElements { get; set; } = new();
+
+    /// <summary>
     /// Which narration phase this scene belongs to. Defaults to <see cref="NarrationPhase.Exploration"/>.
     /// Special phases (e.g. <see cref="NarrationPhase.ChildhoodReminescence"/>) opt out of critic checks
     /// and noetic-point consumption and use phase-specific prompt contexts.

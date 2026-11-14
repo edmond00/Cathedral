@@ -662,6 +662,7 @@ public static class Config
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
+            '☠', '✗', '✓', '❝', // location map: a hostile, a refusal or failure, a success, speech
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
@@ -1429,6 +1430,21 @@ public static class Config
 
         // Difficulty 0: an act that cannot fail, and rolls no dice (REMEMBER, and any plain act)
         public const char AutomaticDifficultyGlyph = '○';
+
+        // ── The location map's symbols (narration) ──────────────────────────────
+        // What stands on a card before it is observed, by kind, and what a thought tree is made of.
+        public const char MapWay      = '∩';   // a way on: a neighbouring area, a door, a stair, a path
+        public const char MapPerson   = '☺';   // a living thing that is no enemy
+        public const char MapHostile  = '☠';   // one that is
+        public const char MapThing    = '◆';   // any other point of interest
+        public const char MapContent  = '◇';   // what a container holds, disclosed and not yet observed
+        public const char MapThink    = '?';   // think about this
+        public const char MapSpeak    = '❝';   // speak of this to a companion; and what was said
+        public const char MapThought  = '≡';   // a text a mind wrote
+        public const char MapRefusal  = '✗';   // a refusal, or an act that failed
+        public const char MapSuccess  = '✓';   // an act that succeeded
+        public const char MapEmotion  = '♥';   // what it stirred
+        public const char MapBeast    = '♞';   // a companion that is a beast
 
         // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
         public const char GoldCoinSymbol   = '⎊'; // yellow
