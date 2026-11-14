@@ -31,10 +31,38 @@ public abstract class Verb
     public abstract string DisplayName { get; }
 
     /// <summary>
-    /// Base difficulty of this verb (1–10). Combined with a situational modifier
-    /// from the LLM critic to produce the final difficulty level.
+    /// Base difficulty of this verb (0–10): the number of sixes the roll must show. Combined with
+    /// the action modus mentis's willingness (eager −1, willing 0, reluctant +1) to give the action's
+    /// difficulty — see <see cref="ActionDifficulty"/>.
+    ///
+    /// <para><b>0 is a real difficulty, not "unset"</b>: an act so plain that nothing about it can go
+    /// wrong (walking up a stair, opening an unlocked door, sitting down, going over to speak to
+    /// somebody). A difficulty-0 action rolls no dice and succeeds, exactly as REMEMBER does in the
+    /// childhood reminescence; so it can never fail and its <see cref="FailurePenalties"/> are drawn
+    /// only when reluctance has raised it to 1. A verb whose failure is part of its meaning — losing
+    /// the way, looking and seeing nothing, a slip in front of a confronter — keeps a base of 1 or
+    /// more.</para>
     /// </summary>
     public abstract int BaseDifficulty { get; }
+
+    /// <summary>The hardest an action can be: ten sixes.</summary>
+    public const int MaxDifficulty = 10;
+
+    /// <summary>
+    /// The difficulty of this verb as one action: <see cref="DifficultyFor"/> plus the willingness
+    /// modifier, clamped to 0–<see cref="MaxDifficulty"/>.
+    ///
+    /// <para><b>A crime is never free.</b> An illegal act (<see cref="IsIllegal"/>) is floored at 1:
+    /// what a failed crime costs — the witness who hears it and comes, the confrontation — is the
+    /// whole of the crime chain, and an act that cannot fail could never be heard. So an eager means
+    /// takes a lawful difficulty-1 act to 0, and the same act done while trespassing stays at 1.
+    /// Without a scene (tooling) nothing is known to be illegal and the floor is 0.</para>
+    /// </summary>
+    public int ActionDifficulty(Element? target, int modifier, Scene? scene = null, PoV? pov = null, PartyMember? actor = null)
+    {
+        int floor = scene != null && pov != null && IsIllegal(scene, pov, target, actor) ? 1 : 0;
+        return System.Math.Clamp(DifficultyFor(target) + modifier, floor, MaxDifficulty);
+    }
 
     /// <summary>
     /// Optional override for the action menu's difficulty glyph. When non-null, takes

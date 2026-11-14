@@ -7,7 +7,10 @@
 # pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
 # clicked by index (which word the prose highlights is not something a test can know).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Roof" --period dawn --observe-only "Test Stair"
+# The verb's base difficulty is 0, which rolls nothing and cannot fail; --willingness reluctant
+# raises it to 1 (Verb.ActionDifficulty), so there is a roll for fail-dice to miss.
+#
+# FLAGS: --playground --willingness reluctant --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Roof" --period dawn --observe-only "Test Stair"
 
 wait
 click menu New

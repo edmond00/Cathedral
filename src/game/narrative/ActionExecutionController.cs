@@ -152,13 +152,14 @@ public class ActionExecutionController
         // prompts want. It decides nothing about the outcome: success is the dice roll alone
         // (difficulty = 6s needed, dice = summed modus-mentis levels), which is where the anatomy
         // enters, and only through the level cap those modi mentis were raised under.
-        int difficultyLevel = action.DifficultyLevel > 0
+        // 0 is a real difficulty — an act that cannot fail, which the controller resolves with no roll.
+        int difficultyLevel = action.DifficultyLevel != ParsedNarrativeAction.NotEvaluated
             ? action.DifficultyLevel
-            : Math.Clamp(action.Verb.DifficultyFor(action.PreselectedOutcome?.Target), 1, 10);
+            : action.Verb.ActionDifficulty(action.PreselectedOutcome?.Target, 0);
         double difficultyScore = (Math.Clamp(difficultyLevel, 1, 10) - 1) / 9.0;
 
         Console.WriteLine($"🎯 [DIFFICULTY] level {difficultyLevel}/10 (score {difficultyScore:F3}, " +
-            $"{(difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")})");
+            $"{(difficultyLevel == 0 ? "Automatic" : difficultyLevel <= 3 ? "Easy" : difficultyLevel <= 6 ? "Moderate" : "Hard")})");
 
         return Task.FromResult(new ActionEvaluationResult
         {

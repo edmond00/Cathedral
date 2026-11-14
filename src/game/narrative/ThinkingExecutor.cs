@@ -398,11 +398,12 @@ public class ThinkingExecutor
             string bareAction = StripPrefix(styledAction, ActionPrefix);
 
             // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
-            // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
+            // clamped to 0..10 — 1 at least for a crime (Verb.ActionDifficulty). Difficulty 0 rolls no
+            // dice and succeeds (the ○ glyph), as every act of an auto-success phase does.
             var verbOutcome = (VerbAction)resolved;
             int difficultyLevel = autoSuccess
                 ? 0
-                : Math.Clamp(verbOutcome.Verb.DifficultyFor(verbOutcome.Target) + fit.DifficultyModifier, 1, 10);
+                : verbOutcome.Verb.ActionDifficulty(verbOutcome.Target, fit.DifficultyModifier, scene, pov, actingMember);
 
             var action = new ParsedNarrativeAction
             {
@@ -622,7 +623,7 @@ public class ThinkingExecutor
             NeutralActionText   = goalPhrase,
             ThinkingModusMentis = thinkingModusMentis,
             Keyword             = previous.Keyword,
-            DifficultyLevel     = Math.Clamp(goal.Verb.DifficultyFor(goal.Target) + fit.DifficultyModifier, 1, 10),
+            DifficultyLevel     = goal.Verb.ActionDifficulty(goal.Target, fit.DifficultyModifier, scene, pov, actingMember),
         });
     }
 
@@ -771,6 +772,13 @@ public class ThinkingExecutor
                 Config.Debug.RefuseMeans--;
                 Console.WriteLine($"ThinkingExecutor: --refuse-means: {skill.DisplayName} refuses '{goalPhrase}' ({Config.Debug.RefuseMeans} left).");
                 return (PersonaFit.Refused, null);
+            }
+            // --willingness: eager or reluctant in place of willing, narrowed to what the rules offer.
+            if (Config.Debug.WillingnessOverride is { } forced and not Willingness.Unwilling)
+            {
+                var forcedFit = Offered(forced);
+                Console.WriteLine($"ThinkingExecutor: --willingness: {skill.DisplayName} is {forced} to '{goalPhrase}' -> {forcedFit}");
+                return (forcedFit, null);
             }
             return (PersonaFit.Willing, null);
         }

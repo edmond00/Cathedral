@@ -674,7 +674,7 @@ public class NarrativeUI : TerminalPanelUI
             // Glyph always uses difficulty-mapped color (dimmed in history)
             Vector4 diffGlyphColor = dimContent
                 ? Config.NarrativeUI.DimmedContentColor
-                : (action.DifficultyLevel > 0
+                : (action.DifficultyLevel >= 0
                     ? Config.Symbols.DifficultyLevelColor(action.DifficultyLevel)
                     : modusMentisBracketColor);
 

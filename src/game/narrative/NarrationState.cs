@@ -335,10 +335,18 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public Item? CombinedItem { get; set; } = null;
 
     /// <summary>
-    /// Difficulty level pre-computed after the thinking phase (1–10 scale).
-    /// 0 means not yet evaluated.
+    /// Difficulty level pre-computed after the thinking phase (0–10 scale): the sixes the roll must
+    /// show. 0 is an act that cannot fail — no dice are rolled and it succeeds (see
+    /// <see cref="Cathedral.Game.Scene.Verbs.Verb.BaseDifficulty"/>). <see cref="NotEvaluated"/> (−1)
+    /// means not yet evaluated.
     /// </summary>
-    public int DifficultyLevel { get; set; } = 0;
+    public int DifficultyLevel { get; set; } = NotEvaluated;
+
+    /// <summary>The <see cref="DifficultyLevel"/> of an action whose difficulty has not been decided.</summary>
+    public const int NotEvaluated = -1;
+
+    /// <summary>A difficulty-0 action: no roll, no failure.</summary>
+    public bool IsAutomatic => DifficultyLevel == 0;
 
     /// <summary>
     /// Set when a coded rule refused this action for want of an implement (<c>RequiredToolRule</c>).
@@ -370,14 +378,14 @@ public class ParsedNarrativeAction : ModusMentisChainElement
     public override ModusMentis ChainModusMentis => CombinedActionModusMentis ?? ActionModusMentis!;
 
     /// <summary>
-    /// The glyph opening this action's line: the verb's override when it has one (REMEMBER uses '○',
-    /// having no normal difficulty), else the difficulty glyph, else '>' before evaluation.
+    /// The glyph opening this action's line: the verb's override when it has one, else the
+    /// difficulty glyph — '○' for difficulty 0, an act that cannot fail — else '>' before evaluation.
     /// </summary>
     public char DifficultyGlyph
         => PreselectedOutcome?.Verb?.DifficultyGlyphOverride
            ?? (DifficultyLevel > 0
                ? Config.Symbols.DifficultyGlyphs[Math.Clamp(DifficultyLevel, 1, 10) - 1]
-               : '>');
+               : DifficultyLevel == 0 ? Config.Symbols.AutomaticDifficultyGlyph : '>');
 
     /// <summary>
     /// The full <c>"⑤ [MODUS MENTIS ⟐⟐] "</c> prefix an action line is drawn with. The live renderer

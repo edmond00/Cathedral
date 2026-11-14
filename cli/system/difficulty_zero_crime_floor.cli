@@ -1,0 +1,42 @@
+# Difficulty 0 — a crime is never free
+#
+# open_door is difficulty 0, and an eager means would take it lower still — but standing in the Test
+# Room, which is private, makes ANY act trespass, and an illegal act is floored at 1
+# (Verb.ActionDifficulty): what a failed crime costs (the witness who hears it and comes) is the whole
+# crime chain, and an act that cannot fail could never be heard. So the door out is rolled, at ①, and
+# `strategy fail-dice` makes it miss.
+#
+# FLAGS: --playground --willingness eager --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Room Door"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+expect-state where trespass=yes
+
+strategy fail-dice
+goal open_door
+advance 12 180
+
+click keyword 0
+choose 0
+choose ripelore
+advance 12 180
+
+expect ①
+expect-not ○
+
+click action 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+
+expect FAILURE
+expect-verb open_door
+expect-no-outcome area_move
+quit

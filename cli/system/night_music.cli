@@ -32,8 +32,8 @@ choose ripelore
 advance 12 180
 click action 0
 choose 0
-advance 12 180
-click continue
+# sit_and_wait is difficulty 0: no dice box, the time box asks at once. `wait`, not `advance`,
+# which would press through it and take the next period.
 
 wait
 click period morning

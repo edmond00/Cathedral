@@ -9,7 +9,10 @@
 # this a test of THAT conversation. --auto-dialogue then settles the conversation this verb opens,
 # so the assertion is about the verb. The trees are covered by cli/_systems/dialogue_*.cli.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+# The verb's base difficulty is 0, which rolls nothing and cannot fail; --willingness reluctant
+# raises it to 1 (Verb.ActionDifficulty), so there is a roll for fail-dice to miss.
+#
+# FLAGS: --playground --willingness reluctant --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
 
 wait
 click menu New
