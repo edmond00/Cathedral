@@ -13,7 +13,7 @@
 #
 # --doubt low: one try, no iterative thinking — a retry would step around the refusal
 # this script is about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period dawn --observe-only "Test Chest" --grant-mm discipline,knack,scientific_research --means-only discipline --doubt low
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period night --observe-only "Test Chest" --grant-mm discipline,knack,scientific_research --means-only discipline --doubt low
 
 wait
 click menu New
@@ -27,7 +27,9 @@ strategy succeed
 goal steal
 advance 12 180
 
-# Ripelore; Discipline refuses to steal, before any button exists.
+# By night: awake in her own room the weaver would confront whoever walked in, and nothing but
+# her could then be looked at.
+# Ripelore; Discipline refuses to steal, before any act exists.
 click observe "Test Chest"
 choose childhood_memory
 advance 12 180
@@ -35,7 +37,7 @@ click think "Test Chest"
 choose ripelore
 advance 12 180
 expect-state texts "against every principle I hold"
-expect-not ] steal
+expect-no-state trees verb=steal
 
 # Learned Research: still offered stealing, carried out by a means that would not refuse. At seed 42
 # the draw lands on Stealth, a discreet means, whose button reads "[Stealth ⟐] discreetly steal …".
@@ -43,6 +45,7 @@ means none
 click think "Test Chest"
 choose scientific_research
 advance 12 180
-expect-state texts "] discreetly steal"
+expect-state trees verb=steal
+expect-state trees discreetly steal
 
 quit

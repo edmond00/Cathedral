@@ -21,6 +21,12 @@ expect-state map visited Test Field
 expect-no-state map visited Test Rock
 expect-no-state map taken
 
+# A look at the mud, the crossing to the wood: the way is seen, and the wood at its far end with it.
+click observe "Test Mud"
+choose childhood_memory
+advance 12 180
+expect-state map seen Test Wood
+
 strategy succeed
 goal follow_path
 advance 12 180
@@ -49,8 +55,9 @@ expect-state map taken between Test Rock and Test Yard
 # The move was shown on the map: the party walked the track's own line, from card to card.
 expect-state map walk from Test Field to Test Rock
 expect-state map via=line
-# The wood is off the path: neither visited nor any way to it taken.
-expect-no-state map Test Wood
+# The wood is off the path: seen from the field, never stood in, and no way to it taken.
+expect-no-state map visited Test Wood
+expect-no-state map taken Test Mud
 save roundtrip
 
 # Leave, come back: a rebuilt scene, the same record.
@@ -67,7 +74,7 @@ expect-state map visited Test Yard
 expect-state map visited Test Rock
 expect-state map taken Field–Rock Track
 expect-state map taken between Test Field and Test Yard
-# What the observations took in is seen, and only that: the field's introduction named the Test Mud,
-# the crossing to the wood, so the wood is seen without ever being stood in.
+# What an observation took in is seen, and only that: the Test Mud was looked at from the field, so
+# the wood is seen without ever being stood in.
 expect-state map seen Test Wood
 quit

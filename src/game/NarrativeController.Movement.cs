@@ -523,6 +523,8 @@ public partial class NarrativeController
         if (escape.Done > 0)
         {
             Console.WriteLine($"NarrativeController: RUNAWAY failed on the way out in '{_pov.Where.DisplayName}' — stopped by '{from.Npc.DisplayName}'");
+            // They stand here now, with whoever stopped them on their map.
+            ReconcileTrees();
             return;
         }
         if (from.Kind == ConfrontationKind.Enemy)

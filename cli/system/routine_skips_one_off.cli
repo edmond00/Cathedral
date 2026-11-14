@@ -34,26 +34,24 @@ advance 12 180
 expect-verb catch
 expect Caught:
 
-# The walk after it. The footer closes the segment and opens the next phase, pinned to the track.
-observe "Test Field"
-goal move
+# The walk after it, to the field: the result closed, the way is looked at, thought about and taken.
 click continue
-wait 60
 advance 12 180
-click think "Butterfly"
+goal move
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+click think "Test Field"
 choose ripelore
 advance 12 180
-click act 0
+click act move
 choose 0
 advance 12 180
 click continue
 advance 12 180
 expect-verb move
 expect Moved to:
-
-observe none
 click continue
-wait 60
 advance 12 180
 click exit
 wait mode WorldView 90

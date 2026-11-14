@@ -20,26 +20,25 @@ wait mode LocationInteraction 60
 
 # The hall is public.
 expect-state where trespass=no
-expect open ground
+expect-not TRESPASSING
 
 strategy succeed
 goal open_door
 advance 12 180
+
 click observe "Test Room Door"
 choose childhood_memory
 advance 12 180
 click think "Test Room Door"
 choose ripelore
 advance 12 180
+
+# An unlocked door is opened without a roll: the result is up at once.
 click act 0
 choose 0
 advance 12 180
-click continue
-advance 12 180
 expect-verb open_door
 expect Moved to:
-
-observe none
 click continue
 wait 60
 advance 12 180
@@ -49,8 +48,9 @@ expect-state where Test Room
 expect-state where trespass=yes
 expect TRESPASSING
 
-# The weaver lives in that room, so the footer is RUNAWAY rather than LEAVE — an escape roll, which
-# `strategy succeed` lets through. The visit then ends from inside the room.
+# The weaver lives in that room and is in it, so the way out is RUNAWAY rather than LEAVE — an
+# escape roll, which `strategy succeed` lets through. The visit then ends from inside the room.
+expect-state where exit=RUNAWAY
 click exit
 advance 12 180
 click continue

@@ -19,9 +19,7 @@ advance 12 180
 # --- appease, then tame (see cli/verb/tame/success.cli) ---------------------------
 strategy succeed
 goal appease
-click observe "crocodile"
-choose childhood_memory
-advance 12 180
+# The beast confronts whoever walks in, and so is on the map already observed.
 click think "crocodile"
 choose ripelore
 advance 12 180

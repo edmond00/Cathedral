@@ -1,19 +1,18 @@
 # speaking — a Speaking modus mentis puts conversation first
 #
-# Observing: Banter (Observation + Speaking) is handed the crate in the Test Hall. The crate is kept
-# (the playground never turns away), and the follow-up observation is narrowed to the one living
-# person still unobserved, the brewer, out of every object left in the hall. The line turning
-# to him ("shifts to the brewer") is what proves he was the one attended to.
+# Observing: Banter (Observation + Speaking) is asked to look at somebody in the Test Hall. A
+# speaking mind never turns away from a person, so the declining --refuse-focus forces on any other
+# observation is not open to it, and somebody is observed.
 #
-# Thinking: Rhetoric (Thinking + Speaking), thinking about the brewer, is offered only the
-# conversations among his goals, and a conversation's means are narrowed to the one speaking
-# action modus mentis held, Boasting — so the button reads "[Boasting …]" and offers no attack.
+# Thinking: Rhetoric (Thinking + Speaking), thinking about that person, is offered only the
+# conversations among their goals, and a conversation's means are narrowed to the one speaking
+# action modus mentis held, Boasting — so the act is Boasting's and no attack is offered.
 #
 # Not reachable here: a speaking action modus mentis never refusing a conversation (the playground
 # always answers "willing"), and never turning away from a person (the playground never turns away,
 # and --refuse-focus deliberately wins over the rule).
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --grant-mm banter,rhetoric,boasting,knack
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Hall" --period dawn --grant-mm banter,rhetoric,boasting,knack --refuse-focus
 
 wait
 click menu New
@@ -24,21 +23,21 @@ travel here
 wait mode LocationInteraction 60
 advance 12 180
 
-# Banter observes the crate, then turns to the brewer rather than to another object.
-click observe "crate"
+# Banter is asked to look at somebody. A speaking mind does not turn away from a person: the
+# declining --refuse-focus forces on every other observation is not open to it here.
+click observe person
 choose banter
 advance 12 180
-expect-state texts "shifts to the brewer"
+expect-state trees observer=banter
+expect-no-state trees refusal
 
-# Rhetoric thinks about the brewer: a conversation, carried out by Boasting.
+# Rhetoric thinks about them: of what a person affords it wants the conversation, and a speaking
+# means carries that out — Boasting, not the Knack.
 strategy succeed
-click observe "man"
-choose childhood_memory
-advance 12 180
-click think "man"
+click think last
 choose rhetoric
 advance 12 180
-expect [Boasting
-expect-not attack him
-expect-not [Knack
+expect-state trees means=boasting
+expect-no-state trees verb=attack
+expect-no-state trees means=knack
 quit

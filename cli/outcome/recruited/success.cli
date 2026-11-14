@@ -24,9 +24,7 @@ state
 # --- appease: enemy -> suspicious, which is what tame requires --------------------
 strategy succeed
 goal appease
-click observe "wolf"
-choose childhood_memory
-advance 12 180
+# The beast confronts whoever walks in, and so is on the map already observed.
 click think "wolf"
 choose ripelore
 advance 12 180

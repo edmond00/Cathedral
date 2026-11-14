@@ -180,6 +180,7 @@ public partial class NarrativeController
 
         AdoptCorpses();
         AdoptArrivals();
+        AdoptConfronters();
         SceneDebugManager.UpdatePoV(_pov);
     }
 
@@ -225,6 +226,27 @@ public partial class NarrativeController
                 Root(mind, anchor, area, text: null,
                      note: enemy ? NeutralNarration.ArrivalEnemyCaution() : NeutralNarration.ArrivalWitnessNotice());
             }
+        }
+    }
+
+    /// <summary>
+    /// Whoever confronts a member is on that member's map already observed: an enemy standing in
+    /// the room walked into, a householder who has seen them where they have no business, somebody
+    /// who stopped them on their way out. Confronted, a member may look at nobody else, so leaving
+    /// the confronter to be looked at first would make answering them cost a point more than
+    /// anything else in the place — for the one person who will not wait.
+    /// </summary>
+    private void AdoptConfronters()
+    {
+        foreach (var mind in _minds.Values)
+        {
+            if (ConfrontationOf(mind) is not { } confrontation) continue;
+            if (_scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, confrontation.Npc)) is not { } confronter) continue;
+            if (mind.NodeOf(confronter, null) != null) continue;
+            var anchor = NodeForArea(mind.Pov.Where).PossibleOutcomes.OfType<SyntheticNpcObservationObject>()
+                             .FirstOrDefault(o => ReferenceEquals(o.SceneNpc, confronter));
+            if (anchor != null)
+                Root(mind, anchor, mind.Pov.Where, text: null, note: NeutralNarration.ConfrontedBy(confrontation.Kind));
         }
     }
 }

@@ -18,18 +18,15 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-expect-state texts "wolf"
 
 strategy succeed
 goal examine
-click observe "wolf"
-choose childhood_memory
-advance 12 180
+# The beast confronts whoever walks in, and so is on the map already observed.
 click think "wolf"
 choose ripelore
 advance 12 180
-expect-not That will not do, and I think again
-expect [Woodcraft
+expect-no-state texts "That will not do, and I think again"
+expect-state trees means=woodcraft
 regions
 
 click act 0

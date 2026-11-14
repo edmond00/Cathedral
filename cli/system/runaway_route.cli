@@ -45,8 +45,10 @@ hostile brewer Test Rock
 hostile weaver Test Yard
 click continue
 advance 12 180
-expect-state texts "RUNAWAY"
+expect-state where exit=RUNAWAY
 expect-state where Test Rock
+# Whoever confronts is on the map already, observed by nobody.
+expect-state trees the brewer
 
 # Away from the brewer: the dice settle, then the second roll is set to fail before the walk on.
 click exit
@@ -58,8 +60,8 @@ click continue
 advance 12 180
 expect-state map walk from Test Rock to Test Yard
 expect-state where Test Yard
-expect-state texts "after trying to run away"
-expect-state texts "RUNAWAY"
+expect-state where confronted=Enemy:weaver exit=RUNAWAY
+expect-state trees the weaver
 expect-no-state dialogue caught_red_handed
 
 # From here it is the narration's own RUNAWAY again, and failing that one is what it always was: the
