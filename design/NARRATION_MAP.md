@@ -152,14 +152,53 @@ what the map shows. Time is one clock for the whole party.
 ## 9. Childhood and get-up
 
 - **Decided: both play on the get-up map** (Under the Tree).
-- Reminescence: only the "myself" token is interactive; the scenery is drawn dim and inert. A click
-  on myself observes a fragment of the current memory, a thought follows, Remember carries on to the
-  next memory. **Decided: the branches accumulate under myself**, and are cleared when get-up begins.
-- Get-up: **decided: the tree scene, enriched** — myself carries the three states of exhaustion, and
-  a few things of scenery can be observed and thought about. Every thought ends on Get Up.
+- "Myself" is an element of that place (`SelfPointOfInterest`), on the map from the start and
+  observed by nobody. It holds what each phase is about the way a container holds its contents: one
+  named symbol each, looked at one at a time.
+- Reminescence: only what hangs from myself is interactive; the scenery is drawn dim and inert.
+  Myself holds the fragments of the current memory; a fragment observed is thought about, and
+  Remember carries on to the next memory. **Decided: the branches accumulate under myself**, and are
+  cleared when get-up begins. A fragment looked at and not reached for stays as it was read.
+- Get-up: **decided: the tree scene, enriched** — myself holds the three states of exhaustion, and
+  the scenery (the lone tree, the road, the horizon) can be observed and thought about. Every
+  thought ends on Get Up.
 
-## 10. Tests and tools
+## 10. Settled while building it
 
-- `click keyword` goes; 226 of 278 scripts are rewritten against symbols, elements and acts named,
-  never coordinates.
+What the draft and the interview left open, and how it was filled.
+
+- **Every phase an act opens waits for the result's CONTINUE.** An act's result is a box of its
+  own (SUCCESS or FAILURE, and the chips). A fight, a conversation, a crafting menu, the next
+  memory and a lost way all start on its CONTINUE, since the next screen paints over the only
+  account of what the act did. With no chip to read, what follows starts at once.
+- **The pool also refills on the way back** from a fight, a conversation or a menu, for every
+  member standing where it happened.
+- **A plain way to ground already stood on is not a symbol.** Its line is on the map and a click on
+  the card walks there. A door, a stair, a path or a climb keeps its symbol: there is more to do to
+  it than walk it.
+- **Thinking is offered only about what affords an act now.** A way since walked, a container
+  emptied, a person gone to bed keep their tree and show no `?`.
+- **Somebody asleep witnesses nothing.** A confrontation now locks what may be looked at, so a
+  sleeper counted as a witness would have made their own bedroom a dead end. (The test for "asleep"
+  also stopped answering no about everybody already put to bed.)
+- **A conversation with the people of a place is the protagonist's.** The dialogue verbs are not
+  offered to a companion played elsewhere: its replies, and what it settles, are the protagonist's.
+- **A fight takes the members standing where it breaks out.** Whoever is fought counts those
+  members enemies. Lost with the protagonist in it, the run ends; lost by companions on their own,
+  they are dead and the protagonist plays on.
+- **The roster follows the party.** Somebody recruited mid-visit stands where the member who won
+  them over stands; somebody dead is gone with their trees, and their body lies where they stood.
+- **When trees outgrow their room** (eleven rows under a card), the elements with something left to
+  do are drawn first and the last row counts the finished ones not shown.
+- **A stalked quarry's locked door is marked seen** rather than opening a text about it.
+- **`--no-embeddings` and the word vectors' runtime load are gone**: keywords were their only
+  reader. `--mm-audit`'s persona lint still reads the file when it is there.
+
+## 11. Tests and tools
+
+- `click keyword` goes; the scripts are rewritten against symbols, elements and acts named, never
+  coordinates: `click observe <kind|name>`, `click think <name>`, `click speak <name>`,
+  `click act <n|word>`, `click member <name>`, `click area <name>`, `click exit`.
+- `inspect trees`, `inspect texts` and `inspect known` read what the map shows; `inspect where`
+  carries `exit=LEAVE|RUNAWAY`.
 - The flags that pinned text behaviour (`--refuse-focus`, the group scripts) go or are redefined.

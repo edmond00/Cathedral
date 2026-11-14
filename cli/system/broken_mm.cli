@@ -48,8 +48,7 @@ expect-state skills "woodcraft level=3 xp=0 effective=0 max=0 broken=True"
 
 # Choosing a broken modus mentis for an observation is offered and refused, not hidden. The refusal
 # is narrated in that modus mentis's own voice and names the organs and the wounds behind them.
-click keyword 0
-choose 1
+click observe "?"
 choose ripelore
 advance 8 90
 expect "will not answer"

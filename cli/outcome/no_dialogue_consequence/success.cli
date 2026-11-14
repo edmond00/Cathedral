@@ -23,18 +23,21 @@ strategy succeed
 goal propose_to_buy
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
 advance 12 180
 
 # --- walk the tree, and lose the check at the end -------------------------------
+click continue
 wait mode Dialogue 60
 strategy fail-dice
 advance 20 180

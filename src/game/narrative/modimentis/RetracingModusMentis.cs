@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Retracing — going back the way one came, step for step, by ways already walked. VerbAction.
-/// What a successful backtrack teaches on an ordinary day.
+/// What a new way found back to known ground teaches on an ordinary day (Verb.WayBackLessons).
 /// </summary>
 public class RetracingModusMentis : ModusMentis
 {

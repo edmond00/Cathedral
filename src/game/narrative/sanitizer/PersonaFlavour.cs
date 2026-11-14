@@ -19,11 +19,6 @@ namespace Cathedral.Game.Narrative.Sanitizer;
 /// <c>--seed</c> is untouched, and the same text always comes out the same — and since a growing text
 /// never changes what comes before its first listed word, the preview, which rewrites the text on every
 /// streamed word, shows exactly the words the final text will hold.</para>
-///
-/// <para><b>Keywords follow the word.</b> A noun a register replaces ("horse" → "steed") stays the
-/// keyword that names its object: <see cref="KeywordLemmas"/> tells
-/// <see cref="KeywordExtractor"/> that "steed" stands for "horse", so the replacement is chosen, and
-/// highlighted, where the plain word would have been.</para>
 /// </summary>
 public sealed class PersonaFlavour
 {
@@ -31,7 +26,7 @@ public sealed class PersonaFlavour
     public const int SharePercent = 60;
 
     private static readonly ConcurrentDictionary<string, PersonaFlavour?> _byModusMentis = new();
-    private static readonly ConcurrentDictionary<string, (Lexicon Lexicon, IReadOnlyDictionary<string, string> Lemmas)> _byRegisters = new();
+    private static readonly ConcurrentDictionary<string, Lexicon> _byRegisters = new();
 
     private readonly Lexicon _lexicon;
     private readonly string _voice;
@@ -40,34 +35,12 @@ public sealed class PersonaFlavour
     /// <summary>The registers, in precedence order: on a word two of them replace, the first wins.</summary>
     public IReadOnlyList<Register> Registers { get; }
 
-    /// <summary>
-    /// Every replacement this flavour can write, lower-cased, mapped to the word it stands for
-    /// ("steed" → "horse", "bairns" → "child"), for keyword extraction.
-    /// </summary>
-    public IReadOnlyDictionary<string, string> KeywordLemmas { get; }
-
     private PersonaFlavour(IReadOnlyList<Register> registers, string voice, int share)
     {
         Registers = registers;
         _voice    = voice;
         _share    = share;
-        (_lexicon, KeywordLemmas) = _byRegisters.GetOrAdd(string.Join(",", registers), _ => Build(registers));
-    }
-
-    private static (Lexicon, IReadOnlyDictionary<string, string>) Build(IReadOnlyList<Register> registers)
-    {
-        var lexicon = new Lexicon(registers.SelectMany(PersonaLexicons.For));
-        var lemmas  = new Dictionary<string, string>();
-        foreach (var e in lexicon.Entries.Where(e => e.Replacement.Length > 0))
-        {
-            string lemma = e.Lemma ?? e.Form.ToLowerInvariant();
-            string replacement = e.Replacement.ToLowerInvariant();
-            lemmas.TryAdd(replacement, lemma);
-            // A keyword is one word, so a kenning is found at its last: "bite-iron" at "iron".
-            if (e.Lemma != null && replacement.LastIndexOfAny(new[] { '-', ' ' }) is int cut and >= 0)
-                lemmas.TryAdd(replacement[(cut + 1)..], lemma);
-        }
-        return (lexicon, lemmas);
+        _lexicon = _byRegisters.GetOrAdd(string.Join(",", registers), _ => new Lexicon(registers.SelectMany(PersonaLexicons.For)));
     }
 
     /// <summary>The flavour of <paramref name="mm"/>, or null when it declares no register.</summary>

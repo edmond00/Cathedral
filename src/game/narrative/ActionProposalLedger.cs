@@ -5,13 +5,10 @@ using Cathedral.Game.Scene;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// What the acting member has already been <b>offered a button for</b> during the current narration
-/// phase — the thinking-side counterpart of <see cref="ObservationLedger"/>, with the same lifetime
-/// and the same purpose.
+/// What a member has already been <b>offered an act for</b>, kept by their mind for the visit.
 ///
-/// <para>The problem it solves is the one the observation ledger solves one step earlier. A thinking
-/// request lets the modus mentis choose freely among everything the observed object affords, and
-/// those choices converge: the mind that wanted to grab the apple wants to grab it again, so a
+/// <para>A thinking request lets the modus mentis choose freely among everything the observed
+/// element affords, and those choices converge: the mind that wanted to grab the apple wants to grab it again, so a
 /// player trying to reach some *other* action on the same object spent point after point being
 /// offered the same one. Actions recorded here are dropped from every later goal list of the phase,
 /// so each request has to reach for something the player has not already been given.</para>

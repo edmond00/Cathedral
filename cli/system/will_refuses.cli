@@ -29,8 +29,10 @@ expect-state will "will lockpicking steps=2"
 expect-state will "will winnowing steps=none"
 
 # Not this way: no action, and the way named.
-click keyword bush
-choose 0
+click observe "bush"
+choose childhood_memory
+advance 12 180
+click think "bush"
 choose lockpicking
 advance 12 180
 expect I want to pick a lock: to unlock
@@ -38,16 +40,14 @@ expect but that does nothing for it, and I leave it be
 expect-not to get there
 
 # Not this way, with a person at the end of it: named, not pronounced.
-click keyword bush
-choose 0
+click think "bush"
 choose pugilitas
 advance 12 180
 expect : to attack the
 expect-not attack him
 
 # Not in this place: the focus is refused, and why.
-click keyword bush
-choose 1
+click observe "bush"
 choose winnowing
 advance 12 180
 expect have to leave it

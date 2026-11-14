@@ -608,8 +608,9 @@ public partial class NarrativeController
     private ModusMentis? ChooseLesson(Verb verb, Element target, VerbAction? action = null)
         => verb.ResolveLesson(new LessonContext(_scene, _pov, _active, target)
         {
-            Hostile = ThreatSelector.ComputeContext(_scene, _pov, _active).Level,
-            Action  = action,
+            Hostile      = ThreatSelector.ComputeContext(_scene, _pov, _active).Level,
+            FindsWayBack = AreaVisits.IsNewWayBack(_scene, _pov.Where, target),
+            Action       = action,
         });
 
     /// <summary>
@@ -653,8 +654,6 @@ public partial class NarrativeController
         // Where and when the member was before the reports apply: an act may move either.
         var areaBefore   = _pov.Where;
         var periodBefore = _pov.When;
-        // Whether the way about to be taken leads somewhere the party has already stood by a way it
-        // has not: the lesson of finding one's way back (Verb.ResolveLesson reads the visits).
         foreach (var report in reports)
             report.ApplyTo(OutcomeContext.For(_active, _scene, _pov));
 
@@ -731,8 +730,9 @@ public partial class NarrativeController
         // Read off the scene rather than off the outcome, because a report is what asks for it and
         // reports are applied for a success and a failure alike. A fight the player started outranks
         // the one their failure invited: swing at somebody and miss in front of a witness, and the
-        // brawl is the story, not the conversation the miss would otherwise have opened. It waits for
-        // the result's CONTINUE — the chips are the only account of what the blow did.
+        // brawl is the story, not the conversation the miss would otherwise have opened. Like every
+        // phase an act sets going, it waits for the result's CONTINUE — the chips are the only
+        // account of what the act did, and the next screen paints over them.
         Action? then = null;
         if (fightRequest != null)
         {
@@ -746,23 +746,23 @@ public partial class NarrativeController
         }
         // === The failure's social consequence ===
         // Three rungs of one ladder, decided by the executor from effective proximity. At most one is
-        // set. Seen by an enemy: they attack, with the initiative, and at once.
+        // set. Seen by an enemy: they attack, with the initiative.
         else if (!result.Succeeded && result.FightWithEnemy != null)
         {
             Console.WriteLine($"NarrativeController: enemy '{result.FightWithEnemy.DisplayName}' attacks after a failed act in plain sight");
-            _pendingFightOutcome = new FightTriggerOutcome(result.FightWithEnemy, $"opportunity attack by {result.FightWithEnemy.DisplayName}")
+            var fight = new FightTriggerOutcome(result.FightWithEnemy, $"opportunity attack by {result.FightWithEnemy.DisplayName}")
             {
                 EnemyInitiative = true,
             };
-            return;
+            then = () => _pendingFightOutcome = fight;
         }
         // Seen by a witness: they confront the member, and the tree decides what that becomes.
         else if (!result.Succeeded && result.CaughtByWitness != null)
         {
             var catchTree = ConfrontationSelector.TreeFor(_scene, result.CaughtByWitness, action!.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: witness '{result.CaughtByWitness.DisplayName}' caught the failed act ({catchTree.TreeId})");
-            SetPendingDialogue(new DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree));
-            return;
+            var caught = new DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree);
+            then = () => SetPendingDialogue(caught);
         }
         // Only heard, from a room away: they come to look. That rung is NpcDrawnInOutcome, applied
         // with the other reports above, and the trees have already taken them in.
@@ -773,9 +773,9 @@ public partial class NarrativeController
         }
         else if (dialogueRequest != null)
         {
-            Console.WriteLine($"NarrativeController: a conversation with {dialogueRequest.Npc.DisplayName} ('{dialogueRequest.Tree?.TreeId ?? dialogueRequest.TreeId}')");
-            SetPendingDialogue(new DialogueTriggerOutcome(dialogueRequest.Npc, dialogueRequest.TreeId, dialogueRequest.Tree));
-            return;
+            Console.WriteLine($"NarrativeController: a conversation with {dialogueRequest.Npc.DisplayName} ('{dialogueRequest.Tree?.TreeId ?? dialogueRequest.TreeId}') — held for CONTINUE");
+            var talk = new DialogueTriggerOutcome(dialogueRequest.Npc, dialogueRequest.TreeId, dialogueRequest.Tree);
+            then = () => SetPendingDialogue(talk);
         }
         else if (_scene.PendingGetUpTransition)
             then = FinishGetUp;

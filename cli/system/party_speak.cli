@@ -1,0 +1,76 @@
+# party — speaking of an element to a companion, and playing the companion
+#
+# Every member of the party has their own token on the map, their own trees and their own noetic
+# pool. Speaking is a symbol under an observed element: it costs the speaker a point, hangs what was
+# said under the element, and plants the element on the listener's trees with those words as its
+# root — the listener was told of it, and thinks about it from there. Speaking is not switching:
+# the member played changes only when a token is clicked.
+#
+# --fill-party is what makes this reachable: recruiting a companion in play is a long approach. At
+# seed 42 the party is filled with the hyena Brindletail, and the protagonist is Kenryc Greygate —
+# both names are seed-stable. The header names the member played.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# The visit opens on the protagonist, with both tokens in the yard.
+expect [KENRYC GREYGATE]
+inspect party
+
+# Something to speak of.
+click observe "Test Bench"
+choose childhood_memory
+advance 12 180
+expect-state noetic points=2/3
+
+# Speak: the speech mark under the bench, then a speaking modus mentis. One companion is in reach,
+# so nobody is asked whom.
+regions
+click speak "Test Bench"
+choose friendship
+advance 12 180
+expect-state trees speech
+expect-state noetic points=1/3
+expect [KENRYC GREYGATE]
+
+# The hyena has the bench on its own trees now, with its own full pool.
+click member Brindletail
+wait
+expect [BRINDLETAIL]
+expect-state trees "Test Bench"
+expect-state noetic points=
+
+# The companion thinks and acts for itself. The goal is pinned: a beast's action modus mentis
+# refuses to examine, and the playground's draw over the goals moves whenever an earlier draw does.
+strategy succeed
+goal smell
+click think "Test Bench"
+choose birdsong
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect SUCCESS
+expect-verb smell
+
+# The result closed, the companion is still the one played.
+click continue
+advance 12 180
+expect [BRINDLETAIL]
+
+# And back, by the protagonist's token: their trees are as they left them.
+click member Kenryc
+wait
+expect [KENRYC GREYGATE]
+expect-state trees speech
+quit

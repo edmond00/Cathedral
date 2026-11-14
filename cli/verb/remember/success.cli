@@ -4,9 +4,13 @@
 # pass --skip-childhood: that flag skips the phase entirely and fills the starting kit as if it had
 # run. Every other script in the suite passes it, which is why this verb had no test.
 #
-# The phase auto-succeeds by design — NarrativeController short-circuits it before the critic: no
-# plausibility check, no noetic cost, dice at difficulty 0. So there is no `strategy` here and no
-# meaningful failure case; `cli/remember/` has one script, deliberately.
+# The childhood is remembered from the place the protagonist will get up from, through the one
+# element that answers a click there: "Myself", which holds the fragments of the memory at hand as a
+# container holds its contents. A fragment is looked at, thought about, and reached for.
+#
+# The phase auto-succeeds by design — no plausibility check, no noetic cost, difficulty 0, so no
+# dice. There is no `strategy` here and no meaningful failure case; `cli/remember/` has one script,
+# deliberately. The fragment is named: --seed 42 fixes which memory comes first and what it holds.
 #
 # FLAGS: --playground --debug --seed 42 --no-encounters
 
@@ -20,19 +24,34 @@ wait mode ChildhoodReminescence 60
 advance 12 180
 regions
 
-# A memory fragment is the observable, and REMEMBER is the only verb the phase offers.
-click keyword 0
-choose 0
-choose 0
+# Nothing around the body answers; the memory's fragments hang from "Myself".
+expect Under the Tree
+expect-state trees "Myself"
+expect-state symbols x3 (disabled)
+expect-state symbols a scream
+
+click observe "a scream"
+choose childhood_reminescence
+advance 12 180
+click think "a scream"
+choose childhood_reminescence
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 0
 advance 12 180
+
+# No dice: the result is up at once.
+expect SUCCESS
+expect-verb remember
+
+# Its CONTINUE moves on to the next memory, whose fragments take the first one's place under
+# "Myself" — and the branch just remembered stays.
 click continue
 advance 12 180
-
-# What makes this a remember test rather than an any-verb test.
-expect-verb remember
+expect-no-state symbols "a scream"
+expect-state symbols manure smelt
+expect-state trees "a scream"
+expect-state trees "state=done verb=remember"
 quit

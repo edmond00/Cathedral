@@ -25,8 +25,10 @@ wait mode LocationInteraction 60
 advance 12 180
 expect-state will "will lockpicking steps=2 first="
 
-click keyword yard
-choose 0
+click observe "yard"
+choose childhood_memory
+advance 12 180
+click think "yard"
 choose lockpicking
 advance 12 180
 expect To get there I must first

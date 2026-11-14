@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Nightwalking — going about known rooms and lanes in the dark, by sound and step count.
-/// Observation and VerbAction. What a backtrack teaches when it is made at night.
+/// Observation and VerbAction. What a new way found back to known ground teaches when it is walked at night.
 /// </summary>
 public class NightwalkingModusMentis : ModusMentis
 {

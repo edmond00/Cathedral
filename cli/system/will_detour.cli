@@ -20,15 +20,17 @@ wait mode LocationInteraction 60
 advance 12 180
 expect-state will "will lockpicking steps=2"
 
-click keyword 0
-choose 0
+click observe "Field–Rock Track"
+choose childhood_memory
+advance 12 180
+click think "Field–Rock Track"
 choose lockpicking
 advance 12 180
 regions
 expect-not but that does nothing for it
 
 strategy succeed
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

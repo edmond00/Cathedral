@@ -27,14 +27,16 @@ strategy succeed
 goal gather
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Berry Bush"
+choose childhood_memory
+advance 12 180
+click think "Test Berry Bush"
 choose ripelore
 advance 12 180
 
 inspect noetic
 
-click action 0
+click act 0
 
 # Still offered. The row is greyed by what is carried and by nothing else, so an implement that
 # cannot possibly serve is still offered — and the point below is what that costs.

@@ -25,11 +25,13 @@ expect open ground
 strategy succeed
 goal open_door
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Room Door"
+choose childhood_memory
+advance 12 180
+click think "Test Room Door"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -38,7 +40,7 @@ expect-verb open_door
 expect Moved to:
 
 observe none
-click button
+click continue
 wait 60
 advance 12 180
 
@@ -49,7 +51,7 @@ expect TRESPASSING
 
 # The weaver lives in that room, so the footer is RUNAWAY rather than LEAVE — an escape roll, which
 # `strategy succeed` lets through. The visit then ends from inside the room.
-click button
+click exit
 advance 12 180
 click continue
 advance 12 180

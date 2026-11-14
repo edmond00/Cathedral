@@ -25,11 +25,13 @@ goal examine
 advance 12 180
 expect-no-state skills skill gut_feeling
 
-click keyword 0
-choose 0
+click observe "Test Giant Tree"
+choose childhood_memory
+advance 12 180
+click think "Test Giant Tree"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -47,16 +49,15 @@ manage
 save roundtrip
 
 # Close the segment (the footer CONTINUE), which opens a new phase on the same tree.
-click button
+click continue
 advance 12 180
 regions
 
 # The same act again teaches nothing: no chip is shown, and gut_feeling stays unlearned.
-click keyword 0
-choose 0
+click think "Test Giant Tree"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

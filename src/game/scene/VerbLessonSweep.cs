@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Scene.Verbs;
+using Cathedral.Game.Scene.Building;
 
 namespace Cathedral.Game.Scene;
 
@@ -13,8 +14,8 @@ namespace Cathedral.Game.Scene;
 /// <para>It <b>calls</b> <see cref="Verb.Lessons"/> rather than reading a declaration of what that
 /// method might return. A verb's lessons are free C#, and a list declared beside free logic drifts
 /// from it; a call cannot. Every period is walked, and each pairing is asked under four situations —
-/// alone, hostile heard, hostile seen — which between them reach every branch a
-/// sweep is able to stage.</para>
+/// alone, hostile heard, hostile seen, and each again as a new way back to known ground — which
+/// between them reach every branch a sweep is able to stage.</para>
 ///
 /// <para>What no sweep can reach is a branch needing state only play produces. Those are written up
 /// in prose by the <c>mm-grants</c> skill, which reads the methods themselves.</para>
@@ -91,12 +92,18 @@ public static class VerbLessonSweep
     {
         var plain = new LessonContext(scene, pov, Actor, target);
 
-        foreach (var ctx in new[]
-                 {
-                     plain,
-                     plain with { Hostile = ThreatLevel.Audio },
-                     plain with { Hostile = ThreatLevel.Visual },
-                 })
+        var staged = new List<LessonContext>
+        {
+            plain,
+            plain with { Hostile = ThreatLevel.Audio },
+            plain with { Hostile = ThreatLevel.Visual },
+        };
+        // A way found to come out on known ground: no swept scene has a visit behind it, so it is
+        // staged on every way that could be one (AreaVisits.IsNewWayBack names the same kinds).
+        if (target is ConnectorPointOfInterest and not LandscapePointOfInterest)
+            staged.AddRange(staged.ToList().Select(c => c with { FindsWayBack = true }));
+
+        foreach (var ctx in staged)
         {
             // ResolveLesson, not Lessons: the method yields ORDERED CANDIDATES and exactly one of
             // them is ever granted. Reading the whole list counted a candidate standing behind a

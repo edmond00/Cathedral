@@ -60,12 +60,18 @@ public static class AreaVisits
                 break;
 
             case SyntheticObservationObject { PointOfInterest: ConnectorPointOfInterest connector }:
-                scene.SeenLinks.Add(connector.StableKey);
-                foreach (var end in new[] { connector.AreaA, connector.AreaB })
-                    if (end.Id != here.Id && scene.SeenAreas.Add(end.StableKey))
-                        Console.WriteLine($"AreaVisits: {end.DisplayName} seen from {here.DisplayName} by {connector.DisplayName}");
+                See(scene, here, connector);
                 break;
         }
+    }
+
+    /// <summary>A way seen from <paramref name="here"/>, and the area at its far end with it.</summary>
+    public static void See(Scene scene, Area here, ConnectorPointOfInterest connector)
+    {
+        scene.SeenLinks.Add(connector.StableKey);
+        foreach (var end in new[] { connector.AreaA, connector.AreaB })
+            if (end.Id != here.Id && scene.SeenAreas.Add(end.StableKey))
+                Console.WriteLine($"AreaVisits: {end.DisplayName} seen from {here.DisplayName} by {connector.DisplayName}");
     }
 
     // ── Going back ───────────────────────────────────────────────────────────
@@ -86,6 +92,19 @@ public static class AreaVisits
         ConnectorPointOfInterest c => c is not LandscapePointOfInterest && c.Touches(here) && scene.TakenLinks.Contains(c.StableKey),
         _ => false,
     };
+
+    /// <summary>
+    /// Whether <paramref name="way"/>, seen from <paramref name="here"/>, is a way the party has never
+    /// gone by that leads somewhere it has already stood: a door, a stair, a path, a climb or a
+    /// crossing found to come out on known ground. What such a way teaches is how places join up
+    /// (<see cref="Verbs.Verb.ResolveLesson"/>). A neighbour is never one — standing in an area is
+    /// what makes the plain way to it known (<see cref="IsKnownWay"/>).
+    /// </summary>
+    public static bool IsNewWayBack(Scene scene, Area here, Element? way)
+        => way is ConnectorPointOfInterest c and not LandscapePointOfInterest
+           && c.AreaA.Id != c.AreaB.Id && c.Touches(here)
+           && !scene.TakenLinks.Contains(c.StableKey)
+           && scene.VisitedAreas.Contains(c.Other(here).StableKey);
 
     private static (Area To, string Key)? BackStep(Scene scene, Area here, Element way, TimePeriod when)
     {

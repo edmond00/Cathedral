@@ -18,11 +18,13 @@ wait mode LocationInteraction 60
 strategy succeed
 goal sit_and_wait
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Bench"
+choose childhood_memory
+advance 12 180
+click think "Test Bench"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 # sit_and_wait is difficulty 0: no dice box, the time box asks at once. `wait`, not `advance`,
 # which would press through it and take the next period.

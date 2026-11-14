@@ -17,7 +17,7 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 expect-state mental-maps mental-maps used=1 usable=4
@@ -33,21 +33,21 @@ travel new
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 travel new
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 travel new
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 expect-state mental-maps mental-maps used=4
 
@@ -56,7 +56,7 @@ travel new
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 expect-state mental-maps mental-maps used=4
 expect-state mental-maps locked=yes

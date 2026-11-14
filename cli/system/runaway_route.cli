@@ -27,11 +27,13 @@ expect-state map walk in to Test Field
 strategy succeed
 goal follow_path
 advance 12 180
-click keyword 0
-choose 0
+click observe "Field–Rock Track"
+choose childhood_memory
+advance 12 180
+click think "Field–Rock Track"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -41,13 +43,13 @@ expect Moved to: Test Rock
 observe none
 hostile brewer Test Rock
 hostile weaver Test Yard
-click button
+click continue
 advance 12 180
 expect RUNAWAY
 expect-state where Test Rock
 
 # Away from the brewer: the dice settle, then the second roll is set to fail before the walk on.
-click button
+click exit
 wait
 click continue
 strategy fail-dice
@@ -63,7 +65,7 @@ expect-no-state dialogue caught_red_handed
 # From here it is the narration's own RUNAWAY again, and failing that one is what it always was: the
 # weaver is an enemy, so the fight starts.
 strategy fail-dice
-click button
+click exit
 wait
 click continue
 wait mode Fighting 90

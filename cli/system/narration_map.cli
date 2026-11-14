@@ -1,0 +1,51 @@
+# narration map — a visit is played on a map of the location
+#
+# The map is the narration's whole screen: LocationMap draws every area as a card inside its
+# section's panel, the played member's token on the card they stand in, and on each card of ground
+# already stood on a symbol for every kind of thing not yet looked at. On a first arrival only the
+# yard is visited, its neighbours are seen (named, dimmed) and the rest is unknown: the Test Den,
+# two ways off past the wood, reads ??? and must not be named. The map has no legend and no footer
+# button; the way out is the glyph in its margin.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+expect Test Yard
+expect ???
+expect-not Test Den
+expect-not [ LEAVE ]
+expect-state where exit=LEAVE
+
+# Nothing is observed on arrival: what stands in the yard is on its card as symbols, by kind.
+expect-state trees ""
+regions
+expect-state noetic points=3/3
+
+# The arrow keys pan it. The section's tab is off the left edge while the view is centred on the
+# yard, and comes into view as the map moves right under it.
+expect-not Test Grounds
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+key Left
+wait
+expect Test Grounds
+
+# The way out is a click on its glyph, from anywhere on the map.
+click exit
+wait mode WorldView 60
+quit

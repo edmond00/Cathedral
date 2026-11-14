@@ -465,12 +465,6 @@ public class MentalMapsPanelRenderer
                 yield return ("Opens your narration there, at that hour.", plain);
                 break;
 
-            case MeetRoutine meet:
-                yield return ($"{meet.NpcName}, {meet.NpcDescription}", head);
-                yield return (RelationText(meet), plain);
-                yield return ("Opens your narration with your eyes on them.", plain);
-                break;
-
             case TradeRoutine trade:
                 yield return ($"{trade.NpcName}, {trade.NpcDescription}", head);
                 yield return (RelationText(trade), plain);

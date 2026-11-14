@@ -28,13 +28,13 @@ namespace Cathedral.Game.Narrative;
 /// </list>
 ///
 /// <para><b>How a thing is told.</b> A word counts when it is a distinct noun and concrete. Both are predicted
-/// from the word's GloVe vector, which the game already loads (<see cref="WordEmbedding"/>), by two linear fits
+/// from the word's GloVe vector (<see cref="WordEmbedding"/>, loaded for this audit), by two linear fits
 /// to the Brysbaert, Warriner &amp; Kuperman (2014) norms, made in tools/prompts (persona_lint.py is the Python
 /// twin of this class; the weights are data/concreteness_glove100.json): concreteness, 1 abstract to 5
 /// concrete, held-out r = 0.79, a word rated 3.8 or more counting (oil 4.9, wick 4.7, silver 4.5; delay 2.8,
 /// patience 2.1); and noun or not, held-out accuracy 0.83. A field naming two or more such words, or a style
 /// with a props phrase, is flagged. Across the catalogue as it was, the count ranked the personas by how much
-/// of their style the model carried into scenes (Spearman 0.46). Without the vectors (<c>--no-embeddings</c>)
+/// of their style the model carried into scenes (Spearman 0.46). Without the vectors file
 /// the section says so and checks only the props phrase.</para>
 /// </summary>
 public static class PersonaLint

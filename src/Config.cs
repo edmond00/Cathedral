@@ -279,20 +279,6 @@ public static class Config
         public static bool Silent { get; set; } = false;
 
         /// <summary>
-        /// Runs without the GloVe word vectors (<c>models/embeddings/glove.6B.100d.txt</c>) instead of
-        /// exiting for want of them. Set by <c>--no-embeddings</c>.
-        ///
-        /// <para>For a machine that cannot have the file: a CI runner or container that does not fetch
-        /// 822 MB, or a sandbox whose network policy blocks the download. Keyword ranking then takes the
-        /// path it already takes before the vectors finish loading — by word length — so a
-        /// <c>--playground</c> script sees what it would see racing an unfinished load. <c>wait
-        /// embeddings</c> returns at once and says so.</para>
-        ///
-        /// <para>Inert at its default of false: without the flag a missing file still ends the run.</para>
-        /// </summary>
-        public static bool NoEmbeddings { get; set; } = false;
-
-        /// <summary>
         /// Which audio path to take (<c>--audio winmm|openal</c>). Null means the platform's own:
         /// WinMM and the system MIDI synth on Windows, OpenAL with an in-process SoundFont synth
         /// everywhere else. Exists so the OpenAL path can be heard on Windows beside the one players
@@ -662,7 +648,7 @@ public static class Config
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
-            '☠', '✗', '✓', '❝', // location map: a hostile, a refusal or failure, a success, speech
+            '☠', '✗', '✓', '❝', '≡', // location map: a hostile, a refusal or failure, a success, speech, a thought
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
@@ -1528,9 +1514,9 @@ public static class Config
         public static readonly Vector4 HeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for location title
         public static readonly Vector4 ModusMentisHeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for modusMentis headers
         public static readonly Vector4 NarrativeColor = Colors.MediumGray60; // Medium grey for base text (darker for better contrast)
-        public static readonly Vector4 KeywordNormalColor = Colors.White; // White for interactive elements
-        public static readonly Vector4 KeywordHoverColor = Colors.BrightYellow; // Yellow text on hover
-        public static readonly Vector4 KeywordHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
+        public static readonly Vector4 MapArrowColor = Colors.White; // The map's pan arrows
+        public static readonly Vector4 MapArrowHoverColor = Colors.BrightYellow; // Yellow text on hover
+        public static readonly Vector4 MapArrowHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
         public static readonly Vector4 ActionNormalColor = Colors.White; // White for interactive elements
         public static readonly Vector4 ActionHoverColor = Colors.BrightYellow; // Yellow text on hover
         public static readonly Vector4 ActionHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
@@ -1761,14 +1747,6 @@ public static class Config
         public const string PlayerName = "character";
         
         /// <summary>
-        /// Target number of keywords to include in observations.
-        /// For overall observations: if more outcomes than this, sample this many outcomes.
-        /// If fewer outcomes, sample multiple keywords per outcome until reaching this target.
-        /// For focus observations: if more keywords than this, sample this many keywords.
-        /// </summary>
-        public const int TargetKeywordCount = 10;
-
-        /// <summary>
         /// Maximum character length of an LLM-generated narrative text — observation, thinking,
         /// action, outcome, speaking, dialogue, and sanitizer rewrites all share this cap. It is
         /// encoded straight into the GBNF grammar as the upper bound of the free-text body.
@@ -1781,33 +1759,6 @@ public static class Config
         /// <c>ActionPathPlanner.WaysThrough</c>). The shortest path is accepted however long it is.
         /// </summary>
         public const int WillMaxPathSteps = 3;
-
-        // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
-        // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
-        // multi-object observation phase can be tuned without touching the controller.
-
-        /// <summary>
-        /// If the first object's observation text alone is longer than this, the phase stops there and
-        /// no second (or third) observation is started — one rich paragraph stands on its own.
-        /// </summary>
-        public const int ObservationSkipSecondThreshold = 500;
-
-        /// <summary>
-        /// If the first + second observation texts together stay below this, and more than
-        /// <see cref="ObservationThirdMinRemaining"/> other objects could still be observed, a third
-        /// observation is added over the remaining objects.
-        /// </summary>
-        public const int ObservationTriggerThirdThreshold = 400;
-
-        /// <summary>Minimum number of still-observable objects required before a third observation is added.</summary>
-        public const int ObservationThirdMinRemaining = 5;
-
-        /// <summary>
-        /// If a single observation's text is longer than this, two distinct keywords (both linked to the
-        /// same object, so either click does the same thing) are highlighted instead of one.
-        /// </summary>
-        public const int ObservationTwoKeywordsThreshold = 400;
-
 
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";

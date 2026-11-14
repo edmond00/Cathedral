@@ -21,13 +21,15 @@ strategy succeed
 goal catch
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Butterfly"
+choose childhood_memory
+advance 12 180
+click think "Butterfly"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

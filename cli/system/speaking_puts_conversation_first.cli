@@ -25,16 +25,17 @@ wait mode LocationInteraction 60
 advance 12 180
 
 # Banter observes the crate, then turns to the brewer rather than to another object.
-click keyword crate
-choose 1
+click observe "crate"
 choose banter
 advance 12 180
 expect shifts to the brewer
 
 # Rhetoric thinks about the brewer: a conversation, carried out by Boasting.
 strategy succeed
-click keyword man
-choose 0
+click observe "man"
+choose childhood_memory
+advance 12 180
+click think "man"
 choose rhetoric
 advance 12 180
 expect [Boasting

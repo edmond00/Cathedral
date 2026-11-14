@@ -29,7 +29,7 @@ expect-state will "pursuit=yes"
 
 # Out, and in again: an ordinary visit, which wants the nearest.
 advance 12 180
-click button
+click exit
 wait mode WorldView 60
 travel here
 wait mode LocationInteraction 120

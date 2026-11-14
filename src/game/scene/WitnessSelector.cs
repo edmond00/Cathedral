@@ -15,7 +15,7 @@ namespace Cathedral.Game.Scene;
 /// Audio witness (adjacent area) selection priority:
 ///   Same rules, applied across areas one step away in either direction of the AreaGraph.
 ///
-/// Only alive, speaking-capable NPCs are considered.
+/// Only alive, speaking-capable NPCs who are awake are considered.
 /// </summary>
 public static class WitnessSelector
 {
@@ -45,8 +45,10 @@ public static class WitnessSelector
 
     private static NpcEntity? SelectFrom(Scene scene, Area area, TimePeriod when)
     {
+        // Somebody asleep in their bed sees and hears nothing: they are woken, or stepped past.
+        var there = new PoV(area, when);
         var candidates = scene.GetNpcsAt(area, when)
-            .Where(n => n.IsAlive && n.Entity is NpcEntity npc && npc.CanSpeak)
+            .Where(n => n.IsAlive && n.Entity is NpcEntity npc && npc.CanSpeak && !n.IsSleeping(scene, there))
             .Select(n => (NpcEntity)n.Entity)
             .ToList();
 

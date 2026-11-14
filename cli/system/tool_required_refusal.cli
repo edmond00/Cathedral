@@ -28,15 +28,17 @@ wait mode LocationInteraction 60
 strategy succeed
 goal slay
 advance 12 180
-click keyword 0
-choose 0
+click observe "chicken"
+choose childhood_memory
+advance 12 180
+click think "chicken"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 1
 choose 0
 advance 12 180
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue
@@ -44,15 +46,14 @@ advance 12 180
 expect Slain:
 
 # ── Cut it bare-handed ───────────────────────────────────────────────────────
-click button
+click continue
 advance 12 180
 goal cut
-click keyword 0
-choose 0
+click think "chicken"
 choose ripelore
 advance 12 180
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 # Short fragments, because `expect` matches one row and the sentence wraps.
@@ -62,14 +63,14 @@ expect So I left it undone
 expect-not I would need to find
 
 # ── The action is still the way on, and only through a tool ──────────────────
-click action 0
+click act 0
 inspect popup
 expect-state popup Execute(disabled)
 expect-no-state popup Use Tool(disabled)
 choose 1
 choose 0
 advance 12 180
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue

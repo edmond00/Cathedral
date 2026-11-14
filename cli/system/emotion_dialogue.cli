@@ -34,11 +34,13 @@ expect-no-state humors Laetitia
 strategy succeed
 goal meet_stranger
 advance 12 180
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

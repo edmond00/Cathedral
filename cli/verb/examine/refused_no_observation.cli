@@ -24,13 +24,15 @@ strategy succeed
 goal examine
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Giant Tree"
+choose childhood_memory
+advance 12 180
+click think "Test Giant Tree"
 choose ripelore
 advance 12 180
 
 # No action button: the means refused, so the thought ends on the refusal.
 # Asserted on the half that fits one row; the sentence wraps before "observe".
-expect I want to act, not to stand and
+expect-state texts "I want to act, not to stand and"
 expect-not SUCCESS
 quit

@@ -20,20 +20,22 @@ strategy succeed
 goal use
 means blacksmithing
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Old Anvil"
+choose childhood_memory
+advance 12 180
+click think "Test Old Anvil"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 1
 choose 0
 advance 12 180
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue
 advance 12 180
-click button
+click continue
 wait mode Crafting 30
 
 # Both trades, both implements and the hands put their dice in.

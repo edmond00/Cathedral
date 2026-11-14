@@ -210,9 +210,58 @@ public partial class NarrativeController
             foreach (var companion in _protagonist.CompanionParty)
                 _minds[companion] = new MemberMind(companion, new PoV(entry, TimePeriod.Morning));
         _active = _protagonist;
+
+        StandMyself();
+    }
+
+    /// <summary>
+    /// The opening phases are played through the one who lives them: "myself" is on the map from
+    /// the start, observed by nobody, and holds what the phase is about. Nothing in a real place.
+    /// </summary>
+    private void StandMyself()
+    {
+        var here = _pov.Where;
+        if (Mind.Roots.Any(r => r.Element is Scene.GetUp.SelfPointOfInterest)) return;
+        if (NodeForArea(here).PossibleOutcomes.OfType<SyntheticObservationObject>()
+                .FirstOrDefault(o => o.PointOfInterest is Scene.GetUp.SelfPointOfInterest) is { } myself)
+            Root(Mind, myself, here, text: null, note: ((Scene.GetUp.SelfPointOfInterest)myself.PointOfInterest).Note);
+    }
+
+    /// <summary>
+    /// Brings the members played here into line with the party: somebody recruited during the visit
+    /// stands where the member who won them over stands, with nothing observed yet; somebody dead or
+    /// sent away is gone with their trees, and the protagonist is played in their place. True when
+    /// anything changed. The opening phases are the protagonist's alone.
+    /// </summary>
+    private bool SyncRoster()
+    {
+        if (_scene.Phase != NarrationPhase.Exploration) return false;
+        bool changed = false;
+        foreach (var companion in _protagonist.CompanionParty)
+            if (!_minds.ContainsKey(companion))
+            {
+                _minds[companion] = new MemberMind(companion, new PoV(_pov.Where, Period));
+                changed = true;
+            }
+        foreach (var gone in _minds.Keys.Where(m => !ReferenceEquals(m, _protagonist)
+                                                 && !_protagonist.CompanionParty.Contains(m)).ToList())
+        {
+            if (ReferenceEquals(gone, _active)) _active = _protagonist;
+            _minds.Remove(gone);
+            changed = true;
+        }
+        return changed;
     }
 
     // ── What the game controller reads ───────────────────────────────────────
+
+    /// <summary>The members standing in <paramref name="area"/>, the one played first when they are there.</summary>
+    public IReadOnlyList<PartyMember> MembersAt(Area area)
+        => _minds.Values.Where(m => m.Pov.Where.Id == area.Id).Select(m => m.Member)
+                 .OrderBy(m => ReferenceEquals(m, _active) ? 0 : 1).ToList();
+
+    /// <summary>Where <paramref name="member"/> stands in the place, or null for somebody not played here.</summary>
+    public Area? AreaOf(PartyMember member) => _minds.TryGetValue(member, out var mind) ? mind.Pov.Where : null;
 
     /// <summary>The scene narrated.</summary>
     public Scene.Scene Scene => _scene;
@@ -326,6 +375,7 @@ public partial class NarrativeController
             mind.Refill();
         }
         _active = _protagonist;
+        StandMyself();
     }
 
     /// <summary>
@@ -396,7 +446,6 @@ public partial class NarrativeController
         foreach (var mind in _minds.Values) mind.Pov.When = period;
         // A place at night plays its night music; the opening phases are not a place.
         _ambianceEngine?.SetNight(Exploring && period == TimePeriod.Night);
-        _npcPlacement.PlaceForPeriod(period);
         if (Exploring)
             foreach (var mind in _minds.Values) AreaVisits.Arrive(_scene, mind.Pov.Where);
         ReconcileTrees();

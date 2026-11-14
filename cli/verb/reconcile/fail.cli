@@ -27,13 +27,15 @@ goal reconcile
 advance 12 180
 regions
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -45,6 +47,7 @@ advance 12 180
 # The fight, not an outcome banner. A failed reconciliation with somebody who counts you an enemy and
 # is standing right there is an opportunity attack (ProximityModel — effective-Visual threat +
 # failure ⇒ fight), so no outcome block is ever written. Same shape as cli/appease/fail.cli.
+click continue
 wait mode Fighting 60
 
 # What makes this a reconcile test rather than an any-verb test.

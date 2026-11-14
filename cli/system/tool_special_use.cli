@@ -31,14 +31,16 @@ strategy succeed
 goal examine
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+click think "Test Rack"
 choose ripelore
 advance 12 180
 
 inspect noetic
 
-click action 0
+click act 0
 regions
 choose 1
 regions
@@ -54,7 +56,7 @@ inspect noetic
 expect-state noetic points=2/3
 expect-state noetic tool_proficiency=Low
 
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue

@@ -292,10 +292,6 @@ public partial class NarrativeController
          : (_result.Title, _result.Chips.Select(c => c.Text).ToList(),
             _resultContinueRegion.X, _resultContinueRegion.Y, _resultContinueRegion.Width);
 
-    /// <summary>The text a script reads back from a node: an observed element's, or its nth thought, by name.</summary>
-    public IReadOnlyList<string> CliTexts()
-        => Mind.AllNodes.Where(n => n.Block != null).Select(n => $"[{n.Kind}] {n.Block!.Text}").ToList();
-
     // ── Popups ───────────────────────────────────────────────────────────────
 
     /// <summary>Labels of the popup on screen, or null when none is up.</summary>
@@ -496,7 +492,8 @@ public partial class NarrativeController
             var confrontation = ConfrontationOf(Mind);
             outp.Add($"where area=\"{_pov.Where.DisplayName}\" period={_pov.When} "
                    + $"day={(int)Cathedral.Game.Narrative.GameClock.Days} trespass={(IsTrespassing ? "yes" : "no")} "
-                   + $"confronted={(confrontation == null ? "none" : $"{confrontation.Kind}:{confrontation.Npc.Archetype.ArchetypeId}")}");
+                   + $"confronted={(confrontation == null ? "none" : $"{confrontation.Kind}:{confrontation.Npc.Archetype.ArchetypeId}")}"
+                   + (Exploring ? $" exit={ExitLabel}" : ""));
         }
 
         // What the location map knows: every area stood in, every way gone by (AreaVisits). Read from
@@ -529,6 +526,19 @@ public partial class NarrativeController
 
         // The played member's thought trees: every observed element with where it now is, and under
         // each every node in order. What the screen draws as symbols, as lines a script can assert on.
+        // What the map offers a click now, as `regions` lists it: the tray symbols of each card, the
+        // stubs and the waiting acts. Asked for by name only, for an assertion on what is NOT offered.
+        if (subject == "symbols")
+            foreach (var line in CliSymbols())
+                outp.Add($"symbol {line.Trim()}");
+
+        // What every node of the played member's trees says: on screen a text is read once, in the
+        // preview box, and after that only by hovering its symbol. Asked for by name only.
+        if (subject == "texts")
+            foreach (var node in Mind.AllNodes)
+                if ((node.Block?.Text ?? node.Note) is { Length: > 0 } said)
+                    outp.Add($"text {node.Kind.ToString().ToLowerInvariant()} mind={node.Mind?.ModusMentisId ?? "-"} \"{said}\"");
+
         if (All("trees"))
         {
             foreach (var root in Mind.Roots) Describe(root, 0);

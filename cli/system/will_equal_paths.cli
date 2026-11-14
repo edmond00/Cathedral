@@ -24,8 +24,7 @@ expect-state will "will pugilitas steps=1"
 expect-state will "target=farmer"
 
 # Observing the other man: he is on the way too, so the focus is kept and the reason is the goal here.
-click keyword 0
-choose 1
+click observe "?"
 choose pugilitas
 advance 12 180
 # The sentence is "Here I could attack the plowman, which is what I want."; its tail is asserted, since
@@ -33,8 +32,7 @@ advance 12 180
 expect which is what I want
 
 # Thinking on him: the attack is proposed, carried out by Pugilitas itself.
-click keyword 0
-choose 0
+click think "?"
 choose pugilitas
 advance 12 180
 expect [Pugilitas

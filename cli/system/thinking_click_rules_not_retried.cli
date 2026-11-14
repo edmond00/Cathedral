@@ -22,15 +22,17 @@ expect wolf
 
 strategy succeed
 goal examine
-click keyword 0
-choose 0
+click observe "wolf"
+choose childhood_memory
+advance 12 180
+click think "wolf"
 choose ripelore
 advance 12 180
 expect-not That will not do, and I think again
 expect [Woodcraft
 regions
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 expect while under the threat of

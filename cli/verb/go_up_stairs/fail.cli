@@ -4,8 +4,8 @@
 #
 # Reached in 9/12 of the sampled location ids (see --verb-probe). --location-type and
 # --location-id decide the whole scene, so this does not depend on world generation; --npc-static
-# pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
-# clicked by index (which word the prose highlights is not something a test can know).
+# pins people to one room; --observe-only pins an observation to one object, which the script
+# names again when it clicks its symbol.
 #
 # The verb's base difficulty is 0, which rolls nothing and cannot fail; --willingness reluctant
 # raises it to 1 (Verb.ActionDifficulty), so there is a roll for fail-dice to miss.
@@ -24,13 +24,15 @@ strategy fail-dice
 goal go_up_stairs
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Stair"
+choose childhood_memory
+advance 12 180
+click think "Test Stair"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

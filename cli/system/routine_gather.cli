@@ -22,11 +22,13 @@ wait mode LocationInteraction 60
 strategy succeed
 goal gather
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Ford"
+choose childhood_memory
+advance 12 180
+click think "Test Ford"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -44,10 +46,10 @@ expect-state routines time=Dawn
 # Two presses: the first closes the segment the gather left pending (CONTINUE) and opens the next
 # phase, whose preview is drained before the footer becomes LEAVE.
 observe none
-click button
+click continue
 wait 60
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 expect-no-state routines category=goto
 save roundtrip
@@ -56,7 +58,7 @@ travel neighbour
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 travel back

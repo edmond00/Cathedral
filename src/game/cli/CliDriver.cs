@@ -17,7 +17,7 @@ namespace Cathedral.Game.Cli;
 /// executed from <see cref="Pump"/> on the game's update tick. Executing them on the reader thread
 /// would race every piece of game state, and reading stdin on the update tick would stall rendering.</para>
 ///
-/// <para><b>Design.</b> Commands name things, not coordinates — <c>click keyword hearth</c>, not
+/// <para><b>Design.</b> Commands name things, not coordinates — <c>click think hearth</c>, not
 /// <c>click 34 12</c>. Coordinate-based scripts break on every layout change and are unwritable
 /// without seeing the screen. Use <c>regions</c> to discover what is actionable right now.</para>
 ///
@@ -399,7 +399,7 @@ public sealed class CliDriver
                                     verb is not offered, so the action that runs is the proof
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic / humors / world-regions / world-variant /
+                                    routines / noetic / humors / trees / known / world-regions / world-variant /
                                     world-history / world-realms / world-events, or all. What
                                     cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
@@ -407,7 +407,12 @@ public sealed class CliDriver
                                     tool proficiency, neither of which `expect` can reach;
                                     `popup` the open choice popup's options, each marked
                                     (disabled) when greyed; `dialogue` the tree id of the last
-                                    conversation queued (a confrontation's id names its crime)
+                                    conversation queued (a confrontation's id names its crime);
+                                    `trees` the played member's thought trees, node by node;
+                                    `texts` (by name only) what each node says — on screen a text
+                                    is read once in the preview box and then only under the pointer;
+                                    `symbols` (by name only) what the map offers a click, as
+                                    `regions` lists it
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world
@@ -417,11 +422,23 @@ public sealed class CliDriver
                                     what the player was TOLD; this proves what ran, which is the
                                     only way to assert the outcomes that show no chip
           expect-no-outcome <id>    the negative form, for asserting something did NOT happen
-          click keyword <name|n>    click a narration keyword by name, or by position.
-                                    The index form is for tests: a phase pinned with
-                                    --observe-only knows what it is looking at but not
-                                    which word the prose highlighted
-          click action <n>          click a narration action by index
+          click observe <kind|name> [in <area>]
+                                    click an unobserved symbol on the narration map. A kind (way,
+                                    person, hostile, thing) is the anonymous symbol of it, and the
+                                    mind then chosen picks which element; a name is a remembered
+                                    element or a container's content — or, for a script only,
+                                    something not yet known, which pins the observation to it
+                                    as --observe-only does for a whole run
+          click think <name>        the ? after an observed element: think about it
+          click speak <name>        the speech mark after an observed element: speak of it to the
+                                    members within reach
+          click act <n|word>        a waiting act, by position (the order proposed) or by a word of
+                                    its text or its verb id
+          click member <name>       play another member of the party (their token on the map)
+          click area <name>         walk the played member to an area by ways the party knows,
+                                    as a click on its card does
+          click exit                the way out of the place: LEAVE, or RUNAWAY when confronted
+                                    (`inspect where` reports which, as exit=)
           click option <n>          pick a dialogue reply by index
           click period <name>       pick the hour a wait lasts until, while the time box asks
                                     (`advance` picks the next period by itself)
@@ -438,7 +455,6 @@ public sealed class CliDriver
           click menu <label>        press a main-menu button (New, Continue, …)
           click menu-button         press the ☰ in the top-right corner: the main menu, in every
                                     phase Escape pauses (`inspect buttons` says whether it is up)
-          click map-button          press the narration header's ↹: the map and back, as Tab
           click moon <name|n>       pick a world off the world-selection sky, by moon name or
                                     ordinal. Turns the sky towards it first, as the arrows would
           click sky                 press an empty patch of the world-selection sky, which releases
@@ -453,8 +469,9 @@ public sealed class CliDriver
           click world <confirm|cancel>  the world-selection screen's two buttons
           click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
                                     mouse's copy of the arrow keys
-          click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
-          click continue            confirm the dice overlay
+          click button              press a conversation's footer button (END / CONTINUE)
+          click continue            press the CONTINUE of the box on screen: the dice's, the
+                                    preview's, or an act's result box
           click cell <x> <y>        raw terminal cell click (escape hatch)
           choose <n|mm-id>          answer the visible popup by index, or a modus mentis popup by id
           travel <vertex|name>      plan a route to a world vertex (bypasses 3D picking)
@@ -463,8 +480,8 @@ public sealed class CliDriver
           travel back               plan a route to the last location entered that is not this one
           travel new                plan a route to a bordering vertex with no mental map
           routines                  list the routines the planned destination offers
-          routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
-                                    gather, buy, sell, work) — and set out; entered on arrival.
+          routines <n|kind>         pick routine n — or the first walkable of a kind (goto,
+                                    gather, buy, sell, work, craft) — and set out; entered on arrival.
                                     `routines next|prev` steps the box's selection, and
                                     `routines confirm` presses CONFIRM
           trade leave               close the trade menu without settling anything
@@ -484,12 +501,12 @@ public sealed class CliDriver
           select [item name]        show a carried item's info panel; bare `select` lists them
           select mm <id>            show a held modus mentis's detail box on the Memory tab
           key <escape|…>            send a key
-          scroll up|down [n]        scroll the shared history buffer
+          scroll up|down [n]        scroll a conversation's history buffer
         Control
           strategy <succeed|fail-dice|fail-plausibility|auto>
                                     pin action outcomes (needs --debug)
           goal <verb-id|none>       pin the playground's goal choice to one verb (e.g. `goal tame`),
-                                    set before the keyword click it should apply to
+                                    set before the `click think` it should apply to
           means <mm-id|none>        pin the playground's choice of means — the action modus mentis
                                     that carries the goal out — the way `goal` pins the goal
           doubt <yes|no>            queue the answer to the next doubt of a thinking (the preview box's
@@ -523,12 +540,11 @@ public sealed class CliDriver
                                     modus mentis (default: protagonist)
           wait [frames]             block until the game settles (no LLM/travel/dice in flight)
           advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone
-                                    (default up to 8 presses). Use this, not a bare `click continue`,
-                                    to get from a keyword click to the action list
+                                    (default up to 8 presses), answering a wait's hour and a doubt
+                                    on the way. It stops at an act's result box, which is read
+                                    (`expect SUCCESS`, its chips) and closed with `click continue`
           wait mode <GameMode>      block until the game reaches a mode (e.g. LocationInteraction);
                                     a timeout is reported as FAIL
-          wait embeddings [secs]    block until the word vectors have loaded, so a later phase's
-                                    keyword ranking is the same on every --playground run
           when <GameMode> <command> run the command only in that mode (scripts on a real model)
           journal dump <file.json>  write the run's journal as JSON — material for tools/journal/
           wait for <secs>           settle, then hold that long — a player reading, which is the quiet
@@ -1476,7 +1492,7 @@ public sealed class CliDriver
     /// <summary>
     /// The routine box: <c>routines</c> lists what the planned destination offers, and <c>routines
     /// &lt;n&gt;</c> — or <c>routines &lt;kind&gt;</c>, the first walkable routine of that kind
-    /// (goto, meet, gather, buy, sell, work) — picks one and sets out; it is entered on arrival.
+    /// (goto, gather, buy, sell, work, craft) — picks one and sets out; it is entered on arrival.
     ///
     /// <para>By index or kind rather than by click because both the rows and the ROUTINES button are
     /// hit-tested against rendered boxes whose geometry moves with how many routines exist — the same
@@ -1530,7 +1546,7 @@ public sealed class CliDriver
                 .DefaultIfEmpty(-1)
                 .First();
             if (index < 0)
-            { CliMode.Emit($"error: no {kind} routine here (routines <n>|<goto|meet|gather|buy|sell|work>)"); return; }
+            { CliMode.Emit($"error: no {kind} routine here (routines <n>|<goto|gather|buy|sell|work|craft>)"); return; }
         }
 
         if (!_game.CliSelectRoutine(index))
@@ -1723,7 +1739,7 @@ public sealed class CliDriver
         if (a.Length > 1)
         {
             if (!_game.CliSelectRoutineCategory(a[1]))
-            { CliMode.Emit($"error: no {a[1]} routine on any map (goto, meet, gather, buy, sell, work)"); return; }
+            { CliMode.Emit($"error: no {a[1]} routine on any map (goto, gather, buy, sell, work, craft)"); return; }
             CliMode.Emit($"ok: management tab {tab}, a routine of kind {a[1]}");
             return;
         }
@@ -1834,7 +1850,7 @@ public sealed class CliDriver
 
     /// <summary>
     /// Pins the playground's goal choice to one verb, the way <c>strategy</c> pins the dice. Set it
-    /// before the keyword click whose thinking phase should land on that goal; <c>goal none</c> (or
+    /// before the <c>click think</c> whose thinking should land on that goal; <c>goal none</c> (or
     /// <c>auto</c>) hands the choice back to the RNG. Same switch as <c>--goal-only</c> — a command
     /// too, because a script that appeases a beast and then tames it needs to change it mid-run.
     /// </summary>
@@ -1991,7 +2007,7 @@ public sealed class CliDriver
     ///
     /// <para>The narration preview arrives in segments — the goal, the modus mentis chosen for it,
     /// the persona's willingness — and CONTINUE clears one segment at a time. A script that presses
-    /// once lands in the middle of the stack, where <c>click action</c> reports nothing on screen and
+    /// once lands in the middle of the stack, where <c>click act</c> reports nothing waiting and
     /// nothing explains why. This is the "press CONTINUE until the game gives me the actions back"
     /// loop a person does without thinking about it.</para>
     /// </summary>
@@ -2040,18 +2056,6 @@ public sealed class CliDriver
             _waitDescription = $"mode={mode}";
             if (a.Length >= 3 && int.TryParse(a[2], out int modeSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, modeSecs));
-        }
-        // The word vectors load on a background task (~6s) that a real run hides behind the model
-        // load and --playground has nothing to hide behind, so which keyword a phase highlights
-        // depends on whether they have arrived yet. A script that clicks a keyword in a LATER phase
-        // waits for them first, so the ranking it meets is the same on every run.
-        else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
-        {
-            // Under --no-embeddings they never arrive; the ranking is the fallback on every run anyway.
-            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady || Cathedral.Config.Debug.NoEmbeddings;
-            _waitDescription = Cathedral.Config.Debug.NoEmbeddings ? "embeddings (none: --no-embeddings)" : "embeddings loaded";
-            if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
-                timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
         }
         // `wait for <secs>`: settle, then hold for that long — a player reading. What lets a script give
         // the background chronicler the quiet it waits for, which a bare `wait` (done the moment the

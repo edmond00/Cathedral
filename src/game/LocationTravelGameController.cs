@@ -285,7 +285,7 @@ public class LocationTravelGameController : IDisposable
     /// not enter Catalyst's initialisation concurrently. See the constructor for what starting it
     /// from <c>SetLlamaServer</c> instead used to cost.
     /// </summary>
-    private readonly Task? _keywordInitTask;
+    private readonly Task? _taggerInitTask;
 
     // Events
     public event Action<GameMode, GameMode>? ModeChanged;
@@ -1041,7 +1041,7 @@ public class LocationTravelGameController : IDisposable
         // A real session usually won that race (reaching an observation costs several real LLM
         // calls); a --playground one loses it every time, which is every script in the suite. So
         // the effect was invisible where it was measurable and unpredictable where it was not.
-        _keywordInitTask = Task.Run(() =>
+        _taggerInitTask = Task.Run(() =>
             Cathedral.Game.Narrative.NounExtractor.InitializeAsync(CatalystModelPath));
 
         // Initialize with WorldView as default (SetMode(MainMenu) will transition properly)
@@ -1685,7 +1685,7 @@ public class LocationTravelGameController : IDisposable
                 // twice. Sequenced, the second call finds the guard set and returns at once — and
                 // by now the constructor's task has had the whole model load to finish in, so this
                 // await is normally free.
-                if (_keywordInitTask != null) await _keywordInitTask;
+                if (_taggerInitTask != null) await _taggerInitTask;
                 Console.WriteLine("LocationTravelGameController: KeywordExtractor initialized");
             }
             catch (Exception ex)
@@ -4180,7 +4180,7 @@ public class LocationTravelGameController : IDisposable
             _managementMenuRenderer.OnMapsPortholeClosed = () =>
                 _core.SetNarrationMode(true); // restore dark world shading for the other tabs
 
-            // A Meet/Buy/Sell/Work routine's detail shows how its person stands with you today, read
+            // A Buy/Sell/Work routine's detail shows how its person stands with you today, read
             // from the location's memory (keyed by persistent id) without building the scene.
             // Memory tab: a will's "Wants" row seeks that target in every place within reach — only
             // over the world map, where the search can end by planning the journey there.
@@ -4843,12 +4843,13 @@ public class LocationTravelGameController : IDisposable
         if (fallen.Count == 0) return false;
 
         var scene = _narrativeController?.Scene;
-        var area  = _narrativeController?.CurrentPoV?.Where;
 
         var lines = new List<string>();
         foreach (var companion in fallen)
         {
             var cause = companion.CauseOfDeath;
+            // Where they stood, which in a place need not be where the protagonist stands.
+            var area = _narrativeController?.AreaOf(companion);
             _protagonist.CompanionParty.Remove(companion);
 
             lines.Add(cause switch
@@ -6642,9 +6643,10 @@ public class LocationTravelGameController : IDisposable
         // keeps its recorded relationship instead of being re-flagged hostile on every revisit.
         // Non-persistent beasts spawn fresh as strangers each visit, so they are always re-flagged.
         foreach (var sceneNpc in scene.Npcs)
-            if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy
-                && npcEnt.AffinityTable.IsStranger(_protagonist.AffinityKey))
-                npcEnt.AffinityTable.SetEnemy(_protagonist.AffinityKey);
+            if (sceneNpc.Entity is Cathedral.Game.Npc.NpcEntity npcEnt && npcEnt.Archetype.DefaultEnemy)
+                foreach (var member in _protagonist.CompanionParty.Prepend<Cathedral.Game.Narrative.PartyMember>(_protagonist))
+                    if (npcEnt.AffinityTable.IsStranger(member.AffinityKey))
+                        npcEnt.AffinityTable.SetEnemy(member.AffinityKey);
 
         // The persistent stores are already shared with the scene (LocationInstanceState.AttachTo,
         // called from SceneFactory.Build); apply the depletion that has regenerated since.
@@ -6717,10 +6719,14 @@ public class LocationTravelGameController : IDisposable
         var scene      = _narrativeController.Scene;
         var pov        = _narrativeController.CurrentPoV;
 
-        Console.WriteLine($"LocationTravelGameController: Starting fight with {mainEnemy.DisplayName}");
+        // A fight in a place takes the members standing where it breaks out, and nobody else: the
+        // rest of the party is somewhere else in the location and hears of it afterwards.
+        var party = _narrativeController.MembersAt(pov.Where);
+        Console.WriteLine($"LocationTravelGameController: Starting fight with {mainEnemy.DisplayName} "
+                        + $"({string.Join(", ", party.Select(m => m.DisplayName))})");
 
-        // Mark main enemy and all allies as enemies of the protagonist
-        mainEnemy.AffinityTable.SetEnemy(protagonist.AffinityKey);
+        // Whoever is fought counts everybody they fight an enemy from here on.
+        foreach (var member in party) mainEnemy.AffinityTable.SetEnemy(member.AffinityKey);
 
         // Compute allies: brave NPCs in the same section as the player (excluding main enemy).
         // A provoked fight skips this entirely — being goaded into swinging at one person is not a
@@ -6746,7 +6752,8 @@ public class LocationTravelGameController : IDisposable
                     .ToList();
 
                 foreach (var ally in allies)
-                    ally.AffinityTable.SetEnemy(protagonist.AffinityKey);
+                    foreach (var member in party)
+                        ally.AffinityTable.SetEnemy(member.AffinityKey);
 
                 Console.WriteLine($"LocationTravelGameController: {allies.Count} ally(ies) joining the fight");
             }
@@ -6772,7 +6779,8 @@ public class LocationTravelGameController : IDisposable
             allies,
             sfxTrigger: e => _ambianceEngine?.TriggerGameEvent(e),
             setMusicFilter: f => _ambianceEngine?.SetFilter(f),
-            enemyInitiative: fightOutcome.EnemyInitiative);
+            enemyInitiative: fightOutcome.EnemyInitiative,
+            party: party);
 
         SetMode(GameMode.Fighting);
     }
@@ -6855,6 +6863,7 @@ public class LocationTravelGameController : IDisposable
                 : $"Fled a fight with {Cathedral.Game.Npc.NpcLabelResolver.ShortLabel(_fightAdapter.TargetNpc, _protagonist)}");
         var npc          = _fightAdapter.TargetNpc;
         var allEnemyNpcs = _fightAdapter.AllEnemyNpcs;
+        bool protagonistFought = _fightAdapter.Party.Contains(_protagonist);
 
         Console.WriteLine($"LocationTravelGameController: Fight completed - {result}");
 
@@ -6940,7 +6949,7 @@ public class LocationTravelGameController : IDisposable
         _fightAdapter = null;
         _core.Terminal?.Clear();
 
-        if (result == FightAdapterResult.Death)
+        if (result == FightAdapterResult.Death && protagonistFought)
         {
             // A fight lost is a run lost, wherever it was fought. This used to exit to the world view
             // instead — so the one lethal fight in the game was the travel encounter, and a fight
@@ -6948,6 +6957,16 @@ public class LocationTravelGameController : IDisposable
             // of it at zero hit points and playing on. TriggerDeath tears the session down itself.
             Console.WriteLine("LocationTravelGameController: Player was killed in a narration fight");
             TriggerDeath(DeathCause.Wounds);
+            return;
+        }
+
+        if (result == FightAdapterResult.Death)
+        {
+            // Lost by companions fighting on their own, elsewhere in the place: they are dead, and
+            // the companion sweep says so on the next tick. The protagonist was not there and plays on.
+            Console.WriteLine("LocationTravelGameController: a fight was lost by companions on their own");
+            SetMode(GameMode.LocationInteraction);
+            _narrativeController.ResumeNarration();
             return;
         }
 

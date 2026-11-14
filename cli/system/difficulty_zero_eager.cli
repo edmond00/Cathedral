@@ -19,15 +19,17 @@ strategy fail-dice
 goal move
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Yard"
+choose childhood_memory
+advance 12 180
+click think "Test Yard"
 choose ripelore
 advance 12 180
 
 expect ○
 expect-not ①
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 

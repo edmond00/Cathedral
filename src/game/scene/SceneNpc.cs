@@ -65,6 +65,10 @@ public class SceneNpc : Element, IVerbModusMentisSource, IPlayable
         var bedroom = scene.GetAreaOf(this, pov.When);
         if (bedroom == null || bedroom.Id != pov.Where.Id) return false;
 
-        return Building.BuildingRooms.BedsIn(bedroom).Any();
+        // A bed to lie in — or the one they are already lying in: once put to bed the sleeper and
+        // the bed are one point of interest (SceneNpcPlacement), and the room's bed list no longer
+        // holds it. Asking only for a free bed answered "awake" about everybody already asleep.
+        return Building.BuildingRooms.BedsIn(bedroom).Any()
+            || bedroom.PointsOfInterest.OfType<SleepingNpcPointOfInterest>().Any(s => ReferenceEquals(s.Sleeper, this));
     }
 }

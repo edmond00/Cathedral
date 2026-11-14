@@ -21,20 +21,22 @@ strategy fail-dice
 goal slay
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "goat"
+choose childhood_memory
+advance 12 180
+click think "goat"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 1
 regions
 choose 0
 advance 12 180
 
 regions
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue
@@ -43,16 +45,15 @@ advance 12 180
 expect-outcome npc_drawn_in
 
 # The brewer opens the next phase. Now try something lawful.
-click button
+click continue
 advance 12 180
 expect RUNAWAY
 goal contemplate
-click keyword 0
-choose 0
+click think "goat"
 choose ripelore
 advance 12 180
 regions
-click action 0
+click act 0
 choose 0
 advance 12 180
 expect watching me

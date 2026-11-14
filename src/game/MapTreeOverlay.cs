@@ -79,16 +79,21 @@ public sealed class MapFrame
 /// shown once with a count — the symbols of a kind are interchangeable until one is observed.</para>
 ///
 /// <para><b>A tree.</b> Observed elements hang from a trunk down the card's left side, one under
-/// another. A node's first child follows it on the same row; its other children each start a row of
-/// their own under it, joined by a line down from the node. So a root reads left to right as
-/// observation, thought, act, outcome, and a second thought about the same thing is the next row.</para>
+/// another, on a panel as wide as the card that covers the map's own lines. A node's first child
+/// follows it on the same row; its other children each start a row of their own under it, joined by
+/// a line down from the node. So a root reads left to right as observation, thought, act, outcome,
+/// and a second thought about the same thing is the next row.</para>
+///
+/// <para><b>Room.</b> The rows of cards stand a fixed distance apart, so a card has a fixed number
+/// of rows to hang its trees in. When they do not all fit, the elements with something left to do
+/// are drawn first and the last row says how many finished ones are not shown.</para>
 /// </summary>
 public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 {
     // The game's three hues: grey for what is told, yellow for what a click acts on and for gain,
     // purple for enemies and for what failed.
-    private static readonly Vector4 Backdrop     = new(0.030f, 0.028f, 0.022f, 1f);
-    private static readonly Vector4 LineInk      = new(0.300f, 0.270f, 0.160f, 1f);
+    private static readonly Vector4 Backdrop     = new(0.040f, 0.038f, 0.026f, 1f);
+    private static readonly Vector4 LineInk      = new(0.460f, 0.410f, 0.240f, 1f);
     private static readonly Vector4 DeadInk      = Config.Colors.DarkGray40;
     private static readonly Vector4 DisabledInk  = Config.Colors.DarkGray40;
     private static readonly Vector4 HoverInk     = new(0.04f, 0.04f, 0.04f, 1f);
@@ -124,16 +129,58 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 
         // The trunk, and each observed element on a row of its own under the card.
         var hanging = card.Roots.Concat(card.Strays).ToList();
-        int y = by + canvas.CardHeight;
-        int trunk = bx + 1;
-        int last = -1;
-        for (int i = 0; i < hanging.Count; i++)
+        if (hanging.Count == 0) return;
+
+        // What does not fit is what is finished: the elements with something left to do come first.
+        int room = canvas.TreeRows;
+        int shown = hanging.Count, used = hanging.Sum(Rows);
+        if (used > room)
+        {
+            hanging = hanging.OrderBy(n => HasBusiness(n) ? 0 : 1).ToList();
+            // One row is kept to say how many are not shown.
+            shown = 0; used = 0;
+            while (shown < hanging.Count && used + Rows(hanging[shown]) <= room - 1)
+                used += Rows(hanging[shown++]);
+        }
+        int hidden = hanging.Count - shown;
+
+        int top = by + canvas.CardHeight;
+        for (int r = 0; r < used + (hidden > 0 ? 1 : 0); r++) Panel(canvas, bx, top + r);
+
+        int y = top, trunk = bx, last = -1;
+        for (int i = 0; i < shown; i++)
         {
             for (int r = last + 1; last >= 0 && r < y; r++) Line(canvas, trunk, r, '│');
-            Line(canvas, trunk, y, i == hanging.Count - 1 ? '└' : '├');
+            Line(canvas, trunk, y, i == shown - 1 && hidden == 0 ? '└' : '├');
+            Line(canvas, trunk + 1, y, '─');
             last = y;
-            Place(canvas, hanging[i], trunk + 1, ref y, live: hanging[i].Kind == ThoughtNodeKind.Element || hanging[i].IsLive);
+            Place(canvas, hanging[i], trunk + 2, ref y, live: hanging[i].Kind == ThoughtNodeKind.Element || hanging[i].IsLive);
         }
+        if (hidden > 0)
+        {
+            for (int r = last + 1; last >= 0 && r < y; r++) Line(canvas, trunk, r, '│');
+            string more = $"└ +{hidden}";
+            for (int i = 0; i < more.Length; i++) canvas.Put(trunk + i, y, more[i], DeadInk, Backdrop);
+        }
+    }
+
+    /// <summary>The rows <paramref name="node"/> and everything under it are drawn on.</summary>
+    private int Rows(ThoughtNode node)
+    {
+        int rows = 0;
+        foreach (var item in Hanging(node)) rows += item is ThoughtNode child ? Rows(child) : 1;
+        return Math.Max(1, rows);
+    }
+
+    /// <summary>Whether anything under <paramref name="root"/> still answers a click: an act waiting, something to think of, something held.</summary>
+    private bool HasBusiness(ThoughtNode root)
+        => root.SelfAndDescendants().Any(n => n.IsWaitingAct
+               || (n.Kind == ThoughtNodeKind.Element && (Frame.Stubs(n).Count > 0 || Frame.Contents(n).Count > 0)));
+
+    /// <summary>One row of the panel the trees hang on, the card's width: it covers the map's lines.</summary>
+    private static void Panel(LocationMap.MapCanvas canvas, int bx, int y)
+    {
+        for (int x = bx; x < bx + canvas.CardWidth; x++) canvas.Put(x, y, ' ', LineInk, Backdrop);
     }
 
     /// <summary>The party member's piece: a beast's is another glyph.</summary>
@@ -204,14 +251,18 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 
     // ── A tree ───────────────────────────────────────────────────────────────
 
-    /// <summary>What hangs under a node: its children, and for an element what it holds and offers.</summary>
+    /// <summary>
+    /// What hangs under a node: its children, and for an element one last row — its shelf — of what
+    /// it holds and what it offers: a symbol for each thing in it not yet looked at, then the stubs.
+    /// </summary>
     private List<object> Hanging(ThoughtNode node)
     {
         var items = new List<object>(node.Children);
         if (node.Kind != ThoughtNodeKind.Element) return items;
-        foreach (var part in Frame.Contents(node)) items.Add(new ContentSymbol(node, part));
-        var stubs = Frame.Stubs(node);
-        if (stubs.Count > 0) items.Add(stubs);
+        var shelf = new List<MapSymbol>();
+        foreach (var part in Frame.Contents(node)) shelf.Add(new ContentSymbol(node, part));
+        foreach (var kind in Frame.Stubs(node)) shelf.Add(new StubSymbol(node, kind));
+        if (shelf.Count > 0) items.Add(shelf);
         return items;
     }
 
@@ -253,17 +304,17 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
                     Place(canvas, child, cx, ref y,
                           live: node.Kind == ThoughtNodeKind.Element ? child.IsLive || child.Kind == ThoughtNodeKind.Element : live);
                     break;
-                case ContentSymbol content:
-                    Symbol(canvas, cx, y, Config.Symbols.MapContent,
-                           Frame.Enabled(content) ? Config.Colors.GoldYellow : DisabledInk, content, Backdrop);
-                    y++;
-                    break;
-                case IReadOnlyList<StubKind> stubs:
-                    foreach (var kind in stubs)
+                case List<MapSymbol> shelf:
+                    // One row, a space between symbols; what is held first, then what is offered.
+                    foreach (var symbol in shelf)
                     {
-                        var stub = new StubSymbol(node, kind);
-                        Symbol(canvas, cx, y, kind == StubKind.Think ? Config.Symbols.MapThink : Config.Symbols.MapSpeak,
-                               Frame.Enabled(stub) ? Config.Colors.BrightYellow : DisabledInk, stub, Backdrop);
+                        char glyph = symbol is StubSymbol stub
+                            ? stub.Kind == StubKind.Think ? Config.Symbols.MapThink : Config.Symbols.MapSpeak
+                            : Config.Symbols.MapContent;
+                        var ink = !Frame.Enabled(symbol) ? DisabledInk
+                                : symbol is StubSymbol ? Config.Colors.BrightYellow : Config.Colors.GoldYellow;
+                        Symbol(canvas, cx, y, glyph, ink, symbol, Backdrop);
+                        canvas.Put(cx + 1, y, ' ', LineInk, Backdrop);
                         cx += 2;
                     }
                     y++;

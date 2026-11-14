@@ -21,11 +21,13 @@ expect-no-state items hawthorn_berry
 strategy succeed
 goal gather
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Berry Bush"
+choose childhood_memory
+advance 12 180
+click think "Test Berry Bush"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

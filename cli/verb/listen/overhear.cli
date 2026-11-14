@@ -21,14 +21,16 @@ strategy succeed
 goal listen
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
 regions
-expect talking with
+expect-state trees "talking with"
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

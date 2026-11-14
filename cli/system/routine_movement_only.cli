@@ -24,11 +24,13 @@ wait mode LocationInteraction 60
 strategy succeed
 goal move
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Yard"
+choose childhood_memory
+advance 12 180
+click think "Test Yard"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -44,10 +46,10 @@ observe none
 # Two presses, and the first one is not the exit. A move ends on a node transition, so the footer
 # reads CONTINUE: pressing it closes the segment and opens the next phase in the new area, whose
 # observation preview then has to be drained before the footer becomes LEAVE.
-click button
+click continue
 wait 60
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 # The area left from, at the hour it was left at, as a Go to routine — and nothing else.

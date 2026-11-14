@@ -28,15 +28,17 @@ expect-state will "slay"
 expect-state will "aim=2/3"
 expect-state will "kill a beast for its meat"
 
-click keyword 0
-choose 0
+click observe "chicken"
+choose childhood_memory
+advance 12 180
+click think "chicken"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 1
 choose 0
 advance 12 180
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue
@@ -45,7 +47,7 @@ expect Slain:
 expect-verb slay
 
 # ── The carcass is down: the will wants the cut ──────────────────────────────
-click button
+click continue
 advance 12 180
 
 expect-state will "will butchery steps=1"

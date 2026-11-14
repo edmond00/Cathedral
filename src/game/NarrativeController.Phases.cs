@@ -287,14 +287,23 @@ public partial class NarrativeController
     }
 
     /// <summary>
-    /// Puts the next memory's scene in place of the one just remembered. The member's trees are kept:
-    /// each memory adds its branch, so by the end they are the whole childhood.
+    /// Puts the next memory's scene in place of the one just remembered. What hung under "myself"
+    /// is carried over to the new scene's: each memory adds its branch, so by the end the tree is the
+    /// whole childhood. A fragment looked at and not reached for is kept as it was read, with
+    /// nothing left to do about it — its memory has gone by.
     /// </summary>
     private void ReplaceMemory(Scene.Scene next)
     {
-        var remembered = Mind.Roots.ToList();
+        var remembered = Mind.Roots.FirstOrDefault(r => r.Element is Scene.GetUp.SelfPointOfInterest);
         AdoptScene(next);
-        Mind.Roots.AddRange(remembered);
+        if (remembered != null && Mind.Roots.FirstOrDefault(r => r.Element is Scene.GetUp.SelfPointOfInterest) is { } myself)
+            foreach (var branch in remembered.Children.ToList())
+            {
+                remembered.Remove(branch);
+                foreach (var act in branch.SelfAndDescendants().Where(n => n.IsWaitingAct))
+                    act.State = ActState.Lapsed;
+                myself.Add(branch);
+            }
         ApplyTimePeriod(TimePeriod.Morning);
         Console.WriteLine($"NarrativeController: scene replaced with reminescence '{next.CurrentReminescenceId}'");
     }

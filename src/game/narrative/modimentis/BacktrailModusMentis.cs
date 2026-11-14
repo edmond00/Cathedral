@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Backtrail — going back along one's own scent, the trail laid on the way out. VerbAction.
-/// What a successful backtrack teaches a beast; a person, who has no snout, learns retracing.
+/// What a new way found back to known ground teaches a beast; a person, who has no snout, learns retracing.
 /// </summary>
 public class BacktrailModusMentis : ModusMentis
 {

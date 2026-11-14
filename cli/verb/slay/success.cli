@@ -4,8 +4,8 @@
 #
 # Reached in 12/12 of the sampled location ids (see --verb-probe). --location-type and
 # --location-id decide the whole scene, so this does not depend on world generation; --npc-static
-# pins people to one room; --observe-only pins the phase to one object, which is why the keyword is
-# clicked by index (which word the prose highlights is not something a test can know).
+# pins people to one room; --observe-only pins an observation to one object, which the script
+# names again when it clicks its symbol.
 #
 # Slay is a Required verb: a knife must be COMBINED with the action, not merely carried. Since the
 # knife is slay's own reference tool the combination is accepted without a critic call at all
@@ -26,13 +26,15 @@ strategy succeed
 goal slay
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 1
 regions
 choose 0
@@ -41,7 +43,7 @@ advance 12 180
 # Combining does not execute: it rewrites the action to include the tool and offers THAT as a new
 # button. Executing the reformulated one is what puts CombinedItem on the action.
 regions
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue

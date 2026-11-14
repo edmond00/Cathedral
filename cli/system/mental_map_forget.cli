@@ -22,11 +22,13 @@ wait mode LocationInteraction 60
 strategy succeed
 goal move
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Yard"
+choose childhood_memory
+advance 12 180
+click think "Test Yard"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -38,10 +40,10 @@ expect-state map map visited Test Yard
 expect-state mental-maps mental-maps used=0 usable=0
 
 observe none
-click button
+click continue
 wait 60
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 # Left, and forgotten: no map, so no routine either.
@@ -53,7 +55,7 @@ travel neighbour
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 travel back

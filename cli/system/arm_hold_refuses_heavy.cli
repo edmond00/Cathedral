@@ -19,12 +19,14 @@ strategy succeed
 goal grab
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+click think "Test Rack"
 choose ripelore
 advance 12 180
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 

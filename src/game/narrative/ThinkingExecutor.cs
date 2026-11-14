@@ -164,8 +164,8 @@ public class ThinkingExecutor
             // ones, the will's own pick.
             // What this phase has already put a button on screen for is no way at all: a will is asked
             // for its way only through what is left, so a second thought reaches for another first step
-            // of up to the same length, as a goal choice does. A wait or a backtrack is told apart only
-            // once settled ("…until noon"), so it is read settled, and goes if that much was offered.
+            // of up to the same length, as a goal choice does. A wait is told apart only once
+            // settled ("…until noon"), so it is read settled, and goes if that much was offered.
             var afforded = subOutcomes.OfType<VerbAction>().ToList();
             var fresh = afforded.Where(v => proposed?.WasProposed(v) != true).ToList();
             var ways = Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, fresh);
@@ -199,8 +199,7 @@ public class ThinkingExecutor
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, refusal, NarrationKind.Reasoning, thoughtPart, cancellationToken));
                 return Finish(new List<ParsedNarrativeAction>());
             }
-            // A wait on the way lasts until the hour the path needs, a backtrack goes to the area it
-            // needs: not ones the player picks.
+            // A wait on the way lasts until the hour the path needs, not one the player picks.
             if (willPath!.First.Settled is { } settled && willStep.Verb.Settle(willStep, settled) is { } settledStep)
                 willStep = settledStep;
             willOnTheWay = !thinkingModusMentis.Will!.Matches(willStep);

@@ -24,22 +24,22 @@ wait mode LocationInteraction 60
 advance 12 180
 expect-state will "will bargaining steps=2 first="
 
-click keyword 0
-choose 0
+click observe "poultry_keeper"
+choose childhood_memory
+advance 12 180
+click think "poultry_keeper"
 choose bargaining
 advance 12 180
 expect I must first
 
-click keyword 0
-choose 0
+click think "poultry_keeper"
 choose bargaining
 advance 12 180
 expect ask him to take me to the coop
 expect follow him at a distance
 expect-not nothing else comes to mind
 
-click keyword 0
-choose 0
+click think "poultry_keeper"
 choose bargaining
 advance 12 180
 expect nothing else comes to mind

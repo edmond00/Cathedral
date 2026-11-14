@@ -26,16 +26,14 @@ wait mode LocationInteraction 60
 advance 12 180
 
 # Observe the bench with Ripelore; it turns to the butterfly instead.
-click keyword bench
-choose 1
+click observe "bench"
 choose childhood_memory
 advance 12 180
 expect I am not interested in a test bench. My attention shifts to a butterfly
 
 # The turn carried the new object's keyword, wired to the butterfly: observing through "butterfly"
 # focuses on it (and, under --refuse-focus, turns away from it in turn).
-click keyword butterfly
-choose 1
+click observe "butterfly"
 choose comradeship
 advance 12 180
 expect I am not interested in a butterfly

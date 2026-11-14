@@ -27,16 +27,14 @@ expect-state will "will lockpicking steps=2 first="
 expect-state will "unlock and open the test door"
 
 # Observing with the will: the yard is on its way, so it keeps it, and the reason is the path.
-click keyword yard
-choose 1
+click observe "yard"
 choose lockpicking
 advance 12 180
 expect Through it I could
 
 # Thinking with the will on the yard: the first step, voiced as the way to the goal, by the judged means.
 means woodcraft
-click keyword yard
-choose 0
+click think "yard"
 choose lockpicking
 advance 12 180
 expect To get there I must first
@@ -44,7 +42,7 @@ expect so I will
 expect [Woodcraft
 
 strategy succeed
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -52,24 +50,24 @@ advance 12 180
 expect-state where Test Yard
 expect-state will "will lockpicking steps=1"
 
-# The next phase is clicked into: settle the word-vector load first (see `wait embeddings`).
-wait embeddings 60
 observe "Test Door"
-click button
+click continue
 wait 60
 advance 12 180
 
 # In the yard the door is the goal itself.
-click keyword 0
-choose 0
+click observe "?"
+choose childhood_memory
+advance 12 180
+click think "?"
 choose lockpicking
 advance 12 180
 expect [Lockpicking
-click action 0
+click act 0
 choose 1
 choose 0
 advance 12 180
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue

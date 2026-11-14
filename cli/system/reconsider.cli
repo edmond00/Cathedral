@@ -24,8 +24,10 @@ expect wolf
 strategy succeed
 goal examine
 means woodcraft
-click keyword 0
-choose 0
+click observe "wolf"
+choose childhood_memory
+advance 12 180
+click think "wolf"
 choose ripelore
 advance 12 180
 expect [Woodcraft
@@ -33,7 +35,7 @@ regions
 
 # Reconsider the act: any thinking modus mentis, and the means is no longer pinned.
 means none
-click action 0
+click act 0
 choose 2
 choose ripelore
 advance 12 180
@@ -42,7 +44,7 @@ expect discreetly examine
 regions
 
 # The new act passes the threat rule on the click.
-click action 1
+click act 1
 choose 0
 advance 12 180
 click continue

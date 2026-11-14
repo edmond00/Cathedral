@@ -24,13 +24,15 @@ goal propose_to_buy
 advance 12 180
 regions
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 0
 # Difficulty 0 at a willing means: no dice, so no dice box to confirm — the outcome comes straight on.
 advance 12 180

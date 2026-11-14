@@ -16,11 +16,13 @@ wait mode LocationInteraction 60
 strategy succeed
 goal ask_to_use_workshop
 advance 12 180
-click keyword blacksmith
-choose 0
+click observe "blacksmith"
+choose childhood_memory
+advance 12 180
+click think "blacksmith"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

@@ -18,8 +18,10 @@ strategy succeed
 goal listen
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "weaver"
+choose childhood_memory
+advance 12 180
+click think "weaver"
 choose ripelore
 advance 12 180
 regions

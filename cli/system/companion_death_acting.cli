@@ -1,21 +1,16 @@
-# The companion who is narrating can die mid-phase, and the narration returns to the protagonist.
+# The companion being played can die, and the protagonist is played in their place.
 #
-# The sharp edge of the standing death check. After a Speak-About hand-off the companion is the one
-# who observes, deliberates and acts — and therefore the one a failed act's wound penalty lands on
-# (see Chapter VI: every gate consults the acting body). So the member being narrated as is exactly
-# the member who can be killed by the narration, and when they are, the phase is left with nobody to
-# run it.
+# The sharp edge of the standing death check. A companion is played like the protagonist — it
+# observes, thinks and acts for itself — and is therefore the one a failed act's wound penalty lands
+# on (see Chapter VI: every gate consults the acting body). So the member played is exactly the
+# member the narration can kill, and when it does the map is left with a token nobody answers for.
 #
-# NarrativeController.StartObservationPhaseWithHistory already answers that: an active member no
-# longer in the party hands the narration back to the protagonist. This asserts the two halves
-# together — the companion is really gone, and the session is still usable afterwards, which is what
-# would break if the hand-off were left pointing at a corpse.
+# NarrativeController.SyncRoster answers that: a member no longer in the party is taken off the map
+# with their trees, and when they were the one played the protagonist is. This asserts the two
+# halves together — the companion is really gone, and the session is still usable afterwards, which
+# is what would break if the view were left on somebody dead.
 #
-# The hand-off itself is companion_handoff.cli's subject; this repeats it as far as the companion's
-# first act, which is what leaves the footer offering to open another segment rather than to leave
-# the place — killing the hyena before it has acted strands the session on a LEAVE, and the return of
-# the narration is then unobservable. See companion_death_wounds.cli for the notice and the body,
-# which are the same here and are not re-asserted.
+# See companion_death_wounds.cli for the notice and the body, which are the same here.
 #
 # FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
 
@@ -27,30 +22,27 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-
 expect [KENRYC GREYGATE]
 
-# Speak About: keyword -> "Speak About" -> speaking modus mentis -> companion.
-click keyword 0
-choose 2
-choose friendship
-choose 0
-advance 12 180
-
-# The hyena has the narration.
+# Play the hyena.
+click member Brindletail
+wait
 expect [BRINDLETAIL]
 
-# It takes its turn at the scene — its own observation, deliberation, act and dice. The goal is
-# pinned: walking away from the chicken would leave nothing acted, and the playground's draw over the
-# goals moves whenever an earlier draw does.
+# It takes its turn at the scene — its own observation, thought, act and dice. The goal is pinned:
+# the playground's draw over the goals moves whenever an earlier draw does.
 strategy succeed
 goal smell
-click keyword 0
-choose 0
+click observe "Test Bench"
 choose birdsong
 advance 12 180
-click action 0
+click think "Test Bench"
+choose birdsong
+advance 12 180
+click act 0
 choose 0
+advance 12 180
+click continue
 advance 12 180
 click continue
 advance 12 180
@@ -68,15 +60,15 @@ wait 60
 # Gone from the party...
 inspect party
 expect-no-state party Brindletail
-# ...and a body in the room they were narrating in.
+
+# ...and a body where they stood.
 inspect pois
 expect-state pois Brindletail's Remains
 
-# The session survives them: the next segment opens with the protagonist narrating again, rather
-# than on a member who is no longer in the party.
-click button
-wait 60
-advance 12 180
+# The session survives them: the protagonist is the one played, and the map answers.
 expect [KENRYC GREYGATE]
-
+click observe way
+choose childhood_memory
+advance 12 180
+expect-state trees element
 quit

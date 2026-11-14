@@ -357,12 +357,6 @@ public class Scene
     /// </summary>
     public TimePeriod? WaitUntil { get; set; }
 
-    /// <summary>
-    /// The area a successful backtrack goes to, chosen by the player on the location map before its
-    /// outcome is narrated; <see cref="Verbs.BacktrackVerb"/> reads it, and the commit clears it.
-    /// </summary>
-    public Area? BacktrackTo { get; set; }
-
     /// <summary>The section <paramref name="area"/> belongs to, or null for an area in none.</summary>
     public Section? SectionOf(Area area) => Sections.FirstOrDefault(s => s.Areas.Contains(area));
 
@@ -515,13 +509,6 @@ public class Scene
     /// action's reports apply, which then leaves the location on the CONTINUE that closes the segment.
     /// </summary>
     public bool PendingLostWay { get; set; }
-
-    /// <summary>
-    /// What the next narration phase should open on, set by an outcome rather than by the controller —
-    /// the door a stalked quarry went through. Read once and cleared, behind the controller's own
-    /// opening focus.
-    /// </summary>
-    public Element? PendingOpeningFocus { get; set; }
 
     /// <summary>
     /// Noetic points to take away, added to by <see cref="FocusLostOutcome"/>; consumed by

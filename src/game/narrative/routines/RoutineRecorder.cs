@@ -12,11 +12,10 @@ namespace Cathedral.Game.Narrative.Routines;
 /// <summary>
 /// Learns routines from one narration session. A routine is an entry point — an area, an hour and
 /// what opens there — so the recorder does not follow the player's steps at all: it waits for the
-/// five moments that make one, and notes where and when the player stood.
+/// moments that make one, and notes where and when the player stood.
 ///
 /// <list type="bullet">
 /// <item><b>Gather</b> — a successful gather, dig, mine, fish or cut-wood, on its source.</item>
-/// <item><b>Meet</b> — a conversation opened with somebody.</item>
 /// <item><b>Buy / Sell</b> — a merchant agreeing to trade.</item>
 /// <item><b>Work</b> — a master agreeing to take the player on.</item>
 /// <item><b>Go to</b> — walking into an area other than the one the session opened in (each one,
@@ -84,7 +83,7 @@ public class RoutineRecorder
         }, pov, IsRecordable(scene, pov.Where) && Crafting.CraftingAccess.MayUse(scene, pov, request.Station));
     }
 
-    // ── The five moments ──────────────────────────────────────────────────────
+    // ── The moments ───────────────────────────────────────────────────────────
 
     /// <summary>
     /// Called after a verb has SUCCEEDED and before its reports apply, so the item is still on its
@@ -126,10 +125,6 @@ public class RoutineRecorder
             Name                = GatherName(verb.DisplayName, item.Item.DisplayName, source.DisplayName),
         }, pov);
     }
-
-    /// <summary>A conversation opened with <paramref name="npc"/>: the player knows where to find them.</summary>
-    public void OnConversation(PoV pov, NpcEntity npc)
-        => Record(Person(new MeetRoutine(), npc, $"Meet {npc.DisplayName}"), pov);
 
     /// <summary>A merchant agreed to trade.</summary>
     public void OnTrade(PoV pov, NpcEntity npc, TradeMode mode)

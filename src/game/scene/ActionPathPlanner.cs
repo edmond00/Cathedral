@@ -10,8 +10,7 @@ namespace Cathedral.Game.Scene;
 /// <summary>
 /// One action of a path: the action itself, as the scene offers it from that step's standing, and
 /// what the path needs of a step whose end the player would otherwise choose — the hour a sit lasts
-/// until, the area a backtrack goes to (<see cref="Verb.Settle"/>). Either may reach any of several;
-/// the path is one of them.
+/// until (<see cref="Verb.Settle"/>). It may reach any of several; the path is one of them.
 /// </summary>
 public sealed record PathStep(VerbAction Action, object? Settled = null)
 {

@@ -9,7 +9,7 @@ namespace Cathedral.Game.Cli;
 ///
 /// <para>
 /// The point is automated verification. An agent (or a shell script) issues semantic commands —
-/// <c>click keyword hearth</c>, <c>travel "Oakhollow"</c> — and reads back the terminal grid or a
+/// <c>click think hearth</c>, <c>travel "Oakhollow"</c> — and reads back the terminal grid or a
 /// structured state line, instead of computing pixel coordinates and screenshotting.
 /// See <see cref="CliDriver"/> for the command vocabulary.
 /// </para>

@@ -173,7 +173,7 @@ public sealed class Astrolabe : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Medium;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path", "backtrack" };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path" };
     public override int UsageLevel => 2;
 }
 

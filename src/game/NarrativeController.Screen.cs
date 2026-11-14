@@ -7,6 +7,7 @@ using Cathedral.Game.Narrative.Tree;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Building;
+using Cathedral.Game.Scene.Verbs;
 using OpenTK.Mathematics;
 
 namespace Cathedral.Game;
@@ -45,6 +46,9 @@ public partial class NarrativeController
     /// <summary>Called at 10 Hz by the game controller.</summary>
     public void Update()
     {
+        // The party changes under the narration — somebody recruited by a conversation, somebody
+        // dead of a wound — and nothing tells it so.
+        if (SyncRoster()) ReconcileTrees();
         RenderPanel();
         // A popup is a modal choice, so the panel behind it is greyed the way the preview box greys
         // it: recolouring what is drawn rather than darkening the whole HUD, so the popup itself (a
@@ -177,7 +181,9 @@ public partial class NarrativeController
         {
             Active       = _active,
             Hovered      = Busy || IsPopupVisible ? null : _hovered,
-            ElementGlyph = node => ElementKinds.Glyph(KindOf(node)),
+            // "Myself" is drawn as the protagonist is everywhere else.
+            ElementGlyph = node => node.Element is Scene.GetUp.SelfPointOfInterest ? Config.GlyphSphere.ProtagonistChar
+                                                                                    : ElementKinds.Glyph(KindOf(node)),
             IsHostile    = node => KindOf(node) == ElementKind.Hostile,
             Contents     = ContentsOf,
             Stubs        = StubsOf,
@@ -231,7 +237,11 @@ public partial class NarrativeController
     private IReadOnlyList<StubKind> StubsOf(ThoughtNode element)
     {
         var stubs = new List<StubKind>();
-        if (_active.GetThinkingModiMentis().Count > 0) stubs.Add(StubKind.Think);
+        // Thinking is offered about what affords an act now: a way since walked, a thing emptied
+        // or a person asleep keeps its tree and has nothing to be thought into.
+        if (_active.GetThinkingModiMentis().Count > 0 && Locate(element) is { } at
+            && GoalsOf(at.Anchor).Any(g => g.Verb is not IgnoreVerb))
+            stubs.Add(StubKind.Think);
         if (Exploring && _minds.Count > 1 && _active.GetSpeakingModiMentis().Count > 0) stubs.Add(StubKind.Speak);
         return stubs;
     }
@@ -254,6 +264,8 @@ public partial class NarrativeController
                 return !ReferenceEquals(token.Member, _active);
 
             case TraySymbol tray:
+                // While the childhood comes back, nothing around the body answers: only "myself".
+                if (_scene.Phase == NarrationPhase.ChildhoodReminescence) return false;
                 if (!HasPoint || _active.GetObservationModiMentis().Count == 0) return false;
                 if (confrontation == null) return _frameReach.Contains(tray.Area.Id);
                 return tray.Area.Id == _pov.Where.Id

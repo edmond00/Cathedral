@@ -47,7 +47,7 @@ advance 12 90
 save roundtrip
 
 # Back out at the world map, where the autosave fires and location memory has been recorded.
-click button
+click exit
 wait mode WorldView 45
 save roundtrip
 

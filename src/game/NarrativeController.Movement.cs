@@ -219,6 +219,8 @@ public partial class NarrativeController
                 if (link != null) _scene.TakenLinks.Add(link);
             }
             StandIn(mind, arrive);
+            // Ground stood on makes the plain ways to it known, and a known way is no act any more.
+            ReconcileTrees();
             if (stop < 0) { then(); return; }
             Console.WriteLine($"NarrativeController: stopped in '{arrive.DisplayName}' by "
                             + $"'{ConfrontationOf(mind)?.Npc.DisplayName}' — what was set out for is dropped");

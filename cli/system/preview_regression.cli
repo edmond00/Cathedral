@@ -26,8 +26,10 @@ wait
 # word is still in the prose, "My attention is drawn to…") and silently stopped clicking anything.
 expect attention
 strategy succeed
-click keyword 0
-choose 0
+click observe "?"
+choose childhood_memory
+advance 12 180
+click think "?"
 choose ripelore
 wait 45
 
@@ -43,7 +45,7 @@ wait
 
 # Thinking committed: the action button is live.
 expect I want to
-click action 0
+click act 0
 choose 0
 wait 60
 

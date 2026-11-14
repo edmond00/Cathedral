@@ -35,13 +35,15 @@ strategy succeed
 goal pickpocket
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose avarice
 advance 12 180
 regions
 
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -59,7 +61,7 @@ expect-outcome emotion
 # Under --playground the persona rewrite returns the neutral line unchanged, so the humor's own
 # FeelsLike sentence is on screen verbatim. This is the block, not the chip: it proves the coda was
 # narrated and committed, which the chip alone does not.
-expect It makes me feel
+expect-state texts "It makes me feel"
 
 # --- after: the spleen really moved ---
 # Nothing but EmotionOutcome.Apply can put a mind state in a queue - secretion never produces one.

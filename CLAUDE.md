@@ -25,7 +25,6 @@ apt-get update && apt-get install -y dotnet-sdk-8.0
 Xvfb :99 -screen 0 1280x1024x24 &
 mkdir -p /tmp/xdg && chmod 700 /tmp/xdg
 export DISPLAY=:99 XDG_RUNTIME_DIR=/tmp/xdg
-export CLI_EXTRA_FLAGS=--no-embeddings   # models/embeddings/ (GloVe) is gitignored, so absent
 ```
 
 The exports do not outlive one shell command, so repeat them in the command that runs the game or

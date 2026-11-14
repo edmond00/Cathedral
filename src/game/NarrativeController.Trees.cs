@@ -6,6 +6,7 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Tree;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.GetUp;
 
 namespace Cathedral.Game;
 
@@ -47,12 +48,14 @@ public partial class NarrativeController
                                     .FirstOrDefault(p => ReferenceEquals(p.Item, item));
                 return part == null ? null : (part, held.Where);
 
-            case PointOfInterest poi when element.SeenFrom is { } from:
+            // A fragment of a memory already remembered is of a scene that is gone: its area is not
+            // in this one.
+            case PointOfInterest poi when element.SeenFrom is { } from && _scene.AllAreas.Contains(from):
                 var thing = NodeForArea(from).PossibleOutcomes.OfType<SyntheticObservationObject>()
                                 .FirstOrDefault(o => ReferenceEquals(o.PointOfInterest, poi));
                 return thing == null ? null : (thing, from);
 
-            case Area area when element.SeenFrom is { } from:
+            case Area area when element.SeenFrom is { } from && _scene.AllAreas.Contains(from):
                 var way = NodeForArea(from).PossibleOutcomes.OfType<SyntheticAreaObservationObject>()
                               .FirstOrDefault(o => ReferenceEquals(o.Area, area));
                 return way == null ? null : (way, from);
@@ -70,6 +73,12 @@ public partial class NarrativeController
         {
             if (ElementKinds.ElementOf(anchor) is not { } element) continue;
             if (Mind.NodeOf(element, area) != null) continue;
+            // What "myself" holds — a memory's fragments, the body's exhaustion — is looked at from
+            // there (ContentsOf), and "myself" is on the map from the start.
+            if (element is SelfPointOfInterest || SelfPointOfInterest.Holds(element)) continue;
+            // The plain way to ground already stood on is walked on the map and offers nothing to
+            // look at: its line is drawn, and a click on the card goes there.
+            if (anchor is SyntheticAreaObservationObject { Area: var to } && AreaVisits.IsWayBack(_scene, area, to, Period)) continue;
             yield return (anchor, ElementKinds.Of(anchor, _active), ElementMemory.IsKnown(_scene, area, anchor));
         }
     }
@@ -77,7 +86,12 @@ public partial class NarrativeController
     /// <summary>What an observed container holds that the played member has not observed in its turn.</summary>
     private IReadOnlyList<NarrativeAnchor> ContentsOf(ThoughtNode element)
     {
-        if (Locate(element) is not { Anchor: SyntheticObservationObject container }) return Array.Empty<NarrativeAnchor>();
+        if (Locate(element) is not { Anchor: SyntheticObservationObject container } held) return Array.Empty<NarrativeAnchor>();
+        // "Myself" holds what its phase is about, as a chest holds what is in it.
+        if (element.Element is SelfPointOfInterest)
+            return NodeForArea(held.Where).PossibleOutcomes.OfType<SyntheticObservationObject>()
+                .Where(o => SelfPointOfInterest.Holds(o.PointOfInterest) && Mind.NodeOf(o.PointOfInterest, held.Where) == null)
+                .ToList<NarrativeAnchor>();
         return container.Parts
             .Where(p => p is SyntheticItemObservationObject item
                      && !element.Children.Any(c => c.Kind == ThoughtNodeKind.Element && ReferenceEquals(c.Element, item.Item)))
@@ -129,6 +143,12 @@ public partial class NarrativeController
     /// </summary>
     private void ReconcileTrees()
     {
+        SyncRoster();
+        // Where everybody is now: the hour moves people, and so does a noise that draws one in, a
+        // householder coming to bed, a death, a beast tamed.
+        _npcPlacement.PlaceForPeriod(Period);
+        // What the world now allows is planned afresh: a will's path was found in the scene as it was.
+        ActionPathPlanner.Forget();
         RefreshSceneVerbs();
 
         foreach (var mind in _minds.Values)
@@ -196,7 +216,7 @@ public partial class NarrativeController
                 if (mind.NodeOf(arrival, null) != null) continue;
                 bool enemy = ElementKinds.IsHostile(arrival, mind.Member);
                 Root(mind, anchor, area, text: null,
-                     note: enemy ? "They heard me, and have come looking for me." : "They have come to see what the noise was.");
+                     note: enemy ? NeutralNarration.ArrivalEnemyCaution() : NeutralNarration.ArrivalWitnessNotice());
             }
         }
     }

@@ -380,9 +380,9 @@ public class SyntheticAreaObservationObject : ObservationObject, IVerbRefreshabl
     }
 
     /// <summary>
-    /// Re-reads the ways to this area from where the party stands: walking to it, or — once it has
-    /// been stood in and may be gone back to — going back to it, which takes walking's place
-    /// (<see cref="Verbs.BacktrackVerb"/>). Only those two: an area is a way, not a thing to act on.
+    /// Re-reads the way to this area from where the party stands: walking to it, and nothing once
+    /// it has been stood in and may be gone back to — a known way is walked on the map, and is no
+    /// act. An area is a way, not a thing to act on.
     /// </summary>
     public void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null)
     {

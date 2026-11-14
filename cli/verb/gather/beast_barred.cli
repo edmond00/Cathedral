@@ -1,19 +1,14 @@
-# Regression script for the anatomy gate (see AnatomyCapability, Verb.RequiredCapabilities).
-# Run: dotnet run -- --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters \
-#        --period noon --observe-only flower --cli-timeout 500 \
-#        --cli-script cli/beast_verbs.cli 2>&1 | grep '^\[cli\]'
-# A non-zero exit means an `expect`/`wait` failed.
+# gather — withheld from a body with no hands (see AnatomyCapability, Verb.RequiredCapabilities)
 #
-# The same object, looked at by two bodies. --observe-only pins the phase to the flower patch, and
-# --fill-party gives the party a beast (the hyena Brindletail at seed 42) that the Speak About hand-off
-# can pass narration to — the only way to make a companion the ACTING member, which is what the gate
-# reads.
+# The same object, thought about by two bodies. --fill-party gives the party a beast (the hyena
+# Brindletail at seed 42), played by a click on its token — every gate reads the member played.
 #
-# GATHER is a Handcraft verb. The protagonist is offered it on the patch; the hyena, with the same
-# patch in front of it, is not — the goal is not in its list at all, so `goal gather` falls back and
+# GATHER is a Handcraft verb. The protagonist is offered it on the bush; the hyena, with the same
+# bush in front of it, is not — the goal is not in its list at all, so `goal gather` falls back and
 # stdout carries
 #   [debug] --goal-only 'gather': no such goal here — drawing from all N.
-# (An absence cannot be asserted on screen: `expect` scans the whole terminal, greyed history and all.)
+# The act that then runs is the proof: `goal` falls back to the other goals when its verb is not
+# offered, so whatever the hyena does, it is not gathering.
 #
 # FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Field" --period noon --observe-only "Test Berry Bush"
 
@@ -27,44 +22,37 @@ wait mode LocationInteraction 60
 advance 12 180
 expect [KENRYC GREYGATE]
 
-# --- the human: gather is offered, and the action line says so ------------------
+# --- the human: gather is offered, and the act says so --------------------------
 strategy succeed
 goal gather
-# Clicked by INDEX, not by name: under --playground the clickable keyword is the object's
-# own noun, not its display name, so a phase pinned with --observe-only still cannot be
-# spelled. Index means "whatever this phase opened on".
-click keyword 0
-choose 0
+click observe "Test Berry Bush"
+choose childhood_memory
+advance 12 180
+click think "Test Berry Bush"
 choose ripelore
 advance 12 180
-expect gather
+expect-state trees "verb=gather"
 
-# --- hand narration to the beast, on the same object ----------------------------
-# Straight from the same live keyword — do NOT press the footer here: with the action offered but
-# not taken, the phase is idle and that button reads LEAVE, which walks out of the location.
-click keyword 0
-choose 2
-choose friendship
-choose 0
-advance 12 180
+# --- the beast, on the same object ----------------------------------------------
+click member Brindletail
+wait
 expect [BRINDLETAIL]
 
-# --- the beast: no gather in its goals, but it still acts ------------------------
-# The spoken address leaves its own keyword live ('colour-clusters' at this seed) and it points at the
-# same flower patch. `goal gather` prints the fallback line above; the phase then runs on whatever the
-# hyena CAN do, which proves the gate narrowed the goal list rather than emptying it.
+# No gather in its goals, but it still acts: the gate narrowed the goal list rather than emptying it.
 goal gather
-click keyword 0
-choose 0
+click observe "Test Berry Bush"
 choose birdsong
 advance 12 180
-click action 0
+click think "Test Berry Bush"
+choose birdsong
+advance 12 180
+click act 0
 choose 0
 advance 12 180
 click continue
 advance 12 180
+expect-no-verb gather
 expect [BRINDLETAIL]
-state
 
 # This script tests an ABSENCE: the hyena must NOT be offered gather. `--goal-only gather` finding
 # no such goal is therefore the assertion passing, so its miss must not fail the run.

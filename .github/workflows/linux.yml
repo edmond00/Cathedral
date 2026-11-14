@@ -1,8 +1,8 @@
 # The Linux build and the headless suite, on every push to develop.
 #
 # Builds linux-x64, runs the audits and the --playground CLI suite under Xvfb. No model download:
-# the suite never starts the language model. The 822 MB GloVe file is not downloaded either, so the
-# CLI scripts run with --no-embeddings (keywords ranked by length; see Config.Debug.NoEmbeddings).
+# the suite never starts the language model. The 822 MB GloVe file is not downloaded either: only
+# --mm-audit's persona lint reads it, and it says so and checks less without it.
 # Both take long on a 4-vCPU runner (~20 min of audits, ~55 min of scripts), hence two jobs that run
 # side by side.
 
@@ -26,7 +26,6 @@ jobs:
       DOTNET_NOLOGO: 1
       ALSOFT_DRIVERS: null
       CLI_TIMEOUT: 400
-      CLI_EXTRA_FLAGS: --no-embeddings
     steps:
       - uses: actions/checkout@v4
 

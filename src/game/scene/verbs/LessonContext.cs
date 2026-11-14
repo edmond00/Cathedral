@@ -26,6 +26,13 @@ public sealed record LessonContext(
     /// <summary>How close anybody who counts this body an enemy is — see <see cref="ThreatSelector"/>.</summary>
     public ThreatLevel Hostile { get; init; } = ThreatLevel.None;
 
+    /// <summary>
+    /// The way being taken is one never gone by, and it comes out somewhere already stood in
+    /// (<see cref="AreaVisits.IsNewWayBack"/>). Set by the caller, like <see cref="Hostile"/>: an
+    /// audit stages it, since no scene it builds has a visit behind it.
+    /// </summary>
+    public bool FindsWayBack { get; init; }
+
     /// <summary>The action being taught by, when there is one — its variant can name the lesson (USE names its trade).</summary>
     public VerbAction? Action { get; init; }
 

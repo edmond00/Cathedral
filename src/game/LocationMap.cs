@@ -7,6 +7,7 @@ using System.Linq;
 using OpenTK.Mathematics;
 using Cathedral.Terminal;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Tree;
 using Cathedral.Game.Scene;
 using Cathedral.Game.Scene.Building;
 
@@ -591,7 +592,7 @@ public sealed class LocationMap
             // nobody made.
             string tenure = TenureLabel(scene, area);
             string detail = isHere ? $"you · {scene.GetNpcsAt(area, period).Count} npc"
-                          : known == Known.Visited ? tenure
+                          : known == Known.Visited ? tenure + RememberedMark(scene, area)
                           : known == Known.Seen ? "not visited"
                           : "";
             // The routines learned here take the right of the detail row; the detail keeps what is left.
@@ -739,8 +740,8 @@ public sealed class LocationMap
     {
         void Arm(int ax, int ay, char ch, PadArrow arrow)
         {
-            var fg = _hovered == arrow ? Config.NarrativeUI.KeywordHoverColor : Config.NarrativeUI.KeywordNormalColor;
-            var back = _hovered == arrow ? Config.NarrativeUI.KeywordHoverBackgroundColor : Canvas;
+            var fg = _hovered == arrow ? Config.NarrativeUI.MapArrowHoverColor : Config.NarrativeUI.MapArrowColor;
+            var back = _hovered == arrow ? Config.NarrativeUI.MapArrowHoverBackgroundColor : Canvas;
             terminal.SetCell(ax, ay, ch, fg, back);
             _padCells.Add((ax, ay, arrow));
         }
@@ -776,6 +777,9 @@ public sealed class LocationMap
         public int CardWidth => BoxW;
         public int CardHeight => BoxH;
 
+        /// <summary>The rows under a card an overlay may hang its trees on, a blank one left above the next card.</summary>
+        public int TreeRows => TreeRoom - 1;
+
         /// <summary>The top-left cell of <paramref name="area"/>'s card, or null when the map has none.</summary>
         public (int X, int Y)? CardOf(Area area) => _map._boxAt.TryGetValue(area, out var at) ? at : null;
 
@@ -801,6 +805,19 @@ public sealed class LocationMap
         {
             if (InBounds(x, y)) _map._iconCells.Add((x, y, tag));
         }
+    }
+
+    /// <summary>
+    /// What a menu map says of the things remembered in an area: their symbol and how many. An
+    /// observation made on a visit is kept with the place (<see cref="ElementMemory"/>), and this is
+    /// its mark on the map between visits. Ways are not counted — a way known is a line drawn — and
+    /// neither are people, who are not where they were seen.
+    /// </summary>
+    private static string RememberedMark(Scene.Scene scene, Area area)
+    {
+        int things = area.PointsOfInterest.Count(p => p is not ConnectorPointOfInterest
+                                                   && ElementMemory.KeyOf(p) is { } key && scene.KnownElements.Contains(key));
+        return things == 0 ? "" : $" {Config.Symbols.MapThing}{things}";
     }
 
     /// <summary>What draws over the narration's map: the symbols on each card and the trees under it.</summary>
@@ -919,7 +936,8 @@ public sealed class LocationMap
         {
             int cols = cells.Values.Max(c => c.C) + 1, rows = cells.Values.Max(c => c.R) + 1;
             int innerW = cols * AreaPitchX - (AreaPitchX - BoxW);
-            int innerH = rows * AreaPitchY - (AreaPitchY - BoxH);
+            // The narration hangs its trees under every card, the last row's too: the panel holds them.
+            int innerH = rows * AreaPitchY - (Narration ? 0 : AreaPitchY - BoxH);
             string title = $" {section.DisplayName}{(section.IsInterior ? " · interior" : "")} ";
             int w = Math.Max(innerW + 2 * SectionPadX, title.Length + 6);
             if (title.Length > w - 4) title = title[..(w - 4)];
@@ -980,7 +998,8 @@ public sealed class LocationMap
         int failed = RouteAll(_grid, _links, weights);
         _layoutNets = _netDashed.Count;
         foreach (var link in _links) SetPath(_grid, link);
-        LayExit(scene);
+        // A way out is laid for a place only: the two opening phases have none.
+        if (scene.Phase == NarrationPhase.Exploration) LayExit(scene);
 
         Console.WriteLine($"LocationMap: laid out {_boxAt.Count} areas in {_sectionBoxes.Count} sections, " +
                           $"{_links.Count} lines ({failed} unroutable), {_viewLinks.Count} views, canvas {_canvasW}x{_canvasH}");

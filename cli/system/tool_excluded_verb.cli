@@ -28,8 +28,10 @@ strategy succeed
 goal examine
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+click think "Test Rack"
 choose ripelore
 advance 12 180
 
@@ -37,7 +39,7 @@ advance 12 180
 # against this number less one.
 inspect noetic
 
-click action 0
+click act 0
 
 # Row 1 is "Use Tool" and it must be LIVE. Were a verb category ever to start greying this row, the
 # `regions` line below would report "(disabled)" and `choose 1` would error — which is the

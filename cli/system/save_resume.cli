@@ -45,7 +45,7 @@ expect-state savefile days=0.0
 travel here
 wait mode LocationInteraction 45
 advance 12 90
-click button
+click exit
 wait mode WorldView 45
 
 # The save now carries the location the visit created memory for.

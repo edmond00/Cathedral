@@ -24,11 +24,13 @@ expect-state where "trespass=yes confronted=none"
 strategy succeed
 goal sit_and_wait
 advance 12 180
-click keyword 0
-choose 0
+click observe "Storage"
+choose childhood_memory
+advance 12 180
+click think "Storage"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -39,21 +41,22 @@ expect-outcome time_shift
 expect-state where "period=Night"
 expect-state where "confronted=FoundWaiting"
 
-# The next phase opens on them. Going up to them is one of the few acts a confrontation permits,
+# They are on the map already observed. Going up to them is one of the few acts a confrontation permits,
 # and it opens found_waiting rather than caught-red-handed.
-click button
+click continue
 advance 12 180
 goal explain_myself
-click keyword 0
-choose 0
+regions
+click think "apprentice"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
 advance 12 180
 
+click continue
 wait mode Dialogue 60
 expect-state dialogue "last=found_waiting"
 strategy fail-dice

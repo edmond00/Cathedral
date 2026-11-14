@@ -38,8 +38,10 @@ advance 12 180
 regions
 
 # The keyword opens thinking. The goal choice runs here, behind the choice rules.
-click keyword chest
-choose 0
+click observe "chest"
+choose childhood_memory
+advance 12 180
+click think "chest"
 choose ripelore
 advance 12 180
 state
@@ -47,7 +49,7 @@ regions
 
 # Execute it. fail-dice forces the roll to fail, which is what hands a witness in earshot the
 # caught-red-handed confrontation — when one is in earshot and the skill was not discreet.
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue

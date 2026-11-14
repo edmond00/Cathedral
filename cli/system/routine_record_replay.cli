@@ -33,11 +33,13 @@ strategy succeed
 # --- walk into the wood ------------------------------------------------------
 goal move
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Wood"
+choose childhood_memory
+advance 12 180
+click think "Test Wood"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -45,12 +47,9 @@ advance 12 180
 
 # Pinned BEFORE the footer press: that press closes the segment and generates the next phase's
 # observation, so a filter set after it would arrive too late to steer anything.
-# The second phase is clicked into: settle the word-vector load first, or which keyword it
-# highlights depends on a race (see `wait embeddings`).
-wait embeddings 60
 observe farmer
 goal propose_to_buy
-click button
+click continue
 wait 60
 advance 12 180
 expect-state where Test Wood
@@ -58,11 +57,10 @@ expect-state where Test Wood
 expect-state where trespass=no
 
 # --- the trade, which teaches the Meet and the Buy routines -------------------
-click keyword 0
-choose 0
+click think "Test Wood"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -78,7 +76,7 @@ expect-state routines time=Noon
 
 # --- leave, go elsewhere, and come back on the routine ------------------------
 observe none
-click button
+click continue
 wait mode WorldView 90
 
 # Leaving from the wood, not the yard it opened in, is the Go to routine.
@@ -131,7 +129,7 @@ travel neighbour
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 travel back

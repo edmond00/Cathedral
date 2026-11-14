@@ -18,8 +18,8 @@
 #     into models/llama-linux/
 #
 # What it does NOT fetch: the 2 GB model and the 347 MB GloVe vectors. Those are on demand, see
-# tools/linux/fetch-assets.sh. --playground runs need no model; without GloVe pass --no-embeddings
-# (CLI_EXTRA_FLAGS=--no-embeddings for run_tests.sh), or the game exits at its first observation.
+# tools/linux/fetch-assets.sh. --playground runs need no model, and only --mm-audit's persona lint
+# reads the vectors (it says so and checks less without them).
 #
 # Run as root (cloud sessions are) or with sudo available.
 

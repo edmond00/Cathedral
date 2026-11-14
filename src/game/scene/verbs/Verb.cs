@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Narrative.ModiMentis;
 
 namespace Cathedral.Game.Scene.Verbs;
 
@@ -154,19 +155,27 @@ public abstract class Verb
     /// </summary>
     public bool IsPossible(Scene scene, PoV pov, Element target, PartyMember? actor = null)
         => (actor?.Can(EffectiveCapabilities) ?? true)
+           && (actor == null || MayBePerformedBy(actor))
            && !(MovesAlongWay && AreaVisits.IsWayBack(scene, pov.Where, target, pov.When))
            && IsPossibleFor(scene, pov, target, actor);
 
     /// <summary>
+    /// Whether <paramref name="actor"/> may perform this verb at all, beyond what their body can do
+    /// (<see cref="RequiredCapabilities"/>). Everybody may, by default.
+    /// </summary>
+    protected virtual bool MayBePerformedBy(PartyMember actor) => true;
+
+    /// <summary>
     /// Whether this verb walks a way out of the area — a neighbour, a door, a stair, a path, a climb, a
     /// crossing. On a way the party already knows and may go back by, such a verb is not offered:
-    /// <see cref="BacktrackVerb"/> is, in its place.
+    /// a known way is walked on the map, freely, and is no act. On a way never gone by that comes
+    /// out on known ground it teaches how the place joins up (<see cref="WayBackLessons"/>).
     /// </summary>
     protected virtual bool MovesAlongWay => false;
 
     /// <summary>
     /// <paramref name="action"/> settled on what a will's path needs of it (<see cref="PathStep.Settled"/>):
-    /// the hour a wait lasts until, the area a backtrack goes to. Null for a verb that settles nothing.
+    /// the hour a wait lasts until. Null for a verb that settles nothing.
     /// </summary>
     public virtual VerbAction? Settle(VerbAction action, object settled) => null;
 
@@ -480,9 +489,25 @@ public abstract class Verb
     /// </summary>
     public ModusMentis? ResolveLesson(LessonContext ctx)
     {
-        foreach (var mm in Lessons(ctx))
+        var candidates = MovesAlongWay && ctx.FindsWayBack ? WayBackLessons(ctx).Concat(Lessons(ctx)) : Lessons(ctx);
+        foreach (var mm in candidates)
             if (ctx.Actor == null || ModusMentisAnatomy.IsLearnableBy(mm, ctx.Actor)) return mm;
         return null;
+    }
+
+    /// <summary>
+    /// What any walk teaches when it is made by a way never taken and comes out on ground already
+    /// stood on (<see cref="LessonContext.FindsWayBack"/>): ahead of the verb's own lessons, because
+    /// what was learned is how the place joins up, whichever door or stair showed it. A beast learns
+    /// it by scent, a person by the ways remembered — the beast's first, as everywhere.
+    /// </summary>
+    private static IEnumerable<ModusMentis> WayBackLessons(LessonContext ctx)
+    {
+        if (ctx.Hostile == ThreatLevel.Visual) yield return Mm<WithdrawalModusMentis>();
+        if (ctx.Night) yield return Mm<NightwalkingModusMentis>();
+        if (ctx.IsPrivate) yield return Mm<HousewaysModusMentis>();
+        yield return Mm<BacktrailModusMentis>();
+        yield return Mm<RetracingModusMentis>();
     }
     // ── Failure penalties ──────────────────────────────────────────────────────
     // Replaces the former LLM failure-outcome critic tree: instead of asking the critic which body

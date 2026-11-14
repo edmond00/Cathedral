@@ -1,0 +1,92 @@
+# walking — a way the party knows is walked on the map for nothing, and a new way back teaches
+#
+# There is no act of going back. Ground already stood on is reached by a click on its card, by ways
+# already gone by: no thought, no roll, no point. The plain way to such ground is no longer a symbol
+# on the card either — its line is on the map.
+#
+# A way NOT yet gone by is still an act. When it comes out on ground already stood on, what the walk
+# teaches is how the place joins up (Verb.WayBackLessons): the Field–Rock Track, found at the rock
+# after the field and the yard were both walked, teaches Retracing rather than the track's own
+# lesson.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Field -> yard, by an act: the way is not known yet.
+strategy succeed
+goal move
+click observe "Test Yard"
+choose childhood_memory
+advance 12 180
+click think "Test Yard"
+choose ripelore
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Yard
+click continue
+advance 12 180
+expect-state where Test Yard
+
+# From the yard the field is ground stood on: no symbol for the way to it, and the card walks there.
+expect-no-state symbols "the way to Test Field"
+expect-state noetic points=3/3
+click area "Test Field"
+wait
+expect-state where Test Field
+expect-state noetic points=3/3
+expect-state map walk from Test Yard to Test Field
+click area "Test Yard"
+wait
+expect-state where Test Yard
+
+# Yard -> rock, by an act again.
+click observe "Test Rock"
+choose childhood_memory
+advance 12 180
+click think "Test Rock"
+choose ripelore
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Rock
+click continue
+advance 12 180
+
+# At the rock, the track to the field is a way never gone by that comes out on known ground.
+goal follow_path
+click observe "Field–Rock Track"
+choose childhood_memory
+advance 12 180
+click think "Field–Rock Track"
+choose ripelore
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Field
+expect-verb follow_path
+expect Modus mentis learned: Retracing
+click continue
+advance 12 180
+
+# The track is known now, and walked back for nothing.
+click area "Test Rock"
+wait
+expect-state where Test Rock
+quit

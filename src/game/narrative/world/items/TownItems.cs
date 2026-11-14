@@ -224,7 +224,7 @@ public sealed class Compass : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Light;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path", "backtrack" };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path" };
     public override int UsageLevel => 2;
 }
 
@@ -240,7 +240,7 @@ public sealed class Chart : Item
     public override ItemSize Size => ItemSize.Small;
     public override WeightClass Weight => WeightClass.Insignificant;
     public override List<ItemTag> Tags => new() { ItemTag.Craftware };
-    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path", "backtrack" };
+    public override IReadOnlyList<string> MadeForVerbIds => new[] { "voyage_toward", "follow_path" };
     public override int UsageLevel => 2;
 }
 

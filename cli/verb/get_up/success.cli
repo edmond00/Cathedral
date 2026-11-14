@@ -5,12 +5,15 @@
 # uses. That is why the verb had no test.
 #
 # Reaching it means playing the whole childhood out: five reminescences, each a full
-# observe -> think -> act chain plus a footer CONTINUE to move to the next. The loop below is those
-# five, unrolled — the count is fixed by --seed 42, which also orders the fragments — a script has no repetition, and unrolling reads better than pretending otherwise.
+# observe -> think -> remember chain plus the result's CONTINUE to move to the next. The loop below
+# is those five, unrolled — the count and the fragments are fixed by --seed 42. A script has no
+# repetition, and unrolling reads better than pretending otherwise.
 #
-# The phase itself skips the critic and forces difficulty 1 (NarrativeController's GET-UP
-# short-circuit), so failure loops back with no penalty rather than producing a FAILURE outcome —
-# there is no meaningful fail.cli, and cli/get_up/ has one script deliberately.
+# The get-up is played on the same ground: "Myself" now holds the three states of the body's
+# exhaustion, what stands around may be looked at, and whatever is thought about, the thought ends on
+# rising. The phase skips the critic and forces difficulty 1, so failure loops back with no penalty
+# rather than costing anything — there is no meaningful fail.cli, and cli/get_up/ has one script
+# deliberately.
 #
 # FLAGS: --playground --debug --seed 42 --no-encounters
 
@@ -22,68 +25,64 @@ wait mode ChildhoodReminescence 60
 
 # ── The five childhood reminescences ─────────────────────────────────────────
 advance 12 180
-click keyword 0
-choose 0
-choose 0
+click observe "a scream"
+choose childhood_reminescence
 advance 12 180
-click action 0
-choose 0
+click think "a scream"
+choose childhood_reminescence
 advance 12 180
-click continue
+click act 0
+choose 0
 advance 20 180
-click button
+click continue
 advance 12 180
 
+click observe "manure smelt"
+choose childhood_reminescence
 advance 12 180
-click keyword 0
+click think "manure smelt"
+choose childhood_reminescence
+advance 12 180
+click act 0
 choose 0
-choose beast_sense
-advance 12 180
-click action 0
-choose 0
-advance 12 180
-click continue
 advance 20 180
-click button
+click continue
 advance 12 180
 
+click observe "nothing"
+choose childhood_reminescence
 advance 12 180
-click keyword 0
+click think "nothing"
+choose childhood_reminescence
+advance 12 180
+click act 0
 choose 0
-choose beast_sense
-advance 12 180
-click action 0
-choose 0
-advance 12 180
-click continue
 advance 20 180
-click button
+click continue
 advance 12 180
 
+click observe "a dirty traveller"
+choose childhood_reminescence
 advance 12 180
-click keyword 0
+click think "a dirty traveller"
+choose childhood_reminescence
+advance 12 180
+click act 0
 choose 0
-choose sense_of_humor
-advance 12 180
-click action 0
-choose 0
-advance 12 180
-click continue
 advance 20 180
-click button
+click continue
 advance 12 180
 
+click observe "shelter"
+choose childhood_reminescence
 advance 12 180
-click keyword 0
+click think "shelter"
+choose childhood_reminescence
+advance 12 180
+click act 0
 choose 0
-choose beast_sense
-advance 12 180
-click action 0
-choose 0
-advance 12 180
-click continue
 advance 20 180
-click button
+click continue
 advance 12 180
 
 # ── The get-up phase ─────────────────────────────────────────────────────────
@@ -93,9 +92,17 @@ expect-state music tracks=2 filter=None cold=0.60 fear=0.15 mystery=0.15
 advance 12 180
 regions
 
-click keyword 0
-choose 0
-choose beast_sense
+# The childhood's branches went with the childhood; the scenery answers now.
+expect-no-state trees "a scream"
+expect-state symbols click observe thing
+expect-no-state symbols "(disabled)"
+
+strategy succeed
+click observe "aching legs"
+choose childhood_memory
+advance 12 180
+click think "aching legs"
+choose ripelore
 advance 12 180
 regions
 
@@ -105,7 +112,7 @@ regions
 # levels, narrated the outcome, and awarded no experience at all. Nothing caught it: `inspect
 # skills` reported the level only, and a level takes several successes to move.
 inspect skills
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -116,17 +123,17 @@ inspect skills
 expect-verb get_up
 
 # The two halves of what a successful act owes, and they are different outcomes:
-#   vigor  — the lesson the verb teaches of itself (ModusMentisGrantOutcome), newly known here
-#   sense_of_humor — a point of practice to a modus mentis that carried the chain, and it stood at xp=0
-#            before the action, so the whole of this value was earned by THIS phase
+#   vigor    — the lesson the verb teaches of itself (ModusMentisGrantOutcome), newly known here
+#   ripelore — a point of practice to a modus mentis that carried the chain, and it stood at xp=0
+#              before the action, so the whole of this value was earned by THIS phase
 # Both values are pinned by --seed 42, as everything in this script is; if the childhood content
 # changes the chain, this fails naming the skill, which is the right way to be told.
 expect-state skills skill vigor level=1 xp=0
-expect-state skills skill sense_of_humor level=1 xp=1
+expect-state skills skill ripelore level=1 xp=1
 
 # And the first sight of the world is a second break, into the map's music. The phase ends on the
-# footer button, as each reminescence did.
-click button
+# result's CONTINUE, as each reminescence did.
+click continue
 wait mode WorldView 60
 expect-state music tracks=4 filter=None cold=0.65 fear=0.60
 quit

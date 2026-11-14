@@ -19,17 +19,18 @@ inspect party
 advance 12 180
 
 # The beast is there and hostile: the phase opens on it under the threat rule.
-expect wolf
 state
 
 # --- appease: enemy -> suspicious, which is what tame requires --------------------
 strategy succeed
 goal appease
-click keyword wolf
-choose 0
+click observe "wolf"
+choose childhood_memory
+advance 12 180
+click think "wolf"
 choose ripelore
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -37,10 +38,10 @@ advance 12 180
 expect Appeasement
 
 # --- close the segment; the beast is still in the scene and still observable ------
-click button
+click continue
 wait 60
 advance 12 180
-expect wolf
+expect-state trees wolf
 
 # --- tame: the beast joins the party ---------------------------------------------
 # Difficulty 4 off a three-modus-mentis chain: `strategy succeed` asks for more sixes
@@ -48,11 +49,10 @@ expect wolf
 goal tame
 # By index: the wolf is the phase's only object, but which of its words is drawn as the keyword
 # ("wolf", "limp", "rolling"...) is a shuffle among equally related words, not a fixed choice.
-click keyword 0
-choose 0
+click think "wolf"
 choose beast_sense
 advance 12 180
-click action 0
+click act 0
 choose 0
 advance 12 180
 click continue
@@ -70,7 +70,7 @@ expect Joined you
 #   [debug] --observe-only 'wolf': nothing here matches — offering the whole scene.
 # and `state` drops one observable (observed=1/10 before the tame, 3/9 after).
 goal none
-click button
+click continue
 wait 60
 advance 12 180
 state
@@ -90,7 +90,7 @@ wait 20
 # The rebuild is a pure function of the location id, so without the departed record in
 # LocationInstanceState the very same wolf would be standing here again. stdout shows
 #   SceneFactory: '<the beast>' left this location for good — not rebuilt
-click button
+click exit
 wait mode WorldView 120
 advance 12 120
 travel here
