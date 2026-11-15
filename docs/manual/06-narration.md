@@ -20,9 +20,11 @@ never across a gate, so that it is never a way round either. Not every location 
 of areas two steps apart is joined by a path with a chance of 30 in 100, each pair three steps apart
 with 15 in 100, and no area has more than two.
 
-**Known ways.** A way out already known — a neighbouring area already stood in, or a door, stair,
-path or climb already gone by — is no longer an act. It is simply walked: a body goes, at no cost
-and upon no roll, to any area already visited that known ways join to the one it stands in. Such a
+**Known ways.** A way is known when it has been gone by — the plain way to a neighbour no less than
+a door, a stair, a path or a climb. To have stood in two neighbouring areas is not to know the way
+between them: each may have been reached by another, and the way that joins them is then as new as
+any. A known way is no longer an act. It is simply walked: a body goes, at no cost and upon no
+roll, to any area that known ways join to the one it stands in. Such a
 walk never passes a door locked against the comer, and never steps from other ground into private,
 so the private rooms it may return to are only those of the private ground the body already stands
 in. It is not for that a walk through an empty place. Every area on the way is weighed as though the
@@ -30,8 +32,9 @@ body stood in it, the areas a path runs past among them, and in the first where 
 witness would confront it (§7) it stops and stands confronted; whatever it had set out to do there
 is dropped. No roll is made at such a stop: flight alone is rolled.
 
-A way *not* yet gone by remains an act, at its own difficulty. When such a way — a door, a stair, a
-path, a climb or a crossing never taken — comes out upon ground already stood on, what the act
+A way *not* yet gone by remains an act, at its own difficulty. When such a way — the plain way to a
+neighbour, a door, a stair, a path, a climb or a crossing never taken — comes out upon ground
+already stood on, what the act
 teaches is how the place joins together, in the stead of its ordinary lesson: taken with an enemy in
 sight, by night, or on private ground, each teaches its own; otherwise it teaches the retracing of
 known ways, or to a beast the following of its own trail.
@@ -113,7 +116,9 @@ except somebody with a reason to stop it — an enemy, or a witness confronting 
 ## 4. What a visit keeps
 
 **Every thing in a place stands, to a given body, in one of three conditions.** It is **unknown**
-when nothing of it is had but its kind — a way onward, a person, one who means harm, or a thing. It
+when nothing of it is had but its kind — a person, one who means harm, a thing, or a prospect over
+distant ground — and where it stands, which is had of every area of the place, those never entered
+among them. It
 is **known** when an earlier visit observed it and the place is still remembered
 ([IX §1](09-routines.md)): it then has its name, and may be attended to in particular. It is
 **observed** when it has been attended to on this visit, by this body. Only what is observed may be
@@ -156,9 +161,14 @@ only with a degree of assent; it may not refuse.
 
 **A mind that wanted nothing of an object is not asked twice.** A thinking modus mentis may judge
 that nothing an object affords is worth doing, and say so. Its judgement does not vary — the same
-mind asked about the same object returns the same answer — so to ask it again is to insist: the
-second time, it may not decline, and settles on one of the goals offered. Another mind asked about
-the same object may still decline it.
+mind asked about the same object returns the same answer — so it is not asked about that object
+again while the judgement stands. An object is so declined once only: the next mind asked about it
+is asked by insistence, may not decline, and settles on one of the goals offered. The same holds of
+a will that finds no way to its end through the object, of a mind with nothing left to try upon it,
+and of a mind that, reconsidering an act, wanted no part of it or found no other to carry it out:
+each has answered, and is not asked the same again. A will's answer is its course through the place
+as it stood, and is forgotten when anything in the place changes; the others stand until the pool
+is restored.
 
 **The restoring of the pool wipes these slates.** Every refusal and every declining recorded since
 the pool was last full is forgotten with it (§3), and each mind may be asked again as though for the
@@ -170,17 +180,22 @@ first time. The acts that wait are untouched.
 kind in a given area*. Which thing, among those of that kind there that the body has neither
 observed nor remembers, is the mind's own choice; it renders what it finds, and that one thing is
 thenceforth observed. A thing that is known is asked for in particular, and no other is chosen in
-its place. Nothing is rendered of the area at large, and nothing is observed unasked: an arrival
+its place. So is a way: each way between two areas is asked for by itself, known or not, and the
+mind has no choice among the ways out of an area. It is one way from either of its ends, observed
+once, and attended to from the end the body stands at. Nothing is rendered of the area at large, and nothing is observed unasked: an arrival
 attends to nothing. Observation requires presence — the body walks to the area first, by known
 ways, and what it cannot so reach it cannot observe.
 
 **The declining is spent once taken.** A mind asked to attend may answer instead that nothing of
 that kind there draws it, or that the thing named does not. The answer costs its point as an
-observation does, and stands in the account. The same mind asked again about the same kind in the
-same area, or about the same thing, may not decline a second time, and must attend to something:
-were each asking free to end in a declining, a thing in plain view could go unattended for a whole
-visit. Another mind has a declining of its own. A will's turning from what does not begin its course
-(§6) is a rule of its nature, not this declining, and is never spent. In recollection and in the
+observation does, and stands in the account. That mind is not asked the same again, and the
+declining is spent for every mind: the next asked about the same kind in the same area, or about the
+same thing, may not decline, and must attend to something. Were each asking free to end in a
+declining, a thing in plain view could go unattended for a whole visit; and a body that holds but
+one mind fit to observe has, of a thing that mind declined, no second asking until the pool is
+restored. A will's turning from what does not begin its course (§6) is a rule of its nature, not
+this declining, and spends nothing: the will is not asked the same again until the place has
+changed, and a mind asked after it may still decline. In recollection and in the
 rising from exhaustion no mind declines at all.
 
 **Contents.** A thing that holds two or more different things discloses them when it is observed:
