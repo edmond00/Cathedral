@@ -1,0 +1,71 @@
+# ways — a way's symbol stands on its line, and is one way from either end
+#
+# The plain way between two neighbours, a door, a stair, a path or a climb is not on a card: its
+# symbol is on the line the map draws for it. One line is one symbol and one tree, so a click names
+# exactly that way and the mind has nothing to choose among. What stands in areas nobody has been
+# to is on their cards all the same, and answers no click until a known way leads there.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --organs encephalon=6
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# The ways out of the yard are symbols on their lines, each named from the yard.
+inspect symbols
+expect-state symbols click observe "the way to Test Field" in "Test Yard" (way)
+expect-state symbols click observe "Test Door" in "Test Yard" (way)
+# The card keeps no way but its views: the yard has none, so the kind is not on it.
+expect-no-state symbols click observe way in "Test Yard"
+
+# What stands where nobody has been is shown and cannot be looked at yet: the wolf's den, two ways off.
+expect-state symbols click observe hostile in "Test Den" x1 (disabled)
+# Nor can a way neither of whose ends can be walked to.
+expect-state symbols click observe "the way to Test Den" in "Test Wood" (way) (disabled)
+
+# Under the pointer an unknown way says no more than that, on the clickable ground.
+point observe "Test Field"
+wait 1
+expect-state pointer-label ground=yellow text=observe · an unknown way
+point observe "Test Den"
+wait 1
+expect-state pointer-label text=a way · no known way there
+
+# Observed, the way is the root of a tree hung from its line; the mind was asked for that way and no other.
+strategy succeed
+goal move
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+expect-state trees element "the way to Test Field"
+expect-no-state symbols click observe "the way to Test Field"
+point think "Test Field"
+wait 1
+expect-state pointer-label text=think about the way to the test field
+
+# Walked, the member stands at its other end, and the same tree is the way back to the yard: one
+# way, seen from where the member stands.
+click think "Test Field"
+choose ripelore
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+click continue
+advance 12 180
+expect-state where Test Field
+expect-state trees element "the way to Test Yard"
+expect-no-state trees element "the way to Test Field"
+
+# The way out is a symbol like the rest.
+point exit
+wait 1
+expect-state pointer-label ground=yellow text=LEAVE
+quit

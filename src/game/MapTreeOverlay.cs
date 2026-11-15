@@ -38,6 +38,27 @@ public sealed record StubSymbol(ThoughtNode Element, StubKind Kind) : MapSymbol;
 /// <summary>Something an observed container holds, disclosed and not yet observed itself.</summary>
 public sealed record ContentSymbol(ThoughtNode Container, NarrativeAnchor Part) : MapSymbol;
 
+/// <summary>
+/// A way not yet observed, standing on its line: the plain way between two neighbours, a door, a
+/// stair, a path, a climb. <paramref name="Key"/> is what the way is recorded under
+/// (<see cref="AreaVisits"/>), so one line is one symbol whichever end it is looked at from.
+/// </summary>
+public sealed record WaySymbol(string Key) : MapSymbol;
+
+/// <summary>The way out of the place: LEAVE, or RUNAWAY while somebody confronts the member played.</summary>
+public sealed record ExitSymbol : MapSymbol;
+
+/// <summary>One way drawn on its line this frame: its tree once observed, and the refusals to look at it.</summary>
+public sealed class WayFrame
+{
+    public required string Key { get; init; }
+    /// <summary>The end the way is looked at from now: on a long line its tree hangs from the symbol near that card.</summary>
+    public Area? From { get; init; }
+    /// <summary>The observed way's tree, or null while it is only a symbol.</summary>
+    public ThoughtNode? Root { get; init; }
+    public List<ThoughtNode> Strays { get; } = new();
+}
+
 /// <summary>What stands on, and hangs under, one card this frame.</summary>
 public sealed class CardFrame
 {
@@ -56,6 +77,10 @@ public sealed class CardFrame
 public sealed class MapFrame
 {
     public List<CardFrame> Cards { get; } = new();
+    /// <summary>The ways the map draws a line for, each on its line.</summary>
+    public List<WayFrame> Ways { get; } = new();
+    /// <summary>Whether the way out is drawn (a real place), for the pointer to find.</summary>
+    public bool Exit { get; set; }
     public MapSymbol? Hovered { get; set; }
     public PartyMember? Active { get; set; }
 
@@ -79,10 +104,18 @@ public sealed class MapFrame
 /// shown once with a count — the symbols of a kind are interchangeable until one is observed.</para>
 ///
 /// <para><b>A tree.</b> Observed elements hang from a trunk down the card's left side, one under
-/// another, on a panel as wide as the card that covers the map's own lines. A node's first child
-/// follows it on the same row; its other children each start a row of their own under it, joined by
-/// a line down from the node. So a root reads left to right as observation, thought, act, outcome,
-/// and a second thought about the same thing is the next row.</para>
+/// another. A node's first child follows it on the same row; its other children each start a row of
+/// their own under it, joined by a line down from the node. So a root reads left to right as
+/// observation, thought, act, outcome, and a second thought about the same thing is the next row.
+/// Only the cells a tree is drawn on are taken from the map: a line running under a card shows
+/// wherever the tree does not reach.</para>
+///
+/// <para><b>A way.</b> Its symbol stands on its line, and once observed is the root of its tree:
+/// hung under the symbol where the line runs across, beside it where the line runs down, and above
+/// rather than below where the map has more room there. It is never drawn over a card.</para>
+///
+/// <para><b>What a click acts on stands on a lit ground</b>, whatever its ink says of it; what only
+/// tells is drawn on the map's own.</para>
 ///
 /// <para><b>Room.</b> The rows of cards stand a fixed distance apart, so a card has a fixed number
 /// of rows to hang its trees in. When they do not all fit, the elements with something left to do
@@ -92,15 +125,18 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 {
     // The game's three hues: grey for what is told, yellow for what a click acts on and for gain,
     // purple for enemies and for what failed.
-    private static readonly Vector4 Backdrop     = new(0.040f, 0.038f, 0.026f, 1f);
     private static readonly Vector4 LineInk      = new(0.460f, 0.410f, 0.240f, 1f);
     private static readonly Vector4 DeadInk      = Config.Colors.DarkGray40;
     private static readonly Vector4 DisabledInk  = Config.Colors.DarkGray40;
     private static readonly Vector4 HoverInk     = new(0.04f, 0.04f, 0.04f, 1f);
     private static readonly Vector4 HoverGround  = Config.Colors.GoldYellow;
-    private static readonly Vector4 TrayGround   = new(0.075f, 0.075f, 0.080f, 1f);
+    /// <summary>The ground of everything a click acts on: a dark gold, a button's face.</summary>
+    private static readonly Vector4 ClickGround  = new(0.300f, 0.225f, 0.030f, 1f);
 
     public MapFrame Frame { get; set; } = null!;
+
+    // Set while a way's tree is drawn: it hangs in the open map, and stops at a card.
+    private bool _keepOffCards;
 
     public int BandRoom(Area area)
         => Frame?.Cards.FirstOrDefault(c => c.Area.Id == area.Id)?.Tokens.Count ?? 0;
@@ -111,6 +147,27 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         foreach (var card in Frame.Cards)
             if (canvas.CardOf(card.Area) is { } at)
                 PaintCard(canvas, card, at.X, at.Y);
+
+        // The ways after the cards' trees: theirs are the smaller, and where the pointer goes for one.
+        _keepOffCards = true;
+        foreach (var way in Frame.Ways)
+        {
+            var spots = canvas.WaySpots(way.Key);
+            if (spots.Count == 0) continue;
+            // A long line carries the symbol near each card: the tree hangs from the one near
+            // where the way is seen from, and the other is the same symbol with nothing under it.
+            var hung = spots.FirstOrDefault(p => p.Near != null && p.Near.Id == way.From?.Id, spots[0]);
+            foreach (var spot in spots)
+                PaintWay(canvas, way, spot.X, spot.Y, spot.Vertical, spot.Up, hang: spot == hung);
+        }
+        _keepOffCards = false;
+
+        // The way out is the map's own glyph; under the pointer it is drawn as any symbol is.
+        if (Frame.Exit && canvas.Exit is { } exit)
+        {
+            canvas.Hit(exit.X, exit.Y, new ExitSymbol());
+            if (Frame.Hovered is ExitSymbol) canvas.Put(exit.X, exit.Y, LocationMap.ExitGlyph, HoverInk, HoverGround);
+        }
     }
 
     private void PaintCard(LocationMap.MapCanvas canvas, CardFrame card, int bx, int by)
@@ -122,7 +179,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             int x = bx + canvas.CardWidth - 1 - card.Tokens.Count + i;
             bool active = ReferenceEquals(card.Tokens[i], Frame.Active);
             Symbol(canvas, x, by, TokenGlyph(card.Tokens[i]),
-                   active ? Config.Colors.BrightYellow : Config.Colors.Ochre, symbol, ground: null);
+                   active ? Config.Colors.BrightYellow : Config.Colors.Ochre, symbol);
         }
 
         PaintTray(canvas, card, bx + 1, by + 2, canvas.CardWidth - 2);
@@ -144,10 +201,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         }
         int hidden = hanging.Count - shown;
 
-        int top = by + canvas.CardHeight;
-        for (int r = 0; r < used + (hidden > 0 ? 1 : 0); r++) Panel(canvas, bx, top + r);
-
-        int y = top, trunk = bx, last = -1;
+        int y = by + canvas.CardHeight, trunk = bx, last = -1;
         for (int i = 0; i < shown; i++)
         {
             for (int r = last + 1; last >= 0 && r < y; r++) Line(canvas, trunk, r, '│');
@@ -160,28 +214,24 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         {
             for (int r = last + 1; last >= 0 && r < y; r++) Line(canvas, trunk, r, '│');
             string more = $"└ +{hidden}";
-            for (int i = 0; i < more.Length; i++) canvas.Put(trunk + i, y, more[i], DeadInk, Backdrop);
+            for (int i = 0; i < more.Length; i++) canvas.Put(trunk + i, y, more[i], DeadInk);
         }
     }
 
     /// <summary>The rows <paramref name="node"/> and everything under it are drawn on.</summary>
     private int Rows(ThoughtNode node)
     {
-        int rows = 0;
-        foreach (var item in Hanging(node)) rows += item is ThoughtNode child ? Rows(child) : 1;
+        int rows = Hanging(node).Sum(RowsOf);
         return Math.Max(1, rows);
     }
+
+    /// <summary>The rows one hanging thing takes: a node its tree's, a shelf one.</summary>
+    private int RowsOf(object item) => item is ThoughtNode child ? Rows(child) : 1;
 
     /// <summary>Whether anything under <paramref name="root"/> still answers a click: an act waiting, something to think of, something held.</summary>
     private bool HasBusiness(ThoughtNode root)
         => root.SelfAndDescendants().Any(n => n.IsWaitingAct
                || (n.Kind == ThoughtNodeKind.Element && (Frame.Stubs(n).Count > 0 || Frame.Contents(n).Count > 0)));
-
-    /// <summary>One row of the panel the trees hang on, the card's width: it covers the map's lines.</summary>
-    private static void Panel(LocationMap.MapCanvas canvas, int bx, int y)
-    {
-        for (int x = bx; x < bx + canvas.CardWidth; x++) canvas.Put(x, y, ' ', LineInk, Backdrop);
-    }
 
     /// <summary>The party member's piece: a beast's is another glyph.</summary>
     public static char TokenGlyph(PartyMember member)
@@ -216,22 +266,22 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             bool fold = folded.Contains(group[0].Kind);
             // The remembered first: each is its own symbol, a shade brighter than the anonymous.
             foreach (var known in group.Where(t => t.Known != null))
-                if (x < x0 + room) Symbol(canvas, x++, y, ElementKinds.Glyph(known.Kind), TrayInk(known), known, TrayGround);
+                if (x < x0 + room) Symbol(canvas, x++, y, ElementKinds.Glyph(known.Kind), TrayInk(known), known);
             var anonymous = group.Where(t => t.Known == null).ToList();
             if (anonymous.Count == 0) continue;
             if (!fold)
             {
                 foreach (var t in anonymous)
-                    if (x < x0 + room) Symbol(canvas, x++, y, ElementKinds.Glyph(t.Kind), TrayInk(t), t, TrayGround);
+                    if (x < x0 + room) Symbol(canvas, x++, y, ElementKinds.Glyph(t.Kind), TrayInk(t), t);
                 continue;
             }
             // Folded: the symbol, then how many. Every cell of it is the first of them.
             string count = anonymous.Count.ToString();
             if (x + count.Length < x0 + room)
             {
-                Symbol(canvas, x++, y, ElementKinds.Glyph(anonymous[0].Kind), TrayInk(anonymous[0]), anonymous[0], TrayGround);
+                Symbol(canvas, x++, y, ElementKinds.Glyph(anonymous[0].Kind), TrayInk(anonymous[0]), anonymous[0]);
                 foreach (char digit in count)
-                    Symbol(canvas, x++, y, digit, TrayInk(anonymous[0]), anonymous[0], TrayGround);
+                    Symbol(canvas, x++, y, digit, TrayInk(anonymous[0]), anonymous[0]);
             }
         }
     }
@@ -242,11 +292,74 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         return !folded || anonymous <= 1 ? group.Count : known + 1 + anonymous.ToString().Length;
     }
 
+    /// <summary>An enemy is purple whether or not it can be looked at from here; the rest are gold, or grey out of reach.</summary>
     private Vector4 TrayInk(TraySymbol symbol)
     {
-        if (!Frame.Enabled(symbol)) return DisabledInk;
-        if (symbol.Kind == ElementKind.Hostile) return symbol.Known != null ? Config.Colors.BrightPurple : Config.Colors.Purple;
-        return symbol.Known != null ? Config.Colors.GoldYellow : Config.Colors.MediumYellow;
+        bool enabled = Frame.Enabled(symbol);
+        if (symbol.Kind == ElementKind.Hostile)
+            return !enabled ? Config.Colors.DarkPurple : symbol.Known != null ? Config.Colors.BrightPurple : Config.Colors.LightPurple;
+        return !enabled ? DisabledInk : symbol.Known != null ? Config.Colors.BrightYellow : Config.Colors.GoldYellow;
+    }
+
+    // ── A way ────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// A way's symbol on its line and what hangs from it: its tree once observed, and any refusal to
+    /// look at it. Under the symbol where the line runs across — every row a branch off a trunk down
+    /// from it — and beside it where the line runs down, the first branch on the symbol's own row.
+    /// Above instead of below when <paramref name="up"/>. Only the symbol when not <paramref name="hang"/>:
+    /// the far one of a long line's two.
+    /// </summary>
+    private void PaintWay(LocationMap.MapCanvas canvas, WayFrame way, int x, int y, bool vertical, bool up, bool hang)
+    {
+        var items = new List<object>();
+        if (way.Root is { } root)
+        {
+            Symbol(canvas, x, y, NodeGlyph(root), NodeInk(root, live: true), new NodeSymbol(root));
+            items.AddRange(Hanging(root));
+        }
+        else
+        {
+            var symbol = new WaySymbol(way.Key);
+            Symbol(canvas, x, y, Config.Symbols.MapWay, Frame.Enabled(symbol) ? Config.Colors.BrightYellow : DisabledInk, symbol);
+        }
+        items.AddRange(way.Strays);
+        if (!hang || items.Count == 0) return;
+
+        // Where each branch starts: one under another, from the top.
+        int total = items.Sum(RowsOf);
+        int top = vertical ? (up ? y - total + 1 : y) : (up ? y - total : y + 1);
+        int trunk = vertical ? x + 1 : x;
+        var starts = new List<int>();
+        for (int i = 0, r = top; i < items.Count; r += RowsOf(items[i]), i++) starts.Add(r);
+
+        // The trunk, from the symbol to the furthest branch.
+        int first = Math.Min(starts[0], vertical ? y : y + 1), last = Math.Max(starts[^1], vertical ? y : y - 1);
+        for (int r = first; r <= last; r++)
+        {
+            // Under or over the symbol, the trunk runs on to it; beside it, it joins it on its row.
+            bool branch = starts.Contains(r);
+            bool above = r > first || (!vertical && !up), below = r < last || (!vertical && up);
+            char glyph = vertical && r == y
+                ? (branch ? (above && below ? '┼' : above ? '┴' : below ? '┬' : '─') : (above && below ? '┤' : above ? '┘' : '┐'))
+                : (branch ? (above && below ? '├' : above ? '└' : below ? '┌' : '─') : '│');
+            Line(canvas, trunk, r, glyph);
+        }
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            int row = starts[i];
+            switch (items[i])
+            {
+                case ThoughtNode child:
+                    Place(canvas, child, trunk + 1, ref row,
+                          live: child.IsLive || child.Kind == ThoughtNodeKind.Element);
+                    break;
+                case List<MapSymbol> shelf:
+                    PaintShelf(canvas, shelf, trunk + 1, row);
+                    break;
+            }
+        }
     }
 
     // ── A tree ───────────────────────────────────────────────────────────────
@@ -273,7 +386,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     private void Place(LocationMap.MapCanvas canvas, ThoughtNode node, int x, ref int y, bool live)
     {
         int row = y;
-        Symbol(canvas, x, row, NodeGlyph(node), NodeInk(node, live), new NodeSymbol(node), Backdrop);
+        Symbol(canvas, x, row, NodeGlyph(node), NodeInk(node, live), new NodeSymbol(node));
 
         var hanging = Hanging(node);
         if (hanging.Count == 0) { y = row + 1; return; }
@@ -305,23 +418,27 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
                           live: node.Kind == ThoughtNodeKind.Element ? child.IsLive || child.Kind == ThoughtNodeKind.Element : live);
                     break;
                 case List<MapSymbol> shelf:
-                    // One row, a space between symbols; what is held first, then what is offered.
-                    foreach (var symbol in shelf)
-                    {
-                        char glyph = symbol is StubSymbol stub
-                            ? stub.Kind == StubKind.Think ? Config.Symbols.MapThink : Config.Symbols.MapSpeak
-                            : Config.Symbols.MapContent;
-                        var ink = !Frame.Enabled(symbol) ? DisabledInk
-                                : symbol is StubSymbol ? Config.Colors.BrightYellow : Config.Colors.GoldYellow;
-                        Symbol(canvas, cx, y, glyph, ink, symbol, Backdrop);
-                        canvas.Put(cx + 1, y, ' ', LineInk, Backdrop);
-                        cx += 2;
-                    }
+                    PaintShelf(canvas, shelf, cx, y);
                     y++;
                     break;
             }
         }
         if (y <= row) y = row + 1;
+    }
+
+    /// <summary>An element's shelf: one row, a space between symbols; what is held first, then what is offered.</summary>
+    private void PaintShelf(LocationMap.MapCanvas canvas, List<MapSymbol> shelf, int x, int y)
+    {
+        foreach (var symbol in shelf)
+        {
+            char glyph = symbol is StubSymbol stub
+                ? stub.Kind == StubKind.Think ? Config.Symbols.MapThink : Config.Symbols.MapSpeak
+                : Config.Symbols.MapContent;
+            var ink = !Frame.Enabled(symbol) ? DisabledInk
+                    : symbol is StubSymbol ? Config.Colors.BrightYellow : Config.Colors.GoldYellow;
+            Symbol(canvas, x, y, glyph, ink, symbol);
+            x += 2;
+        }
     }
 
     private char NodeGlyph(ThoughtNode node) => node.Kind switch
@@ -330,6 +447,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         ThoughtNodeKind.Thought => Config.Symbols.MapThought,
         ThoughtNodeKind.Act     => node.Action?.DifficultyGlyph ?? '>',
         ThoughtNodeKind.Success => Config.Symbols.MapSuccess,
+        ThoughtNodeKind.Failure => Config.Symbols.MapFailure,
         ThoughtNodeKind.Emotion => Config.Symbols.MapEmotion,
         ThoughtNodeKind.Speech  => Config.Symbols.MapSpeak,
         _                       => Config.Symbols.MapRefusal,
@@ -350,13 +468,21 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 
     // ── Cells ────────────────────────────────────────────────────────────────
 
-    private void Symbol(LocationMap.MapCanvas canvas, int x, int y, char glyph, Vector4 ink, MapSymbol symbol, Vector4? ground)
+    /// <summary>
+    /// One symbol: inverted under the pointer, on the lit ground when a click would act on it, and
+    /// otherwise on whatever the map has there.
+    /// </summary>
+    private void Symbol(LocationMap.MapCanvas canvas, int x, int y, char glyph, Vector4 ink, MapSymbol symbol)
     {
+        if (_keepOffCards && canvas.IsCard(x, y)) return;
         if (Equals(symbol, Frame.Hovered)) canvas.Put(x, y, glyph, HoverInk, HoverGround);
-        else canvas.Put(x, y, glyph, ink, ground);
+        else canvas.Put(x, y, glyph, ink, Frame.Enabled(symbol) ? ClickGround : null);
         canvas.Hit(x, y, symbol);
     }
 
-    private static void Line(LocationMap.MapCanvas canvas, int x, int y, char glyph)
-        => canvas.Put(x, y, glyph, LineInk, Backdrop);
+    private void Line(LocationMap.MapCanvas canvas, int x, int y, char glyph)
+    {
+        if (_keepOffCards && canvas.IsCard(x, y)) return;
+        canvas.Put(x, y, glyph, LineInk);
+    }
 }

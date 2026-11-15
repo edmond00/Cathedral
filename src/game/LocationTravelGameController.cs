@@ -642,9 +642,10 @@ public class LocationTravelGameController : IDisposable
         (int X, int Y)? cell =
               _currentMode == GameMode.ProtagonistManagement ? _managementMenuRenderer?.CliMapCardCell(areaName)
             : _currentMode == GameMode.WorldView ? _travelRoutinesBox?.CliCardCell(areaName)
+            : _isInNarrativeMode ? _narrativeController?.CliAreaCell(areaName)
             : null;
         if (cell is not { } c)
-            return $"no card named \"{areaName}\" on a map shown (the Chorography tab, or the routine box)";
+            return $"no card named \"{areaName}\" on a map shown (the narration, the Chorography tab, or the routine box)";
         CliHoverCell(c.X, c.Y);
         return null;
     }
@@ -662,6 +663,10 @@ public class LocationTravelGameController : IDisposable
         CliHoverCell(c.X, c.Y);
         return null;
     }
+
+    /// <summary>Whether the player is holding the left button down: a press kept on a map's pan pad keeps it moving.</summary>
+    private bool LeftButtonHeld
+        => !_core.VirtualPointerOnly && _core.MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left);
 
     /// <summary>Inject a hover at a terminal cell (some UI only reacts once hovered).</summary>
     public void CliHoverCell(int x, int y) => OnTerminalCellHovered(x, y);
@@ -1293,7 +1298,7 @@ public class LocationTravelGameController : IDisposable
         // Update management menu animation
         if (_currentMode == GameMode.ProtagonistManagement && _managementMenuRenderer != null)
         {
-            _managementMenuRenderer.Update();
+            _managementMenuRenderer.Update(LeftButtonHeld);
             return; // Management mode owns the popup (e.g. inventory drag); skip UpdatePopupTerminal
         }
 
@@ -1309,6 +1314,11 @@ public class LocationTravelGameController : IDisposable
         // Update Phase 6 controller if active
         if (_isInNarrativeMode && _narrativeController != null)
         {
+            // Another screen has the panel — a conversation, a fight, a menu: the label the map
+            // last put up above the pointer goes, or it would follow the pointer through all of it.
+            if (_currentMode is not (GameMode.LocationInteraction or GameMode.ChildhoodReminescence or GameMode.GetUp))
+                _narrativeController.HideMapLabel();
+
             // Main menu / settings opened as a pause overlay over narration: the menu renderer owns
             // the screen and is event-driven (rendered on enter/hover/click). Skip the narration
             // Update entirely so it doesn't redraw over the menu every frame.
@@ -1468,6 +1478,7 @@ public class LocationTravelGameController : IDisposable
         // The routine list box (from the travel UI) is modal.
         if (_currentMode == GameMode.WorldView && _travelRoutinesBox != null)
         {
+            _travelRoutinesBox.Hold(LeftButtonHeld);
             _travelRoutinesBox.Render();
             UpdatePopupTerminal();
             return;

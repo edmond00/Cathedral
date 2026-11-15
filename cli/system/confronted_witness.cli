@@ -52,9 +52,12 @@ advance 12 180
 expect-state where confronted=CameForYou:brewer exit=RUNAWAY
 expect-state trees the brewer
 
-# Nothing else answers: not the ways off the roof, not the goat already thought about.
+# Nothing else answers: not the views from the roof, not the wall and the stair on their lines,
+# not the goat already thought about.
 inspect symbols
-expect-state symbols click observe way in Test Roof x8 (disabled)
+expect-state symbols click observe way in Test Roof x6 (disabled)
+expect-state symbols click observe Test Wall in Test Roof (way) (disabled)
+expect-state symbols click observe Test Stair in Test Roof (way) (disabled)
 expect-state symbols click think the goat (disabled)
 
 # He does. Now try something lawful about him.

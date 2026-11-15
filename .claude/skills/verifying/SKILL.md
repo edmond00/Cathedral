@@ -148,6 +148,16 @@ Run `help` for the authoritative list. The essentials:
                             box), panned into view. The location map has no legend: what the
                             pointer is over is named in a label above it, in the mouse-following
                             popup, which `dump` does not see — read it with `inspect pointer-label`
+                            In the narration it hovers the card on the narration's own map: a
+                            card a click would walk to reads "walk to the test yard", on the
+                            clickable ground
+  point observe|think|speak|act|member <what>
+                            hover a symbol of the narration's map, named exactly as `click`
+                            names it, without pressing it. What only the pointer shows is read
+                            after it: the symbol's label (`inspect pointer-label`, with
+                            `ground=yellow` when a click would act), an act's dice and sixes or
+                            a node's text in the reading box (`expect`), a way's whole line lit
+  point exit                hover the way out: LEAVE, or RUNAWAY
   point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
                             left_hand…), so the panel shows that part's derived stats — the
                             player's hover, reached by id rather than by a cell
@@ -161,15 +171,28 @@ Run `help` for the authoritative list. The essentials:
                             or an act's RESULT box (SUCCESS / FAILURE and its chips). A walk on the
                             map needs none: every walk ends by itself, at once under `--cli`
                             (`wait` outlasts it; `state` carries `walk=none|walking`, and
-                            `inspect map` ends on `map walk from <A> to <B> … via=line|jump`)
+                            `inspect map` ends on `map walk from <A> to <B> … via=line|jump`;
+                            a free walk also names the areas it went by, `walk from Test Field
+                            to Test Yard by way of Test Shore > Test Yard`, which is how a
+                            script asserts WHICH known ways were taken)
   click observe <kind|name> [in <area>]
-                            an unobserved symbol on the narration map. A KIND (way, person,
-                            hostile, thing) is the anonymous symbol of it on a card, and the mind
-                            then chosen picks which element of that kind it looks at. A NAME is a
+                            an unobserved symbol on the narration map. A KIND (person, hostile,
+                            thing) is the anonymous symbol of it on a card, and the mind then
+                            chosen picks which element of that kind it looks at. A NAME is a
                             remembered element or a container's content — or, for a script only,
                             something not yet known: the click then lands on its kind's symbol and
                             that one observation is pinned to it, as `--observe-only` pins a run.
-                            Follow with `choose <observation mm-id>` and `advance`
+                            A WAY is its own symbol on its line and is always named — the area it
+                            leads to (`"Test Yard"`) or the door, stair, path or climb itself
+                            (`"Test Door"`); `in <area>` says which end it is looked at from when
+                            both could be. The kind `way` is the first view on the card (views
+                            stay there), else the first way on a line seen from where the member
+                            stands. Every card shows what stands in it, so `regions` lists the
+                            symbols of areas nobody has been to as `(disabled)`.
+                            Follow with `choose <observation mm-id>` and `advance`. A mind that
+                            has refused this very thing is listed `(refused)` by `regions`
+                            and by `inspect popup` (`minds=[childhood_memory(refused),…]`), and
+                            `choose` reports an error for it: choose another
   click think <name|last>   the ? after an observed element: think about it. Then `choose <mm-id>`.
                             `last` is whatever was observed last — for a script on the real
                             model, where the mind chooses what it looks at (`speak` takes it too).

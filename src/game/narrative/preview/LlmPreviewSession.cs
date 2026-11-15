@@ -402,7 +402,9 @@ public sealed class PreviewPart
 /// <summary>Builds the box title for a modus mentis — just the name (no level dots).</summary>
 public static class PreviewTitles
 {
-    public static string For(ModusMentis mm) => mm.DisplayName.ToUpper();
+    /// <summary>The mind's name and its level, one mark a level: a level is a die it brings to a roll.</summary>
+    public static string For(ModusMentis mm)
+        => $"{mm.DisplayName.ToUpper()} {new string(Config.Symbols.ModusMentisLevelIndicator, System.Math.Clamp(mm.Level, 0, 10))}".TrimEnd();
 }
 
 /// <summary>Adapts a <see cref="PreviewPart"/> segment to the <see cref="ILlmPreviewSink"/> the rewriter calls.</summary>

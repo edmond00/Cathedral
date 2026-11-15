@@ -59,7 +59,8 @@ public partial class NarrativeController
     /// </summary>
     private sealed class ActResult
     {
-        public required string Title { get; init; }
+        /// <summary>The act as it was offered; empty for a result no act of the member's made.</summary>
+        public required string Act { get; init; }
         public required bool Succeeded { get; init; }
         public List<Outcome> Chips { get; } = new();
         public Action? Then { get; init; }
@@ -804,7 +805,7 @@ public partial class NarrativeController
         }
         _result = new ActResult
         {
-            Title     = $"{(succeeded ? "SUCCESS" : "FAILURE")}{(act.Length > 0 ? $" — {act}" : "")}",
+            Act       = act,
             Succeeded = succeeded,
             Then      = then,
         };
@@ -856,7 +857,7 @@ public partial class NarrativeController
                 Console.Error.WriteLine("NarrativeController: cannot combine an item — the acting modus mentis is not resolved.");
                 return;
             }
-            var where = Locate(actNode.ElementNode)?.Where ?? _pov.Where;
+            var where = LocateAct(actNode)?.Where ?? _pov.Where;
             var node = NodeForArea(where);
 
             // Lower-cased with an article, never the bare display name, which reads to the critic as a

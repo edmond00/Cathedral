@@ -6,6 +6,7 @@ using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Tree;
 using Cathedral.Game.Npc.Corpse;
 using Cathedral.Game.Scene;
+using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene.GetUp;
 
 namespace Cathedral.Game;
@@ -15,8 +16,8 @@ namespace Cathedral.Game;
 public partial class NarrativeController
 {
     /// <summary>
-    /// Whether the party knows <paramref name="area"/> well enough to see what stands in it: it has
-    /// been stood in. Outside a real place every area is.
+    /// Whether the party has stood in <paramref name="area"/>, which is what a click on its card
+    /// walks back to. Outside a real place every area has been.
     /// </summary>
     private bool IsAreaKnown(Area area) => !Exploring || _scene.VisitedAreas.Contains(area.StableKey);
 
@@ -32,6 +33,14 @@ public partial class NarrativeController
     /// </summary>
     private (NarrativeAnchor Anchor, Area Where)? Locate(ThoughtNode element)
     {
+        // A way on a line is one tree whichever end it was first looked at from: it is seen from
+        // the far end while the member stands there, and from the end it was observed at otherwise.
+        if (EndsOf(element) is { } ends)
+        {
+            if (_pov.Where.Id == ends.Far.Id && WayAnchor(element, ends.Far) is { } across) return (across, ends.Far);
+            return WayAnchor(element, ends.Near) is { } way ? (way, ends.Near) : null;
+        }
+
         switch (element.Element)
         {
             case SceneNpc npc:
@@ -56,22 +65,127 @@ public partial class NarrativeController
                 return thing == null ? null : (thing, from);
 
             case Area area when element.SeenFrom is { } from && _scene.AllAreas.Contains(from):
-                var way = NodeForArea(from).PossibleOutcomes.OfType<SyntheticAreaObservationObject>()
-                              .FirstOrDefault(o => ReferenceEquals(o.Area, area));
-                return way == null ? null : (way, from);
+                var neighbour = NodeForArea(from).PossibleOutcomes.OfType<SyntheticAreaObservationObject>()
+                                    .FirstOrDefault(o => ReferenceEquals(o.Area, area));
+                return neighbour == null ? null : (neighbour, from);
         }
         return null;
     }
 
     /// <summary>
-    /// What stands in <paramref name="area"/> that the played member has not observed: each with its
-    /// kind, and whether it is remembered — named, and a click's to choose — or anonymous.
+    /// Where a waiting act is carried out, and through which anchor. An act on a way was thought of
+    /// from one of its ends and is good from that end only — "go to the yard" means nothing in the
+    /// yard — so it is looked for at the end the tree is now seen from and then at the other, and
+    /// the member is walked to whichever still affords it.
+    /// </summary>
+    private (NarrativeAnchor Anchor, Area Where)? LocateAct(ThoughtNode act)
+    {
+        var root = act.ElementNode;
+        if (Locate(root) is not { } at) return null;
+        if (EndsOf(root) is not { } ends || act.Action?.PreselectedOutcome is not { } goal) return at;
+        var identity = ActionProposalLedger.IdentityOf(goal);
+        bool Affords(NarrativeAnchor anchor) => GoalsOf(anchor).Any(g => ActionProposalLedger.IdentityOf(g).Equals(identity));
+        if (Affords(at.Anchor)) return at;
+        var other = at.Where.Id == ends.Near.Id ? ends.Far : ends.Near;
+        return WayAnchor(root, other) is { } there && Affords(there) ? (there, other) : at;
+    }
+
+    // ── Ways ─────────────────────────────────────────────────────────────────
+    //
+    // A way the map draws a line for — the plain way between two neighbours, a door, a stair, a
+    // path, a climb — has its symbol on that line, not on a card: one line, one symbol, one tree.
+    // A view, and a way whose line could not be drawn, stay on the card they are seen from.
+
+    /// <summary>The key of the line <paramref name="anchor"/>, seen from <paramref name="from"/>, is drawn as; null for anything not drawn as one.</summary>
+    private string? WayKeyOf(Area from, NarrativeAnchor anchor) => anchor switch
+    {
+        SyntheticAreaObservationObject { Area: var to } => Drawn(AreaVisits.LinkKey(from, to)),
+        SyntheticObservationObject { PointOfInterest: ConnectorPointOfInterest c } => WayKeyOf(c),
+        _ => null,
+    };
+
+    private string? WayKeyOf(ConnectorPointOfInterest connector)
+        => connector is LandscapePointOfInterest || connector.AreaA.Id == connector.AreaB.Id ? null : Drawn(connector.StableKey);
+
+    /// <summary>The key of the line an observed element is drawn on, or null when it hangs under a card.</summary>
+    private string? WayKeyOf(ThoughtNode element) => element.Element switch
+    {
+        Area far when element.SeenFrom is { } near => Drawn(AreaVisits.LinkKey(near, far)),
+        ConnectorPointOfInterest c when element.SeenFrom != null => WayKeyOf(c),
+        _ => null,
+    };
+
+    private string? Drawn(string key) => _map.DrawsWay(_scene, key) ? key : null;
+
+    /// <summary>The two ends of an observed way on a line: the one it was observed from, and the other.</summary>
+    private (Area Near, Area Far)? EndsOf(ThoughtNode element)
+    {
+        if (element.Kind != ThoughtNodeKind.Element || element.SeenFrom is not { } near || WayKeyOf(element) == null) return null;
+        return element.Element switch
+        {
+            Area far => (near, far),
+            ConnectorPointOfInterest c when c.Touches(near) => (near, c.Other(near)),
+            _ => null,
+        };
+    }
+
+    /// <summary>The observation object of the way of <paramref name="element"/> as seen from <paramref name="from"/>, one of its ends.</summary>
+    private NarrativeAnchor? WayAnchor(ThoughtNode element, Area from)
+    {
+        if (!_scene.AllAreas.Contains(from)) return null;
+        return element.Element switch
+        {
+            ConnectorPointOfInterest c => WayAnchor(from, c.Other(from), c),
+            Area far => WayAnchor(from, from.Id == far.Id ? element.SeenFrom! : far, null),
+            _ => null,
+        };
+    }
+
+    /// <summary>The observation object of a way seen from <paramref name="from"/>: the connector, or the neighbour <paramref name="to"/>.</summary>
+    private NarrativeAnchor? WayAnchor(Area from, Area to, ConnectorPointOfInterest? connector)
+        => connector != null
+            ? NodeForArea(from).PossibleOutcomes.OfType<SyntheticObservationObject>()
+                  .FirstOrDefault(o => ReferenceEquals(o.PointOfInterest, connector))
+            : NodeForArea(from).PossibleOutcomes.OfType<SyntheticAreaObservationObject>()
+                  .FirstOrDefault(o => ReferenceEquals(o.Area, to));
+
+    /// <summary><paramref name="mind"/>'s tree of the way recorded as <paramref name="key"/>, when it has observed it.</summary>
+    private ThoughtNode? WayRoot(MemberMind mind, string key) => mind.Roots.FirstOrDefault(r => WayKeyOf(r) == key);
+
+    /// <summary>
+    /// The end an unobserved way is looked at from, and the observation object there: where the
+    /// member stands when that is an end, else the end fewest known steps away, else either. Null
+    /// when neither end shows it — or it is the plain way already gone by, which is walked on the
+    /// map and offers nothing to look at.
+    /// </summary>
+    private (Area From, NarrativeAnchor Anchor)? WaySide(Area a, Area b, ConnectorPointOfInterest? connector)
+    {
+        (Area From, NarrativeAnchor Anchor)? best = null;
+        int bestSteps = int.MaxValue;
+        foreach (var (from, to) in new[] { (a, b), (b, a) })
+        {
+            if (WayAnchor(from, to, connector) is not { } anchor) continue;
+            if (connector == null && AreaVisits.IsWayBack(_scene, from, to, Period)) continue;
+            int steps = _frameReach.TryGetValue(from.Id, out int n) ? n : int.MaxValue - 1;
+            if (steps >= bestSteps) continue;
+            best = (from, anchor);
+            bestSteps = steps;
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// What stands in <paramref name="area"/> that the played member has not observed and that is
+    /// shown on its card: each with its kind, and whether it is remembered — named, and a click's to
+    /// choose — or anonymous. The ways drawn as lines are not among them (<see cref="WaySide"/>).
     /// </summary>
     private IEnumerable<(NarrativeAnchor Anchor, ElementKind Kind, bool Known)> Unobserved(Area area)
     {
         foreach (var anchor in NodeForArea(area).PossibleOutcomes.OfType<ObservationObject>())
         {
             if (ElementKinds.ElementOf(anchor) is not { } element) continue;
+            // A way drawn as a line has its symbol there.
+            if (WayKeyOf(area, anchor) != null) continue;
             if (Mind.NodeOf(element, area) != null) continue;
             // What "myself" holds — a memory's fragments, the body's exhaustion — is looked at from
             // there (ContentsOf), and "myself" is on the map from the start.
@@ -158,6 +272,9 @@ public partial class NarrativeController
         ActionPathPlanner.Forget();
         RefreshSceneVerbs();
 
+        // A will's refusal was its course through the place as it stood: it may be asked again.
+        foreach (var mind in _minds.Values) mind.ForgetWillRefusals();
+
         foreach (var mind in _minds.Values)
             foreach (var dead in mind.Roots.Where(r => r.Element is SceneNpc { IsAlive: false }).ToList())
             {
@@ -169,7 +286,7 @@ public partial class NarrativeController
         // Acts are checked for the member played only: every verb list was just expanded for them.
         foreach (var act in Mind.WaitingActs.ToList())
         {
-            if (Locate(act.ElementNode) is not { } at) continue;
+            if (LocateAct(act) is not { } at) continue;
             var goal = act.Action!.PreselectedOutcome;
             var identity = ActionProposalLedger.IdentityOf(goal);
             if (GoalsOf(at.Anchor).Any(g => ActionProposalLedger.IdentityOf(g).Equals(identity))) continue;

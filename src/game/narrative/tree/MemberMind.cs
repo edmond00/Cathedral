@@ -4,6 +4,9 @@ using Cathedral.Game.Scene;
 
 namespace Cathedral.Game.Narrative.Tree;
 
+/// <summary>What a mind is asked to do from the popup: the offices a refusal is remembered by.</summary>
+public enum MindOffice { Observe, Think, Reconsider, Speak }
+
 /// <summary>
 /// What one party member carries through a visit: where they stand, the noetic points they have
 /// left, and their thought trees. Everything here is private to the member — a companion's trees are
@@ -32,11 +35,22 @@ public sealed class MemberMind
     /// </summary>
     public List<(Area Area, ThoughtNode Node)> Strays { get; } = new();
 
+    /// <summary>
+    /// Refusals to look at a way, which hang from the way's symbol on its line: kept with the key
+    /// the way is recorded under (<see cref="AreaVisits"/>).
+    /// </summary>
+    public List<(string Way, ThoughtNode Node)> WayStrays { get; } = new();
+
     /// <summary>What this member's acts waiting on the trees already cover, and what its minds refused.</summary>
     public ActionProposalLedger Proposals { get; } = new();
 
-    // A mind declines a thing once: asked again about it, it must attend (the player insisting).
-    private readonly HashSet<(ModusMentis Mind, object About)> _declined = new();
+    // A thing is declined once: asked about it again, whichever mind is asked must attend (the
+    // player insisting). The mind that declined is not asked again at all (_refused).
+    private readonly HashSet<object> _declined = new();
+
+    // The minds that refused a thing asked of them, by what was asked: they are greyed in the
+    // popup the next time the same is asked about the same thing.
+    private readonly HashSet<(ModusMentis Mind, MindOffice Office, object About)> _refused = new();
 
     public MemberMind(PartyMember member, PoV pov)
     {
@@ -45,10 +59,25 @@ public sealed class MemberMind
         Noetic = member.MaxNoeticPoints;
     }
 
-    /// <summary>Whether <paramref name="mind"/> has already declined <paramref name="about"/> (an element, or a kind in an area).</summary>
-    public bool HasDeclined(ModusMentis mind, object about) => _declined.Contains((mind, about));
+    /// <summary>Whether a mind has already declined <paramref name="about"/> (an element, a way, or a kind in an area).</summary>
+    public bool HasDeclined(object about) => _declined.Contains(about);
 
-    public void Decline(ModusMentis mind, object about) => _declined.Add((mind, about));
+    public void Decline(object about) => _declined.Add(about);
+
+    /// <summary>
+    /// <paramref name="mind"/> refused <paramref name="office"/> about <paramref name="about"/>: a
+    /// decline, a will with no way through it, a faculty the body can no longer carry. Asking the
+    /// same mind the same thing again would spend a point to hear it twice.
+    /// </summary>
+    public void Refuse(ModusMentis mind, MindOffice office, object about) => _refused.Add((mind, office, about));
+
+    public bool HasRefused(ModusMentis mind, MindOffice office, object about) => _refused.Contains((mind, office, about));
+
+    /// <summary>
+    /// The world changed: a will's refusal was its course through the place as it stood, and is asked
+    /// again. Any other mind's stands until the pool refills.
+    /// </summary>
+    public void ForgetWillRefusals() => _refused.RemoveWhere(r => r.Mind.IsWill);
 
     /// <summary>
     /// The pool back to its full, and with it everything a mind refused or declined: the member
@@ -58,6 +87,7 @@ public sealed class MemberMind
     {
         Noetic = Member.MaxNoeticPoints;
         _declined.Clear();
+        _refused.Clear();
         Proposals.ForgetRefusals();
     }
 
@@ -67,7 +97,7 @@ public sealed class MemberMind
 
     /// <summary>Every node of this member's trees and stray refusals.</summary>
     public IEnumerable<ThoughtNode> AllNodes
-        => Roots.SelectMany(r => r.SelfAndDescendants()).Concat(Strays.Select(s => s.Node));
+        => Roots.SelectMany(r => r.SelfAndDescendants()).Concat(Strays.Select(s => s.Node)).Concat(WayStrays.Select(s => s.Node));
 
     /// <summary>
     /// The node of <paramref name="element"/> as observed from <paramref name="seenFrom"/>, or null

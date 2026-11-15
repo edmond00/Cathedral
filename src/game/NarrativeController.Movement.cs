@@ -209,7 +209,9 @@ public partial class NarrativeController
 
         var leg = stop < 0 ? hops : hops.Take(stop + 1).ToList();
         var arrive = leg[^1].To;
-        _lastWalk = $"walk from {from.DisplayName} to {arrive.DisplayName}" + (stop < 0 ? "" : " stopped");
+        // The areas gone through are said too: which known ways a walk took is the whole of the rule.
+        _lastWalk = $"walk from {from.DisplayName} to {arrive.DisplayName}" + (stop < 0 ? "" : " stopped")
+                  + $" by way of {string.Join(" > ", leg.Select(h => h.To.DisplayName))}";
         Console.WriteLine($"NarrativeController: {_lastWalk}");
         StartWalk(_map.Walk(_scene, from, leg), leg, "Walking...", then: () =>
         {

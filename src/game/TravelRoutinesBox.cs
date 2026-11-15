@@ -93,6 +93,9 @@ public class TravelRoutinesBox
     /// <summary>An arrow key pans the map, as the pad does; false for any other key.</summary>
     public bool PanMap(OpenTK.Windowing.GraphicsLibraryFramework.Keys key) => _map.HandleKey(key);
 
+    /// <summary>A press kept on the map's pan pad keeps it moving (<see cref="LocationMap.Hold"/>); the box is drawn every tick.</summary>
+    public void Hold(bool buttonDown) => _map.Hold(buttonDown);
+
     /// <summary>
     /// The routines on offer, for <c>--cli</c>, kind by kind. A script picks one by index or by kind,
     /// because an icon's cell moves with the layout and the pan.

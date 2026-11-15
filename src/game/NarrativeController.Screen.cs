@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Cathedral.Audio;
 using Cathedral.Game.Narrative;
+using Cathedral.Game.Narrative.Preview;
 using Cathedral.Game.Narrative.Tree;
 using Cathedral.Game.Npc;
 using Cathedral.Game.Scene;
@@ -32,7 +33,10 @@ public partial class NarrativeController
 
     // Read once a frame, for every symbol's state.
     private Confrontation? _frameConfrontation;
-    private HashSet<Guid> _frameReach = new();
+    /// <summary>The areas the played member may walk to by known ways, each with how many steps away; where they stand is 0.</summary>
+    private Dictionary<Guid, int> _frameReach = new();
+    /// <summary>The unobserved ways drawn on their lines: the end each is looked at from, and its observation object there.</summary>
+    private readonly Dictionary<string, (Area From, NarrativeAnchor Anchor)> _frameWays = new();
 
     /// <summary>
     /// Whether something holds the screen: a mind at work, a text being read, a roll, the hours
@@ -49,6 +53,9 @@ public partial class NarrativeController
         // The party changes under the narration — somebody recruited by a conversation, somebody
         // dead of a wound — and nothing tells it so.
         if (SyncRoster()) ReconcileTrees();
+        // A press kept on the pan pad keeps the map moving.
+        _map.Hold(!Busy && !IsPopupVisible && !_core.VirtualPointerOnly
+                  && _core.MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left));
         RenderPanel();
         // A popup is a modal choice, so the panel behind it is greyed the way the preview box greys
         // it: recolouring what is drawn rather than darkening the whole HUD, so the popup itself (a
@@ -82,6 +89,14 @@ public partial class NarrativeController
 
         AdvanceWalk();
         _overlay.Frame = BuildFrame();
+        // The way pointed at — by its symbol, by a node of its tree, or along its line — is lit whole.
+        _map.LitWay = Busy || IsPopupVisible ? null : _hovered switch
+        {
+            WaySymbol way => way.Key,
+            NodeSymbol { Node: var over } => WayKeyOf(over.ElementNode),
+            null => _map.WayAt(_lastMouseX, _lastMouseY),
+            _ => null,
+        };
 
         // The map is always what is drawn; everything else is a box over it.
         if (_walk is { } walk)
@@ -149,14 +164,14 @@ public partial class NarrativeController
 
         if (_result != null)
         {
-            _resultContinueRegion = _ui.RenderResultBox(_result.Title, _result.Succeeded, _result.Chips, _resultContinueHovered);
+            _resultContinueRegion = _ui.RenderResultBox(_result.Succeeded, _result.Act, _result.Chips, _resultContinueHovered);
             _ui.RenderStatusBar("Click Continue");
             return;
         }
 
         // Idle: what the pointer is over is read again.
         if (!IsPopupVisible && _hovered is NodeSymbol { Node: var node } && ReadingOf(node) is { } reading)
-            _ui.RenderReadingBox(reading.Title, reading.Text, node.Block?.OutcomeReports);
+            _ui.RenderReadingBox(reading.Title, reading.Text, node.Block?.OutcomeReports, reading.Odds);
         _ui.RenderStatusBar(SceneInfoLine());
     }
 
@@ -174,8 +189,8 @@ public partial class NarrativeController
     private MapFrame BuildFrame()
     {
         _frameConfrontation = ConfrontationOf(Mind);
-        _frameReach = Reach(Mind).Keys.Select(a => a.Id).ToHashSet();
-        _frameReach.Add(_pov.Where.Id);
+        _frameReach = Reach(Mind).ToDictionary(r => r.Key.Id, r => r.Value.Count);
+        _frameReach[_pov.Where.Id] = 0;
 
         var frame = new MapFrame
         {
@@ -188,6 +203,7 @@ public partial class NarrativeController
             Contents     = ContentsOf,
             Stubs        = StubsOf,
             Enabled      = symbol => !Busy && IsEnabled(symbol),
+            Exit         = Exploring,
         };
 
         var cards = new Dictionary<Guid, CardFrame>();
@@ -207,17 +223,36 @@ public partial class NarrativeController
             if (!walking.Contains(mind.Member))
                 Card(mind.Pov.Where).Tokens.Add(mind.Member);
 
-        // What is not yet observed, in every area the party knows.
-        foreach (var area in _scene.AllAreas.Where(IsAreaKnown))
+        // What is not yet observed, in every area: what stands in a place nobody has been to is
+        // shown too, and answers no click until a known way leads there.
+        foreach (var area in _scene.AllAreas)
         {
             var tray = Card(area).Tray;
             foreach (var (anchor, kind, known) in Unobserved(area))
                 tray.Add(new TraySymbol(area, kind, known ? anchor : null, tray.Count));
         }
 
-        // The played member's trees, each under the card of where its element now is.
+        // The ways, each on its line: its tree once observed, its symbol before.
+        _frameWays.Clear();
+        foreach (var (a, b, key, connector) in AreaVisits.AllLinks(_scene))
+        {
+            if (a.Id == b.Id || connector is LandscapePointOfInterest || !_map.DrawsWay(_scene, key)) continue;
+            var root = WayRoot(Mind, key);
+            if (root == null && WaySide(a, b, connector) is { } side) _frameWays[key] = side;
+            else if (root == null || Locate(root) == null) continue;
+            var way = new WayFrame
+            {
+                Key  = key,
+                Root = root,
+                From = root != null ? Locate(root)?.Where : _frameWays.TryGetValue(key, out var seenFrom) ? seenFrom.From : null,
+            };
+            way.Strays.AddRange(Mind.WayStrays.Where(s => s.Way == key).Select(s => s.Node));
+            frame.Ways.Add(way);
+        }
+
+        // The played member's other trees, each under the card of where its element now is.
         foreach (var root in Mind.Roots)
-            if (Locate(root) is { } at && IsAreaKnown(at.Where))
+            if (WayKeyOf(root) == null && Locate(root) is { } at)
                 Card(at.Where).Roots.Add(root);
         foreach (var (area, refusal) in Mind.Strays)
             Card(area).Strays.Add(refusal);
@@ -267,7 +302,7 @@ public partial class NarrativeController
                 // While the childhood comes back, nothing around the body answers: only "myself".
                 if (_scene.Phase == NarrationPhase.ChildhoodReminescence) return false;
                 if (!HasPoint || _active.GetObservationModiMentis().Count == 0) return false;
-                if (confrontation == null) return _frameReach.Contains(tray.Area.Id);
+                if (confrontation == null) return _frameReach.ContainsKey(tray.Area.Id);
                 return tray.Area.Id == _pov.Where.Id
                     && (tray.Known != null
                         ? IsConfronter(tray.Known, confrontation)
@@ -275,7 +310,15 @@ public partial class NarrativeController
 
             case ContentSymbol content:
                 return HasPoint && confrontation == null && _active.GetObservationModiMentis().Count > 0
-                    && Locate(content.Container) is { } held && _frameReach.Contains(held.Where.Id);
+                    && Locate(content.Container) is { } held && _frameReach.ContainsKey(held.Where.Id);
+
+            // A way is looked at from one of its ends: the member must be able to walk to it.
+            case WaySymbol way:
+                return HasPoint && confrontation == null && _active.GetObservationModiMentis().Count > 0
+                    && _frameWays.TryGetValue(way.Key, out var side) && _frameReach.ContainsKey(side.From.Id);
+
+            case ExitSymbol:
+                return Exploring;
 
             case StubSymbol { Kind: StubKind.Think } think:
                 return HasPoint && Locate(think.Element) is { } thought
@@ -286,29 +329,43 @@ public partial class NarrativeController
                     && WithinSpeech().Count > 0;
 
             case NodeSymbol { Node: { IsWaitingAct: true } act }:
-                return Locate(act.ElementNode) is { } target
-                    && (target.Where.Id == _pov.Where.Id || (confrontation == null && _frameReach.Contains(target.Where.Id)));
+                return LocateAct(act) is { } target
+                    && (target.Where.Id == _pov.Where.Id || (confrontation == null && _frameReach.ContainsKey(target.Where.Id)));
         }
         return false;
     }
 
     // ── Names and texts ──────────────────────────────────────────────────────
 
-    /// <summary>What an element is called on the map: a person by role until introduced, a way by where it leads.</summary>
+    /// <summary>
+    /// What an element is called in a label: a person by role until introduced, a way by where it
+    /// leads, anything else as a sentence names it — "the cart trail", never the title "Cart Trail".
+    /// </summary>
     private string NameOf(NarrativeAnchor anchor) => anchor switch
     {
         SyntheticNpcObservationObject npc => NpcLabelResolver.ShortLabel(npc.SceneNpc.Entity),
-        SyntheticAreaObservationObject area => $"the way to {area.Area.DisplayName}",
-        ObservationObject obs => obs.NeutralName,
-        _ => anchor.DisplayName,
+        SyntheticAreaObservationObject area => $"the way to {NeutralNarration.AreaPhrase(area.Area.DisplayName)}",
+        SyntheticObservationObject { PointOfInterest: var poi } when IsOfMyself(poi) => poi.DisplayName.ToLowerInvariant(),
+        ObservationObject obs => NeutralNarration.ThingPhrase(obs.NeutralName),
+        _ => NeutralNarration.ThingPhrase(anchor.DisplayName),
     };
+
+    /// <summary>
+    /// "Myself", and what it holds in the two opening phases — a fragment of a memory, a facet of
+    /// exhaustion: named as they are, not as things of a place ("myself", "aching legs", "nothing").
+    /// </summary>
+    private static bool IsOfMyself(Element element)
+        => element is Cathedral.Game.Scene.GetUp.SelfPointOfInterest || Cathedral.Game.Scene.GetUp.SelfPointOfInterest.Holds(element);
 
     private string NameOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => NpcLabelResolver.ShortLabel(npc.Entity),
-        Area area    => $"the way to {area.DisplayName}",
-        ItemElement item => item.Item.DisplayName,
-        { } other    => other.DisplayName,
+        // A way is named from the end it is now seen from.
+        Area or ConnectorPointOfInterest when Locate(element) is { } at => NameOf(at.Anchor),
+        Area area    => $"the way to {NeutralNarration.AreaPhrase(area.DisplayName)}",
+        ItemElement item => NeutralNarration.ItemPhrase(item.Item.DisplayName),
+        { } own when IsOfMyself(own) => own.DisplayName.ToLowerInvariant(),
+        { } other    => NeutralNarration.ThingPhrase(other.DisplayName),
         null         => "",
     };
 
@@ -318,9 +375,14 @@ public partial class NarrativeController
         bool enabled = !Busy && IsEnabled(symbol);
         return symbol switch
         {
+            // What stands where no known way leads is told, and cannot be looked at from here.
+            TraySymbol tray when Exploring && !_frameReach.ContainsKey(tray.Area.Id)
+                                            => new($"{ElementKinds.Word(tray.Kind)} · no known way there", false),
             TraySymbol { Known: null } tray => new($"observe · {ElementKinds.Word(tray.Kind)}", enabled),
             TraySymbol { Known: { } known } => new($"observe {NameOf(known)}", enabled),
             ContentSymbol content           => new($"observe {NameOf(content.Part)}", enabled),
+            WaySymbol way                   => new(WayLabel(way), enabled),
+            ExitSymbol                      => new(ExitLabel, enabled),
             TokenSymbol token               => new(ReferenceEquals(token.Member, _active) ? token.Member.DisplayName : $"play {token.Member.DisplayName}", enabled),
             StubSymbol { Kind: StubKind.Think } stub => new($"think about {NameOf(stub.Element)}", enabled),
             StubSymbol stub                 => new($"speak of {NameOf(stub.Element)}", enabled),
@@ -328,6 +390,18 @@ public partial class NarrativeController
             _ => null,
         };
     }
+
+    /// <summary>An unobserved way under the pointer: named once seen or gone by, a way and no more before.</summary>
+    private string WayLabel(WaySymbol way)
+    {
+        if (!_frameWays.TryGetValue(way.Key, out var side)) return "a way";
+        if (!_frameReach.ContainsKey(side.From.Id)) return "a way · no known way there";
+        return ElementMemory.IsKnown(_scene, side.From, side.Anchor) ? $"observe {NameOf(side.Anchor)}" : "observe · an unknown way";
+    }
+
+    /// <summary>A card a click would walk the played member to, by ways the party knows.</summary>
+    private bool CanWalkTo(Area card)
+        => card.Id != _pov.Where.Id && IsAreaKnown(card) && _frameConfrontation == null && _frameReach.ContainsKey(card.Id);
 
     private string LabelOf(ThoughtNode node) => node.Kind switch
     {
@@ -348,20 +422,25 @@ public partial class NarrativeController
         _ => "",
     };
 
-    /// <summary>The text a node is read from again, with the mind that wrote it; null for a node that carries none.</summary>
-    private (string Title, string Text)? ReadingOf(ThoughtNode node)
+    /// <summary>
+    /// The text a node is read from again, with the mind that wrote it and its level; null for a
+    /// node that carries none. An act is read with what it would be rolled with (<c>Odds</c>): the
+    /// dice it would throw, one mark a die, and the sixes it needs.
+    /// </summary>
+    private (string Title, string Text, string? Odds)? ReadingOf(ThoughtNode node)
     {
         if (node.Kind == ThoughtNodeKind.Act && node.Action is { } action)
         {
             int dice = Math.Max(1, action.GetTotalModusMentisLevel(_active));
-            string odds = action.IsAutomatic ? "cannot fail"
-                        : action.DifficultyLevel > 0 ? $"{dice} {(dice == 1 ? "die" : "dice")}, {action.DifficultyLevel} {(action.DifficultyLevel == 1 ? "six" : "sixes")} needed"
-                        : $"{dice} {(dice == 1 ? "die" : "dice")}";
-            return (action.ChainModusMentis.DisplayName.ToUpper(), $"{action.DisplayText}\n{odds}");
+            string marks = new string(Config.Symbols.ModusMentisLevelIndicator, dice);
+            string odds = action.IsAutomatic ? $"{action.DifficultyGlyph} cannot fail"
+                        : action.DifficultyLevel > 0 ? $"{marks} {dice} {(dice == 1 ? "die" : "dice")} · {action.DifficultyGlyph} {action.DifficultyLevel} {(action.DifficultyLevel == 1 ? "six" : "sixes")} needed"
+                        : $"{marks} {dice} {(dice == 1 ? "die" : "dice")}";
+            return (PreviewTitles.For(action.ChainModusMentis), action.DisplayText, odds);
         }
         if (node.Block is { } block)
-            return (block.ModusMentis?.DisplayName.ToUpper() ?? "", block.Text);
-        return node.Note is { } note ? (NameOf(node).ToUpper(), note) : null;
+            return (block.ModusMentis is { } mind ? PreviewTitles.For(mind) : "", block.Text, null);
+        return node.Note is { } note ? (NameOf(node).ToUpper(), note, null) : null;
     }
 
     /// <summary>
@@ -372,10 +451,22 @@ public partial class NarrativeController
     {
         if (IsPopupVisible) { _mapLabelShown = false; return; }
         var label = Busy ? null
-                  : _map.LabelAt(_lastMouseX, _lastMouseY, tag => LabelFor((MapSymbol)tag), Exploring ? ExitLabel : null);
+                  : _map.LabelAt(_lastMouseX, _lastMouseY, tag => LabelFor((MapSymbol)tag),
+                                 card => CanWalkTo(card) ? new($"walk to {NeutralNarration.AreaPhrase(card.DisplayName)}", true) : null);
         if (label == null && !_mapLabelShown) return;
         LocationMap.ShowLabel(_popup, label);
         _mapLabelShown = label != null;
+    }
+
+    /// <summary>
+    /// Takes down the label the map put up, when one is up: called while another screen has the
+    /// panel, which draws no map and would leave the last label following the pointer.
+    /// </summary>
+    public void HideMapLabel()
+    {
+        if (!_mapLabelShown) return;
+        LocationMap.ShowLabel(_popup, null);
+        _mapLabelShown = false;
     }
 
     // ── The pointer ──────────────────────────────────────────────────────────
@@ -533,13 +624,6 @@ public partial class NarrativeController
             return;
         }
 
-        if (Exploring && _map.IsExitAt(mouseX, mouseY))
-        {
-            PlayClickSound();
-            OnExitClicked();
-            return;
-        }
-
         if (_map.IconAt(mouseX, mouseY) is MapSymbol symbol)
         {
             ClickSymbol(symbol);
@@ -547,8 +631,7 @@ public partial class NarrativeController
         }
 
         // A card: walk there, where a known way leads and nobody holds the member where they stand.
-        if (_map.AreaAt(mouseX, mouseY) is { } card && card.Id != _pov.Where.Id && IsAreaKnown(card)
-            && _frameConfrontation == null && _frameReach.Contains(card.Id))
+        if (_map.AreaAt(mouseX, mouseY) is { } card && CanWalkTo(card))
         {
             PlayClickSound();
             WalkTo(card, then: () => { });
@@ -571,24 +654,30 @@ public partial class NarrativeController
                 Switch(token.Member);
                 break;
 
+            case ExitSymbol:
+                OnExitClicked();
+                break;
+
             case TraySymbol tray:
-                _pending = new ObservePending(tray.Area, tray.Kind, tray.Known, Container: null);
-                _modusMentisPopup.Show(PopupAnchor(), _active.GetObservationModiMentis(), "Observe with");
+                AskMind(new ObservePending(tray.Area, tray.Kind, tray.Known, Container: null), _active.GetObservationModiMentis(), "Observe with");
+                break;
+
+            case WaySymbol way when _frameWays.TryGetValue(way.Key, out var side):
+                AskMind(new ObservePending(side.From, ElementKind.Way, side.Anchor, Container: null, Way: way.Key),
+                        _active.GetObservationModiMentis(), "Observe with");
                 break;
 
             case ContentSymbol content when Locate(content.Container) is { } held:
-                _pending = new ObservePending(held.Where, ElementKind.Thing, content.Part, content.Container);
-                _modusMentisPopup.Show(PopupAnchor(), _active.GetObservationModiMentis(), "Observe with");
+                AskMind(new ObservePending(held.Where, ElementKind.Thing, content.Part, content.Container),
+                        _active.GetObservationModiMentis(), "Observe with");
                 break;
 
             case StubSymbol { Kind: StubKind.Think } stub:
-                _pending = new ThinkPending(stub.Element);
-                _modusMentisPopup.Show(PopupAnchor(), _active.GetThinkingModiMentis(), "Think with");
+                AskMind(new ThinkPending(stub.Element), _active.GetThinkingModiMentis(), "Think with");
                 break;
 
             case StubSymbol stub:
-                _pending = new SpeakPending(stub.Element, Mind: null, WithinSpeech());
-                _modusMentisPopup.Show(PopupAnchor(), _active.GetSpeakingModiMentis(), "Speak with");
+                AskMind(new SpeakPending(stub.Element, Mind: null, WithinSpeech()), _active.GetSpeakingModiMentis(), "Speak with");
                 break;
 
             case NodeSymbol { Node: { IsWaitingAct: true } act }:
@@ -604,6 +693,18 @@ public partial class NarrativeController
                 _choicePopup.Show(PopupAnchor(), new List<string> { "Execute", "Use Tool", "Reconsider" }, "Action", disabled);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Opens the popup that asks which mind does what was clicked. A mind that has already refused
+    /// this very thing is listed greyed and cannot be picked: asked again it would refuse again, and
+    /// the point would be spent to hear it twice.
+    /// </summary>
+    private void AskMind(Pending pending, List<ModusMentis> minds, string title)
+    {
+        _pending = pending;
+        var (office, about) = AskedOf(pending);
+        _modusMentisPopup.Show(PopupAnchor(), minds, title, minds.Where(m => Mind.HasRefused(m, office, about)).ToHashSet());
     }
 
     /// <summary>A click while a popup is up: its choice, or — outside it — its dismissal.</summary>
@@ -624,7 +725,8 @@ public partial class NarrativeController
         {
             var mind = _modusMentisPopup.HandleClick(screen.X, screen.Y, _core.ClientSize, CellPixels);
             if (mind != null) ApplyModusMentisSelection(mind);
-            else _pending = null;
+            // A click on a mind that refused already picks nothing and leaves the popup up.
+            else if (!_modusMentisPopup.IsVisible) _pending = null;
         }
     }
 
@@ -643,7 +745,7 @@ public partial class NarrativeController
 
             case ActPending { Act: var act } when index == 0:
                 // Acting needs presence: the member goes to where the act is to be done.
-                if (Locate(act.ElementNode) is { } target)
+                if (LocateAct(act) is { } target)
                     WalkTo(target.Where, then: () => _ = ActAsync(act));
                 break;
 
@@ -655,8 +757,7 @@ public partial class NarrativeController
                 break;
 
             case ActPending { Act: var act } when index == 2 && CanReconsider():
-                _pending = new ReconsiderPending(act);
-                _modusMentisPopup.Show(PopupAnchor(), _active.GetThinkingModiMentis(), "Reconsider with");
+                AskMind(new ReconsiderPending(act), _active.GetThinkingModiMentis(), "Reconsider with");
                 break;
         }
     }

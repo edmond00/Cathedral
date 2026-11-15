@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Cathedral.Game.Narrative;
 using Cathedral.Game.Narrative.Tree;
 using Cathedral.Game.Npc;
+using Cathedral.Game.Scene.Building;
 using Cathedral.Game.Scene;
 
 namespace Cathedral.Game;
@@ -47,27 +48,30 @@ public partial class NarrativeController
             foreach (var group in card.Tray.Where(t => t.Known == null).GroupBy(t => t.Kind))
                 lines.Add($"click observe {ElementKinds.Word(group.Key)} in \"{card.Area.DisplayName}\" x{group.Count()}{On(group.First())}");
             foreach (var known in card.Tray.Where(t => t.Known != null))
-                lines.Add($"click observe \"{NameOf(known.Known!)}\" in \"{card.Area.DisplayName}\"{On(known)}");
+                lines.Add($"click observe \"{HandleOf(known.Known!)}\" in \"{card.Area.DisplayName}\"{On(known)}");
             foreach (var token in card.Tokens)
                 lines.Add($"click member \"{token.DisplayName}\" in \"{card.Area.DisplayName}\"{(ReferenceEquals(token, _active) ? " (played)" : "")}");
         }
+        // The ways on their lines, each named from the end it would be looked at from.
+        foreach (var (key, side) in _frameWays)
+            lines.Add($"click observe \"{HandleOf(side.Anchor)}\" in \"{side.From.DisplayName}\" (way){On(new WaySymbol(key))}");
         foreach (var element in Mind.ElementNodes.Where(n => Locate(n) != null))
         {
-            lines.Add($"element \"{NameOf(element)}\" in \"{Locate(element)!.Value.Where.DisplayName}\"");
+            lines.Add($"element \"{HandleOf(element)}\" in \"{Locate(element)!.Value.Where.DisplayName}\"");
             foreach (var part in ContentsOf(element))
-                lines.Add($"click observe \"{NameOf(part)}\" in \"{NameOf(element)}\"{On(new ContentSymbol(element, part))}");
+                lines.Add($"click observe \"{HandleOf(part)}\" in \"{HandleOf(element)}\"{On(new ContentSymbol(element, part))}");
             foreach (var stub in StubsOf(element))
-                lines.Add($"click {(stub == StubKind.Think ? "think" : "speak")} \"{NameOf(element)}\"{On(new StubSymbol(element, stub))}");
+                lines.Add($"click {(stub == StubKind.Think ? "think" : "speak")} \"{HandleOf(element)}\"{On(new StubSymbol(element, stub))}");
         }
         var acts = CliActs();
         for (int i = 0; i < acts.Count; i++)
-            lines.Add($"click act {i} \"{acts[i].Action!.DisplayText}\" on \"{NameOf(acts[i].ElementNode)}\"{On(new NodeSymbol(acts[i]))}");
+            lines.Add($"click act {i} \"{acts[i].Action!.DisplayText}\" on \"{HandleOf(acts[i].ElementNode)}\"{On(new NodeSymbol(acts[i]))}");
         if (Exploring) lines.Add($"click exit  ({ExitLabel})");
         return lines;
     }
 
     /// <summary>The acts waiting on the played member's trees, in the order they were proposed.</summary>
-    private List<ThoughtNode> CliActs() => Mind.WaitingActs.Where(a => Locate(a.ElementNode) != null).ToList();
+    private List<ThoughtNode> CliActs() => Mind.WaitingActs.Where(a => LocateAct(a) != null).ToList();
 
     /// <summary>
     /// Whether <paramref name="name"/> names something that answers to <paramref name="names"/>: the
@@ -82,11 +86,36 @@ public partial class NarrativeController
         return all.Any(n => n.Contains(name, StringComparison.OrdinalIgnoreCase)) ? 2 : int.MaxValue;
     }
 
+    /// <summary>
+    /// What a script calls an element: its title as the scene has it ("Test Chest", "the way to
+    /// Test Yard"), a person as the map names them. Not the label's wording, which names a thing as
+    /// a sentence does — a handle is typed, and stays what it was when the label is reworded.
+    /// </summary>
+    private static string HandleOf(NarrativeAnchor anchor) => anchor switch
+    {
+        SyntheticNpcObservationObject npc => NpcLabelResolver.ShortLabel(npc.SceneNpc.Entity),
+        SyntheticAreaObservationObject area => $"the way to {area.Area.DisplayName}",
+        ObservationObject obs => obs.NeutralName,
+        _ => anchor.DisplayName,
+    };
+
+    private string HandleOf(ThoughtNode element) => element.Element switch
+    {
+        SceneNpc npc => NpcLabelResolver.ShortLabel(npc.Entity),
+        // A way is named from the end it is now seen from.
+        Area or ConnectorPointOfInterest when Locate(element) is { } at => HandleOf(at.Anchor),
+        Area area    => $"the way to {area.DisplayName}",
+        ItemElement item => item.Item.DisplayName,
+        { } other    => other.DisplayName,
+        null         => "",
+    };
+
     private IEnumerable<string> NamesOf(NarrativeAnchor anchor)
-        => ObservationController.TargetableNames(anchor).Append(NameOf(anchor));
+        => ObservationController.TargetableNames(anchor).Append(HandleOf(anchor)).Append(NameOf(anchor));
 
     private IEnumerable<string> NamesOf(ThoughtNode element)
-        => Locate(element) is { } at ? NamesOf(at.Anchor).Append(NameOf(element)) : new[] { NameOf(element) };
+        => Locate(element) is { } at ? NamesOf(at.Anchor).Append(HandleOf(element)).Append(NameOf(element))
+                                     : new[] { HandleOf(element), NameOf(element) };
 
     private static T? Best<T>(IEnumerable<T> candidates, Func<T, int> rank) where T : class
         => candidates.Select(c => (c, r: rank(c))).Where(x => x.r != int.MaxValue).OrderBy(x => x.r).Select(x => x.c).FirstOrDefault();
@@ -115,11 +144,32 @@ public partial class NarrativeController
             {
                 var trays = frame.Cards.Where(c => area == null || c.Area.Id == area.Id)
                                  .OrderBy(c => c.Area.Id == _pov.Where.Id ? 0 : 1).SelectMany(c => c.Tray).ToList();
+                // The ways on their lines, those looked at from the area named — or from where the
+                // played member stands — first.
+                var ways = _frameWays.Where(w => area == null || w.Value.From.Id == area.Id)
+                                     .OrderBy(w => w.Value.From.Id == _pov.Where.Id ? 0 : 1).ToList();
                 if (ElementKinds.Parse(name) is { } kind)
-                    return trays.FirstOrDefault(t => t.Kind == kind && t.Known == null) is { } anonymous
-                        ? (anonymous, null) : (null, $"nothing unobserved of kind '{name}'" + (area != null ? $" in {area.DisplayName}" : ""));
+                {
+                    // Where the member stands (or the area named) first: every card shows what
+                    // stands in it now, and a kind with no area means the one in front of them.
+                    var here = area ?? _pov.Where;
+                    if (trays.FirstOrDefault(t => t.Area.Id == here.Id && t.Kind == kind && t.Known == null) is { } anonymous)
+                        return (anonymous, null);
+                    // A way on a line is its own symbol: the kind names the first seen from there.
+                    if (kind == ElementKind.Way && ways.Any(w => w.Value.From.Id == here.Id))
+                        return (new WaySymbol(ways.First(w => w.Value.From.Id == here.Id).Key), null);
+                    if (area == null && trays.FirstOrDefault(t => t.Kind == kind && t.Known == null) is { } elsewhere)
+                        return (elsewhere, null);
+                    return (null, $"nothing unobserved of kind '{name}'" + (area != null ? $" in {area.DisplayName}" : ""));
+                }
                 if (Best(trays.Where(t => t.Known != null), t => MatchRank(NamesOf(t.Known!), name)) is { } known)
                     return (known, null);
+                // A way is named as anything known is; a recording names only the ways the party
+                // has seen or gone by, as a player would.
+                var named = ways.Where(w => !playerOnly || ElementMemory.IsKnown(_scene, w.Value.From, w.Value.Anchor))
+                                .Select(w => (w.Key, Rank: MatchRank(NamesOf(w.Value.Anchor), name)))
+                                .Where(w => w.Rank != int.MaxValue).OrderBy(w => w.Rank).ToList();
+                if (named.Count > 0) return (new WaySymbol(named[0].Key), null);
                 var contents = Mind.ElementNodes.SelectMany(n => ContentsOf(n).Select(p => new ContentSymbol(n, p)));
                 if (Best(contents, c => MatchRank(NamesOf(c.Part), name)) is { } content) return (content, null);
                 // Naming the holder asks for whatever it holds first: a memory's fragments are not
@@ -151,7 +201,7 @@ public partial class NarrativeController
                 if (element == null) return (null, $"no observed element named '{name}'");
                 var stub = what == "think" ? StubKind.Think : StubKind.Speak;
                 return StubsOf(element).Contains(stub) ? (new StubSymbol(element, stub), null)
-                                                       : (null, $"'{NameOf(element)}' offers no '{what}'");
+                                                       : (null, $"'{HandleOf(element)}' offers no '{what}'");
             }
             case "act":
             {
@@ -294,7 +344,8 @@ public partial class NarrativeController
     /// <summary>The result box: its title and chips, and its [ CONTINUE ] region; null when no result is up.</summary>
     public (string Title, IReadOnlyList<string> Chips, int X, int Y, int Width)? CliResult()
         => _result == null ? null
-         : (_result.Title, _result.Chips.Select(c => c.Text).ToList(),
+         : ($"{(_result.Succeeded ? "SUCCESS" : "FAILURE")}{(_result.Act.Length > 0 ? $" — {_result.Act}" : "")}",
+            _result.Chips.Select(c => c.Text).ToList(),
             _resultContinueRegion.X, _resultContinueRegion.Y, _resultContinueRegion.Width);
 
     // ── Popups ───────────────────────────────────────────────────────────────
@@ -305,7 +356,8 @@ public partial class NarrativeController
         if (_choicePopup.IsVisible)
             return ("choice", _choicePopup.Choices.Select((c, i) => _choicePopup.IsChoiceEnabled(i) ? c : $"{c} (disabled)").ToList());
         if (_modusMentisPopup.IsVisible)
-            return ("modus-mentis", _modusMentisPopup.Choices.Select(m => m.DisplayName).ToList());
+            return ("modus-mentis", _modusMentisPopup.Choices
+                .Select(m => _modusMentisPopup.IsRefused(m) ? $"{m.DisplayName} (refused)" : m.DisplayName).ToList());
         if (_itemSelectionPopup.IsVisible)
             return ("item", _itemSelectionPopup.Choices.Select(i => i.DisplayName).ToList());
         return null;
@@ -335,6 +387,7 @@ public partial class NarrativeController
             var list = _modusMentisPopup.Choices;
             if (index < 0 || index >= list.Count) return $"modus-mentis {index} out of range";
             var chosen = list[index];
+            if (_modusMentisPopup.IsRefused(chosen)) return $"{chosen.DisplayName} has refused this already and cannot be asked again";
             _modusMentisPopup.Hide();
             ApplyModusMentisSelection(chosen);
             return null;
@@ -459,6 +512,11 @@ public partial class NarrativeController
         if (All("popup") && _choicePopup.IsVisible)
             outp.Add("popup options=[" + string.Join(",", _choicePopup.Choices.Select((c, i) =>
                          _choicePopup.IsChoiceEnabled(i) ? c : $"{c}(disabled)")) + "]");
+        // The minds offered, by id: one that has refused what is asked is greyed, which the screen
+        // says by colour alone.
+        if (All("popup") && _modusMentisPopup.IsVisible)
+            outp.Add("popup minds=[" + string.Join(",", _modusMentisPopup.Choices.Select(m =>
+                         _modusMentisPopup.IsRefused(m) ? $"{m.ModusMentisId}(refused)" : m.ModusMentisId)) + "]");
 
         // trespass= is what the header's TRESPASSING tag shows, and the condition under which every act
         // is a crime — assertable, where the tag is only a colour on screen. confronted= is the kind of
@@ -549,6 +607,9 @@ public partial class NarrativeController
             foreach (var root in Mind.Roots) Describe(root, 0);
             foreach (var (area, refusal) in Mind.Strays)
                 outp.Add($"tree refusal area=\"{area.DisplayName}\" mind={refusal.Mind?.ModusMentisId ?? "-"}");
+            // A refusal to look at a way hangs from the way's symbol on its line.
+            foreach (var (way, refusal) in Mind.WayStrays)
+                outp.Add($"tree refusal way=\"{(_frameWays.TryGetValue(way, out var side) ? HandleOf(side.Anchor) : way)}\" mind={refusal.Mind?.ModusMentisId ?? "-"}");
 
             void Describe(ThoughtNode node, int depth)
             {
@@ -557,7 +618,7 @@ public partial class NarrativeController
                 {
                     case ThoughtNodeKind.Element:
                         var at = Locate(node);
-                        outp.Add($"tree {pad}element \"{NameOf(node)}\" kind={ElementKinds.Word(KindOf(node))} "
+                        outp.Add($"tree {pad}element \"{HandleOf(node)}\" kind={ElementKinds.Word(KindOf(node))} "
                                + $"area=\"{at?.Where.DisplayName ?? "-"}\" observer={node.Mind?.ModusMentisId ?? "none"}");
                         break;
                     case ThoughtNodeKind.Act:

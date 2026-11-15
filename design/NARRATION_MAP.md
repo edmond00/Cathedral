@@ -198,11 +198,47 @@ What the draft and the interview left open, and how it was filled.
 - **`--no-embeddings` and the word vectors' runtime load are gone**: keywords were their only
   reader. `--mm-audit`'s persona lint still reads the file when it is there.
 
-## 11. Tests and tools
+## 11. Settled after the first play
+
+What changed once the map had been played, each answering a remark made on it.
+
+- **A way's symbol stands on its line.** One line, one symbol, one tree, whichever end it is looked
+  at from; the mind no longer chooses among the ways out of an area — exploring is the one thing a
+  player should aim exactly. Pointing at the symbol, a node of its tree or the line lights the whole
+  line, and the tree hangs from the symbol: under it where the line runs across, beside it where it
+  runs down. A view stays on the card of the area it is seen from, as does a way with no line.
+- **Free walking goes only by ways gone by.** A neighbour already stood in used to count as known,
+  so a member sent back to look at something walked a way nobody had taken. Known is taken, for the
+  plain way as for a door; the plain way never taken to ground already stood on is an act, and
+  teaches what a new way back teaches.
+- **Every card shows what stands in it**, visited or not: people, enemies and things are on the map
+  before anybody goes there, and answer no click until a known way leads to them.
+- **What a click acts on stands on a lit ground.** Ink says what a symbol is; the ground says a
+  click does something. A card a click walks to says so under the pointer.
+- **A refusal has one symbol** (`⊘`), whoever refused and whatever was asked — a mind that would
+  not look, one that would not think, a will with no way through, a means, a broken faculty — and a
+  failed act keeps `✗` to itself.
+- **A mind that refused is greyed in the popup** the next time the same is asked about the same
+  thing: a will until the world changes, any other mind until the pool refills. A thing is declined
+  once, whichever mind declined, so the next ask — necessarily of another mind — attends.
+- **A level is shown as marks, one a level**, in the popup, on the titles of the text boxes, and an
+  act read under the pointer is followed by its dice and the sixes it needs, in another ink.
+- **The result box** carries SUCCESS or FAILURE on its border, the act, and what it came to one
+  line each in the ink of a gain, a loss or neither, on the box's own ground.
+- **The map is darkened, hue kept**, under a popup or a box; it had been recoloured to grey on
+  black, which left a few letters on nothing.
+- **A tree takes only the cells it is drawn on**: the panel behind it hid lines it did not reach.
+- **The way out answers the pointer** like any symbol; **the label is taken down** when another
+  screen has the panel; **a press kept on the pan pad keeps panning**.
+- **Labels name things as a sentence does**: "think about the cart trail".
+
+## 12. Tests and tools
 
 - `click keyword` goes; the scripts are rewritten against symbols, elements and acts named, never
   coordinates: `click observe <kind|name>`, `click think <name>`, `click speak <name>`,
   `click act <n|word>`, `click member <name>`, `click area <name>`, `click exit`.
 - `inspect trees`, `inspect texts` and `inspect known` read what the map shows; `inspect where`
   carries `exit=LEAVE|RUNAWAY`.
+- `point observe|think|speak|act|member <what>`, `point exit` and `point card <area>` put the
+  pointer on a symbol without pressing it, for what only hovering shows.
 - The flags that pinned text behaviour (`--refuse-focus`, the group scripts) go or are redefined.

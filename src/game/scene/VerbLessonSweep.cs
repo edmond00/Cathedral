@@ -100,7 +100,7 @@ public static class VerbLessonSweep
         };
         // A way found to come out on known ground: no swept scene has a visit behind it, so it is
         // staged on every way that could be one (AreaVisits.IsNewWayBack names the same kinds).
-        if (target is ConnectorPointOfInterest and not LandscapePointOfInterest)
+        if (target is Area or (ConnectorPointOfInterest and not LandscapePointOfInterest))
             staged.AddRange(staged.ToList().Select(c => c with { FindsWayBack = true }));
 
         foreach (var ctx in staged)

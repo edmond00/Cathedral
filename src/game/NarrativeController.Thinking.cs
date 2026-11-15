@@ -19,8 +19,12 @@ public partial class NarrativeController
     // ── What a click has asked for, while its popup is open ──────────────────
 
     private abstract record Pending;
-    /// <summary>Observe in <paramref name="Area"/>: one of a kind, or the element <paramref name="Named"/>.</summary>
-    private sealed record ObservePending(Area Area, ElementKind Kind, NarrativeAnchor? Named, ThoughtNode? Container) : Pending;
+    /// <summary>
+    /// Observe in <paramref name="Area"/>: one of a kind, or the element <paramref name="Named"/> —
+    /// which, when it is a way on a line, is recorded as <paramref name="Way"/>.
+    /// </summary>
+    private sealed record ObservePending(Area Area, ElementKind Kind, NarrativeAnchor? Named, ThoughtNode? Container,
+                                         string? Way = null) : Pending;
     private sealed record ThinkPending(ThoughtNode Element) : Pending;
     /// <summary>Speak of an element: first the speaking mind is asked for, then whom to address.</summary>
     private sealed record SpeakPending(ThoughtNode Element, ModusMentis? Mind, IReadOnlyList<PartyMember> Listeners) : Pending;
@@ -30,6 +34,36 @@ public partial class NarrativeController
     private sealed record ToolPending(ThoughtNode Act) : Pending;
 
     private Pending? _pending;
+
+    /// <summary>
+    /// What a mind is asked by <paramref name="pending"/>, and about what: the pair a refusal is
+    /// remembered under, so the mind that refused is not offered the same again. A way is the same
+    /// way from either end, and a kind of thing in an area is one question whatever it holds.
+    /// </summary>
+    private static (MindOffice Office, object About) AskedOf(Pending pending) => pending switch
+    {
+        ObservePending { Way: { } way }     => (MindOffice.Observe, way),
+        ObservePending { Named: { } named } => (MindOffice.Observe, (object?)ElementKinds.ElementOf(named) ?? named),
+        ObservePending observe              => (MindOffice.Observe, (observe.Area.Id, observe.Kind)),
+        ThinkPending think                  => (MindOffice.Think, think.Element),
+        ReconsiderPending reconsider        => (MindOffice.Reconsider, reconsider.Act),
+        SpeakPending speak                  => (MindOffice.Speak, speak.Element),
+        _                                   => (MindOffice.Think, pending),
+    };
+
+    /// <summary>Hangs a refusal where what was asked would have hung: under the element, on the way's line, or alone on the area's card.</summary>
+    private void HangRefusal(MemberMind owner, Pending? pending, Area area, ThoughtNode refusal)
+    {
+        switch (pending)
+        {
+            case ObservePending { Container: { } container }: container.Add(refusal); break;
+            case ObservePending { Way: { } way }:             owner.WayStrays.Add((way, refusal)); break;
+            case ThinkPending think:                          think.Element.Add(refusal); break;
+            case SpeakPending speak:                          speak.Element.Add(refusal); break;
+            case ReconsiderPending reconsider:                reconsider.Act.ElementNode.Add(refusal); break;
+            default:                                          owner.Strays.Add((area, refusal)); break;
+        }
+    }
 
     /// <summary>
     /// Routes the modus mentis chosen in the popup to the step it was asked for. Shared by the mouse
@@ -46,15 +80,18 @@ public partial class NarrativeController
         // player chooses passes through, so the guard is written once.
         if (_active.IsModusMentisBroken(chosen))
         {
-            var (faculty, under) = pending switch
+            var faculty = pending switch
             {
-                ObservePending o   => (NeutralNarration.BrokenFaculty.Observation, o.Container),
-                SpeakPending s     => (NeutralNarration.BrokenFaculty.Speech, s.Element),
-                ThinkPending t     => (NeutralNarration.BrokenFaculty.Thinking, t.Element),
-                ReconsiderPending r => (NeutralNarration.BrokenFaculty.Thinking, r.Act.ElementNode),
-                _                  => (NeutralNarration.BrokenFaculty.Thinking, (ThoughtNode?)null),
+                ObservePending => NeutralNarration.BrokenFaculty.Observation,
+                SpeakPending   => NeutralNarration.BrokenFaculty.Speech,
+                _              => NeutralNarration.BrokenFaculty.Thinking,
             };
-            _ = RefuseBrokenModusMentisAsync(chosen, faculty, under);
+            if (pending != null)
+            {
+                var (office, about) = AskedOf(pending);
+                Mind.Refuse(chosen, office, about);
+            }
+            _ = RefuseBrokenModusMentisAsync(chosen, faculty, pending);
             return;
         }
 
@@ -109,12 +146,9 @@ public partial class NarrativeController
             var area = what.Area;
 
             List<NarrativeAnchor> pool;
-            object about;
+            var (_, about) = AskedOf(what);
             if (what.Named != null)
-            {
-                pool  = new List<NarrativeAnchor> { what.Named };
-                about = ElementKinds.ElementOf(what.Named)!;
-            }
+                pool = new List<NarrativeAnchor> { what.Named };
             else
             {
                 pool = Unobserved(area).Where(u => u.Kind == what.Kind && !u.Known).Select(u => u.Anchor).ToList();
@@ -124,13 +158,12 @@ public partial class NarrativeController
                 // Confronted, a member looks only at whoever confronts them.
                 if (ConfrontationOf(owner) is { } confrontation)
                     pool = pool.Where(a => IsConfronter(a, confrontation)).ToList();
-                about = (area.Id, what.Kind);
             }
             if (pool.Count == 0) { _loading = null; return; }
 
             var result = await _observationController.ObserveAsync(
                 pool, what.Named != null, mind, _active, NodeForArea(area), (_scene, owner.Pov), _locationId,
-                mayDecline: !owner.HasDeclined(mind, about),
+                mayDecline: !owner.HasDeclined(about),
                 preview: _previewSession, commit: Commit);
 
             _loading = null;
@@ -144,11 +177,12 @@ public partial class NarrativeController
 
                 if (observed.Observed == null)
                 {
-                    // The declining is spent: asked again about the same thing, this mind attends.
-                    owner.Decline(mind, about);
-                    var refusal = new ThoughtNode(ThoughtNodeKind.Refusal) { Block = observed.Block };
-                    if (what.Container != null) what.Container.Add(refusal);
-                    else owner.Strays.Add((area, refusal));
+                    // This mind is not asked the same again. A decline is spent with it: whichever
+                    // mind is asked next about the same thing attends. A will's refusal is its
+                    // course, not the one decline a thing is allowed, and spends nothing.
+                    owner.Refuse(mind, MindOffice.Observe, about);
+                    if (!mind.IsWill) owner.Decline(about);
+                    HangRefusal(owner, what, area, new ThoughtNode(ThoughtNodeKind.Refusal) { Block = observed.Block });
                     return;
                 }
 
@@ -240,11 +274,16 @@ public partial class NarrativeController
                 foreach (var action in response.Actions)
                     owner.Proposals.Propose(action.PreselectedOutcome);
 
+                // A mind that came to nothing has refused: its last thought is drawn as one, and it
+                // is not asked about this element again while the refusal stands.
+                if (response.Declined) owner.Refuse(thinkingMind, MindOffice.Think, element);
+
                 var tail = element;
                 ThoughtNode? last = null;
                 for (int i = 0; i < segments.Count; i++)
                 {
-                    tail = tail.Add(new ThoughtNode(segments[i].IsThought ? ThoughtNodeKind.Thought : ThoughtNodeKind.Refusal)
+                    bool thought = segments[i].IsThought && !(response.Declined && i == segments.Count - 1);
+                    tail = tail.Add(new ThoughtNode(thought ? ThoughtNodeKind.Thought : ThoughtNodeKind.Refusal)
                                     { Block = blocks[i] });
                     if (ReferenceEquals(segments[i], lastThought)) last = tail;
                     Chronicle(blocks[i]);
@@ -311,7 +350,8 @@ public partial class NarrativeController
             var element = previousNode.ElementNode;
             Console.WriteLine($"NarrativeController: reconsidering '{previous.ActionText}' with {thinkingMind.DisplayName}");
             _previewSession.Reset();
-            var where = Locate(element)?.Where ?? _pov.Where;
+            var where = LocateAct(previousNode)?.Where ?? _pov.Where;
+            var owner = Mind;
 
             var response = await _thinkingExecutor.ReconsiderAsync(
                 thinkingMind, previous, NodeForArea(where), _active.GetActionModiMentis(),
@@ -329,10 +369,14 @@ public partial class NarrativeController
 
             void Commit()
             {
+                // Wanting no part of it, or finding nobody else to carry it out, is this mind's refusal.
+                if (response.Declined) owner.Refuse(thinkingMind, MindOffice.Reconsider, previousNode);
+
                 var tail = element;
                 foreach (var block in blocks)
                 {
-                    tail = tail.Add(new ThoughtNode(ThoughtNodeKind.Thought) { Block = block });
+                    bool refused = response.Declined && ReferenceEquals(block, blocks[^1]);
+                    tail = tail.Add(new ThoughtNode(refused ? ThoughtNodeKind.Refusal : ThoughtNodeKind.Thought) { Block = block });
                     Chronicle(block);
                 }
                 if (action != null)
@@ -395,8 +439,10 @@ public partial class NarrativeController
             {
                 Chronicle(spoken);
                 element.Add(new ThoughtNode(ThoughtNodeKind.Speech) { Block = spoken, Note = $"to {companion.DisplayName}" });
-                if (listener.NodeOf(element.Element!, element.SeenFrom) == null)
-                    Root(listener, at.Anchor, at.Where, spoken);
+                // A way on a line is one tree from either end.
+                bool told = WayKeyOf(element) is { } way ? WayRoot(listener, way) != null
+                                                         : listener.NodeOf(element.Element!, element.SeenFrom) != null;
+                if (!told) Root(listener, at.Anchor, at.Where, spoken);
                 speaker.Noetic = Math.Max(0, speaker.Noetic - 1);
                 _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
             }
@@ -420,13 +466,13 @@ public partial class NarrativeController
     /// point the attempt cost. The observation / thinking / speaking counterpart of
     /// <c>BrokenModusMentisRule</c>, which does the same job for an action — see
     /// <see cref="BrokenModusMentis"/> for why this refuses rather than withholding. The refusal
-    /// hangs under <paramref name="under"/>, or stands alone in the area when it is about no element.
+    /// hangs where what was asked would have (<see cref="HangRefusal"/>).
     ///
     /// <para>It swallows its own exception rather than failing the narration. This is a refusal, not
     /// a step: taking the visit down because the account of a ruined arm could not be generated would
     /// turn a wound into a lost run.</para>
     /// </summary>
-    private async Task RefuseBrokenModusMentisAsync(ModusMentis mind, NeutralNarration.BrokenFaculty faculty, ThoughtNode? under)
+    private async Task RefuseBrokenModusMentisAsync(ModusMentis mind, NeutralNarration.BrokenFaculty faculty, Pending? asked)
     {
         try
         {
@@ -446,9 +492,7 @@ public partial class NarrativeController
             CommitOnContinue(part, () =>
             {
                 Chronicle(block);
-                var refusal = new ThoughtNode(ThoughtNodeKind.Refusal) { Block = block };
-                if (under != null) under.Add(refusal);
-                else owner.Strays.Add((area, refusal));
+                HangRefusal(owner, asked, area, new ThoughtNode(ThoughtNodeKind.Refusal) { Block = block });
             });
             SpendPoint();
         }

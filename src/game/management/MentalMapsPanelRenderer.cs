@@ -176,6 +176,9 @@ public class MentalMapsPanelRenderer
     /// <summary>An arrow key pans the map, as the pad does; false for any other key.</summary>
     public bool PanMap(OpenTK.Windowing.GraphicsLibraryFramework.Keys key) => _shownMap != null && _map.HandleKey(key);
 
+    /// <summary>A press kept on the map's pan pad keeps it moving (<see cref="LocationMap.Hold"/>). True when it moved.</summary>
+    public bool Hold(bool buttonDown) => _shownMap != null && _map.Hold(buttonDown);
+
     /// <summary>Flips the selected icon's blink when it is due; true when the panel needs redrawing.</summary>
     public bool UpdateBlink()
     {

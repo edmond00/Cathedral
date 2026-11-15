@@ -65,6 +65,13 @@ public sealed class LocationMap
     public bool Narration { get; init; }
 
     /// <summary>
+    /// The way (by <see cref="AreaVisits"/> key) whose whole line is drawn lit, from card to card:
+    /// the one whose symbol the pointer is on, or whose line it is over. A long line is hard to
+    /// follow by eye across a large map.
+    /// </summary>
+    public string? LitWay { get; set; }
+
+    /// <summary>
     /// The ground under everything drawn: the narration's translucent black by default, which lets the
     /// world show faintly through; a modal box over the world sets it opaque.
     /// </summary>
@@ -142,6 +149,7 @@ public sealed class LocationMap
     private static readonly Vector4 SolidLine       = Config.Colors.LightGray85;
     private static readonly Vector4 DashedLine      = Config.Colors.GoldYellow;
     private static readonly Vector4 ViewLine        = Config.Colors.DarkGray40;
+    private static readonly Vector4 LitLine         = Config.Colors.BrightYellow;
     private static readonly Vector4 PartyInk        = Config.Colors.White;
     public  static readonly Vector4 IconOn          = Config.Colors.GoldYellow;
     private static readonly Vector4 IconOnAlt       = Config.Colors.MediumYellow;
@@ -189,7 +197,23 @@ public sealed class LocationMap
         /// back to its card dim.
         /// </summary>
         public List<int> Path = new();
+        /// <summary>
+        /// Where the way's symbol stands on the line (<see cref="PlaceSymbols"/>): none when the line
+        /// has no stretch of its own to carry one, one on a short line, and on a long one a spot
+        /// near each card it leaves, so the way is marked where it is looked at from.
+        /// </summary>
+        public readonly List<WaySpot> Spots = new();
+        /// <summary>The cell of a connector's letter, beside a symbol on the same stretch; -1 for none.</summary>
+        public int Letter = -1;
     }
+
+    /// <summary>
+    /// A cell a way's symbol stands on: whether the line runs down through it (what hangs from the
+    /// symbol then goes beside it, and under it otherwise), whether that is drawn above the cell
+    /// rather than below, and the card this spot is the near one of — null for the one spot of a
+    /// short line, which serves both.
+    /// </summary>
+    public readonly record struct WaySpot(int X, int Y, bool Vertical, bool Up, Area? Near);
 
     /// <summary>
     /// One cell of a walk shown on the map: where the party is drawn, the area it counts as in (the
@@ -311,6 +335,32 @@ public sealed class LocationMap
 
     /// <summary>Whether the cursor is on an arm of the pad, as last recorded by <see cref="SetHover"/>.</summary>
     public bool PadArrowHovered => _hovered != PadArrow.None;
+
+    // A press kept on an arm goes on panning: the click made the first step, and after a moment
+    // every tick makes a smaller one.
+    private const int HoldDelayMs = 350;
+    private long _heldSince;
+
+    /// <summary>
+    /// Called every tick with whether the button is down: a press kept on an arm of the pad keeps
+    /// the map moving, by an arrow key's step a tick, once it has been held a moment. True when the
+    /// view moved, for a caller that draws on events to draw again.
+    /// </summary>
+    public bool Hold(bool buttonDown)
+    {
+        if (!buttonDown || _hovered is PadArrow.None or PadArrow.Centre) { _heldSince = 0; return false; }
+        long now = Environment.TickCount64;
+        if (_heldSince == 0) { _heldSince = now; return false; }
+        if (now - _heldSince < HoldDelayMs) return false;
+        switch (_hovered)
+        {
+            case PadArrow.Up:    Pan(0, -KeyStepY); break;
+            case PadArrow.Down:  Pan(0,  KeyStepY); break;
+            case PadArrow.Left:  Pan(-KeyStepX, 0); break;
+            case PadArrow.Right: Pan( KeyStepX, 0); break;
+        }
+        return true;
+    }
 
     /// <summary>
     /// A click on the pad. Returns true when it landed on an arm and was consumed, so the narration
@@ -554,6 +604,11 @@ public sealed class LocationMap
                     LineColor(grid.NetA[c], known));
         }
 
+        // The way pointed at, lit from card to card over whatever trunk it shares.
+        if (LitWay is { } lit && _links.Concat(_overlayLinks).FirstOrDefault(l => l.Key == lit) is { } litLink)
+            foreach (int c in litLink.Path.Count > 0 ? litLink.Path : litLink.Cells)
+                if (grid.NetA[c] != -1) fgs[c] = LitLine;
+
         PaintExit(Put);
 
         // Areas over everything: a card, the name on a coloured band, the detail under it.
@@ -623,18 +678,19 @@ public sealed class LocationMap
             }
         }
 
-        // A connector's letter, as a badge on a straight stretch only it uses.
+        // A connector's letter, as a badge on a straight stretch only it uses. The narration's map
+        // stands the way's symbol there (the overlay draws it), and the letter beside it.
         foreach (var link in _links.Concat(_overlayLinks))
         {
-            if (!link.Dashed) continue;
-            var straight = link.Fresh.Where(c => grid.NetB[c] == -1 && grid.Kind[c] is Cell.Free or Cell.BesideBox
-                                              && (grid.MaskA[c] == Vertical || grid.MaskA[c] == Horizontal)).ToList();
-            if (straight.Count == 0) continue;
-            int at = straight[straight.Count / 2];
+            if (!link.Dashed || link.Letter < 0) continue;
             var known = LinkKnown(link);
             var badge = link.View ? ViewLine : DashedLine;
+            int at = link.Letter;
             if (known == Known.Unknown)
-                Put(at % w, at / w, '?', UnknownInk, UnknownBand);
+            {
+                // The symbol on the line already says a way nobody knows.
+                if (!Narration || link.Spots.Count == 0) Put(at % w, at / w, '?', UnknownInk, UnknownBand);
+            }
             else
                 Put(at % w, at / w, link.Kind, DarkText, known == Known.Seen ? Shade(badge, 0.5f) : badge);
         }
@@ -786,6 +842,17 @@ public sealed class LocationMap
         /// <summary>The cell of the way out's glyph, or null when none was laid.</summary>
         public (int X, int Y)? Exit => _map.ExitCell;
 
+        /// <summary>
+        /// Where the symbol of the way recorded as <paramref name="key"/> stands on its line: empty
+        /// when the map draws no line for it, one spot on a short line, one near each card on a
+        /// long one.
+        /// </summary>
+        public IReadOnlyList<WaySpot> WaySpots(string key)
+            => _map._waySymbols.TryGetValue(key, out var link) ? link.Spots : Array.Empty<WaySpot>();
+
+        /// <summary>Whether a card stands on the cell: nothing hung from a line is drawn over one.</summary>
+        public bool IsCard(int x, int y) => InBounds(x, y) && _map._grid.Kind[y * Width + x] == Cell.Box;
+
         public bool InBounds(int x, int y) => x >= 0 && y >= 0 && x < Width && y < Height;
 
         /// <summary>Draws a glyph; <paramref name="bg"/> null keeps the ground under it.</summary>
@@ -851,14 +918,6 @@ public sealed class LocationMap
         _viewX = ClampView(canvasX - _shownAt.W / 2, _canvasW, _shownAt.W);
         _viewY = ClampView(canvasY - _shownAt.H / 2, _canvasH, _shownAt.H);
         _recentre = false;
-    }
-
-    /// <summary>Whether screen cell (<paramref name="x"/>, <paramref name="y"/>) is the way out's glyph as last drawn.</summary>
-    public bool IsExitAt(int x, int y)
-    {
-        var (left, top, w, h) = _shownAt;
-        if (x < left || y < top || x >= left + w || y >= top + h) return false;
-        return ExitCell is { } exit && exit.X == _viewX + x - left && exit.Y == _viewY + y - top;
     }
 
     // ── Layout ───────────────────────────────────────────────────────────────
@@ -997,6 +1056,7 @@ public sealed class LocationMap
         foreach (var link in _links) SetPath(_grid, link);
         // A way out is laid for a place only: the two opening phases have none.
         if (scene.Phase == NarrationPhase.Exploration) LayExit(scene);
+        PlaceSymbols(_grid, _links);
 
         Console.WriteLine($"LocationMap: laid out {_boxAt.Count} areas in {_sectionBoxes.Count} sections, " +
                           $"{_links.Count} lines ({failed} unroutable), {_viewLinks.Count} views, canvas {_canvasW}x{_canvasH}");
@@ -1100,6 +1160,165 @@ public sealed class LocationMap
                 Route(_overlay, link, here, other, net, relaxed: true);
         }
         foreach (var link in _overlayLinks) SetPath(_overlay, link);
+        PlaceSymbols(_overlay, _overlayLinks);
+    }
+
+    // ── Symbols on lines ─────────────────────────────────────────────────────
+
+    // The ways whose line carries a symbol, by the key each is recorded under.
+    private readonly Dictionary<string, Link> _waySymbols = new();
+
+    /// <summary>
+    /// Whether the map draws a line for the way recorded as <paramref name="key"/> with a stretch of
+    /// its own to stand a symbol on. A way that has none — a view, a line that could not be routed —
+    /// is shown on its area's card instead.
+    /// </summary>
+    public bool DrawsWay(Scene.Scene scene, string key)
+    {
+        if (scene.Sections.Count == 0) return false;
+        EnsureLayout(scene);
+        return _waySymbols.ContainsKey(key);
+    }
+
+    /// <summary>The key of the way whose line is under screen cell (<paramref name="x"/>, <paramref name="y"/>) as last drawn, or null.</summary>
+    public string? WayAt(int x, int y)
+    {
+        var (left, top, w, h) = _shownAt;
+        if (x < left || y < top || x >= left + w || y >= top + h) return null;
+        int cx = _viewX + x - left, cy = _viewY + y - top;
+        if (cx < 0 || cy < 0 || cx >= _canvasW || cy >= _canvasH) return null;
+        int c = cy * _canvasW + cx;
+        return c < _lineAt.Length ? _lineAt[c]?.Key : null;
+    }
+
+    /// <summary>
+    /// Chooses, for each line, the cells its symbol stands on and the cell of its letter.
+    ///
+    /// <para>A symbol goes on a straight stretch only this line uses, so it names one way. Among
+    /// those cells the one is kept from which a small tree can hang without covering a card, and
+    /// covering as little as may be of the room under a card where that card's own trees hang — tried
+    /// below the cell and above it, and the better of the two kept as the side to hang on.</para>
+    ///
+    /// <para>A short line has one symbol, towards its middle. A long one — across a section, or
+    /// between two — would carry it far from both cards, off the view of whoever stands in either:
+    /// it has one near each card instead, the same way marked twice. A view keeps its letter and
+    /// gets no symbol: it is looked at from its area's card.</para>
+    /// </summary>
+    private void PlaceSymbols(RouteGrid g, List<Link> links)
+    {
+        if (ReferenceEquals(links, _links)) _waySymbols.Clear();
+        var taken = new HashSet<int>(_links.Concat(_overlayLinks).Where(l => !links.Contains(l))
+                                           .SelectMany(l => l.Spots.Select(p => p.Y * g.W + p.X).Append(l.Letter)).Where(c => c >= 0));
+        foreach (var link in links)
+        {
+            link.Spots.Clear();
+            link.Letter = -1;
+            if (link.Net < 0) continue;
+            var own = link.Fresh.Where(c => g.NetB[c] == -1 && g.Kind[c] is Cell.Free or Cell.BesideBox
+                                         && !_exitCells.Contains(c) && !taken.Contains(c)).ToList();
+            var straight = own.Where(c => g.MaskA[c] == Vertical || g.MaskA[c] == Horizontal).ToList();
+            if (link.View || !Narration)
+            {
+                // A menu's map and a view carry the letter alone, in the middle of the stretch.
+                if (straight.Count > 0) taken.Add(link.Letter = straight[straight.Count / 2]);
+                continue;
+            }
+            if (straight.Count == 0)
+            {
+                // Nothing straight: the way stands on a bend.
+                if (own.Count > 0) Stand(link, own[own.Count / 2], vertical: false, up: false, near: null);
+                continue;
+            }
+
+            // The stretch in the order the line runs, from the first card to the second.
+            var along = link.Path.Count > 0 ? straight.Where(link.Path.Contains).OrderBy(link.Path.IndexOf).ToList() : straight;
+            if (along.Count == 0) along = straight;
+            int length = Math.Max(link.Path.Count, along.Count);
+            if (length <= LongLine)
+                Best(link, along, c => Math.Abs(along.IndexOf(c) - along.Count / 2), near: null);
+            else
+            {
+                int Pos(int c) => link.Path.Count > 0 ? link.Path.IndexOf(c) : along.IndexOf(c);
+                var head = along.Where(c => Pos(c) < NearEnd).ToList();
+                var tail = along.Where(c => Pos(c) >= length - NearEnd).ToList();
+                if (head.Count > 0) Best(link, head, c => Pos(c), link.From);
+                if (tail.Count > 0) Best(link, tail, c => length - 1 - Pos(c), link.To);
+                // An end whose stretch is another line's too has no cell of its own: the middle serves it.
+                if (head.Count == 0 || tail.Count == 0)
+                {
+                    var rest = along.Where(c => !link.Spots.Any(p => Math.Abs(Pos(c) - Pos(p.Y * g.W + p.X)) < NearEnd)).ToList();
+                    if (rest.Count > 0)
+                        Best(link, rest, c => Math.Abs(rest.IndexOf(c) - rest.Count / 2), head.Count == 0 ? link.From : link.To);
+                }
+            }
+
+            // The letter beside the first symbol, on the same stretch.
+            if (link.Dashed && link.Spots.Count > 0)
+            {
+                var first = link.Spots[0];
+                int cell = first.Y * g.W + first.X, step = first.Vertical ? g.W : 1;
+                link.Letter = new[] { cell - step, cell + step }.FirstOrDefault(c => straight.Contains(c) && !taken.Contains(c), -1);
+                if (link.Letter >= 0) taken.Add(link.Letter);
+            }
+        }
+
+        // The cheapest of the candidates to hang a tree from, the nearer to where it is wanted first.
+        void Best(Link link, List<int> candidates, Func<int, int> distance, Area? near)
+        {
+            float best = float.MaxValue;
+            int cell = -1;
+            bool vertical = false, up = false;
+            foreach (int c in candidates)
+            {
+                if (taken.Contains(c)) continue;
+                bool v = g.MaskA[c] == Vertical;
+                foreach (bool u in new[] { false, true })
+                {
+                    float cost = HangCost(g, c % g.W, c / g.W, v, u) + distance(c) * 0.05f;
+                    if (cost >= best) continue;
+                    best = cost; cell = c; vertical = v; up = u;
+                }
+            }
+            if (cell >= 0) Stand(link, cell, vertical, up, near);
+        }
+
+        void Stand(Link link, int cell, bool vertical, bool up, Area? near)
+        {
+            link.Spots.Add(new WaySpot(cell % g.W, cell / g.W, vertical, up, near));
+            taken.Add(cell);
+            _waySymbols[link.Key] = link;
+        }
+    }
+
+    // A line longer than this carries its symbol near each card, within so many cells of it.
+    private const int LongLine = 22, NearEnd = 12;
+
+    // The room a way's small tree is weighed for: so many cells across, so many rows.
+    private const int HangWidth = 6, HangRows = 3;
+
+    /// <summary>
+    /// What a tree hung from a symbol at (<paramref name="x"/>, <paramref name="y"/>) would cover:
+    /// a card counts most, the canvas's edge next, then another line, then the room under a card —
+    /// more the nearer the card, where its own trees begin.
+    /// </summary>
+    private float HangCost(RouteGrid g, int x, int y, bool vertical, bool up)
+    {
+        // Beside a line running down: from the symbol's own row. Under one running across: from the next.
+        int x0 = vertical ? x + 1 : x;
+        int y0 = vertical ? (up ? y - HangRows + 1 : y) : (up ? y - HangRows : y + 1);
+        float cost = 0;
+        for (int cy = y0; cy < y0 + HangRows; cy++)
+            for (int cx = x0; cx < x0 + HangWidth; cx++)
+            {
+                if (!g.InBounds(cx, cy)) { cost += 3; continue; }
+                int c = cy * g.W + cx;
+                if (g.Kind[c] == Cell.Box) { cost += 10; continue; }
+                if (g.NetA[c] != -1) cost += 1;
+                foreach (var (bx, by) in _boxAt.Values)
+                    if (cx >= bx && cx < bx + BoxW && cy >= by + BoxH && cy < by + BoxH + TreeRoom)
+                        cost += 2f * (TreeRoom - (cy - by - BoxH)) / TreeRoom;
+            }
+        return cost;
     }
 
     /// <summary>A routed line's whole run between its cards, for <see cref="Link.Path"/>.</summary>
@@ -1428,10 +1647,12 @@ public sealed class LocationMap
     /// <summary>
     /// What is under screen cell (<paramref name="x"/>, <paramref name="y"/>) as last drawn, in a few
     /// words, or null over bare canvas. An icon is the caller's to name (<paramref name="iconLabel"/>,
-    /// handed its tag); the pad, a card and a line are named here. The narration names the way out
-    /// (<paramref name="exitLabel"/>: LEAVE or RUNAWAY), which a click there then takes.
+    /// handed its tag); the pad, a card and a line are named here. The narration tags the way out
+    /// as a symbol of its own, so it names it too (LEAVE or RUNAWAY), and names a card a click
+    /// would walk to (<paramref name="areaLabel"/>, null for any other card).
     /// </summary>
-    public HoverLabel? LabelAt(int x, int y, Func<object, HoverLabel?>? iconLabel = null, string? exitLabel = null)
+    public HoverLabel? LabelAt(int x, int y, Func<object, HoverLabel?>? iconLabel = null,
+                               Func<Area, HoverLabel?>? areaLabel = null)
     {
         switch (ArrowAt(x, y))
         {
@@ -1444,12 +1665,12 @@ public sealed class LocationMap
         var (left, top, w, h) = _shownAt;
         if (x < left || y < top || x >= left + w || y >= top + h) return null;
         if (IconAt(x, y) is { } tag) return iconLabel?.Invoke(tag);
-        if (AreaAt(x, y) is { } area) return AreaLabel(area);
+        if (AreaAt(x, y) is { } area) return areaLabel?.Invoke(area) ?? AreaLabel(area);
         int cx = _viewX + x - left, cy = _viewY + y - top;
         if (cx < 0 || cy < 0 || cx >= _canvasW || cy >= _canvasH) return null;
         int c = cy * _canvasW + cx;
         if (ExitCell is { } exit && exit.X == cx && exit.Y == cy)
-            return new(exitLabel ?? "the way out of this place", exitLabel != null);
+            return new("the way out of this place", false);
         if (_exitCells.Contains(c)) return new($"the way in: {_entryArea?.DisplayName}", false);
         return c < _lineAt.Length && _lineAt[c] is { } link ? LinkLabel(link) : null;
     }

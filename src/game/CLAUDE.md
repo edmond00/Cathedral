@@ -615,12 +615,45 @@ thing it stands for.
 | **unknown** | one anonymous symbol of its **kind** on its card's third row (the tray) | asks a mind to look at *something of that kind there*; the mind picks which |
 | **known** | its own symbol in the tray, a shade brighter, named under the pointer | asks a mind to look at *that one* |
 | **observed** | the root of a tree under the card, for the member who observed it | its `?`, its speech mark, its acts |
+| a **way** (any state) | its own symbol **on its line**, and once observed the root of a tree hung from that spot | asks a mind to look at *that way*: one line, one symbol, nothing to choose |
 
 The kinds are `ElementKind`: `Way` (`∩`: a neighbouring area, a door, a stair, a path, a climb),
 `Person` (`☺`), `Hostile` (`☠`: a living thing that counts the played member an enemy — the same
 person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). The glyphs are
 `Config.Symbols.Map*`; four of them (`☠ ✗ ✓ ❝`) are not in the main font and had to be added to
 `Config.Terminal.FallbackGlyphs`, without which they draw as an empty cell and nothing says why.
+
+**Every card shows its tray, visited or not.** What stands in a place nobody has been to — a
+person, an enemy, a thing — is on its card, so the map says where things are before anybody goes;
+it answers no click until a known way leads there (`IsEnabled`: `_frameReach`), is drawn grey (an
+enemy dark purple), and its label says "no known way there". An observed person who walks into an
+unvisited area takes their tree to that card for the same reason.
+
+**A way stands on its line** (`WaySymbol(key)`, the `AreaVisits` key of the line): the plain way
+between two neighbours, a door, a stair, a path, a climb, a crossing. `LocationMap.PlaceSymbols`
+chooses the cell once per layout — a straight stretch only that line uses, the one from which a
+small tree can hang without covering a card and with least of the room under one — and whether what
+hangs from it goes below or above. **A long line carries the symbol twice, near each card it
+leaves** (`WaySpot.Near`): in its middle it stood far from both, and a door looked at from the hall
+grew its tree a screen away, in the yard's section. Both are the same `WaySymbol` — they hover and
+click as one — and the tree hangs from the one near the end the way is now seen from
+(`WayFrame.From`). It replaced the `∩` in the tray, where a click on "a way" let the
+mind choose among every way out of the area: exploring is the one thing a player should be able to
+aim exactly, and a symbol on the line says which way it is without a word. Three consequences:
+
+- **One line is one tree, from either end.** `WayKeyOf` gives the key of an anchor or of a root;
+  `WaySide` picks the end an unobserved way is looked at from (where the member stands, else the
+  end fewest known steps away); `Locate` answers a way's root from the far end while the member
+  stands there and from the end it was observed at otherwise. An act thought of from one end is
+  good from that end only — "go to the yard" means nothing in the yard — so `LocateAct` looks for
+  it at the located end and then the other, the member is walked to whichever still affords it,
+  and `ReconcileTrees` lapses it only when neither does.
+- **Pointing at a way lights its whole line** (`LocationMap.LitWay`): the symbol, a node of its
+  tree, or any cell of the line. A long line across a large map is hard to follow by eye.
+- **A view stays on its card.** A `LandscapePointOfInterest` is looked at from the area that has
+  it and its line is only routed from where the played member stands, so it is a thing of that
+  area (`∩` in the tray, its tree under the card); so is a way whose line could not be routed
+  (`LocationMap.DrawsWay` is the test). The kind `Way` in the tray now means only those.
 
 **The mind chooses, the player aims.** A click on an anonymous symbol names an area and a kind; the
 observation modus mentis then picked from the popup chooses which unobserved element of that kind it
@@ -639,9 +672,9 @@ gone — they are never saved — and what was observed comes back as *known*: n
 without the mind being asked to choose. The menu maps (the Chorography tab, the routine box) show
 the count on a visited card (`LocationMap.RememberedMark`, `◆n`).
 
-**Two things are never symbols.** The plain way to ground already stood on (`Unobserved` skips an
-area whose way is `AreaVisits.IsWayBack`): its line is on the map and a click on its card walks
-there, so a symbol would offer a look at nothing. A door, a stair, a path or a climb keeps its
+**Two things are never symbols.** The plain way already gone by (`WaySide` skips an edge that is
+`AreaVisits.IsWayBack` from both ends): its line is lit and a click on its card walks there, so a
+symbol would offer a look at nothing. A door, a stair, a path or a climb keeps its
 symbol however often it has been taken — there is more to do to a door than walk through it. And
 what "myself" holds in the two opening phases (below).
 
@@ -655,9 +688,9 @@ is `ThoughtNode`s:
 |---|---|---|
 | `Element` | its kind's | the observation's `NarrationBlock`, or a `Note` for what nobody observed |
 | `Thought` | `¶` | a thinking's text; a tool's reasoning |
-| `Refusal` | `✗` | a mind that declined, a means that refused, a broken faculty, a refused implement |
+| `Refusal` | `⊘` | every refusal, whoever refused and whatever was asked: a mind that declined to look or to think, a will with no way through the thing, a means that refused, a broken faculty, a refused implement |
 | `Act` | its difficulty glyph | a `ParsedNarrativeAction`, in an `ActState`: `Waiting` (the one state a click executes), `Done`, `Superseded` (reconsidered), `Lapsed` (no longer possible) |
-| `Success` / `Failure` | `✓` / `✗` | the outcome's block, with its chips |
+| `Success` / `Failure` | `✓` / `✗` | the outcome's block, with its chips. A failure is not a refusal and no longer shares its glyph |
 | `Emotion` | `♥` | what the outcome stirred |
 | `Speech` | `❝` | what was said of the element to a companion |
 
@@ -673,9 +706,9 @@ every frame.** `Locate(node)` answers where the element is *now* and through whi
 acted on, or null while it is out of sight. The scene makes its observation objects again as the
 world changes (`SyncSpawnedObservations`) and moves a person's from node to node with the hour, so
 a tree that kept the anchor would point at something stale after the first change of period. This
-is also what makes time coherent for nothing: a person who walks to another known area takes their
-tree to that card, one who walks off the known map is not drawn until that area is discovered, and
-they come back with everything thought about them. `SeenFrom` tells apart the things that are
+is also what makes time coherent for nothing: a person who walks to another area takes their tree
+to that card, one who goes where they cannot be seen at all (to bed, out of the place) is not drawn,
+and they come back with everything thought about them. `SeenFrom` tells apart the things that are
 different from different sides — a door seen from the street and from the hall, a neighbour that is
 a way only from somewhere; a person has none.
 
@@ -686,15 +719,24 @@ their tree and show no `?`: a thought there would cost a point to be told there 
 #### The frame, the symbols and the click
 
 `BuildFrame` reads off the game everything the overlay draws this frame into a `MapFrame` — per
-card its tokens, its tray, its roots and strays, plus delegates for what only the controller knows
+card its tokens, its tray, its roots and strays, per line its way (`WayFrame`: the tree, or the
+refusals to look at it), plus delegates for what only the controller knows
 (`ElementGlyph`, `IsHostile`, `Contents`, `Stubs`, `Enabled`). The overlay is a painter and decides
 nothing. It reaches the map through `LocationMap.IMapOverlay` and a `MapCanvas`
 (`CardOf`, `Put`, `Hit`, `TreeRows`), and every cell it draws is tagged with a `MapSymbol` record —
-`TraySymbol`, `ContentSymbol`, `StubSymbol`, `NodeSymbol`, `TokenSymbol`. **The record is the hit
+`TraySymbol`, `ContentSymbol`, `StubSymbol`, `NodeSymbol`, `TokenSymbol`, `WaySymbol`,
+`ExitSymbol`. **The record is the hit
 tag, the hover key and what the CLI clicks**, compared by value, so there is no second table of
 regions to keep in step with what was painted — which is the bug class the keyword renderer's
 region list was. `IsEnabled(symbol)` is the single rule for what a click would do now, read by the
-painter (grey), the label (grey or gold) and the click alike.
+painter, the label (grey or gold) and the click alike.
+
+**What a click acts on stands on a lit ground** (`MapTreeOverlay.ClickGround`, a dark gold): the
+painter's `Symbol` gives it to every symbol `Enabled` says yes to and to nothing else, whatever the
+symbol's ink says of it. Yellow ink alone did not tell a `✓` (a record) from a `◇` (a click), and
+a card a click walks to now says so too ("walk to the test yard", on the clickable label ground).
+Under the pointer a symbol is inverted, the way out included — it is tagged as an `ExitSymbol`, so
+it ticks, highlights and labels as every other symbol does rather than through a path of its own.
 
 A click that needs a mind stores a `Pending` record (`ObservePending`, `ThinkPending`,
 `SpeakPending`, `ActPending`, `ReconsiderPending`, `ToolPending`) and opens the popup;
@@ -702,9 +744,20 @@ A click that needs a mind stores a `Pending` record (`ObservePending`, `ThinkPen
 is where a broken modus mentis is refused. What is done is decided by the symbol clicked; the popup
 only says by whom.
 
+**A mind that refused is greyed in the popup the next time the same is asked about the same
+thing** (`AskMind`, `MemberMind.Refuse` / `HasRefused`, keyed by `MindOffice` — Observe, Think,
+Reconsider, Speak — and what was asked about: `AskedOf(pending)`). A will that has no way through
+the thing, a mind that declined, a faculty the body cannot carry: each would answer the same again,
+and the point would be spent to hear it twice. A will's refusal is its course through the place as
+it stood, so `ReconcileTrees` forgets those (`ForgetWillRefusals`) whenever the plans are; the
+rest stand until the pool refills. The popup lists each mind with its level, one `⟐` a level — a
+level is a die — and so do the titles of the preview and reading boxes (`PreviewTitles.For`).
+
 **The trees hang in a fixed room.** Rows of cards stand `TreeRoom` apart (the map's layout is
-routed once and does not move as trees grow), which leaves `canvas.TreeRows` = 11 rows under a card,
-on a panel the card's width that covers the map's own lines. When a card's trees need more, the
+routed once and does not move as trees grow), which leaves `canvas.TreeRows` = 11 rows under a card.
+A tree takes from the map only the cells it is drawn on: there was a panel the card's width behind
+it, which hid a line running under a card behind a tree two cells wide. A way's tree hangs in the
+open map and is never drawn over a card (`MapCanvas.IsCard`). When a card's trees need more, the
 elements with something left to do — an act waiting, a `?`, a content — are drawn first and the last
 row reads `+N` for the finished ones not shown. Nothing clickable is ever what is cut.
 
@@ -771,7 +824,12 @@ two opening phases cost nothing.
 **Walking by ways the party knows is free and is not an act.** `WalkTo` takes the played member
 anywhere `AreaVisits.BackReach` reaches — never through a door locked against them, never from
 other ground into private — for no point and no roll, shown as a short walk on the map (instant
-under `--cli`). A click on a card does it; so does acting on, or looking at, something in another
+under `--cli`). **Known is gone by** (`AreaVisits.IsKnownWay`: the way's key is in `TakenLinks`),
+for the plain way between neighbours as for a door. It used to be "a neighbour already stood in",
+and a member sent back to an area to look at something walked there by a way nobody had ever
+taken; two areas each reached by other ways are not thereby joined. A plain way never taken that
+leads to ground already stood on is an act like any other, and teaches what a new way back teaches
+(`IsNewWayBack`, the way-back lessons). A click on a card does it; so does acting on, or looking at, something in another
 area. It replaced the Go Back verb, which priced the same walk at a difficulty-2 roll and asked for
 its destination on a second map. A move along a way *not* yet taken is still an act: a thought on
 the way's symbol and a roll. Thinking needs no presence; looking and acting do.
@@ -799,8 +857,9 @@ elsewhere are untouched. Two things had to change for the lock to be liveable:
   That is the rule working; scripts that want to act there go at night.
 
 **The way out is a glyph on the map** (`⎆`, laid only in `NarrationPhase.Exploration`), not a footer
-button. It is LEAVE, or RUNAWAY while somebody confronts the played member (`ExitLabel`; the label
-under the pointer says which, and `inspect where` reports `exit=`). LEAVE walks **every** member out
+button, and a symbol like the rest (`ExitSymbol`). It is LEAVE, or RUNAWAY while somebody confronts
+the played member (`ExitLabel`; the label under the pointer says which, and `inspect where` reports
+`exit=`). LEAVE walks **every** member out
 from where they stand, those standing together going together, and is stopped as any walk is — the
 view goes to whoever was stopped and the rest stay where they had got to. RUNAWAY is the confronted
 member's alone and is the roll it always was, made again at every area on the way where somebody
@@ -864,13 +923,23 @@ skill for the whole of it):
 
 | | |
 |---|---|
-| `click observe <kind\|name> [in <area>]` | a kind (`way`, `person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element or a container's content — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run |
+| `click observe <kind\|name> [in <area>]` | a kind (`person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element, a way on its line (`"Test Yard"`, `"Test Door"`) or a container's content — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run. `way` is the first view in the tray, else the first way on a line looked at from where the member stands |
+| `point observe\|think\|speak\|act\|member <what>` / `point exit` / `point card <area>` | puts the pointer on a symbol, named as `click` names it, and presses nothing: `inspect pointer-label` then reads its label and whether it is on the clickable ground, a node's text is in the reading box, a way's line is lit |
 | `click think <name>` / `click speak <name>` | the stubs of an observed element. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
 | `click act <n\|word>` | a waiting act by position, or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it |
 | `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
 | `click continue` | the dice's, the preview's or the result box's CONTINUE |
 | `inspect trees` / `texts` / `known` / `symbols` | the played member's trees node by node; what each node says; what the place remembers; what `regions` lists, for `expect-state symbols` |
 | `inspect where` | carries `confronted=` and `exit=LEAVE\|RUNAWAY` |
+| `inspect popup` | the open popup: `options=[…]` with `(disabled)` rows, or `minds=[…]` by id with `(refused)` on a mind that has already refused what is asked — `choose` reports an error for one |
+| `inspect map` | ends on the last walk, which names the areas it went by: `walk from Test Field to Test Yard by way of Test Shore > Test Yard` |
+
+**A label and a handle are two wordings of one thing, on purpose.** Under the pointer an element
+is named as a sentence names it (`NameOf`: "think about the cart trail", through
+`NeutralNarration.ThingPhrase` / `AreaPhrase` / `ItemPhrase`; "myself" and what it holds as they
+are) — the title "Cart Trail" reads as a proper name. What a script types and `regions`,
+`inspect symbols` and `inspect trees` print is the title (`HandleOf`: `"Test Chest"`, `"the way to
+Test Yard"`), so a label can be reworded without a script noticing. `CliFindSymbol` matches either.
 
 `expect` reads the **screen**, and a text is on screen only while its preview box is up: prose is
 asserted with `expect-state texts <fragment>`. State assertions compare **with double quotes
@@ -1004,21 +1073,27 @@ Things to know:
   willingly?", the willingness judge called a cutpurse reluctant to pick a pocket. Benchmark a
   rewording against labelled cases before shipping it; a bias like the first one only shows over many
   calls.
-- **A mind may decline once, and asked again it observes.** An observation is asked of one mind
-  about one kind of thing in one area (the anonymous symbol), or about one named element (a
-  remembered one, a container's content). The Focus list carries "let your focus go" and the
-  keep-focus question may answer no — once: `MemberMind.Decline` records the mind against what it
-  turned down (`(area, kind)`, or the element), and `HasDeclined` withholds the decline the next
-  time. The second ask is the player insisting, and the mind chooses. It replaced the turning away
+- **A thing is declined once, and the mind that declined is not asked again.** An observation is
+  asked of one mind about one kind of thing in one area (the anonymous symbol), or about one named
+  element (a remembered one, a way, a container's content). The Focus list carries "let your focus
+  go" and the keep-focus question may answer no — once **per thing, whichever mind**:
+  `MemberMind.Decline` records what was turned down (`(area, kind)`, the element, or a way's key),
+  and `HasDeclined` withholds the decline from the next mind asked. The mind that declined is
+  greyed in the popup for that thing (`MemberMind.Refuse`), so the second ask is of another mind,
+  is the player insisting, and that mind chooses. It was one decline per mind per thing, with the
+  same mind asked twice; the player now needs a second general mind, and loses no point to a mind
+  that has already answered. It replaced the turning away
   to another object, which needed a dismissal rewritten alone ahead of a second observation and a
   keyword filtered against the dismissed thing's words; with one element per observation there is
-  nothing to turn to. A decline is a `Refusal` node — under the container, for a content, else
-  standing alone on the area's card (`MemberMind.Strays`) — and costs its point like any text. The
+  nothing to turn to. A decline is a `Refusal` node — under the container, for a content; hung from
+  the way's symbol on its line, for a way (`MemberMind.WayStrays`); else standing alone on the
+  area's card (`MemberMind.Strays`) — and costs its point like any text (`HangRefusal`). The
   judge leaned to the decline as a scene thinned, and when one mind after another took it an
-  appeased triceratops in plain view stayed unobserved by every faculty; one decline per mind per
-  thing is what bounds that. `--refuse-focus` forces the decline wherever one is still allowed,
+  appeased triceratops in plain view stayed unobserved by every faculty; one decline per thing is
+  what bounds that. `--refuse-focus` forces the decline wherever one is still allowed,
   since `--playground` never declines. A will's rule-based refusal (`WillPriority`) is not this
-  option and is never spent. Declines are forgotten when the pool refills (`MemberMind.Refill`): a
+  option and spends nothing: the will is greyed until the world changes, and a general mind asked
+  after it may still decline. Declines are forgotten when the pool refills (`MemberMind.Refill`): a
   success starts the member over with every mind willing to be asked.
 - **Nothing opens a visit.** The area introduction, the block that named somebody on arrival, the
   follow-up looks and the length thresholds that paced them are gone with the scrolling text: an
@@ -1350,11 +1425,16 @@ changing one alone re-breaks what the others fix.
     is withheld from everyone when no held action modus mentis passes the willingness rules for it
     (`ThinkingExecutor.CanCarryOut`, a silent `ChoiceRuleContext.Probe`), and otherwise the means
     pool is narrowed to those that pass and the decline option is dropped.
-  - **A thinking mind that declined an element is not offered the decline about it again**
-    (`ActionProposalLedger.Decline` / `HasDeclined`, by mind and observation instance): the goal judge
-    reads scores rather than sampling, so the second ask could only be declined again — the playtest
-    saw Keywise turn the same locked door down twice, a point each. The second ask is the player
-    insisting, and the mind chooses a goal. Unreachable under `--playground`, whose goal draw never
+  - **An element declined by a thinking mind is not declined again**
+    (`ActionProposalLedger.Decline` / `HasDeclined`, by observation instance): the goal judge
+    reads scores rather than sampling, so the same mind could only decline again — the playtest
+    saw Keywise turn the same locked door down twice, a point each. That mind is greyed for the
+    element (`ThinkingResponse.Declined` → `MemberMind.Refuse`, and its last thought is drawn as a
+    refusal, `⊘`); the next ask is of another mind, is the player insisting, and that mind chooses
+    a goal. `Declined` is also set when a will has no way through the element, when nothing is left
+    for the mind to try, and when a reconsidering mind wants no part of the act or finds nobody
+    else for it — but not when an acting mind refused a goal the thinking mind chose: asked again,
+    the thinking mind chooses another. Unreachable under `--playground`, whose goal draw never
     declines.
   - **An act carried out, lapsed or whose person died is `Withdraw`n**, so it may be thought of
     again: a failed `get_up`, a second fish from the same pool. Before there were trees the ledger
@@ -1760,6 +1840,19 @@ are forgotten with the map. `Protagonist.MentalMaps` is the queue, oldest first,
   what it names): black on yellow when a click acts on it, black on grey when it only tells. The popup
   is shared — the Chorography tab clears only a label it put up (`HideLabel`), the narration only while no
   modal popup is open (`NarrativeController.UpdateMapLabel`), the world view redraws it every frame.
+  **Whoever takes the panel from the narration must have its label taken down**: a conversation, a
+  fight or a menu draws no map, the narration's `Update` no longer runs, and the last label ("an
+  unknown way") followed the pointer through the whole conversation. `LocationTravelGameController.Update`
+  calls `NarrativeController.HideMapLabel` whenever the mode is not one of the three narration modes.
+- **The narration's map is darkened, not greyed.** `TerminalPanelUI.DimContent` recolours every cell
+  to one grey on black, which is right for a page of text and flattens a map — drawn in grounds as
+  much as in glyphs — to black with a few grey letters left. `NarrativeUI` overrides `DimFrom` to
+  `TerminalHUD.ShadeRect`, which multiplies text and ground alike and keeps the hue. Unlike the
+  grey-out it is not idempotent, so it is applied once a frame (`_shaded`, reset by `Clear`).
+- **A press kept on the pan pad keeps the map moving** (`LocationMap.Hold`, called every tick with
+  the button's state): the click makes the pad's step, and after a moment each tick makes an arrow
+  key's. All three maps call it: the narration and the routine box from their tick, the
+  Chorography tab from the management menu's, which draws again when the view moved.
 - CLI: `inspect mental-maps`, `travel new` (a bordering vertex not remembered), `manage Chorography <kind>`,
   `manage Chorography lock newest|oldest`, `point card <area>` and `inspect pointer-label`. `cli/system/mental_map_forget.cli` (anamnesis 0),
   `mental_map_queue.cli` (eviction passes over the locked map).

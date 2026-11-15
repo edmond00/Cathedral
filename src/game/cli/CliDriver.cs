@@ -406,7 +406,8 @@ public sealed class CliDriver
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach;
                                     `popup` the open choice popup's options, each marked
-                                    (disabled) when greyed; `dialogue` the tree id of the last
+                                    (disabled) when greyed, or the minds offered by id, one
+                                    that already refused what is asked marked (refused); `dialogue` the tree id of the last
                                     conversation queued (a confrontation's id names its crime);
                                     `trees` the played member's thought trees, node by node;
                                     `texts` (by name only) what each node says — on screen a text
@@ -466,6 +467,10 @@ public sealed class CliDriver
           point card <area>         hover an area's card on the menu map shown (the Chorography tab, the
                                     routine box), panned into view; `inspect pointer-label` reads
                                     the label it puts above the pointer, and on what ground
+          point observe|think|speak|act|member <what>   hover a symbol of the narration's map, named
+                                    as `click` names it, without pressing it: its label
+                                    (`inspect pointer-label`), its line lit, a node's text read
+          point exit                hover the way out of the place
           point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
                                     left_hand…), so the panel shows that part's stats
           click world <confirm|cancel>  the world-selection screen's two buttons
@@ -971,22 +976,8 @@ public sealed class CliDriver
                 //   click think <name> | click speak <name>   an element already observed
                 //   click act <n|word>                    an act waiting on a tree, by index or by its words
                 //   click member <name>                   play another member of the party
-                if (a.Length < 2) { CliMode.Emit($"error: click {a[0]} <what>"); return; }
-                var n = _game.CliNarration;
-                if (n == null) { CliMode.Emit("error: not in narration"); return; }
-                string what = a[0].ToLowerInvariant();
-                string rest = string.Join(' ', a[1..]);
-                string? area = null;
-                int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
-                if (what == "observe" && at > 0)
-                {
-                    area = rest[(at + 4)..].Trim().Trim('"');
-                    rest = rest[..at];
-                }
-                string name = rest.Trim().Trim('"');
-                var (symbol, error) = n.CliFindSymbol(what, name, area);
-                if (symbol == null) { CliMode.Emit($"error: {error}"); return; }
-                Report(n.CliClickSymbol(symbol), $"clicked {what} \"{name}\"");
+                if (FindSymbol(a) is not { } found) return;
+                Report(found.Narration.CliClickSymbol(found.Symbol), $"clicked {found.What} \"{found.Name}\"");
                 break;
             }
             case "exit":
@@ -1307,8 +1298,51 @@ public sealed class CliDriver
     /// differently and held at the same time. <c>click moon</c> drives both at once, so this is the
     /// only way a script can show that a choice survives the cursor wandering off it.</para>
     /// </summary>
+    /// <summary>
+    /// The map symbol a command names — <c>observe person [in &lt;area&gt;]</c>, <c>think &lt;name&gt;</c>,
+    /// <c>act &lt;n|word&gt;</c>, <c>member &lt;name&gt;</c> — or null having already reported why not.
+    /// Shared by <c>click</c> and <c>point</c>, so what is hovered is what would be clicked.
+    /// </summary>
+    private (NarrativeController Narration, MapSymbol Symbol, string What, string Name)? FindSymbol(string[] a)
+    {
+        if (a.Length < 2) { CliMode.Emit($"error: {a[0]} <what>"); return null; }
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return null; }
+        string what = a[0].ToLowerInvariant();
+        string rest = string.Join(' ', a[1..]);
+        string? area = null;
+        int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
+        if (what == "observe" && at > 0)
+        {
+            area = rest[(at + 4)..].Trim().Trim('"');
+            rest = rest[..at];
+        }
+        string name = rest.Trim().Trim('"');
+        var (symbol, error) = n.CliFindSymbol(what, name, area);
+        if (symbol == null) { CliMode.Emit($"error: {error}"); return null; }
+        return (n, symbol, what, name);
+    }
+
     private void CmdPoint(string[] a)
     {
+        // A symbol of the narration's map, named as `click` names it: the pointer is put on it and
+        // nothing is pressed, which is how its label, its text and its line are read.
+        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "member")
+        {
+            if (FindSymbol(a) is not { } found) return;
+            if (found.Narration.CliSymbolCell(found.Symbol) is not { } cell)
+            { CliMode.Emit($"error: '{found.Name}' is not drawn on the map"); return; }
+            _game.CliHoverCell(cell.X, cell.Y);
+            CliMode.Emit($"ok: pointed at {found.What} \"{found.Name}\"");
+            return;
+        }
+        if (a.Length >= 1 && a[0].Equals("exit", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_game.CliNarration?.CliExitCell() is not { } cell) { CliMode.Emit("error: no way out on screen"); return; }
+            _game.CliHoverCell(cell.X, cell.Y);
+            CliMode.Emit("ok: pointed at the way out");
+            return;
+        }
         if (a.Length >= 2 && a[0].Equals("card", StringComparison.OrdinalIgnoreCase))
         {
             string name = string.Join(' ', a[1..]).Trim('"');
@@ -1321,7 +1355,7 @@ public sealed class CliDriver
             return;
         }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id>"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id> | point <observe|think|speak|act|member> <what> | point exit"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;

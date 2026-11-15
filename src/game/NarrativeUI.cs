@@ -80,18 +80,41 @@ public class NarrativeUI : TerminalPanelUI
                    walker, follow: true, withheld, overlay: overlay, partyGlyph: walkerGlyph);
     }
 
+    // The map is drawn in grounds as much as in glyphs, so it is darkened in place — hue kept —
+    // rather than flattened to grey on black. Once a frame: a second darkening would be a darker one.
+    private const float MapShade = 0.38f;
+    private bool _shaded;
+
+    public override void Clear()
+    {
+        base.Clear();
+        _shaded = false;
+    }
+
+    protected override void DimFrom(int startY)
+    {
+        if (_shaded) return;
+        _shaded = true;
+        _terminal.ShadeRect(
+            _layout.LEFT_PADDING, startY,
+            _layout.TERMINAL_WIDTH - _layout.LEFT_PADDING - _layout.RIGHT_PADDING,
+            (_layout.TERMINAL_HEIGHT - _layout.BOTTOM_PADDING) - startY, MapShade);
+    }
+
     /// <summary>
     /// The box a node's text is read in again, docked at the foot of the map: the mind that wrote it
-    /// on the border, the text, and under it the chips of what it came to.
+    /// on the border, the text, and under it the chips of what it came to. An act is read with its
+    /// <paramref name="odds"/> on a line of their own, in another ink than the text: they are a
+    /// reckoning, not something a mind said.
     /// </summary>
-    public void RenderReadingBox(string title, string text, IReadOnlyList<Outcome>? chips = null)
+    public void RenderReadingBox(string title, string text, IReadOnlyList<Outcome>? chips = null, string? odds = null)
     {
         int width = _layout.CONTENT_END_X - _layout.CONTENT_START_X;
         int inner = width - 4;
         var lines = WrapText(text, inner);
-        var chipRows = ChipRows(chips, inner);
+        int chipRows = chips?.Count ?? 0;
         int rows = Math.Min(lines.Count, Math.Max(1, _layout.NARRATIVE_HEIGHT / 3));
-        int height = rows + chipRows.Count + (chipRows.Count > 0 ? 1 : 0) + 2;
+        int height = rows + (odds != null ? 1 : 0) + chipRows + (chipRows > 0 ? 1 : 0) + 2;
         int x = _layout.CONTENT_START_X;
         int y = _layout.SEPARATOR_Y - height;
 
@@ -106,32 +129,40 @@ public class NarrativeUI : TerminalPanelUI
             string line = i == rows - 1 && lines.Count > rows ? TrimTo(lines[i], inner - 2) + " …" : lines[i];
             _terminal.Text(x + 2, y + 1 + i, line, Config.NarrativeUI.NarrativeColor, Config.NarrativeUI.BackgroundColor);
         }
-        DrawChips(chipRows, x + 2, y + 1 + rows + (chipRows.Count > 0 ? 1 : 0), inner);
+        if (odds != null)
+            _terminal.Text(x + 2, y + 1 + rows, TrimTo(odds, inner), Config.Colors.DarkYellowGrey, Config.NarrativeUI.BackgroundColor);
+        DrawChips(chips, x + 2, y + 1 + rows + (odds != null ? 1 : 0) + (chipRows > 0 ? 1 : 0), inner);
     }
 
     /// <summary>
-    /// The box an act's result is read in, centred over the greyed map: how it went, the chips of
-    /// what it came to, and a CONTINUE. Returns the button's region.
+    /// The box an act's result is read in, centred over the darkened map: SUCCESS or FAILURE on its
+    /// border, the act, then what it came to — one line each, marked and inked by whether it is a
+    /// gain, a loss or neither — and a CONTINUE. Returns the button's region.
     /// </summary>
-    public (int X, int Y, int Width) RenderResultBox(string title, bool succeeded, IReadOnlyList<Outcome> chips, bool continueHovered)
+    public (int X, int Y, int Width) RenderResultBox(bool succeeded, string act, IReadOnlyList<Outcome> chips, bool continueHovered)
     {
         DimContent();
-        // As wide as its longest chip asks, within the panel.
-        int longest = chips.Count == 0 ? 0 : chips.Max(c => c.Text.Length) + 2;
-        int width = Math.Clamp(longest + 4, Math.Max(40, _layout.CONTENT_WIDTH / 2), _layout.CONTENT_WIDTH - 2);
-        int inner = width - 4;
-        var titleLines = WrapText(title, inner);
-        var chipRows = ChipRows(chips, inner);
-        int height = titleLines.Count + chipRows.Count + 6;
+        // As wide as its longest line asks, within the panel.
+        int longest = Math.Max(act.Length, chips.Count == 0 ? 0 : chips.Max(c => c.Text.Length) + 2);
+        int width = Math.Clamp(longest + 8, Math.Max(40, _layout.CONTENT_WIDTH / 2), _layout.CONTENT_WIDTH - 2);
+        int inner = width - 8;
+        var actLines = act.Length > 0 ? WrapText(act, inner) : new List<string>();
+        // Border, blank, the act and a blank under it, the chips, blank, the button, blank, border.
+        int height = (actLines.Count > 0 ? actLines.Count + 1 : 0) + chips.Count + 6;
         int x = (_layout.TERMINAL_WIDTH - width) / 2;
         int y = _layout.CONTENT_START_Y + (_layout.NARRATIVE_HEIGHT - height) / 2;
-
-        _terminal.FillRect(x, y, width, height, ' ', Config.Colors.White, Config.NarrativeUI.BackgroundColor);
-        _terminal.DrawBox(x, y, width, height, BoxStyle.Single, Config.NarrativeUI.SeparatorColor, Config.NarrativeUI.BackgroundColor);
+        var ground = Config.NarrativeUI.BackgroundColor;
         var ink = succeeded ? Config.Colors.GoldYellow : Config.Colors.LightPurple;
-        for (int i = 0; i < titleLines.Count; i++)
-            _terminal.Text(x + width / 2, y + 1 + i, titleLines[i], ink, Config.NarrativeUI.BackgroundColor, TextAlignment.Center);
-        DrawChips(chipRows, x + 2, y + 2 + titleLines.Count, inner);
+
+        _terminal.FillRect(x, y, width, height, ' ', Config.Colors.White, ground);
+        _terminal.DrawBox(x, y, width, height, BoxStyle.Single, succeeded ? Config.Colors.DarkYellow : Config.Colors.DarkPurple, ground);
+        _terminal.Text(x + width / 2, y, succeeded ? " SUCCESS " : " FAILURE ", ink, ground, TextAlignment.Center);
+
+        int row = y + 2;
+        foreach (var line in actLines)
+            _terminal.Text(x + width / 2, row++, line, Config.Colors.LightGray85, ground, TextAlignment.Center);
+        if (actLines.Count > 0) row++;
+        DrawChips(chips, x + 4, row, inner);
 
         const string button = "[ CONTINUE ]";
         int buttonX = x + (width - button.Length) / 2, buttonY = y + height - 2;
@@ -141,39 +172,22 @@ public class NarrativeUI : TerminalPanelUI
         return (buttonX, buttonY, button.Length);
     }
 
-    /// <summary>Chips laid out in rows no wider than <paramref name="width"/>, each a band of its severity's colour.</summary>
-    private static List<List<Outcome>> ChipRows(IReadOnlyList<Outcome>? chips, int width)
+    /// <summary>
+    /// What an act came to, one line each: a mark and the text in the ink of its severity — gold
+    /// for a gain, purple for a loss, grey for what is neither — on the box's own ground.
+    /// </summary>
+    private void DrawChips(IReadOnlyList<Outcome>? chips, int x, int y, int width)
     {
-        var rows = new List<List<Outcome>>();
-        if (chips == null) return rows;
-        int used = 0;
-        foreach (var chip in chips)
+        if (chips == null) return;
+        for (int r = 0; r < chips.Count; r++)
         {
-            int w = Math.Min(chip.Text.Length, width - 2) + 2;
-            if (rows.Count == 0 || used + w + 1 > width) { rows.Add(new()); used = 0; }
-            rows[^1].Add(chip);
-            used += w + 1;
-        }
-        return rows;
-    }
-
-    private void DrawChips(List<List<Outcome>> rows, int x, int y, int width)
-    {
-        for (int r = 0; r < rows.Count; r++)
-        {
-            int cx = x;
-            foreach (var chip in rows[r])
+            var (mark, ink) = chips[r].Severity switch
             {
-                var band = chip.Severity switch
-                {
-                    OutcomeSeverity.Negative => Config.NarrativeUI.OutcomeReportNegativeBackground,
-                    OutcomeSeverity.Positive => Config.NarrativeUI.OutcomeReportPositiveBackground,
-                    _                        => Config.NarrativeUI.OutcomeReportNeutralBackground,
-                };
-                string text = $" {TrimTo(chip.Text, width - 2)} ";
-                _terminal.Text(cx, y + r, text, Config.NarrativeUI.OutcomeReportTextColor, band);
-                cx += text.Length + 1;
-            }
+                OutcomeSeverity.Negative => ('−', Config.Colors.LightPurple),
+                OutcomeSeverity.Positive => ('+', Config.Colors.GoldYellow),
+                _                        => ('·', Config.Colors.LightGray75),
+            };
+            _terminal.Text(x, y + r, $"{mark} {TrimTo(chips[r].Text, width - 2)}", ink, Config.NarrativeUI.BackgroundColor);
         }
     }
 

@@ -1,8 +1,8 @@
 # walking — a way the party knows is walked on the map for nothing, and a new way back teaches
 #
 # There is no act of going back. Ground already stood on is reached by a click on its card, by ways
-# already gone by: no thought, no roll, no point. The plain way to such ground is no longer a symbol
-# on the card either — its line is on the map.
+# already gone by: no thought, no roll, no point. A plain way once gone by is no longer a symbol
+# on its line either — the line is lit, and that is all there is to it.
 #
 # A way NOT yet gone by is still an act. When it comes out on ground already stood on, what the walk
 # teaches is how the place joins up (Verb.WayBackLessons): the Field–Rock Track, found at the rock
@@ -38,8 +38,10 @@ click continue
 advance 12 180
 expect-state where Test Yard
 
-# From the yard the field is ground stood on: no symbol for the way to it, and the card walks there.
-expect-no-state symbols "the way to Test Field"
+# From the yard the way to the field has been gone by: it is no longer a symbol to look at (its
+# tree stays, as the record of how it was found), and the card walks there.
+expect-no-state symbols click observe "the way to Test Field"
+expect-state symbols element "the way to Test Field" in "Test Yard"
 expect-state noetic points=3/3
 click area "Test Field"
 wait

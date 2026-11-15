@@ -1,0 +1,93 @@
+# walking — only a way gone by is a known way
+#
+# Free walking goes by ways the party has taken, and by no other. Two neighbouring areas each stood
+# in are not thereby joined: here the yard and the field are both visited, but the field was reached
+# from the shore across the ford, so the plain way between field and yard has never been walked.
+#
+# It used to count as known the moment both its ends were — and a member sent back to the yard
+# walked it, a way nobody had ever taken. Now the walk goes round by what was taken (the ford, then
+# the way from the shore), the untaken way keeps its symbol on its line, and taking it is an act
+# that teaches what a new way back teaches.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+strategy succeed
+
+# Yard -> shore, by the plain way: an act, since it has never been gone by.
+goal move
+click observe "Test Shore"
+choose childhood_memory
+advance 12 180
+click think "Test Shore"
+choose ripelore
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Shore
+click continue
+advance 12 180
+
+# Shore -> field, across the ford.
+goal swim_across
+click observe "Test Ford"
+choose childhood_memory
+advance 12 180
+click think "Test Ford"
+choose ripelore
+advance 12 180
+click act swim_across
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Field
+click continue
+advance 12 180
+expect-state where Test Field
+
+# Field and yard are both ground stood on, and neighbours. The way between them was never taken:
+# it is still a symbol on its line, looked at from the field.
+expect-state symbols click observe "the way to Test Yard" in "Test Field" (way)
+
+# Sent back to the yard, the member goes round by the ways gone by: the ford, then the shore.
+click area "Test Yard"
+wait
+expect-state where Test Yard
+expect-state map walk from Test Field to Test Yard by way of Test Shore > Test Yard
+expect-state noetic points=3/3
+
+# The untaken way is an act, and comes out on known ground: it teaches how the place joins up.
+goal move
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+click think "Test Field"
+choose ripelore
+advance 12 180
+click act 0
+choose 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Field
+expect Modus mentis learned: Retracing
+click continue
+advance 12 180
+
+# Gone by, it is a known way: no symbol, and the direct walk.
+expect-no-state symbols click observe "the way to Test Yard"
+click area "Test Yard"
+wait
+expect-state map walk from Test Field to Test Yard by way of Test Yard
+quit

@@ -25,7 +25,7 @@ expect-not [ LEAVE ]
 expect-state where exit=LEAVE
 
 # Nothing is observed on arrival: what stands in the yard is on its card as symbols, by kind.
-expect-state trees ""
+expect-no-state trees element
 regions
 expect-state noetic points=3/3
 

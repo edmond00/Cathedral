@@ -798,6 +798,17 @@ public static class NeutralNarration
     /// <summary>"the hairpin" — an item named on its own, definite, lower-cased as <c>Item.WithArticle</c> is.</summary>
     public static string ItemPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";
 
+    /// <summary>
+    /// "the cart trail" — a thing of a place named on its own once it has been made out: definite
+    /// and lower-cased, since its display name is a title ("Cart Trail") and reads as a proper name
+    /// in a sentence. A name that opens with an article of its own keeps it ("a scream").
+    /// </summary>
+    public static string ThingPhrase(string displayName)
+    {
+        string name = displayName.Trim().ToLowerInvariant();
+        return name.StartsWith("the ") || name.StartsWith("a ") || name.StartsWith("an ") ? name : $"the {name}";
+    }
+
     // ── Noun-phrase normalisation ──────────────────────────────────────────────
 
     private static readonly HashSet<string> Determiners = new(StringComparer.OrdinalIgnoreCase)
