@@ -164,9 +164,10 @@ public partial class NarrativeController
                 }
                 if (Best(trays.Where(t => t.Known != null), t => MatchRank(NamesOf(t.Known!), name)) is { } known)
                     return (known, null);
-                // A way is named as anything known is; a recording names only the ways the party
-                // has seen or gone by, as a player would.
-                var named = ways.Where(w => !playerOnly || ElementMemory.IsKnown(_scene, w.Value.From, w.Value.Anchor))
+                // A way is named as anything known is, and a recording may name any way on the map:
+                // each stands on its own line, and pointing at it says where it leads, so a player
+                // aims a way exactly whether or not it was gone by (NARRATION_MAP §11).
+                var named = ways
                                 .Select(w => (w.Key, Rank: MatchRank(NamesOf(w.Value.Anchor), name)))
                                 .Where(w => w.Rank != int.MaxValue).OrderBy(w => w.Rank).ToList();
                 if (named.Count > 0) return (new WaySymbol(named[0].Key), null);
