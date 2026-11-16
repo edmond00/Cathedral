@@ -1,0 +1,68 @@
+[
+ {
+  "t0": 91.4,
+  "ts": 102.3,
+  "t1": 102.3,
+  "section": "think_enemy",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_5",
+  "request": "request_001_08-36-11-414",
+  "prompt": "The faculty: HERALDRY - Names a rider by the device on their shield, the colours of a surcoat or the banner over a column. Reads the marks that distinguish one ",
+  "text": "I"
+ },
+ {
+  "t0": 102.3,
+  "ts": 112.0,
+  "t1": 112.0,
+  "section": "think_enemy",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_5",
+  "request": "request_002_08-36-22-263",
+  "prompt": "The faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unr",
+  "text": "H"
+ },
+ {
+  "t0": 112.1,
+  "ts": 119.3,
+  "t1": 119.3,
+  "section": "think_enemy",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_6",
+  "request": "request_001_08-36-32-063",
+  "prompt": "The thinking faculty: HERALDRY - Names a rider by the device on their shield, the colours of a surcoat or the banner over a column. Reads the marks that disting",
+  "text": "B"
+ },
+ {
+  "t0": 119.3,
+  "ts": 125.9,
+  "t1": 125.9,
+  "section": "think_enemy",
+  "voice": "MEANS MATCHER",
+  "slot": "slot_6",
+  "request": "request_002_08-36-39-303",
+  "prompt": "The thinking faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plai",
+  "text": "E"
+ },
+ {
+  "t0": 126.0,
+  "ts": 135.4,
+  "t1": 234.4,
+  "section": "think_enemy",
+  "voice": "HERALDRY",
+  "slot": "slot_8",
+  "request": "request_001_08-36-45-984",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice the cobbler of the city (a man). I want to strike up a conversation with him, introducing myself.",
+  "text": "I see the cobbler of this city, a man well-known for his steady finishing. I want to introduce myself, hoping our conversation might mend a small tear in this busy street."
+ },
+ {
+  "t0": 253.7,
+  "ts": 262.3,
+  "t1": 294.1,
+  "section": "think_enemy",
+  "voice": "DILIGENCE",
+  "slot": "slot_10",
+  "request": "request_001_08-38-53-653",
+  "prompt": "Re-express the following sentence in your own voice: \"I will strike up a conversation with him, introducing myself\"\n\nThis sentence is written in the first perso",
+  "text": "I will introduce myself, striking up a conversation with him here in this city."
+ }
+]

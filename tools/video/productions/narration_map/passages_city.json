@@ -1,0 +1,222 @@
+[
+ {
+  "t0": 79.2,
+  "ts": 86.3,
+  "t1": 157.2,
+  "section": "thief_observe",
+  "voice": "PETTY THIEF",
+  "slot": "slot_9",
+  "request": "request_001_07-44-39-173",
+  "prompt": "Re-express the following sentence in your own voice: \"My attention is drawn to a rack of lasts. This is a dark-handled wooden feet of every size hung on pegs, e",
+  "text": "I spy a rack of lasts, dark-handled wooden feet for shoes, each chalked with names. That's my chance to lift one, easy as pie."
+ },
+ {
+  "t0": 185.6,
+  "ts": 193.7,
+  "t1": 341.2,
+  "section": "diligence_think",
+  "voice": "DILIGENCE",
+  "slot": "slot_10",
+  "request": "request_001_07-46-25-589",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice a labelled wooden feet of every size hung on pegs, each chalked with a customer's name. I want to",
+  "text": "I notice the labelled wooden feet, each chalked with a customer's name, and I find myself drawn to find work, to seek a bench where I can take in honest tasks waiting to be done. Yet, it seems no such place exists here, and I must leave this place to find where my efforts are truly valued in this old world."
+ },
+ {
+  "t0": 359.4,
+  "ts": 366.8,
+  "t1": 366.8,
+  "section": "thief_think",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_5",
+  "request": "request_001_07-49-19-441",
+  "prompt": "The faculty: PETTY THIEF - Watches for the quick lift: the loose purse, the unattended trinket, the palmed small thing. Keeps the hands ready to take unseen, an",
+  "text": "A"
+ },
+ {
+  "t0": 366.8,
+  "ts": 372.2,
+  "t1": 372.2,
+  "section": "thief_think",
+  "voice": "GOAL CHOOSER",
+  "slot": "slot_5",
+  "request": "request_002_07-49-26-838",
+  "prompt": "The faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unr",
+  "text": "A"
+ },
+ {
+  "t0": 372.2,
+  "ts": 379.8,
+  "t1": 455.0,
+  "section": "thief_think",
+  "voice": "PETTY THIEF",
+  "slot": "slot_9",
+  "request": "request_002_07-49-32-165",
+  "prompt": "Re-express the following sentence in your own voice: \"I notice a labelled wooden feet of every size hung on pegs, each chalked with a customer's name. I want to",
+  "text": "I notice the labelled wooden feet on pegs, each chalked with a name. Last, I'll pick a shoe, relying on the picking of pockets and small thefts."
+ },
+ {
+  "t0": 455.9,
+  "ts": 463.5,
+  "t1": 504.0,
+  "section": "thief_think",
+  "voice": "PETTY THIEF",
+  "slot": "slot_9",
+  "request": "request_003_07-50-55-936",
+  "prompt": "Re-express the following sentence in your own voice: \"I will discreetly steal a shoe last\"\n\nThis sentence is written in the first person, and that \"I\" is you — ",
+  "text": "I will discreetly steal a shoe last, as seen on the crowded cobblestones."
+ },
+ {
+  "t0": 532.7,
+  "ts": 540.9,
+  "t1": 592.5,
+  "section": "steal",
+  "voice": "PETTY THIEF",
+  "slot": "slot_9",
+  "request": "request_004_07-52-12-744",
+  "prompt": "Re-express the following sentence in your own voice: \"Alas, I failed to steal a shoe last. Due to this failure I lost the thread of my thoughts.\"\n\nThis sentence",
+  "text": "I know not, thought I saw a shoe last time, but no luck. Lost the flow, just like always."
+ },
+ {
+  "t0": 621.9,
+  "ts": 630.3,
+  "t1": 674.3,
+  "section": "caught",
+  "voice": "You are Marcus, the cobbler. You spend y",
+  "slot": "slot_11",
+  "request": "request_001_07-53-41-891",
+  "prompt": "You are Marcus. You are speaking directly to Michael. You are speaking of having just caught someone stealing, and confronting them.\n\nThis is what you must say:",
+  "text": "There, stop. I have seen you take what's not yours."
+ },
+ {
+  "t0": 675.4,
+  "ts": 682.2,
+  "t1": 682.2,
+  "section": "caught",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_8",
+  "request": "request_001_07-54-35-364",
+  "prompt": "The faculty: DILIGENCE - Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single m",
+  "text": "C"
+ },
+ {
+  "t0": 682.2,
+  "ts": 688.0,
+  "t1": 688.0,
+  "section": "caught",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_8",
+  "request": "request_002_07-54-42-210",
+  "prompt": "The faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unr",
+  "text": "C"
+ },
+ {
+  "t0": 688.0,
+  "ts": 696.5,
+  "t1": 747.1,
+  "section": "caught",
+  "voice": "DILIGENCE",
+  "slot": "slot_10",
+  "request": "request_002_07-54-48-031",
+  "prompt": "You are Michael. You are speaking directly to Marcus. You are speaking of being caught stealing by a witness.\n\nThis is what you must say:\nI say to Marcus : \"Wha",
+  "text": "Nay, it was not me, nor doth my guilt besmirch your tale."
+ },
+ {
+  "t0": 760.0,
+  "ts": 769.5,
+  "t1": 829.8,
+  "section": "__sync_73",
+  "voice": "You are Marcus, the cobbler. You spend y",
+  "slot": "slot_11",
+  "request": "request_002_07-55-59-978",
+  "prompt": "You are Marcus. You are speaking directly to Michael. You are speaking of having just caught someone stealing, and confronting them.\n\nThis is what you must say:",
+  "text": "It's someone else's fault. That's always the case. I'm listening, and it better be worth it."
+ },
+ {
+  "t0": 839.1,
+  "ts": 845.6,
+  "t1": 845.6,
+  "section": "__sync_73",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_8",
+  "request": "request_003_07-57-19-071",
+  "prompt": "The faculty: SOCIAL INTERACTION - Strikes up talk with strangers easily and keeps a conversation moving. Inclines toward the ordinary courtesies of meeting and ",
+  "text": "B"
+ },
+ {
+  "t0": 845.6,
+  "ts": 852.4,
+  "t1": 852.4,
+  "section": "__sync_73",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_8",
+  "request": "request_004_07-57-25-621",
+  "prompt": "The faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unr",
+  "text": "C"
+ },
+ {
+  "t0": 852.4,
+  "ts": 861.9,
+  "t1": 931.2,
+  "section": "__sync_73",
+  "voice": "SOCIAL INTERACTION",
+  "slot": "slot_12",
+  "request": "request_001_07-57-32-444",
+  "prompt": "You are Michael. You are speaking directly to Marcus. You are speaking of being caught stealing by a witness.\n\nThis is what you must say:\nI say to Marcus : \"It ",
+  "text": "Though I confess, my hands were not stained with this theft, yet I shall share with you what I can to clear my name."
+ },
+ {
+  "t0": 943.4,
+  "ts": 955.0,
+  "t1": 1008.7,
+  "section": "__sync_82",
+  "voice": "You are Marcus, the cobbler. You spend y",
+  "slot": "slot_11",
+  "request": "request_003_07-59-03-364",
+  "prompt": "You are Marcus. You are speaking directly to Michael. You are speaking of having just caught someone stealing, and confronting them.\n\nThis is what you must say:",
+  "text": "Whose fault is this? Name the culprit or I'll have none of this nonsense."
+ },
+ {
+  "t0": 1009.9,
+  "ts": 1016.9,
+  "t1": 1016.9,
+  "section": "__sync_82",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_8",
+  "request": "request_005_08-00-09-864",
+  "prompt": "The faculty: DILIGENCE - Works the whole task rather than the interesting part of it, and finishes to the same standard it started. Unremarkable at any single m",
+  "text": "A"
+ },
+ {
+  "t0": 1016.9,
+  "ts": 1023.1,
+  "t1": 1023.1,
+  "section": "__sync_82",
+  "voice": "REPLY CHOOSER",
+  "slot": "slot_8",
+  "request": "request_006_08-00-16-881",
+  "prompt": "The faculty: ONLOOKER - An ordinary attention with no bent of its own: notices what anyone would notice and does what anyone would do. Its manner: plain and unr",
+  "text": "A"
+ },
+ {
+  "t0": 1023.1,
+  "ts": 1032.4,
+  "t1": 1094.1,
+  "section": "__sync_82",
+  "voice": "DILIGENCE",
+  "slot": "slot_10",
+  "request": "request_003_08-00-23-109",
+  "prompt": "You are Michael. You are speaking directly to Marcus. You are speaking of being caught stealing by a witness.\n\nThis is what you must say:\nI say to Marcus : \"I w",
+  "text": "I was informed I had permission. Should they have deceived me, the blame lies with those who gave the order."
+ },
+ {
+  "t0": 1151.5,
+  "ts": 1162.7,
+  "t1": 1203.9,
+  "section": "__sync_113",
+  "voice": "You are Marcus, the cobbler. You spend y",
+  "slot": "slot_11",
+  "request": "request_004_08-02-31-463",
+  "prompt": "You are Marcus. You are speaking directly to Michael. You are speaking of having just caught someone stealing, and confronting them.\n\nThis is what you must say:",
+  "text": "Answer my insult with silence, for I expect no less."
+ }
+]

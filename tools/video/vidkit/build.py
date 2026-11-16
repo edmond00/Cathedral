@@ -511,6 +511,7 @@ class Build:
         s = seg.spec
         shots = [(self.recordings[sh["recording"]], float(sh["from"]), float(sh["to"]), float(sh.get("speed", 1)))
                  for sh in s["shots"]]
+        zooms = [sh.get("zoom") for sh in s["shots"]]
         natural = sum((b - a) / sp for _, a, b, sp in shots)
         stretch = max(target / natural, 1.0) if natural else 1.0
         dst = self.out_dir / f"seg{seg.index:02d}_{self.seg_key(seg)}.mkv"
@@ -521,8 +522,16 @@ class Build:
             parts = []
             for i, (rec, a, b, sp) in enumerate(shots):
                 part = self.out_dir / f"seg{seg.index:02d}_shot{i:02d}.mkv"
+                crop = ""
+                if z := zooms[i]:                 # a shot may be framed closer, as a game segment's "zoom"
+                    rw, rh = rec.manifest["width"], rec.manifest["height"]
+                    f = float(z.get("factor", 2))
+                    cw, ch = int(rw / f) // 2 * 2, int(rh / f) // 2 * 2
+                    cx, cy = z.get("center", [rw / 2, rh / 2])
+                    crop = (f"crop={cw}:{ch}:{int(min(max(cx - cw / 2, 0), rw - cw))}:"
+                            f"{int(min(max(cy - ch / 2, 0), rh - ch))},")
                 ffmpeg.run("-ss", f"{rec.video_time(a):.3f}", "-to", f"{rec.video_time(b):.3f}", "-i", rec.video,
-                           "-vf", f"setpts=(PTS-STARTPTS)*{stretch / sp:g},scale={sw}:{sh_}:flags=neighbor,fps={self.fps}",
+                           "-vf", f"setpts=(PTS-STARTPTS)*{stretch / sp:g},{crop}scale={sw}:{sh_}:flags=neighbor,fps={self.fps}",
                            "-an", *ffmpeg.INTERMEDIATE, part)
                 parts.append(part)
             listing = self.out_dir / f"seg{seg.index:02d}_shots.txt"
