@@ -2,7 +2,7 @@
 # map. Fenumoth (the tutorial's world), the protagonist accepted as it stands, the five childhood
 # memories played on the get-up map through "Myself", and the get-up. Checkpoint on the world map.
 #
-# FLAGS: --no-encounters --npc-static --grant-mm diligence,provisioning,petty_thief,social_interaction
+# FLAGS: --organs encephalon=2 --no-encounters --npc-static --grant-mm diligence,provisioning,petty_thief,social_interaction
 #        --fill-party --humors all=voluptas --no-generate-ahead --save-path <dir>/save.json
 
 wait mode MainMenu 900
