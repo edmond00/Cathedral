@@ -1,0 +1,214 @@
+# The changelog video's opening take: a new run on the map narration, from the main menu to the world
+# map. Fenumoth (the tutorial's world), the protagonist accepted as it stands, the five childhood
+# memories played on the get-up map through "Myself", and the get-up. Checkpoint on the world map.
+#
+# FLAGS: --no-encounters --npc-static --grant-mm diligence,provisioning,petty_thief,social_interaction
+#        --fill-party --humors all=voluptas --no-generate-ahead --save-path <dir>/save.json
+
+wait mode MainMenu 900
+mark new_run
+clip new_run
+cursor rest
+hold 4
+click menu New
+wait mode WorldSelection 900
+cursor rest
+hold 4
+click moon Fenumoth
+wait 900
+cursor rest
+hold 4
+click world confirm
+wait mode ProtagonistCreation 900
+cursor rest
+hold 4
+click continue
+wait mode ChildhoodReminescence 900
+clip end new_run
+
+# ── Childhood, on the map: the fragments hang from "Myself" ──────────────────────────────────────────
+mark childhood
+clip childhood
+advance 12 900
+cursor rest
+hold 8
+# memory 1
+mark memory_1
+click observe Myself
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click think last
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click act 0
+wait for 0.3
+hold 2
+choose 0
+advance 20 900
+cursor rest
+hold 6
+click continue
+advance 12 900
+cursor rest
+hold 4
+# memory 2
+mark memory_2
+click observe Myself
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click think last
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click act 0
+wait for 0.3
+hold 2
+choose 0
+advance 20 900
+cursor rest
+hold 6
+click continue
+advance 12 900
+cursor rest
+hold 4
+# memory 3
+mark memory_3
+click observe Myself
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click think last
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click act 0
+wait for 0.3
+hold 2
+choose 0
+advance 20 900
+cursor rest
+hold 6
+click continue
+advance 12 900
+cursor rest
+hold 4
+# memory 4
+mark memory_4
+click observe Myself
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click think last
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click act 0
+wait for 0.3
+hold 2
+choose 0
+advance 20 900
+cursor rest
+hold 6
+click continue
+advance 12 900
+cursor rest
+hold 4
+# memory 5
+mark memory_5
+click observe Myself
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click think last
+wait for 0.3
+hold 2
+choose childhood_reminescence
+advance 12 900
+cursor rest
+hold 6
+click act 0
+wait for 0.3
+hold 2
+choose 0
+advance 20 900
+cursor rest
+hold 6
+click continue
+advance 12 900
+cursor rest
+hold 4
+clip end childhood
+
+# ── Getting up: "Myself" holds the states of exhaustion; the scenery answers too ────────────────────
+mark get_up
+clip get_up
+advance 12 900
+cursor rest
+hold 8
+click observe Myself
+wait for 0.3
+hold 2
+choose childhood_memory
+advance 12 900
+cursor rest
+hold 6
+click think last
+wait for 0.3
+hold 2
+choose 0
+advance 12 900
+cursor rest
+hold 6
+click act 0
+wait for 0.3
+hold 2
+choose 0
+advance 12 900
+dice
+hold 2
+click humor hepar needed
+click die needed
+click humor spleen needed
+click die needed
+hold 2
+click continue
+advance 20 900
+cursor rest
+hold 8
+click continue
+wait mode WorldView 900
+cursor rest
+hold 6
+clip end get_up
+state
+quit
