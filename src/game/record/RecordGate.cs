@@ -460,7 +460,12 @@ public sealed class RecordGate
                 var pv = narration.CliPreviewContinue();
                 if (pv.Present) return Span((pv.X, pv.Y, pv.Width), "CONTINUE");
                 var dice = narration.CliDiceContinue();
-                return dice.Present ? Span((dice.X, dice.Y, dice.Width), "Continue") : Fail("no continue button on screen");
+                if (dice.Present) return Span((dice.X, dice.Y, dice.Width), "Continue");
+                // The result box an act ends on (SUCCESS / FAILURE and its chips): every phase the act
+                // opens waits for its CONTINUE.
+                return narration.CliResult() is { Width: > 0 } res
+                    ? Span((res.X, res.Y, res.Width), "CONTINUE")
+                    : Fail("no continue button on screen");
             }
 
             case "menu":
