@@ -41,11 +41,15 @@ def available_voices() -> list[str]:
     return sorted(p.stem for p in VOICES.glob("*.onnx"))
 
 
-def _raw(text: str, voice: str, speed: float) -> tuple[np.ndarray, int]:
+def _raw(text: str, voice: str, speed: float, noise_scale: float | None = None,
+         noise_w: float | None = None) -> tuple[np.ndarray, int]:
     from piper import SynthesisConfig
     v = _voice(voice)
     chunks, rate = [], 22050
-    for chunk in v.synthesize(text, syn_config=SynthesisConfig(length_scale=1.0 / max(speed, 0.1))):
+    cfg = SynthesisConfig(length_scale=1.0 / max(speed, 0.1))
+    if noise_scale is not None: cfg.noise_scale = noise_scale      # variation in the voice's inflection
+    if noise_w is not None: cfg.noise_w_scale = noise_w            # variation in its rhythm
+    for chunk in v.synthesize(text, syn_config=cfg):
         chunks.append(chunk.audio_float_array)
         rate = chunk.sample_rate
     audio = np.concatenate(chunks) if chunks else np.zeros(1, np.float32)
@@ -101,15 +105,40 @@ def grit_chain(x: np.ndarray, rate: int, grit: float, seed: int = 7) -> np.ndarr
     return (y / peak * 0.89).astype(np.float32)
 
 
+def _pitch_room(audio: np.ndarray, pitch: float, room: float) -> np.ndarray:
+    """Lowers or raises the pitch without changing the length, then adds a small room (a single short
+    echo). ffmpeg's own filters, so the result matches what was auditioned."""
+    import subprocess, tempfile
+    from . import ffmpeg
+    filters = []
+    if pitch != 1.0:
+        filters += [f"asetrate={RATE}*{pitch}", f"aresample={RATE}", f"atempo={1 / pitch:.5f}"]
+    if room > 0:
+        filters.append(f"aecho=0.8:0.5:35:{room}")
+    if not filters:
+        return audio
+    with tempfile.TemporaryDirectory() as d:
+        a, b = Path(d) / "a.wav", Path(d) / "b.wav"
+        write_wav(a, audio, RATE)
+        subprocess.run([ffmpeg.FFMPEG, "-y", "-loglevel", "error", "-i", str(a), "-af", ",".join(filters), str(b)],
+                       check=True)
+        return read_wav(b)
+
+
 def speak(text: str, out: str | Path, voice: str = DEFAULT_VOICE, speed: float = 1.0, grit: float = 0.35,
-          cache_dir: str | Path | None = None) -> tuple[Path, float]:
+          cache_dir: str | Path | None = None, noise_scale: float | None = None, noise_w: float | None = None,
+          pitch: float = 1.0, room: float = 0.0) -> tuple[Path, float]:
     """Renders `text` to a 48 kHz mono WAV at `out`. Returns the path and its duration in seconds.
 
     Identical requests are served from `cache_dir` (keyed on the text and every setting), so rebuilding a
-    video after changing one line re-voices only that line.
+    video after changing one line re-voices only that line. `noise_scale` / `noise_w` loosen Piper's
+    inflection and rhythm, `pitch` shifts the voice without changing its pace, `room` (0..1) is a small
+    room's echo: together they make a second register of the same voice (the tutorial reads the
+    game's own text that way).
     """
     out = Path(out)
-    key = hashlib.sha1(json.dumps([text, voice, speed, grit, 3]).encode()).hexdigest()[:16]
+    extra = [noise_scale, noise_w, pitch, room] if (noise_scale, noise_w, pitch, room) != (None, None, 1.0, 0.0) else []
+    key = hashlib.sha1(json.dumps([text, voice, speed, grit, 3, *extra]).encode()).hexdigest()[:16]
     if cache_dir:
         cached = Path(cache_dir) / f"vo_{key}.wav"
         if cached.exists():
@@ -117,8 +146,9 @@ def speak(text: str, out: str | Path, voice: str = DEFAULT_VOICE, speed: float =
                 out.write_bytes(cached.read_bytes())
             return out, wav_duration(out)
 
-    audio, rate = _raw(text, voice, speed)
+    audio, rate = _raw(text, voice, speed, noise_scale, noise_w)
     audio = signal.resample_poly(audio, RATE, rate).astype(np.float32)
+    audio = _pitch_room(audio, pitch, room)
     # a breath of silence either side, so a cut never clips a consonant
     pad = np.zeros(int(RATE * 0.12), np.float32)
     audio = np.concatenate([pad, grit_chain(audio, RATE, grit, seed=int(key[:6], 16)), pad])
