@@ -937,6 +937,7 @@ public class LocationTravelGameController : IDisposable
             if (_dialogueAdapter != null && dlg == null) return false;   // still acquiring its LLM slot
             if (dlg != null)
             {
+                if (dlg.CliPreviewWaitsOnContinue) return true;   // --no-generate-ahead: held for CONTINUE
                 var s = dlg.CliSnapshot();
                 // IsDiceRolling is only meaningful while a roll is active — it rests at true.
                 return !s.Loading && !(s.DiceActive && s.DiceRolling);
@@ -952,6 +953,8 @@ public class LocationTravelGameController : IDisposable
             // retry after a refusal asks its doubt before the refusal has been read — and `advance`
             // then presses CONTINUE on the parts in front until the question is shown.
             if (_narrativeController.CliPreviewAwaitsAnswer()) return true;
+            // So does a part held behind the shown one until CONTINUE (--no-generate-ahead).
+            if (_narrativeController.CliPreviewWaitsOnContinue()) return true;
             var s = _narrativeController.CliSnapshot();
             if (s.Busy || (s.DiceActive && s.DiceRolling)) return false;
             // The hours rolling by in the time box: an animation, like the dice tumbling.

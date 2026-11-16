@@ -329,6 +329,7 @@ public partial class NarrativeController
     /// to be continued past. The thinking is blocked on it, so the script driver counts it as idle.
     /// </summary>
     public bool CliPreviewAwaitsAnswer() => _previewSession.AwaitsAnswer;
+    public bool CliPreviewWaitsOnContinue() => _previewSession.WaitsOnContinue;
 
     /// <summary>The preview box's [ YES ] or [ NO ] region, when the shown part asks.</summary>
     public (bool Present, int X, int Y, int Width) CliPreviewAnswer(bool yes)

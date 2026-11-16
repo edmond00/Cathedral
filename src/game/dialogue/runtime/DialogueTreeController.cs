@@ -54,6 +54,8 @@ public class DialogueTreeController
 
     // Streams the player replies being generated into a preview box, gated by CONTINUE.
     private readonly LlmPreviewSession        _preview = new();
+    /// <summary>The preview's next part is held for CONTINUE (see <see cref="LlmPreviewSession.WaitsOnContinue"/>).</summary>
+    public bool CliPreviewWaitsOnContinue => _preview.WaitsOnContinue;
     private string                            _lastPreviewText = ""; // last rendered preview text, to tick on change
 
     private NpcLineNode                       _currentNode;
