@@ -182,7 +182,7 @@ so, and says why.
 | | Escape |
 |---|---|
 | Fighting | cancels the armed skill or move target; pauses when nothing is armed |
-| LocationInteraction, ChildhoodReminescence, GetUp | closes the popup that is open (which mind, what to do with an act, which implement); otherwise pauses **as an overlay**, leaving the map standing |
+| LocationInteraction, ChildhoodReminescence, GetUp | closes the popup that is open (which mind, which implement); otherwise pauses **as an overlay**, leaving the map standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | WorldView, while the will picker is open | closes the picker (its CLOSE button) |
 | WorldView, while a will's search runs | cancels the search (its CANCEL button); pauses otherwise, as above |
@@ -724,8 +724,8 @@ refusals to look at it), plus delegates for what only the controller knows
 (`ElementGlyph`, `IsHostile`, `Contents`, `Stubs`, `Enabled`). The overlay is a painter and decides
 nothing. It reaches the map through `LocationMap.IMapOverlay` and a `MapCanvas`
 (`CardOf`, `Put`, `Hit`, `TreeRows`), and every cell it draws is tagged with a `MapSymbol` record —
-`TraySymbol`, `ContentSymbol`, `StubSymbol`, `NodeSymbol`, `TokenSymbol`, `WaySymbol`,
-`ExitSymbol`. **The record is the hit
+`TraySymbol`, `ContentSymbol`, `StubSymbol`, `NodeSymbol`, `CommandSymbol`, `TokenSymbol`,
+`WaySymbol`, `ExitSymbol`. **The record is the hit
 tag, the hover key and what the CLI clicks**, compared by value, so there is no second table of
 regions to keep in step with what was painted — which is the bug class the keyword renderer's
 region list was. `IsEnabled(symbol)` is the single rule for what a click would do now, read by the
@@ -738,11 +738,19 @@ a card a click walks to now says so too ("walk to the test yard", on the clickab
 Under the pointer a symbol is inverted, the way out included — it is tagged as an `ExitSymbol`, so
 it ticks, highlights and labels as every other symbol does rather than through a path of its own.
 
+**What is done is said by the symbol clicked; a popup only ever asks by which mind** — or, for an
+implement, with which thing carried. There is no menu of commands anywhere on the screen. A waiting
+act is carried out by a click on the act itself, and what else may be done with it stands beside
+it on its row as two symbols of their own (`CommandSymbol`, from `CommandsOf`): `⚒` reaches for an
+implement, `↺` has it thought over again. A speech mark is to one companion — there is one `❝` for
+each within hearing (`StubSymbol.Listener`) — so nobody is asked whom. This replaced a popup that
+opened on an act with Execute / Use Tool / Reconsider and a second one that asked whom to address:
+the one screen of the game drawn as a tree had two places where the next step was a list of words.
+
 A click that needs a mind stores a `Pending` record (`ObservePending`, `ThinkPending`,
-`SpeakPending`, `ActPending`, `ReconsiderPending`, `ToolPending`) and opens the popup;
+`SpeakPending`, `ReconsiderPending`; `ToolPending` for the implement) and opens the popup;
 `ApplyModusMentisSelection` is the one place every player-chosen faculty comes back through, which
-is where a broken modus mentis is refused. What is done is decided by the symbol clicked; the popup
-only says by whom.
+is where a broken modus mentis is refused.
 
 **A mind that refused is greyed in the popup the next time the same is asked about the same
 thing** (`AskMind`, `MemberMind.Refuse` / `HasRefused`, keyed by `MindOffice` — Observe, Think,
@@ -800,7 +808,7 @@ first.
 
 #### An act, its result, and what it sets going
 
-A click on a waiting act opens Execute / Use Tool / Reconsider. Execute needs the member *there*:
+A click on a waiting act carries it out. That needs the member *there*:
 standing elsewhere, they are walked to the element's area first (`WalkTo`, and the act is dropped if
 the walk is stopped), and `ActAsync` follows on arrival. It runs the coded rules, the evaluation, the dice, the outcome preview and `CommitOutcomeResult`, which
 applies the reports, hangs the outcome under its act and puts up the **result box** (`ActResult`):
@@ -873,9 +881,10 @@ would stop them (see "Crime").
   the body that would now perform it.
 - **Trees are private.** What one member observed is on their map only — though *known* is the
   place's, so it is named for all of them.
-- **Speaking shares one element.** The `❝` on an observed element is offered to a member with a
-  speaking mind while a companion stands in the same area or one next to it (`WithinSpeech`,
-  `AreNextTo`: a neighbour or any connector but a view). It costs the speaker a point, hangs what
+- **Speaking shares one element.** A `❝` on an observed element is offered to a member with a
+  speaking mind for each companion standing in the same area or one next to it (`WithinSpeech`,
+  `AreNextTo`: a neighbour or any connector but a view) — one mark a listener, named under the
+  pointer. It costs the speaker a point, hangs what
   was said under the speaker's element, and plants that element on the listener's trees with the
   words as its root. The view stays on the speaker: speaking is not switching. This is what Speak
   About became — it used to hand the whole narration to the companion.
@@ -925,8 +934,9 @@ skill for the whole of it):
 |---|---|
 | `click observe <kind\|name> [in <area>]` | a kind (`person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element, a way on its line (`"Test Yard"`, `"Test Door"`) or a container's content — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run. `way` is the first view in the tray, else the first way on a line looked at from where the member stands |
 | `point observe\|think\|speak\|act\|member <what>` / `point exit` / `point card <area>` | puts the pointer on a symbol, named as `click` names it, and presses nothing: `inspect pointer-label` then reads its label and whether it is on the clickable ground, a node's text is in the reading box, a way's line is lit |
-| `click think <name>` / `click speak <name>` | the stubs of an observed element. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
-| `click act <n\|word>` | a waiting act by position, or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it |
+| `click think <name>` / `click speak <name> [to <member>]` | the stubs of an observed element; a speech mark is to one companion, the first within hearing when none is named. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
+| `click act <n\|word>` | carries out a waiting act, by position or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it. No popup follows |
+| `click tool <n\|word>` / `click reconsider <n\|word>` | the two symbols beside a waiting act: then `choose <n>` picks the implement, or `choose <mm-id>` the mind that thinks it over |
 | `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
 | `click continue` | the dice's, the preview's or the result box's CONTINUE |
 | `inspect trees` / `texts` / `known` / `symbols` | the played member's trees node by node; what each node says; what the place remembers; what `regions` lists, for `expect-state symbols` |
@@ -1403,9 +1413,9 @@ changing one alone re-breaks what the others fix.
 - **An accepted tool costs nothing; a refused one costs a point.** Combining is part of the act
   already proposed, and only one item may ever be combined with it. Charging for the *accepted*
   case made the tool-gated verbs (`dig`, `mine`, `fish`, `cut_wood`, `break`) *impossible* once the
-  pool shrank: the thinking that produces the act spends the point "Use Tool" then wants,
-  so the option was offered and permanently greyed out. Charging for the refusal is what pays for
-  never greying the row by verb — see "Tools: the three categories" below.
+  pool shrank: the thinking that produces the act spends the point reaching for a tool then
+  wanted, so the option was offered and permanently greyed out. Charging for the refusal is what
+  pays for never greying it by verb — see "Tools: the three categories" below.
 - **The two opening phases cost nothing** (`SpendPoint` and `HasPoint` read `InOpeningPhase`): the
   one verb of each is the only way onward, and a pool that could run dry there is a softlock.
 - **Nothing is proposed twice.** What has been *looked at* needs no ledger now — an observed
@@ -1486,8 +1496,8 @@ the ignore branch says `IterationExhausted`. The response is a list of `Thinking
 and refusals in order — and the controller hangs one node per segment under the element, each from
 the last, the act from the last thought (`ThinkAsync`). **One noetic point for the whole chain.**
 
-**Reconsider: the act's popup's third row, and the one place the action rules are asked ahead.**
-Execute / Use Tool / Reconsider. Reconsider asks a thinking modus mentis the player picks
+**Reconsider: the `↺` beside a waiting act, and the one place the action rules are asked ahead.**
+It asks a thinking modus mentis the player picks
 (`ReconsiderPending`, routed by `ApplyModusMentisSelection`) to keep the act or want no part of
 it — `ChooseGoalAsync` over that one goal with the decline, no ledger; a will keeps an act of its own
 path only — and `ThinkingExecutor.ReconsiderAsync` then gives it to another means than the one that
@@ -1627,11 +1637,12 @@ never have avoided — a withholding dressed as a refusal, which is the whole `C
 `ActionRulesChecker` distinction. Read the declared half anywhere and the beast comes out able to
 slay; that was the bug the audit fix caught.
 
-**The "Use Tool" row is greyed only when nothing combinable is carried** — never by category. An
-excluded verb still accepts the attempt and still fails it, at the cost of a point. That is the
-bargain: the player is trusted to choose, and pays for choosing badly. Do not add a category test
-where `ClickSymbol` builds the act's popup (Execute / Use Tool / Reconsider, the row disabled only by
-`GetCombinableItems().Count == 0` or an implement already combined).
+**The implement symbol beside an act is greyed only when nothing combinable is carried** — never
+by category. An excluded verb still accepts the attempt and still fails it, at the cost of a
+point. That is the bargain: the player is trusted to choose, and pays for choosing badly. Do not
+add a category test to `IsEnabled`'s `CommandSymbol` case (greyed only by
+`GetCombinableItems().Count == 0` or an implement already combined). The act itself is greyed
+while it `NeedsTool` — refused once for want of an implement, reaching for one is the only way on.
 
 **A combined act hangs under the act it was combined with** (`CombineItemAsync`): the acting mind's
 reasoning as a thought node, and under it a new act node whose chain ends on the implement. The
@@ -2627,16 +2638,13 @@ arrival passes it to `NarrativeController.StartVisit`, so the childhood, the get
 (`StartAtArea`, which opens at its own hour) are untouched, and `--period` still wins. `StartVisit`
 keeps making the old random draw and discards it, so every later roll of a seeded run is unchanged.
 
-**Fixing it is what makes a settlement greet you cheaply.** Measured before the change, the area a
-visit opens in held a person by day 40% of the time in a village and 6% at a stable, with a dozen
-people indoors. `EnsureArrivalCompany` (on for `SettledSceneFactory` and the farm, through
-`GuaranteesArrivalCompany`) moves **one period of one schedule** into the arrival area when nobody is
-there, choosing in order: someone out of doors in that section, anyone out of doors, someone in a
-private room / not alone in a public one / a trader whose counter a fellow trader keeps and who keeps
-it at another hour, someone away, and last the lone person in a household hall that is manned every
-other daytime period. Never the sole keeper of a counter or store. Runs after `DropDepartedNpcs`, so a
-departed greeter is replaced, and is skipped under `--npc-static`. `--building-audit` warns when it
-fails with somebody to spare and prints the coverage per factory.
+**Nobody is moved to meet an arrival.** A settlement used to guarantee somebody in the area a visit
+opens in (`EnsureArrivalCompany`: one period of one schedule changed when the area was empty),
+because the first text of a visit was an empty square more often than not, with a dozen people
+indoors. The map now shows where everybody is on every card before anything is looked at, so an
+empty square is no longer a place that looks deserted, and the pass, its audit check and
+`GuaranteesArrivalCompany` are gone: people stand where their day puts them. The fixed daytime hour
+stays — a first sight of a place is never of its doors shut for the night.
 
 ### The hours passing, and the turn of a day
 

@@ -35,7 +35,6 @@ advance 12 180
 
 # An unlocked door is opened without a roll: the result is up at once.
 click act 0
-choose 0
 advance 12 180
 expect-verb open_door
 expect Moved to:

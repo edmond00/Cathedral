@@ -47,7 +47,6 @@ expect-state texts "I want to"
 expect-state trees act state=waiting
 
 click act 0
-choose 0
 wait 60
 
 # Dice overlay resolved — confirm it, which triggers outcome generation.

@@ -19,8 +19,6 @@ choose poetry
 advance 12 1200
 regions
 click act 0
-regions
-choose 0
 advance 12 1200
 click continue
 advance 12 1200

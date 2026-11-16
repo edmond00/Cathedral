@@ -26,7 +26,6 @@ click think "blacksmith"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 # Difficulty 0 at a willing means: no dice, so no dice box to confirm — the outcome comes straight on.
 advance 12 180
 

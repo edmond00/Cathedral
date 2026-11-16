@@ -33,14 +33,12 @@ advance 12 180
 # Combining does not execute: it rewrites the action to include the weapon and offers THAT as a new
 # act. Executing the reformulated one is what puts CombinedItem on the action, which is how the
 # blow learns which weapon is in the hand.
-click act 0
-choose 1
+click tool 0
 regions
 choose 0
 advance 12 180
 regions
 click act 1
-choose 0
 
 advance 12 180
 click continue

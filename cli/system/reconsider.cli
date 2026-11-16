@@ -32,8 +32,7 @@ regions
 
 # Reconsider the act: any thinking modus mentis, and the means is no longer pinned.
 means none
-click act 0
-choose 2
+click reconsider 0
 choose ripelore
 advance 12 180
 expect-state texts "I think again about how to"
@@ -42,7 +41,6 @@ regions
 
 # The new act passes the threat rule on the click.
 click act examine
-choose 0
 advance 12 180
 click continue
 advance 12 180

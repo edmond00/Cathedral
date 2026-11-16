@@ -73,7 +73,7 @@ target that cannot be located on screen is refused, never performed some other w
 
 | kind | commands |
 |---|---|
-| pointer (animated, clicked) | on a place's map `click observe <kind\|known name>`, `click think/speak <name>`, `click act <n\|word>`, `click member <name>`, `click area <name>`, `click exit`; elsewhere `click option/skill/fighter/end-turn/engage/button/continue/menu/world/moon/sky/arrow/companion-death/end-run/cell`, `click humor <queue>` and `click die <n>` (spending humors on a settled roll; `dice` shows it), `choose <n>` (scrolls a long list to the row first), `travel here/<name>/<vertex>/neighbour/back`, `travel-go`, `point moon`, `scroll up/down [n]`, and the presses `advance` makes |
+| pointer (animated, clicked) | on a place's map `click observe <kind\|known name>`, `click think/speak <name>`, `click act/tool/reconsider <n\|word>`, `click member <name>`, `click area <name>`, `click exit`; elsewhere `click option/skill/fighter/end-turn/engage/button/continue/menu/world/moon/sky/arrow/companion-death/end-run/cell`, `click humor <queue>` and `click die <n>` (spending humors on a settled roll; `dice` shows it), `choose <n>` (scrolls a long list to the row first), `travel here/<name>/<vertex>/neighbour/back`, `travel-go`, `point moon`, `scroll up/down [n]`, and the presses `advance` makes |
 | keyboard | `key <name>`, `pause` |
 | menus and screens | `pause` (Escape: opens the menu), `click menu <label>` (Continue, Protagonist, Settings…), `click tab <name>` and `click back` on the protagonist screen, `click element <id>` for any named control (settings rows, trade, work). `elements` lists the ids on screen |
 | directing the film | `clip <name>` … `clip end` (a span to cut), `mark <label>`, `note <text>`, `hold <secs>` (let the shot breathe), `cursor rest/hide/show` |
@@ -126,7 +126,7 @@ otherwise misleading in promotional material).
   viscera allow, then `click continue`. Spend the humor on camera — it is one of the game's best
   moments to show.
 - **A container** shows what it holds once observed, each thing a symbol to look at in its turn;
-  **Use Tool** (the act's second row) needs a carried item.
+  the implement symbol beside an act (`click tool <n|word>`) needs a carried item.
 - **Walking by ways already taken is free**: `click area <name>`. When nothing on the map leads
   anywhere, `click exit` leaves the place (it reads RUNAWAY, and rolls, while somebody confronts
   the character). `click continue` closes an act's result box.

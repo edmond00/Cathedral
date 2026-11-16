@@ -30,7 +30,6 @@ expect-state trees means=woodcraft
 regions
 
 click act 0
-choose 0
 advance 12 180
 expect-state texts "while under the threat of"
 quit

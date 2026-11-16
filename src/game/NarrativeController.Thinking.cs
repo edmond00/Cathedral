@@ -26,10 +26,8 @@ public partial class NarrativeController
     private sealed record ObservePending(Area Area, ElementKind Kind, NarrativeAnchor? Named, ThoughtNode? Container,
                                          string? Way = null) : Pending;
     private sealed record ThinkPending(ThoughtNode Element) : Pending;
-    /// <summary>Speak of an element: first the speaking mind is asked for, then whom to address.</summary>
-    private sealed record SpeakPending(ThoughtNode Element, ModusMentis? Mind, IReadOnlyList<PartyMember> Listeners) : Pending;
-    /// <summary>An act clicked: Execute, Use Tool or Reconsider.</summary>
-    private sealed record ActPending(ThoughtNode Act) : Pending;
+    /// <summary>Speak of an element to <paramref name="Listener"/>: the speech mark clicked said to whom.</summary>
+    private sealed record SpeakPending(ThoughtNode Element, PartyMember Listener) : Pending;
     private sealed record ReconsiderPending(ThoughtNode Act) : Pending;
     private sealed record ToolPending(ThoughtNode Act) : Pending;
 
@@ -116,16 +114,9 @@ public partial class NarrativeController
                 _ = ReconsiderAsync(chosen, reconsider.Act);
                 break;
 
-            case SpeakPending { Listeners.Count: 1 } speak:
-                // One companion within reach: nobody is asked whom.
-                _loading = Config.LoadingMessages.Speaking;
-                _ = SpeakAsync(speak.Element, chosen, speak.Listeners[0]);
-                break;
-
             case SpeakPending speak:
-                // The speaking mind is chosen: now, whom to address.
-                _pending = speak with { Mind = chosen };
-                _choicePopup.Show(PopupAnchor(), speak.Listeners.Select(l => l.DisplayName).ToList(), "Who do you address?");
+                _loading = Config.LoadingMessages.Speaking;
+                _ = SpeakAsync(speak.Element, chosen, speak.Listener);
                 break;
         }
     }

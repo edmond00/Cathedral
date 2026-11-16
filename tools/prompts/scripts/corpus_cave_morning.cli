@@ -15,7 +15,6 @@ click think last
 choose tactics
 advance 12 1500
 click act 0
-choose 0
 advance 12 1500
 click continue
 advance 12 1500
@@ -44,7 +43,6 @@ click think last
 choose sense_of_humor
 advance 12 1500
 click act 0
-choose 0
 advance 12 1500
 click continue
 advance 12 1500
@@ -76,7 +74,6 @@ click think last
 choose ruination
 advance 12 1500
 click act 0
-choose 0
 advance 12 1500
 click continue
 advance 12 1500

@@ -29,7 +29,6 @@ click think "Test Yard"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -60,7 +59,6 @@ click think "Test Rock"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -77,7 +75,6 @@ click think "Field–Rock Track"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180

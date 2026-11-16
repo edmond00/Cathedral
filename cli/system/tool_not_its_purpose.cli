@@ -36,12 +36,12 @@ advance 12 180
 
 inspect noetic
 
-click act 0
-
-# Still offered. The row is greyed by what is carried and by nothing else, so an implement that
-# cannot possibly serve is still offered — and the point below is what that costs.
+# Still offered. The implement symbol beside the act is greyed by what is carried and by nothing
+# else, so an implement that cannot possibly serve is still offered — and the point below is what
+# that costs.
 regions
-choose 1
+expect-no-state symbols click tool 0 (disabled)
+click tool 0
 regions
 choose 0
 advance 12 180

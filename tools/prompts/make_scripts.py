@@ -42,7 +42,6 @@ def think(mm, kind="thing"):
 choose {mm}
 advance 12 {W}
 click act 0
-choose 0
 advance 12 {W}
 click continue
 advance 12 {W}

@@ -50,7 +50,6 @@ regions
 # Execute it. fail-dice forces the roll to fail, which is what hands a witness in earshot the
 # caught-red-handed confrontation — when one is in earshot and the skill was not discreet.
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180

@@ -202,6 +202,7 @@ public partial class NarrativeController
             IsHostile    = node => KindOf(node) == ElementKind.Hostile,
             Contents     = ContentsOf,
             Stubs        = StubsOf,
+            Commands     = CommandsOf,
             Enabled      = symbol => !Busy && IsEnabled(symbol),
             Exit         = Exploring,
         };
@@ -268,18 +269,41 @@ public partial class NarrativeController
         _ => ElementKind.Thing,
     };
 
-    /// <summary>What an observed element offers to do next: to think about it, and to speak of it where anybody could be told.</summary>
-    private IReadOnlyList<StubKind> StubsOf(ThoughtNode element)
+    /// <summary>
+    /// What an observed element offers to do next: to think about it, and to speak of it to each
+    /// companion within hearing — one speech mark a listener, so the symbol says to whom.
+    /// </summary>
+    private IReadOnlyList<StubSymbol> StubsOf(ThoughtNode element)
     {
-        var stubs = new List<StubKind>();
+        var stubs = new List<StubSymbol>();
         // Thinking is offered about what affords an act now: a way since walked, a thing emptied
         // or a person asleep keeps its tree and has nothing to be thought into.
         if (_active.GetThinkingModiMentis().Count > 0 && Locate(element) is { } at
             && GoalsOf(at.Anchor).Any(g => g.Verb is not IgnoreVerb))
-            stubs.Add(StubKind.Think);
-        if (Exploring && _minds.Count > 1 && _active.GetSpeakingModiMentis().Count > 0) stubs.Add(StubKind.Speak);
+            stubs.Add(new StubSymbol(element, StubKind.Think));
+        if (Exploring && _active.GetSpeakingModiMentis().Count > 0)
+            foreach (var listener in WithinSpeech())
+                stubs.Add(new StubSymbol(element, StubKind.Speak, listener));
         return stubs;
     }
+
+    /// <summary>
+    /// What may be done with a waiting act besides carrying it out, each a symbol beside it: reach
+    /// for an implement, think it over again. Neither in the two opening phases, whose one act has
+    /// one means and no implement.
+    /// </summary>
+    private IReadOnlyList<ActCommand> CommandsOf(ThoughtNode act)
+        => !act.IsWaitingAct || InOpeningPhase ? Array.Empty<ActCommand>() : AllCommands;
+
+    private static readonly ActCommand[] AllCommands = { ActCommand.Tool, ActCommand.Reconsider };
+
+    /// <summary>
+    /// Whether the played member can get to where a waiting act is done: there already, or by ways
+    /// the party knows while nobody holds them where they stand.
+    /// </summary>
+    private bool CanReachAct(ThoughtNode act)
+        => LocateAct(act) is { } target
+        && (target.Where.Id == _pov.Where.Id || (_frameConfrontation == null && _frameReach.ContainsKey(target.Where.Id)));
 
     /// <summary>
     /// Whether a click on <paramref name="symbol"/> would act now.
@@ -324,13 +348,23 @@ public partial class NarrativeController
                 return HasPoint && Locate(think.Element) is { } thought
                     && (confrontation == null || IsConfronter(thought.Anchor, confrontation));
 
-            case StubSymbol { Kind: StubKind.Speak } speak:
+            case StubSymbol { Kind: StubKind.Speak, Listener: { } listener } speak:
                 return Mind.Noetic > 0 && confrontation == null && Locate(speak.Element) != null
-                    && WithinSpeech().Count > 0;
+                    && WithinSpeech().Contains(listener);
 
+            // An act refused for want of an implement is not carried out bare-handed: reaching for
+            // one is then the only way on.
             case NodeSymbol { Node: { IsWaitingAct: true } act }:
-                return LocateAct(act) is { } target
-                    && (target.Where.Id == _pov.Where.Id || (confrontation == null && _frameReach.ContainsKey(target.Where.Id)));
+                return !act.Action!.NeedsTool && CanReachAct(act);
+
+            // Reaching for an implement is part of the act already proposed: it costs nothing, only
+            // one thing may ever be combined with it, and something combinable must be carried.
+            case CommandSymbol { Command: ActCommand.Tool, Act: { IsWaitingAct: true } act }:
+                return act.Action!.CombinedItem == null && CanReachAct(act) && GetCombinableItems().Count > 0;
+
+            // Reconsidering is a thinking, and costs its point.
+            case CommandSymbol { Command: ActCommand.Reconsider, Act: { IsWaitingAct: true } act }:
+                return CanReconsider() && CanReachAct(act);
         }
         return false;
     }
@@ -385,7 +419,9 @@ public partial class NarrativeController
             ExitSymbol                      => new(ExitLabel, enabled),
             TokenSymbol token               => new(ReferenceEquals(token.Member, _active) ? token.Member.DisplayName : $"play {token.Member.DisplayName}", enabled),
             StubSymbol { Kind: StubKind.Think } stub => new($"think about {NameOf(stub.Element)}", enabled),
-            StubSymbol stub                 => new($"speak of {NameOf(stub.Element)}", enabled),
+            StubSymbol stub                 => new($"speak of {NameOf(stub.Element)} to {stub.Listener?.DisplayName}", enabled),
+            CommandSymbol { Command: ActCommand.Tool } tool => new(ToolLabel(tool.Act), enabled),
+            CommandSymbol                   => new("think it over again", enabled),
             NodeSymbol { Node: var node }   => new(LabelOf(node), enabled),
             _ => null,
         };
@@ -398,6 +434,12 @@ public partial class NarrativeController
         if (!_frameReach.ContainsKey(side.From.Id)) return "a way · no known way there";
         return ElementMemory.IsKnown(_scene, side.From, side.Anchor) ? $"observe {NameOf(side.Anchor)}" : "observe · an unknown way";
     }
+
+    /// <summary>The implement command under the pointer, and when it cannot be used, why.</summary>
+    private string ToolLabel(ThoughtNode act)
+        => act.Action!.CombinedItem is { } held ? $"already with {held.WithArticle()}"
+         : GetCombinableItems().Count == 0     ? "nothing carried to do it with"
+         : "do it with an implement";
 
     /// <summary>A card a click would walk the played member to, by ways the party knows.</summary>
     private bool CanWalkTo(Area card)
@@ -488,7 +530,6 @@ public partial class NarrativeController
         bool changed = false;
         if (_modusMentisPopup.IsVisible)   changed |= _modusMentisPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, CellPixels);
         if (_itemSelectionPopup.IsVisible) changed |= _itemSelectionPopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, CellPixels);
-        if (_choicePopup.IsVisible)        changed |= _choicePopup.UpdateHover(screenPosition.X, screenPosition.Y, _core.ClientSize, CellPixels);
         if (changed) PlayHoverSound();
     }
 
@@ -639,8 +680,9 @@ public partial class NarrativeController
     }
 
     /// <summary>
-    /// A symbol was clicked: what kind of thing to observe, which element to think about or speak of,
-    /// which act to carry out, whom to play. The mind that does it is asked for next.
+    /// A symbol was clicked: what kind of thing to observe, which element to think about or speak of
+    /// and to whom, which act to carry out or to do something else with, whom to play. What is done
+    /// is said by the symbol; a popup only ever asks by which mind, or with which thing carried.
     /// </summary>
     private void ClickSymbol(MapSymbol symbol)
     {
@@ -676,21 +718,24 @@ public partial class NarrativeController
                 AskMind(new ThinkPending(stub.Element), _active.GetThinkingModiMentis(), "Think with");
                 break;
 
-            case StubSymbol stub:
-                AskMind(new SpeakPending(stub.Element, Mind: null, WithinSpeech()), _active.GetSpeakingModiMentis(), "Speak with");
+            case StubSymbol { Listener: { } listener } stub:
+                AskMind(new SpeakPending(stub.Element, listener), _active.GetSpeakingModiMentis(), "Speak with");
                 break;
 
+            // The act itself: carried out. Acting needs presence, so the member goes to where it
+            // is to be done.
             case NodeSymbol { Node: { IsWaitingAct: true } act }:
-                // Reaching for a tool is part of the act already proposed, not a second thought: the
-                // point was spent when the act was thought of, and only one item may ever be combined
-                // with it. A refusal for want of a tool leaves Use Tool as the only way on; and
-                // reconsidering is a thinking, which costs its point.
-                var disabled = new HashSet<int>();
-                if (act.Action!.NeedsTool) disabled.Add(0);
-                if (act.Action.CombinedItem != null || GetCombinableItems().Count == 0) disabled.Add(1);
-                if (!CanReconsider()) disabled.Add(2);
-                _pending = new ActPending(act);
-                _choicePopup.Show(PopupAnchor(), new List<string> { "Execute", "Use Tool", "Reconsider" }, "Action", disabled);
+                if (LocateAct(act) is { } target)
+                    WalkTo(target.Where, then: () => _ = ActAsync(act));
+                break;
+
+            case CommandSymbol { Command: ActCommand.Tool } tool:
+                _pending = new ToolPending(tool.Act);
+                _itemSelectionPopup.Show(PopupAnchor(), GetCombinableItems(), "Use with this action");
+                break;
+
+            case CommandSymbol { Command: ActCommand.Reconsider } reconsider:
+                AskMind(new ReconsiderPending(reconsider.Act), _active.GetThinkingModiMentis(), "Reconsider with");
                 break;
         }
     }
@@ -710,11 +755,7 @@ public partial class NarrativeController
     /// <summary>A click while a popup is up: its choice, or — outside it — its dismissal.</summary>
     private void ClickPopup(Vector2 screen)
     {
-        if (_choicePopup.IsVisible)
-        {
-            DispatchChoice(_choicePopup.HandleClick(screen.X, screen.Y, _core.ClientSize, CellPixels));
-        }
-        else if (_itemSelectionPopup.IsVisible)
+        if (_itemSelectionPopup.IsVisible)
         {
             var item = _itemSelectionPopup.HandleClick(screen.X, screen.Y, _core.ClientSize, CellPixels);
             var pending = _pending as ToolPending;
@@ -727,38 +768,6 @@ public partial class NarrativeController
             if (mind != null) ApplyModusMentisSelection(mind);
             // A click on a mind that refused already picks nothing and leaves the popup up.
             else if (!_modusMentisPopup.IsVisible) _pending = null;
-        }
-    }
-
-    /// <summary>The choice popup's answer: what to do with an act, or whom to speak to.</summary>
-    private void DispatchChoice(int? index)
-    {
-        var pending = _pending;
-        _pending = null;
-
-        switch (pending)
-        {
-            case SpeakPending { Mind: { } speakingMind } speak when index is { } i && i >= 0 && i < speak.Listeners.Count:
-                _loading = Config.LoadingMessages.Speaking;
-                _ = SpeakAsync(speak.Element, speakingMind, speak.Listeners[i]);
-                break;
-
-            case ActPending { Act: var act } when index == 0:
-                // Acting needs presence: the member goes to where the act is to be done.
-                if (LocateAct(act) is { } target)
-                    WalkTo(target.Where, then: () => _ = ActAsync(act));
-                break;
-
-            case ActPending { Act: var act } when index == 1:
-                var items = GetCombinableItems();
-                if (items.Count == 0) break;
-                _pending = new ToolPending(act);
-                _itemSelectionPopup.Show(PopupAnchor(), items, "Use with this action");
-                break;
-
-            case ActPending { Act: var act } when index == 2 && CanReconsider():
-                AskMind(new ReconsiderPending(act), _active.GetThinkingModiMentis(), "Reconsider with");
-                break;
         }
     }
 
@@ -776,7 +785,6 @@ public partial class NarrativeController
     public bool ClosePopup()
     {
         if (!IsPopupVisible) return false;
-        _choicePopup.Hide();
         _modusMentisPopup.Hide();
         _itemSelectionPopup.Hide();
         _pending = null;

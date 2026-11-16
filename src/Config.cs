@@ -648,7 +648,7 @@ public static class Config
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
-            '☠', '✗', '✓', '❝', // location map: a hostile, a failure, a success, speech
+            '☠', '✗', '✓', '❝', '⚒', // location map: a hostile, a failure, a success, speech, an implement
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
@@ -1426,6 +1426,8 @@ public static class Config
         public const char MapContent  = '◇';   // what a container holds, disclosed and not yet observed
         public const char MapThink    = '?';   // think about this
         public const char MapSpeak    = '❝';   // speak of this to a companion; and what was said
+        public const char MapTool     = '⚒';   // beside a waiting act: reach for an implement
+        public const char MapReconsider = '↺'; // beside a waiting act: think it over again
         public const char MapThought  = '¶';   // a text a mind wrote: three thin bars read as a grey block at this size
         public const char MapRefusal  = '⊘';   // a refusal, whoever refused and whatever was asked
         public const char MapFailure  = '✗';   // an act that failed

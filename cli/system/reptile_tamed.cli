@@ -24,7 +24,6 @@ click think "crocodile"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -39,7 +38,6 @@ click think "crocodile"
 choose beast_sense
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180

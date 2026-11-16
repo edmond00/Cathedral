@@ -30,7 +30,6 @@ click think "Test Shore"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -47,7 +46,6 @@ click think "Test Ford"
 choose ripelore
 advance 12 180
 click act swim_across
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -76,7 +74,6 @@ click think "Test Field"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180

@@ -31,10 +31,11 @@ choose childhood_memory
 advance 12 180
 expect-state noetic points=2/3
 
-# Speak: the speech mark under the chicken, then a speaking modus mentis. One companion is in reach,
-# so nobody is asked whom.
+# Speak: the speech mark under the chicken — one for each companion within hearing, so the mark
+# clicked says to whom — then a speaking modus mentis.
 regions
-click speak "chicken"
+expect-state symbols click speak "the chicken" to "Brindletail"
+click speak "chicken" to Brindletail
 choose friendship
 advance 12 180
 expect-state trees speech
@@ -55,7 +56,6 @@ click think "chicken"
 choose birdsong
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180

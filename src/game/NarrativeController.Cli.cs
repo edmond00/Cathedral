@@ -61,11 +61,19 @@ public partial class NarrativeController
             foreach (var part in ContentsOf(element))
                 lines.Add($"click observe \"{HandleOf(part)}\" in \"{HandleOf(element)}\"{On(new ContentSymbol(element, part))}");
             foreach (var stub in StubsOf(element))
-                lines.Add($"click {(stub == StubKind.Think ? "think" : "speak")} \"{HandleOf(element)}\"{On(new StubSymbol(element, stub))}");
+                lines.Add(stub.Kind == StubKind.Think
+                    ? $"click think \"{HandleOf(element)}\"{On(stub)}"
+                    : $"click speak \"{HandleOf(element)}\" to \"{stub.Listener!.DisplayName}\"{On(stub)}");
         }
+        // A waiting act is carried out by a click on it; what else may be done with it stands
+        // beside it, each a symbol of its own.
         var acts = CliActs();
         for (int i = 0; i < acts.Count; i++)
+        {
             lines.Add($"click act {i} \"{acts[i].Action!.DisplayText}\" on \"{HandleOf(acts[i].ElementNode)}\"{On(new NodeSymbol(acts[i]))}");
+            foreach (var command in CommandsOf(acts[i]))
+                lines.Add($"click {(command == ActCommand.Tool ? "tool" : "reconsider")} {i}{On(new CommandSymbol(acts[i], command))}");
+        }
         if (Exploring) lines.Add($"click exit  ({ExitLabel})");
         return lines;
     }
@@ -131,7 +139,7 @@ public partial class NarrativeController
     /// otherwise the one the played member stands in when it offers any.
     /// </summary>
     public (MapSymbol? Symbol, string? Error) CliFindSymbol(string what, string name, string? areaName = null,
-                                                             bool playerOnly = false)
+                                                             bool playerOnly = false, string? listenerName = null)
     {
         var frame = _overlay.Frame;
         if (frame == null) return (null, "the map has not been drawn yet");
@@ -199,17 +207,25 @@ public partial class NarrativeController
                     ? _lastRooted.TryGetValue(_active, out var latest) && Locate(latest) != null ? latest : null
                     : Best(Mind.ElementNodes.Where(n => Locate(n) != null), n => MatchRank(NamesOf(n), name));
                 if (element == null) return (null, $"no observed element named '{name}'");
-                var stub = what == "think" ? StubKind.Think : StubKind.Speak;
-                return StubsOf(element).Contains(stub) ? (new StubSymbol(element, stub), null)
-                                                       : (null, $"'{HandleOf(element)}' offers no '{what}'");
+                // A speech mark is to one companion: the one named, or the first within hearing.
+                var stubs = StubsOf(element).Where(s => s.Kind == (what == "think" ? StubKind.Think : StubKind.Speak)).ToList();
+                if (listenerName != null)
+                    stubs = stubs.Where(s => s.Listener != null && MatchRank(new[] { s.Listener.DisplayName }, listenerName) != int.MaxValue).ToList();
+                return stubs.Count > 0 ? (stubs[0], null)
+                     : (null, $"'{HandleOf(element)}' offers no '{what}'" + (listenerName != null ? $" to '{listenerName}'" : ""));
             }
-            case "act":
+            case "act" or "tool" or "reconsider":
             {
+                // The act itself is carried out; `tool` and `reconsider` are the two symbols beside it.
                 var acts = CliActs();
                 var act = int.TryParse(name, out int index)
                     ? (index >= 0 && index < acts.Count ? acts[index] : null)
                     : Best(acts, a => MatchRank(new[] { a.Action!.ActionText, a.Action.Verb.VerbId }, name));
-                return act != null ? (new NodeSymbol(act), null) : (null, $"no waiting act '{name}' ({acts.Count} waiting)");
+                if (act == null) return (null, $"no waiting act '{name}' ({acts.Count} waiting)");
+                if (what == "act") return (new NodeSymbol(act), null);
+                var command = what == "tool" ? ActCommand.Tool : ActCommand.Reconsider;
+                return CommandsOf(act).Contains(command) ? (new CommandSymbol(act, command), null)
+                                                         : (null, $"that act offers no '{what}' here");
             }
             case "member":
             {
@@ -353,8 +369,6 @@ public partial class NarrativeController
     /// <summary>Labels of the popup on screen, or null when none is up.</summary>
     public (string Kind, IReadOnlyList<string> Labels)? CliPopup()
     {
-        if (_choicePopup.IsVisible)
-            return ("choice", _choicePopup.Choices.Select((c, i) => _choicePopup.IsChoiceEnabled(i) ? c : $"{c} (disabled)").ToList());
         if (_modusMentisPopup.IsVisible)
             return ("modus-mentis", _modusMentisPopup.Choices
                 .Select(m => _modusMentisPopup.IsRefused(m) ? $"{m.DisplayName} (refused)" : m.DisplayName).ToList());
@@ -375,13 +389,6 @@ public partial class NarrativeController
     /// </summary>
     public string? CliChoosePopup(int index)
     {
-        if (_choicePopup.IsVisible)
-        {
-            if (!_choicePopup.IsChoiceEnabled(index)) return $"choice {index} is disabled or out of range";
-            _choicePopup.Hide();
-            DispatchChoice(index);
-            return null;
-        }
         if (_modusMentisPopup.IsVisible)
         {
             var list = _modusMentisPopup.Choices;
@@ -416,8 +423,7 @@ public partial class NarrativeController
         if (bounds == null) return null;
 
         Func<float, float, OpenTK.Mathematics.Vector2i, float, int?>? hit =
-              _choicePopup.IsVisible        ? _choicePopup.CliIndexAt
-            : _itemSelectionPopup.IsVisible ? _itemSelectionPopup.CliIndexAt
+              _itemSelectionPopup.IsVisible ? _itemSelectionPopup.CliIndexAt
             : _modusMentisPopup.IsVisible   ? _modusMentisPopup.CliIndexAt
             : null;
         if (hit == null) return null;
@@ -506,12 +512,6 @@ public partial class NarrativeController
             outp.Add($"noetic points={Mind.Noetic}/{actor.MaxNoeticPoints} "
                    + $"tool_proficiency={ToolUsageProficiencyStat.Of(actor)}");
 
-        // The open choice popup, with each option's state. `regions` prints the same thing, but only
-        // emits — and a greyed option differs from a live one by colour alone, so this is what lets a
-        // script assert that a tool refusal leaves "Use Tool" as the only way forward.
-        if (All("popup") && _choicePopup.IsVisible)
-            outp.Add("popup options=[" + string.Join(",", _choicePopup.Choices.Select((c, i) =>
-                         _choicePopup.IsChoiceEnabled(i) ? c : $"{c}(disabled)")) + "]");
         // The minds offered, by id: one that has refused what is asked is greyed, which the screen
         // says by colour alone.
         if (All("popup") && _modusMentisPopup.IsVisible)

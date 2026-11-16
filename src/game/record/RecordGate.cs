@@ -354,16 +354,18 @@ public sealed class RecordGate
 
         switch (what)
         {
-            case "observe" or "think" or "speak" or "act" or "member":
+            case "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member":
             {
                 // A symbol of the location map, found as the script driver finds it and aimed at where
                 // it is drawn (panned into view first).
                 if (narration == null) return Fail("not in narration");
                 string rest = arg, name = arg;
-                string? area = null;
+                string? area = null, listener = null;
                 int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
                 if (what == "observe" && at > 0) { area = rest[(at + 4)..].Trim().Trim('"'); name = rest[..at].Trim().Trim('"'); }
-                var (symbol, error) = narration.CliFindSymbol(what, name, area, playerOnly: true);
+                int to = rest.LastIndexOf(" to ", StringComparison.OrdinalIgnoreCase);
+                if (what == "speak" && to > 0) { listener = rest[(to + 4)..].Trim().Trim('"'); name = rest[..to].Trim().Trim('"'); }
+                var (symbol, error) = narration.CliFindSymbol(what, name, area, playerOnly: true, listenerName: listener);
                 if (symbol == null) return Fail(error ?? "no such symbol");
                 return narration.CliSymbolCell(symbol) is { } sc0 ? At(sc0, $"{what} {name}") : Fail($"'{name}' is not drawn on the map");
             }

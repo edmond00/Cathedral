@@ -36,7 +36,6 @@ click think "Test Field"
 choose birdsong
 advance 12 180
 click act move
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -63,7 +62,6 @@ click think "farmer"
 choose ripelore
 advance 12 180
 click act attack
-choose 0
 advance 12 180
 click continue
 advance 12 180

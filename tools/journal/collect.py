@@ -48,7 +48,6 @@ when LocationInteraction click think last
 when LocationInteraction choose 0
 advance 20 1200
 when LocationInteraction click act 0
-when LocationInteraction choose 0
 advance 20 1200
 when LocationInteraction click continue
 advance 20 1200

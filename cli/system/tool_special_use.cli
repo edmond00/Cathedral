@@ -40,9 +40,8 @@ advance 12 180
 
 inspect noetic
 
-click act 0
 regions
-choose 1
+click tool 0
 regions
 choose 0
 advance 12 180
@@ -57,7 +56,6 @@ expect-state noetic points=1/3
 expect-state noetic tool_proficiency=Low
 
 click act 1
-choose 0
 advance 12 180
 click continue
 advance 12 180

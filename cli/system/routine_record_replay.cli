@@ -39,7 +39,6 @@ click think "Test Wood"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -62,7 +61,6 @@ advance 12 180
 # Proposing to buy is asked without a roll; the result's CONTINUE opens the conversation, which
 # --auto-dialogue settles as won.
 click act propose_to_buy
-choose 0
 advance 12 180
 click continue
 advance 12 180

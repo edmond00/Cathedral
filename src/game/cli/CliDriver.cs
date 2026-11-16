@@ -405,9 +405,8 @@ public sealed class CliDriver
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach;
-                                    `popup` the open choice popup's options, each marked
-                                    (disabled) when greyed, or the minds offered by id, one
-                                    that already refused what is asked marked (refused); `dialogue` the tree id of the last
+                                    `popup` the minds the open popup offers, by id, one that
+                                    already refused what is asked marked (refused); `dialogue` the tree id of the last
                                     conversation queued (a confrontation's id names its crime);
                                     `trees` the played member's thought trees, node by node;
                                     `texts` (by name only) what each node says — on screen a text
@@ -433,10 +432,17 @@ public sealed class CliDriver
           click think <name|last>   the ? after an observed element: think about it. `last` is
                                     whatever was observed last, for a script on the real model,
                                     where the mind chooses what it looks at (`speak` takes it too)
-          click speak <name>        the speech mark after an observed element: speak of it to the
-                                    members within reach
-          click act <n|word>        a waiting act, by position (the order proposed) or by a word of
-                                    its text or its verb id
+          click speak <name> [to <member>]
+                                    a speech mark after an observed element: speak of it to a
+                                    companion within hearing — there is one mark a listener, and
+                                    with no `to` it is the first
+          click act <n|word>        carry out a waiting act, by position (the order proposed) or
+                                    by a word of its text or its verb id. No popup follows: the
+                                    act is the click
+          click tool <n|word>       the implement symbol beside a waiting act: then `choose <n>`
+                                    picks what is carried to do it with
+          click reconsider <n|word> the symbol beside a waiting act that has it thought over
+                                    again: then `choose <thinking mm-id>`
           click member <name>       play another member of the party (their token on the map)
           click area <name>         walk the played member to an area by ways the party knows,
                                     as a click on its card does
@@ -968,13 +974,14 @@ public sealed class CliDriver
 
         switch (a[0].ToLowerInvariant())
         {
-            case "observe" or "think" or "speak" or "act" or "member":
+            case "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member":
             {
                 // A symbol of the location map, by what it stands for:
                 //   click observe person [in <area>]     one of a kind, the observing mind's to choose
                 //   click observe <name> [in <area>]     an element remembered, or disclosed by a container
-                //   click think <name> | click speak <name>   an element already observed
-                //   click act <n|word>                    an act waiting on a tree, by index or by its words
+                //   click think <name> | click speak <name> [to <member>]   an element already observed
+                //   click act <n|word>                    carry out an act waiting on a tree, by index or by its words
+                //   click tool <n|word> | click reconsider <n|word>   the two symbols beside a waiting act
                 //   click member <name>                   play another member of the party
                 if (FindSymbol(a) is not { } found) return;
                 Report(found.Narration.CliClickSymbol(found.Symbol), $"clicked {found.What} \"{found.Name}\"");
@@ -1317,8 +1324,16 @@ public sealed class CliDriver
             area = rest[(at + 4)..].Trim().Trim('"');
             rest = rest[..at];
         }
+        // `speak <element> to <member>`: which companion, when more than one is within hearing.
+        string? listener = null;
+        int to = rest.LastIndexOf(" to ", StringComparison.OrdinalIgnoreCase);
+        if (what == "speak" && to > 0)
+        {
+            listener = rest[(to + 4)..].Trim().Trim('"');
+            rest = rest[..to];
+        }
         string name = rest.Trim().Trim('"');
-        var (symbol, error) = n.CliFindSymbol(what, name, area);
+        var (symbol, error) = n.CliFindSymbol(what, name, area, listenerName: listener);
         if (symbol == null) { CliMode.Emit($"error: {error}"); return null; }
         return (n, symbol, what, name);
     }
@@ -1327,7 +1342,7 @@ public sealed class CliDriver
     {
         // A symbol of the narration's map, named as `click` names it: the pointer is put on it and
         // nothing is pressed, which is how its label, its text and its line are read.
-        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "member")
+        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member")
         {
             if (FindSymbol(a) is not { } found) return;
             if (found.Narration.CliSymbolCell(found.Symbol) is not { } cell)

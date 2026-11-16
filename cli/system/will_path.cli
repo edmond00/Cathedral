@@ -42,7 +42,6 @@ expect-state trees means=woodcraft
 
 strategy succeed
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -61,12 +60,10 @@ click think "Test Door"
 choose lockpicking
 advance 12 180
 expect-state trees means=lockpicking
-click act unlock_door
-choose 1
+click tool unlock_door
 choose 0
 advance 12 180
 click act hairpin
-choose 0
 advance 12 180
 click continue
 advance 12 180

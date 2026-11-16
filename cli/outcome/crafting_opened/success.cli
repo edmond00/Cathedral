@@ -24,12 +24,10 @@ advance 12 180
 click think "Test Old Anvil"
 choose ripelore
 advance 12 180
-click act 0
-choose 1
+click tool 0
 choose 0
 advance 12 180
 click act 1
-choose 0
 advance 12 180
 click continue
 advance 12 180

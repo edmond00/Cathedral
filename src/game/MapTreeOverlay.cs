@@ -32,8 +32,23 @@ public sealed record NodeSymbol(ThoughtNode Node) : MapSymbol;
 /// <summary>What an observed element offers to do next.</summary>
 public enum StubKind { Think, Speak }
 
-/// <summary>Think about, or speak of, the element of <paramref name="Element"/>.</summary>
-public sealed record StubSymbol(ThoughtNode Element, StubKind Kind) : MapSymbol;
+/// <summary>
+/// Think about the element of <paramref name="Element"/>, or speak of it to <paramref name="Listener"/>:
+/// there is one speech mark for each companion within hearing, so whom is said by the symbol clicked.
+/// </summary>
+public sealed record StubSymbol(ThoughtNode Element, StubKind Kind, PartyMember? Listener = null) : MapSymbol;
+
+/// <summary>What may be done with an act still waiting, besides carrying it out (a click on the act itself).</summary>
+public enum ActCommand
+{
+    /// <summary>Reach for an implement: the act combined with something carried.</summary>
+    Tool,
+    /// <summary>Think it over again: another mind may keep it and hand it to another means.</summary>
+    Reconsider,
+}
+
+/// <summary>A command on the waiting act of <paramref name="Act"/>, standing beside it on its row.</summary>
+public sealed record CommandSymbol(ThoughtNode Act, ActCommand Command) : MapSymbol;
 
 /// <summary>Something an observed container holds, disclosed and not yet observed itself.</summary>
 public sealed record ContentSymbol(ThoughtNode Container, NarrativeAnchor Part) : MapSymbol;
@@ -91,7 +106,9 @@ public sealed class MapFrame
     /// <summary>What an element node holds that is disclosed and not yet observed.</summary>
     public required Func<ThoughtNode, IReadOnlyList<NarrativeAnchor>> Contents { get; init; }
     /// <summary>Which stubs an element node shows.</summary>
-    public required Func<ThoughtNode, IReadOnlyList<StubKind>> Stubs { get; init; }
+    public required Func<ThoughtNode, IReadOnlyList<StubSymbol>> Stubs { get; init; }
+    /// <summary>Which commands a waiting act shows beside it.</summary>
+    public required Func<ThoughtNode, IReadOnlyList<ActCommand>> Commands { get; init; }
     /// <summary>Whether a click on the symbol would act now. What would not is drawn grey.</summary>
     public required Func<MapSymbol, bool> Enabled { get; init; }
 }
@@ -367,14 +384,24 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     /// <summary>
     /// What hangs under a node: its children, and for an element one last row — its shelf — of what
     /// it holds and what it offers: a symbol for each thing in it not yet looked at, then the stubs.
+    /// A waiting act's commands come first instead, so they stand beside it on its own row: the act
+    /// is what a click carries out, and what else may be done with it is at its elbow.
     /// </summary>
     private List<object> Hanging(ThoughtNode node)
     {
-        var items = new List<object>(node.Children);
-        if (node.Kind != ThoughtNodeKind.Element) return items;
+        var items = new List<object>();
         var shelf = new List<MapSymbol>();
+        if (node.IsWaitingAct)
+        {
+            foreach (var command in Frame.Commands(node)) shelf.Add(new CommandSymbol(node, command));
+            if (shelf.Count > 0) items.Add(shelf);
+            items.AddRange(node.Children);
+            return items;
+        }
+        items.AddRange(node.Children);
+        if (node.Kind != ThoughtNodeKind.Element) return items;
         foreach (var part in Frame.Contents(node)) shelf.Add(new ContentSymbol(node, part));
-        foreach (var kind in Frame.Stubs(node)) shelf.Add(new StubSymbol(node, kind));
+        shelf.AddRange(Frame.Stubs(node));
         if (shelf.Count > 0) items.Add(shelf);
         return items;
     }
@@ -426,16 +453,24 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (y <= row) y = row + 1;
     }
 
-    /// <summary>An element's shelf: one row, a space between symbols; what is held first, then what is offered.</summary>
+    /// <summary>
+    /// A shelf: one row, a space between symbols. An element's is what it holds, then what it
+    /// offers; a waiting act's is what may be done with it besides carrying it out.
+    /// </summary>
     private void PaintShelf(LocationMap.MapCanvas canvas, List<MapSymbol> shelf, int x, int y)
     {
         foreach (var symbol in shelf)
         {
-            char glyph = symbol is StubSymbol stub
-                ? stub.Kind == StubKind.Think ? Config.Symbols.MapThink : Config.Symbols.MapSpeak
-                : Config.Symbols.MapContent;
+            char glyph = symbol switch
+            {
+                StubSymbol { Kind: StubKind.Think }             => Config.Symbols.MapThink,
+                StubSymbol                                      => Config.Symbols.MapSpeak,
+                CommandSymbol { Command: ActCommand.Tool }      => Config.Symbols.MapTool,
+                CommandSymbol                                   => Config.Symbols.MapReconsider,
+                _                                               => Config.Symbols.MapContent,
+            };
             var ink = !Frame.Enabled(symbol) ? DisabledInk
-                    : symbol is StubSymbol ? Config.Colors.BrightYellow : Config.Colors.GoldYellow;
+                    : symbol is ContentSymbol ? Config.Colors.GoldYellow : Config.Colors.BrightYellow;
             Symbol(canvas, x, y, glyph, ink, symbol);
             x += 2;
         }

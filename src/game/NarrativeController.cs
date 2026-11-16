@@ -63,7 +63,6 @@ public partial class NarrativeController
     private readonly PopupTerminalHUD _popup;
     private readonly TerminalThinkingModusMentisPopup _modusMentisPopup;
     private readonly TerminalItemSelectionPopup _itemSelectionPopup;
-    private readonly TerminalSimpleChoicePopup _choicePopup;
     private readonly GlyphSphereCore _core;
     private readonly TerminalInputHandler _terminalInputHandler;
 
@@ -148,7 +147,6 @@ public partial class NarrativeController
         _popup                = popup ?? throw new ArgumentNullException(nameof(popup));
         _modusMentisPopup     = new TerminalThinkingModusMentisPopup(popup);
         _itemSelectionPopup   = new TerminalItemSelectionPopup(popup);
-        _choicePopup          = new TerminalSimpleChoicePopup(popup);
         _core                 = core ?? throw new ArgumentNullException(nameof(core));
         _terminalInputHandler = terminalInputHandler ?? throw new ArgumentNullException(nameof(terminalInputHandler));
         _thinkingExecutor     = thinkingExecutor ?? throw new ArgumentNullException(nameof(thinkingExecutor));
@@ -287,7 +285,7 @@ public partial class NarrativeController
     public bool HasRequestedExit() => _requestedExit;
 
     /// <summary>Whether a modal popup (modus mentis / item / choice) is open over the map.</summary>
-    public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible || _choicePopup.IsVisible;
+    public bool IsPopupVisible => _modusMentisPopup.IsVisible || _itemSelectionPopup.IsVisible;
 
     /// <summary>
     /// The text history of the conversations held this visit: each writes its lines into it, so a

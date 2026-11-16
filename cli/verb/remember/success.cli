@@ -39,7 +39,6 @@ advance 12 180
 regions
 
 click act 0
-choose 0
 advance 12 180
 
 # No dice: the result is up at once.

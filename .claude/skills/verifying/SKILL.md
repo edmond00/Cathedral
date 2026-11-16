@@ -58,7 +58,7 @@ from the game's (very chatty) diagnostic logging on the same stdout.
 | `--location-id <n>` | Builds every scene as location id `n`. A scene is a pure function of its id (`CreateSeededRandom(locationId)`), so the id decides the layout, the room names, the objects and the people — a village rolls a Chain or a Hub with entirely different rooms. Together with `--location-type` it determines the whole scene, which is what makes `--verb-probe`'s reported rooms actually exist in the run. |
 | `--npc-static` | Pins every NPC to the area they spend most of the day in, instead of following their schedule. Where somebody stands at a given hour is drawn from the location seed across six periods, so an NPC verb's test cannot otherwise name the room — and a test that names the wrong one finds it empty. `--verb-probe` sets the same flag, so its rooms and the run's agree by construction. |
 | `--auto-dialogue` | Settles every conversation as an immediate success instead of holding one. A dozen verbs only *open* a dialogue and the tree decides what follows, so without this a **verb** test has to walk somebody else's tree to reach its own assertion — and breaks whenever that tree is re-authored. `DialogueAutoResolve` performs exactly the writes a won conversation makes, so nothing reading the world afterwards can tell. The conversation still starts on the CONTINUE of the act's result box, so assert its outcomes *after* that press. The trees themselves are covered by `cli/system/dialogue_*.cli`. |
-| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`, `knife`…). Seven verbs are `ToolUsage.Required` and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the act (`click act 0` → `choose 1` → `choose` the item → `advance` → `click act 1`, the combined act, which waits beside the plain one; or `click act <a word of it>`). Grant the verb's own **reference tool**, which auto-passes with no critic call: under `--playground` the item critic picks its verdict at random, so a substitute makes the test a coin flip. |
+| `--grant-item <id[,id…]>` | Puts named items in the starting pack (`axe`, `pick`, `shovel`, `fishing_rod`, `knife`…). Seven verbs are `ToolUsage.Required` and `RequiredToolRule` refuses them outright without one; the starting kit is random, so their success test is unwritable otherwise. Note the rule accepts only `Action.CombinedItem` — **carrying** the tool is not enough, the script must combine it with the act (`click tool 0` → `choose` the item → `advance` → `click act 1`, the combined act, which waits beside the plain one; or `click act <a word of it>`). Grant the verb's own **reference tool**, which auto-passes with no critic call: under `--playground` the item critic picks its verdict at random, so a substitute makes the test a coin flip. |
 
 A typical invocation:
 
@@ -198,14 +198,24 @@ Run `help` for the authoritative list. The essentials:
                             model, where the mind chooses what it looks at (`speak` takes it too).
                             Naming an observed holder in `click observe` asks for whatever it
                             holds first (`click observe Myself`)
-  click speak <name>        the speech mark after an observed element: speak of it to a companion
-                            in the same or an adjacent area. Then `choose <speaking mm-id>` (and a
-                            `choose` of the listener when more than one is in reach)
-  click act <n|word>        a waiting act: by position (the order proposed), or by a word of its
-                            text or its verb id (`click act explain_myself`). PREFER THE WORD once
-                            more than one act waits — a combined act leaves the uncombined one
-                            waiting beside it, so indexes shift. Opens Execute / Use Tool /
-                            Reconsider: `choose 0|1|2`
+  click speak <name> [to <member>]
+                            a speech mark after an observed element: speak of it to a companion
+                            in the same or an adjacent area. There is one mark for each
+                            companion within hearing; with no `to` it is the first. Then
+                            `choose <speaking mm-id>`
+  click act <n|word>        CARRY OUT a waiting act: by position (the order proposed), or by a
+                            word of its text or its verb id (`click act explain_myself`). PREFER
+                            THE WORD once more than one act waits — a combined act leaves the
+                            uncombined one waiting beside it, so indexes shift. No popup follows:
+                            the click is the act. An act refused for want of an implement is
+                            `(disabled)` until one is combined
+  click tool <n|word>       the implement symbol beside a waiting act (named as `click act`
+                            names it): then `choose <n>` picks the thing carried, `advance`, and
+                            the combined act waits as a second act. `(disabled)` in `regions`
+                            when nothing combinable is carried or one is combined already
+  click reconsider <n|word> the think-again symbol beside a waiting act: then
+                            `choose <thinking mm-id>`. A popup is only ever a list of minds, or
+                            of things carried — never of commands
   click member <name>       play another member of the party (their token on a card)
   click area <name>         walk the played member to an area by ways the party knows — a click on
                             its card (panned into view first). Free: no point, no roll. Refused
@@ -503,8 +513,8 @@ click think "Test Ford"     # its ? → which mind thinks
 choose ripelore
 advance 12 180              # goal, means, reasoning, willingness → an act now waits on the tree
 
-click act 0                 # or by a word: click act gather
-choose 0                    # Execute  (1 = Use Tool, then `choose` the item; 2 = Reconsider)
+click act 0                 # carried out at once; or by a word: click act gather
+                            # (click tool 0 → `choose` the item; click reconsider 0 → `choose` a mind)
 advance 12 180
 click continue              # the dice — ABSENT at difficulty 0, where there is no roll to confirm
 advance 12 180              # the outcome's text (and an emotion's, when one is stirred)
@@ -528,7 +538,7 @@ Things this shape depends on, each of which has cost a script:
   dialogue_trigger`, nothing the conversation does has happened yet: `click continue`, `advance`,
   then assert. The same for `wait mode Fighting` and `wait mode Crafting`.
 - **Difficulty 0 has no dice.** `open_door`, the stairs, `sit_and_wait` and the plain conversation
-  openers go from `choose 0` straight to the outcome: one `advance`, then `expect SUCCESS`. A
+  openers go from `click act` straight to the outcome: one `advance`, then `expect SUCCESS`. A
   `click continue` written there for dice that are not coming closes the result box instead.
 - **Observing costs a point, so a pool of 3 is observe + think + one more.** A script that fails an
   act and then needs to think again runs out one step earlier than it used to; give it room with

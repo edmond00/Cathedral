@@ -17,7 +17,8 @@ code once the work is done.
   for a doubt). On CONTINUE it becomes a **symbol on a tree**; hovering that symbol shows the text
   again.
 - The mind popup stays (which modus mentis). *What* is done is decided by the symbol clicked, so the
-  Think / Observe / Speak About menu goes. The act popup (Execute / Use Tool / Reconsider) stays.
+  Think / Observe / Speak About menu goes. The act popup (Execute / Use Tool / Reconsider) stays
+  (it went later too — see §11).
 - Conversations (`GameMode.Dialogue`) keep their own scrolling text screen. The journal is fed from
   tree nodes instead of from the scroll buffer's blocks.
 - `DebugLocationMap` is renamed: it is no longer a debug view.
@@ -193,7 +194,8 @@ What the draft and the interview left open, and how it was filled.
 - **Whoever confronts a member is on their map already observed** — the enemy in the room walked
   into, the householder who sees them, whoever stopped a walk or an escape. Confronted, nothing else
   may be looked at, so the confronter is not left to cost a point before they can be answered.
-- **One listener within reach is spoken to without asking whom.**
+- **One listener within reach is spoken to without asking whom** (later: each listener has a
+  speech mark of their own, and nobody is ever asked).
 - **A stalked quarry's locked door is marked seen** rather than opening a text about it.
 - **`--no-embeddings` and the word vectors' runtime load are gone**: keywords were their only
   reader. `--mm-audit`'s persona lint still reads the file when it is there.
@@ -231,6 +233,12 @@ What changed once the map had been played, each answering a remark made on it.
 - **The way out answers the pointer** like any symbol; **the label is taken down** when another
   screen has the panel; **a press kept on the pan pad keeps panning**.
 - **Labels name things as a sentence does**: "think about the cart trail".
+- **A popup only asks by which mind** (or with which thing carried). The act popup (Execute / Use
+  Tool / Reconsider) and the "whom do you address" list are gone: a click on a waiting act carries
+  it out, an implement symbol and a think-again symbol stand beside it, and there is one speech
+  mark for each companion within hearing.
+- **Nobody is moved to meet an arrival.** The map shows where everybody is before anything is
+  looked at, so a settlement no longer puts somebody in the area a visit opens in.
 
 ## 12. Tests and tools
 

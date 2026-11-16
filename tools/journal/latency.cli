@@ -26,7 +26,6 @@ choose 0
 advance 20 900
 wait for 6
 click act 0
-choose 0
 advance 20 900
 click continue
 advance 20 900
@@ -54,7 +53,6 @@ choose 0
 advance 20 900
 wait for 6
 click act 0
-choose 0
 advance 20 900
 click continue
 advance 20 900

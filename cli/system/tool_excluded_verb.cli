@@ -4,7 +4,7 @@
 # there is nothing for an implement to make go better. Three things follow, and none is visible from
 # the other two:
 #
-#   * the "Use Tool" row is NOT greyed. Greying is decided by what is carried and by nothing else —
+#   * the implement symbol beside the act is NOT greyed. Greying is decided by what is carried and by nothing else —
 #     a knife is carried, so the row is live. That is deliberate: the player is trusted to choose,
 #     and the noetic cost below is what pays for that trust;
 #   * the attempt FAILS, and without a critic call. Under --playground the item critic picks its
@@ -39,13 +39,12 @@ advance 12 180
 # against this number less one.
 inspect noetic
 
-click act 0
-
-# Row 1 is "Use Tool" and it must be LIVE. Were a verb category ever to start greying this row, the
-# `regions` line below would report "(disabled)" and `choose 1` would error — which is the
+# The implement symbol beside the act must be LIVE. Were a verb category ever to start greying
+# it, `inspect symbols` would report "(disabled)" and the click would error — which is the
 # regression this script exists to catch.
 regions
-choose 1
+expect-no-state symbols click tool 0 (disabled)
+click tool 0
 regions
 choose 0
 advance 12 180

@@ -33,14 +33,12 @@ choose ripelore
 advance 12 180
 regions
 
-click act 0
-choose 1
+click tool 0
 regions
 choose 0
 advance 12 180
 regions
 click act 1
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -68,7 +66,6 @@ advance 12 180
 regions
 
 click act contemplate
-choose 0
 advance 12 180
 expect-state texts "watching me"
 expect-no-outcome dialogue_trigger

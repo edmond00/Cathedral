@@ -30,7 +30,6 @@ click think "wolf"
 choose ripelore
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
@@ -50,7 +49,6 @@ click think "wolf"
 choose beast_sense
 advance 12 180
 click act 0
-choose 0
 advance 12 180
 click continue
 advance 12 180
