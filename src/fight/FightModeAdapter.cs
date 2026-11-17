@@ -656,19 +656,7 @@ public class FightModeAdapter
             }
             if (y == FightModeUI.RunButtonRow)
             {
-                // Survival Instinct lifts the once-per-turn limit on the runaway check, so a
-                // failed roll can be attempted again for as long as the turn lasts.
-                bool mayRetry = active.ActiveEffects.Any(e => e.AllowsRunawayRetry);
-                if (_state.RunUsedThisTurn && !mayRetry) return;
-                if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
-                {
-                    _state.RunUsedThisTurn = true;
-                    ExecuteAction(new Actions.RunawayAction(active));
-                }
-                else
-                {
-                    _state.AddLog("Must reach the exit tile (⎆) to run away.");
-                }
+                TryRunaway(active);
                 return;
             }
 
@@ -994,15 +982,32 @@ public class FightModeAdapter
         }
         if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R)
         {
-            if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
-                ExecuteAction(new Actions.RunawayAction(active));
-            else
-                _state.AddLog("Must reach the exit tile (⎆) to run away.");
+            TryRunaway(active);
             return;
         }
         // ESC is routed through TryCancelSelection by the launcher, not handled here — see that
         // method. The log is not scrollable any more (it shows the most recent lines and nothing
         // else), so PageUp/PageDown are gone with it.
+    }
+
+    /// <summary>
+    /// The runaway attempt, for the RUN button and the R key alike. Once per turn unless a state
+    /// lifts the limit (Survival Instinct), and only from the exit tile. The key used to skip the
+    /// once-per-turn test, so a failed roll could be retried by pressing R again.
+    /// </summary>
+    private void TryRunaway(Fighter active)
+    {
+        bool mayRetry = active.ActiveEffects.Any(e => e.AllowsRunawayRetry);
+        if (_state.RunUsedThisTurn && !mayRetry) return;
+        if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
+        {
+            _state.RunUsedThisTurn = true;
+            ExecuteAction(new Actions.RunawayAction(active));
+        }
+        else
+        {
+            _state.AddLog("Must reach the exit tile (⎆) to run away.");
+        }
     }
 
     /// <summary>

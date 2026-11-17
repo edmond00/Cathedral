@@ -3225,9 +3225,12 @@ public class LocationTravelGameController : IDisposable
         // --no-encounters skips the roll entirely, for scripted runs that are testing something else.
         if (Config.Debug.NoEncounters) return;
 
+        // The nose's avoidance scales every hazard's chance, the same factor the route
+        // forecast shows (EncounterAvoidanceStat.ChanceFactorFor).
+        double encounterFactor = EncounterAvoidanceStat.ChanceFactorFor(_protagonist);
         foreach (var enc in biomeInfo.Encounters)
         {
-            if (_travelRng.NextDouble() < enc.ChancePerCell)
+            if (_travelRng.NextDouble() < enc.ChancePerCell * encounterFactor)
             {
                 StartTravelEncounter(enc.CreatureName);
                 break;

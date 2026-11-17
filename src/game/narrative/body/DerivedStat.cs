@@ -129,33 +129,78 @@ public abstract class DerivedStat
                         bodyPartId ??= bp.Id;
         }
 
-        // Check for disabling wounds
-        bool disabled = member.Wounds.Any(w =>
-            (organPartId != null && w.AffectsOrganPart(organPartId, organId ?? "", bodyPartId ?? "")
-                                 && w.Handicap == WoundHandicap.High)
-         || (organId    != null && organPartId == null
-                                 && w.AffectsOrgan(organId, bodyPartId ?? "")
-                                 && w.Handicap == WoundHandicap.High)
-         || (bodyPartId != null && organId == null && organPartId == null
-                                 && w.AffectsBodyPart(bodyPartId)
-                                 && w.Handicap == WoundHandicap.High));
+        // A wound aimed at the source itself (or, for an organ part, at its organ; for an organ, at
+        // its region — the downward reach AffectsOrganPart / AffectsOrgan already encode).
+        bool Direct(WoundInstance w) =>
+            organPartId != null ? w.AffectsOrganPart(organPartId, organId ?? "", bodyPartId ?? "")
+          : organId     != null ? w.AffectsOrgan(organId, bodyPartId ?? "")
+          : bodyPartId  != null && w.AffectsBodyPart(bodyPartId);
 
-        if (disabled) return int.MinValue;
+        if (member.Wounds.Any(w => w.Handicap == WoundHandicap.High && Direct(w))) return int.MinValue;
+        int penalty = member.Wounds.Count(w => w.Handicap == WoundHandicap.Medium && Direct(w));
 
-        int rawScore = GetSourceScore(member);
+        // An organ part has nothing below it.
+        if (organPartId != null) return GetSourceScore(member) - penalty;
 
-        // Penalty from medium-handicap wounds (Low/wildcard wounds have no organ effect)
-        int penalty = member.Wounds.Count(w =>
-            (organPartId != null && w.AffectsOrganPart(organPartId, organId ?? "", bodyPartId ?? "")
-                                 && w.Handicap == WoundHandicap.Medium)
-         || (organId    != null && organPartId == null
-                                 && w.AffectsOrgan(organId, bodyPartId ?? "")
-                                 && w.Handicap == WoundHandicap.Medium)
-         || (bodyPartId != null && organId == null && organPartId == null
-                                 && w.AffectsBodyPart(bodyPartId)
-                                 && w.Handicap == WoundHandicap.Medium));
+        // An organ's score is the sum of its parts and a region's the sum of its organs, so a
+        // wound to a part reaches the whole: the effective score is summed from what each
+        // component has left. A part disabled by a High wound gives nothing, each Medium wound on
+        // it takes one, and a component never counts below nothing. Only when every component is
+        // down is the whole disabled. Before, a wound on one part of a paired organ (a pierced
+        // left eye, a broken arm) never touched a value drawn from the organ or the region.
+        if (organId != null)
+        {
+            var organ = member.GetOrganById(organId);
+            if (organ == null) return GetSourceScore(member) - penalty;
+            var (sum, allDown) = OrganRemainder(member, organ, bodyPartId ?? "", directOnly: true);
+            return allDown ? int.MinValue : sum - penalty;
+        }
 
-        return rawScore - penalty;
+        if (bodyPartId != null)
+        {
+            var region = member.GetBodyPartById(bodyPartId);
+            if (region == null || region.Organs.Count == 0) return GetSourceScore(member) - penalty;
+            int sum = 0;
+            bool allDown = true;
+            foreach (var organ in region.Organs)
+            {
+                var (rest, down) = OrganRemainder(member, organ, bodyPartId, directOnly: false);
+                if (!down) { allDown = false; sum += Math.Max(0, rest); }
+            }
+            return allDown ? int.MinValue : sum - penalty;
+        }
+
+        return GetSourceScore(member) - penalty;
+    }
+
+    /// <summary>
+    /// What an organ has left once the wounds on its parts are counted: the sum of each part's
+    /// score less its Medium wounds (never below 0), a part under a High wound giving nothing.
+    /// With <paramref name="directOnly"/> false the wounds aimed at the organ itself count too
+    /// (a High one downs it, each Medium one takes one) — for a region summing its organs; an
+    /// organ-sourced stat counts those itself. Region-aimed wounds are never counted here.
+    /// Returns down = true when nothing of the organ remains usable.
+    /// </summary>
+    private static (int Sum, bool Down) OrganRemainder(PartyMember member, Organ organ, string bodyPartId, bool directOnly)
+    {
+        bool AtOrgan(WoundInstance w) => w.TargetKind == WoundTargetKind.Organ && w.TargetId == organ.Id;
+        if (!directOnly && member.Wounds.Any(w => w.Handicap == WoundHandicap.High && AtOrgan(w)))
+            return (0, true);
+
+        if (organ.Parts.Count == 0) return (organ.Score, false);
+
+        int sum = 0;
+        bool anyUp = false;
+        foreach (var part in organ.Parts)
+        {
+            bool AtPart(WoundInstance w) => w.TargetKind == WoundTargetKind.OrganPart && w.TargetId == part.Id;
+            if (member.Wounds.Any(w => w.Handicap == WoundHandicap.High && AtPart(w))) continue;
+            anyUp = true;
+            sum += Math.Max(0, part.Score - member.Wounds.Count(w => w.Handicap == WoundHandicap.Medium && AtPart(w)));
+        }
+        if (!anyUp) return (0, true);
+        if (!directOnly) sum -= member.Wounds.Count(w => w.Handicap == WoundHandicap.Medium && AtOrgan(w));
+        return (sum, false);
     }
 
     /// <summary>

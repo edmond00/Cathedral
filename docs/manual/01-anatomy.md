@@ -292,16 +292,25 @@ A **wound** is one injury on one body, of a fixed kind from the game's list of w
 
 ### Which wounds count against a value
 
-A wound counts against a derived value only if it hits the value's source, or a larger part that contains it, as follows:
+A wound counts against a derived value if it hits the value's source, a larger part that contains
+it, or a smaller part inside it:
 
 | Value drawn from | Wounds that count against it |
 |---|---|
 | an organ part | wounds to that part, or to its whole organ |
-| an organ | wounds to that organ, or to its whole region |
-| a region | wounds to that whole region |
+| an organ | wounds to that organ or its whole region, and wounds to any of its parts |
+| a region | wounds to that whole region, and wounds to any of its organs or their parts |
 
-1. A wound to one part of a paired organ (one eye, one arm) does not count against a value drawn from the whole organ.
-2. A wound to one organ does not count against a value drawn from its region.
+**Rules**
+
+1. A wound to the source itself, or to a larger part containing it, works as the severity table says: a High wound switches the source off, a Medium wound gives −1.
+2. A wound to a smaller part inside the source lowers only that part's share. An organ's score is the sum of its parts, and a region's the sum of its organs, so the effective score is summed from what each part has left.
+3. A part under a High wound adds nothing to the sum. Each Medium wound on a part takes 1 from its share. A part's share never falls below 0.
+4. The source is switched off only when every part inside it is switched off.
+
+**Example.** The eyes are two parts, each of score 2, so the eyes score 4. A High wound to the left
+eye switches the left eye off. Values drawn from the left eye fall to their worst value. Values drawn
+from the eyes use an effective score of 2, the right eye's share.
 
 ### Health and death
 
