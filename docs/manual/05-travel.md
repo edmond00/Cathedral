@@ -1,362 +1,405 @@
-# V. Of Travel
+# V. Travel
 
-The world is a sphere divided into cells. Each cell bears a **biome**, and some cells bear a
-**location** besides. All movement between places is movement across this sphere, and every such
-movement is paid for three times over: in days, in vital heat, and in the risk of what is met on the
+The world is a sphere divided into cells. Travel is movement from one cell to another, and it costs
+days, vital heat (the energy the body draws from its humors) and the risk of meeting danger on the
 way.
 
-## 1. The choosing of a world
+**In short**
 
-The sphere is not one sphere but many. Every world the game can build is settled entire by a single
-number — its terrain, where each location falls upon it, the cost of every edge between two cells,
-and the people who will be found inside each place — so that two travellers given the same number
-walk the same ground, and no part of a world is decided after the fact.
+1. A destination can be set only within the travel radius, which grows with the lower limbs score.
+2. Each cell crossed costs days and vital heat according to its biome; mountain costs 12 days a cell, plain 5.
+3. Each cell crossed can bring an encounter, at a chance set by its biome.
+4. Vital heat is paid from the humor queues while walking; when every queue is all black bile, the character dies of starvation.
+5. The calendar moves only when a journey ends, when hired work ends, and when night turns to dawn during a visit.
+6. The party holds at most 1 companion per point of heart score.
 
-That number is not asked for directly. Beyond the world hangs a further sphere, of stars, and among
-the stars are **three hundred and eighty-three moons**. Each moon stands for one world and for
-nothing else; each bears a name, and the name, the moon and the world beneath it are fixed for all
-players and all time. The sky is not drawn from the world's own number — were it so, a moon would
-cease to be itself in the instant it was taken — but from a constant, so that the sky above one
-world is the sky above every other.
+## 1. Choosing a world
 
-A run begins by taking one moon out of that sky. Until it is taken, no world exists: the sphere is
-unmade, and what stands in its place is the star-field alone. Taking it settles the number, and the
-world is generated from it before a protagonist is composed (Chapter I, §9). Nothing is spent by
-looking; a choice may be set down again without cost, since nothing has yet been made.
+Every world is generated from a single number, and the world is chosen by picking a moon.
 
-**The moon of the world one stands upon is absent from that world's sky.** A traveller may count
-three hundred and eighty-two moons overhead and never the one beneath their feet. The same holds on
-returning to a world set aside and taken up again: its moon is struck from its own sky for as long
-as it is inhabited.
+**Rules**
 
-## 2. The disposition of a world
+1. One number fixes the whole world: its terrain, where each location stands, the cost of every step between two cells, and the people inside each place.
+2. Two players given the same number get the same world, and no part of it is decided later.
+3. The number is not entered directly; it is chosen by picking one of **383 moons** in a sky of stars.
+4. Each moon stands for one world, and each has a name.
+5. The name, the moon and the world under it are the same for every player and never change.
+6. The sky is generated from a fixed constant, not from the world's number.
+7. Reason: a sky generated from the world's number would rearrange itself the moment a moon was picked.
+8. A run begins by picking a moon; until then no world exists.
+9. Picking a moon fixes the number, and the world is generated before the protagonist is made ([Chapter I §9](01-anatomy.md#9-creating-a-protagonist)).
+10. Looking costs nothing, and a pick can be undone at no cost, since nothing has been made yet.
+11. The moon of the world the character stands on is missing from that world's sky, so 382 moons are visible.
+12. The same holds when returning to a world that was set aside: its moon is missing from its own sky while it is played.
 
-The number that settles a world settles more than where its land falls. It settles the **disposition**
-of that world: which of twenty manners the sphere is composed after.
+## 2. The kind of world
 
-The terrain is read out of four fields of noise laid over the sphere — one governing water, one
-relief, one the cover of the land, one heat — and a disposition is a set of thresholds and scales
-those fields are read through, together with how thickly the land is settled. It moves six things:
+Each world is built in one of **20 dispositions** (styles of world), chosen by the world's number.
 
-| | |
+**Rules**
+
+1. The terrain is read from four noise fields laid over the sphere: one for water, one for relief, one for land cover, one for heat.
+2. A disposition is a set of thresholds and scales for reading those fields, plus how thickly the land is settled.
+3. A disposition sets the six things in the table below.
+4. The disposition follows from the world's number by a fixed rule, so the moon that names a world also names its disposition.
+5. The disposition is known before the world is made; two players who pick the same moon get the same kind of ground.
+6. A disposition changes only how the sphere is laid out; it changes no cost, no hazard chance and no body threshold.
+7. Every disposition is checked to give a minimum of walkable land, a minimum of settled country, and a single landmass with enough settled country to live on.
+8. Reason for rule 7: a world that failed any of these would generate correctly but be unplayable, so the bounds are checked rather than assumed.
+
+| Setting | What it decides |
 |---|---|
-| **The waterline** | how much of the sphere is sea at all, and therefore how much land there is to walk upon |
-| **The reach of the shore** | how much of a coastline reads as shore rather than as the country behind it, and how far below the waterline the shallow sea gives way to deep ocean |
-| **The treeline** | where the ground turns to mountain, and where mountain turns to bare peak |
-| **The temper of the land** | what proportion of the walkable ground is forest, and how thickly the settled country spreads over the rest |
-| **The size of the features** | how broad a continent is before the sea interrupts it, and how long a range of mountains runs |
-| **The temper of the air** | how far the whole world is set toward heat or toward cold |
+| Waterline | how much of the sphere is sea, and so how much land there is |
+| Reach of the shore | how much of a coastline counts as shore rather than inland country, and how far below the waterline shallow sea turns to deep ocean |
+| Treeline | where ground turns to mountain, and where mountain turns to bare peak |
+| Land cover | what share of walkable ground is forest, and how thickly settled country spreads over the rest |
+| Size of features | how broad a continent is before the sea breaks it, and how long a mountain range runs |
+| Climate | how far the whole world is shifted toward heat or cold |
 
-The consequences reach every other rule in this chapter. A high waterline leaves narrow land between
-long arms of sea, and since **no route on foot may cross water** ([§3](#3-the-compass-of-a-stride)),
-a world so composed is a world of separated countries. A low treeline puts mountain and peak across
-the middle of it, and mountain is crossed at twelve days to the cell against a plain's five
-([§4](#4-the-price-of-a-crossing)) — such a world is not smaller than another, but every journey
-across it is longer, and dearer in heat, and met with more of what lives at that height. A sparsely
-settled disposition spreads its country thinly about each of history's places, and a thickly settled
-one far wider ([§2a](#2a-the-settled-country)).
+**Example.** A high waterline leaves narrow land between long arms of sea. No route on foot crosses
+water (§3), so such a world is split into separate countries. A low treeline puts mountain and peak
+across the middle of the land. Mountain costs 12 days a cell against plain's 5 (§4), so every journey
+there is longer, costs more heat and meets more mountain hazards. A sparsely settled disposition
+spreads country thinly around each historical place; a thickly settled one spreads it far wider
+(§2a). A mountain still costs 12 days in every world; the disposition decides only how much mountain
+there is.
 
-Two things about a disposition are worth stating plainly, because both are easy to assume otherwise:
+### Shores
 
-- **It is fixed by the world, not drawn during play.** The disposition follows from the world's own
-  number by a settled rule, so the moon that names a world names its disposition also, and it is
-  known before the world is made. Two travellers who take the same moon walk not merely the same
-  ground but the same kind of ground.
-- **It changes the composition of the sphere and nothing else.** No cost, no hazard chance, no
-  threshold of the body is touched by it. A mountain is crossed at twelve days in every world; a
-  disposition decides only how much mountain there is.
+A shore (coast) is the land cell at the edge of the sea.
 
-Every disposition is a world that can be lived in. Each is held to a floor of land to walk upon, of
-settled country across the world, and of a body of land rich enough in it to spend a life in. A world that failed
-any of these would generate perfectly well and simply be unplayable, which is why the bounds are
-checked rather than trusted.
+**Rules**
 
-**A shore is always upon the water.** The three fields of noise settle a shore by a threshold, as
-they settle everything else — a cell reads as shore when its water reading stands a little above the
-waterline — and a threshold upon a field is not the same thing as a distance from the sea. Where the
-field is broad and its slopes gentle, as it is in a world of vast continents, that little band
-reaches a great way inland, and would leave beaches in country that has never seen water. So the
-reckoning is made twice: the noise proposes a shore, and then every cell that borders neither sea nor
-ocean is reduced to ordinary plain. **The converse holds as well: every cell of land that borders the
-sea is shore**, whatever the noise had made of it — a range or a wood that runs down to the water
-ends in a shore, and in cold country that shore is sea ice. Nothing else ever touches the sea. **What a disposition can widen is therefore how completely a
-coastline reads as coast, never how far the coast reaches from the coastline** — a shore is as long
-as the shore is, and a world wanting more of it must break its land up rather than raise a threshold.
+1. The noise fields first propose shore wherever the water reading stands a little above the waterline.
+2. Every proposed shore cell that borders neither sea nor ocean is then turned into plain.
+3. Every land cell that borders the sea becomes shore, whatever the noise made of it.
+4. A mountain range or forest that reaches the water therefore ends in a shore; in cold country that shore is sea ice.
+5. Only shore and sea ice ever border the sea.
+6. A disposition can change how completely a coastline counts as shore, never how far shore reaches inland.
+7. Reason: in a world of large continents the water field slopes gently, and without rule 2 the shore band would put beaches far inland.
 
-**Heat and cold remake the ground.** The fourth field is read last, after the other three have
-settled what a cell would be in a temperate world, and it changes only cells whose reading crosses a
-threshold. Above **0.48** a cell is hot country: mountain and peak become **hot steppe**, plain
-becomes **desert**, forest becomes **jungle**. Below **−0.48** it is cold country: peak becomes
-**glacier**, mountain **snowfield**, plain **cold steppe**, and a shore becomes **sea ice**.
-Whatever else stands in hot or cold country keeps its temperate nature — a hot shore is a shore, a cold
-forest a forest.
+### Heat and cold
 
-Two further rules settle the edges. Wherever temperate plain would touch desert, it
-becomes **canyon**, the broken ground where grass gives out on sand, as the coast lies between land
-and sea. And the
-sea beside sea ice may freeze in its turn, ring upon ring outward, **each ring wanting 0.08 more cold
-than the one inside it**: a world barely cold has an iced shore, and only a world far below the
-threshold has a frozen sea, which is walked upon like land.
+The heat field is read last and turns temperate ground into hot or cold ground.
 
-Ten of the twenty dispositions are temperate, their temper set at nothing; even these hold a little
-hot and a little cold country wherever the field alone crosses a threshold — some seven to nine
-pockets of each in a world, a few parts in the hundred of its land. The other ten are set hot or
-cold, by between **0.62** and **0.80**, and are hot or cold country over half their land and often
-far more. Heat and cold do not empty the land: hot steppe, jungle, cold steppe and snowfield are
-settled after their own fashion, and only the barren grounds — desert, canyon, glacier and sea ice —
-hold nothing but the isolated places of history ([§2a](#2a-the-settled-country)).
+**Rules**
 
-**A traveller is never set down where nothing can be reached.** Since no route on foot may cross
-water, the body of land one wakes upon is the whole of the world that life will be lived in. The
-waking place is therefore drawn, in this order, from the first of three sets that holds any cell at
-all:
+1. A cell whose heat reading is above **0.48** is hot country.
+2. A cell whose heat reading is below **−0.48** is cold country.
+3. Hot and cold country change the ground as shown in the table; every other ground keeps its temperate type (a hot shore is a shore, a cold forest is a forest).
+4. Any temperate plain that touches desert becomes **canyon**.
+5. Sea next to sea ice freezes into sea ice too, ring by ring outward.
+6. Each ring needs 0.08 more cold than the ring inside it: ring 1 freezes below −0.56, ring 2 below −0.64, and so on.
+7. A frozen sea is sea ice, and is walked on like land.
+8. A barely cold world therefore has an iced shore; only a world far below −0.48 has a frozen sea.
+9. 10 of the 20 dispositions are temperate (climate shift 0); each still has about 7 to 9 small pockets each of hot and cold country, a few per cent of its land.
+10. The other 10 are shifted hot or cold by between **0.62** and **0.80**, and are hot or cold over half their land or more.
+11. Hot steppe, jungle, cold steppe and snowfield are settled in their own way.
+12. Desert, canyon, glacier and sea ice are **barren**: they hold nothing but isolated historical places (§2a).
 
-1. **open ground beside the settled country** — a livable cell or a shore, bearing no location of its
-   own, that borders a city, farmland, a settlement or stock;
-2. open ground bearing no location, anywhere, for a world whose history left it unsettled;
-3. any land whatever, rather than a game that will not begin.
+| Temperate ground | In hot country | In cold country |
+|---|---|---|
+| Plain | desert | cold steppe |
+| Mountain | hot steppe | snowfield |
+| Peak | hot steppe | glacier |
+| Forest | jungle | forest |
+| Shore | shore | sea ice |
 
-Waking beside settled country is what ensures both that there is somewhere to go and that the body
-of land one stands on has people upon it.
+### Where the character starts
 
-## 2a. The settled country
+The starting cell is always on land connected to settled country.
 
-The land is peopled by its history, and the people are laid down in two passes, both settled by the
-world's number like everything else.
+**Rules**
 
-**History's places stand on cells of their own.** Every place a world's history founds — a citadel, a
-castle, a temple, a mine, and the rest — is founded upon one cell of its region, chosen among the
-cells whose ground its kind can stand on:
+1. No route on foot crosses water, so the landmass the character starts on is the whole of the world they can reach.
+2. The starting cell is picked from the first of these three sets that has any cell in it.
+3. Set 1: open ground (a livable cell or a shore with no location on it) that borders a city, farmland, a settlement or stock.
+4. Set 2: open ground with no location, anywhere, for a world whose history left it unsettled.
+5. Set 3: any land at all, so that the game can always begin.
+6. Reason: starting beside settled country ensures there is somewhere to go and that the landmass has people on it.
 
-| Kind of place | Stands on |
-|---|---|
-| **Urban** — citadel, port, palace, imperial school | plain, mountain, hot steppe or cold steppe, never jungle or snowfield; a port by the water |
-| **Rural** — castle, fortress, temple, imperial temple, commandery | any livable ground; a commandery by the water |
-| **Isolated** — monastery, mine, sanctuary, burial field, pyramid | the ground of its kind, livable or barren |
+## 2a. Settled country
 
-A kind no cell of a region can carry is never founded there. Every realm that rises upon free land
-raises a **castle** for its founder soon after its founding. A place that history ruins remains upon
-its cell as a **ruin**, which is isolated whatever it once was.
+The land is settled by the world's history in two passes, both fixed by the world's number.
 
-**The country then spreads from them.** **Livable ground** is plain, mountain, hot steppe, cold steppe,
-jungle and snowfield; forest is left wild, and the barren grounds are not settled. From every place
-still standing, settled country spreads outward over free livable cells:
+### Historical places
 
-- an urban place first raises **one to three city cells** about itself, or spreads farmland directly
-  where no city ground is free beside it;
-- from each such city, and from every rural place, **farmland** spreads in rings, two or three rings
-  deep, each cell putting out one to three more upon the free livable cells beside it;
-- **one cell of farmland in three** becomes instead a **settlement** or a place where **stock** is
-  kept, the two in equal measure where that ground keeps stock;
-- **no country crosses a border**: every cell a place's country takes lies in a region held by the
-  realm that holds the place itself, so a place upon a frontier spreads only on its own side;
-- every count of one to three is scaled by the disposition's density and held between one and five,
-  and only the want of free livable ground within the realm ever stops the spread. Isolated places
-  and ruins spread nothing.
+**Rules**
 
-What grows, who lives, and what is kept is a matter of the ground: each livable biome has its own
-crops, its own manner of settlement and its own stock, and jungle and snowfield keep none. The ground
-beneath a location is never changed by it — a field on the cold steppe is crossed as cold steppe —
-and a location built upon a cell is built in the materials of that ground.
+1. Every place the world's history founds (a citadel, a castle, a temple, a mine and so on) stands on one cell of its region.
+2. That cell is chosen among the cells whose ground its kind of place can stand on, as shown in the table.
+3. A kind of place that no cell of a region can carry is never founded there.
+4. Every realm that rises on free land builds a **castle** for its founder soon after it is founded.
+5. A place that history ruins stays on its cell as a **ruin**, which counts as isolated whatever it was before.
 
-## 3. The compass of a stride
+| Kind of place | Examples | Stands on |
+|---|---|---|
+| Urban | citadel, port, palace, imperial school | plain, mountain, hot steppe or cold steppe; never jungle or snowfield; a port beside water |
+| Rural | castle, fortress, temple, imperial temple, commandery | any livable ground; a commandery beside water |
+| Isolated | monastery, mine, sanctuary, burial field, pyramid | the ground its kind needs, livable or barren |
 
-A destination may be set only within a radius of the traveller's present position, measured as a
-straight chord across the sphere and not as a count of steps. That radius is the **lower limbs'**
-measure: **4.0 units at nought, rising linearly to 14.8 at the region's ceiling** — which is
-something on the order of five cells at the weakest and twenty at the strongest, an adjacent cell
-lying about three quarters of a unit away.
+### How settled country spreads
 
-Within that compass, as many as **four waypoints** may be set, and a route is found through them.
-The route need not be direct; the waypoints are the traveller's insistence upon a particular way
-round.
+**Livable ground** is plain, mountain, hot steppe, cold steppe, jungle and snowfield. Forest stays
+wild, and barren ground is never settled.
 
-**The sea and the ocean forbid travel on foot.** They are registered like any other biome — their
-durations and hazards are recorded against the day some other means of crossing exists — but no
-route on foot may enter them.
+**Rules**
 
-## 4. The price of a crossing
+1. Settled country spreads outward from every place still standing, over free livable cells.
+2. An urban place first builds **1 to 3 city cells** around itself; where no city ground is free beside it, it spreads farmland directly.
+3. From each city cell and from every rural place, **farmland** spreads in rings 2 or 3 deep, each cell adding 1 to 3 more on the free livable cells beside it.
+4. **1 farmland cell in 3** becomes a **settlement** or a place where **stock** is kept instead, in equal shares where that ground keeps stock.
+5. Settled country never crosses a border: every cell it takes lies in a region held by the realm that holds the place.
+6. A place on a frontier therefore spreads only on its own side.
+7. Every count of 1 to 3 is scaled by the disposition's density and kept between 1 and 5.
+8. Only a lack of free livable ground inside the realm stops the spread.
+9. Isolated places and ruins spread nothing.
+10. Each livable biome has its own crops, its own kind of settlement and its own stock; jungle and snowfield keep no stock.
+11. A location never changes the ground under it: a field on cold steppe is crossed as cold steppe.
+12. A location is built in the materials of the ground it stands on.
 
-Each biome declares what one of its cells costs to cross, and the whole is summed cell by cell along
-the route. A cell bearing a location is crossed as the biome beneath it.
+## 3. Travel radius and waypoints
 
-| Biome | Days per cell | Heat per cell | Hazards met, per cell |
+A destination can be set only within a fixed distance of the character's position.
+
+**Rules**
+
+1. The radius is the **Max Travel Distance**, a value derived from the lower limbs score (the summed score of the legs and feet; see [Chapter I §6](01-anatomy.md#6-derived-values)).
+2. Max Travel Distance runs in a straight line from **4.0 units** at a lower limbs score of 0 to **14.8 units** at the region's maximum score (10 for a human).
+3. Distance is measured as a straight line through the sphere, not as a count of steps.
+4. Neighbouring cells are about 0.74 units apart, so the radius reaches about 5 cells at score 0 and about 20 at the maximum.
+5. Up to **4 waypoints** can be set inside the radius, and the route is found through them in order.
+6. Waypoints let the character insist on a particular way round instead of the shortest route.
+7. No route on foot can enter **sea** or **ocean**.
+
+| Lower limbs score (human) | 0 | 2 | 4 | 6 | 8 | 10 |
+|---|---|---|---|---|---|---|
+| Radius (units) | 4.0 | 6.2 | 8.3 | 10.5 | 12.6 | 14.8 |
+| About (cells) | 5 | 8 | 11 | 14 | 17 | 20 |
+
+## 4. The cost of a journey
+
+Each biome sets what one of its cells costs to cross, and the route's cost is the sum over its cells.
+
+**Rules**
+
+1. Every cell entered is charged; the cell the character starts on is not.
+2. A cell with a location on it is crossed as the biome under it.
+3. A biome not in the table costs 6 days and 1 vital heat per cell, with no hazard.
+4. Sea and ocean have values recorded (in italics below), but no route on foot enters them.
+5. A single cell costs several days, and a long journey runs into hundreds of days; time is the main cost of travel.
+
+| Biome | Days per cell | Vital heat per cell | Hazards, chance per cell |
 |---|---|---|---|
 | Plain | 5 | 2 | wolf 2 %, bandit 1 % |
 | Coast | 6 | 3 | smuggler 1 % |
 | Forest | 8 | 4 | wolf 6 %, bear 2 %, brigand 2 % |
 | Mountain | 12 | 6 | bear 3 %, rockfall 2 % |
 | Peak | 18 | 10 | blizzard 5 %, ice wraith 1 % |
-| Canyon | 8 | 2 | puma 3 %, rockfall 2 % |
-| Desert | 9 | 1 | hyena 3 %, sandstorm 3 % |
-| Hot steppe | 11 | 2 | lion 3 %, hyena 3 % |
-| Jungle | 11 | 2 | jaguar 4 %, tiger 2 %, fever 3 % |
+| Canyon | 8 | 2 | puma 3 %, rockfall 2 %, carnotaurus 2 % |
+| Desert | 9 | 1 | hyena 3 %, sandstorm 3 %, giant monitor 2 % |
+| Hot steppe | 11 | 2 | lion 3 %, hyena 3 %, triceratops 2 % |
+| Jungle | 11 | 2 | jaguar 4 %, tiger 2 %, fever 3 %, crocodile 2 % |
 | Cold steppe | 6 | 5 | white wolf 3 %, blizzard 2 % |
 | Sea ice | 8 | 8 | white bear 3 %, thin ice 2 % |
 | Snowfield | 13 | 9 | snow leopard 2 %, blizzard 4 % |
 | Glacier | 20 | 14 | crevasse 4 %, blizzard 5 % |
-| *(Sea)* | 10 | 8 | storm 3 %, pirate 2 % |
-| *(Ocean)* | 14 | 16 | leviathan 1 %, storm 4 % |
+| *Sea* | *10* | *8* | *storm 3 %, pirate 2 %* |
+| *Ocean* | *14* | *16* | *leviathan 1 %, storm 4 %* |
 
-A biome not registered above is crossed at six days and one heat, without hazard.
+**Example.** A route of 3 forest cells and 2 mountain cells costs 3 × 8 + 2 × 12 = 48 days and
+3 × 4 + 2 × 6 = 24 vital heat.
 
-The durations are calibrated so that a single hop costs several days and a journey of any length
-runs into the hundreds. Time is the principal expense of travel, and the reason a journey is not
-undertaken lightly.
+## 5. Encounters
 
-## 5. Hazards
+An encounter is a hazard met on the way: a creature, a person or an event such as a rockfall.
 
-Each hazard's stated chance is the **independent** probability that it fires upon crossing **one**
-cell of that biome. The chance of meeting a given creature at all across a route is therefore
+**Rules**
 
-> 1 − ∏(1 − p) over every cell of the route
+1. Each hazard's chance is the separate probability that it happens when **one** cell of that biome is crossed.
+2. The hazards of a cell are checked in table order, and the first that happens is the only one met in that cell.
+3. Over a whole route, the chance of meeting a given hazard is 1 − the product of (1 − p) over every cell of the route, where p is its chance per cell.
+4. The chance of meeting anything at all is the same product taken over every hazard.
+5. A short crossing of forest is a modest risk; a long one is not.
+6. The nose lowers the chances: its **Encounter Avoidance**, a value derived from the nose score ([Chapter I §6](01-anatomy.md#6-derived-values)), is 10 % per point of nose score.
+7. Every per-cell chance is multiplied by (1 − Encounter Avoidance) before the product is taken.
+8. An encounter stops the journey in the cell where it happens.
 
-and the chance of meeting anything at all is the same product taken across every creature. A short
-crossing of a forest is a modest risk; a long one is not.
+| Nose score | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| Encounter Avoidance | 0 % | 10 % | 20 % | 30 % |
+| Forest wolf chance per cell (6 %) | 6 % | 5.4 % | 4.8 % | 4.2 % |
 
-The **nose** reduces this. Its measure of avoidance — ten per cent per level of the organ — scales
-down every per-cell chance before the product is taken, a keen nose smelling danger ahead and
-steering the party clear.
+## 6. Paying heat, and starvation
 
-An encounter interrupts the journey where it occurs.
+The vital heat a route costs is paid while walking, not on arrival.
 
-## 6. Heat, and starvation
+**Rules**
 
-The heat a route demands is **paid as the route is walked, not on reaching the end of it.** Each leg
-of the journey opens a debt, and the traveller halts where they stand until it is met, consuming
-humors in rotation — hepar, paunch, pulmones, spleen, and round again — one at a time (see [Chapter
-III](03-humors.md)). The journey resumes when the charge for that stretch is settled, and the next
-stretch opens its own.
-
-This matters for two reasons. The reserve is drawn down **continuously**, so a body may set out with
-enough and run out halfway. And the consumption drives the queues forward the whole way, so a
-traveller arrives with different humors at the back of each queue than they set out with — which is
-to say a long journey changes what may be spent upon the first roll made at the far end.
-
-A humor of **negative** heat, consumed against the debt, does not pay it. What it does is deepen the
-outstanding charge for the leg being crossed, so a body carrying poison or intoxication pays for its
-passage twice.
-
-And when every queue has gone critical — entirely black bile, nothing left to draw — **the debt
-cannot be paid and the traveller dies of starvation.** This is the ordinary way that a body allowed
-to sour in its humors is killed, and it is why the state of the queues is a thing to consult before
-setting out rather than after. The forecast of a route reports whether the queues as they now stand
-would carry the traveller to the end of it.
+1. Each cell entered adds its vital heat cost to a running debt.
+2. When the debt reaches 1 or more, the character stops where they stand until it is paid.
+3. The debt is paid by consuming humors one at a time, in rotation: hepar (liver), paunch, pulmones (lungs), spleen, then hepar again (see [Chapter III](03-humors.md)).
+4. Each humor consumed pays its own vital heat off the debt.
+5. A queue that is **critical** (holding nothing but black bile, the humor that carries no heat) is skipped in the rotation.
+6. A humor of 0 heat pays nothing; the queue still moves on.
+7. A humor of **negative** heat pays nothing and puts back on the debt up to its heat in what was already paid for the current stretch.
+8. A body carrying poison or intoxication therefore pays for its journey twice.
+9. When the debt is paid, walking resumes, and the next cells open a new debt.
+10. When every queue is critical, the debt cannot be paid and the character **dies of starvation**.
+11. Starvation is the usual way a body whose humors have soured is killed.
+12. The forecast of a route says whether the humor queues as they now stand would carry the character to its end.
+13. Reason for the forecast: the reserve is drawn down all the way, so a body can set out with enough and run out halfway.
+14. Consuming humors moves the queues the whole way, so the character arrives with different humors at the back of each queue; a long journey changes what can be spent on the first roll at the destination.
 
 ## 7. The calendar
 
-The world keeps a calendar of **days**, and the day is the unit every span is expressed in.
+The world counts time in **days**, and every span of time is given in days.
 
-**The calendar advances at exactly three occasions:** the completion of a journey, by the whole of
-its duration; the completion of a stint of hired work, by the days worked; and, within a visit, the
-period's passing from night into dawn, by one day each time it does. Every other act of narration,
-conversation and combat is free of it — a day may hold any amount of them.
+**Rules**
 
-The advance happens **before** the destination is built, so that anything the destination reckons
-against the calendar reckons against the post-journey date.
+1. The calendar moves on only at three moments.
+2. When a journey ends, it moves on by the journey's whole duration.
+3. When a stint of hired work ends, it moves on by the days worked ([Chapter VII §5](07-social.md#5-hired-work)).
+4. During a visit, it moves on by 1 day each time the period passes from night to dawn (§8).
+5. Narration, conversation and combat cost no days; a day can hold any number of them.
+6. The calendar moves on **before** the destination is built, so anything there that depends on the date uses the date after the journey.
 
-Two things are settled on the traveller's return to the map:
+### On returning to the map
 
-- **Wounds are swept for healing.** Those that have stood their term close, and the health they cost
-  is restored.
-- **Age is checked.** A body that has lived out its term dies of old age. The protagonist's term
-  ending here ends the run; a companion's is caught by the standing question of [§9](#9-companions-and-their-loss),
-  which needs no particular juncture to be asked at.
+Two checks are made, in this order, when the character returns to the map.
 
-The order is deliberate: healing restores what a wound took, and the term of life is itself
-shortened by a wound to the heart, so a heart wound that closed upon the journey must not still be
-counted against the term a moment later.
+1. **Wounds are checked for healing**: those that have lasted their healing time close, and the health they cost is restored.
+2. **Age is checked**: a body that has reached its lifetime (a heart-derived value, see [Chapter I §8](01-anatomy.md#8-age-and-lifespan)) dies of old age.
 
-A day turned within a visit settles neither: the sweep for healing and the reckoning of age wait for
-the return to the map like any other.
+**Rules**
 
-**This is the whole of what the map settles.** Wounds and spent humors are not waited for here — both
-are reckoned by a standing question, wherever the body happens to be ([Chapter I
-§7](01-anatomy.md#7-wounds)). Age is the one end of a life that keeps to a juncture, because the
-calendar keeps to one.
+1. If the protagonist dies of old age here, the run ends.
+2. A companion's death of age is caught by the standing check of §9, which can happen at any moment.
+3. Healing comes first because a heart wound shortens lifetime; a heart wound that closed during the journey must not still count against lifetime a moment later.
+4. A day passed during a visit triggers neither check; both wait for the next return to the map.
+5. These two checks are all the map settles.
+6. Wounds and spent humors are not waited for here; both are checked at any moment, wherever the body is ([Chapter I §7](01-anatomy.md#7-wounds)).
+7. Age is the only cause of death tied to a fixed moment, because the calendar itself moves only at fixed moments.
 
 ## 8. The periods of the day
 
-Within a day, six coarse **periods** are distinguished — dawn, morning, noon, afternoon, evening,
-night — and they cycle, night returning to dawn.
+A day is divided into six **periods**: dawn, morning, noon, afternoon, evening and night. After night
+comes dawn again.
 
-The period is not tracked continuously. **Each place has its own hour of arrival**, fixed for it
-once and for all and always one of the five periods of daylight, never night; every visit opens at
-that hour. Thereafter the period is moved only by acts that wait, and by failures that waste time
-(see [Chapter VI](06-narration.md)): sitting out an interval lasts until whichever of the five other
-periods the sitter chooses, once the sitting has succeeded — save when a will proposed it as a step
-of its course, when it lasts until the period that course needs, and nothing is chosen — and an act that waits for something to
-happen walks it forward a period at a time until the thing happens or the day is exhausted. A
-failure that wastes time advances it by one. Whichever moves it, a passage from night into dawn turns
-the calendar by a day ([§7](#7-the-calendar)). A routine is the exception, opening at the hour it was
-learned at (see [Chapter IX](09-routines.md)).
+### How the period moves
 
-Sitting out an interval requires a seat. Nearly every place has one to three in its open ground — a
-stump, a flat rock, a bench against a wall — and indoors any bench, stool, barrel or crate serves,
-so a store, a cellar or a chapel is as good a place to wait in as a square. A room without one, as
-most bedrooms and every passage are, admits no sitting out. Hiding requires a place of concealment
-instead.
+**Rules**
 
-**Night in another's house.** Where the body is trespassing in a building that has anybody to come
-home to it, a wait cannot run through the night. Sitting out, or a failure that wastes the hour, that
-brings the period to night brings the householder too: they come into the room and find the body
-there, and a wait chosen to last beyond the night stops at night instead. What follows is given in
-[Chapter VI §7](06-narration.md). Hiding brings nobody, concealment being the whole of its purpose.
+1. Each place has its own **hour of arrival**, fixed once and for all; it is always one of the 5 daylight periods, never night.
+2. Every visit to a place opens at its hour of arrival.
+3. A routine is the exception: it opens at the period it was learned in ([Chapter IX](09-routines.md)).
+4. After arrival, the period moves only through acts that wait and through failures that waste time ([Chapter VI](06-narration.md)).
+5. A successful wait (sitting out an interval) lasts until whichever of the other 5 periods the character chooses.
+6. When a will (a modus mentis that desires particular things; see [Chapter II §1](02-memory.md#1-what-a-modus-mentis-is)) proposed the wait as a step of its course, the wait lasts until the period the will needs, and nothing is chosen.
+7. An act that waits for something to happen moves the period forward one at a time, until the thing happens or the day runs out.
+8. A failure that wastes time moves the period forward by 1.
+9. Whatever moves it, passing from night to dawn moves the calendar on by 1 day (§7).
+10. A place's other periods can be reached only by waiting in it, or by a routine.
 
-The period matters because it settles the state of a place. Where each inhabitant of a location
-stands is decided by their schedule against the period; a building's entry is shut at night; and
-what may be attempted at all follows from both. A place's other periods are reached only by waiting
-in it, or by a routine.
+### Seats and hiding
 
-**A settled place is never found empty at its hour of arrival** while anyone can be spared to stand
-there. At that hour somebody is in the area a visit opens in: one of the inhabitants, drawn from the
-open ground, from a private room, from a shared hall or counter, or from wherever they were away to
-— but never the only keeper of a counter or a store, nor so as to leave a household's hall unmanned
-a second period of the day. A place of one or two inhabitants, each the sole keeper of something, may
-therefore still be found empty. The wild is under no such rule.
+**Rules**
 
-## 9. Companions, and their loss
+1. Sitting out an interval needs a seat.
+2. Nearly every place has 1 to 3 seats in its open ground, such as a stump, a flat rock or a bench against a wall.
+3. Indoors, any bench, stool, barrel or crate is a seat, so a store, a cellar or a chapel is as good for waiting as a square.
+4. A room without a seat, as most bedrooms and every passage are, allows no sitting out.
+5. Hiding needs a hiding place instead of a seat.
 
-The party is limited by the **heart's** measure — one companion per level of the organ. The limit is
-checked before a destination may be chosen, and a party over strength must be reduced before travel
-is possible.
+### Night in someone else's house
 
-A protagonist accepted straight out of composition, with a heart at one, sustains a single
-companion.
+**Rules**
 
-**A companion may die, and dies as any body does.** Three things end them, and they are the same
-three that end a protagonist:
+1. This applies when the character is trespassing in a building that someone lives in and comes home to.
+2. A wait there cannot run through the night.
+3. A sitting out, or a failure that wastes time, that brings the period to night also brings the householder: they enter the room and find the character.
+4. A wait chosen to last past night stops at night instead.
+5. What follows is in [Chapter VI §7](06-narration.md#7-crime-and-being-seen).
+6. Hiding brings nobody, since hiding is meant to avoid exactly that.
 
-- **Wounds**, when the hurts borne consume the health the frame affords (see [Chapter I
-  §7](01-anatomy.md#7-wounds));
-- **The humors**, when every queue has gone critical and exertion can no longer be paid for (see
-  [Chapter III §5](03-humors.md#5-black-bile));
-- **Age**, when the years lived reach the term the heart sets.
+### What the period decides
 
-The question is not asked at any particular juncture. It is standing, and answered from the state of
-the body itself at whatever moment it is put — so a companion who is killed is gone from the party
-at once, and not upon the next return to the map. The one exception is the length of a fight, which
-holds the whole party until it is decided; a companion who falls in one is taken from the party the
-moment it ends, and does not end it by falling ([Chapter VIII
-§8](08-fighting.md#9-the-ending-of-a-fight)).
+**Rules**
 
-The loss is **permanent**: they are struck from the party, they no longer count against the heart's
-limit, and nothing restores them. Where they died within a place, they leave a body in the area they
-fell in, on the same terms as any other death ([Chapter VI
-§11](06-narration.md#11-what-a-killing-leaves)) — a beast leaving what may be cut from it, a person
-leaving what they carried. Where they died upon the map, between places, there is no area to hold a
-body and none is left.
+1. Where each inhabitant of a place stands is decided by their schedule and the current period.
+2. A building's entrance is shut at night.
+3. What can be attempted in a place follows from both.
+4. A settled place is never empty at its hour of arrival while someone can be spared to be there.
+5. At that hour, someone is in the area the visit opens in: an inhabitant taken from the open ground, a private room, a shared hall or counter, or wherever they were away to.
+6. That person is never the only keeper of a counter or a store.
+7. That person is never taken so as to leave a household's hall unattended for a second period of the day.
+8. A place of 1 or 2 inhabitants, each the only keeper of something, can therefore still be found empty.
+9. The wild is not bound by rule 4.
+
+## 9. Companions and their loss
+
+The number of companions is limited by the heart.
+
+**Rules**
+
+1. The party holds at most 1 companion per point of heart score; this is the **Max Companions** value derived from the heart ([Chapter I §6](01-anatomy.md#6-derived-values)).
+2. The limit is checked before a destination can be chosen.
+3. A party over the limit must dismiss companions before it can travel.
+4. A protagonist accepted straight from character creation has a heart score of 1, and so can keep 1 companion.
+5. A companion dies the same three ways a protagonist does, listed in the table.
+6. Death is checked at every moment from the state of the body, so a companion who dies leaves the party at once, not on the next return to the map.
+7. A fight is the one exception: it holds the whole party until it ends, and a companion who falls in it leaves the party when it ends ([Chapter VIII §9](08-fighting.md#9-the-end-of-a-fight)).
+8. A companion's fall does not end a fight.
+9. Losing a companion is **permanent**: they leave the party, no longer count against the limit, and nothing brings them back.
+10. A companion who dies inside a place leaves a body in the area where they fell, like any other death ([Chapter VI §11](06-narration.md#11-what-a-killing-leaves)).
+11. A beast's body leaves what can be cut from it; a person's leaves what they carried.
+12. A companion who dies on the map, between places, leaves no body, since there is no area to hold one.
+
+| Cause of death | When it happens |
+|---|---|
+| Wounds | the wounds borne use up all the health the body has ([Chapter I §7](01-anatomy.md#7-wounds)) |
+| Humors | every queue is critical, so effort can no longer be paid for ([Chapter III §5](03-humors.md#5-black-bile)) |
+| Age | the days lived reach the lifetime the heart sets ([Chapter I §8](01-anatomy.md#8-age-and-lifespan)) |
 
 ## 10. Arrival
 
-On arrival the traveller enters the place. Where the cell bears a location, the location is built
-and its narration begins; where it bears only a biome, the biome is entered instead. Arriving
-somewhere therefore opens it — there is no separate act of entering, and a place already stood upon
-cannot be entered again without first leaving.
+Arriving at a cell enters it.
 
-What survives from a previous visit is treated in [Chapter VI
-§9](06-narration.md#9-what-a-place-remembers).
+**Rules**
+
+1. If the cell has a location, the location is built and its narration begins.
+2. If the cell has only a biome, the biome is entered instead.
+3. There is no separate act of entering a place.
+4. A place the character already stands on cannot be entered again without leaving first.
+5. What remains from an earlier visit is described in [Chapter VI §9](06-narration.md#9-what-a-place-remembers).
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| Biome | The type of ground of a cell, such as plain or forest; it sets the cell's travel cost and hazards |
+| Barren ground | Desert, canyon, glacier and sea ice: never settled, holding only isolated historical places |
+| Calendar | The count of days; it moves only when a journey or hired work ends, or when night turns to dawn |
+| Cell | One unit of the world sphere |
+| Companion | A party member other than the protagonist |
+| Critical | A humor queue holding nothing but black bile |
+| Disposition | One of 20 styles of world, setting water, relief, cover, feature size, climate and settlement density |
+| Encounter | A hazard met on the way, which stops the journey |
+| Encounter Avoidance | Nose-derived value: 10 % per point of nose score, cutting every hazard's chance |
+| Hour of arrival | The fixed daylight period at which every visit to a place opens |
+| Humor | A unit in one of the body's four queues, carrying vital heat |
+| Livable ground | Plain, mountain, hot steppe, cold steppe, jungle and snowfield |
+| Location | A place built on a cell, such as a village or a castle |
+| Max Companions | Heart-derived value: 1 companion per point of heart score |
+| Max Travel Distance | Lower-limbs-derived value: 4.0 to 14.8 units, the radius within which a destination can be set |
+| Moon | One of 383 in the sky; each names one world |
+| Period | One of six parts of the day: dawn, morning, noon, afternoon, evening, night |
+| Score | An organ's or body region's number, the sum of its parts ([Chapter I](01-anatomy.md)) |
+| Settled country | City, farmland, settlement and stock cells spread around historical places |
+| Starvation | Death when a heat debt is owed and every humor queue is critical |
+| Vital heat | The energy humors carry, spent on travel and effort |
+| Waypoint | A cell the route must pass through; up to 4 per journey |
 
 ---
 
-Previous: [IV. Of Items](04-items.md) · Next: [VI. Of Narration](06-narration.md)
+Previous: [IV. Items](04-items.md) · Next: [VI. Narration](06-narration.md)

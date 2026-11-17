@@ -1,58 +1,58 @@
-# Proscribed Palimpsest — A Manual of its Systems
+# Proscribed Palimpsest — Rules Manual
 
-This manual describes the machinery of the game: how a body is constituted, how a faculty is learned
-and spent, how a die pool is assembled and what its result costs. It is written as a treatise on the
-doctrine the world runs on, and it is exact — every figure in it is the figure the game uses.
+This manual explains the rules of the game: how a body is built, how modi mentis are learned and
+used, how a die pool is assembled, and what a result costs. Every number in it is the number the
+game uses.
 
-It is deliberately **not** a guide to the content and **not** a guide to the interface. It does not
-enumerate the modi mentis, the deeds, the humors or the wares; it explains what such a thing *is*
-and what it does. It names no key and no button.
+It is not a guide to the content and not a guide to the interface. It does not list every modus
+mentis, act, humor or item; it explains what each kind of thing is and how it works. It names no
+key and no button.
 
-## Order of reading
+## How to use it
 
-The chapters proceed from the body outward: what a character is made of, what it carries, where it
-goes, and what it does when it arrives.
+- Each chapter opens with **In short**: the few rules most often needed.
+- Sections are numbered, and other chapters cite them as *Chapter N §M*.
+- Each chapter ends with a **Terms** table explaining every game term it uses.
+- Values that come from an organ (the backbone score, the feet's equilibrium) are defined in
+  [Chapter I](01-anatomy.md).
 
-**The Frame**
+## Chapters
 
-1. [Anatomy](01-anatomy.md) — regions, organs and their parts; species and anatomies; the faculties
-   a body may lack; the derived measures; wounds; the composition of a protagonist.
-2. [Memory](02-memory.md) — the modi mentis: their properties, their functions, their levels and
-   their ceilings; the five modules of memory and the displacement of what will not fit.
-3. [The Humors](03-humors.md) — the four queues, their secretion, vital heat, the transmuting
-   virtues, and the black bile that cannot be shed.
+**The Body**
 
-**What is Carried**
+1. [Anatomy](01-anatomy.md) — body regions, organs and their parts; species and anatomies; missing
+   capabilities; derived values; wounds; making a protagonist.
+2. [Memory](02-memory.md) — modi mentis: their properties, functions, levels and level caps; the
+   five memory modules; what happens when memory is full.
+3. [Humors](03-humors.md) — the four humor queues, how organs fill them, vital heat, transmuting
+   virtues, and black bile.
 
-4. [Items](04-items.md) — burden and bulk; anchors and vessels; the categories, and what each is
-   admitted to; coin.
+**Items**
+
+4. [Items](04-items.md) — burden and bulk; where items are held and stored; item categories and
+   what each can be used for; coin.
 
 **The World**
 
-5. [Travel](05-travel.md) — the choosing of a world out of the moons and the disposition it is
-   composed after; the sphere and its cells; the compass of a body's stride; the price of a crossing
-   in days, in heat and in hazard; the calendar and the periods of the day; the party a heart
-   sustains, and the three ways it is lost.
+5. [Travel](05-travel.md) — choosing a world; the sphere and its cells; how far a character can
+   travel; the cost of a crossing in days, heat and danger; the calendar and the periods of the day;
+   companions and how they are lost.
 
-**The Conduct of a Visit**
+**Actions**
 
-6. [Narration](06-narration.md) — the phase and its budget; observation, deliberation and act; the
-   composition of the die pool; implements; the lending of narration to a companion; the wages of
-   failure.
-7. [Social Intercourse](07-social.md) — the ladder of affinity; the single check that settles a
-   conversation; introduction, barter and hire.
-8. [Combat](08-fighting.md) — the turn and its cinetic points; mediums and the skills they bear; the
-   blow that opens a fight; the attack and defence pools; wounds, status, terrain and flight; the two
-   ways to fall and what decides the field.
-9. [Mental Maps and Routines](09-routines.md) — what is remembered of a place and for how long, and
-   the ways into it the body already knows: the seven kinds, where none is learned, what each
-   requires, and the gathering stay.
-10. [Crafting](10-crafting.md) — materials and their units; stations and the one material each works;
-    trades, their implements and their wants; a master's leave; setting to work, taking apart and
-    making.
+6. [Narration](06-narration.md) — the phase and its point budget; observing, thinking and acting;
+   building the die pool; tools; letting a companion act; the cost of failure.
+7. [Social Interaction](07-social.md) — affinity levels; the conversation check; introductions,
+   trade and hiring.
+8. [Combat](08-fighting.md) — turns and cinetic points; mediums and fighting skills; the opening
+   blow; attack and defence pools; wounds, states, terrain and fleeing; how a fight ends.
+9. [Mental Maps and Routines](09-routines.md) — what a character remembers of a place and for how
+   long; routines, the ways into a place a character already knows; the gathering stay.
+10. [Crafting](10-crafting.md) — materials and units; stations; trades, their tools and their
+    requirements; a master's permission; working, taking apart and making.
 
-## A note on numbers
+## Numbers
 
-Scores, capacities, thresholds and probabilities are stated as the game computes them. Where a
-figure depends on a body's own maximum rather than on a fixed constant, that is said explicitly: the
-doctrine is written to hold for anatomies other than the human one.
+Scores, capacities, thresholds and probabilities are given exactly as the game computes them. When
+a value depends on a body's own maximum rather than a fixed number, the text says so, because the
+rules also apply to anatomies other than the human one.

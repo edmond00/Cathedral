@@ -59,7 +59,7 @@ MANUAL_DIR = ROOT / "docs" / "manual"
 DEFAULT_OUT = MANUAL_DIR / "ProscribedPalimpsest-Manual.pdf"
 
 BOOK_TITLE = "Proscribed Palimpsest"
-BOOK_SUBTITLE = "A Manual of its Systems"
+BOOK_SUBTITLE = "Rules Manual"
 
 # 6 x 9 inches, in points — the trim size, needed by the stamping pass.
 PAGE_W, PAGE_H = 432.0, 648.0
@@ -521,10 +521,10 @@ def stamp_overlay(font: str, folio: int, running_head: str | None):
 # ─────────────────────────────────────────────────────────────────────────────
 
 PARTS = {
-    1: "The Frame",
-    4: "What is Carried",
+    1: "The Body",
+    4: "Items",
     5: "The World",
-    6: "The Conduct of a Visit",
+    6: "Actions",
 }
 
 ROMAN = {1: "I", 2: "II", 3: "III", 4: "IV", 5: "V", 6: "VI", 7: "VII", 8: "VIII", 9: "IX", 10: "X", 11: "XI", 12: "XII"}
