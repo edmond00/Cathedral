@@ -195,7 +195,8 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             var symbol = new TokenSymbol(card.Tokens[i]);
             int x = bx + canvas.CardWidth - 1 - card.Tokens.Count + i;
             bool active = ReferenceEquals(card.Tokens[i], Frame.Active);
-            Symbol(canvas, x, by, TokenGlyph(card.Tokens[i]),
+            // Every member wears the party's face, a beast as a person does.
+            Symbol(canvas, x, by, Config.GlyphSphere.ProtagonistChar,
                    active ? Config.Colors.BrightYellow : Config.Colors.Ochre, symbol);
         }
 
@@ -249,11 +250,6 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     private bool HasBusiness(ThoughtNode root)
         => root.SelfAndDescendants().Any(n => n.IsWaitingAct
                || (n.Kind == ThoughtNodeKind.Element && (Frame.Stubs(n).Count > 0 || Frame.Contents(n).Count > 0)));
-
-    /// <summary>The party member's piece: a beast's is another glyph.</summary>
-    public static char TokenGlyph(PartyMember member)
-        => member is Protagonist || member.Can(Narrative.AnatomyCapability.Speech)
-            ? Config.GlyphSphere.ProtagonistChar : Config.Symbols.MapBeast;
 
     // ── The tray ─────────────────────────────────────────────────────────────
 

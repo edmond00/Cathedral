@@ -432,8 +432,7 @@ public sealed class LocationMap
                        bool follow = true, IReadOnlySet<string>? withheld = null,
                        IReadOnlyList<MapIcon>? icons = null, object? hoveredIcon = null,
                        object? selectedIcon = null, Area? focus = null,
-                       int footRows = 0, bool selectedLit = true, IMapOverlay? overlay = null,
-                       char partyGlyph = Config.GlyphSphere.ProtagonistChar)
+                       int footRows = 0, bool selectedLit = true, IMapOverlay? overlay = null)
     {
         _padCells.Clear();
         if (scene == null || scene.Sections.Count == 0)
@@ -489,7 +488,7 @@ public sealed class LocationMap
         {
             int px = at.X - _viewX, py = at.Y - _viewY;
             if (px >= 0 && px < width && py >= 0 && py < mapH)
-                terminal.SetCell(left + px, mapTop + py, partyGlyph, PartyInk,
+                terminal.SetCell(left + px, mapTop + py, Config.GlyphSphere.ProtagonistChar, PartyInk,
                                  bgs[at.Y * _canvasW + at.X]);
         }
 

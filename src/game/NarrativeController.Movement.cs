@@ -31,7 +31,6 @@ public partial class NarrativeController
         /// <summary>What the move recorded that the map did not know before: revealed as the walk reaches it.</summary>
         public HashSet<string> Fresh { get; init; } = new();
         public required string Status { get; init; }
-        public required char Glyph { get; init; }
         /// <summary>Who is on the way, and so not drawn standing on any card meanwhile.</summary>
         public IReadOnlyList<PartyMember> Walkers { get; init; } = Array.Empty<PartyMember>();
         public Action? Then { get; init; }
@@ -58,7 +57,6 @@ public partial class NarrativeController
         var walk = new MapWalk
         {
             Steps = steps, Hops = hops, Fresh = fresh ?? new(), Status = status, Then = then, Walkers = walkers,
-            Glyph = MapTreeOverlay.TokenGlyph(walkers.Count > 0 ? walkers[0] : _active),
             // A script has nothing to watch: the walk is settled at once.
             StepMs = Cli.CliMode.IsActive && !Record.RecordMode.IsActive ? 0 : Math.Min(WalkStepMs, WalkMaxMs / steps.Count),
         };

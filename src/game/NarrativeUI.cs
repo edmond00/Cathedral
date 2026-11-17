@@ -70,14 +70,13 @@ public class NarrativeUI : TerminalPanelUI
     /// </summary>
     public void RenderMap(LocationMap map, Scene.Scene scene, Area here, TimePeriod period,
                           LocationMap.IMapOverlay overlay, (int X, int Y)? walker = null,
-                          char walkerGlyph = Config.GlyphSphere.ProtagonistChar,
                           IReadOnlySet<string>? withheld = null)
     {
         ClearContent();
         int left = _layout.LEFT_PADDING + 1;
         int width = _layout.TERMINAL_WIDTH - _layout.RIGHT_PADDING - 1 - left;
         map.Render(_terminal, scene, here, period, left, _layout.CONTENT_START_Y, width, _layout.NARRATIVE_HEIGHT,
-                   walker, follow: true, withheld, overlay: overlay, partyGlyph: walkerGlyph);
+                   walker, follow: true, withheld, overlay: overlay);
     }
 
     // The map is drawn in grounds as much as in glyphs, so it is darkened in place — hue kept —

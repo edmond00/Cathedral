@@ -648,7 +648,7 @@ public static class Config
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
-            '☠', '✗', '✓', '❝', '⚒', // location map: a hostile, a failure, a success, speech, an implement
+            '✗', '✓', '❝', '⚒', // location map: a failure, a success, speech, an implement
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
@@ -1419,9 +1419,16 @@ public static class Config
 
         // ── The location map's symbols (narration) ──────────────────────────────
         // What stands on a card before it is observed, by kind, and what a thought tree is made of.
+        /// <summary>
+        /// An enemy, wherever one is drawn: a fighter of the other side on the fight's board, and on
+        /// the location map a living thing that counts the member played an enemy. One face, so the
+        /// thing seen in a place is recognised when the fight opens against it.
+        /// </summary>
+        public const char EnemyChar   = '☹';
+
         public const char MapWay      = '∩';   // a way on: a neighbouring area, a door, a stair, a path
         public const char MapPerson   = '☺';   // a living thing that is no enemy
-        public const char MapHostile  = '☠';   // one that is
+        public const char MapHostile  = EnemyChar; // one that is: the face an enemy wears in a fight
         public const char MapThing    = '◆';   // any other point of interest
         public const char MapContent  = '◇';   // what a container holds, disclosed and not yet observed
         public const char MapThink    = '?';   // think about this
@@ -1433,7 +1440,6 @@ public static class Config
         public const char MapFailure  = '✗';   // an act that failed
         public const char MapSuccess  = '✓';   // an act that succeeded
         public const char MapEmotion  = '♥';   // what it stirred
-        public const char MapBeast    = '♞';   // a companion that is a beast
 
         // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
         public const char GoldCoinSymbol   = '⎊'; // yellow

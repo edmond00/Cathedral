@@ -618,9 +618,10 @@ thing it stands for.
 | a **way** (any state) | its own symbol **on its line**, and once observed the root of a tree hung from that spot | asks a mind to look at *that way*: one line, one symbol, nothing to choose |
 
 The kinds are `ElementKind`: `Way` (`∩`: a neighbouring area, a door, a stair, a path, a climb),
-`Person` (`☺`), `Hostile` (`☠`: a living thing that counts the played member an enemy — the same
+`Person` (`☺`), `Hostile` (`☹`, `Config.Symbols.EnemyChar` — the face an enemy wears on the fight's
+board, so what is seen in a place is recognised when the fight opens: a living thing that counts the played member an enemy — the same
 person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). The glyphs are
-`Config.Symbols.Map*`; four of them (`☠ ✗ ✓ ❝`) are not in the main font and had to be added to
+`Config.Symbols.Map*`; four of them (`✗ ✓ ❝ ⚒`) are not in the main font and had to be added to
 `Config.Terminal.FallbackGlyphs`, without which they draw as an empty cell and nothing says why.
 
 **Every card shows its tray, visited or not.** What stands in a place nobody has been to — a
@@ -803,7 +804,7 @@ them where they have no business, whoever stopped a walk or an escape. Confronte
 at nobody else, so leaving the confronter to be looked at first made answering them cost a point
 more than anything else in the place — and with the pool at zero, impossible: the only symbol that
 answered was RUNAWAY. An enemy who confronts nobody (asleep, appeased, in another area) is simply a
-`☠` in the tray. A script therefore thinks about a beast that opens on it without observing it
+`☹` in the tray. A script therefore thinks about a beast that opens on it without observing it
 first.
 
 #### An act, its result, and what it sets going
@@ -876,8 +877,8 @@ would stop them (see "Crime").
 #### The party: independent members
 
 - **Each member has an area, a token and trees of their own.** A move moves the member who made it.
-  All of them enter at the place's entry area. The token on a card is the protagonist glyph, or `♞`
-  for a beast; clicking one plays that member (`Switch`), for nothing, and re-expands every verb for
+  All of them enter at the place's entry area. The token on a card is the protagonist glyph for every
+  member, a beast as a person (which member it is, the pointer says); clicking one plays that member (`Switch`), for nothing, and re-expands every verb for
   the body that would now perform it.
 - **Trees are private.** What one member observed is on their map only — though *known* is the
   place's, so it is named for all of them.

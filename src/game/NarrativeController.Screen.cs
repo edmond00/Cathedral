@@ -102,7 +102,7 @@ public partial class NarrativeController
         if (_walk is { } walk)
         {
             var step = walk.Steps[walk.Shown];
-            _ui.RenderMap(_map, _scene, step.Here, Period, _overlay, (step.X, step.Y), walk.Glyph, WalkWithheld());
+            _ui.RenderMap(_map, _scene, step.Here, Period, _overlay, (step.X, step.Y), WalkWithheld());
         }
         else
             _ui.RenderMap(_map, _scene, _pov.Where, Period, _overlay);
