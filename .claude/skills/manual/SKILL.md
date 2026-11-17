@@ -24,7 +24,7 @@ resolution system. They can find the buttons themselves.
 |---|---|---|
 | **Content** | The 180 modi mentis, the 54 verbs, the 30 humors, the item catalogue, the archetypes, the biomes | Explain the *type*: what a modus mentis is, what properties it has, what it does in a roll. Name individual instances only as illustration, and only where one is structurally load-bearing (the four sanguific organs, the four cardinal humors). |
 | **Interface** | Screens, buttons, menus, keys, clicks, popups, tabs | The rule the interface expresses. Not "press CONTINUE to clear the preview" but "an action is committed in stages, and each stage is settled before the next is offered." |
-| **Narrative flavour** | Plot, setting fiction, what the world is *like* | The mechanism. The register carries the atmosphere; the content is technical throughout. |
+| **Narrative flavour** | Plot, setting fiction, what the world is *like*, atmosphere carried by the prose itself | The mechanism, in plain words. The manual has no register of its own: no period voice, no ornament. |
 
 **Human anatomy is a system, not content.** Organs feed derived stats, gate modi mentis, set level
 ceilings and carry wounds, so the manual explains them one by one. This is the single deliberate
@@ -53,32 +53,70 @@ other one — changing the C# `DisplayName` is entirely acceptable and often the
 manual is where the vocabulary is thought about. Check both the stat's `DisplayName` and any place a
 renderer hardcodes its own label (the dialogue footer does).
 
-## Register
+## Style
 
-Write as an old treatise on a pseudo-science would write — a work of natural philosophy explaining
-a doctrine of humors and faculties, which happens to be exactly correct about the world it
-describes.
+The manual is a **reference**: a player opens it to find one rule, reads a few lines and goes back to
+the game. Every choice below serves that reader. This style was chosen by experiment (November 2026):
+three rewrites of Chapters III and VIII — plain prose, a structured rules card, question-led
+headings — were blind-tested against the old treatise register by readers answering fourteen lookup
+questions. The old register ranked last; the rules card ranked first, and the best features of the
+other two are folded in here.
 
-**Hold these together:**
+### Language
 
-- **Neutral and technical.** State the mechanism. No enthusiasm, no address to the reader
-  ("you will find that…"), no promises about how it feels to play.
-- **Precise over accessible.** Give the formula, the bound, the exact tier. Where a rule is
-  intricate, write the intricate version — do not simplify into a half-truth. A reader who wants
-  the shape can read the first sentence of the paragraph.
-- **Period register, modern clarity.** Slightly archaic vocabulary and a taste for definition and
-  consequence: *the frame*, *the faculties*, *whence*, *it is to be observed that*. But sentences
-  parse on first reading, and every number is stated plainly.
-- **Light on flavour.** The tone is a thin varnish over an exact description. If a sentence is more
-  ornament than information, cut it.
+- **Plain present-day English.** No archaic or literary words: not *whence*, *save* (for "except"),
+  *nought*, *thereof*, *reckoned*, *drawn at hazard*, *it is to be observed that*, *the frame*, *the
+  doctrine*. No "Of X" titles. No metaphor, no lore, no atmosphere, no sentence that states no rule.
+- **Short sentences, one fact each.** Aim for under fifteen words on average; never chain clauses
+  with semicolons and dashes. A number is written as a digit (*49*, *3*, *1 die per 3 points*).
+- **Third person** — *the character*, *a fighter*, *the protagonist*. No "you", and nothing about
+  what playing feels like.
+- **One name per thing.** Never vary a term for elegance; never use two words ("measure", "score")
+  for one value. Use the game's on-screen names (see above), and no others.
 
-Anchor the vocabulary on what the code already uses. The organ and body-region `Description`
-strings in `src/game/narrative/body/` are written in precisely this register and are the reference
-for it — *"The central vital organ and index of the constitution's warmth, its span of years, and
-its capacity for attachment."*
+### Every term explained where it is used
 
-**Do not invent doctrine.** Every claim must be traceable to code. Where a system is unfinished,
-say so once, plainly, and do not describe intended behaviour as though it were current.
+The blind readers' one shared complaint about every version was a term used without explanation —
+*the viscera's measure*, *the backbone's score*, *the pineal gland*. A reader looking up one rule has
+not read Chapter I. So:
+
+- **Organ-based values** name the organ *and* say what kind of number it is, every time:
+  *"cinetic points = the backbone score × 2 (minimum 1)"*, *"dice equal to the feet's equilibrium
+  value (an organ-derived value, see [Chapter I §5](01-anatomy.md#…))"*. Link the first use in each
+  section to where the value is defined.
+- **Game terms** (hepar, cinetic points, transmuting virtue, critical…) get a plain gloss in
+  parentheses on first use in the chapter: *"the hepar (liver)"*.
+- **Never use a term before it is defined** in the chapter; if a rule needs one defined later,
+  define it inline.
+
+### Layout of a chapter
+
+1. `# N. Title` — plain noun: *III. Humors*, *VIII. Combat*.
+2. One or two sentences on what the system is for.
+3. **In short** — a numbered list of the 3–6 rules a player most often needs.
+4. Numbered sections, `## N. Plain name` (*## 4. Fleeing a fight*). **Keep the numbers stable**:
+   other chapters cite *§N* and link `#n-plain-name`, so renumbering or renaming a section means
+   fixing every link to it (grep `docs/manual` for the anchor).
+5. A **Terms** table at the end: term | one-line meaning, for every game term the chapter uses.
+6. The navigation footer.
+
+### Layout of a section
+
+1. One sentence: what it is.
+2. **Rules** — a numbered list, one rule per item, each a single plain sentence carrying its number.
+   Past about ten rules, split into `###` sub-headings rather than one long list.
+3. A **table** for any numeric data. Give the actual values in every row — score 0, 1, 2, 3, 4 —
+   never *Weakest / Next / Strongest*.
+4. A **sequence** of steps (an attack resolved, a fight opened) is a numbered list of steps.
+5. Optionally an **Example** paragraph: one concrete case worked through with numbers.
+6. A reason is given only where a rule would otherwise look like a bug, as its own short rule
+   beginning *Reason:*.
+
+**Precise, never vague.** *"Impedes"* or *"as above, and worse"* is not a rule; state what it does
+(*"costs 3 times the movement"*, *"a slip also deals a Low wound"*). Where the old text is vague, read
+the code and write the exact rule.
+
+**Do not invent rules.** Every claim must be traceable to code.
 
 ## Chapters
 
@@ -101,8 +139,10 @@ docs/manual/07-social.md         affinity, the conversation check, introduction,
 docs/manual/08-fighting.md       turns, cinetic points, mediums, fighting skills, the attack
                                  and defence pools, wounds, terrain, flight
 docs/manual/09-routines.md       mental maps (what a place's memory holds, the queue, the lock,
-                                 forgetting) and routines as entry points: the six kinds, where
+                                 forgetting) and routines as entry points: the seven kinds, where
                                  none is learned, each kind's check, the gathering stay
+docs/manual/10-crafting.md       materials and units, stations, trades and their implements,
+                                 a master's leave, working, taking apart, making
 ```
 
 Order is deliberate: the body, then what it carries, then the world it crosses, then the four
@@ -129,6 +169,8 @@ things it does there. Chapter numbers are stable — insert rather than renumber
 - An exhaustive list of content instances.
 - A number not present in the source.
 - Second-person address, or any sentence about what playing feels like.
+- Archaic or literary wording, ornament, lore, or a sentence that states no rule.
+- A term used without a gloss, or before it is defined.
 - Content sourced from `design/` without confirming it against the code.
 
 ## Building the PDF
