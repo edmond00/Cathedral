@@ -43,6 +43,8 @@ SENTENCES = {
     # no means in the line at all: "aside" puts it outside the quoted sentence (see make_variant)
     "aside":     lambda h, g, m, n: f"{h} I want to {g}, and I will leave it to my {n}.",
     "none":      lambda h, g, m, n: f"{h} I want to {g}.",
+    # the name as a part of the speaker, so "peasantry" or "petty thief" cannot read as people
+    "inme":      lambda h, g, m, n: f"{h} I want to {g}, and I will leave it to the {n} in me.",
 }
 
 ASIDE = ("\n\nYour {n} is the part of you that will do it: {m}. Mention it in your own way if you like; "
