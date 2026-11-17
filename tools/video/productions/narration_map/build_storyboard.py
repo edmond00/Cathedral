@@ -85,6 +85,11 @@ def W(text):
     return {"text": text, "wait": True}
 
 
+def A(text, t):
+    """Said from recording moment t: what the picture shows next is introduced as it happens."""
+    return {"text": text, "at": round(t, 2)}
+
+
 def game(rec, t0, t1, *vo, fade=False, zoom=MAP, **kw):
     seg = {"type": "game", "recording": rec, "from": round(t0, 2), "to": round(t1, 2), "fade": fade}
     if zoom:
@@ -195,8 +200,8 @@ game("farm", F.mark("coop"), F.mark("coop_sloth"),
      "In the coop, Ratcatcher is asked to look at the people. As a will, it only looks at what begins its "
      "course, and nothing here does.",
      F.R(13),
-     W("Then Hunt. A will turning away is not the one decline a thing allows, so Hunt may still decline, "
-       "and does."),
+     A("Then Hunt. A will turning away is not the one decline a thing allows, so Hunt may still decline, "
+       "and does.", F.mark("coop_hunt")),
      F.R(14))
 game("farm", F.mark("coop_sloth"), F.mark("think_hen"),
      "Third asking: now the mind must look. Sloth, a low-moral mind that observes and thinks.",
@@ -204,9 +209,10 @@ game("farm", F.mark("coop_sloth"), F.mark("think_hen"),
 game("farm", F.mark("think_hen"), F.mark("coop_thing"),
      "Watch what a low moral level does. We ask Sloth to think about the hen.",
      F.R(20),
-     W("Behind that thought, the game log says: Sloth is unscrupulous, offering only the two illegal goals "
+     A("Behind that thought, the game log says: Sloth is unscrupulous, offering only the two illegal goals "
        "of seven. Striking a hen that is not wild is a crime: the bird is somebody's. Sloth chose to attack "
-       "it. Then the means: Diligence, a principled mind, refuses a crime before it is even offered."),
+       "it. Then the means: Diligence, a principled mind, refuses a crime before it is even offered.",
+       F.click("CONTINUE", F.mark("think_hen"))),
      F.R(21))
 manim("Morality")
 manim("Rules")
@@ -224,8 +230,8 @@ game("farm", F.mark("party"), F.mark("rag_think"),
 game("farm", F.mark("rag_think"), F.mark("leave"),
      "Curiosity wants to examine it closely.",
      F.R(30),
-     W("And Digging, chosen to do it, refuses at once. A mind that does not observe will not stand and look: "
-       "a rule of choice, the game tells you why."),
+     A("And Digging, chosen to do it, refuses at once. A mind that does not observe will not stand and look: "
+       "a rule of choice, the game tells you why.", F.click("CONTINUE", F.mark("rag_think"))),
      F.R(31))
 game("farm", F.mark("leave"), F.mark("end"),
      "Everybody is out of points, so we leave. Leave walks every member out, each from where it stands, by "
