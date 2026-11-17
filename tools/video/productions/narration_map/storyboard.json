@@ -44,7 +44,7 @@
   }
  },
  "music": {
-  "take_audio": "farm",
+  "wav": "build/music_bed.wav",
   "level_db": -34,
   "duck": 0.65
  },

@@ -354,7 +354,7 @@ storyboard = {
     "voice": {"name": "en_GB-alan-medium", "speed": 1.0, "grit": 0.15},
     "voice_styles": {"reading": {"speed": 0.88, "grit": 0, "noise_scale": 0.9, "noise_w": 1.1,
                                  "pitch": 0.97, "room": 0.16}},
-    "music": {"take_audio": "farm", "level_db": -34, "duck": 0.65},
+    "music": {"wav": "build/music_bed.wav", "level_db": -34, "duck": 0.65},
     "clicks": {"gain": 0.5},
     "recordings": {
         "opening": {"script": "opening_map.cli", "dir": "build/rec_opening", "timeout": 7200,

@@ -784,6 +784,20 @@ class Build:
             fade = int(audio.RATE * 2.5)
             bed[-fade:] *= np.linspace(1, 0, fade)[:, None]
             return audio.normalise(bed, m.get("level_db", -34))
+        if "wav" in m:
+            # the game's own music, rendered beforehand (--render-music): played as is, from the top
+            import soundfile as sf
+            from scipy import signal as sg
+            raw, rate = sf.read(str(self.base / m["wav"]), dtype="float32", always_2d=True)
+            if raw.shape[1] == 1:
+                raw = np.repeat(raw, 2, axis=1)
+            bed = raw[:, :2] if rate == audio.RATE else sg.resample_poly(raw[:, :2], audio.RATE, rate, axis=0).astype(np.float32)
+            n = int(total * audio.RATE)
+            bed = np.pad(bed, ((0, max(0, n - len(bed))), (0, 0)))[:n]
+            fade = int(audio.RATE * 2.5)
+            bed[-fade:] *= np.linspace(1, 0, fade)[:, None]
+            bed[:int(audio.RATE)] *= np.linspace(0, 1, int(audio.RATE))[:, None]
+            return audio.normalise(bed, m.get("level_db", -34))
         if "midi" in m:
             midi = self.base / m["midi"]
         elif "recording" in m:
