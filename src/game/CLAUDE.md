@@ -712,7 +712,9 @@ is `ThoughtNode`s:
 Each node keeps the very `NarrationBlock` or action the dice read (`ChainOrigin`), so a roll needs
 nothing the tree does not hold: observation → thinking → act is still the pool, and the tree is that
 chain drawn. A node's first child follows it on its row; the others each start a row under it. An
-element's contents (`◇`, one per part) and its stubs (`?`, `❝`) share **one last row**, its shelf.
+element's contents (`◇`, one per part, **joined by a line**: `└◇─◇─◇` — they came out of one look,
+and a gap between them read as unrelated symbols) and its stubs (`?`, `❝`, a space apart) share
+**one last row**, its shelf.
 A branch with no act left waiting is the record of a thought and is drawn dimmed, never removed —
 trees last the visit and are thrown away with it.
 
@@ -951,8 +953,10 @@ teaches one thing.
 phase is about, exactly as a container holds its contents (`SelfPointOfInterest.Holds`,
 `ContentsOf`): the fragments of the memory at hand in the childhood, the three facets of exhaustion
 in the get-up. **What it holds is unnamed until it is looked at** — `observe · a memory`,
-`observe · a sensation` (`SelfPointOfInterest.Holding`) — because a memory is not known before it
-comes back; a script still names a fragment (`click observe "a scream"`).
+`observe · a sensation` (`SelfPointOfInterest.Holding`, `UnnamedHolding`) — because a memory is not
+known before it comes back, whatever it hangs from: the later memories' fragments hang from a
+fragment, not from "myself", and used to be named at once for it. A script still names a fragment
+(`click observe "a scream"`).
 
 - **Childhood: one tree in the dark** (`MinimalScreen` → `LocationMap.Bare`, `MapFrame.Minimal`,
   `NarrativeUI.Blackout`). The screen is black to the window's edges: every terminal cell opaque,

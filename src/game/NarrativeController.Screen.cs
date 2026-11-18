@@ -505,8 +505,10 @@ public partial class NarrativeController
             TraySymbol when MinimalScreen   => new("observe · myself", enabled),
             TraySymbol { Known: null } tray => new($"observe · {ElementKinds.Word(tray.Kind)}", enabled),
             TraySymbol { Known: { } known } => new($"observe {NameOf(known)}", enabled),
-            // What "myself" holds is not named before it is looked at: a memory, a sensation.
-            ContentSymbol { Container.Element: Scene.GetUp.SelfPointOfInterest self } => new($"observe · {self.Holding}", enabled),
+            // What "myself" holds is not named before it is looked at: a memory, a sensation —
+            // whatever it hangs from. In the childhood that is the fragment remembered last, once
+            // the first memory is behind.
+            ContentSymbol content when UnnamedHolding(content.Part) is { } holding => new($"observe · {holding}", enabled),
             ContentSymbol content           => new($"observe {NameOf(content.Part)}", enabled),
             WaySymbol way                   => new(WayLabel(way), enabled),
             ExitSymbol                      => new(ExitLabel, enabled),
@@ -525,6 +527,16 @@ public partial class NarrativeController
             _ => null,
         };
     }
+
+    /// <summary>
+    /// What <paramref name="part"/> is called while it has not been looked at, when it is one of the
+    /// things "myself" holds — "a memory", "a sensation" (<see cref="Scene.GetUp.SelfPointOfInterest.Holding"/>)
+    /// — or null for anything else, which is named.
+    /// </summary>
+    private string? UnnamedHolding(NarrativeAnchor part)
+        => Cathedral.Game.Scene.GetUp.SelfPointOfInterest.Holds(ElementKinds.ElementOf(part))
+            ? _pov.Where.PointsOfInterest.OfType<Cathedral.Game.Scene.GetUp.SelfPointOfInterest>().FirstOrDefault()?.Holding
+            : null;
 
     /// <summary>An unobserved way under the pointer: named once seen or gone by, a way and no more before.</summary>
     private string WayLabel(WaySymbol way)

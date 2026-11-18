@@ -547,13 +547,19 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     }
 
     /// <summary>
-    /// A shelf: one row, a space between symbols. An element's is what it holds, then what it
-    /// offers; a waiting act's is what may be done with it besides carrying it out.
+    /// A shelf: one row. An element's is what it holds — joined by a line, one thing to the next —
+    /// then what it offers, a space apart; a waiting act's is what may be done with it besides
+    /// carrying it out.
     /// </summary>
     private void PaintShelf(LocationMap.MapCanvas canvas, List<MapSymbol> shelf, int x, int y)
     {
+        MapSymbol? before = null;
         foreach (var symbol in shelf)
         {
+            // What a container holds is one row of things joined by a line, as a tree's nodes are:
+            // they came out of the same look, and a gap between them read as unrelated symbols.
+            if (symbol is ContentSymbol && before is ContentSymbol) Line(canvas, x - 1, y, '─');
+            before = symbol;
             char glyph = symbol switch
             {
                 StubSymbol { Kind: StubKind.Think }             => Config.Symbols.MapThink,
