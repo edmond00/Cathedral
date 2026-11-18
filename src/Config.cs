@@ -1149,6 +1149,29 @@ public static class Config
         // event, the visual counterpart of the UI sound effects. See PostProcessRenderer.
         public static bool PulsesEnabled = true;
         public static float PulseDuration = 0.15f; // Seconds a pulse lasts before decaying back
+
+        // Glow: every lit glyph bleeds its own light into the dark around it (see
+        // PostProcessRenderer). Independent of the dither; the Settings screen and --glow switch it.
+        public static bool GlowEnabled = true;
+
+        /// <summary>
+        /// True once <c>--glow</c> has spoken for the glow, which then outranks the saved
+        /// <see cref="UserSettings.GlowEnabled"/> for this run, as <c>--dither</c> does the dither.
+        /// </summary>
+        public static bool GlowSetByFlag = false;
+        public static float GlowStrength = 0.5f;  // Intensity of the halo added over the frame
+        public static float GlowTightness = 0.55f; // Share of the halo at 2-4 px against 8-64 px
+        public static float GlowProtect = 1.0f;   // Keep dark text on lit fills from the halo (0 = off)
+        // The lit ground that triggers it: its brightest channel, averaged around the pixel at mip
+        // level GlowProtectLod of the half-size bright-pass (2.5 = about 10 px, a glyph cell).
+        public static float GlowProtectLow = 0.10f;
+        public static float GlowProtectHigh = 0.28f;
+        public static float GlowProtectLod = 2.5f;
+        public static float GlowFlicker = 0.15f;   // How far the halo falters (0 = steady); text never does
+        // Bright-pass knee, on a pixel's brightest channel: below the first nothing shines, above
+        // the second all of it does. Keeps dim panel fills and dark bands from glowing.
+        public static float GlowKneeLow = 0.08f;
+        public static float GlowKneeHigh = 0.45f;
     }
 
     #endregion
