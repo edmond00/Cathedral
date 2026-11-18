@@ -59,7 +59,7 @@ public abstract class TerminalPanelUI
     /// Override to also reset subclass-specific hit-tracking collections.
     /// </summary>
     /// <summary>
-    /// A panel with no frame of its own: no border, no rule over the status row. A subclass says so
+    /// A panel with no furniture inside its frame: no rule over the status row. A subclass says so
     /// for a screen that is to be nothing but what is drawn on it.
     /// </summary>
     protected virtual bool Chromeless => false;

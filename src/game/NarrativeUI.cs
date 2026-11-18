@@ -86,10 +86,12 @@ public class NarrativeUI : TerminalPanelUI
     private bool _shaded;
 
     /// <summary>
-    /// The whole terminal is black and nothing of the panel's own is drawn: no border, no header,
-    /// no status row, and not the sky behind the padding either — every cell is opaque. The
-    /// childhood is played so: a memory coming back in the dark, with the world, the sky and the
-    /// ordinary screen first seen when it is time to get up. The boxes a text is read in are drawn
+    /// The panel is black and holds nothing of its own but its frame: no header, no rule, no status
+    /// row. The childhood is played so — a memory coming back in the dark — with the sky and the
+    /// world not drawn behind it (<c>GlyphSphereCore.SkyRenderEnabled</c>), so the screen is black
+    /// to the window's edges. The frame stays: it is the one thing that is the same on both sides
+    /// of the waking, when the sky opens round it and the ordinary screen inside it, and without it
+    /// the panel's edge appeared from nowhere at that moment. The boxes a text is read in are drawn
     /// as everywhere, and the line that says a mind is at work stays, alone on its row.
     /// </summary>
     public bool Blackout { get; set; }
@@ -98,11 +100,8 @@ public class NarrativeUI : TerminalPanelUI
 
     public override void Clear()
     {
+        base.Clear();
         _shaded = false;
-        if (!Blackout) { base.Clear(); return; }
-        for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
-            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
-                _terminal.SetCell(x, y, ' ', Config.Colors.Black, Config.Colors.Black);
     }
 
     protected override void DimFrom(int startY)
