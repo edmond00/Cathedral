@@ -6,7 +6,7 @@
 # That flag pins everyone to their workplace all day, which is exactly what this verb cannot have:
 # it needs somebody asleep in their own bed, and a pinned NPC never goes to bed.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period night --observe-only "weaver" --organs encephalon=2
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Room" --period night --observe-only "weaver"
 
 wait
 click menu New

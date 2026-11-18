@@ -71,6 +71,8 @@ public partial class NarrativeController
 
     private void RenderPanel()
     {
+        // The childhood is played in the dark: nothing of the screen but the memory.
+        _ui.Blackout = MinimalScreen;
         _ui.Clear();
 
         // The dice-roll music plays only while the dice are tumbling.
@@ -237,9 +239,9 @@ public partial class NarrativeController
     // ── What the map shows ───────────────────────────────────────────────────
 
     /// <summary>
-    /// The childhood is the first screen a player meets, and holds only what it is about: the
-    /// fragments of the memory at hand and what was made of them. No card, no panel, no token, no
-    /// line — there is one place and nobody else in it.
+    /// The childhood is the first screen a player meets, and holds only what it is about: one
+    /// symbol in the dark — the one remembering — and, once it is looked at, the tree of what
+    /// comes back. No card, no panel, no token, no line, no header and no sky.
     /// </summary>
     private bool MinimalScreen => _scene.Phase == NarrationPhase.ChildhoodReminescence;
 
@@ -313,9 +315,12 @@ public partial class NarrativeController
             frame.Ways.Add(way);
         }
 
-        // The played member's other trees, each under the card of where its element now is.
+        // The played member's other trees, each under the card of where its element now is. The
+        // childhood's one tree is drawn whole wherever its elements were: most are of memories
+        // whose scenes are gone.
         foreach (var root in Mind.Roots)
-            if (WayKeyOf(root) == null && Locate(root) is { } at)
+            if (MinimalScreen) Card(_pov.Where).Roots.Add(root);
+            else if (WayKeyOf(root) == null && Locate(root) is { } at)
                 Card(at.Where).Roots.Add(root);
         foreach (var (area, refusal) in Mind.Strays)
             Card(area).Strays.Add(refusal);
@@ -496,6 +501,8 @@ public partial class NarrativeController
             // What stands where no known way leads is told, and cannot be looked at from here.
             TraySymbol tray when Exploring && !_frameReach.ContainsKey(tray.Area.Id)
                                             => new($"{ElementKinds.Word(tray.Kind)} · no known way there", false),
+            // The one symbol the childhood opens on is whoever is remembering.
+            TraySymbol when MinimalScreen   => new("observe · myself", enabled),
             TraySymbol { Known: null } tray => new($"observe · {ElementKinds.Word(tray.Kind)}", enabled),
             TraySymbol { Known: { } known } => new($"observe {NameOf(known)}", enabled),
             // What "myself" holds is not named before it is looked at: a memory, a sensation.

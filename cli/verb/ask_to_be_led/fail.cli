@@ -9,7 +9,7 @@
 # The real farm rather than the test location: there every person trades wherever they stand, so a
 # trader is never off their premises and this verb is offered on nobody.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --start-area "Duck Pond" --period afternoon --observe-only "poultry_keeper" --organs encephalon=2
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type farm --location-id 1 --start-area "Duck Pond" --period afternoon --observe-only "poultry_keeper"
 
 wait
 click menu New

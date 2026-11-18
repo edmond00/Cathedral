@@ -9,6 +9,10 @@ wait mode ProtagonistCreation 60
 click continue
 wait mode ChildhoodReminescence 900
 advance 12 1500
+# The one symbol the childhood opens on: whoever is remembering.
+click observe person
+choose 0
+advance 12 1500
 click observe Myself
 choose 0
 advance 12 1500

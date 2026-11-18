@@ -1220,7 +1220,7 @@ public abstract class PartyMember
 
     /// <summary>
     /// Maximum noetic points, derived from the encephalon body part score by <see cref="NoeticPointsStat"/>
-    /// (encephalon / 2 + 1). This is the per-node pool of thinking attempts.
+    /// (encephalon / 2 + 3). This is the per-node pool of thinking attempts.
     /// </summary>
     public int MaxNoeticPoints
     {
@@ -1229,7 +1229,7 @@ public abstract class PartyMember
             var stat = DerivedStats.FirstOrDefault(s => s.Name == "noetic_points");
             return stat != null
                 ? stat.GetRawValue(this)
-                : Math.Max(1, (_bodyParts.FirstOrDefault(bp => bp.Id == "encephalon")?.Score ?? 0) / 2 + 1);
+                : Math.Max(3, (_bodyParts.FirstOrDefault(bp => bp.Id == "encephalon")?.Score ?? 0) / 2 + 3);
         }
     }
 

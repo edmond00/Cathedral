@@ -45,7 +45,10 @@ public sealed class ReminescenceSceneFactory : SceneFactory
         // Wire the fragments as PoIs, in an order drawn from the world's seed: the catalogue order
         // put the same fragment first in every run. The `rng` handed in is seeded from the location
         // id alone, so it would shuffle every world the same way.
-        area.PointsOfInterest.Add(new SelfPointOfInterest("Myself, and what I was, coming back to me in pieces.", holding: "a memory"));
+        area.PointsOfInterest.Add(new SelfPointOfInterest("Myself, and what I was, coming back to me in pieces.", holding: "a memory")
+        {
+            Awakening = NeutralNarration.Awakening,
+        });
 
         var order = GameRng.For($"reminescence-order:{_data.Id}");
         foreach (var fragment in _data.Fragments.OrderBy(_ => order.Next()))

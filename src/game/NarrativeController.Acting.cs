@@ -790,7 +790,7 @@ public partial class NarrativeController
         else if (_scene.PendingGetUpTransition)
             then = FinishGetUp;
         else if (_scene.PendingReminescenceTransition is { } memory)
-            then = () => NextReminescence(memory);
+            then = () => NextReminescence(memory, actNode.ElementNode);
         else if (lostWay)
         {
             Console.WriteLine("NarrativeController: the way is lost — the visit ends");

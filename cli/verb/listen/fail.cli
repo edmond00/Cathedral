@@ -7,7 +7,7 @@
 # pins people to one room; --observe-only pins an observation to one object, which the script
 # names again when it clicks its symbol.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Bell" --organs encephalon=2
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --observe-only "Test Bell"
 
 wait
 click menu New

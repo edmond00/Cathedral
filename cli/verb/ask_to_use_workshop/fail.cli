@@ -5,7 +5,7 @@
 # The verb's base difficulty is 0, which rolls nothing and cannot fail; --willingness reluctant
 # raises it to 1 (Verb.ActionDifficulty), so there is a roll for fail-dice to miss.
 #
-# FLAGS: --playground --willingness reluctant --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --location-type test --location-id 0 --start-area "Test Forge" --period dawn --observe-only blacksmith --organs encephalon=2
+# FLAGS: --playground --willingness reluctant --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --grant-mm blacksmithing --location-type test --location-id 0 --start-area "Test Forge" --period dawn --observe-only blacksmith
 
 wait
 click menu New

@@ -25,6 +25,12 @@ wait mode ChildhoodReminescence 60
 
 # ── The five childhood reminescences ─────────────────────────────────────────
 advance 12 180
+# The childhood opens in the dark on one symbol: whoever is remembering. Looking at it says what
+# has been lost and discloses the first memory's fragments; each memory after it hangs from the
+# fragment remembered before.
+click observe person
+choose childhood_reminescence
+advance 12 180
 click observe "a scream"
 choose childhood_reminescence
 advance 12 180

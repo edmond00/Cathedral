@@ -58,6 +58,12 @@ public abstract class TerminalPanelUI
     /// the content zone is filled with the background colour.
     /// Override to also reset subclass-specific hit-tracking collections.
     /// </summary>
+    /// <summary>
+    /// A panel with no frame of its own: no border, no rule over the status row. A subclass says so
+    /// for a screen that is to be nothing but what is drawn on it.
+    /// </summary>
+    protected virtual bool Chromeless => false;
+
     public virtual void Clear()
     {
         for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
@@ -306,7 +312,7 @@ public abstract class TerminalPanelUI
     /// <summary>Draw the horizontal separator and write a message to the status bar row in a given color.</summary>
     protected void DrawStatusBar(string message, Vector4 textColor)
     {
-        DrawHorizontalLine(_layout.SEPARATOR_Y);
+        if (!Chromeless) DrawHorizontalLine(_layout.SEPARATOR_Y);
         int maxW = _layout.CONTENT_WIDTH - 2;
         if (message.Length > maxW) message = message[..(maxW - 3)] + "...";
         _terminal.Text(_layout.CONTENT_START_X, _layout.STATUS_BAR_Y,

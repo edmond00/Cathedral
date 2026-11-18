@@ -186,9 +186,11 @@ Run `help` for the authoritative list. The essentials:
                             leads to (`"Test Yard"`) or the door, stair, path or climb itself
                             (`"Test Door"`); `in <area>` says which end it is looked at from when
                             both could be. The kind `way` is the first way on a line seen from
-                            where the member stands (a view is a THING of its card). In the
-                            get-up, "myself" is the one `person` under the tree: `click observe
-                            person`, then its sensations by name (`click observe "aching legs"`). Every card shows what stands in it, so `regions` lists the
+                            where the member stands (a view is a THING of its card). In both
+                            opening phases "myself" is the one `person`: `click observe person`
+                            first — in the childhood it is the only symbol on the screen, and
+                            nothing else can be named before it — then what it holds by name
+                            (`click observe "a scream"`, `click observe "aching legs"`). Every card shows what stands in it, so `regions` lists the
                             symbols of areas nobody has been to as `(disabled)`.
                             Follow with `choose <observation mm-id>` and `advance`. A mind that
                             has refused this very thing is listed `(refused)` by `regions`
@@ -198,7 +200,8 @@ Run `help` for the authoritative list. The essentials:
                             `last` is whatever was observed last — for a script on the real
                             model, where the mind chooses what it looks at (`speak` takes it too).
                             Naming an observed holder in `click observe` asks for whatever it
-                            holds first (`click observe Myself`)
+                            holds first (`click observe Myself` — in the childhood that is the
+                            memory at hand, even once it hangs from the fragment remembered last)
   click speak <name> [to <member>]
                             a speech mark after an observed element: speak of it to a companion
                             in the same or an adjacent area. There is one mark for each
@@ -551,12 +554,13 @@ Things this shape depends on, each of which has cost a script:
 - **Difficulty 0 has no dice.** `open_door`, the stairs, `sit_and_wait` and the plain conversation
   openers go from `click act` straight to the outcome: one `advance`, then `expect SUCCESS`. A
   `click continue` written there for dice that are not coming closes the result box instead.
-- **Observing, thinking and acting each cost a point, so a pool of 3 is exactly one chain.** A
-  success refills the pool; a failure, a rule's refusal and a refused implement do not, and at zero
-  the out-of-points box takes the screen and nothing but `click exit` answers. A script that looks
-  twice, combines a wrong implement, reconsiders, or fails and goes on needs a bigger pool: give it
-  room with `--organs encephalon=2` (6 points) or `=4` (11) rather than rearranging its steps, and
-  assert the pool with `expect-state noetic points=`.
+- **Observing, thinking and acting each cost a point; the default pool is 5** (`encephalon / 2 + 3`,
+  every organ at 1), so one chain leaves two points over. A success refills the pool; a failure, a
+  rule's refusal and a refused implement do not, and at zero the out-of-points box takes the screen
+  and nothing but `click exit` answers. A script that needs more room takes it with
+  `--organs encephalon=2` (8 points) or `=4` (13) rather than rearranging its steps, and one that
+  needs less with `--organs encephalon=0` (3: exactly one chain). Assert the pool with
+  `expect-state noetic points=`.
 - **A second act on the same element needs no second observation**: `click think "<name>"` again.
   Somebody who walked in (drawn by a noise, a householder at nightfall), whoever **confronts** the
   member (the wolf in the den the visit opens in, whoever stopped a walk) and a body that has just
@@ -633,11 +637,6 @@ cli/system/                       scripts that test a system rather than a verb 
 ```
 
 `./run_tests.sh cli verb` runs a whole range; `./run_tests.sh cli gather` runs one folder inside one.
-
-**A `fail.cli` whose verb's only penalty is the thread lost runs on a pool of 6**
-(`--organs encephalon=2`). On the default 3 the attempt itself spends the last point, a thread
-cannot be lost from an empty pool, and a failure with no chip shows no result box — so
-`expect FAILURE` finds nothing, and the out-of-points box is what comes up instead.
 
 **The two ranges compose, and that composition is the point.** A verb test asserts that the verb
 declares the right outcome; an outcome test asserts that the outcome really changes the world. Put

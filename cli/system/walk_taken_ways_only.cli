@@ -63,7 +63,7 @@ click area "Test Yard"
 wait
 expect-state where Test Yard
 expect-state map walk from Test Field to Test Yard by way of Test Shore > Test Yard
-expect-state noetic points=3/3
+expect-state noetic points=5/5
 
 # The untaken way is an act, and comes out on known ground: it teaches how the place joins up.
 goal move

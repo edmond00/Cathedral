@@ -41,13 +41,13 @@ expect-no-state texts "to get there"
 # The refusal hangs under the bush as one, and the will is not asked the same again: it is greyed
 # in the popup until something in the place changes, and picking it spends nothing.
 expect-state trees refusal mind=lockpicking
-expect-state noetic points=4/6
+expect-state noetic points=6/8
 
 # Not this way, with a person at the end of it: named, not pronounced.
 click think "Test Berry Bush"
 expect-state popup lockpicking(refused)
 choose lockpicking
-expect-state noetic points=4/6
+expect-state noetic points=6/8
 choose pugilitas
 advance 12 180
 expect-state texts ": to attack the"

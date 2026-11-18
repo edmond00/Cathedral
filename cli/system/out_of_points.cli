@@ -6,9 +6,10 @@
 # member — out_of_points_confronted.cli; a PLAY button for each companion who still has a point).
 # The map under it takes no click. `click exit` presses its button.
 #
-# Here the pool of 3 goes on three looks.
+# Here the smallest pool there is — 3, an encephalon of nothing (--organs encephalon=0) — goes on
+# three looks.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --organs encephalon=0
 
 wait
 click menu New

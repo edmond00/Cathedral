@@ -10,8 +10,9 @@ namespace Cathedral.Game.Scene.GetUp;
 /// is time to rise (<see cref="GetUpPointOfInterest"/>). What it holds is shown unnamed until it
 /// is looked at: a memory is not known before it comes back.
 ///
-/// <para>While the childhood comes back it is there from the start and is the whole of the
-/// screen. Getting up, it is one more thing under the tree, to be noticed like the rest — a
+/// <para>While the childhood comes back it is the one symbol the screen opens on, in the dark:
+/// looked at, it says what has been lost (<see cref="Awakening"/>) and discloses the first memory's
+/// fragments. Getting up, it is one more thing under the tree, to be noticed like the rest — a
 /// person, the only one there — and what it holds is disclosed by looking at it.</para>
 ///
 /// <para>No verb acts on it.</para>
@@ -23,6 +24,13 @@ public sealed class SelfPointOfInterest : PointOfInterest
 
     /// <summary>What one of the things it holds is called before it is looked at: "a memory", "a sensation".</summary>
     public string Holding { get; }
+
+    /// <summary>
+    /// What looking at it says, in place of an account of how it looks, when it is the first thing
+    /// a run looks at: the neutral meaning the observing mind puts in its own voice. Null where
+    /// "myself" is described as anything else is (getting up).
+    /// </summary>
+    public string? Awakening { get; init; }
 
     public SelfPointOfInterest(string note, string holding)
         : base(

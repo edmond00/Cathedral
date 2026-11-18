@@ -4,11 +4,13 @@
 # pass --skip-childhood: that flag skips the phase entirely and fills the starting kit as if it had
 # run. Every other script in the suite passes it, which is why this verb had no test.
 #
-# The childhood is the first screen of a run and holds nothing but the memory at hand: its
-# fragments, unnamed until one is looked at ("observe · a memory"), and what is made of them. No
-# card, no panel, no token, nothing standing around. "Myself" holds the fragments as a container
-# holds its contents, and is not drawn: it is whoever is remembering. A fragment is looked at,
-# thought about, and reached for. No will is asked to look or to think here.
+# The childhood is the first screen of a run and is played in the dark: no sky, no world, no card,
+# no header, no status row. It opens on ONE symbol, whoever is remembering. Looking at it says what
+# has been lost — who they are — and discloses the fragments of the first memory, unnamed until one
+# is looked at ("observe · a memory"). A fragment is looked at, thought about, and reached for; the
+# next memory's fragments then hang from the fragment just remembered, so the whole childhood grows
+# as one tree. What is behind is a record: its texts can be read, nothing of it answers a click.
+# No will is asked to look or to think here.
 #
 # The phase auto-succeeds by design — no plausibility check, no noetic cost, difficulty 0, so no
 # dice. There is no `strategy` here and no meaningful failure case; `cli/remember/` has one script,
@@ -24,16 +26,38 @@ click continue
 # The phase opens on its own — no travel, no location. Wait for the mode rather than for idleness.
 wait mode ChildhoodReminescence 60
 advance 12 180
-regions
 
-# Only the memory's fragments: nothing else is on the screen to click, and no card is drawn.
+# --- one symbol in the dark, and nothing else on the screen ---
 expect-not ???
-expect-state trees "Myself"
+expect-not NOETIC
+expect-not Under the Tree
+expect-no-state trees element
+expect-state symbols click observe person in "Under the Tree" x1
 expect-no-state symbols click observe thing
-expect-state symbols a scream
+point observe person
+wait 1
+expect-state pointer-label ground=yellow text=observe · myself
+
+# --- looking at it: what has been lost, and the first memory's fragments ---
+click observe person
+choose childhood_reminescence
+advance 12 180
+expect-state trees element "Myself"
+expect-state texts I have forgotten who I am
+expect-no-state symbols click observe person
+expect-state symbols click observe "a scream" in "Myself"
 point observe "a scream"
 wait 1
 expect-state pointer-label ground=yellow text=observe · a memory
+
+# --- a second fragment looked at and thought about, which will not be the one remembered ---
+click observe "a whisper"
+choose childhood_reminescence
+advance 12 180
+click think "a whisper"
+choose childhood_reminescence
+advance 12 180
+expect-state trees act state=waiting verb=remember
 
 click observe "a scream"
 choose childhood_reminescence
@@ -41,20 +65,31 @@ advance 12 180
 click think "a scream"
 choose childhood_reminescence
 advance 12 180
-regions
 
-click act 0
+click act scream
 advance 12 180
 
 # No dice: the result is up at once.
 expect SUCCESS
 expect-verb remember
 
-# Its CONTINUE moves on to the next memory, whose fragments take the first one's place. Nothing
-# of the memory just remembered is carried over: the screen is the memory at hand.
+# Its CONTINUE moves on to the next memory — and the tree stays: the new fragments hang from the
+# fragment just remembered.
 click continue
 advance 12 180
-expect-no-state symbols "a scream"
-expect-state symbols manure smelt
-expect-no-state trees "a scream"
+expect-state trees element "Myself"
+expect-state trees element "a scream"
+expect-state trees element "a whisper"
+expect-state symbols click observe "manure smelt" in "a scream"
+
+# --- what is behind is a record: no fragment of the first memory is offered, the act that was
+# --- waiting on the other one has lapsed, and nothing is thought about either ---
+expect-no-state symbols in "Myself"
+expect-no-state symbols click think
+expect-no-state symbols click act
+expect-state trees act state=lapsed verb=remember
+expect-no-state trees act state=waiting
+
+# --- and its texts are still there to be read ---
+expect-state texts I have forgotten who I am
 quit

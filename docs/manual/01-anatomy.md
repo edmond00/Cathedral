@@ -166,7 +166,7 @@ The last column gives the full range for a human, from a score of 0 to the sourc
 
 | Derived value | Source | Formula | Human range |
 |---|---|---|---|
-| **Noetic Points** | encephalon (region) | score ÷ 2 + 1 (minimum 1) | 1 to 12 |
+| **Noetic Points** | encephalon (region) | score ÷ 2 + 3 | 3 to 14 |
 | **Working Memory** | encephalon (region) | score + 2, between 1 and 25 | 2 to 25 |
 | **Countenance** | visage (region) | score ÷ 5, in dice | 0 to 4 dice |
 | **Health Points** | trunk (region) | score ÷ 3 + 1 (minimum 1) | 1 to 10 |

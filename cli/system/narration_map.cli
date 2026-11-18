@@ -27,7 +27,7 @@ expect-state where exit=LEAVE
 # Nothing is observed on arrival: what stands in the yard is on its card as symbols, by kind.
 expect-no-state trees element
 regions
-expect-state noetic points=3/3
+expect-state noetic points=5/5
 
 # The arrow keys pan it. The section's tab is off the left edge while the view is centred on the
 # yard, and comes into view as the map moves right under it.

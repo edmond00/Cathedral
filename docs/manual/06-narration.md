@@ -5,7 +5,7 @@ the main mode of play, and it is where most of the rules of the earlier chapters
 
 **In short**
 
-1. A character in a place has a budget of **noetic points** (attention points) = ⌊encephalon score ÷ 2⌋ + 1; every observation, deliberation and attempted act costs 1 point, and a successful act refills the budget (§3).
+1. A character in a place has a budget of **noetic points** (attention points) = ⌊encephalon score ÷ 2⌋ + 3; every observation, deliberation and attempted act costs 1 point, and a successful act refills the budget (§3).
 2. Every act passes through a chain of modi mentis: one observes, one thinks, one acts (§5).
 3. The die pool is the sum of the levels of the modi mentis in the chain, plus any implement; the act succeeds when the number of sixes reaches the difficulty (§5).
 4. An act of difficulty 0 is not rolled and always succeeds; a crime is never below difficulty 1 (§5).
@@ -95,7 +95,7 @@ observed and what it has decided to do waits to be done. The limit is its budget
 
 **Rules**
 
-1. The budget is the character's **noetic points** = ⌊encephalon score ÷ 2⌋ + 1. The encephalon is the brain region; its score is a region score ([Chapter I §6](01-anatomy.md#6-derived-values)).
+1. The budget is the character's **noetic points** = ⌊encephalon score ÷ 2⌋ + 3. The encephalon is the brain region; its score is a region score ([Chapter I §6](01-anatomy.md#6-derived-values)).
 2. Each member of a party has its own budget (§10).
 3. A successful act refills the whole budget of the character that performed it, at once.
 4. The budget is also refilled after a fight, a conversation, a trade or a spell of work, for every party member standing in the area where it took place.
@@ -103,7 +103,7 @@ observed and what it has decided to do waits to be done. The limit is its budget
 6. Reason for rule 5: a miss must cost something. If the budget were handed back, the next attempt would be free.
 7. Accepting an implement for an act costs nothing. It is part of an act already deliberated on, and charging for it would put acts that need an implement out of reach of a small budget.
 8. Attempting an act costs 1 noetic point, whatever comes of it. A successful act then refills the budget (rule 3), so only an attempt that does not succeed keeps its point spent.
-9. Reaching one act from nothing therefore takes 3 points: 1 to observe, 1 to deliberate, 1 to attempt. Walking by known ways (§1) costs nothing.
+9. Reaching one act from nothing therefore takes 3 points: 1 to observe, 1 to deliberate, 1 to attempt. The smallest budget is 3, so every character can reach at least one act. Walking by known ways (§1) costs nothing.
 10. A character with no noetic point left can observe nothing, deliberate on nothing and attempt nothing, including the acts it had already decided on.
 11. It can only leave the place, or run away when it is confronted (§7).
 12. In a party, a member with no noetic point left cannot be played until its budget refills. When the member being played spends its last point, play passes to a member who still has one, a member standing in the same area first (§10).
@@ -121,7 +121,7 @@ observed and what it has decided to do waits to be done. The limit is its budget
 
 | Encephalon score | 0 | 1 | 2 | 3 | 4 | 5 | 23 |
 |---|---|---|---|---|---|---|---|
-| Noetic points | 1 | 1 | 2 | 2 | 3 | 3 | 12 |
+| Noetic points | 3 | 3 | 4 | 4 | 5 | 5 | 14 |
 
 ## 4. What a visit keeps
 
@@ -324,15 +324,16 @@ sixes, so it cannot succeed with this chain. With an eager acting modus mentis i
 
 A run opens on two scenes before any place: the childhood recollection, then getting up.
 
-1. Each memory of the childhood recollection holds a few fragments. A fragment has no name until it is observed.
-2. Remembering a fragment is an act of difficulty 0: it is not rolled and always succeeds. It ends that memory and opens the next.
-3. Nothing is kept from one memory to the next except what the memory taught.
-4. A will (§6) is not asked to observe or to deliberate in the childhood recollection. Any other observing or thinking modus mentis may be.
-5. When getting up, the character itself is one of the things present, and is observed like any other.
-6. Observed, it reveals 3 sensations, as a container reveals its contents (above). A sensation has no name until it is observed.
-7. Only a sensation allows an act, and the act is getting up. The other things present can be observed and nothing more.
-8. Getting up is always difficulty 1, whatever the acting modus mentis's degree of assent. A failure has no penalty, and the act can be decided on again.
-9. Nothing in either scene costs a noetic point (§3).
+1. The childhood recollection begins with the character observing itself. This observation says what the character has lost, the knowledge of who it is, and reveals the fragments of the first memory, as a container reveals its contents (above).
+2. Each memory holds a few fragments. A fragment has no name until it is observed.
+3. Remembering a fragment is an act of difficulty 0: it is not rolled and always succeeds. It ends that memory and opens the next, whose fragments are revealed by the fragment just remembered.
+4. A memory that has ended cannot be returned to. Its other fragments can no longer be observed, deliberated on or remembered, and an act still waiting on one of them is withdrawn. What was written about them can still be read.
+5. A will (§6) is not asked to observe or to deliberate in the childhood recollection. Any other observing or thinking modus mentis may be.
+6. When getting up, the character itself is one of the things present, and is observed like any other.
+7. Observed, it reveals 3 sensations, as a container reveals its contents (above). A sensation has no name until it is observed.
+8. Only a sensation allows an act, and the act is getting up. The other things present can be observed and nothing more.
+9. Getting up is always difficulty 1, whatever the acting modus mentis's degree of assent. A failure has no penalty, and the act can be decided on again.
+10. Nothing in either scene costs a noetic point (§3).
 
 ## 6. Rules of action and rules of choice
 
@@ -737,7 +738,7 @@ a place to enter.
 | Known way | A way already used; walking by known ways is free and is not an act. |
 | Mental map | What is known of a place: areas stood in, ways used, things and people observed. |
 | Moral level | Low, medium or high; decides how a modus mentis treats crimes. |
-| Noetic points | A character's attention budget in a place: ⌊encephalon score ÷ 2⌋ + 1. Observing, deliberating and attempting each cost 1; a successful act refills it. |
+| Noetic points | A character's attention budget in a place: ⌊encephalon score ÷ 2⌋ + 3. Observing, deliberating and attempting each cost 1; a successful act refills it. |
 | Observed thing | A thing this character has observed during this visit; only an observed thing can be deliberated on. |
 | Path | A shortcut across open ground to an area 2 or 3 steps away, followed as one act of difficulty 2. |
 | Penalty | The cost every failure carries: a wound, the way lost, the hour wasted, or the thread lost. |

@@ -189,6 +189,10 @@ public sealed class ObservationController
         var candidates = DeduplicateByName(ObserveOnlyFilter(pool));
         if (declines && Config.Debug.RefuseFocus)
             return (null, null, NeutralNarration.ObservationNothing(reminescence));
+        // One thing to look at and no turning away: there is nothing to choose, and no judge is
+        // asked. The first click of a run is this case — "myself", alone in the dark — and it may
+        // come before the judges have finished loading.
+        if (!declines && candidates.Count == 1) return (candidates[0], null, null);
         string? decline = !declines ? null
             : reminescence ? "let the recollection go, nothing of this is surfacing"
                            : "let your focus go, none of these is worth attending to";
@@ -214,6 +218,9 @@ public sealed class ObservationController
             // A named NPC's appearance is a clause ("a figure hauls a barrel …"); shallow wildlife's
             // is a noun phrase ("a wiry white goat, chewing a rope").
             descriptionIsClause: element is ObservationObject { DescriptionIsClause: true });
+        // "Myself" looked at in the dark says what has been lost, not how it looks.
+        if (element is SyntheticObservationObject { PointOfInterest: Scene.GetUp.SelfPointOfInterest { Awakening: { } awakening } })
+            neutral = awakening;
         // A way out already known is said to be one.
         if (KnownWayNote(element, at) is { } known) neutral = $"{neutral} {known}";
         if (!string.IsNullOrWhiteSpace(trailing)) neutral = $"{neutral} {trailing.Trim()}";

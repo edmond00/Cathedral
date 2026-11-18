@@ -54,6 +54,23 @@ public static class NeutralNarration
                               : $"{(plural ? "These are" : "This is")} {phrase}.";
     }
 
+    /// <summary>
+    /// What the first look of a run says — the protagonist looking at themselves in the dark, before
+    /// any memory has come back: who they are is lost, their childhood is what is left of it, and
+    /// it has to be reached for.
+    ///
+    /// <para>Chosen by trial against the shipped model, with the childhood's own persona and no
+    /// place clause (fifteen wordings over four rounds, three to six samples each). Opening on the
+    /// long walk gives the rewrite one concrete thing to hold, and it kept the loss, the childhood
+    /// "scattered in the dark" and the reaching for it in every sample. Wordings that opened on
+    /// darkness, on tiredness or on a hollow drifted into things nobody gave it — an old room, a
+    /// dusty attic, a forgotten shore; a plain "I do not know who I am, I remember nothing" came
+    /// back copied nearly word for word; and "who am I?" lost the question altogether.</para>
+    /// </summary>
+    public const string Awakening =
+        "I have walked until I could walk no more, and I have forgotten who I am. Names and faces are gone. "
+      + "Only my childhood is left, scattered in the dark, and I must reach for it piece by piece to know myself again.";
+
     /// <summary>A clause made into a sentence: capitalised, one closing full stop.</summary>
     private static string Sentence(string clause)
     {

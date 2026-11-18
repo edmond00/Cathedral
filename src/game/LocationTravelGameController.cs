@@ -2459,7 +2459,13 @@ public class LocationTravelGameController : IDisposable
         // Here, in the one funnel, so a transition added later is marked without anyone remembering
         // to. RedrawCurrentMode (an overlay dismissed over a live phase) does not pass through here,
         // which is right: nothing changed.
-        _ambianceEngine?.TriggerGameEvent(GameEventType.Transition);
+        //
+        // One change is not like the others: the last memory closing and the world opening. The
+        // childhood is played in the dark and the get-up is the first sight of the sky, the plain
+        // and the ordinary screen, so that hand-over is struck as a blow landing in a fight is —
+        // the loudest sound and the hardest dither pulse the game has — rather than swept.
+        bool waking = oldMode == GameMode.ChildhoodReminescence && newMode == GameMode.GetUp;
+        _ambianceEngine?.TriggerGameEvent(waking ? GameEventType.Hit : GameEventType.Transition);
 
         RunModeEnter(newMode);
         if (Cathedral.Game.Cli.CliMode.IsActive) _cliOverlayOnEntry[newMode] = CliOverlayReading();
@@ -2485,7 +2491,11 @@ public class LocationTravelGameController : IDisposable
         // OnEnter. Two conditions, and both are easy to get wrong from inside a single mode: there
         // may be no world yet (nothing is generated until a run starts), and the world-selection
         // screen wants the sky unobstructed even when a previous run has left a world standing.
-        _core.WorldRenderEnabled = _interface.IsWorldGenerated && newMode != GameMode.WorldSelection;
+        // The childhood is remembered in the dark: no world and no sky, to the window's edges. Both
+        // are first seen when it is time to get up.
+        bool dark = newMode == GameMode.ChildhoodReminescence;
+        _core.SkyRenderEnabled   = !dark;
+        _core.WorldRenderEnabled = _interface.IsWorldGenerated && newMode != GameMode.WorldSelection && !dark;
         if (newMode is not (GameMode.MainMenu or GameMode.Settings or GameMode.ProtagonistManagement))
             _musicUnderMenu = null;
 

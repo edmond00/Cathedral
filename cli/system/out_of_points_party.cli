@@ -5,7 +5,7 @@
 # nothing left cannot be played again until their pool refills: there is nothing to play them for.
 # The box that says to leave comes up only when nobody in the party has a point.
 #
-# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --organs encephalon=0
 
 wait
 click menu New
@@ -18,7 +18,7 @@ advance 12 180
 expect [KENRYC GREYGATE]
 inspect party
 
-# --- the protagonist's three points go on three looks ---
+# --- the protagonist's three points (the smallest pool: --organs encephalon=0) go on three looks ---
 click observe "Test Field"
 choose childhood_memory
 advance 12 180
@@ -44,7 +44,7 @@ point member Kenryc
 wait 1
 expect-state pointer-label no noetic point left
 
-# --- the companion's five points go the same way ---
+# --- the companion's seven points go the same way ---
 click observe thing
 choose birdsong
 advance 12 180
@@ -52,6 +52,12 @@ click observe thing
 choose birdsong
 advance 12 180
 click observe thing
+choose birdsong
+advance 12 180
+click observe thing
+choose birdsong
+advance 12 180
+click observe person
 choose birdsong
 advance 12 180
 click observe person
@@ -64,7 +70,7 @@ advance 12 180
 wait
 
 # --- nobody has a point: the box, on the member played last, and the party leaves together ---
-expect-state party member Brindletail area=Test Yard noetic=0/5 played=yes
+expect-state party member Brindletail area=Test Yard noetic=0/7 played=yes
 expect-state where exit=LEAVE out_of_points=yes
 expect NO NOETIC POINT LEFT
 expect Brindletail has no noetic point left
