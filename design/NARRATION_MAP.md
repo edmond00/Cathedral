@@ -263,13 +263,20 @@ What changed once the map had been played, each answering a remark made on it.
 - **A click on an observed element folds its tree away, and another brings it back.** Folded, the
   element stands alone with `…` beside it. Nothing under it is lost; none of it answers a click.
 - **An act costs a noetic point**, like a look and a thought, and cannot be attempted without one.
-  A pool of 3 is one chain; a success still refills it.
+  A success still refills the pool.
 - **A member with no point left hands over**: the view goes to a companion who still has one, and
   a member with none cannot be played until their pool refills.
 - **When nobody has a point a box takes the screen**: why nothing answers, and LEAVE — RUNAWAY when
   confronted.
 - **Where the party stands is a warm grey card**, not a gold one, so the lit symbols on it stand
   out; the sections' grounds are darker.
+- **The noetic pool is `encephalon / 2 + 3`**: three is one whole chain, so every body can act at
+  least once in a place.
+- **The childhood is one tree in the dark.** The screen is black to its edges — no sky, no world,
+  no header — and opens on one symbol, the one remembering. Looking at it says what has been lost
+  (a wording chosen by trial on the shipped model) and discloses the first memory; each memory
+  after it hangs from the fragment remembered before, and what is behind is a record that answers
+  no click. The hand-over to the get-up is struck like a blow in a fight.
 
 ## 14. Tests and tools
 

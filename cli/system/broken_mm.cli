@@ -55,7 +55,7 @@ expect-state texts "will not answer"
 expect-state texts "cannot look at anything"
 
 # It cost a point, exactly as an action refused by a coded rule does.
-expect-state noetic points=2/3
+expect-state noetic points=4/5
 
 # A broken modus mentis is a derived state, so nothing about it reaches the file.
 save roundtrip

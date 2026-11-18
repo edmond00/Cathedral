@@ -3,10 +3,9 @@
 # A failed look that loses the thread: one noetic point beyond the three the look, the thinking and
 # the attempt spent, and kept lost, because a failed act does not refill the pool at the CONTINUE
 # that follows. Examine's whole table is this one entry; --penalty-only is passed anyway, so the
-# script still means something the day the table grows. The pool is 6 (--organs encephalon=2): on a
-# pool of 3 the attempt spends the last point and there is no thread left to lose.
+# script still means something the day the table grows. The pool is the default 5.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft --penalty-only lose_focus --organs encephalon=2
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft --penalty-only lose_focus
 
 wait
 click menu New
@@ -27,8 +26,8 @@ click think "Test Giant Tree"
 choose ripelore
 advance 12 180
 
-# --- before: a pool of 6, of which the look and the thinking spent one each ---
-expect-state noetic points=4/6
+# --- before: a pool of 5, of which the look and the thinking spent one each ---
+expect-state noetic points=3/5
 
 click act 0
 advance 12 180
@@ -43,10 +42,10 @@ expect Focus lost:
 expect-outcome focus_lost
 
 # --- after: the attempt's point is gone, and the thread's with it ---
-expect-state noetic points=2/6
+expect-state noetic points=1/5
 
 # --- and stays gone across the result's CONTINUE ---
 click continue
 advance 12 180
-expect-state noetic points=2/6
+expect-state noetic points=1/5
 quit

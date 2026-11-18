@@ -222,26 +222,28 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     }
 
     /// <summary>
-    /// The minimal screen: what the one root holds and what was made of it, from where its card
-    /// would stand. Each thing looked at is a row — the thing, the thought, the act — and the last
-    /// row is what is still to be looked at. The root itself is not drawn: it is whoever is looking.
+    /// The minimal screen: one tree in the dark, drawn from where its card would stand. Before
+    /// anything is looked at it is a single symbol — whoever is remembering, drawn as the
+    /// protagonist is everywhere — and once that is looked at, the tree that grows from it: each
+    /// memory hangs from the fragment remembered before it, so the tree gets a row deeper and a
+    /// cell further right with every memory that comes back.
     /// </summary>
     private void PaintMinimal(LocationMap.MapCanvas canvas, CardFrame card, int bx, int by)
     {
-        if (card.Roots.FirstOrDefault() is not { } holder) return;
-        int x = bx + 1, y = by;
-        foreach (var item in Hanging(holder))
-            switch (item)
+        // A little up and left of the middle: the tree grows down and to the right.
+        int x = bx + 1, y = Math.Max(0, by - 3);
+        if (card.Roots.Count == 0)
+        {
+            foreach (var symbol in card.Tray)
             {
-                case ThoughtNode child:
-                    Place(canvas, child, x, ref y, live: child.IsLive || child.Kind == ThoughtNodeKind.Element);
-                    y++;
-                    break;
-                case List<MapSymbol> shelf:
-                    PaintShelf(canvas, shelf, x, y);
-                    y += 2;
-                    break;
+                char glyph = symbol.Kind == ElementKind.Person ? Config.GlyphSphere.ProtagonistChar : ElementKinds.Glyph(symbol.Kind);
+                Symbol(canvas, x, y, glyph, TrayInk(symbol), symbol);
+                x += 2;
             }
+            return;
+        }
+        foreach (var root in card.Roots)
+            Place(canvas, root, x, ref y, live: true);
     }
 
     private void PaintCard(LocationMap.MapCanvas canvas, CardFrame card, int bx, int by)

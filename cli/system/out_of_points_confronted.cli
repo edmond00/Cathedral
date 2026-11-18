@@ -1,7 +1,8 @@
 # out of points, confronted — an attempt costs a point, and with none left the box says RUNAWAY
 #
 # Carrying an act out costs a point like looking and thinking do, and there is none to carry one out
-# without: a pool of 3 buys exactly one chain — a look, a thought, the attempt. A success hands the
+# without: the smallest pool, 3 (--organs encephalon=0), buys exactly one chain — a look, a thought,
+# the attempt. A success hands the
 # pool back; a failure does not. Here the failure is also heard: the wolf comes to the noise and
 # stands over the member, who can then neither look, think nor act. The box that says so names who
 # bars the way and its button is RUNAWAY, the roll it always was.
@@ -9,7 +10,7 @@
 # Examine's whole failure table is the thread lost, which cannot take hold with no point left, so
 # the failure costs the attempt's point and nothing more.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft --organs encephalon=0
 
 wait
 click menu New

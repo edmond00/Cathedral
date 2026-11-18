@@ -189,6 +189,11 @@ public partial class NarrativeController
                 // something a script on the real model can name ahead.
                 if (Best(Mind.ElementNodes.Where(n => ContentsOf(n).Count > 0), n => MatchRank(NamesOf(n), name)) is { } holder)
                     return (new ContentSymbol(holder, ContentsOf(holder)[0]), null);
+                // In the childhood the memory at hand hangs from whatever was remembered last, which
+                // such a script cannot name either: "Myself" asks for its first fragment all the same.
+                if (name.Equals("Myself", StringComparison.OrdinalIgnoreCase) && MemoryHolder is { } tip
+                    && ContentsOf(tip) is { Count: > 0 } recalled)
+                    return (new ContentSymbol(tip, recalled[0]), null);
 
                 // A script may name what a player cannot: something not yet known. The symbol is the
                 // anonymous one of its kind, and the observation that follows is pinned to it — the

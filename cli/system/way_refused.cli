@@ -24,7 +24,7 @@ choose childhood_memory
 advance 12 180
 expect-state trees refusal way="the way to Test Field" mind=childhood_memory
 expect-no-state trees element
-expect-state noetic points=2/3
+expect-state noetic points=4/5
 # The way is still to be looked at.
 expect-state symbols click observe "the way to Test Field" in "Test Yard" (way)
 
@@ -32,13 +32,13 @@ expect-state symbols click observe "the way to Test Field" in "Test Yard" (way)
 click observe "Test Field"
 expect-state popup childhood_memory(refused)
 choose childhood_memory
-expect-state noetic points=2/3
+expect-state noetic points=4/5
 
 # ...and the mind asked after it attends: the way's one declining is spent.
 choose comradeship
 advance 12 180
 expect-state trees element "the way to Test Field"
-expect-state noetic points=1/3
+expect-state noetic points=3/5
 
 # About another way, Childhood Memory may be asked.
 click observe "Test Rock"

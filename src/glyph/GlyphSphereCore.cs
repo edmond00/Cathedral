@@ -155,6 +155,13 @@ namespace Cathedral.Glyph
         public bool WorldRenderEnabled { get; set; } = true;
 
         /// <summary>
+        /// Whether the star sphere is drawn. Off while a screen is to be black to its edges: the
+        /// terminal is square and the window is not, so the sky shows in the margins beside it
+        /// whatever the terminal paints.
+        /// </summary>
+        public bool SkyRenderEnabled { get; set; } = true;
+
+        /// <summary>
         /// When true, mouse movement and clicks are tested against the moons in the sky instead of
         /// the vertices of the world, raising <see cref="MoonHovered"/> and <see cref="MoonClicked"/>.
         /// Set only by the world-selection screen.
@@ -1054,7 +1061,7 @@ namespace Cathedral.Glyph
             var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60f), (float)ClientSize.X / ClientSize.Y, Config.GlyphSphere.NearClipPlane, Config.GlyphSphere.FarClipPlane);
 
             // Render sky stars first (behind everything)
-            _skyCloudRenderer?.RenderSky(view, proj);
+            if (SkyRenderEnabled) _skyCloudRenderer?.RenderSky(view, proj);
 
             // The world and everything that belongs to it. Skipped whole while the sky is being
             // chosen from, and before a world exists at all — the backdrop sphere is opaque, so

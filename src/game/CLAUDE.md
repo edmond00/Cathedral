@@ -954,14 +954,41 @@ in the get-up. **What it holds is unnamed until it is looked at** — `observe �
 `observe · a sensation` (`SelfPointOfInterest.Holding`) — because a memory is not known before it
 comes back; a script still names a fragment (`click observe "a scream"`).
 
-- **Childhood: a minimal screen** (`MinimalScreen` → `LocationMap.Bare`, `MapFrame.Minimal`). No
-  panel, no card, no token, no line, no pad, no scenery: only the fragments (`◇`) and what was
-  made of each (`◆─¶─○`). "Myself" is rooted from the start by `StandMyself` and is not drawn —
-  it is whoever is remembering; `PaintMinimal` draws what hangs from it. REMEMBER carries on to
-  the next memory, and **nothing is carried over** (`ReplaceMemory` is `AdoptScene`): the screen is
-  the memory at hand. **A will is not asked here** (`Askable`, behind `ObservingMinds` /
-  `ThinkingMinds`): a will looks and thinks toward what it wants in a place, and a memory is no
-  place.
+- **Childhood: one tree in the dark** (`MinimalScreen` → `LocationMap.Bare`, `MapFrame.Minimal`,
+  `NarrativeUI.Blackout`). The screen is black to the window's edges: every terminal cell opaque,
+  no border, header or status row (`Chromeless`; the line that says a mind is at work stays), and
+  the sky and the world not drawn at all (`GlyphSphereCore.SkyRenderEnabled`, set with
+  `WorldRenderEnabled` in `RunModeEnter` — the terminal is square and the window is not, so the
+  stars showed in the margins whatever the terminal painted). Only the ☰ is left, because a script
+  and a mouse both pause by it.
+  - **It opens on one symbol**: "myself", unobserved, drawn as the protagonist is (`PaintMinimal`,
+    label `observe · myself`). Looking at it does not describe it: the observing mind is given
+    `NeutralNarration.Awakening` to put in its own voice (`SelfPointOfInterest.Awakening`,
+    read in `ObservationController.DescribeAsync`) — who they are is lost, the childhood is what is
+    left, it must be reached for. **That wording was chosen by trial against the shipped model**
+    (its doc comment has what was tried and why the others lost); change it the same way, with
+    `tools/prompts/prompt_lib.py` and the childhood persona, not by taste. One thing to look at and
+    no turning away asks no judge (`ChooseAsync`), which also keeps the first click of a run from
+    racing the judges' loading.
+  - **Every memory grows the same tree.** Each memory is still a scene of its own
+    (`ReminescenceSceneFactory`: its fragments, its lines for the narrator), but `ReplaceMemory`
+    keeps the roots across `AdoptScene` and the next memory's fragments hang from the fragment
+    just remembered (`_memoryTip`; `MemoryHolder` is that, or "myself" for the first memory).
+    `Locate` answers the holder as where the remembering is done and `ContentsOf` gives it — and
+    only it — the fragments of the scene at hand. So the tree gets a row deeper and a cell further
+    right with every memory: `☻─◆─¶─○─✓`, and under it `└◆─¶─○─✓`, and so on.
+  - **What is behind is a record.** Its elements are of scenes that are gone, so nothing of it is
+    located: no `?`, no fragment of an old memory to look at, and an act left waiting on a fragment
+    that was not the one remembered is `Lapsed` in `ReplaceMemory`. The texts stay to be read under
+    the pointer. That is the sequence of memories kept as it was, without clearing the screen.
+  - "Myself" is looked at once: every memory's scene has one, and `Unobserved` skips it while the
+    tree has a "myself" root. It used to be rooted from the start by `StandMyself`, undrawn.
+  - **A will is not asked here** (`Askable`, behind `ObservingMinds` / `ThinkingMinds`): a will
+    looks and thinks toward what it wants in a place, and a memory is no place.
+  - **The hand-over to the get-up is struck, not swept**: `SetMode` fires `GameEventType.Hit` — the
+    blow landing in a fight, the loudest sound and hardest dither pulse there is — in place of the
+    `Transition` every other mode change gets. It is the first sight of the sky, the plain and the
+    ordinary screen.
 - **Get-up: the first ordinary screen.** A new controller. Nothing is observed: the card shows
   three things (the tree, the road, the horizon) and **one person, "myself"** (`ElementKinds.Of`
   answers `Person` for it), to be noticed like the rest. Observed, it is drawn with the
@@ -970,9 +997,6 @@ comes back; a script still names a fragment (`click observe "a scream"`).
   **GET UP is always rolled against one six** and shown as that before the roll
   (`ThinkingExecutor`: the verb's base, no willingness modifier) — it is the dice's tutorial; it
   used to show `○` "cannot fail" and then roll.
-- `StandMyself` is called from `AdoptScene` **and** from `ResetSession`. The second matters:
-  `ResetSession` clears every root, and with only the first call "myself" vanished the moment a
-  session was restarted, leaving a childhood with nothing to click.
 
 #### Driving it from a script
 
@@ -1006,7 +1030,7 @@ asserted with `expect-state texts <fragment>`. State assertions compare **with d
 ignored on both sides** (`CmdExpectState`): the inspect lines put quotes round names and the
 tokenizer strips an assertion's own, so `area="Test Yard"` could never be asserted on as it reads.
 Naming an observed container in `click observe` asks for whatever it holds first (`click observe
-Myself`), and a recording (`--record`) refuses a name nobody has learned (`CliFindSymbol(…,
+Myself` — which in the childhood means the memory at hand even once it hangs from a fragment), and a recording (`--record`) refuses a name nobody has learned (`CliFindSymbol(…,
 playerOnly: true)`) — on camera an unknown thing is clicked by its kind. `advance` drains the preview and the time box and
 **stops at the result box**, which is what lets `expect SUCCESS` and the chip expects read it.
 
@@ -1442,25 +1466,25 @@ it), one per act attempted, one per Reconsider, one per speech to a companion, o
 own pool (`MemberMind.Noetic`), and the rules that decide how far it reaches were designed together —
 changing one alone re-breaks what the others fix.
 
-- **The pool is `encephalon / 2 + 1`** (`NoeticPointsStat`, integer division, floored at 1): one
-  point per two levels, plus one — 3 for an encephalon of 5 (every organ at 1), 12 at the human maximum of 23.
-  At one point per level a pool was never really spent: a player could work through every object
-  in a room and still have attempts left, so nothing had to be chosen over anything else; one per
-  three proved too tight.
+- **The pool is `encephalon / 2 + 3`** (`NoeticPointsStat`, integer division; `WorstValue` 3, which
+  is also what a disabled encephalon reads): one point per two levels, plus three — 5 for an
+  encephalon of 5 (every organ at 1), 14 at the human maximum of 23, never under 3. **Three is one
+  whole chain** — a look, a thought, the attempt — so every body can act at least once in a place.
+  It was `+ 1` while carrying an act out was free; once the attempt cost its point, an encephalon of
+  3 or less (a starting character with one head wound) could look and think and never act. At one
+  point per level a pool was never really spent: a player could work through every object in a room
+  and still have attempts left, so nothing had to be chosen over anything else; one per three proved
+  too tight.
 - **Every observation costs a point; nothing is looked at for free.** A visit used to open on an
-  observation nobody paid for, so the weakest pool of 3 bought that look, three thoughts and no
-  more. It now buys exactly one chain — a look, a thought and the attempt — with nothing over. That
-  is a real tightening and it is deliberate: what is on a card is shown as symbols for nothing, and
-  the point is what choosing one to look at costs.
+  observation nobody paid for. What is on a card is shown as symbols for nothing, and the point is
+  what choosing one to look at costs.
 - **Carrying an act out costs a point, and there is none to carry it out without.** `ActAsync`
   spends it first, whatever follows — refused by a coded rule, judged implausible, rolled and
   failed, rolled and won — so `Refuse` no longer charges anything of its own, and a success hands
   the pool back a moment later. It used to be free, and an act already waiting could be tried at
   zero: a member with nothing left kept trying the acts on their trees, which made the pool a limit
   on thinking only. `IsEnabled` withholds the act and its implement symbol without a point
-  (`HasPoint`). **A pool under 3 can no longer reach an act alone** (`encephalon` 3 or less: a look
-  and a thought, and nothing to attempt with); only a companion's word, which plants the element on
-  the listener's trees for nothing, gets a pool of 2 to one.
+  (`HasPoint`).
 - **A successful act refills it, per act.** `CommitOutcomeResult` calls `MemberMind.Refill` for the
   member who acted, the moment the outcome is committed. There is no phase boundary any more: the
   trees stay, the other acts still waiting stay, and only what the world no longer allows lapses.

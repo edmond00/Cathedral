@@ -30,6 +30,7 @@ public class NarrativeUI : TerminalPanelUI
     public void RenderHeader(string memberName, int noeticPoints, int maxNoeticPoints,
         bool showNoeticPoints = true, bool? trespassing = null)
     {
+        if (Blackout) return;
         int headerY = _layout.TOP_PADDING;
         _terminal.Text(_layout.CONTENT_START_X, headerY, $"[{memberName.ToUpper()}]",
                        Config.NarrativeUI.HeaderColor, Config.NarrativeUI.BackgroundColor);
@@ -84,10 +85,24 @@ public class NarrativeUI : TerminalPanelUI
     private const float MapShade = 0.38f;
     private bool _shaded;
 
+    /// <summary>
+    /// The whole terminal is black and nothing of the panel's own is drawn: no border, no header,
+    /// no status row, and not the sky behind the padding either — every cell is opaque. The
+    /// childhood is played so: a memory coming back in the dark, with the world, the sky and the
+    /// ordinary screen first seen when it is time to get up. The boxes a text is read in are drawn
+    /// as everywhere, and the line that says a mind is at work stays, alone on its row.
+    /// </summary>
+    public bool Blackout { get; set; }
+
+    protected override bool Chromeless => Blackout;
+
     public override void Clear()
     {
-        base.Clear();
         _shaded = false;
+        if (!Blackout) { base.Clear(); return; }
+        for (int y = 0; y < _layout.TERMINAL_HEIGHT; y++)
+            for (int x = 0; x < _layout.TERMINAL_WIDTH; x++)
+                _terminal.SetCell(x, y, ' ', Config.Colors.Black, Config.Colors.Black);
     }
 
     protected override void DimFrom(int startY)
@@ -236,5 +251,9 @@ public class NarrativeUI : TerminalPanelUI
     /// Render the footer status bar: where the member stands and the hour while nothing is happening,
     /// or what is.
     /// </summary>
-    public void RenderStatusBar(string message = "") => DrawStatusBar(message);
+    public void RenderStatusBar(string message = "")
+    {
+        // In the dark there is no status row: where the body is and what hour it is are not yet known.
+        if (!Blackout) DrawStatusBar(message);
+    }
 }

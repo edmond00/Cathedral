@@ -33,6 +33,13 @@ public partial class NarrativeController
     /// </summary>
     private (NarrativeAnchor Anchor, Area Where)? Locate(ThoughtNode element)
     {
+        // What holds the memory at hand is where the remembering is done, whatever scene its own
+        // element was of: the fragment last remembered belongs to a memory that has closed.
+        if (ReferenceEquals(element, MemoryHolder))
+            return NodeForArea(_pov.Where).PossibleOutcomes.OfType<SyntheticObservationObject>()
+                       .FirstOrDefault(o => o.PointOfInterest is SelfPointOfInterest) is { } self
+                ? (self, _pov.Where) : null;
+
         // A way on a line is one tree whichever end it was first looked at from: it is seen from
         // the far end while the member stands there, and from the end it was observed at otherwise.
         if (EndsOf(element) is { } ends)
@@ -188,9 +195,12 @@ public partial class NarrativeController
             if (WayKeyOf(area, anchor) != null) continue;
             if (Mind.NodeOf(element, area) != null) continue;
             // What "myself" holds — a memory's fragments, the body's exhaustion — is looked at from
-            // there (ContentsOf). "Myself" is among the unobserved only while getting up: in the
-            // childhood it is rooted from the start (StandMyself).
+            // there (ContentsOf).
             if (SelfPointOfInterest.Holds(element)) continue;
+            // "Myself" is looked at once in a childhood: every memory's scene has one, and the one
+            // on the tree is all of them.
+            if (element is SelfPointOfInterest && _scene.Phase == NarrationPhase.ChildhoodReminescence
+                && Mind.Roots.Any(r => r.Element is SelfPointOfInterest)) continue;
             // The plain way to ground already stood on is walked on the map and offers nothing to
             // look at: its line is drawn, and a click on the card goes there.
             if (anchor is SyntheticAreaObservationObject { Area: var to } && AreaVisits.IsWayBack(_scene, area, to, Period)) continue;
@@ -202,8 +212,11 @@ public partial class NarrativeController
     private IReadOnlyList<NarrativeAnchor> ContentsOf(ThoughtNode element)
     {
         if (Locate(element) is not { Anchor: SyntheticObservationObject container } held) return Array.Empty<NarrativeAnchor>();
-        // "Myself" holds what its phase is about, as a chest holds what is in it.
-        if (element.Element is SelfPointOfInterest)
+        // "Myself" holds what its phase is about, as a chest holds what is in it — and in the
+        // childhood, whatever now holds the memory at hand does. An older holder holds nothing more.
+        if (_scene.Phase == NarrationPhase.ChildhoodReminescence && !ReferenceEquals(element, MemoryHolder))
+            return Array.Empty<NarrativeAnchor>();
+        if (element.Element is SelfPointOfInterest || ReferenceEquals(element, MemoryHolder))
             return NodeForArea(held.Where).PossibleOutcomes.OfType<SyntheticObservationObject>()
                 .Where(o => SelfPointOfInterest.Holds(o.PointOfInterest) && Mind.NodeOf(o.PointOfInterest, held.Where) == null)
                 .ToList<NarrativeAnchor>();

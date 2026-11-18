@@ -257,15 +257,16 @@ public partial class NarrativeController
             Mind.Proposals.Withdraw(action.PreselectedOutcome);
             _ambianceEngine?.TriggerGameEvent(GameEventType.PositiveOutcome);
             ShowResult(succeeded: true, OutcomeNarrator.ActionDisplay(action), chips,
-                       then: memory == null ? null : () => NextReminescence(memory));
+                       then: memory == null ? null : () => NextReminescence(memory, actNode.ElementNode));
         });
     }
 
     /// <summary>
-    /// The memory remembered leads on: to the next memory, whose scene takes this one's place, or —
+    /// The memory remembered leads on: to the next memory, whose scene takes this one's place and
+    /// whose fragments hang from <paramref name="remembered"/>, the fragment just remembered, or —
     /// at the last — out of the childhood.
     /// </summary>
-    private void NextReminescence(ReminescenceTransitionRequest request)
+    private void NextReminescence(ReminescenceTransitionRequest request, ThoughtNode remembered)
     {
         Console.WriteLine($"NarrativeController: reminescence '{request.FromReminescenceId}' → '{request.NextReminescenceId}'");
         _scene.PendingReminescenceTransition = null;
@@ -282,19 +283,47 @@ public partial class NarrativeController
         }
 
         // The next memory's scene, in the same controller: the childhood is one sitting.
-        ReplaceMemory(new Cathedral.Game.Scene.Reminescence.ReminescenceSceneFactory(registry).Build(_locationId));
+        ReplaceMemory(new Cathedral.Game.Scene.Reminescence.ReminescenceSceneFactory(registry).Build(_locationId), remembered);
     }
 
     /// <summary>
-    /// Puts the next memory's scene in place of the one just remembered. Nothing is carried over:
-    /// the childhood's screen holds the memory at hand and no other, so that the first thing a new
-    /// player sees is a handful of fragments and what was made of them.
+    /// The fragment last remembered: the fragments of the memory at hand hang from it. Null for the
+    /// first memory, whose fragments hang from "myself".
     /// </summary>
-    private void ReplaceMemory(Scene.Scene next)
+    private ThoughtNode? _memoryTip;
+
+    /// <summary>
+    /// What holds the fragments of the memory at hand, as a container holds its contents: "myself"
+    /// once looked at, then each fragment remembered in its turn — so the whole childhood is one
+    /// tree, grown a memory at a time. Null outside the childhood, and before "myself" is looked at.
+    /// </summary>
+    private ThoughtNode? MemoryHolder
+        => _scene.Phase != NarrationPhase.ChildhoodReminescence ? null
+         : _memoryTip ?? Mind.Roots.FirstOrDefault(r => r.Element is Cathedral.Game.Scene.GetUp.SelfPointOfInterest);
+
+    /// <summary>
+    /// Puts the next memory's scene in place of the one just remembered, and keeps the tree: every
+    /// memory is its own scene — its own fragments, its own lines for the narrator — but what was
+    /// remembered stays on the screen, and the new fragments hang from <paramref name="remembered"/>.
+    ///
+    /// <para>What is carried over is a record. Its elements are of a scene that is gone, so nothing
+    /// of it is located (<see cref="Locate"/>): no thought is offered about an old fragment, and an
+    /// act that was waiting on one — a fragment looked at and thought about but not the one
+    /// remembered — is lapsed here, since the memory it reached for has closed. The texts stay to
+    /// be read.</para>
+    /// </summary>
+    private void ReplaceMemory(Scene.Scene next, ThoughtNode remembered)
     {
+        var tree = Mind.Roots.ToList();
+        foreach (var act in tree.SelectMany(r => r.SelfAndDescendants()).Where(n => n.IsWaitingAct))
+            act.State = ActState.Lapsed;
+
         AdoptScene(next);
+        Mind.Roots.AddRange(tree);
+        _memoryTip = remembered;
         ApplyTimePeriod(TimePeriod.Morning);
-        Console.WriteLine($"NarrativeController: scene replaced with reminescence '{next.CurrentReminescenceId}'");
+        Console.WriteLine($"NarrativeController: scene replaced with reminescence '{next.CurrentReminescenceId}', "
+                        + $"hung from '{remembered.Element?.DisplayName}'");
     }
 
     // ── The get-up ───────────────────────────────────────────────────────────

@@ -210,23 +210,6 @@ public partial class NarrativeController
             foreach (var companion in _protagonist.CompanionParty)
                 _minds[companion] = new MemberMind(companion, new PoV(entry, TimePeriod.Morning));
         _active = _protagonist;
-
-        StandMyself();
-    }
-
-    /// <summary>
-    /// The childhood is played through the one who remembers: "myself" is there from the start,
-    /// observed by nobody, and holds the fragments of the memory at hand. Getting up, "myself" is
-    /// noticed like anything else under the tree; in a real place there is no such element.
-    /// </summary>
-    private void StandMyself()
-    {
-        if (_scene.Phase != NarrationPhase.ChildhoodReminescence) return;
-        var here = _pov.Where;
-        if (Mind.Roots.Any(r => r.Element is Scene.GetUp.SelfPointOfInterest)) return;
-        if (NodeForArea(here).PossibleOutcomes.OfType<SyntheticObservationObject>()
-                .FirstOrDefault(o => o.PointOfInterest is Scene.GetUp.SelfPointOfInterest) is { } myself)
-            Root(Mind, myself, here, text: null, note: ((Scene.GetUp.SelfPointOfInterest)myself.PointOfInterest).Note);
     }
 
     /// <summary>
@@ -377,7 +360,6 @@ public partial class NarrativeController
             mind.Refill();
         }
         _active = _protagonist;
-        StandMyself();
     }
 
     /// <summary>
