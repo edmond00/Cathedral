@@ -52,6 +52,12 @@ public class SettingsMenuRenderer
     /// <summary>Fired with the new state when the dither toggle is clicked.</summary>
     public Action<bool>? OnDitherChanged { get; set; }
 
+    /// <summary>Whether the glow is on. Read back from the renderer, like the dither.</summary>
+    public bool GlowEnabled { get; set; } = true;
+
+    /// <summary>Fired with the new state when the glow toggle is clicked.</summary>
+    public Action<bool>? OnGlowChanged { get; set; }
+
     /// <summary>
     /// Whether the window is borderless-fullscreen. Read back from <c>WindowMode</c> rather than
     /// from the saved setting, so the row shows the true live state after an F11 press — the key and
@@ -160,6 +166,7 @@ public class SettingsMenuRenderer
     private const int CtlWorldSizePlus    = 18;
     private const int CtlWorldWeightMinus = 19;
     private const int CtlWorldWeightPlus  = 20;
+    private const int CtlGlow             = 21;
     private int _hoveredControl = -1;
 
     private const int Step = 10; // percent per click
@@ -207,6 +214,11 @@ public class SettingsMenuRenderer
     private const string BackLabel = "[ Back ]";
     // Widest of the two states, so the hit region does not change size with the label.
     private const int ToggleW = 7; // "[ OFF ]"
+
+    // GLOW shares the dither row: both are switches on the final shader layer, and the video group
+    // has no row to spare above the glyph block. Its label sits over the bar column of a volume row.
+    private int GlowLabelX  => BarX + 7;
+    private int GlowToggleX => BarX + 13;
     // Widest of the two states, so the hit region does not change size with the label.
     private const int FullscreenW = 10; // "[ WINDOW ]"
 
@@ -308,6 +320,16 @@ public class SettingsMenuRenderer
 
         string label = (DitherEnabled ? "[ ON ]" : "[ OFF ]").PadRight(ToggleW);
         _terminal.Text(MinusX, DitherRow, label, textColor, bgColor);
+
+        _terminal.Text(GlowLabelX, DitherRow, "GLOW", Config.Colors.MediumGray60, Config.Colors.Black);
+
+        bool glowHovered = _hoveredControl == CtlGlow;
+        Vector4 glowText = glowHovered ? Config.Colors.BrightYellow
+                         : GlowEnabled ? Config.Colors.White
+                         :               Config.Colors.DarkGray35;
+        Vector4 glowBg = glowHovered ? Config.Colors.DarkYellow : Config.Colors.Black;
+        _terminal.Text(GlowToggleX, DitherRow, (GlowEnabled ? "[ ON ]" : "[ OFF ]").PadRight(ToggleW),
+            glowText, glowBg);
     }
 
     /// <summary>
@@ -587,6 +609,7 @@ public class SettingsMenuRenderer
             case CtlSfxMinus:   SetSfx(SfxVolume - Step); break;
             case CtlSfxPlus:    SetSfx(SfxVolume + Step); break;
             case CtlDither:     ToggleDither(); break;
+            case CtlGlow:       ToggleGlow(); break;
             case CtlFullscreen: ToggleFullscreen(); break;
             case CtlWeightMinus: SetGlyphWeight(GlyphWeight - 1); break;
             case CtlWeightPlus:  SetGlyphWeight(GlyphWeight + 1); break;
@@ -722,6 +745,13 @@ public class SettingsMenuRenderer
         Render();
     }
 
+    private void ToggleGlow()
+    {
+        GlowEnabled = !GlowEnabled;
+        OnGlowChanged?.Invoke(GlowEnabled);
+        Render();
+    }
+
     private void ToggleFullscreen()
     {
         Fullscreen = !Fullscreen;
@@ -775,6 +805,7 @@ public class SettingsMenuRenderer
         else if (y == DitherRow)
         {
             if (x >= MinusX && x < MinusX + ToggleW) return CtlDither;
+            if (x >= GlowToggleX && x < GlowToggleX + ToggleW) return CtlGlow;
         }
         else if (y == FullscreenRow)
         {
@@ -829,6 +860,7 @@ public class SettingsMenuRenderer
         CtlSfxMinus   => "settings:sfx-minus",
         CtlSfxPlus    => "settings:sfx-plus",
         CtlDither     => "settings:dither",
+        CtlGlow       => "settings:glow",
         CtlFullscreen => "settings:fullscreen",
         CtlWeightMinus => "settings:glyph-weight-minus",
         CtlWeightPlus  => "settings:glyph-weight-plus",

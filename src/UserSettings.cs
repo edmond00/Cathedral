@@ -51,6 +51,13 @@ public static class UserSettings
     public static bool DitherEnabled { get; set; } = true;
 
     /// <summary>
+    /// Whether the glow is on — the halo every lit glyph sheds into the dark around it. Applied at
+    /// startup unless <c>--glow</c> spoke for it on this run. Only the switch is saved; the
+    /// strength is tuning, kept in <c>Config.PostProcess</c>.
+    /// </summary>
+    public static bool GlowEnabled { get; set; } = true;
+
+    /// <summary>
     /// Whether the game window opens borderless-fullscreen. Applied once the window exists (see
     /// <c>WindowMode</c>), and toggled either from the Settings screen or with F11 — both of which
     /// write back here, so the mode the player left in is the mode they come back to.
@@ -171,6 +178,7 @@ public static class UserSettings
             SfxVolume   = Math.Clamp(dto.SfxVolume, 0, 100);
 
             DitherEnabled = dto.DitherEnabled;
+            GlowEnabled   = dto.GlowEnabled;
             Fullscreen    = dto.Fullscreen;
 
             // Clamped to exactly the range the Settings screen offers, because this file is
@@ -218,6 +226,7 @@ public static class UserSettings
                 SfxVolume   = SfxVolume,
 
                 DitherEnabled = DitherEnabled,
+                GlowEnabled   = GlowEnabled,
                 Fullscreen    = Fullscreen,
                 GlyphWeight   = GlyphWeight,
                 GlyphScale    = GlyphScale,
@@ -248,6 +257,7 @@ public static class UserSettings
         public int MusicVolume { get; set; } = 100;
         public int SfxVolume { get; set; } = 100;
         public bool DitherEnabled { get; set; } = true;
+        public bool GlowEnabled { get; set; } = true;
         public bool Fullscreen { get; set; } = false;
         public int GlyphWeight { get; set; } = Config.Terminal.GlyphWeightDefaultStep;
         public float GlyphScale { get; set; } = Config.Terminal.GlyphScaleDefault;

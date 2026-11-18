@@ -257,6 +257,8 @@ public sealed class CliDriver
                 case "state":       CmdState();                       break;
                 case "dump":        CmdDump(rest);                    break;
                 case "snap":        CmdSnap(rest);                    break;
+                case "glow":        CmdGlow(rest);                    break;
+                case "dither":      CmdDither(rest);                  break;
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
                 case "world-regions": CmdWorldRegions(rest);         break;
@@ -364,6 +366,14 @@ public sealed class CliDriver
           dump [--color]            the terminal grid as text; --color annotates greyed lines
           snap <file.png>           the next frame drawn, as a PNG — colours and layout, which
                                     `dump` cannot see. Waits until it is written
+          glow [on|off|<strength>]  switch the glow layer for this run, or set its strength
+                                    (nothing saved); bare `glow` reports it. With `snap`, the
+                                    way to take a before/after of one frame
+          glow flicker <amount>     how far the halo falters (0 = steady, default 0.15)
+          glow protect <0..1>       how firmly dark text on a lit fill is kept from the halo
+          glow clock <secs|live>    pin the falter's clock, so frames snapped at fixed steps
+                                    film it evenly; `live` hands it back to the frame clock
+          dither [on|off]           the same for the dither layer
           regions                   what is actionable right now (the handles `click` accepts)
           world                     avatar vertex, biome, location, travel range, region
           world-variant             which kind of world this is, its thresholds, and the whole table
@@ -630,6 +640,63 @@ public sealed class CliDriver
         _draining = false;
         RestartWait("snap");
         _waitCondition = () => snap.Done;
+    }
+
+    private void CmdGlow(string[] args)
+    {
+        var post = _game.CliCore.PostProcess;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        if (args.Length >= 2 && args[0].Equals("flicker", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float fl))
+        {
+            post.GlowFlicker = Math.Max(0f, fl);
+        }
+        else if (args.Length >= 2 && args[0].Equals("protect", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float pr))
+        {
+            post.GlowProtect = Math.Clamp(pr, 0f, 1f);
+            // glow protect <amount> [<low> <high> <lod>] — the knee, for tuning
+            if (args.Length >= 5
+                && float.TryParse(args[2], System.Globalization.NumberStyles.Float, inv, out float lo)
+                && float.TryParse(args[3], System.Globalization.NumberStyles.Float, inv, out float hi)
+                && float.TryParse(args[4], System.Globalization.NumberStyles.Float, inv, out float lod))
+            {
+                Config.PostProcess.GlowProtectLow = lo;
+                Config.PostProcess.GlowProtectHigh = hi;
+                Config.PostProcess.GlowProtectLod = lod;
+            }
+        }
+        else if (args.Length >= 2 && args[0].Equals("clock", StringComparison.OrdinalIgnoreCase))
+        {
+            if (args[1].Equals("live", StringComparison.OrdinalIgnoreCase)) post.GlowClockOverride = null;
+            else if (float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float t)) post.GlowClockOverride = t;
+            else { CliMode.Emit("error: glow clock <seconds|live>"); return; }
+        }
+        else if (args.Length >= 1)
+        {
+            string a = args[0].ToLowerInvariant();
+            if (a == "on") post.GlowEnabled = true;
+            else if (a == "off") post.GlowEnabled = false;
+            else if (float.TryParse(a, System.Globalization.NumberStyles.Float,
+                         System.Globalization.CultureInfo.InvariantCulture, out float k))
+            { post.GlowEnabled = k > 0f; post.GlowStrength = Math.Max(0f, k); }
+            else { CliMode.Emit("error: glow [on|off|<strength>]"); return; }
+        }
+        CliMode.Emit($"glow={(post.GlowEnabled ? "on" : "off")} strength={post.GlowStrength.ToString("0.00", inv)} " +
+                     $"flicker={post.GlowFlicker.ToString("0.00", inv)} clock={(post.GlowClockOverride is float c ? c.ToString("0.000", inv) : "live")}");
+    }
+
+    private void CmdDither(string[] args)
+    {
+        var post = _game.CliCore.PostProcess;
+        if (args.Length >= 1)
+        {
+            string a = args[0].ToLowerInvariant();
+            if (a == "on") post.Enabled = true;
+            else if (a == "off") post.Enabled = false;
+            else { CliMode.Emit("error: dither [on|off]"); return; }
+        }
+        CliMode.Emit($"dither={(post.Enabled ? "on" : "off")}");
     }
 
     private void CmdDump(string[] args)
