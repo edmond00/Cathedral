@@ -211,6 +211,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --dither [mode[:levels[:scale]]]   Retune the final full-screen dither layer (mode off|bayer|mono|noise).");
     Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
     Console.WriteLine("                                     In-game: F cycles the mode, G the palette depth, H the grain, J the event pulses");
+    Console.WriteLine("  --glow [on|off|<strength>]         The glow layer: the halo every lit glyph sheds into the dark. Outranks the");
+    Console.WriteLine("                                     saved Settings switch for this run; a number sets its strength (default 0.9)");
     Console.WriteLine("  --no-encounters                    DEBUG: never roll a random travel encounter. For scripted runs: an");
     Console.WriteLine("                                     encounter puts the game in EncounterPrompt, where a script waiting");
     Console.WriteLine("                                     for LocationInteraction hangs until its timeout");
@@ -1141,6 +1143,27 @@ for (int i = 0; i < args.Length; i++)
 
     Console.WriteLine($"Post-process: dither mode={Cathedral.Config.PostProcess.DitherMode} " +
                       $"levels={Cathedral.Config.PostProcess.Levels} pixelScale={Cathedral.Config.PostProcess.PixelScale}");
+    break;
+}
+
+// Check for --glow [on|off|<strength>] — the halo layer. Like --dither, it outranks the saved switch.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] != "--glow") continue;
+
+    Cathedral.Config.PostProcess.GlowSetByFlag = true;
+    Cathedral.Config.PostProcess.GlowEnabled = true;
+    if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        string v = args[i + 1].ToLowerInvariant();
+        if (v == "off") Cathedral.Config.PostProcess.GlowEnabled = false;
+        else if (float.TryParse(v, System.Globalization.NumberStyles.Float,
+                     System.Globalization.CultureInfo.InvariantCulture, out float k))
+        {
+            Cathedral.Config.PostProcess.GlowStrength = Math.Max(0f, k);
+            Cathedral.Config.PostProcess.GlowEnabled = k > 0f;
+        }
+    }
     break;
 }
 

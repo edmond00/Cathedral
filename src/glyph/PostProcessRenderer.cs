@@ -76,6 +76,29 @@ namespace Cathedral.Glyph
         /// <summary>Blend between the original frame (0) and the dithered result (1).</summary>
         public float Strength { get; set; } = Cathedral.Config.PostProcess.Strength;
 
+        // ── Glow ──────────────────────────────────────────────────────────────────
+        //
+        // Every lit glyph bleeds a little of its own light into the black around it, the way a
+        // phosphor or an LED does. Computed in the same resolve pass, ahead of the dither, from
+        // the mip chain of the finished frame: the light of each pixel is spread at six scales
+        // (2 to 64 pixels) and added back over the sharp frame. The frame itself is never
+        // blurred - the halo only ever adds to it - so a letter keeps its edges and stands out
+        // further from the dark ground. Its hue is the hue of what emits it, so the three-hue
+        // rule holds by construction, and a sum that would clip is scaled down as a whole
+        // rather than per channel, so a bright yellow does not wash out to white.
+
+        /// <summary>Whether the glow is on. Independent of the dither: either may run alone.</summary>
+        public bool GlowEnabled { get; set; } = Cathedral.Config.PostProcess.GlowEnabled;
+
+        /// <summary>Overall intensity of the halo added over the frame.</summary>
+        public float GlowStrength { get; set; } = Cathedral.Config.PostProcess.GlowStrength;
+
+        /// <summary>
+        /// Share of the halo given to the tight scales (2-4 px: the bloom of one glyph) against
+        /// the wide ones (8-64 px: the light of a crowd of them lifting the whole region).
+        /// </summary>
+        public float GlowTightness { get; set; } = Cathedral.Config.PostProcess.GlowTightness;
+
         // ── Event pulses ──────────────────────────────────────────────────────────
         //
         // A game event briefly overrides the resting dither, then decays back — the
@@ -170,7 +193,9 @@ namespace Cathedral.Glyph
         /// The pass has to run for the magnifier even with the dither switched off, so
         /// "is the dither on" is no longer the same question as "is the pass on".
         /// </summary>
-        private bool PassActive => Mode != DitherMode.Off || _zoomActive;
+        private bool PassActive => Mode != DitherMode.Off || _zoomActive || GlowActive;
+
+        private bool GlowActive => GlowEnabled && GlowStrength > 0f;
 
         private int _fbo;
         private int _colorTex;
@@ -183,6 +208,16 @@ namespace Cathedral.Glyph
 
         private int _uScene, _uMode, _uLevels, _uPixelScale, _uStrength, _uResolution;
         private int _uZoom, _uZoomCenter;
+        private int _uGlowSrc, _uGlow, _uGlowTight, _uGlowMaxLod;
+
+        // The glow's source: the frame's bright parts only, at half resolution, read through
+        // its mip chain by a trilinear sampler on unit 1. A bright-pass rather than the frame
+        // itself, because a halo spread from everything lifted every dim panel fill into a haze:
+        // what should shine is a lit glyph, not a large surface of dark gold.
+        private int _glowSampler;
+        private int _brightProgram;
+        private int _uBrightScene, _uBrightKnee;
+        private int _glowFbo, _glowTex, _glowW, _glowH;
 
         // Mirrors the filter currently set on _colorTex, so the zoom toggle only issues
         // TexParameter calls when it actually changes.
@@ -203,6 +238,20 @@ namespace Cathedral.Glyph
             _uResolution = GL.GetUniformLocation(_program, "uResolution");
             _uZoom = GL.GetUniformLocation(_program, "uZoom");
             _uZoomCenter = GL.GetUniformLocation(_program, "uZoomCenter");
+            _uGlowSrc = GL.GetUniformLocation(_program, "uGlowSrc");
+            _uGlow = GL.GetUniformLocation(_program, "uGlow");
+            _uGlowTight = GL.GetUniformLocation(_program, "uGlowTight");
+            _uGlowMaxLod = GL.GetUniformLocation(_program, "uGlowMaxLod");
+
+            _brightProgram = CreateProgram(VertexSrc, BrightPassSrc);
+            _uBrightScene = GL.GetUniformLocation(_brightProgram, "uScene");
+            _uBrightKnee = GL.GetUniformLocation(_brightProgram, "uKnee");
+
+            _glowSampler = GL.GenSampler();
+            GL.SamplerParameter(_glowSampler, SamplerParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+            GL.SamplerParameter(_glowSampler, SamplerParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.SamplerParameter(_glowSampler, SamplerParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.SamplerParameter(_glowSampler, SamplerParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 
             // Fullscreen triangle is generated from gl_VertexID; no buffers needed,
             // but core profile still requires a bound VAO.
@@ -334,7 +383,28 @@ namespace Cathedral.Glyph
                 _currentFilter = filter;
             }
 
+            bool glow = GlowActive;
+            if (glow)
+            {
+                // The halo is read from the mip chain of this very frame's bright-pass, so both
+                // are rebuilt every frame.
+                RenderBrightPass(width, height);
+                GL.BindFramebuffer(FramebufferTarget.Framebuffer, OutputFramebuffer);
+                GL.Viewport(0, 0, width, height);
+                GL.UseProgram(_program);
+
+                GL.ActiveTexture(TextureUnit.Texture1);
+                GL.BindTexture(TextureTarget.Texture2D, _glowTex);
+                GL.BindSampler(1, _glowSampler);
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.Texture2D, _colorTex);
+            }
+
             GL.Uniform1(_uScene, 0);
+            GL.Uniform1(_uGlowSrc, 1);
+            GL.Uniform1(_uGlow, glow ? Math.Max(0f, GlowStrength) : 0f);
+            GL.Uniform1(_uGlowTight, Math.Clamp(GlowTightness, 0f, 1f));
+            GL.Uniform1(_uGlowMaxLod, (float)Math.Floor(Math.Log2(Math.Max(1, Math.Max(_glowW, _glowH)))));
             GL.Uniform1(_uZoom, _zoomActive ? ZoomFactor : 1.0f);
             GL.Uniform2(_uZoomCenter, _zoomU, _zoomV);
             GL.Uniform1(_uMode, (int)EffectiveMode);
@@ -346,6 +416,14 @@ namespace Cathedral.Glyph
             GL.BindVertexArray(_emptyVao);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
             GL.BindVertexArray(0);
+
+            if (glow)
+            {
+                GL.BindSampler(1, 0);
+                GL.ActiveTexture(TextureUnit.Texture1);
+                GL.BindTexture(TextureTarget.Texture2D, 0);
+                GL.ActiveTexture(TextureUnit.Texture0);
+            }
 
             if (depthWasOn) GL.Enable(EnableCap.DepthTest);
             if (blendWasOn) GL.Enable(EnableCap.Blend);
@@ -366,6 +444,7 @@ namespace Cathedral.Glyph
 
         public string Describe()
             => $"dither={Mode} levels={Levels} pixelScale={PixelScale} strength={Strength:0.00} " +
+               $"glow={(GlowEnabled ? $"on ({GlowStrength:0.00})" : "off")} " +
                $"pulses={(PulsesEnabled ? $"on ({PulseDuration:0.00}s)" : "off")}";
 
         private void EnsureTarget(int width, int height)
@@ -411,8 +490,54 @@ namespace Cathedral.Glyph
             }
         }
 
+        /// <summary>
+        /// Writes the frame's bright parts into the half-resolution glow texture and rebuilds its
+        /// mip chain. Leaves the glow framebuffer bound; the caller rebinds its own.
+        /// </summary>
+        private void RenderBrightPass(int width, int height)
+        {
+            int gw = Math.Max(1, width / 2), gh = Math.Max(1, height / 2);
+            if (_glowFbo == 0 || gw != _glowW || gh != _glowH)
+            {
+                DisposeGlowTarget();
+                _glowW = gw; _glowH = gh;
+                _glowTex = GL.GenTexture();
+                GL.BindTexture(TextureTarget.Texture2D, _glowTex);
+                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, gw, gh, 0,
+                              PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+                GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+                _glowFbo = GL.GenFramebuffer();
+                GL.BindFramebuffer(FramebufferTarget.Framebuffer, _glowFbo);
+                GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0,
+                                        TextureTarget.Texture2D, _glowTex, 0);
+            }
+
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, _glowFbo);
+            GL.Viewport(0, 0, gw, gh);
+            GL.UseProgram(_brightProgram);
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, _colorTex);
+            GL.Uniform1(_uBrightScene, 0);
+            GL.Uniform2(_uBrightKnee, Cathedral.Config.PostProcess.GlowKneeLow, Cathedral.Config.PostProcess.GlowKneeHigh);
+            GL.BindVertexArray(_emptyVao);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+            GL.BindVertexArray(0);
+
+            GL.BindTexture(TextureTarget.Texture2D, _glowTex);
+            GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        private void DisposeGlowTarget()
+        {
+            if (_glowFbo != 0) { GL.DeleteFramebuffer(_glowFbo); _glowFbo = 0; }
+            if (_glowTex != 0) { GL.DeleteTexture(_glowTex); _glowTex = 0; }
+            _glowW = _glowH = 0;
+        }
+
         private void DisposeTarget()
         {
+            DisposeGlowTarget();
             if (_fbo != 0) { GL.DeleteFramebuffer(_fbo); _fbo = 0; }
             if (_colorTex != 0) { GL.DeleteTexture(_colorTex); _colorTex = 0; }
             if (_depthRbo != 0) { GL.DeleteRenderbuffer(_depthRbo); _depthRbo = 0; }
@@ -424,6 +549,8 @@ namespace Cathedral.Glyph
             DisposeTarget();
             if (_program != 0) { GL.DeleteProgram(_program); _program = 0; }
             if (_emptyVao != 0) { GL.DeleteVertexArray(_emptyVao); _emptyVao = 0; }
+            if (_glowSampler != 0) { GL.DeleteSampler(_glowSampler); _glowSampler = 0; }
+            if (_brightProgram != 0) { GL.DeleteProgram(_brightProgram); _brightProgram = 0; }
             _initialized = false;
         }
 
@@ -477,6 +604,45 @@ uniform float uStrength;
 uniform vec2  uResolution;
 uniform float uZoom;        // 1.0 = no magnification
 uniform vec2  uZoomCenter;  // UV the magnifier is centred on
+uniform sampler2D uGlowSrc; // the frame's bright-pass at half size, through its mip chain
+uniform float uGlow;        // halo intensity, 0 = no glow
+uniform float uGlowTight;   // share of the halo given to the tight scales
+uniform float uGlowMaxLod;  // last mip level of the frame
+
+// One mip level, smoothed: four bilinear taps half a texel of that level off the centre,
+// so the level reads as a soft disc instead of the square block a single mip sample is.
+vec3 glowLevel(vec2 uv, float lod)
+{
+    vec2 o = exp2(lod) / uResolution;   // half a texel of this level; level 0 is 2 px
+    return 0.25 * (textureLod(uGlowSrc, uv + vec2( o.x,  o.y), lod).rgb
+                 + textureLod(uGlowSrc, uv + vec2(-o.x,  o.y), lod).rgb
+                 + textureLod(uGlowSrc, uv + vec2( o.x, -o.y), lod).rgb
+                 + textureLod(uGlowSrc, uv + vec2(-o.x, -o.y), lod).rgb);
+}
+
+// The light the neighbourhood of uv sheds onto it, at six scales. Tight levels make each
+// glyph bloom; wide ones let a crowd of glyphs lift the dark around it. A mip level is an
+// average, so a level's light is spread over its area: the weights rise with the scale to
+// keep a lone dot visible in the wide halo, and each half is normalised to sum to one.
+vec3 glow(vec2 uv)
+{
+    vec3 tight = 0.45 * glowLevel(uv, 0.0) + 0.55 * glowLevel(uv, 1.0);
+    vec3 wide  = 0.20 * glowLevel(uv, min(2.0, uGlowMaxLod))
+               + 0.25 * glowLevel(uv, min(3.0, uGlowMaxLod))
+               + 0.30 * glowLevel(uv, min(4.0, uGlowMaxLod))
+               + 0.25 * glowLevel(uv, min(5.0, uGlowMaxLod));
+    return mix(wide * 2.0, tight, uGlowTight);
+}
+
+// Adds the halo without letting it clip. A channel driven past 1 scales the whole colour
+// down with it, so the hue of what glows is kept instead of drifting to white.
+vec3 addGlow(vec3 c, vec2 uv)
+{
+    if (uGlow <= 0.0) return c;
+    vec3 g = c + uGlow * glow(uv);
+    float m = max(max(g.r, g.g), g.b);
+    return m > 1.0 ? g / m : g;
+}
 
 // Ordered dither matrices, normalised to [0,1) and biased to -0.5..0.5 at use.
 const float BAYER8[64] = float[64](
@@ -519,7 +685,7 @@ void main()
     //  drivers reject stray bytes even inside comments.)
     sampleUv = uZoomCenter + (sampleUv - uZoomCenter) / uZoom;
 
-    vec3 original = texture(uScene, sampleUv).rgb;
+    vec3 original = addGlow(texture(uScene, sampleUv).rgb, sampleUv);
 
     // Mode 0 is a pure passthrough. It is reachable now that the magnifier can run the
     // pass with the dither switched off; without this the frame would be dithered anyway.
@@ -557,6 +723,34 @@ void main()
     }
 
     FragColor = vec4(clamp(mix(original, dithered, uStrength), 0.0, 1.0), 1.0);
+}";
+
+        // The glow's source, drawn at half resolution: each output texel takes the four frame
+        // pixels under it, keeps of each only what rises above the knee, and averages them.
+        // Thresholding before averaging keeps a one-pixel stroke of a letter as bright as it
+        // is; averaging first would have let thin text fall below the knee. The knee reads the
+        // brightest channel, so a saturated purple counts as fully as a grey of the same peak.
+        private const string BrightPassSrc = @"
+#version 330 core
+in vec2 vUv;
+out vec4 FragColor;
+
+uniform sampler2D uScene;
+uniform vec2 uKnee;   // brightest channel at which a pixel starts, and finishes, shining
+
+vec3 bright(ivec2 p)
+{
+    vec3 c = texelFetch(uScene, p, 0).rgb;
+    float m = max(max(c.r, c.g), c.b);
+    return c * smoothstep(uKnee.x, uKnee.y, m);
+}
+
+void main()
+{
+    ivec2 size = textureSize(uScene, 0);
+    ivec2 p = min(ivec2(gl_FragCoord.xy) * 2, size - 2);
+    vec3 sum = bright(p) + bright(p + ivec2(1, 0)) + bright(p + ivec2(0, 1)) + bright(p + ivec2(1, 1));
+    FragColor = vec4(sum * 0.25, 1.0);
 }";
     }
 }

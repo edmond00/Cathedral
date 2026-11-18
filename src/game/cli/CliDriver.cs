@@ -257,6 +257,8 @@ public sealed class CliDriver
                 case "state":       CmdState();                       break;
                 case "dump":        CmdDump(rest);                    break;
                 case "snap":        CmdSnap(rest);                    break;
+                case "glow":        CmdGlow(rest);                    break;
+                case "dither":      CmdDither(rest);                  break;
                 case "regions":     CmdRegions();                     break;
                 case "world":       CmdWorld();                       break;
                 case "world-regions": CmdWorldRegions(rest);         break;
@@ -364,6 +366,10 @@ public sealed class CliDriver
           dump [--color]            the terminal grid as text; --color annotates greyed lines
           snap <file.png>           the next frame drawn, as a PNG — colours and layout, which
                                     `dump` cannot see. Waits until it is written
+          glow [on|off|<strength>]  switch the glow layer for this run, or set its strength
+                                    (nothing saved); bare `glow` reports it. With `snap`, the
+                                    way to take a before/after of one frame
+          dither [on|off]           the same for the dither layer
           regions                   what is actionable right now (the handles `click` accepts)
           world                     avatar vertex, biome, location, travel range, region
           world-variant             which kind of world this is, its thresholds, and the whole table
@@ -630,6 +636,35 @@ public sealed class CliDriver
         _draining = false;
         RestartWait("snap");
         _waitCondition = () => snap.Done;
+    }
+
+    private void CmdGlow(string[] args)
+    {
+        var post = _game.CliCore.PostProcess;
+        if (args.Length >= 1)
+        {
+            string a = args[0].ToLowerInvariant();
+            if (a == "on") post.GlowEnabled = true;
+            else if (a == "off") post.GlowEnabled = false;
+            else if (float.TryParse(a, System.Globalization.NumberStyles.Float,
+                         System.Globalization.CultureInfo.InvariantCulture, out float k))
+            { post.GlowEnabled = k > 0f; post.GlowStrength = Math.Max(0f, k); }
+            else { CliMode.Emit("error: glow [on|off|<strength>]"); return; }
+        }
+        CliMode.Emit($"glow={(post.GlowEnabled ? "on" : "off")} strength={post.GlowStrength.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}");
+    }
+
+    private void CmdDither(string[] args)
+    {
+        var post = _game.CliCore.PostProcess;
+        if (args.Length >= 1)
+        {
+            string a = args[0].ToLowerInvariant();
+            if (a == "on") post.Enabled = true;
+            else if (a == "off") post.Enabled = false;
+            else { CliMode.Emit("error: dither [on|off]"); return; }
+        }
+        CliMode.Emit($"dither={(post.Enabled ? "on" : "off")}");
     }
 
     private void CmdDump(string[] args)

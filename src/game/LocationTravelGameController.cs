@@ -985,6 +985,8 @@ public class LocationTravelGameController : IDisposable
         // off without overriding a mode chosen at the command line.
         if (!Config.PostProcess.DitherModeSetByFlag)
             _core.PostProcess.Enabled = UserSettings.DitherEnabled;
+        if (!Config.PostProcess.GlowSetByFlag)
+            _core.PostProcess.GlowEnabled = UserSettings.GlowEnabled;
 
         // Glyph weight and size. The scale is a per-frame uniform, so writing it is the whole of
         // applying it. The weight is half rastered, so it needs the atlas re-built — and only when
@@ -3927,6 +3929,12 @@ public class LocationTravelGameController : IDisposable
                         UserSettings.DitherEnabled = on;
                         UserSettings.Save();
                     },
+                    OnGlowChanged = on =>
+                    {
+                        _core.PostProcess.GlowEnabled = on;
+                        UserSettings.GlowEnabled = on;
+                        UserSettings.Save();
+                    },
                     // Applied at once, unlike the model rows: the window is right there, and a
                     // fullscreen setting that took effect next launch would be a strange thing to
                     // offer. Same switch F11 flips (Cathedral.Glyph.WindowMode), same store.
@@ -4040,6 +4048,7 @@ public class LocationTravelGameController : IDisposable
         _settingsMenuRenderer.LlmGpuLayers  = UserSettings.LlmGpuLayers;
         _settingsMenuRenderer.LlmCpuThreads = UserSettings.LlmCpuThreads;
         _settingsMenuRenderer.DitherEnabled = _core.PostProcess.Enabled;
+        _settingsMenuRenderer.GlowEnabled   = _core.PostProcess.GlowEnabled;
         _settingsMenuRenderer.Fullscreen    = Cathedral.Glyph.WindowMode.IsFullscreen;
         _settingsMenuRenderer.GlyphWeight   = Config.Terminal.GlyphWeightStep;
         _settingsMenuRenderer.GlyphScale    = Config.Terminal.GlyphScale;
