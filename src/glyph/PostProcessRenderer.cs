@@ -108,6 +108,15 @@ namespace Cathedral.Glyph
         public float GlowFlicker { get; set; } = Cathedral.Config.PostProcess.GlowFlicker;
 
         /// <summary>
+        /// How firmly dark ink on a lit surface is protected (0 = not at all, 1 = fully). On a
+        /// bright fill - black text on a yellow card, a highlighted menu row - the fill's own halo
+        /// spilled over the dark strokes and thinned them to nothing. Where the ground is lit, the
+        /// halo is withheld and a pixel darker than that ground is deepened a little, which gives
+        /// the strokes back their weight. Light text on a dark ground is untouched.
+        /// </summary>
+        public float GlowProtect { get; set; } = Cathedral.Config.PostProcess.GlowProtect;
+
+        /// <summary>
         /// Pins the flicker's clock to a given second instead of real time. Null (the default) runs
         /// it on the frame clock. For filming: a script steps it by a fixed amount between snaps so
         /// the frames are evenly spaced whatever the renderer's frame rate.
@@ -262,7 +271,7 @@ namespace Cathedral.Glyph
 
         private int _uScene, _uMode, _uLevels, _uPixelScale, _uStrength, _uResolution;
         private int _uZoom, _uZoomCenter;
-        private int _uGlowSrc, _uGlow, _uGlowTight, _uGlowMaxLod, _uGlowTime, _uGlowFlicker;
+        private int _uGlowSrc, _uGlow, _uGlowTight, _uGlowMaxLod, _uGlowTime, _uGlowFlicker, _uGlowProtect, _uGlowProtectKnee;
 
         // The glow's source: the frame's bright parts only, at half resolution, read through
         // its mip chain by a trilinear sampler on unit 1. A bright-pass rather than the frame
@@ -298,6 +307,8 @@ namespace Cathedral.Glyph
             _uGlowMaxLod = GL.GetUniformLocation(_program, "uGlowMaxLod");
             _uGlowTime = GL.GetUniformLocation(_program, "uGlowTime");
             _uGlowFlicker = GL.GetUniformLocation(_program, "uGlowFlicker");
+            _uGlowProtect = GL.GetUniformLocation(_program, "uGlowProtect");
+            _uGlowProtectKnee = GL.GetUniformLocation(_program, "uGlowProtectKnee");
 
             _brightProgram = CreateProgram(VertexSrc, BrightPassSrc);
             _uBrightScene = GL.GetUniformLocation(_brightProgram, "uScene");
@@ -463,6 +474,9 @@ namespace Cathedral.Glyph
             GL.Uniform1(_uGlow, glow ? Math.Max(0f, GlowStrength) * GlobalFalter(GlowTime, flicker) : 0f);
             GL.Uniform1(_uGlowTime, GlowTime);
             GL.Uniform1(_uGlowFlicker, flicker);
+            GL.Uniform1(_uGlowProtect, Math.Clamp(GlowProtect, 0f, 1f));
+            GL.Uniform3(_uGlowProtectKnee, Cathedral.Config.PostProcess.GlowProtectLow,
+                        Cathedral.Config.PostProcess.GlowProtectHigh, Cathedral.Config.PostProcess.GlowProtectLod);
             GL.Uniform1(_uGlowTight, Math.Clamp(GlowTightness, 0f, 1f));
             GL.Uniform1(_uGlowMaxLod, (float)Math.Floor(Math.Log2(Math.Max(1, Math.Max(_glowW, _glowH)))));
             GL.Uniform1(_uZoom, _zoomActive ? ZoomFactor : 1.0f);
@@ -670,6 +684,8 @@ uniform float uGlowTight;   // share of the halo given to the tight scales
 uniform float uGlowMaxLod;  // last mip level of the frame
 uniform float uGlowTime;    // seconds, for the falter
 uniform float uGlowFlicker; // how far the halo falters, as a share of it
+uniform float uGlowProtect; // how firmly dark ink on a lit surface is kept from the halo
+uniform vec3  uGlowProtectKnee; // ground at which protection starts, is full; the mip level it is read at
 
 float vhash(vec3 p)
 {
@@ -719,10 +735,30 @@ vec3 glow(vec2 uv)
 
 // Adds the halo without letting it clip. A channel driven past 1 scales the whole colour
 // down with it, so the hue of what glows is kept instead of drifting to white.
+//
+// Dark ink on a lit surface is kept from the halo. The ground is the bright-pass averaged over
+// about a glyph cell: on a yellow card or a lit menu initial it is the fill, around light text on
+// black it is mostly black. Where
+// it is lit, a pixel well below that ground - a stroke of ink - is kept from the halo, whose spill
+// from the fill is what thinned it, and deepened in proportion, which restores the anti-aliased
+// edge of each stroke and so its weight. The fill itself glows as everything lit does.
 vec3 addGlow(vec3 c, vec2 uv)
 {
     if (uGlow <= 0.0) return c;
-    vec3 g = c + uGlow * glow(uv);
+
+    float L = uGlowProtectKnee.z;
+    vec3 groundRgb = 0.5 * (textureLod(uGlowSrc, uv, L - 0.5).rgb + textureLod(uGlowSrc, uv, L + 0.5).rgb);
+    float ground = max(max(groundRgb.r, groundRgb.g), groundRgb.b);
+    float protect = uGlowProtect * smoothstep(uGlowProtectKnee.x, uGlowProtectKnee.y, ground);
+
+    float lum = max(max(c.r, c.g), c.b);
+    // How far below the ground this pixel sits: 0 for the fill itself, 1 for a black stroke on it.
+    float below = 1.0 - lum / max(ground, 1e-3);
+    float shade = protect * smoothstep(0.20, 0.60, below);   // kept from the halo
+    float ink   = protect * smoothstep(0.45, 0.85, below);   // and deepened
+    c *= 1.0 - 0.55 * ink;
+
+    vec3 g = c + (1.0 - shade) * uGlow * glow(uv);
     float m = max(max(g.r, g.g), g.b);
     return m > 1.0 ? g / m : g;
 }

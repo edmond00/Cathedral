@@ -370,6 +370,7 @@ public sealed class CliDriver
                                     (nothing saved); bare `glow` reports it. With `snap`, the
                                     way to take a before/after of one frame
           glow flicker <amount>     how far the halo falters (0 = steady, default 0.15)
+          glow protect <0..1>       how firmly dark text on a lit fill is kept from the halo
           glow clock <secs|live>    pin the falter's clock, so frames snapped at fixed steps
                                     film it evenly; `live` hands it back to the frame clock
           dither [on|off]           the same for the dither layer
@@ -649,6 +650,21 @@ public sealed class CliDriver
             && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float fl))
         {
             post.GlowFlicker = Math.Max(0f, fl);
+        }
+        else if (args.Length >= 2 && args[0].Equals("protect", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float pr))
+        {
+            post.GlowProtect = Math.Clamp(pr, 0f, 1f);
+            // glow protect <amount> [<low> <high> <lod>] — the knee, for tuning
+            if (args.Length >= 5
+                && float.TryParse(args[2], System.Globalization.NumberStyles.Float, inv, out float lo)
+                && float.TryParse(args[3], System.Globalization.NumberStyles.Float, inv, out float hi)
+                && float.TryParse(args[4], System.Globalization.NumberStyles.Float, inv, out float lod))
+            {
+                Config.PostProcess.GlowProtectLow = lo;
+                Config.PostProcess.GlowProtectHigh = hi;
+                Config.PostProcess.GlowProtectLod = lod;
+            }
         }
         else if (args.Length >= 2 && args[0].Equals("clock", StringComparison.OrdinalIgnoreCase))
         {
