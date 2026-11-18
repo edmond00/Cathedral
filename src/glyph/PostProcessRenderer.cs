@@ -99,6 +99,60 @@ namespace Cathedral.Glyph
         /// </summary>
         public float GlowTightness { get; set; } = Cathedral.Config.PostProcess.GlowTightness;
 
+        /// <summary>
+        /// How far the halo falters, as a share of its strength (0 = steady). Only the halo moves:
+        /// the glyphs themselves are drawn at a constant brightness, so text never flickers, only
+        /// the light around it. Kept slow (under 2 Hz) and shallow so it reads as a lamp, never as
+        /// a strobe.
+        /// </summary>
+        public float GlowFlicker { get; set; } = Cathedral.Config.PostProcess.GlowFlicker;
+
+        /// <summary>
+        /// Pins the flicker's clock to a given second instead of real time. Null (the default) runs
+        /// it on the frame clock. For filming: a script steps it by a fixed amount between snaps so
+        /// the frames are evenly spaced whatever the renderer's frame rate.
+        /// </summary>
+        public float? GlowClockOverride { get; set; }
+
+        private double _glowClock;
+        private float GlowTime => GlowClockOverride ?? (float)(_glowClock % 3600.0);
+
+        /// <summary>
+        /// The whole screen's falter at time t, around 1. Three slow incommensurate sines make the
+        /// lamp breathe; then, in roughly one window of 2.3 s in three, a short dip with a quick
+        /// double catch, which is the "faltering". Hashed from the window index, never drawn from
+        /// a generator: it is decoration and must not touch GameRng.
+        /// </summary>
+        private static float GlobalFalter(float t, float amount)
+        {
+            const float Tau = MathF.PI * 2f;
+            float breathe = 0.50f * MathF.Sin(Tau * 0.37f * t)
+                          + 0.30f * MathF.Sin(Tau * 0.83f * t + 1.3f)
+                          + 0.20f * MathF.Sin(Tau * 1.70f * t + 0.7f);
+
+            const float Window = 2.3f;
+            int slot = (int)MathF.Floor(t / Window);
+            float h1 = Hash01(slot * 2 + 1), h2 = Hash01(slot * 2 + 2);
+            float dip = 0f;
+            if (h1 < 0.35f)
+            {
+                const float Length = 0.32f;
+                float start = h2 * (Window - Length);
+                float u = (t - slot * Window - start) / Length;
+                if (u >= 0f && u <= 1f)
+                    dip = MathF.Sin(MathF.PI * u) * (0.75f + 0.25f * MathF.Cos(Tau * 2.5f * u));
+            }
+            return 1f + amount * (0.5f * breathe - 1.6f * dip);
+        }
+
+        private static float Hash01(int n)
+        {
+            uint x = (uint)n * 747796405u + 2891336453u;
+            x = ((x >> (int)((x >> 28) + 4u)) ^ x) * 277803737u;
+            x = (x >> 22) ^ x;
+            return (x & 0xFFFFFF) / (float)0x1000000;
+        }
+
         // ── Event pulses ──────────────────────────────────────────────────────────
         //
         // A game event briefly overrides the resting dither, then decays back — the
@@ -208,7 +262,7 @@ namespace Cathedral.Glyph
 
         private int _uScene, _uMode, _uLevels, _uPixelScale, _uStrength, _uResolution;
         private int _uZoom, _uZoomCenter;
-        private int _uGlowSrc, _uGlow, _uGlowTight, _uGlowMaxLod;
+        private int _uGlowSrc, _uGlow, _uGlowTight, _uGlowMaxLod, _uGlowTime, _uGlowFlicker;
 
         // The glow's source: the frame's bright parts only, at half resolution, read through
         // its mip chain by a trilinear sampler on unit 1. A bright-pass rather than the frame
@@ -242,6 +296,8 @@ namespace Cathedral.Glyph
             _uGlow = GL.GetUniformLocation(_program, "uGlow");
             _uGlowTight = GL.GetUniformLocation(_program, "uGlowTight");
             _uGlowMaxLod = GL.GetUniformLocation(_program, "uGlowMaxLod");
+            _uGlowTime = GL.GetUniformLocation(_program, "uGlowTime");
+            _uGlowFlicker = GL.GetUniformLocation(_program, "uGlowFlicker");
 
             _brightProgram = CreateProgram(VertexSrc, BrightPassSrc);
             _uBrightScene = GL.GetUniformLocation(_brightProgram, "uScene");
@@ -294,6 +350,7 @@ namespace Cathedral.Glyph
             }
 
             if (_pulseRemaining > 0f) _pulseRemaining -= deltaSeconds;
+            _glowClock += deltaSeconds;
         }
 
         /// <summary>
@@ -402,7 +459,10 @@ namespace Cathedral.Glyph
 
             GL.Uniform1(_uScene, 0);
             GL.Uniform1(_uGlowSrc, 1);
-            GL.Uniform1(_uGlow, glow ? Math.Max(0f, GlowStrength) : 0f);
+            float flicker = Math.Clamp(GlowFlicker, 0f, 0.5f);
+            GL.Uniform1(_uGlow, glow ? Math.Max(0f, GlowStrength) * GlobalFalter(GlowTime, flicker) : 0f);
+            GL.Uniform1(_uGlowTime, GlowTime);
+            GL.Uniform1(_uGlowFlicker, flicker);
             GL.Uniform1(_uGlowTight, Math.Clamp(GlowTightness, 0f, 1f));
             GL.Uniform1(_uGlowMaxLod, (float)Math.Floor(Math.Log2(Math.Max(1, Math.Max(_glowW, _glowH)))));
             GL.Uniform1(_uZoom, _zoomActive ? ZoomFactor : 1.0f);
@@ -608,6 +668,28 @@ uniform sampler2D uGlowSrc; // the frame's bright-pass at half size, through its
 uniform float uGlow;        // halo intensity, 0 = no glow
 uniform float uGlowTight;   // share of the halo given to the tight scales
 uniform float uGlowMaxLod;  // last mip level of the frame
+uniform float uGlowTime;    // seconds, for the falter
+uniform float uGlowFlicker; // how far the halo falters, as a share of it
+
+float vhash(vec3 p)
+{
+    p = fract(p * 0.1031);
+    p += dot(p, p.zyx + 31.32);
+    return fract((p.x + p.y) * p.z);
+}
+
+// Smooth value noise over (x, y, t): the screen is divided into a few broad regions whose halos
+// breathe slightly out of step, so the light wavers like a flame rather than pulsing as one.
+float vnoise(vec3 p)
+{
+    vec3 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    float a = mix(mix(vhash(i),                  vhash(i + vec3(1, 0, 0)), f.x),
+                  mix(vhash(i + vec3(0, 1, 0)),  vhash(i + vec3(1, 1, 0)), f.x), f.y);
+    float b = mix(mix(vhash(i + vec3(0, 0, 1)),  vhash(i + vec3(1, 0, 1)), f.x),
+                  mix(vhash(i + vec3(0, 1, 1)),  vhash(i + vec3(1, 1, 1)), f.x), f.y);
+    return mix(a, b, f.z);
+}
 
 // One mip level, smoothed: four bilinear taps half a texel of that level off the centre,
 // so the level reads as a soft disc instead of the square block a single mip sample is.
@@ -631,7 +713,8 @@ vec3 glow(vec2 uv)
                + 0.25 * glowLevel(uv, min(3.0, uGlowMaxLod))
                + 0.30 * glowLevel(uv, min(4.0, uGlowMaxLod))
                + 0.25 * glowLevel(uv, min(5.0, uGlowMaxLod));
-    return mix(wide * 2.0, tight, uGlowTight);
+    float local = 1.0 + uGlowFlicker * 1.2 * (vnoise(vec3(uv * vec2(3.0, 2.25), uGlowTime * 0.9)) - 0.5);
+    return mix(wide * 2.0, tight, uGlowTight) * local;
 }
 
 // Adds the halo without letting it clip. A channel driven past 1 scales the whole colour

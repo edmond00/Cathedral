@@ -369,6 +369,9 @@ public sealed class CliDriver
           glow [on|off|<strength>]  switch the glow layer for this run, or set its strength
                                     (nothing saved); bare `glow` reports it. With `snap`, the
                                     way to take a before/after of one frame
+          glow flicker <amount>     how far the halo falters (0 = steady, default 0.15)
+          glow clock <secs|live>    pin the falter's clock, so frames snapped at fixed steps
+                                    film it evenly; `live` hands it back to the frame clock
           dither [on|off]           the same for the dither layer
           regions                   what is actionable right now (the handles `click` accepts)
           world                     avatar vertex, biome, location, travel range, region
@@ -641,7 +644,19 @@ public sealed class CliDriver
     private void CmdGlow(string[] args)
     {
         var post = _game.CliCore.PostProcess;
-        if (args.Length >= 1)
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        if (args.Length >= 2 && args[0].Equals("flicker", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float fl))
+        {
+            post.GlowFlicker = Math.Max(0f, fl);
+        }
+        else if (args.Length >= 2 && args[0].Equals("clock", StringComparison.OrdinalIgnoreCase))
+        {
+            if (args[1].Equals("live", StringComparison.OrdinalIgnoreCase)) post.GlowClockOverride = null;
+            else if (float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float t)) post.GlowClockOverride = t;
+            else { CliMode.Emit("error: glow clock <seconds|live>"); return; }
+        }
+        else if (args.Length >= 1)
         {
             string a = args[0].ToLowerInvariant();
             if (a == "on") post.GlowEnabled = true;
@@ -651,7 +666,8 @@ public sealed class CliDriver
             { post.GlowEnabled = k > 0f; post.GlowStrength = Math.Max(0f, k); }
             else { CliMode.Emit("error: glow [on|off|<strength>]"); return; }
         }
-        CliMode.Emit($"glow={(post.GlowEnabled ? "on" : "off")} strength={post.GlowStrength.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}");
+        CliMode.Emit($"glow={(post.GlowEnabled ? "on" : "off")} strength={post.GlowStrength.ToString("0.00", inv)} " +
+                     $"flicker={post.GlowFlicker.ToString("0.00", inv)} clock={(post.GlowClockOverride is float c ? c.ToString("0.000", inv) : "live")}");
     }
 
     private void CmdDither(string[] args)

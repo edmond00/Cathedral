@@ -1161,6 +1161,7 @@ public static class Config
         public static bool GlowSetByFlag = false;
         public static float GlowStrength = 0.9f;  // Intensity of the halo added over the frame
         public static float GlowTightness = 0.55f; // Share of the halo at 2-4 px against 8-64 px
+        public static float GlowFlicker = 0.15f;   // How far the halo falters (0 = steady); text never does
         // Bright-pass knee, on a pixel's brightest channel: below the first nothing shines, above
         // the second all of it does. Keeps dim panel fills and dark bands from glowing.
         public static float GlowKneeLow = 0.08f;
