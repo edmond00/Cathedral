@@ -290,6 +290,9 @@ public static partial class VerbAudit
         ["SleepingNpcPointOfInterest"] = "created per night by SceneNpcPlacement, merging a sleeper with their bed",
         ["FragmentPointOfInterest"]    = "childhood reminescence only, which this sweep does not build",
         ["GetUpPointOfInterest"]       = "the get-up phase only, likewise",
+        ["SelfPointOfInterest"]        = "the two opening phases only: the protagonist, whom the memories and the weariness hang from",
+        ["RoadPointOfInterest"]        = "the resting place of the two opening phases only",
+        ["HorizonPointOfInterest"]     = "the resting place of the two opening phases only",
         ["BellPointOfInterest"]        = "test location only — --verb-audit deliberately does not sweep it",
         ["MiddenPointOfInterest"]      = "test location only, likewise",
     };
@@ -828,9 +831,6 @@ public static partial class VerbAudit
             ["sing_along"]              = "needs a non-stranger",
             ["commission_work"]         = "needs a non-stranger",
             ["hear_gossip"]             = "needs a non-stranger",
-
-            // Visit-gated: the sweep builds scenes with no visit behind them, so no way is known yet.
-            ["backtrack"]               = "needs a way already known: an area visited or a connector taken",
         };
         var phaseScoped = unreachable.Keys.ToHashSet();
 

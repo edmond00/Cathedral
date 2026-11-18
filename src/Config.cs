@@ -90,7 +90,7 @@ public static class Config
         /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
         /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
         /// window's diagnostic dumps (D, G), the narration's location map (Tab,
-        /// <see cref="Game.DebugLocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
+        /// <see cref="Game.LocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
         ///
         /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
         /// frames its own camera — narration, travel and fights each set a distance — and a player
@@ -277,20 +277,6 @@ public static class Config
         /// <para>Inert at its default of false.</para>
         /// </summary>
         public static bool Silent { get; set; } = false;
-
-        /// <summary>
-        /// Runs without the GloVe word vectors (<c>models/embeddings/glove.6B.100d.txt</c>) instead of
-        /// exiting for want of them. Set by <c>--no-embeddings</c>.
-        ///
-        /// <para>For a machine that cannot have the file: a CI runner or container that does not fetch
-        /// 822 MB, or a sandbox whose network policy blocks the download. Keyword ranking then takes the
-        /// path it already takes before the vectors finish loading — by word length — so a
-        /// <c>--playground</c> script sees what it would see racing an unfinished load. <c>wait
-        /// embeddings</c> returns at once and says so.</para>
-        ///
-        /// <para>Inert at its default of false: without the flag a missing file still ends the run.</para>
-        /// </summary>
-        public static bool NoEmbeddings { get; set; } = false;
 
         /// <summary>
         /// Which audio path to take (<c>--audio winmm|openal</c>). Null means the platform's own:
@@ -662,6 +648,7 @@ public static class Config
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
+            '✗', '✓', '❝', '⚒', // location map: a failure, a success, speech, an implement
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
@@ -1430,6 +1417,30 @@ public static class Config
         // Difficulty 0: an act that cannot fail, and rolls no dice (REMEMBER, and any plain act)
         public const char AutomaticDifficultyGlyph = '○';
 
+        // ── The location map's symbols (narration) ──────────────────────────────
+        // What stands on a card before it is observed, by kind, and what a thought tree is made of.
+        /// <summary>
+        /// An enemy, wherever one is drawn: a fighter of the other side on the fight's board, and on
+        /// the location map a living thing that counts the member played an enemy. One face, so the
+        /// thing seen in a place is recognised when the fight opens against it.
+        /// </summary>
+        public const char EnemyChar   = '☹';
+
+        public const char MapWay      = '∩';   // a way on: a neighbouring area, a door, a stair, a path
+        public const char MapPerson   = '☺';   // a living thing that is no enemy
+        public const char MapHostile  = EnemyChar; // one that is: the face an enemy wears in a fight
+        public const char MapThing    = '◆';   // any other point of interest
+        public const char MapContent  = '◇';   // what a container holds, disclosed and not yet observed
+        public const char MapThink    = '?';   // think about this
+        public const char MapSpeak    = '❝';   // speak of this to a companion; and what was said
+        public const char MapTool     = '⚒';   // beside a waiting act: reach for an implement
+        public const char MapReconsider = '↺'; // beside a waiting act: think it over again
+        public const char MapThought  = '¶';   // a text a mind wrote: three thin bars read as a grey block at this size
+        public const char MapRefusal  = '⊘';   // a refusal, whoever refused and whatever was asked
+        public const char MapFailure  = '✗';   // an act that failed
+        public const char MapSuccess  = '✓';   // an act that succeeded
+        public const char MapEmotion  = '♥';   // what it stirred
+
         // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
         public const char GoldCoinSymbol   = '⎊'; // yellow
         public const char SilverCoinSymbol = '◉'; // grey
@@ -1512,9 +1523,9 @@ public static class Config
         public static readonly Vector4 HeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for location title
         public static readonly Vector4 ModusMentisHeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for modusMentis headers
         public static readonly Vector4 NarrativeColor = Colors.MediumGray60; // Medium grey for base text (darker for better contrast)
-        public static readonly Vector4 KeywordNormalColor = Colors.White; // White for interactive elements
-        public static readonly Vector4 KeywordHoverColor = Colors.BrightYellow; // Yellow text on hover
-        public static readonly Vector4 KeywordHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
+        public static readonly Vector4 MapArrowColor = Colors.White; // The map's pan arrows
+        public static readonly Vector4 MapArrowHoverColor = Colors.BrightYellow; // Yellow text on hover
+        public static readonly Vector4 MapArrowHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
         public static readonly Vector4 ActionNormalColor = Colors.White; // White for interactive elements
         public static readonly Vector4 ActionHoverColor = Colors.BrightYellow; // Yellow text on hover
         public static readonly Vector4 ActionHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
@@ -1745,14 +1756,6 @@ public static class Config
         public const string PlayerName = "character";
         
         /// <summary>
-        /// Target number of keywords to include in observations.
-        /// For overall observations: if more outcomes than this, sample this many outcomes.
-        /// If fewer outcomes, sample multiple keywords per outcome until reaching this target.
-        /// For focus observations: if more keywords than this, sample this many keywords.
-        /// </summary>
-        public const int TargetKeywordCount = 10;
-
-        /// <summary>
         /// Maximum character length of an LLM-generated narrative text — observation, thinking,
         /// action, outcome, speaking, dialogue, and sanitizer rewrites all share this cap. It is
         /// encoded straight into the GBNF grammar as the upper bound of the free-text body.
@@ -1765,33 +1768,6 @@ public static class Config
         /// <c>ActionPathPlanner.WaysThrough</c>). The shortest path is accepted however long it is.
         /// </summary>
         public const int WillMaxPathSteps = 3;
-
-        // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
-        // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
-        // multi-object observation phase can be tuned without touching the controller.
-
-        /// <summary>
-        /// If the first object's observation text alone is longer than this, the phase stops there and
-        /// no second (or third) observation is started — one rich paragraph stands on its own.
-        /// </summary>
-        public const int ObservationSkipSecondThreshold = 500;
-
-        /// <summary>
-        /// If the first + second observation texts together stay below this, and more than
-        /// <see cref="ObservationThirdMinRemaining"/> other objects could still be observed, a third
-        /// observation is added over the remaining objects.
-        /// </summary>
-        public const int ObservationTriggerThirdThreshold = 400;
-
-        /// <summary>Minimum number of still-observable objects required before a third observation is added.</summary>
-        public const int ObservationThirdMinRemaining = 5;
-
-        /// <summary>
-        /// If a single observation's text is longer than this, two distinct keywords (both linked to the
-        /// same object, so either click does the same thing) are highlighted instead of one.
-        /// </summary>
-        public const int ObservationTwoKeywordsThreshold = 400;
-
 
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";

@@ -271,7 +271,7 @@ mentis is content and is not listed here.
 
 1. A modus mentis with several functions is consulted in each role.
 2. An **observation** modus mentis is asked what is worth attending to, and describes what it finds.
-   It cannot choose what has already been attended to in this phase.
+   It chooses among the things of the kind asked for that the character has not yet observed.
 3. A **thinking** modus mentis is asked what to want. It picks a goal from what the observed object
    allows. Its moral level decides whether crimes are offered to it at all.
 4. An **action** modus mentis is asked whether it is willing, and how willingly. Its moral level

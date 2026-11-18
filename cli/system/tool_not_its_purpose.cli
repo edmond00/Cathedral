@@ -27,30 +27,32 @@ strategy succeed
 goal gather
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Berry Bush"
+choose childhood_memory
+advance 12 180
+click think "Test Berry Bush"
 choose ripelore
 advance 12 180
 
 inspect noetic
 
-click action 0
-
-# Still offered. The row is greyed by what is carried and by nothing else, so an implement that
-# cannot possibly serve is still offered — and the point below is what that costs.
+# Still offered. The implement symbol beside the act is greyed by what is carried and by nothing
+# else, so an implement that cannot possibly serve is still offered — and the point below is what
+# that costs.
 regions
-choose 1
+expect-no-state symbols click tool 0 (disabled)
+click tool 0
 regions
 choose 0
 advance 12 180
 
-# Refused: no reformulated act, so there is no action 1 and the original button stands alone.
+# Refused: no reformulated act, so there is no second act and the original stands alone.
 regions
 inspect noetic
 
 # The point was taken, exactly as for an act that admits no implement at all. The lenses were
 # offered, refused without a critic call, and charged for.
-expect-state noetic points=1/3
+expect-state noetic points=0/3
 
 # Low, not None — the refusal was the LENSES' doing. At None every combination fails and this
 # script would pass while proving nothing about MadeForVerbIds.

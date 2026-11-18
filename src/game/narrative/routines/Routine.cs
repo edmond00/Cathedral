@@ -11,26 +11,24 @@ using Cathedral.Game.Scene.Verbs;
 namespace Cathedral.Game.Narrative.Routines;
 
 /// <summary>
-/// The six kinds of routine, in the order the menus list them. The kind is the routine's
+/// The kinds of routine, in the order the menus list them. The kind is the routine's
 /// <b>type</b> (see the subclasses of <see cref="Routine"/>); this enum only names it for the menus,
 /// the map icons and the CLI.
 /// </summary>
-public enum RoutineCategory { GoTo, Meet, Gather, Buy, Sell, Work, Craft }
+public enum RoutineCategory { GoTo, Gather, Buy, Sell, Work, Craft }
 
 public static class RoutineCategories
 {
     /// <summary>Menu order.</summary>
     public static readonly RoutineCategory[] All =
     {
-        RoutineCategory.GoTo, RoutineCategory.Meet, RoutineCategory.Gather,
-        RoutineCategory.Buy,  RoutineCategory.Sell, RoutineCategory.Work,
-        RoutineCategory.Craft,
+        RoutineCategory.GoTo, RoutineCategory.Gather, RoutineCategory.Buy,
+        RoutineCategory.Sell, RoutineCategory.Work,   RoutineCategory.Craft,
     };
 
     public static string Label(this RoutineCategory c) => c switch
     {
         RoutineCategory.GoTo   => "Go to",
-        RoutineCategory.Meet   => "Meet",
         RoutineCategory.Gather => "Gather",
         RoutineCategory.Buy    => "Buy",
         RoutineCategory.Sell   => "Sell",
@@ -42,7 +40,6 @@ public static class RoutineCategories
     public static string CliId(this RoutineCategory c) => c switch
     {
         RoutineCategory.GoTo   => "goto",
-        RoutineCategory.Meet   => "meet",
         RoutineCategory.Gather => "gather",
         RoutineCategory.Buy    => "buy",
         RoutineCategory.Sell   => "sell",
@@ -54,7 +51,6 @@ public static class RoutineCategories
     public static char Icon(this RoutineCategory c) => c switch
     {
         RoutineCategory.GoTo   => 'G',
-        RoutineCategory.Meet   => 'M',
         RoutineCategory.Gather => 'H',
         RoutineCategory.Buy    => 'B',
         RoutineCategory.Sell   => 'S',
@@ -66,7 +62,6 @@ public static class RoutineCategories
     public static string HowLearned(this RoutineCategory c) => c switch
     {
         RoutineCategory.GoTo   => "Walk somewhere public and leave from there.",
-        RoutineCategory.Meet   => "Speak with someone where anyone may stand.",
         RoutineCategory.Gather => "Gather, dig, mine, fish or cut wood in the open.",
         RoutineCategory.Buy    => "Agree to buy from a merchant.",
         RoutineCategory.Sell   => "Agree to sell to a merchant.",
@@ -105,7 +100,6 @@ public sealed record RoutineCheckContext(Scene.Scene Scene, Protagonist Protagon
 /// </summary>
 [JsonPolymorphic]
 [JsonDerivedType(typeof(GoToRoutine),   "go_to")]
-[JsonDerivedType(typeof(MeetRoutine),   "meet")]
 [JsonDerivedType(typeof(TradeRoutine),  "trade")]
 [JsonDerivedType(typeof(WorkRoutine),   "work")]
 [JsonDerivedType(typeof(GatherRoutine), "gather")]
@@ -231,15 +225,6 @@ public abstract class NpcRoutine : Routine
         npc = entity;
         return null;
     }
-}
-
-/// <summary>Opens narration in the person's area with the first observation on them.</summary>
-public sealed class MeetRoutine : NpcRoutine
-{
-    [JsonIgnore] public override RoutineCategory Category => RoutineCategory.Meet;
-
-    protected override string? TargetUnavailability(RoutineCheckContext ctx, Area area)
-        => PersonUnavailability(ctx, area, out _);
 }
 
 /// <summary>One line of a merchant's catalogue, as it stood when the routine was learned.</summary>

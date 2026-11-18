@@ -14,14 +14,14 @@ Building, running and testing the game on Linux. The development name is used th
 
 ```bash
 bash tools/linux/cloud-setup.sh
-bash tools/linux/fetch-assets.sh --glove          # 822 MB download; or pass --no-embeddings
+bash tools/linux/fetch-assets.sh --glove          # 822 MB download; only --mm-audit's persona lint reads it
 dotnet build Cathedral.csproj -r linux-x64        # a RID build must name the project
 xvfb-run -a ./run_tests.sh audits
 CLI_TIMEOUT=400 xvfb-run -a ./run_tests.sh cli    # llvmpipe is slower than a GPU
 ```
 
-Without the GloVe file the game exits at its first observation, `--playground` included. For a
-machine that cannot have it, `CLI_EXTRA_FLAGS=--no-embeddings ./run_tests.sh cli`.
+Without the GloVe file everything runs; `--mm-audit` checks the persona wording by its props phrase
+only and says so.
 
 With no sound device, `export ALSOFT_DRIVERS=null` so OpenAL opens a null device. The suite passes
 `--silent` anyway.
@@ -30,7 +30,7 @@ With no sound device, `export ALSOFT_DRIVERS=null` so OpenAL opens a null device
 
 The image holds the SDK, the packages and the game built for Linux; **`models/` is mounted at run
 time, never baked in**. The suite runs with `--playground`, so it needs no model, only (ideally) the
-GloVe file under `models/embeddings/`. Without it the entry point adds `--no-embeddings` and says so.
+GloVe file under `models/embeddings/`, for the persona lint of `--mm-audit`.
 
 ### Linux / WSL2 shell
 

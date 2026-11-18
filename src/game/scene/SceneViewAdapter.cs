@@ -211,7 +211,7 @@ public interface IVerbRefreshable
 /// Items inside the PoI are NOT separate observations — their applicable verbs are folded
 /// in as SubOutcomes (e.g. "grab the apple", "grab the leaf").
 /// </summary>
-public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable, IObservationGroup
+public class SyntheticObservationObject : ObservationObject, IVerbRefreshable, IPeriodStampable
 {
     private readonly PointOfInterest _poi;
 
@@ -380,14 +380,14 @@ public class SyntheticAreaObservationObject : ObservationObject, IVerbRefreshabl
     }
 
     /// <summary>
-    /// Re-reads the ways to this area from where the party stands: walking to it, or — once it has
-    /// been stood in and may be gone back to — going back to it, which takes walking's place
-    /// (<see cref="Verbs.BacktrackVerb"/>). Only those two: an area is a way, not a thing to act on.
+    /// Re-reads the way to this area from where the party stands: walking to it, and nothing once
+    /// it has been stood in and may be gone back to — a known way is walked on the map, and is no
+    /// act. An area is a way, not a thing to act on.
     /// </summary>
     public void RefreshVerbs(Scene scene, PoV pov, PartyMember? actor = null)
     {
         SubOutcomes.Clear();
-        foreach (var verb in scene.Verbs.Where(v => v is Verbs.MoveToAreaVerb or Verbs.BacktrackVerb))
+        foreach (var verb in scene.Verbs.Where(v => v is Verbs.MoveToAreaVerb))
             foreach (var vv in verb.ExpandViews(scene, pov, _area, actor))
                 SubOutcomes.Add(vv);
         SubOutcomes.Add(SceneViewAdapter.MakeIgnoreSubOutcome(_area));

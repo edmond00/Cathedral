@@ -133,13 +133,14 @@ docs/manual/04-items.md          burden, bulk, anchors, vessels and storage, cat
                                  weapons, garments (armour and the eight social standings), coin
 docs/manual/05-travel.md         the sphere, range, waypoints, the cost of a crossing,
                                  encounters, the clock, periods of the day
-docs/manual/06-narration.md      the phase, noetic points, observation, thinking, action,
-                                 the die pool, tools, companions, failure and its consequences
+docs/manual/06-narration.md      the visit, noetic points, what is unknown / known / observed,
+                                 observation, thinking, action, the die pool, tools, the party
+                                 in a place, failure and its consequences
 docs/manual/07-social.md         affinity, the conversation check, introduction, trade, work
 docs/manual/08-fighting.md       turns, cinetic points, mediums, fighting skills, the attack
                                  and defence pools, wounds, terrain, flight
 docs/manual/09-routines.md       mental maps (what a place's memory holds, the queue, the lock,
-                                 forgetting) and routines as entry points: the seven kinds, where
+                                 forgetting) and routines as entry points: the six kinds, where
                                  none is learned, each kind's check, the gathering stay
 docs/manual/10-crafting.md       materials and units, stations, trades and their implements,
                                  a master's leave, working, taking apart, making

@@ -20,41 +20,38 @@ strategy succeed
 # The one-off act.
 goal catch
 advance 12 180
-click keyword 0
-choose 0
+click observe "Butterfly"
+choose childhood_memory
+advance 12 180
+click think "Butterfly"
 choose ripelore
 advance 12 180
-click action 0
-choose 0
+click act 0
 advance 12 180
 click continue
 advance 12 180
 expect-verb catch
 expect Caught:
 
-# The walk after it. The footer closes the segment and opens the next phase, pinned to the track.
-observe "Test Field"
-goal move
-click button
-wait 60
+# The walk after it, to the field: the result closed, the way is looked at, thought about and taken.
+click continue
 advance 12 180
-click keyword 0
-choose 0
+goal move
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+click think "Test Field"
 choose ripelore
 advance 12 180
-click action 0
-choose 0
+click act move
 advance 12 180
 click continue
 advance 12 180
 expect-verb move
 expect Moved to:
-
-observe none
-click button
-wait 60
+click continue
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 # Only the walk: the catch taught nothing.

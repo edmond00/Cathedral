@@ -17,7 +17,7 @@ namespace Cathedral.Game.Cli;
 /// executed from <see cref="Pump"/> on the game's update tick. Executing them on the reader thread
 /// would race every piece of game state, and reading stdin on the update tick would stall rendering.</para>
 ///
-/// <para><b>Design.</b> Commands name things, not coordinates — <c>click keyword hearth</c>, not
+/// <para><b>Design.</b> Commands name things, not coordinates — <c>click think hearth</c>, not
 /// <c>click 34 12</c>. Coordinate-based scripts break on every layout change and are unwritable
 /// without seeing the screen. Use <c>regions</c> to discover what is actionable right now.</para>
 ///
@@ -164,24 +164,6 @@ public sealed class CliDriver
                             CmdClick(new[] { "period", tn.CliTimeBoxChoices()[0].Period.ToString() });
                         else
                             CmdClick(new[] { "continue" });
-                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
-                        return;
-                    }
-
-                    // A backtrack asking where to: the first area on offer, by name.
-                    if (_drainPressesLeft > 0 && _game.CliNarration is { } bn && bn.CliBacktrackState() == "choosing")
-                    {
-                        _drainPressesLeft--;
-                        CmdClick(new[] { "area", bn.CliBacktrackChoices()[0].Name });
-                        RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
-                        return;
-                    }
-
-                    // The walk on the map after a move, the same way.
-                    if (_drainPressesLeft > 0 && _game.CliNarration is { } wn && wn.CliWalkContinue().Present)
-                    {
-                        _drainPressesLeft--;
-                        CmdClick(new[] { "continue" });
                         RestartWait($"advance ({_drainPressesLeft} press(es) left)", _drainTimeout);
                         return;
                     }
@@ -417,15 +399,20 @@ public sealed class CliDriver
                                     verb is not offered, so the action that runs is the proof
           inspect [subject]         print the game state an outcome can change, by STABLE id:
                                     items / coins / where / party / wounds / skills / npcs / pois /
-                                    routines / noetic / humors / world-regions / world-variant /
+                                    routines / noetic / humors / trees / known / world-regions / world-variant /
                                     world-history / world-realms / world-events, or all. What
                                     cli/outcome/ asserts on — the
                                     chip says the player was told, this says the world actually
                                     moved. `noetic` carries the phase budget and the acting body's
                                     tool proficiency, neither of which `expect` can reach;
-                                    `popup` the open choice popup's options, each marked
-                                    (disabled) when greyed; `dialogue` the tree id of the last
-                                    conversation queued (a confrontation's id names its crime)
+                                    `popup` the minds the open popup offers, by id, one that
+                                    already refused what is asked marked (refused); `dialogue` the tree id of the last
+                                    conversation queued (a confrontation's id names its crime);
+                                    `trees` the played member's thought trees, node by node;
+                                    `texts` (by name only) what each node says — on screen a text
+                                    is read once in the preview box and then only under the pointer;
+                                    `symbols` (by name only) what the map offers a click, as
+                                    `regions` lists it
           expect-state <subj> <text>  assert `inspect <subj>` reports a line containing <text>.
                                     What cli/outcome/ asserts with: `expect` reads the SCREEN,
                                     this reads the world
@@ -435,11 +422,32 @@ public sealed class CliDriver
                                     what the player was TOLD; this proves what ran, which is the
                                     only way to assert the outcomes that show no chip
           expect-no-outcome <id>    the negative form, for asserting something did NOT happen
-          click keyword <name|n>    click a narration keyword by name, or by position.
-                                    The index form is for tests: a phase pinned with
-                                    --observe-only knows what it is looking at but not
-                                    which word the prose highlighted
-          click action <n>          click a narration action by index
+          click observe <kind|name> [in <area>]
+                                    click an unobserved symbol on the narration map. A kind (way,
+                                    person, hostile, thing) is the anonymous symbol of it, and the
+                                    mind then chosen picks which element; a name is a remembered
+                                    element or a container's content — or, for a script only,
+                                    something not yet known, which pins the observation to it
+                                    as --observe-only does for a whole run
+          click think <name|last>   the ? after an observed element: think about it. `last` is
+                                    whatever was observed last, for a script on the real model,
+                                    where the mind chooses what it looks at (`speak` takes it too)
+          click speak <name> [to <member>]
+                                    a speech mark after an observed element: speak of it to a
+                                    companion within hearing — there is one mark a listener, and
+                                    with no `to` it is the first
+          click act <n|word>        carry out a waiting act, by position (the order proposed) or
+                                    by a word of its text or its verb id. No popup follows: the
+                                    act is the click
+          click tool <n|word>       the implement symbol beside a waiting act: then `choose <n>`
+                                    picks what is carried to do it with
+          click reconsider <n|word> the symbol beside a waiting act that has it thought over
+                                    again: then `choose <thinking mm-id>`
+          click member <name>       play another member of the party (their token on the map)
+          click area <name>         walk the played member to an area by ways the party knows,
+                                    as a click on its card does
+          click exit                the way out of the place: LEAVE, or RUNAWAY when confronted
+                                    (`inspect where` reports which, as exit=)
           click option <n>          pick a dialogue reply by index
           click period <name>       pick the hour a wait lasts until, while the time box asks
                                     (`advance` picks the next period by itself)
@@ -456,7 +464,6 @@ public sealed class CliDriver
           click menu <label>        press a main-menu button (New, Continue, …)
           click menu-button         press the ☰ in the top-right corner: the main menu, in every
                                     phase Escape pauses (`inspect buttons` says whether it is up)
-          click map-button          press the narration header's ↹: the map and back, as Tab
           click moon <name|n>       pick a world off the world-selection sky, by moon name or
                                     ordinal. Turns the sky towards it first, as the arrows would
           click sky                 press an empty patch of the world-selection sky, which releases
@@ -466,13 +473,18 @@ public sealed class CliDriver
           point card <area>         hover an area's card on the menu map shown (the Chorography tab, the
                                     routine box), panned into view; `inspect pointer-label` reads
                                     the label it puts above the pointer, and on what ground
+          point observe|think|speak|act|member <what>   hover a symbol of the narration's map, named
+                                    as `click` names it, without pressing it: its label
+                                    (`inspect pointer-label`), its line lit, a node's text read
+          point exit                hover the way out of the place
           point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
                                     left_hand…), so the panel shows that part's stats
           click world <confirm|cancel>  the world-selection screen's two buttons
           click arrow <direction>   press an on-screen camera arrow (left|right|up|down), the
                                     mouse's copy of the arrow keys
-          click button              press the footer button (LEAVE/INTERRUPT/END/CONTINUE)
-          click continue            confirm the dice overlay
+          click button              press a conversation's footer button (END / CONTINUE)
+          click continue            press the CONTINUE of the box on screen: the dice's, the
+                                    preview's, or an act's result box
           click cell <x> <y>        raw terminal cell click (escape hatch)
           choose <n|mm-id>          answer the visible popup by index, or a modus mentis popup by id
           travel <vertex|name>      plan a route to a world vertex (bypasses 3D picking)
@@ -481,8 +493,8 @@ public sealed class CliDriver
           travel back               plan a route to the last location entered that is not this one
           travel new                plan a route to a bordering vertex with no mental map
           routines                  list the routines the planned destination offers
-          routines <n|kind>         pick routine n — or the first walkable of a kind (goto, meet,
-                                    gather, buy, sell, work) — and set out; entered on arrival.
+          routines <n|kind>         pick routine n — or the first walkable of a kind (goto,
+                                    gather, buy, sell, work, craft) — and set out; entered on arrival.
                                     `routines next|prev` steps the box's selection, and
                                     `routines confirm` presses CONFIRM
           trade leave               close the trade menu without settling anything
@@ -502,12 +514,12 @@ public sealed class CliDriver
           select [item name]        show a carried item's info panel; bare `select` lists them
           select mm <id>            show a held modus mentis's detail box on the Memory tab
           key <escape|…>            send a key
-          scroll up|down [n]        scroll the shared history buffer
+          scroll up|down [n]        scroll a conversation's history buffer
         Control
           strategy <succeed|fail-dice|fail-plausibility|auto>
                                     pin action outcomes (needs --debug)
           goal <verb-id|none>       pin the playground's goal choice to one verb (e.g. `goal tame`),
-                                    set before the keyword click it should apply to
+                                    set before the `click think` it should apply to
           means <mm-id|none>        pin the playground's choice of means — the action modus mentis
                                     that carries the goal out — the way `goal` pins the goal
           doubt <yes|no>            queue the answer to the next doubt of a thinking (the preview box's
@@ -541,12 +553,11 @@ public sealed class CliDriver
                                     modus mentis (default: protagonist)
           wait [frames]             block until the game settles (no LLM/travel/dice in flight)
           advance [presses] [secs]  settle, then press the preview box's CONTINUE until it is gone
-                                    (default up to 8 presses). Use this, not a bare `click continue`,
-                                    to get from a keyword click to the action list
+                                    (default up to 8 presses), answering a wait's hour and a doubt
+                                    on the way. It stops at an act's result box, which is read
+                                    (`expect SUCCESS`, its chips) and closed with `click continue`
           wait mode <GameMode>      block until the game reaches a mode (e.g. LocationInteraction);
                                     a timeout is reported as FAIL
-          wait embeddings [secs]    block until the word vectors have loaded, so a later phase's
-                                    keyword ranking is the same on every --playground run
           when <GameMode> <command> run the command only in that mode (scripts on a real model)
           journal dump <file.json>  write the run's journal as JSON — material for tools/journal/
           wait for <secs>           settle, then hold that long — a player reading, which is the quiet
@@ -573,26 +584,18 @@ public sealed class CliDriver
         if (_game.CliNarration is { } n)
         {
             var s = n.CliSnapshot();
-            sb.Append($" narration[loading={s.AnyLoading} dice={(s.DiceActive ? (s.DiceRolling ? "rolling" : "settled") : "none")}");
-            sb.Append($" continue={s.ShowContinue} noetic={s.Noetic}/{s.MaxNoetic}");
-            // Objects this narration phase has already observed, out of what the node offers. They are
-            // withheld from every later choice list of the phase, so a stuck-looking observation that
-            // keeps naming the same thing is diagnosable from here.
-            sb.Append($" observed={s.Observed}/{s.Observable}");
+            sb.Append($" narration[loading={s.Busy} dice={(s.DiceActive ? (s.DiceRolling ? "rolling" : "settled") : "none")}");
+            sb.Append($" result={(s.Result ? "shown" : "none")} noetic={s.Noetic}/{s.MaxNoetic}");
+            // What the played member has observed this visit, and what stands unobserved where they are.
+            sb.Append($" observed={s.Observed} unobserved={s.Unobserved}");
             // The preview box hides the action list while it is up, which is the commonest reason
             // a script finds nothing clickable. Say so here rather than leaving it to be guessed.
             var pv = n.CliPreview();
             sb.Append($" preview={(pv.Active ? (pv.Complete ? "ready" : "generating") : "none")}");
-            sb.Append($" time={n.CliTimeBoxState()} walk={n.CliWalkState()} backtrack={n.CliBacktrackState()}");
-            // A fight decided but held for the CONTINUE that shows its opening blow. On screen it is
-            // an ordinary resolved action, so a script waiting on `wait mode Fighting` without
-            // pressing CONTINUE would sit out its whole timeout with nothing to say why.
-            if (n.HasDeferredFight) sb.Append(" fight-held=yes");
-            if (n.HasDeferredCrafting) sb.Append(" crafting-held=yes");
-            sb.Append($" history={n.ScrollBuffer.HistoryLineCount} total={n.ScrollBuffer.TotalLines}");
-            sb.Append($" scroll={n.ScrollBuffer.ScrollOffset}");
+            sb.Append($" time={n.CliTimeBoxState()} walk={(n.CliWalking ? "walking" : "none")}");
+            if (n.CliExitLabel is { } exit) sb.Append($" exit={exit}");
             if (s.Error != null) sb.Append($" error=\"{s.Error}\"");
-            if (s.AnyLoading)    sb.Append($" msg=\"{s.LoadingMessage}\"");
+            if (s.Busy)          sb.Append($" msg=\"{s.Loading}\"");
             sb.Append(']');
         }
 
@@ -766,22 +769,9 @@ public sealed class CliDriver
             {
                 CliMode.Emit("time box: (the hours passing…)");
             }
-            else if (n.CliBacktrackState() == "choosing")
+            else if (n.CliWalking)
             {
-                CliMode.Emit("backtrack: go back to…");
-                foreach (var (name, cell) in n.CliBacktrackChoices())
-                    CliMode.Emit($"  click area {name}" + (cell == null ? "  (off the view)" : ""));
-                any = true;
-            }
-            else if (n.CliWalkState() == "settled")
-            {
-                CliMode.Emit("walk: the party has arrived");
-                CliMode.Emit("  click continue  (walk)");
-                any = true;
-            }
-            else if (n.CliWalkState() == "walking")
-            {
-                CliMode.Emit("walk: (the party walking…)");
+                CliMode.Emit("walk: (somebody walking…)");
             }
             else if (pv.Active)
             {
@@ -796,23 +786,26 @@ public sealed class CliDriver
                     CliMode.Emit($"  choose {i}  {popup.Labels[i]}");
                 any = true;
             }
+            else if (n.CliDiceContinue().Present)
+            {
+                CliMode.Emit("  click continue  [ Continue ]  (dice)");
+                any = true;
+            }
+            else if (n.CliResult() is { } result)
+            {
+                CliMode.Emit($"result: {result.Title}");
+                foreach (var chip in result.Chips) CliMode.Emit($"  chip {chip}");
+                CliMode.Emit("  click continue  (result)");
+                any = true;
+            }
             else
             {
-                var keywords = n.CliKeywords();
-                if (keywords.Count > 0)
+                // The map's symbols, each by what it stands for: the handle after `click`.
+                foreach (var line in n.CliSymbols())
                 {
-                    CliMode.Emit("keywords: " + string.Join(", ", keywords.Select(k => $"\"{k}\"")));
+                    CliMode.Emit($"  {line}");
                     any = true;
                 }
-                foreach (var (idx, text) in n.CliActions())
-                {
-                    CliMode.Emit($"  click action {idx}  {text}");
-                    any = true;
-                }
-                var dice = n.CliDiceContinue();
-                if (dice.Present) { CliMode.Emit("  click continue  [ Continue ]  (dice)"); any = true; }
-                var exit = n.CliExitButton();
-                if (exit.Present) { CliMode.Emit("  click button  (footer)"); any = true; }
             }
         }
 
@@ -977,24 +970,30 @@ public sealed class CliDriver
 
     private void CmdClick(string[] a)
     {
-        if (a.Length == 0) { CliMode.Emit("error: click <keyword|action|option|skill|fighter|end-turn|engage|menu|menu-button|map-button|button|continue|cell> …"); return; }
+        if (a.Length == 0) { CliMode.Emit("error: click <observe|think|speak|act|member|exit|area|option|skill|fighter|end-turn|engage|menu|menu-button|button|continue|cell> …"); return; }
 
         switch (a[0].ToLowerInvariant())
         {
-            case "keyword":
+            case "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member":
             {
-                if (a.Length < 2) { CliMode.Emit("error: click keyword <name|index>"); return; }
-                var n = _game.CliNarration;
-                if (n == null) { CliMode.Emit("error: not in narration"); return; }
-                Report(n.CliClickKeyword(a[1]), $"clicked keyword \"{a[1]}\"");
+                // A symbol of the location map, by what it stands for:
+                //   click observe person [in <area>]     one of a kind, the observing mind's to choose
+                //   click observe <name> [in <area>]     an element remembered, or disclosed by a container
+                //   click think <name> | click speak <name> [to <member>]   an element already observed
+                //   click act <n|word>                    carry out an act waiting on a tree, by index or by its words
+                //   click tool <n|word> | click reconsider <n|word>   the two symbols beside a waiting act
+                //   click member <name>                   play another member of the party
+                if (FindSymbol(a) is not { } found) return;
+                Report(found.Narration.CliClickSymbol(found.Symbol), $"clicked {found.What} \"{found.Name}\"");
                 break;
             }
-            case "action":
+            case "exit":
             {
-                if (a.Length < 2 || !int.TryParse(a[1], out int idx)) { CliMode.Emit("error: click action <n>"); return; }
+                // The way out of the place: LEAVE, or RUNAWAY while somebody confronts the member played.
                 var n = _game.CliNarration;
                 if (n == null) { CliMode.Emit("error: not in narration"); return; }
-                Report(n.CliClickAction(idx), $"clicked action {idx}");
+                string? label = n.CliExitLabel;
+                Report(n.CliClickExit(), $"clicked the way out ({label})");
                 break;
             }
             case "option":
@@ -1052,11 +1051,6 @@ public sealed class CliDriver
                 Report(_game.CliPressMenuButton(), "pressed the menu button");
                 return;
             }
-            case "map-button":
-            {
-                Report(_game.CliPressMapButton(), "pressed the map button");
-                return;
-            }
             case "end-run":
             {
                 // The death screen's only button. Without a handle here a script can reach a death
@@ -1111,12 +1105,7 @@ public sealed class CliDriver
             {
                 var dc = _game.CliDialogue?.Controller;
                 if (dc != null) { dc.CliPressExitButton(); CliMode.Emit("ok: pressed dialogue footer button"); return; }
-                var n = _game.CliNarration;
-                if (n == null) { CliMode.Emit("error: no footer button here"); return; }
-                var btn = n.CliExitButton();
-                if (!btn.Present) { CliMode.Emit("error: no footer button on screen"); return; }
-                _game.CliClickCell(btn.X, btn.Y);
-                CliMode.Emit("ok: pressed narration footer button");
+                CliMode.Emit("error: no footer button here (the narration's way out is `click exit`)");
                 break;
             }
             case "continue":
@@ -1159,13 +1148,6 @@ public sealed class CliDriver
                     CliMode.Emit("ok: time box continue");
                     return;
                 }
-                var walkContinue = n.CliWalkContinue();
-                if (walkContinue.Present)
-                {
-                    _game.CliClickCell(walkContinue.X, walkContinue.Y);
-                    CliMode.Emit("ok: walk continue");
-                    return;
-                }
                 var preview = n.CliPreviewContinue();
                 if (preview.Present)
                 {
@@ -1174,34 +1156,29 @@ public sealed class CliDriver
                     return;
                 }
                 var dice = n.CliDiceContinue();
-                if (!dice.Present) { CliMode.Emit("error: no dice continue button on screen"); return; }
-                _game.CliClickCell(dice.X, dice.Y);
-                CliMode.Emit("ok: confirmed dice");
+                if (dice.Present)
+                {
+                    _game.CliClickCell(dice.X, dice.Y);
+                    CliMode.Emit("ok: confirmed dice");
+                    return;
+                }
+                if (n.CliResult() is { Width: > 0 } result)
+                {
+                    _game.CliClickCell(result.X, result.Y);
+                    CliMode.Emit("ok: result continue");
+                    return;
+                }
+                CliMode.Emit("error: no continue button on screen");
                 break;
             }
             case "area":
             {
-                // A card on the location map while a backtrack asks where to go back to. One off the
-                // view is brought into it first, as a player would pan to it.
+                // A card on the location map: the member played walks there, by ways the party knows.
                 if (a.Length < 2) { CliMode.Emit("error: click area <name>"); return; }
                 var n = _game.CliNarration;
-                if (n == null || n.CliBacktrackState() != "choosing") { CliMode.Emit("error: no backtrack is asking where to"); return; }
+                if (n == null) { CliMode.Emit("error: not in narration"); return; }
                 string name = string.Join(' ', a[1..]).Trim('"');
-                var choice = n.CliBacktrackChoices().FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-                if (choice.Name == null)
-                {
-                    CliMode.Emit($"error: '{name}' is not on offer (offered: {string.Join(", ", n.CliBacktrackChoices().Select(c => c.Name))})");
-                    return;
-                }
-                if (choice.Cell == null)
-                {
-                    n.CliShowBacktrackChoice(choice.Name);
-                    choice = n.CliBacktrackChoices().First(c => c.Name == choice.Name);
-                }
-                if (choice.Cell is not { } cell) { CliMode.Emit($"error: '{choice.Name}' cannot be brought into view"); return; }
-                _game.CliHoverCell(cell.X, cell.Y);
-                _game.CliClickCell(cell.X, cell.Y);
-                CliMode.Emit($"ok: go back to {choice.Name}");
+                Report(n.CliWalkTo(name), $"walking to {name}");
                 break;
             }
             case "period":
@@ -1328,8 +1305,59 @@ public sealed class CliDriver
     /// differently and held at the same time. <c>click moon</c> drives both at once, so this is the
     /// only way a script can show that a choice survives the cursor wandering off it.</para>
     /// </summary>
+    /// <summary>
+    /// The map symbol a command names — <c>observe person [in &lt;area&gt;]</c>, <c>think &lt;name&gt;</c>,
+    /// <c>act &lt;n|word&gt;</c>, <c>member &lt;name&gt;</c> — or null having already reported why not.
+    /// Shared by <c>click</c> and <c>point</c>, so what is hovered is what would be clicked.
+    /// </summary>
+    private (NarrativeController Narration, MapSymbol Symbol, string What, string Name)? FindSymbol(string[] a)
+    {
+        if (a.Length < 2) { CliMode.Emit($"error: {a[0]} <what>"); return null; }
+        var n = _game.CliNarration;
+        if (n == null) { CliMode.Emit("error: not in narration"); return null; }
+        string what = a[0].ToLowerInvariant();
+        string rest = string.Join(' ', a[1..]);
+        string? area = null;
+        int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
+        if (what == "observe" && at > 0)
+        {
+            area = rest[(at + 4)..].Trim().Trim('"');
+            rest = rest[..at];
+        }
+        // `speak <element> to <member>`: which companion, when more than one is within hearing.
+        string? listener = null;
+        int to = rest.LastIndexOf(" to ", StringComparison.OrdinalIgnoreCase);
+        if (what == "speak" && to > 0)
+        {
+            listener = rest[(to + 4)..].Trim().Trim('"');
+            rest = rest[..to];
+        }
+        string name = rest.Trim().Trim('"');
+        var (symbol, error) = n.CliFindSymbol(what, name, area, listenerName: listener);
+        if (symbol == null) { CliMode.Emit($"error: {error}"); return null; }
+        return (n, symbol, what, name);
+    }
+
     private void CmdPoint(string[] a)
     {
+        // A symbol of the narration's map, named as `click` names it: the pointer is put on it and
+        // nothing is pressed, which is how its label, its text and its line are read.
+        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member")
+        {
+            if (FindSymbol(a) is not { } found) return;
+            if (found.Narration.CliSymbolCell(found.Symbol) is not { } cell)
+            { CliMode.Emit($"error: '{found.Name}' is not drawn on the map"); return; }
+            _game.CliHoverCell(cell.X, cell.Y);
+            CliMode.Emit($"ok: pointed at {found.What} \"{found.Name}\"");
+            return;
+        }
+        if (a.Length >= 1 && a[0].Equals("exit", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_game.CliNarration?.CliExitCell() is not { } cell) { CliMode.Emit("error: no way out on screen"); return; }
+            _game.CliHoverCell(cell.X, cell.Y);
+            CliMode.Emit("ok: pointed at the way out");
+            return;
+        }
         if (a.Length >= 2 && a[0].Equals("card", StringComparison.OrdinalIgnoreCase))
         {
             string name = string.Join(' ', a[1..]).Trim('"');
@@ -1342,7 +1370,7 @@ public sealed class CliDriver
             return;
         }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id>"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id> | point <observe|think|speak|act|member> <what> | point exit"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;
@@ -1515,7 +1543,7 @@ public sealed class CliDriver
     /// <summary>
     /// The routine box: <c>routines</c> lists what the planned destination offers, and <c>routines
     /// &lt;n&gt;</c> — or <c>routines &lt;kind&gt;</c>, the first walkable routine of that kind
-    /// (goto, meet, gather, buy, sell, work) — picks one and sets out; it is entered on arrival.
+    /// (goto, gather, buy, sell, work, craft) — picks one and sets out; it is entered on arrival.
     ///
     /// <para>By index or kind rather than by click because both the rows and the ROUTINES button are
     /// hit-tested against rendered boxes whose geometry moves with how many routines exist — the same
@@ -1569,7 +1597,7 @@ public sealed class CliDriver
                 .DefaultIfEmpty(-1)
                 .First();
             if (index < 0)
-            { CliMode.Emit($"error: no {kind} routine here (routines <n>|<goto|meet|gather|buy|sell|work>)"); return; }
+            { CliMode.Emit($"error: no {kind} routine here (routines <n>|<goto|gather|buy|sell|work|craft>)"); return; }
         }
 
         if (!_game.CliSelectRoutine(index))
@@ -1762,7 +1790,7 @@ public sealed class CliDriver
         if (a.Length > 1)
         {
             if (!_game.CliSelectRoutineCategory(a[1]))
-            { CliMode.Emit($"error: no {a[1]} routine on any map (goto, meet, gather, buy, sell, work)"); return; }
+            { CliMode.Emit($"error: no {a[1]} routine on any map (goto, gather, buy, sell, work, craft)"); return; }
             CliMode.Emit($"ok: management tab {tab}, a routine of kind {a[1]}");
             return;
         }
@@ -1873,7 +1901,7 @@ public sealed class CliDriver
 
     /// <summary>
     /// Pins the playground's goal choice to one verb, the way <c>strategy</c> pins the dice. Set it
-    /// before the keyword click whose thinking phase should land on that goal; <c>goal none</c> (or
+    /// before the <c>click think</c> whose thinking should land on that goal; <c>goal none</c> (or
     /// <c>auto</c>) hands the choice back to the RNG. Same switch as <c>--goal-only</c> — a command
     /// too, because a script that appeases a beast and then tames it needs to change it mid-run.
     /// </summary>
@@ -2030,7 +2058,7 @@ public sealed class CliDriver
     ///
     /// <para>The narration preview arrives in segments — the goal, the modus mentis chosen for it,
     /// the persona's willingness — and CONTINUE clears one segment at a time. A script that presses
-    /// once lands in the middle of the stack, where <c>click action</c> reports nothing on screen and
+    /// once lands in the middle of the stack, where <c>click act</c> reports nothing waiting and
     /// nothing explains why. This is the "press CONTINUE until the game gives me the actions back"
     /// loop a person does without thinking about it.</para>
     /// </summary>
@@ -2079,18 +2107,6 @@ public sealed class CliDriver
             _waitDescription = $"mode={mode}";
             if (a.Length >= 3 && int.TryParse(a[2], out int modeSecs))
                 timeout = TimeSpan.FromSeconds(Math.Max(1, modeSecs));
-        }
-        // The word vectors load on a background task (~6s) that a real run hides behind the model
-        // load and --playground has nothing to hide behind, so which keyword a phase highlights
-        // depends on whether they have arrived yet. A script that clicks a keyword in a LATER phase
-        // waits for them first, so the ranking it meets is the same on every run.
-        else if (a.Length >= 1 && a[0].Equals("embeddings", StringComparison.OrdinalIgnoreCase))
-        {
-            // Under --no-embeddings they never arrive; the ranking is the fallback on every run anyway.
-            _waitCondition = () => Cathedral.Game.Narrative.WordEmbedding.IsReady || Cathedral.Config.Debug.NoEmbeddings;
-            _waitDescription = Cathedral.Config.Debug.NoEmbeddings ? "embeddings (none: --no-embeddings)" : "embeddings loaded";
-            if (a.Length >= 2 && int.TryParse(a[1], out int embSecs))
-                timeout = TimeSpan.FromSeconds(Math.Max(1, embSecs));
         }
         // `wait for <secs>`: settle, then hold for that long — a player reading. What lets a script give
         // the background chronicler the quiet it waits for, which a bare `wait` (done the moment the
@@ -2333,7 +2349,11 @@ public sealed class CliDriver
             if (n == null) { CliMode.Emit("error: not in narration"); return; }
             lines = n.CliInspect(subject);
         }
-        bool   found   = lines.Any(l => l.Contains(needle, StringComparison.OrdinalIgnoreCase));
+        // Quotes are not compared. The lines put them round names, and the text of an assertion
+        // reaches here with its own stripped by the tokenizer, so `area="Test Yard"` could never
+        // be asserted on as it reads.
+        static string Bare(string s) => s.Replace("\"", "");
+        bool   found   = lines.Any(l => Bare(l).Contains(Bare(needle), StringComparison.OrdinalIgnoreCase));
 
         if (found == want)
         {

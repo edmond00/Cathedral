@@ -7,7 +7,7 @@ A **mental map** is what the character remembers of one **location** (one place 
 1. The character remembers 4 locations per point of anamnesis score (long-term memory organ, see [Chapter I §6](01-anatomy.md#6-derived-values)). A human at the maximum score of 5 remembers 20.
 2. A visit makes that location's map the newest. When memory is full, the oldest unlocked map is forgotten, with every routine learned there.
 3. A locked map is never forgotten to make room.
-4. A routine is learned by doing something in a location: entering an area, meeting someone, gathering, trading, working or crafting.
+4. A routine is learned by doing something in a location: entering an area, gathering, trading, working or crafting.
 5. Walking a routine skips the way in and opens the area (one spot inside a location), the period of the day and the phase (a stretch of play with its own rules, such as a conversation or a barter) it was learned at. It is checked first, and refused if what it needs is gone.
 6. No routine is learned on private ground, except a workshop whose master has given lasting leave.
 
@@ -17,25 +17,28 @@ A mental map holds what the character remembers of one location.
 
 **Rules**
 
-1. A map holds the **areas** (spots inside the location where the character can stand) the character has stood in, the ways it has gone by, what its observations took in from where it stood (see [Chapter VI](06-narration.md)), and the routines learned there.
+1. A map holds the **areas** (spots inside the location where the character can stand) the character has stood in, the ways it has gone by, the ways, things and people its observations took in (see [Chapter VI](06-narration.md)), and the routines learned there.
 2. The memory belongs to the character, not to the place. It lasts only as long as the map.
 3. **Number of maps = anamnesis score × 4.** This is the Mental Maps value (see [Chapter I §6](01-anatomy.md#6-derived-values)).
 4. Maps are kept in order of last visit.
 5. **A visit** (one stay in a location, from arrival to leaving) **makes its location's map the newest.** A location already remembered keeps its map and moves to the front.
 6. A location not remembered gets a new map. If every map is taken, the **oldest** map is forgotten to make room.
-7. A forgotten map takes everything with it: its areas and ways are unknown again, and its routines are gone.
+7. A forgotten map takes everything with it: its areas and ways are unknown again, the things and people in it have no name again, and its routines are gone.
 8. A map can be **locked**. A locked map is never forgotten to make room; the oldest unlocked map is forgotten instead.
 9. If every map is locked, or the anamnesis allows none, the visit keeps a temporary map. It works like any other while the visit lasts: its walks are recorded and its known ways can be taken again. It is forgotten when the visit ends, routines and all.
 10. If the anamnesis score drops, the maps over the new number are forgotten at the next visit, oldest first. Locked maps are kept.
 11. Routines have no limit of their own. A map keeps every routine learned in its location, and they are forgotten only with the map.
+12. A thing or a person observed during a visit is remembered with the map. On a later visit it is **known** ([Chapter VI §4](06-narration.md#4-what-a-visit-keeps)): it has its name, and is observed by name instead of being chosen among its kind.
+13. Only the fact that it is there is kept. What it allowed, and what was deliberated about it, is not.
+14. Nothing created during a visit is remembered this way: a corpse, a sleeper in a bed.
 
 | Anamnesis score | 0 | 1 | 2 | 3 | 4 | 5 |
 |---|---|---|---|---|---|---|
 | Locations remembered | 0 | 4 | 8 | 12 | 16 | 20 |
 
-## 2. The seven kinds of routine
+## 2. The six kinds of routine
 
-A routine records where the character ended up, when, and why: an **area**, a **period of the day** (one of the parts the day is divided into, see [Chapter V §8](05-travel.md#8-the-periods-of-the-day)), and the **phase** that opens there (a stretch of play with its own rules, see [Chapter VI §3](06-narration.md)).
+A routine records where the character ended up, when, and why: an **area**, a **period of the day** (one of the parts the day is divided into, see [Chapter V §8](05-travel.md#8-the-periods-of-the-day)), and the **phase** that opens there (a stretch of play with its own rules, such as narration, a barter or a stint of work).
 
 **Rules**
 
@@ -45,12 +48,10 @@ A routine records where the character ended up, when, and why: an **area**, a **
 4. The same thing learned twice in the same place at the same period is kept once.
 5. The same thing learned at another period is a separate routine. Reason: who is present and what is possible change with the time of day.
 6. A routine learned again keeps its place in the list, but what it records is updated, such as a merchant's current catalogue.
-7. A conversation the character did not start, such as being confronted over something seen, teaches no routine. Reason: nobody goes back to be caught again.
 
 | Kind | Learned when | Walking it opens |
 |---|---|---|
 | **Go to** | the character walks into an area other than the one its visit started in (every such area, at the period it is reached); also the area a location is left from | narration (the phase of observing, thinking and acting; see [Chapter VI](06-narration.md)), in that area |
-| **Meet** | the character opens a conversation with someone | narration in that person's area, with its first observation on them |
 | **Gather** | an item is successfully gathered, dug, mined, fished or cut | the gathering stay (§5) |
 | **Buy** | a merchant agrees to sell | the barter, buying, with no conversation first; the character returns to the world map when it closes |
 | **Sell** | a merchant agrees to buy | the barter, selling, with no conversation first; the character returns to the world map when it closes |
@@ -87,9 +88,8 @@ Before a routine can be chosen, the location is rebuilt as it now is and the rou
 | Kind | Cannot be walked when |
 |---|---|
 | Go to | no further check |
-| Meet | the person is gone for good, is elsewhere at that period of the day, or counts the character an enemy |
-| Buy, Sell | any Meet condition; or the area is not the merchant's premises; or the merchant would no longer trade (see [Chapter VII](07-social.md)); or an enemy is in the area |
-| Work | any Meet condition; or the work is no longer offered; or the master would not take the character on; or an enemy is in the area |
+| Buy, Sell | the merchant is gone for good, is elsewhere at that period of the day, or counts the character an enemy; or the area is not the merchant's premises; or the merchant would no longer trade (see [Chapter VII](07-social.md)); or an enemy is in the area |
+| Work | the master is gone for good, is elsewhere at that period of the day, or counts the character an enemy; or the work is no longer offered; or the master would not take the character on; or an enemy is in the area |
 | Gather | the source is gone; or the item no longer grows there at all; or the character's anatomy cannot perform that way of taking it; or the implement it was learned with is not carried; or an enemy is in the area |
 | Craft | the station is gone; or the trade is no longer held; or its implement, or the one it was learned with, is not carried; or the station may no longer be used; or an enemy is in the area |
 

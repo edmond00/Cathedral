@@ -40,8 +40,9 @@ key and no button.
 
 **Actions**
 
-6. [Narration](06-narration.md) — the phase and its point budget; observing, thinking and acting;
-   building the die pool; tools; letting a companion act; the cost of failure.
+6. [Narration](06-narration.md) — the visit and its point budget; what is unknown, known and
+   observed; observing, thinking and acting; building the die pool; tools; the party in a place;
+   the cost of failure.
 7. [Social Interaction](07-social.md) — affinity levels; the conversation check; introductions,
    trade and hiring.
 8. [Combat](08-fighting.md) — turns and cinetic points; mediums and fighting skills; the opening

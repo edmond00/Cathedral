@@ -208,7 +208,9 @@ It lists every target of every will and fails (✗) one that no location offers.
 The **persona wording** section (`PersonaLint`) fails (✗) on a `StyleInstruction` or
 `PersonaReminder2` written as things: two or more concrete nouns, or a style opening a props list
 ("images of", "narrate the"). It loads the GloVe vectors to tell a concrete noun, so this audit takes
-a few seconds more than it did. The rules and why are in the `choice-judge` skill ("Writing the
+a few seconds more than it did — when `models/embeddings/glove.6B.100d.txt` is there. The file is
+optional now (nothing in a played game reads a word vector any more): without it the section says so
+and checks only the props phrase. The rules and why are in the `choice-judge` skill ("Writing the
 voice"); `tools/prompts/persona_lint.py --text "…"` checks a wording before it goes in.
 
 Run it after adding or editing a modus mentis, a fighting skill, an organ, or a body region.
@@ -259,8 +261,8 @@ offered somewhere, and the refusal is the planner working as designed.
 The relation is read off the content, never judged: **an object's lesson** — its declared
 `VerbModiMentis` (`IVerbModusMentisSource`) and what `Verb.ResolveLesson` gives a human for an act on it.
 Every location factory is built for up to four ids, every area at morning and at night, and every
-observation object (a point of interest with its items, a person, an area — what a keyword reaches) is
-asked, for each will an act on it teaches, what the thinking phase asks: does anything it offers begin a
+observation object (a point of interest with its items, a person, an area — what a symbol on the map stands for) is
+asked, for each will an act on it teaches, what a thinking asks: does anything it offers begin a
 shortest path to the will (`ActionPathPlanner.PathThrough`)? About a minute.
 
 - **✗** — the object **declares** the will its lesson and offers nothing the will wants or passes on its
@@ -652,10 +654,6 @@ sections that were generated and how often. Then it warns about:
 - an NPC with `[Night] = null`, sleeping in a room with no bed, or a room sleeping more people than
   it has beds. Wilderness factories are exempt — a wolf is allowed to sleep rough;
 - a public hall with nobody in it during a day period: a shop with no one behind the counter;
-- a settled location whose arrival area is empty at its arrival hour while somebody stands out of
-  doors elsewhere with nothing to keep — the guarantee `SceneFactory.EnsureArrivalCompany` makes. Each
-  inhabited factory also prints `arrival … in N/M peopled locations`; what falls short of M is the
-  one- and two-person households where everyone is the sole keeper of a hall or a store;
 - stable keys that are missing, colliding, or **different across two builds of one location id**.
   That last one matters because procedural descriptions are seeded from the key, so a key that moves
   re-rolls how every door in the place looks between visits.

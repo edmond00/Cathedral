@@ -178,11 +178,6 @@ public static class BuildingFactory
             DoorRole.Entry, entryState, doorPhrases[phrase++], buildingDescription,
             spec.BuildingName, phrase);
 
-        // From the street the building is one thing before it is a door and a wall.
-        var exterior = new PoiCluster(spec.BuildingName, "house", buildingDescription);
-        entryDoor.Cluster = exterior;
-        wallClimb.Cluster = exterior;
-
         foreach (var (room, _) in groundInner)
         {
             interiorDoors.Add(MakeDoor(

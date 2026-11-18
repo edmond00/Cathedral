@@ -28,6 +28,7 @@ public class TerminalThinkingModusMentisPopup
 
     private readonly PopupTerminalHUD _popup;
     private List<ModusMentis> _thinkingModiMentis = new();
+    private HashSet<ModusMentis> _refused = new();
     private int? _hoveredModusMentisIndex = null;
     private Vector2 _fixedPosition;
     private int _scrollOffset = 0;
@@ -48,8 +49,11 @@ public class TerminalThinkingModusMentisPopup
     /// <param name="screenPosition">Screen position to show popup at</param>
     /// <param name="modiMentis">List of modiMentis to display</param>
     /// <param name="title">Optional custom title (defaults to "Select Thinking ModusMentis")</param>
-    public void Show(Vector2 screenPosition, List<ModusMentis> modiMentis, string title = "Select Thinking ModusMentis")
+    /// <param name="refused">Minds that have already refused what is being asked: listed greyed, and not to be picked.</param>
+    public void Show(Vector2 screenPosition, List<ModusMentis> modiMentis, string title = "Select Thinking ModusMentis",
+                     IReadOnlySet<ModusMentis>? refused = null)
     {
+        _refused = refused == null ? new() : new HashSet<ModusMentis>(refused);
         if (modiMentis == null) throw new ArgumentNullException(nameof(modiMentis));
         // Listed by name, wills among the rest, so a player finds a mind where the alphabet puts it.
         // A copy, too — Hide clears this list, and it must not clear the caller's.
@@ -76,8 +80,12 @@ public class TerminalThinkingModusMentisPopup
         _popup.Clear();
         _popup.SetFixedMode(false); // Return to mouse-following mode
         _thinkingModiMentis.Clear();
+        _refused.Clear();
         _hoveredModusMentisIndex = null;
     }
+
+    /// <summary>Whether <paramref name="mind"/> is listed greyed: it refused this already, and a click on it does nothing.</summary>
+    public bool IsRefused(ModusMentis mind) => _refused.Contains(mind);
     
     /// <summary>
     /// Check if the popup is currently visible.
@@ -191,8 +199,9 @@ public class TerminalThinkingModusMentisPopup
         
         if (modusMentisIndex.HasValue)
         {
-            // Clicked on a modusMentis - return it
+            // A mind that refused already is not picked, and the popup stays for another.
             var selectedModusMentis = _thinkingModiMentis[modusMentisIndex.Value];
+            if (_refused.Contains(selectedModusMentis)) return null;
             Hide();
             return selectedModusMentis;
         }
@@ -241,26 +250,26 @@ public class TerminalThinkingModusMentisPopup
             int displayRow = i - startIndex + 1;
             var modusMentis = _thinkingModiMentis[i];
             
-            bool isHovered = _hoveredModusMentisIndex == i;
-            Vector4 textColor = isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverColor : Config.ThinkingModusMentisPopup.ModusMentisNormalColor;
+            bool refused = _refused.Contains(modusMentis);
+            bool isHovered = !refused && _hoveredModusMentisIndex == i;
+            Vector4 textColor = refused ? Config.Colors.DarkGray35
+                              : isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverColor : Config.ThinkingModusMentisPopup.ModusMentisNormalColor;
             Vector4 bgColor = isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverBackgroundColor : Config.ThinkingModusMentisPopup.BackgroundColor;
-            
-            // Draw modusMentis name with arrow prefix
+
+            // The name, and at the right its level: one mark a level, which is one die a level.
             string prefix = isHovered ? "> " : "  ";
+            string level = new string(Config.Symbols.ModusMentisLevelIndicator, Math.Clamp(modusMentis.Level, 0, 10));
+            int maxTextWidth = POPUP_WIDTH - 5 - level.Length;
             string displayText = prefix + modusMentis.DisplayName;
-            
-            // Truncate if too long
-            int maxTextWidth = POPUP_WIDTH - 4;
             if (displayText.Length > maxTextWidth)
-            {
                 displayText = displayText.Substring(0, maxTextWidth - 3) + "...";
-            }
-            
+
             // Fill entire row with background
             _popup.Fill(1, displayRow, POPUP_WIDTH - 2, 1, ' ', textColor, bgColor);
-            
-            // Draw text
+
             _popup.DrawText(2, displayRow, displayText, textColor, bgColor);
+            _popup.DrawText(POPUP_WIDTH - 2 - level.Length, displayRow, level,
+                            refused ? Config.Colors.DarkGray35 : isHovered ? textColor : Config.Colors.DarkYellowGrey, bgColor);
         }
         
         // Draw close hint at bottom

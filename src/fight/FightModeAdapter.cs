@@ -142,6 +142,9 @@ public class FightModeAdapter
     /// <summary>Whether the fight has ended.</summary>
     public bool IsOver => Result != FightAdapterResult.Ongoing;
 
+    /// <summary>The members fighting on the party's side, the one who opened the fight first.</summary>
+    public IReadOnlyList<PartyMember> Party { get; }
+
     /// <summary>The NPC that was fought.</summary>
     public NpcEntity TargetNpc => _targetNpc;
 
@@ -232,7 +235,8 @@ public class FightModeAdapter
         IReadOnlyList<NpcEntity>? allies = null,
         Action<GameEventType>? sfxTrigger = null,
         Action<MusicFilter>? setMusicFilter = null,
-        bool enemyInitiative = false)
+        bool enemyInitiative = false,
+        IReadOnlyList<PartyMember>? party = null)
     {
         _terminal = terminal;
         _ = popup; // unused (popups removed; the param is kept for caller compatibility)
@@ -257,7 +261,10 @@ public class FightModeAdapter
         var area = arenaGenerator.Generate();
 
         // Build fighters
-        var fighters = BuildFighters(protagonist, targetNpc, _allies);
+        // Who fights on the party's side: those handed in — the members standing where a fight broke
+        // out in a place, the one who started it first — or, on the road, everybody.
+        Party = party ?? new List<PartyMember> { protagonist }.Concat(protagonist.CompanionParty).ToList();
+        var fighters = BuildFighters(Party, targetNpc, _allies);
 
         // Roll initiative
         foreach (var f in fighters)
@@ -329,27 +336,16 @@ public class FightModeAdapter
         }
     }
 
-    private static List<Fighter> BuildFighters(Protagonist protagonist, NpcEntity npc, IReadOnlyList<NpcEntity> allies)
+    private static List<Fighter> BuildFighters(IReadOnlyList<PartyMember> party, NpcEntity npc, IReadOnlyList<NpcEntity> allies)
     {
         var fighters = new List<Fighter>();
 
-        // Player party
-        var partyFighter = new Fighter(protagonist,
-            FightArea.ZoneColStart + 2, FightArea.PlayerRowStart + 1,
-            isPlayerControlled: true, FighterFaction.Party);
-        fighters.Add(partyFighter);
-
-        // Add companions as party fighters. Like the protagonist, they are player-controlled:
-        // the player takes each companion's turn when it comes up in the initiative order.
-        int companionOffset = 0;
-        foreach (var companion in protagonist.CompanionParty)
-        {
-            companionOffset++;
-            var cf = new Fighter(companion,
-                FightArea.ZoneColStart + 2 + companionOffset * 2, FightArea.PlayerRowStart + 1,
-                isPlayerControlled: true, FighterFaction.Party);
-            fighters.Add(cf);
-        }
+        // The party's side, every one of them player-controlled: the player takes each member's
+        // turn when it comes up in the initiative order.
+        for (int i = 0; i < party.Count; i++)
+            fighters.Add(new Fighter(party[i],
+                FightArea.ZoneColStart + 2 + i * 2, FightArea.PlayerRowStart + 1,
+                isPlayerControlled: true, FighterFaction.Party));
 
         // Main enemy NPC
         var enemyFighter = new Fighter(npc.Combatant,

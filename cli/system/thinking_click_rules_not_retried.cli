@@ -18,20 +18,18 @@ wait mode WorldView 60
 travel here
 wait mode LocationInteraction 60
 advance 12 180
-expect wolf
 
 strategy succeed
 goal examine
-click keyword 0
-choose 0
+# The beast confronts whoever walks in, and so is on the map already observed.
+click think "wolf"
 choose ripelore
 advance 12 180
-expect-not That will not do, and I think again
-expect [Woodcraft
+expect-no-state texts "That will not do, and I think again"
+expect-state trees means=woodcraft
 regions
 
-click action 0
-choose 0
+click act 0
 advance 12 180
-expect while under the threat of
+expect-state texts "while under the threat of"
 quit

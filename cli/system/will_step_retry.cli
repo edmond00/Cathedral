@@ -18,22 +18,22 @@ click menu New
 wait mode ProtagonistCreation 20
 click continue
 wait mode WorldView 60
-observe "Test Yard"
 travel here
 wait mode LocationInteraction 60
 
 advance 12 180
 expect-state will "will lockpicking steps=2 first="
 
-click keyword yard
-choose 0
+click observe "Test Yard"
+choose childhood_memory
+advance 12 180
+click think "Test Yard"
 choose lockpicking
 advance 12 180
-expect To get there I must first
-expect [Bushcraft
-expect That will not do, and I think again
-expect another way
-expect ] discreetly walk back out into the yard
+expect-state texts "To get there I must first"
+expect-state texts "That will not do, and I think again"
+expect-state texts "another way"
+expect-state trees act state=waiting verb=move
 
 allow-flag-miss --means-only
 quit

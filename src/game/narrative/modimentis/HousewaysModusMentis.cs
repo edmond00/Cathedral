@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Houseways — the plan of a house once walked through, held whole. Thinking.
-/// What a backtrack teaches when it is made on somebody's private ground.
+/// What a new way found back to known ground teaches on somebody's private ground.
 /// </summary>
 public class HousewaysModusMentis : ModusMentis
 {

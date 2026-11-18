@@ -4,7 +4,7 @@ namespace Cathedral.Game.Narrative.ModiMentis;
 
 /// <summary>
 /// Withdrawal — falling back from danger by ground already known. VerbAction.
-/// What a backtrack teaches when it is made with an enemy in sight.
+/// What a new way found back to known ground teaches with an enemy in sight.
 /// </summary>
 public class WithdrawalModusMentis : ModusMentis
 {

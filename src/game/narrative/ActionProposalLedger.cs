@@ -5,13 +5,10 @@ using Cathedral.Game.Scene;
 namespace Cathedral.Game.Narrative;
 
 /// <summary>
-/// What the acting member has already been <b>offered a button for</b> during the current narration
-/// phase — the thinking-side counterpart of <see cref="ObservationLedger"/>, with the same lifetime
-/// and the same purpose.
+/// What a member has already been <b>offered an act for</b>, kept by their mind for the visit.
 ///
-/// <para>The problem it solves is the one the observation ledger solves one step earlier. A thinking
-/// request lets the modus mentis choose freely among everything the observed object affords, and
-/// those choices converge: the mind that wanted to grab the apple wants to grab it again, so a
+/// <para>A thinking request lets the modus mentis choose freely among everything the observed
+/// element affords, and those choices converge: the mind that wanted to grab the apple wants to grab it again, so a
 /// player trying to reach some *other* action on the same object spent point after point being
 /// offered the same one. Actions recorded here are dropped from every later goal list of the phase,
 /// so each request has to reach for something the player has not already been given.</para>
@@ -47,13 +44,13 @@ namespace Cathedral.Game.Narrative;
 /// otherwise only those that can are offered as the means, with no refusal left to them. That logic
 /// lives in <c>ThinkingExecutor</c>; this class only remembers what was refused.</para>
 ///
-/// <para><b>Nor is a mind asked twice whether it would rather not.</b> When a thinking modus mentis
-/// declines everything an object offers (<see cref="Decline"/>), asking it again about the same object
-/// can only be declined again: the goal judge reads scores rather than sampling, so one question has
-/// one answer, and the second ask spent a noetic point to hear it twice. The second ask is therefore
-/// the player insisting, and the decline is not offered (<see cref="HasDeclined"/>): the mind chooses
-/// one of the goals. Keyed by mind and object instance, like the refusals; another mind asked about
-/// the same object may still decline.</para>
+/// <para><b>Nor is an object declined twice.</b> When a thinking modus mentis declines everything an
+/// object offers (<see cref="Decline"/>), asking it again about the same object can only be declined
+/// again: the goal judge reads scores rather than sampling, so one question has one answer. The mind
+/// that declined is therefore not asked again (it is greyed in the popup, <c>MemberMind.Refuse</c>),
+/// and the next ask — of another mind — is the player insisting: the decline is not offered
+/// (<see cref="HasDeclined"/>) and the mind chooses one of the goals. Keyed by the object's
+/// instance.</para>
 ///
 /// <para>Cleared wherever the live text greys into history (<c>NarrativeController.CloseNarrationSegment</c>),
 /// alongside the observation ledger: a new phase in the same place sees the whole scene, and every
@@ -76,8 +73,8 @@ public sealed class ActionProposalLedger
     /// <summary>Every action refused this phase, whichever mind chose it.</summary>
     private readonly HashSet<(string VerbId, Element? Target, object? Variant)> _refused = new();
 
-    /// <summary>The objects each thinking modus mentis has declined this phase.</summary>
-    private readonly HashSet<(ModusMentis Thinking, NarrativeAnchor Observed)> _declined = new();
+    /// <summary>The objects a thinking modus mentis has declined, whichever it was.</summary>
+    private readonly HashSet<NarrativeAnchor> _declined = new();
 
     /// <summary>How many distinct actions have been proposed so far this phase.</summary>
     public int Count => _proposed.Count;
@@ -131,19 +128,40 @@ public sealed class ActionProposalLedger
     }
 
     /// <summary>
-    /// Records that <paramref name="thinking"/>, asked about <paramref name="observed"/>, wanted none of
+    /// Records that a thinking modus mentis, asked about <paramref name="observed"/>, wanted none of
     /// what it offers. Called when the thinking ends on that refusal.
     /// </summary>
-    public void Decline(ModusMentis thinking, NarrativeAnchor observed) => _declined.Add((thinking, observed));
+    public void Decline(NarrativeAnchor observed) => _declined.Add(observed);
 
-    /// <summary>True when <paramref name="thinking"/> has already declined <paramref name="observed"/> this phase.</summary>
-    public bool HasDeclined(ModusMentis thinking, NarrativeAnchor observed) => _declined.Contains((thinking, observed));
+    /// <summary>True when <paramref name="observed"/> has already been declined by a thinking mind.</summary>
+    public bool HasDeclined(NarrativeAnchor observed) => _declined.Contains(observed);
 
     /// <summary>
     /// The identity this ledger knows an action by (verb, target, variant), for callers that keep
     /// their own record of actions across a re-expansion of the verb lists — iterative thinking's
     /// crossed-off pairs.
     /// </summary>
+    /// <summary>
+    /// The act is no longer waiting on a tree — carried out, reconsidered, or gone with the world that
+    /// allowed it — so it may be proposed again.
+    /// </summary>
+    public void Withdraw(VerbAction action)
+    {
+        _proposed.Remove(KeyOf(action));
+        _proposedWording.Remove(WordingOf(action));
+    }
+
+    /// <summary>
+    /// Forgets what minds refused and declined, keeping what is proposed: the member's pool has
+    /// refilled, and every mind may be asked again.
+    /// </summary>
+    public void ForgetRefusals()
+    {
+        _refusedFor.Clear();
+        _refused.Clear();
+        _declined.Clear();
+    }
+
     public static (string VerbId, Element? Target, object? Variant) IdentityOf(VerbAction action) => KeyOf(action);
 
     /// <summary>Forgets everything — a new narration phase begins.</summary>

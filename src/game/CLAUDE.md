@@ -182,7 +182,7 @@ so, and says why.
 | | Escape |
 |---|---|
 | Fighting | cancels the armed skill or move target; pauses when nothing is armed |
-| LocationInteraction, ChildhoodReminescence, GetUp | closes the thinking popup; otherwise pauses **as an overlay**, leaving narration standing |
+| LocationInteraction, ChildhoodReminescence, GetUp | closes the popup that is open (which mind, which implement); otherwise pauses **as an overlay**, leaving the map standing |
 | Dialogue, Working, Gathering, Trading, EncounterPrompt, WorldView | pauses. None of them is cancelled by it — walking out is the footer INTERRUPT / LEAVE / ENGAGE button's job |
 | WorldView, while the will picker is open | closes the picker (its CLOSE button) |
 | WorldView, while a will's search runs | cancels the search (its CANCEL button); pauses otherwise, as above |
@@ -282,12 +282,13 @@ Four rules the rest of it depends on:
 - **A miss still starts the fight, and costs the initiative.** `FailureReports` returns a
   `FightTriggerOutcome` with `EnemyInitiative`. Attack was the only crime whose victim could not tell
   it had been attempted.
-- **The fight waits for CONTINUE.** `_deferredFightOutcome` holds it until the press that closes the
-  segment, because `_pendingFightOutcome` is read by the game controller on the very next tick — and
-  the chips (what the blow was, what it broke, what it taught) are the whole account of the swing,
-  painted over by the fight screen the frame it opens. `state` reports `fight-held=yes`, since on
-  screen a held fight is indistinguishable from an ordinary resolved action and a script that presses
-  nothing would sit out its timeout.
+- **The fight waits for CONTINUE.** The act's result box holds it (`ActResult.Then`) until its
+  CONTINUE is pressed, because `_pendingFightOutcome` is read by the game controller on the very next
+  tick — and the chips (what the blow was, what it broke, what it taught) are the whole account of
+  the swing, painted over by the fight screen the frame it opens. This began as attack's own rule and
+  is now everybody's: every phase an act opens waits for its result's CONTINUE (see "Narration is
+  played on the map"). `state` reports `result=shown`, and a script that presses nothing sits out its
+  timeout.
 
 **Effects outlive the narration.** Twelve attack skills carry a `FightStatusEffect` — Trip knocks
 down, Flesh Tear starts bleeding — and a `FightStatusEffect` is meaningless without the `Fighter` it
@@ -307,8 +308,11 @@ and no fight to have, so the blow kills and narration carries on. The kill itsel
 
 `FightState.CheckFightEnd` is faction arithmetic and nothing more — the last living `Enemy` falling
 is `PartyWon`, however many `Party` fighters are standing. **Companions are `FighterFaction.Party`
-and `IsPlayerControlled`**, added by `BuildFighters` straight from `Protagonist.CompanionParty`, so a
-companion neither prolongs a fight nor is waited on. `cli/system/fight_victory_companion.cli` plays a
+and `IsPlayerControlled`**, built by `BuildFighters` from the list the adapter is handed
+(`FightModeAdapter.Party`): on the road that is the protagonist and every companion; in a place it
+is `NarrativeController.MembersAt` — the members standing where the fight broke out, the one who
+started it first, and nobody else (see "Narration is played on the map"). So a companion neither
+prolongs a fight nor is waited on, and the protagonist may be absent from one. `cli/system/fight_victory_companion.cli` plays a
 kill out blow by blow rather than calling `fight-end victory`, because the forced end sets the result
 directly and never evaluates the condition at all.
 
@@ -362,6 +366,12 @@ used to answer a `Death` result with `ExitNarrativeMode()` — so the travel enc
 lethal fight in the game, and a fight picked inside a location could be lost at no cost at all, the
 protagonist walking out at zero hit points and playing on.
 
+**Unless the protagonist was not in it.** Members of the party stand where the player left them, so
+a companion can be fought alone in another room. `OnFightCompleted` asks
+`_fightAdapter.Party.Contains(_protagonist)`: lost with the protagonist among the fighters, the run
+ends; lost by companions on their own, they are dead — the companion sweep says so on the next tick
+— and the narration resumes with the protagonist played.
+
 **Wounds and spent humors are reckoned continuously; age is reckoned on the map.**
 `SettleProtagonistDeath` runs on the same tick as the companion sweep and reads `CauseOfDeath`,
 taking every arm except `OldAge`. Both of the causes it takes are dealt at arbitrary moments of a
@@ -405,8 +415,8 @@ the bug.
 
 **Companions could not really die.** `CompanionParty.Remove` was reached by the old-age check and by
 the heart-ceiling overflow and by nothing else, so a companion cut down in a fight walked out of it
-at zero hit points and stayed in the party for ever — counted against the heart ceiling, handed the
-narration by Speak About, turning up in the next fight with nothing left to lose. One bled dry was
+at zero hit points and stayed in the party for ever — counted against the heart ceiling, still
+there to be played, turning up in the next fight with nothing left to lose. One bled dry was
 not even dead, for the reason above.
 
 **One question, asked in one place.** `PartyMember.CauseOfDeath` returns `Wounds`, `Starvation` or
@@ -420,17 +430,21 @@ Three things about it that are load-bearing:
 
 - **It is swept every tick, not called at each place a companion can be killed** — because those are
   not a closed set. A fight is the obvious one, but a failed action's wound penalty lands on whoever
-  is *acting*, which after a Speak-About hand-off is the companion, and the humors drain on their
-  own. Derived state makes the per-tick cost a few property reads, and makes it impossible for
+  is *acting*, which is the companion whenever the player is playing one, and the humors drain on
+  their own. Derived state makes the per-tick cost a few property reads, and makes it impossible for
   whatever kills somebody next to forget to call it.
 - **Never while a fight is running.** The fight holds `Fighter` wrappers over these members; pulling
   one out of the party mid-swing leaves a fighter on the board belonging to nobody. `Update` gates
   the sweep on the mode, and it fires within a tick of the fight handing back. A dead companion
-  therefore does *not* end the fight — `CheckFightEnd` is faction arithmetic and the protagonist is
-  still standing.
-- **The body is only left when there is a scene to leave it in.** A travel encounter and the old-age
-  check both happen on the world map, where there is no area and no observation graph; there the
-  notice is the whole of the news, which is what it always was.
+  therefore does *not* end the fight — `CheckFightEnd` is faction arithmetic, and it ends when the
+  last `Party` fighter is down.
+- **The body is only left when there is a scene to leave it in, and it is left where they stood.**
+  A travel encounter and the old-age check both happen on the world map, where there is no area and
+  no observation graph; there the notice is the whole of the news, which is what it always was. In
+  a place the area is `NarrativeController.AreaOf(companion)`, which need not be the protagonist's:
+  it used to be the acting point of view's, and a companion killed two rooms away was laid at the
+  protagonist's feet. The narration drops the dead member from its roster on the same tick
+  (`SyncRoster`), with their trees, and plays the protagonist if it was the one being played.
 
 `CorpseRegistry.CreateForCompanion` is a second entry point because **a companion is not an
 `NpcEntity`** — recruiting moves the `EnemyCombatant` into the party and drops the wrapper, so there
@@ -545,8 +559,7 @@ with no account of where they went. It costs a noetic point, like every other re
 | where | what happens |
 |---|---|
 | **action** | `BrokenModusMentisRule`, **first** in `ActionRulesChecker` — ahead of every circumstantial rule, because a player told a witness is watching will walk to another room and one told their arm is ruined will not |
-| **thinking / focus observation / Speak About** | `ApplyModusMentisSelection` is the one place all three player-chosen faculties pass through, so the guard is written once; `RefuseBrokenModusMentisAsync` narrates it |
-| **the phase-opening observation** | the persona passes over broken ones *while any usable one remains* — nobody chose it, and there is no popup to be told anything through, so opening on a refusal would spend a phase on a choice the player never made. With **every** observation modus mentis broken the phase opens on the refusal and carries no keyword |
+| **observation / thinking / reconsidering / speaking to a companion** | `ApplyModusMentisSelection` is the one place every player-chosen faculty passes through, so the guard is written once; `RefuseBrokenModusMentisAsync` narrates it, and the refusal hangs as a node under the element it was about (or stands alone on the area's card when it was about none) |
 | **dialogue replies** | **dropped** (`GetUsableSpeakingModiMentis`). A reply is written straight into the option list with no narration frame to carry a refusal — it would have to be worded as something the character says, which is the thing they cannot do. Emptying the list falls through to `ZeroRepliesDialogueRule`, which now answers *two* questions: no voice (fluency 0) and no means (every speaking modus mentis broken), with a different sentence for each |
 | **fighting** | `FightingSkill.IsBrokenFor` is the modus-mentis sum **below zero**, tested inside `IsUnlocked` so the fight AI is gated by construction. Broken skills leave `GetUnlockedSkills` and appear greyed through `GetUnusableKnownSkills` |
 | **emotions** | untouched. A disposition needs no organ to be moved by something, so a broken one still fires |
@@ -579,6 +592,375 @@ Three things that had to move with it:
 | `inspect skills` | now reports `effective=`, `max=` and `broken=` beside `level=`. The stored level alone cannot say whether the thing can still be used, and deriving `broken` in a script from two numbers would be a paraphrase of the rule rather than a reading of it |
 | `cli/system/broken_mm.cli` | the level falls, the refusal is narrated naming the organs, a noetic point is spent, and `save roundtrip` still passes — the clamp is derived, so nothing about it reaches the file |
 
+### Narration is played on the map: elements, symbols and thought trees
+
+**A visit is one screen: the location's map.** There is no scrolling text and no switch between a
+text and a map. `LocationMap` (`Narration = true`) draws every area as a card inside its section's
+panel; `MapTreeOverlay` draws on each card what stands there and under it what the played member has
+made of it. A text is read once, in the preview box, as it is written, and after that only by
+pointing at the symbol it left. Everything below follows from that, and the pieces live in
+`NarrativeController*.cs` (a partial class: `.Trees`, `.Thinking`, `.Acting`, `.Movement`, `.Phases`,
+`.Screen`, `.Cli`), `MapTreeOverlay.cs`, `LocationMap.cs` and `src/game/narrative/tree/`.
+
+It replaced clickable keywords in generated prose. The keyword was the weak joint of the old screen:
+which word a rewrite highlighted was a ranking over word vectors that raced a background load, a
+phase opened on whichever object a persona preferred out of a dozen, and reaching a second object
+meant reading until its word turned up. A symbol is there from the start and says what kind of
+thing it stands for.
+
+#### An element is unknown, known or observed
+
+| state | on the map | a click |
+|---|---|---|
+| **unknown** | one anonymous symbol of its **kind** on its card's third row (the tray) | asks a mind to look at *something of that kind there*; the mind picks which |
+| **known** | its own symbol in the tray, a shade brighter, named under the pointer | asks a mind to look at *that one* |
+| **observed** | the root of a tree under the card, for the member who observed it | its `?`, its speech mark, its acts |
+| a **way** (any state) | its own symbol **on its line**, and once observed the root of a tree hung from that spot | asks a mind to look at *that way*: one line, one symbol, nothing to choose |
+
+The kinds are `ElementKind`: `Way` (`∩`: a neighbouring area, a door, a stair, a path, a climb),
+`Person` (`☺`), `Hostile` (`☹`, `Config.Symbols.EnemyChar` — the face an enemy wears on the fight's
+board, so what is seen in a place is recognised when the fight opens: a living thing that counts the played member an enemy — the same
+person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). The glyphs are
+`Config.Symbols.Map*`; four of them (`✗ ✓ ❝ ⚒`) are not in the main font and had to be added to
+`Config.Terminal.FallbackGlyphs`, without which they draw as an empty cell and nothing says why.
+
+**Every card shows its tray, visited or not.** What stands in a place nobody has been to — a
+person, an enemy, a thing — is on its card, so the map says where things are before anybody goes;
+it answers no click until a known way leads there (`IsEnabled`: `_frameReach`), is drawn grey (an
+enemy dark purple), and its label says "no known way there". An observed person who walks into an
+unvisited area takes their tree to that card for the same reason.
+
+**A way stands on its line** (`WaySymbol(key)`, the `AreaVisits` key of the line): the plain way
+between two neighbours, a door, a stair, a path, a climb, a crossing. `LocationMap.PlaceSymbols`
+chooses the cell once per layout — a straight stretch only that line uses, the one from which a
+small tree can hang without covering a card and with least of the room under one — and whether what
+hangs from it goes below or above. **A long line carries the symbol twice, near each card it
+leaves** (`WaySpot.Near`): in its middle it stood far from both, and a door looked at from the hall
+grew its tree a screen away, in the yard's section. Both are the same `WaySymbol` — they hover and
+click as one — and the tree hangs from the one near the end the way is now seen from
+(`WayFrame.From`). It replaced the `∩` in the tray, where a click on "a way" let the
+mind choose among every way out of the area: exploring is the one thing a player should be able to
+aim exactly, and a symbol on the line says which way it is without a word. Three consequences:
+
+- **One line is one tree, from either end.** `WayKeyOf` gives the key of an anchor or of a root;
+  `WaySide` picks the end an unobserved way is looked at from (where the member stands, else the
+  end fewest known steps away); `Locate` answers a way's root from the far end while the member
+  stands there and from the end it was observed at otherwise. An act thought of from one end is
+  good from that end only — "go to the yard" means nothing in the yard — so `LocateAct` looks for
+  it at the located end and then the other, the member is walked to whichever still affords it,
+  and `ReconcileTrees` lapses it only when neither does.
+- **Pointing at a way lights its whole line** (`LocationMap.LitWay`): the symbol, a node of its
+  tree, or any cell of the line. A long line across a large map is hard to follow by eye.
+- **A view stays on its card.** A `LandscapePointOfInterest` is looked at from the area that has
+  it and its line is only routed from where the played member stands, so it is a thing of that
+  area (`∩` in the tray, its tree under the card); so is a way whose line could not be routed
+  (`LocationMap.DrawsWay` is the test). The kind `Way` in the tray now means only those.
+
+**The mind chooses, the player aims.** A click on an anonymous symbol names an area and a kind; the
+observation modus mentis then picked from the popup chooses which unobserved element of that kind it
+attends to (`ObservationController.ObserveAsync`, the Focus judge). That keeps the old game's rule —
+what a faculty notices is the faculty's — while giving the player the one lever the old screen
+lacked. When a kind holds more symbols than the tray has room for they fold into one with a count:
+the symbols of a kind are interchangeable until one is observed.
+
+**Known is what a place remembers.** An observation of a thing or a person writes
+`ElementMemory.KeyOf(element)` — `npc|<PersistentId>`, `poi|<StableKey>` — into
+`Scene.KnownElements`, which is the mental map's own set handed over by reference
+(`MentalMap.AttachTo`), so it is saved with the map and forgotten with it. A way needs no entry: a
+way seen or taken is already in `SeenLinks` / `TakenLinks`. A corpse, a sleeper and whatever else
+was spawned during the visit have no key and are never remembered. On the next visit the trees are
+gone — they are never saved — and what was observed comes back as *known*: named, and looked at
+without the mind being asked to choose. The menu maps (the Chorography tab, the routine box) show
+the count on a visited card (`LocationMap.RememberedMark`, `◆n`).
+
+**Two things are never symbols.** The plain way already gone by (`WaySide` skips an edge that is
+`AreaVisits.IsWayBack` from both ends): its line is lit and a click on its card walks there, so a
+symbol would offer a look at nothing. A door, a stair, a path or a climb keeps its
+symbol however often it has been taken — there is more to do to a door than walk through it. And
+what "myself" holds in the two opening phases (below).
+
+#### A thought tree is the modus mentis chain made visible
+
+Each member has a `MemberMind`: their point of view (`Pov` — every member stands in an area of their
+own), their noetic pool, their `ActionProposalLedger`, their roots and their stray refusals. A tree
+is `ThoughtNode`s:
+
+| `ThoughtNodeKind` | glyph | holds |
+|---|---|---|
+| `Element` | its kind's | the observation's `NarrationBlock`, or a `Note` for what nobody observed |
+| `Thought` | `¶` | a thinking's text; a tool's reasoning |
+| `Refusal` | `⊘` | every refusal, whoever refused and whatever was asked: a mind that declined to look or to think, a will with no way through the thing, a means that refused, a broken faculty, a refused implement |
+| `Act` | its difficulty glyph | a `ParsedNarrativeAction`, in an `ActState`: `Waiting` (the one state a click executes), `Done`, `Superseded` (reconsidered), `Lapsed` (no longer possible) |
+| `Success` / `Failure` | `✓` / `✗` | the outcome's block, with its chips. A failure is not a refusal and no longer shares its glyph |
+| `Emotion` | `♥` | what the outcome stirred |
+| `Speech` | `❝` | what was said of the element to a companion |
+
+Each node keeps the very `NarrationBlock` or action the dice read (`ChainOrigin`), so a roll needs
+nothing the tree does not hold: observation → thinking → act is still the pool, and the tree is that
+chain drawn. A node's first child follows it on its row; the others each start a row under it. An
+element's contents (`◇`, one per part) and its stubs (`?`, `❝`) share **one last row**, its shelf.
+A branch with no act left waiting is the record of a thought and is drawn dimmed, never removed —
+trees last the visit and are thrown away with it.
+
+**A tree is rooted on the scene `Element`, never on the observation object, and is located afresh
+every frame.** `Locate(node)` answers where the element is *now* and through which anchor it is
+acted on, or null while it is out of sight. The scene makes its observation objects again as the
+world changes (`SyncSpawnedObservations`) and moves a person's from node to node with the hour, so
+a tree that kept the anchor would point at something stale after the first change of period. This
+is also what makes time coherent for nothing: a person who walks to another area takes their tree
+to that card, one who goes where they cannot be seen at all (to bed, out of the place) is not drawn,
+and they come back with everything thought about them. `SeenFrom` tells apart the things that are
+different from different sides — a door seen from the street and from the hall, a neighbour that is
+a way only from somewhere; a person has none.
+
+**Thinking is offered only about what affords an act now** (`StubsOf`: `GoalsOf(anchor)` holds
+something other than IGNORE). A way since walked, a container emptied, a person gone to bed keep
+their tree and show no `?`: a thought there would cost a point to be told there is nothing to do.
+
+#### The frame, the symbols and the click
+
+`BuildFrame` reads off the game everything the overlay draws this frame into a `MapFrame` — per
+card its tokens, its tray, its roots and strays, per line its way (`WayFrame`: the tree, or the
+refusals to look at it), plus delegates for what only the controller knows
+(`ElementGlyph`, `IsHostile`, `Contents`, `Stubs`, `Enabled`). The overlay is a painter and decides
+nothing. It reaches the map through `LocationMap.IMapOverlay` and a `MapCanvas`
+(`CardOf`, `Put`, `Hit`, `TreeRows`), and every cell it draws is tagged with a `MapSymbol` record —
+`TraySymbol`, `ContentSymbol`, `StubSymbol`, `NodeSymbol`, `CommandSymbol`, `TokenSymbol`,
+`WaySymbol`, `ExitSymbol`. **The record is the hit
+tag, the hover key and what the CLI clicks**, compared by value, so there is no second table of
+regions to keep in step with what was painted — which is the bug class the keyword renderer's
+region list was. `IsEnabled(symbol)` is the single rule for what a click would do now, read by the
+painter, the label (grey or gold) and the click alike.
+
+**What a click acts on stands on a lit ground** (`MapTreeOverlay.ClickGround`, a dark gold): the
+painter's `Symbol` gives it to every symbol `Enabled` says yes to and to nothing else, whatever the
+symbol's ink says of it. Yellow ink alone did not tell a `✓` (a record) from a `◇` (a click), and
+a card a click walks to now says so too ("walk to the test yard", on the clickable label ground).
+Under the pointer a symbol is inverted, the way out included — it is tagged as an `ExitSymbol`, so
+it ticks, highlights and labels as every other symbol does rather than through a path of its own.
+
+**What is done is said by the symbol clicked; a popup only ever asks by which mind** — or, for an
+implement, with which thing carried. There is no menu of commands anywhere on the screen. A waiting
+act is carried out by a click on the act itself, and what else may be done with it stands beside
+it on its row as two symbols of their own (`CommandSymbol`, from `CommandsOf`): `⚒` reaches for an
+implement, `↺` has it thought over again. A speech mark is to one companion — there is one `❝` for
+each within hearing (`StubSymbol.Listener`) — so nobody is asked whom. This replaced a popup that
+opened on an act with Execute / Use Tool / Reconsider and a second one that asked whom to address:
+the one screen of the game drawn as a tree had two places where the next step was a list of words.
+
+A click that needs a mind stores a `Pending` record (`ObservePending`, `ThinkPending`,
+`SpeakPending`, `ReconsiderPending`; `ToolPending` for the implement) and opens the popup;
+`ApplyModusMentisSelection` is the one place every player-chosen faculty comes back through, which
+is where a broken modus mentis is refused.
+
+**A mind that refused is greyed in the popup the next time the same is asked about the same
+thing** (`AskMind`, `MemberMind.Refuse` / `HasRefused`, keyed by `MindOffice` — Observe, Think,
+Reconsider, Speak — and what was asked about: `AskedOf(pending)`). A will that has no way through
+the thing, a mind that declined, a faculty the body cannot carry: each would answer the same again,
+and the point would be spent to hear it twice. A will's refusal is its course through the place as
+it stood, so `ReconcileTrees` forgets those (`ForgetWillRefusals`) whenever the plans are; the
+rest stand until the pool refills. The popup lists each mind with its level, one `⟐` a level — a
+level is a die — and so do the titles of the preview and reading boxes (`PreviewTitles.For`).
+
+**The trees hang in a fixed room.** Rows of cards stand `TreeRoom` apart (the map's layout is
+routed once and does not move as trees grow), which leaves `canvas.TreeRows` = 11 rows under a card.
+A tree takes from the map only the cells it is drawn on: there was a panel the card's width behind
+it, which hid a line running under a card behind a tree two cells wide. A way's tree hangs in the
+open map and is never drawn over a card (`MapCanvas.IsCard`). When a card's trees need more, the
+elements with something left to do — an act waiting, a `?`, a content — are drawn first and the last
+row reads `+N` for the finished ones not shown. Nothing clickable is ever what is cut.
+
+#### One reconciler keeps the trees true
+
+`ReconcileTrees` is the only place scene and trees are brought into line, and nothing in it decides
+anything about the world — the scene is the truth and the trees are an account of it. In order:
+
+1. `SyncRoster` — the members played follow the party (below).
+2. `_npcPlacement.PlaceForPeriod(Period)` — where everybody is *now*.
+3. `ActionPathPlanner.Forget()` — a will's path was found in the scene as it was.
+4. `RefreshSceneVerbs` — every area's verbs re-expanded **from that area's own point of view**, for
+   the member played, which is why an act thought of in one room is still good after walking to
+   another.
+5. Dead people lose their trees (their waiting acts withdrawn from the ledger).
+6. Waiting acts of the played member that the element no longer affords become `Lapsed`.
+7. `AdoptCorpses`, `AdoptArrivals`, `AdoptConfronters` — below.
+
+It runs after every outcome (`CommitOutcomeResult`), every change of hour (`ApplyTimePeriod`), every
+free walk (`WalkTo`), every switch of member, and from `Update` whenever the roster changed under
+it. Step 2 is there because of a bug: people used to be re-placed only by `ApplyTimePeriod`, so a
+householder summoned at nightfall *after* the hour was applied, or anybody drawn in by a noise, was
+displaced in the scene and stood on no card — a confrontation with nobody on the map to answer.
+
+**What used to open a text is now what the map shows.** The corpse opener, the threat opener and
+the "came to look" arrival each wrote a block at the head of the next phase. There is no next
+phase. A body made in front of a member is rooted on their map already observed (`AdoptCorpses`,
+draining `Scene.PendingCorpseObservations`, for every member standing where it fell, with a `Note`
+in place of a text — nobody has to look for what they have just killed, and no mind is counted in
+a roll made on it). Somebody who heard an act go wrong and walked in is rooted the same way
+(`AdoptArrivals`, with `NeutralNarration.ArrivalEnemyCaution` or `ArrivalWitnessNotice`). And
+**whoever confronts a member is on that member's map already observed** (`AdoptConfronters`, with
+`NeutralNarration.ConfrontedBy(kind)`): the enemy in the room walked into, the householder who sees
+them where they have no business, whoever stopped a walk or an escape. Confronted, a member may look
+at nobody else, so leaving the confronter to be looked at first made answering them cost a point
+more than anything else in the place — and with the pool at zero, impossible: the only symbol that
+answered was RUNAWAY. An enemy who confronts nobody (asleep, appeased, in another area) is simply a
+`☹` in the tray. A script therefore thinks about a beast that opens on it without observing it
+first.
+
+#### An act, its result, and what it sets going
+
+A click on a waiting act carries it out. That needs the member *there*:
+standing elsewhere, they are walked to the element's area first (`WalkTo`, and the act is dropped if
+the walk is stopped), and `ActAsync` follows on arrival. It runs the coded rules, the evaluation, the dice, the outcome preview and `CommitOutcomeResult`, which
+applies the reports, hangs the outcome under its act and puts up the **result box** (`ActResult`):
+SUCCESS or FAILURE, the act, its chips, CONTINUE.
+
+**Every phase an act opens waits for that CONTINUE** (`ActResult.Then`): a fight, a conversation,
+the crafting menu, the next memory, the way lost. The next screen paints over the only account of
+what the act did, and with the scrolling text gone there is no history to read it back from. This
+was `attack`'s own rule (the first blow) and is now the general one; a conversation used to start
+on the tick the outcome committed, which under the new screen meant its SUCCESS and its "learned"
+chip were never seen. With no chip to show, the box is skipped and what follows starts at once.
+
+**The noetic rules in one place** (the reasons are in "The economy of a visit"): every observation,
+thinking, reconsidering and speech costs a point and nothing is looked at for free; a successful act
+refills the acting member's pool then and there, a failed one does not; a fight, a conversation or
+a menu hands back a full pool to every member standing where it happened (`ResumeNarration`); the
+two opening phases cost nothing.
+
+#### Walking, confrontation and the way out
+
+**Walking by ways the party knows is free and is not an act.** `WalkTo` takes the played member
+anywhere `AreaVisits.BackReach` reaches — never through a door locked against them, never from
+other ground into private — for no point and no roll, shown as a short walk on the map (instant
+under `--cli`). **Known is gone by** (`AreaVisits.IsKnownWay`: the way's key is in `TakenLinks`),
+for the plain way between neighbours as for a door. It used to be "a neighbour already stood in",
+and a member sent back to an area to look at something walked there by a way nobody had ever
+taken; two areas each reached by other ways are not thereby joined. A plain way never taken that
+leads to ground already stood on is an act like any other, and teaches what a new way back teaches
+(`IsNewWayBack`, the way-back lessons). A click on a card does it; so does acting on, or looking at, something in another
+area. It replaced the Go Back verb, which priced the same walk at a difficulty-2 roll and asked for
+its destination on a second map. A move along a way *not* yet taken is still an act: a thought on
+the way's symbol and a roll. Thinking needs no presence; looking and acting do.
+
+**The walk stops where somebody would confront the walker, with no roll.** Every area on the way
+but the last is weighed as though the member stood in it (`ConfrontationAt`, the areas a path runs
+past among them): in the first where an enemy or a witness would stop them they stand, confronted,
+and what they set out to do is dropped. Only RUNAWAY rolls.
+
+**A confrontation locks what may be looked at and thought about** (`IsEnabled`, from
+`ConfrontationOf(Mind)`): the confronted member may observe only whoever confronts them and think
+only about them, cannot be walked away, and speaks to nobody. **The discreet exception is kept**:
+acts already waiting where they stand stay clickable, and the rules judge them on the click as they
+always did — `ConfrontedImpossibleRule` refuses a plain means and lets a discreet one try. Members
+elsewhere are untouched. Two things had to change for the lock to be liveable:
+
+- **Somebody asleep witnesses nothing** (`WitnessSelector.SelectFrom` skips `IsSleeping`). And
+  `SceneNpc.IsSleeping` had been answering *awake* about everybody actually asleep: it asked for a
+  bed in the room, and `SceneNpcPlacement` takes the bed out of `BuildingRooms.BedsIn` the moment it
+  merges sleeper and bed into a `SleepingNpcPointOfInterest`. So every sleeper was a Visual witness,
+  and a burglar's bedroom opened on a `NoBusinessHere` confrontation by a person the map showed as
+  a thing — nothing to look at, nothing to think about, only RUNAWAY. It now also recognises a
+  sleeper already in their bed.
+- Arriving in a private room whose householder is *awake* still means being confronted at once.
+  That is the rule working; scripts that want to act there go at night.
+
+**The way out is a glyph on the map** (`⎆`, laid only in `NarrationPhase.Exploration`), not a footer
+button, and a symbol like the rest (`ExitSymbol`). It is LEAVE, or RUNAWAY while somebody confronts
+the played member (`ExitLabel`; the label under the pointer says which, and `inspect where` reports
+`exit=`). LEAVE walks **every** member out
+from where they stand, those standing together going together, and is stopped as any walk is — the
+view goes to whoever was stopped and the rest stay where they had got to. RUNAWAY is the confronted
+member's alone and is the roll it always was, made again at every area on the way where somebody
+would stop them (see "Crime").
+
+#### The party: independent members
+
+- **Each member has an area, a token and trees of their own.** A move moves the member who made it.
+  All of them enter at the place's entry area. The token on a card is the protagonist glyph for every
+  member, a beast as a person (which member it is, the pointer says); clicking one plays that member (`Switch`), for nothing, and re-expands every verb for
+  the body that would now perform it.
+- **Trees are private.** What one member observed is on their map only — though *known* is the
+  place's, so it is named for all of them.
+- **Speaking shares one element.** A `❝` on an observed element is offered to a member with a
+  speaking mind for each companion standing in the same area or one next to it (`WithinSpeech`,
+  `AreNextTo`: a neighbour or any connector but a view) — one mark a listener, named under the
+  pointer. It costs the speaker a point, hangs what
+  was said under the speaker's element, and plants that element on the listener's trees with the
+  words as its root. The view stays on the speaker: speaking is not switching. This is what Speak
+  About became — it used to hand the whole narration to the companion.
+- **A fight takes the members standing where it breaks out** (`MembersAt`, the one played first),
+  and whoever is fought counts those members enemies. See "Death, and where it is reckoned" for a
+  fight lost without the protagonist in it.
+- **A conversation with the people of a place is the protagonist's.** `Verb.MayBePerformedBy`
+  (sealed into `IsPossible` beside the anatomy gate) is overridden by `DialogueVerb` to
+  `actor is Protagonist`: the tree's replies, its affinity and what it settles are all keyed to the
+  protagonist, and a companion two rooms away opening a tree would have had the protagonist answer
+  for them from where they were not.
+- **The roster follows the party** (`SyncRoster`): somebody recruited mid-visit stands where the
+  member who won them over stands, with nothing observed; somebody dead or sent away is gone with
+  their trees, and the protagonist is played if they were the one being played.
+
+#### The two opening phases
+
+Childhood and get-up are played on the same map: the `RestingPlace` (`AreaName` "Under the Tree",
+`SectionName` "The Plain"), built once by `ReminescenceSceneFactory` and once by
+`GetUpSceneFactory`, with the same scenery around the body — a lone tree, the road, the horizon —
+and no way out.
+
+**"Myself" is an element of that place** (`Scene.GetUp.SelfPointOfInterest`), drawn with the
+protagonist's glyph and rooted from the start by `StandMyself`, observed by nobody. It *holds* what
+each phase is about, exactly as a container holds its contents (`SelfPointOfInterest.Holds`,
+`ContentsOf`): the fragments of the memory at hand in the childhood, the three facets of exhaustion
+in the get-up. Each is a named `◇` on its shelf, looked at one at a time.
+
+- **Childhood**: only what hangs from myself answers a click; the scenery is drawn and inert
+  (`IsEnabled` refuses the tray in `NarrationPhase.ChildhoodReminescence`). A fragment observed is
+  thought about, REMEMBER carries on to the next memory, and `ReplaceMemory` moves every branch from
+  the old scene's myself to the new one's — so by the last memory the tree under myself is the whole
+  childhood. A fragment looked at and not reached for stays as it was read, its act `Lapsed`.
+- **Get-up**: a new controller, so the childhood's tree is gone. The scenery may be looked at and
+  thought about, and `GetUpVerb` is possible on anything in the phase, so every thought ends on
+  getting up.
+- `StandMyself` is called from `AdoptScene` **and** from `ResetSession`. The second matters:
+  `ResetSession` clears every root, and with only the first call "myself" vanished the moment a
+  session was restarted, leaving a childhood with nothing on the map to click.
+
+#### Driving it from a script
+
+`regions` lists every symbol by the command that clicks it. The vocabulary (see the `verifying`
+skill for the whole of it):
+
+| | |
+|---|---|
+| `click observe <kind\|name> [in <area>]` | a kind (`person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element, a way on its line (`"Test Yard"`, `"Test Door"`) or a container's content — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run. `way` is the first view in the tray, else the first way on a line looked at from where the member stands |
+| `point observe\|think\|speak\|act\|member <what>` / `point exit` / `point card <area>` | puts the pointer on a symbol, named as `click` names it, and presses nothing: `inspect pointer-label` then reads its label and whether it is on the clickable ground, a node's text is in the reading box, a way's line is lit |
+| `click think <name>` / `click speak <name> [to <member>]` | the stubs of an observed element; a speech mark is to one companion, the first within hearing when none is named. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
+| `click act <n\|word>` | carries out a waiting act, by position or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it. No popup follows |
+| `click tool <n\|word>` / `click reconsider <n\|word>` | the two symbols beside a waiting act: then `choose <n>` picks the implement, or `choose <mm-id>` the mind that thinks it over |
+| `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
+| `click continue` | the dice's, the preview's or the result box's CONTINUE |
+| `inspect trees` / `texts` / `known` / `symbols` | the played member's trees node by node; what each node says; what the place remembers; what `regions` lists, for `expect-state symbols` |
+| `inspect where` | carries `confronted=` and `exit=LEAVE\|RUNAWAY` |
+| `inspect popup` | the open popup: `options=[…]` with `(disabled)` rows, or `minds=[…]` by id with `(refused)` on a mind that has already refused what is asked — `choose` reports an error for one |
+| `inspect map` | ends on the last walk, which names the areas it went by: `walk from Test Field to Test Yard by way of Test Shore > Test Yard` |
+
+**A label and a handle are two wordings of one thing, on purpose.** Under the pointer an element
+is named as a sentence names it (`NameOf`: "think about the cart trail", through
+`NeutralNarration.ThingPhrase` / `AreaPhrase` / `ItemPhrase`; "myself" and what it holds as they
+are) — the title "Cart Trail" reads as a proper name. What a script types and `regions`,
+`inspect symbols` and `inspect trees` print is the title (`HandleOf`: `"Test Chest"`, `"the way to
+Test Yard"`), so a label can be reworded without a script noticing. `CliFindSymbol` matches either.
+
+`expect` reads the **screen**, and a text is on screen only while its preview box is up: prose is
+asserted with `expect-state texts <fragment>`. State assertions compare **with double quotes
+ignored on both sides** (`CmdExpectState`): the inspect lines put quotes round names and the
+tokenizer strips an assertion's own, so `area="Test Yard"` could never be asserted on as it reads.
+Naming an observed container in `click observe` asks for whatever it holds first (`click observe
+Myself`), and a recording (`--record`) refuses a name nobody has learned (`CliFindSymbol(…,
+playerOnly: true)`) — on camera an unknown thing is clicked by its kind. `advance` drains the preview and the time box and
+**stops at the result box**, which is what lets `expect SUCCESS` and the chip expects read it.
+
 ### Verbs, actions and outcomes — the three types, and what each is for
 
 The narration loop has exactly three nouns. They were once eight, several of them named "outcome",
@@ -587,7 +969,7 @@ which is why the word alone never told you which end of the pipeline you were at
 | type | what it is | when |
 |---|---|---|
 | `Verb` | the abstract definition — GRAB, MOVE, ATTACK. Hand-registered in `VerbRegistry`, queried before anything exists (`IsPossible`, `DifficultyFor`, `IsIllegal`, `ExpandViews`) | — |
-| `VerbAction` | a verb **in context**: verb + verbatim + target + variant. What the thinking phase picks as a goal (`PreselectedOutcome`) and what a click executes | before |
+| `VerbAction` | a verb **in context**: verb + verbatim + target + variant. What a thinking picks as a goal (`PreselectedOutcome`) and what a click on its act node executes | before |
 | `Outcome` | a **consequence**: `Apply(OutcomeContext)` changes the world, `Text` is the chip, `Verbatim` is the phrase the narrator gets | after |
 
 Two supporting types, both deliberately thin:
@@ -599,7 +981,7 @@ Two supporting types, both deliberately thin:
   for years.
 - **`NarrativeAnchor`** — a place a click can land, with exactly two subclasses: `ObservationObject`
   (look at it) and `VerbAction` (do it). Both live in the same `SubOutcomes` / `PossibleOutcomes`
-  lists because the thinking phase draws from them together: "look closer at that" and "grab the
+  lists because a thinking draws from them together: "look closer at that" and "grab the
   flower" are both answers to "what do you want to do?".
 
 **Do not reintroduce a second class for one event.** Every consequence used to exist twice — once as
@@ -627,7 +1009,7 @@ Which is a proper name is decided by **type**: `NounPhrase`'s capital test canno
 beside the memory panel.
 
 **An NPC's proper name is not known until they give it.** Every sentence the player reads about an
-NPC — a verbatim, a chip, a rule's refusal, a segment caption, a menu title, the dialogue header —
+NPC — a verbatim, a chip, a rule's refusal, a map label, a menu title, the dialogue header —
 names them through `NpcLabelResolver.ShortLabel` (or `NpcPhrase`, which is the same thing): a person
 by their role until the acting member has been introduced ("the reeve"), by name after; a beast and
 shallow wildlife always by their kind ("the hyena", "the pig"). The observation prompts use the
@@ -688,7 +1070,7 @@ answer onto the list. Measured on CPU with the shipped model, that was ~3.2 s a 
 preferences (a cruel mind bribing its way past a guard, a covetous one never stealing), and the
 matcher faithfully carried the drift through. Three things went with it and should not come back
 piecemeal: `PersonaMatchCritic`, the `innerThought` hint on `PersonaRewriter`, and the "free"
-segment kind in the preview box.
+part kind in the preview box.
 
 Things to know:
 
@@ -702,42 +1084,43 @@ Things to know:
   willingly?", the willingness judge called a cutpurse reluctant to pick a pocket. Benchmark a
   rewording against labelled cases before shipping it; a bias like the first one only shows over many
   calls.
-- **A refused focus is not a dead end.** The modus mentis picks another unobserved object (no
-  decline). The dismissal is rewritten **alone, first**, as a keyword-less sentence, and the new
-  object is then observed through a transition. Rewritten together, the model moved the dismissal to
-  the end or dropped it in four turns out of six, and a word-match check that pasted the plain
-  sentence back in front misfired both ways. The keyword is the new object's, filtered so no word
-  naming the dismissed one can be chosen. The closing "nothing more" line is told not to name what
-  the block already described (`NothingMoreClause`), for the same reason. Only with
-  nothing left unobserved does the keyword-less "not interested" block remain. `--refuse-focus`
-  forces the branch, since `--playground` never declines; `cli/system/focus_turned_away.cli`.
-- **An arrival's opening block names somebody.** When it reached no living person while one is in
-  view, `AppendPersonObservationIfMissingAsync` adds one more observation by the same modus mentis,
-  narrowed to the people, no decline (and a decline earlier in the block goes unrendered). Armed by
-  `_arrivalObservationPending`, which only an arrival (`arrivalPeriod` passed) sets; off under
-  `--observe-only`, whose filter would otherwise fail every pinned script on the people. Its extra
-  playground draw shifts later seeded picks, which is why `focus_turned_away.cli` turns to the
-  butterfly; `cli/system/arrival_names_somebody.cli`.
-- **Observation groups shorten the choice and give the next look somewhere to go.**
-  `ObservationGrouping.Build` turns a node's objects into choice units, per phase, cached on the
-  `ObservationLedger` (same lifetime, so a group is one instance the ledger retires and a keyword
-  keeps). Two passes: *wholes* (PoIs sharing a `PoiCluster`, set by the factory — today a
-  building's entry door and outside wall), *families* (`FamilyMinimum` = 3 or more units of one
-  kind: PoI type, kind of whole, or way on — a neighbouring area or a path; never people, never an
-  entry door, never members with different reference nouns). A third pass once paired a path with
-  the area it reached; paths no longer join neighbours (see "Paths: the shortcut of open ground"). A container
-  (`SyntheticObservationObject` holding two or more distinct items) is not a group but has
-  `IObservationGroup.Parts`, one `SyntheticItemObservationObject` per item, whose goals are read live
-  from the container's. Three behaviours follow: the choice offers groups in place of members; the
-  **zoom** — the next look of a block goes to the unseen parts of the most recent thing observed that
-  has any (`NextPool`); and attention **directed** to a group renders its parts, siblings first, rather
-  than the group again. A group's goals are its members' goals, live. All of it is off in the
-  reminescence, the get-up and under `--observe-only` (`Grouping`), so the scripts pinned by that flag
-  are untouched; `cli/system/observation_group_zoom.cli` (orchard: family, zoom, a tree's contents)
-  and `observation_group_parts.cli` (city: houses, thinking on a house reaches its wall).
+- **A thing is declined once, and the mind that declined is not asked again.** An observation is
+  asked of one mind about one kind of thing in one area (the anonymous symbol), or about one named
+  element (a remembered one, a way, a container's content). The Focus list carries "let your focus
+  go" and the keep-focus question may answer no — once **per thing, whichever mind**:
+  `MemberMind.Decline` records what was turned down (`(area, kind)`, the element, or a way's key),
+  and `HasDeclined` withholds the decline from the next mind asked. The mind that declined is
+  greyed in the popup for that thing (`MemberMind.Refuse`), so the second ask is of another mind,
+  is the player insisting, and that mind chooses. It was one decline per mind per thing, with the
+  same mind asked twice; the player now needs a second general mind, and loses no point to a mind
+  that has already answered. It replaced the turning away
+  to another object, which needed a dismissal rewritten alone ahead of a second observation and a
+  keyword filtered against the dismissed thing's words; with one element per observation there is
+  nothing to turn to. A decline is a `Refusal` node — under the container, for a content; hung from
+  the way's symbol on its line, for a way (`MemberMind.WayStrays`); else standing alone on the
+  area's card (`MemberMind.Strays`) — and costs its point like any text (`HangRefusal`). The
+  judge leaned to the decline as a scene thinned, and when one mind after another took it an
+  appeased triceratops in plain view stayed unobserved by every faculty; one decline per thing is
+  what bounds that. `--refuse-focus` forces the decline wherever one is still allowed,
+  since `--playground` never declines. A will's rule-based refusal (`WillPriority`) is not this
+  option and spends nothing: the will is greyed until the world changes, and a general mind asked
+  after it may still decline. Declines are forgotten when the pool refills (`MemberMind.Refill`): a
+  success starts the member over with every mind willing to be asked.
+- **Nothing opens a visit.** The area introduction, the block that named somebody on arrival, the
+  follow-up looks and the length thresholds that paced them are gone with the scrolling text: an
+  arrival shows the map, and every text on it was asked for by a click.
+- **There are no observation groups.** Wholes (a building's door and wall as "the house") and
+  families (three trees as "the trees") existed to shorten a choice list and to give the next look
+  of a block somewhere to go; the kind on the symbol now does the first and there is no next look.
+  Several things of one name are still one choice (`DeduplicateByName`): the judge is shown "a birch
+  tree" once. **Containers stay**: a `SyntheticObservationObject` holding two or more distinct items has `Parts`, one
+  `SyntheticItemObservationObject` per item, whose goals are read live from the container's. Observing
+  the container discloses each part as a named symbol under it, to be observed one at a time; and
+  thinking about the container still proposes its contents' acts beside its own, since
+  `SyntheticObservationObject` folds a PoI's items into its sub-outcomes.
 - **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep
-  history (`keepHistory: true`) relied on that to stay bounded, so the observation follow-ups and the
-  dialogue replies now reset the slot themselves at the same points.
+  history (`keepHistory: true`) relied on that to stay bounded, so an observation and the dialogue
+  replies now reset the slot themselves at the same points.
 
 ### A will: what it wants, and the shortest way to the nearest of it
 
@@ -777,7 +1160,7 @@ ending**: `stalk` reports the hour and the move together, and read apart they pl
 at the later hour, a place the follower never is. `cli/system/will_follow_one_ending.cli`. Only
 `TransitVerbTypes` plus the goal verbs are expanded, except while a missing reference tool is sought,
 when every verb is (a grab that yields it, or `propose_to_buy` on someone whose `BuyCatalog` lists it —
-opaque beyond, replanned next phase). The implement is a goal verb's `ReferenceToolIds` **or any item
+opaque beyond, replanned once the purchase has changed the scene). The implement is a goal verb's `ReferenceToolIds` **or any item
 made for it** (`Item.MadeForVerbIds`, `ToolIdsFor`): a ring of keys is a tool made for `unlock_door`, so
 a will to open a lock goes for the keys on the gatehouse pegs. **An implement never refuses a will: the tool is checked on the click and nowhere else.** Fetching one is a course the
 plan prefers, never a condition. When none can be had in the place the way is planned bare-handed (`ActionPath.Unarmed`, a second
@@ -791,7 +1174,9 @@ conversations whose success is known in advance: `ask_to_use_workshop` (the leav
 hour the search reached by it, `ThinkingExecutor` settles the will's step on it
 (`SitAndWaitVerb.Until`, the period as the action's variant, "…until dawn"), and `AskWaitUntil` then
 asks nothing. A player's own wait still chooses. `sit_and_wait` is the only transit verb whose
-destination was left to a choice after the dice; every other is read off its success reports. Cached until `Forget()`, which runs wherever the observation ledger is cleared.
+destination was left to a choice after the dice; every other is read off its success reports. Cached until `Forget()`, which `NarrativeController.ReconcileTrees` calls: after every outcome, every change of hour, every walk and every change of the member played.
+
+**A way the party knows costs nothing.** Walking by known ways is a click on a card and no act, so the search is a 0-1 breadth-first one: from every standing, the areas `AreaVisits.BackReach` gives are reached without a step (`KnownReach`, kept with the plans) before any verb is expanded, and `Unwind` skips those step-less links. A will's `steps=` therefore counts acts, not areas crossed — lockpicking in the Test Field, with the yard already stood in and the door off it, is one step. This replaced `backtrack` as a planned step settled on an area.
 Measured: under 1 ms mean, half a second for an exhausted search in the largest city.
 
 **Nearest first, then declaration order.** The search does not return at the first goal it meets: it
@@ -826,9 +1211,8 @@ get-up have one verb each:
 
 | where | what |
 |---|---|
-| phase opener | `PickFirstObservationModusMentis` passes over wills while any other observer is held; a will that opens attends only to the object offering the first step |
-| focus | kept iff `WillPriority.PathOn` finds a shortest path beginning with something the object offers; else turned to the unobserved object that does; else refused naming the step. No follow-ups |
-| thinking | **wider than focus**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). **The ledger applies**: a goal the will takes is not chosen, so it never passed `ChooseGoalAsync`, and the same button came back thought after thought. `GenerateThinkingAsync` now offers `WaysOn` only what `ActionProposalLedger.WasProposed` leaves, reading a wait or a backtrack settled (`PathStep.SettledAction`), so a second thought takes the next way within the same reach, and the last says `IterationExhausted`. `cli/system/will_no_duplicate.cli`. No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). A will's one retry (Medium) remains for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
+| observation | `ObservationController.ChooseAsync`, ahead of every judge. Asked about a **named** element: observed iff `WillPriority.PathOn` finds a shortest path beginning with something it offers (the text says why, `WillObservationReason`); else refused naming the step (`WillObservationNotThisWay`), or saying the place holds no way at all (`WillObservationNotHere`). Asked about a **kind**: it attends to the first unobserved element of that kind whose offers begin its path, and to nothing when none does (`WillNothing`). These refusals are the rule's, not the one decline a mind is allowed, and are never spent — asked again, a will answers the same |
+| thinking | **wider than observation**, over every target: `WillPriority.WaysOn` → `ActionPathPlanner.WaysThrough` takes, per action the object offers, the shortest path beginning with it (`ShortestThrough`: the goal itself; an implement obtained, then `Plan(…, obtained)`; a transit, then the nearest of its ends), keeps those of at most `Config.Narrative.WillMaxPathSteps` (3, goal included) or as short as the place's shortest however long, and of those only the least length. One left is the goal; several equally short go to the goal judge over their first steps, no decline (`ChooseWillWayAsync`). **The ledger applies**: a goal the will takes is not chosen, so it never passed `ChooseGoalAsync`, and the same act came back thought after thought. `GenerateThinkingAsync` now offers `WaysOn` only what `ActionProposalLedger.WasProposed` leaves, reading a wait settled (`PathStep.SettledAction`), so a second thought takes the next way within the same reach, and the last says `IterationExhausted`. `cli/system/will_no_duplicate.cli`. No doubt; on an object offering none, or with no path, a reasoning-only refusal. Reconsider's keep and `WillActionNeverRefusesItsPathRule` ask the same (`WillPriority.OnItsWay`). A will's one retry (Medium) remains for a step on the way only, over untried means (the step tried with every means ends the chain as exhausted) |
 | means | **only the act it wants**: a will with Action carries it out itself. A step on the way (a walk, a wait, a tool fetched — `!Will.Matches(step)`) has its means judged like any goal's, the will among the candidates, speakers first for a conversation; the will was not the fittest mind for every walk, and a non-speaking will carried out `propose_to_buy`. `WillActionNeverRefusesItsPathRule`, last, lifts even an imposed refusal for the will's own path whenever the will is the means |
 | speech | **not narrowed.** A will may bear Speaking and then replies in every conversation, whatever its target; without it, in none. Every will whose target is a conversation bears it (51), and cruelty, which had it before. The audit notes a will that wants a conversation and cannot speak |
 
@@ -931,7 +1315,7 @@ trip carries the will's id and the target's description (`_willProposalPursuit`)
 trip makes it the journey's `_pendingPursuit`, any other journey drops it, and
 `BuildSceneForLocation(visit: true)` at its end puts it on the visit's scene, once. There
 `WillPriority.TargetsOf` answers the pursued target alone (`PursuedOf`, while it can still be reached —
-met or gone, the will reverts to all its targets), so the plan, the phase opener, a focus and `inspect
+met or gone, the will reverts to all its targets), so the plan, an observation and `inspect
 will` (`pursuit=yes`) go by it however long its way. `WaysOn` (thinking) takes a way to it through the
 object first, at any length the place makes it, and only when the object offers none a way to the
 other targets, capped at `WillMaxPathSteps` (`WaysThrough(…, reachCap:)`), never "as short as the
@@ -959,7 +1343,8 @@ tidewatching for the one path that had none.
 
 **Every childhood path leaves a speaker too** (rule C4, same validator): a modus mentis with the
 Speaking function, a will counting since one that bears Speaking replies in every conversation.
-Without one the character has no reply in any conversation and Speak About stays greyed. A playtest
+Without one the character has no reply in any conversation, and no speech mark under what they
+have observed — speaking to a companion needs a speaking mind too. A playtest
 reached exactly that, through 'a scream' → 'manure smelt' → 'nothing' → 'a dirty traveller', and
 the farm's manure fragment grants shanty for it. Both rules are also failed (✗) by `--mm-audit`,
 since every audit exits before the launch check runs. Every fragment grants two or three modi mentis;
@@ -993,7 +1378,7 @@ only `anglery` wants it.
 | `cli/system/will_lesson_object.cli` | archeology plans to examine the petroglyphs that taught it, one step from the Dry Wash |
 | `select mm <id>` | the memory panel's detail box for a held modus mentis, which lists a will's targets under "Wants" |
 | `choose <mm-id>` | answer the modus mentis popup by id rather than by position |
-| `cli/system/will_path.cli` | plan, focus kept with the path as reason, the walk carried out by a judged means (pinned to Woodcraft), the unlock by the will itself |
+| `cli/system/will_path.cli` | plan, an observation made with the path as reason, the walk carried out by a judged means (pinned to Woodcraft), the unlock by the will itself |
 | `cli/system/will_refuses.cli` | not this way (names the step), and not in this place (only leaving offers it) |
 | `cli/system/will_step_retry.cli` | a step on the way refused by its judged means, tried again with another |
 | `cli/system/will_nearer_target.cli` | of several targets the nearest is taken, whichever it is in the list |
@@ -1001,61 +1386,77 @@ only `anglery` wants it.
 | `cli/system/will_mycology_forest.cli` / `will_kind_target.cli` | mycology in a forest; a desert truffle answering a target by kind |
 | `cli/system/will_memory_targets.cli` | the memory panel lists each target |
 
-### The economy of a narration phase: noetic points and the two ledgers
+### The economy of a visit: noetic points and what has been proposed
 
-A phase's budget is **noetic points**, one spent per observation, thinking or item combination, and
-the pool refills at the phase boundary (`CloseNarrationSegment`). Three rules decide how far that
-budget reaches, and they were designed together — changing one alone re-breaks what the others fix.
+A member's budget is **noetic points**: one per observation, one per thinking (the whole chain of
+it), one per Reconsider, one per speech to a companion, one per refused tool. Each member has their
+own pool (`MemberMind.Noetic`), and the rules that decide how far it reaches were designed together —
+changing one alone re-breaks what the others fix.
 
 - **The pool is `encephalon / 2 + 1`** (`NoeticPointsStat`, integer division, floored at 1): one
   point per two levels, plus one — 3 for an encephalon of 5 (every organ at 1), 12 at the human maximum of 23.
-  At one point per level a segment was never really spent: a player could work through every object
+  At one point per level a pool was never really spent: a player could work through every object
   in a room and still have attempts left, so nothing had to be chosen over anything else; one per
-  three proved too tight. The `+ 1` keeps the weakest minds off exactly 1, which buys the one
-  thought and nothing else — no focus observation, no Speak-About hand-off (that spends the
-  speaker's own point).
-- **An accepted tool costs nothing; a refused one costs a point.** Combining is part of the action
-  already on screen, and only one item may ever be combined with it. Charging for the *accepted*
+  three proved too tight.
+- **Every observation costs a point; nothing is looked at for free.** A visit used to open on an
+  observation nobody paid for, so the weakest pool of 3 bought that look, three thoughts and no
+  more. It now buys a look, a thought and one point over — a second thought, a second look, or a
+  word to a companion. That is a real tightening and it is deliberate: what is on a card is shown
+  as symbols for nothing, and the point is what choosing one to look at costs.
+- **A successful act refills it, per act.** `CommitOutcomeResult` calls `MemberMind.Refill` for the
+  member who acted, the moment the outcome is committed. There is no phase boundary any more: the
+  trees stay, the other acts still waiting stay, and only what the world no longer allows lapses.
+  The pool also comes back full on the way back from a fight, a conversation or a menu, for every
+  member standing where it happened (`ResumeNarration`), as those boundaries always refilled it.
+- **A failed act does not.** Refilling there meant a miss cost nothing, since the next press handed
+  the whole budget back. It is also what makes **losing focus** a real cost — see "What a failure
+  costs" below.
+- **An accepted tool costs nothing; a refused one costs a point.** Combining is part of the act
+  already proposed, and only one item may ever be combined with it. Charging for the *accepted*
   case made the tool-gated verbs (`dig`, `mine`, `fish`, `cut_wood`, `break`) *impossible* once the
-  pool shrank: the thinking phase that produces the action spends the point "Use Tool" then wants,
-  so the option was offered and permanently greyed out. Charging for the refusal is what pays for
-  never greying the row by verb — see "Tools: the three categories" below.
-- **A failed action does not refill it.** `CloseNarrationSegment(refillNoetic:)` is false on exactly
-  one path — the CONTINUE that closes a segment after a failed action (`_pendingSegmentSucceeded`).
-  Refilling there meant a miss cost nothing, since the very next press handed the whole budget back.
-  Every other boundary (an area move, a fight, a conversation, a hand-off) refills as before. It is
-  also what makes **losing focus** a real cost — see "What a failure costs" below.
-- **Nothing is offered twice in one phase.** Two ledgers, same lifetime, cleared together in
-  `CloseNarrationSegment`:
-  - `ObservationLedger` — what has been *looked at*. Keyed by **instance**, so two same-named things
-    stay two things (which is what makes a second corpse reachable). Note `SceneFactory` merges
-    same-named PoIs within an area at build, so ordinary scenery never has twins.
-    It also spends the **focus refusal** ("let your focus go"): `Declined` is set the first time a
-    mind takes it, and `MayDecline` withholds it from every later Focus choice of the phase. The
-    judge leaned to it as the scene thinned, and when one mind after another took it, an appeased
-    triceratops in plain view stayed unobserved by every faculty (Beast Sense included). A will's
-    rule-based turning away (`WillPriority`) is not this option and is never spent.
-  - `ActionProposalLedger` — what has been offered a **button**. Keyed by **verb + target +
-    variant**, *not* by instance: `RefreshSceneVerbs` re-expands every scene verb list immediately
-    before each thinking request, so the `VerbAction` recorded and the one filtered are never the
-    same object. Recorded when the button reaches the screen, so a goal the *action* modus mentis
-    refused stays available — that refusal was one mind's, and asking again with another is the move
-    that should work. **Not to the thinking modus mentis that chose it**, though: `Refuse` records
-    the goal against that mind (by instance), and `NotRefusedFor` drops it from that mind's later
-    goal lists in the phase, since the same mind would converge on it and be refused again.
-    **A second attempt by another mind is not left to be refused either** (`WasRefused`): the goal
+  pool shrank: the thinking that produces the act spends the point reaching for a tool then
+  wanted, so the option was offered and permanently greyed out. Charging for the refusal is what
+  pays for never greying it by verb — see "Tools: the three categories" below.
+- **The two opening phases cost nothing** (`SpendPoint` and `HasPoint` read `InOpeningPhase`): the
+  one verb of each is the only way onward, and a pool that could run dry there is a softlock.
+- **Nothing is proposed twice.** What has been *looked at* needs no ledger now — an observed
+  element is a node on the member's trees and is simply no longer among the unobserved
+  (`MemberMind.NodeOf`, by **instance**, so two same-named things stay two things, which is what
+  makes a second corpse reachable). What has been offered an **act** is `ActionProposalLedger`, one
+  per member (`MemberMind.Proposals`), for the visit:
+  - Keyed by **verb + target + variant**, *not* by instance: `RefreshSceneVerbs` re-expands every
+    scene verb list on every reconcile and before each thinking request, so the `VerbAction`
+    recorded and the one filtered are never the same object.
+  - Recorded when the act node reaches the tree, so a goal the *action* modus mentis refused stays
+    available — that refusal was one mind's, and asking again with another is the move that should
+    work. **Not to the thinking modus mentis that chose it**, though: `Refuse` records the goal
+    against that mind (by instance), and `NotRefusedFor` drops it from that mind's later goal lists,
+    since the same mind would converge on it and be refused again.
+  - **A second attempt by another mind is not left to be refused either** (`WasRefused`): the goal
     is withheld from everyone when no held action modus mentis passes the willingness rules for it
     (`ThinkingExecutor.CanCarryOut`, a silent `ChoiceRuleContext.Probe`), and otherwise the means
     pool is narrowed to those that pass and the decline option is dropped.
-    **A thinking mind that declined an object is not offered the decline about it again**
-    (`ActionProposalLedger.Decline` / `HasDeclined`, by mind and observation instance): the goal judge
-    reads scores rather than sampling, so the second ask could only be declined again — the playtest
-    saw Keywise turn the same locked door down twice, a point each. The second ask is the player
-    insisting, and the mind chooses a goal. Unreachable under `--playground`, whose goal draw never
+  - **An element declined by a thinking mind is not declined again**
+    (`ActionProposalLedger.Decline` / `HasDeclined`, by observation instance): the goal judge
+    reads scores rather than sampling, so the same mind could only decline again — the playtest
+    saw Keywise turn the same locked door down twice, a point each. That mind is greyed for the
+    element (`ThinkingResponse.Declined` → `MemberMind.Refuse`, and its last thought is drawn as a
+    refusal, `⊘`); the next ask is of another mind, is the player insisting, and that mind chooses
+    a goal. `Declined` is also set when a will has no way through the element, when nothing is left
+    for the mind to try, and when a reconsidering mind wants no part of the act or finds nobody
+    else for it — but not when an acting mind refused a goal the thinking mind chose: asked again,
+    the thinking mind chooses another. Unreachable under `--playground`, whose goal draw never
     declines.
-    `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
-    branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
-    action modus mentis and no flag removes one.
+  - **An act carried out, lapsed or whose person died is `Withdraw`n**, so it may be thought of
+    again: a failed `get_up`, a second fish from the same pool. Before there were trees the ledger
+    was simply cleared at the phase boundary; with no boundary, leaving a done act proposed would
+    have meant it could never be proposed a second time in the visit.
+  - **`Refill` forgets the refusals and the declines** (`ForgetRefusals`, and `MemberMind`'s own
+    observation declines): a success starts the member over with every mind willing to be asked.
+    The acts still waiting on the trees stay proposed.
+  `cli/system/thinking_refused_goal_per_mind.cli` covers the possible branch; the impossible
+  branch has no script, because the `--skip-childhood` kit at seed 42 already holds an observing
+  action modus mentis and no flag removes one.
 
 **Iterative thinking and doubt: a thinking mind's second thoughts.** Every modus mentis with the
 Thinking function declares a `DoubtLevel` (`ModusMentis.Doubt`, R23, fatal): **Low** thinks once and
@@ -1067,7 +1468,7 @@ pineal gland's score once (`ThinkingIterationsStat`, `DoubtStat`), and every min
 second-guessed itself alike. A will declares none and is Medium: it never doubts (its goal is set by
 its course) and keeps one more try of a step on its way. Both live in
 `ThinkingExecutor.GenerateThinkingAsync`, which is a loop: goal → means → reasoning → [doubt] →
-willingness → action. Two things end a try, both before any button exists:
+willingness → action. Two things end a try, both before any act exists on the tree:
 - **the acting modus mentis refuses** (willingness, or a choice rule's imposed refusal);
 - **the player doubts it.** With a retry left, the reasoning ends on `NeutralNarration.DoubtQuestion`
   and the reasoning's preview part `AskAsync`s: the box shows YES / NO in place of CONTINUE
@@ -1077,14 +1478,14 @@ willingness → action. Two things end a try, both before any button exists:
 **The action rules are not retried.** A witness in sight, an enemy in the room, a confronter: those
 are `ActionRulesChecker.Check`'s, on the click. They used to be probed ahead while a retry remained,
 and a scene whose refusal was the situation's (a watching apprentice, no discreet means held) spent
-every retry on means none of which could pass, then offered the last one unprobed — a button the
-click refused anyway. `thinking_click_rules_not_retried.cli` pins that the button is offered.
+every retry on means none of which could pass, then offered the last one unprobed — an act the
+click refused anyway. `thinking_click_rules_not_retried.cli` pins that the act is offered.
 
 A refusal crosses off the pair of goal and means in a `ThinkingChain` (one thinking's life, so Low
 is exactly the old single try), and `TryAgain` then asks whether **an untried means is able
 to carry the goal out** (`CanCarryOut`: no choice rule imposes a refusal). If one is, the next try
 takes the same goal up at once (`again`), as a second attempt — the pool narrowed to the able, no
-decline — so it ends on a button. If none is, the goal is `Drop`ped and the next try chooses another
+decline — so it ends on an act. If none is, the goal is `Drop`ped and the next try chooses another
 goal or finds nothing left. **A NO drops the
 goal with every means** (`Drop`), since a doubt is of the end — crossing off only the pair brought
 the same goal back with the next means, three NOs running. What is untried is read against
@@ -1093,21 +1494,21 @@ carried out by Hard Labor). With a retry left, the next try opens led by `Iterat
 while a means for it is untried (`reoffer`), and as a `WasRefused` second attempt it is then carried
 out by an able means with no decline. A goal tried with every means is dropped; when nothing is left
 the ignore branch says `IterationExhausted`. The response is a list of `ThinkingSegment`s — thoughts
-and refusals in order — and the controller commits one block per segment, the actions on the last
-thought. **One noetic point for the whole chain.**
+and refusals in order — and the controller hangs one node per segment under the element, each from
+the last, the act from the last thought (`ThinkAsync`). **One noetic point for the whole chain.**
 
-**Reconsider: the act's popup's third row, and the one place the action rules are asked ahead.**
-Execute / Use Tool / Reconsider. Reconsider asks a thinking modus mentis the player picks
-(`ActionPendingReconsider`, routed by `ApplyModusMentisSelection`) to keep the act or want no part of
+**Reconsider: the `↺` beside a waiting act, and the one place the action rules are asked ahead.**
+It asks a thinking modus mentis the player picks
+(`ReconsiderPending`, routed by `ApplyModusMentisSelection`) to keep the act or want no part of
 it — `ChooseGoalAsync` over that one goal with the decline, no ledger; a will keeps an act of its own
 path only — and `ThinkingExecutor.ReconsiderAsync` then gives it to another means than the one that
 offered it, among those `CanCarryOut` allows **and** `ActionRulesChecker.Probe` passes (through the
 controller's `ProbeActionRules`, the same `BuildActionRuleContext` the click uses; the two rules that
 read a combined item are skipped). That is what retries deliberately do not do, and what makes
 Reconsider the way to hand a crime in sight of a witness to a discreet means. The means is not asked
-whether it would rather not. A new thinking block carries the new act and the old one is
-`Superseded` (greyed, ignores clicks); a refusal or an empty pool adds only the thought, and the old
-button stands. One noetic point; `CanReconsider` greys the row without one, and in the two opening
+whether it would rather not. A new thought node under the old act carries the new act, and the old
+one is `ActState.Superseded` (greyed, ignores clicks); a refusal or an empty pool adds only the
+thought, and the old act stands. One noetic point; `CanReconsider` greys the row without one, and in the two opening
 phases. `cli/system/reconsider.cli` covers it in the wolf's den.
 
 The playground never refuses, so `--refuse-means <n>` makes its first n willingness answers
@@ -1126,26 +1527,28 @@ doing" line in the thinking modus mentis's voice.
 
 **The two opening phases offer no stop at all.** In the childhood reminescence and the get-up phase
 the goal choice has no "do something else entirely", the observation choices no "let your focus go",
-and the keep-focus question is never asked (`ObservationPhaseController.MustCommit`, and
+and the keep-focus question is never asked (`ObservationController.MustCommit`, and
 `ChooseGoalAsync(offerDecline: !autoSuccess)`). Their one verb is the only way onward, so a mind
-that stopped left the player hunting for a keyword that reached the rest.
+that stopped left the player with nothing on screen that led on.
 
-**A player who spends the pool without succeeding can only leave.** Keyword clicks are gated on
-`ThinkingAttemptsRemaining > 0`, so at zero the footer LEAVE button is the way out. That is the
-intended shape, not an oversight — but it is why LEAVE must stay ungated by anything except a Visual
-threat.
+**A member who spends the pool without succeeding can still walk, act and leave.** Looking and
+thinking are withheld at zero (`IsEnabled` reads `HasPoint` for the tray, the contents and the `?`),
+but the acts already waiting on the trees stay clickable, walking by known ways is free, another
+member with points of their own can be played, and the way out is always there. That is the
+intended shape, not an oversight — but it is why the way out must stay ungated by anything except
+whoever confronts the member, who turns it into RUNAWAY rather than closing it.
 
 ### Difficulty 0: the act that is not rolled
 
 An action's difficulty is `Verb.ActionDifficulty`: `DifficultyFor(target)` plus the willingness
 modifier (eager −1, willing 0, reluctant +1), clamped to **0–10**. It used to be clamped to 1–10, and 0
 existed only for the childhood reminescence. **Difficulty 0 now means what it means there: no dice, no
-humor layer, success.** `ExecuteActionPhaseAsync` checks it after the coded rules and the evaluation
+humor layer, success.** `ActAsync` checks it after the coded rules and the evaluation
 and goes straight to the success path (`OnDiceRollContinue` with `_pendingSucceeded = true`), so the
-wait and backtrack questions, the outcome preview and the lessons are the ordinary ones. `strategy
-fail-dice` cannot fail it — there is no roll to force. The action line shows `○`
-(`Config.Symbols.AutomaticDifficultyGlyph`); an action not yet evaluated is `NotEvaluated` (−1), no
-longer 0.
+wait question, the outcome preview and the lessons are the ordinary ones. `strategy
+fail-dice` cannot fail it — there is no roll to force. An act's node on its tree is drawn as its
+difficulty glyph, so such an act shows `○` (`Config.Symbols.AutomaticDifficultyGlyph`); an act not
+yet evaluated is `NotEvaluated` (−1), no longer 0.
 
 Two ways in:
 
@@ -1183,7 +1586,7 @@ four costs, each an ordinary outcome so it shows a chip, lands in the narration 
 | kind | outcome | what it does |
 |---|---|---|
 | a wound | `WoundInflictionOutcome` | as before; `Wound` converts implicitly, so a table reads `{ FailurePenalty.WasteTime, new CutWound() }` |
-| `GetLost` | `LostWayOutcome` | the CONTINUE that closes the segment ends the visit (`Scene.PendingLostWay` → `ShouldExitOnContinue`) |
+| `GetLost` | `LostWayOutcome` | the CONTINUE of the act's result box ends the visit (`Scene.PendingLostWay`, read in `CommitOutcomeResult` and held as the result's `Then`) |
 | `WasteTime` | `TimeWastedOutcome` | the period moves on one, exactly as `TimeShiftOutcome` — a type of its own so patience is not settled by a fumbled hour |
 | `LoseFocus` | `FocusLostOutcome` | one noetic point more (`Scene.PendingFocusLoss`); kept, since a failure does not refill the pool |
 
@@ -1202,8 +1605,8 @@ any other verb with an empty table.
   single lost way;
 - **the way lost outside exploration** (`FailureSituation.CanLoseTheWay`);
 - **the hour wasted when the failure was seen** (`FailureSituation.Caught`: a fight or caught
-  red-handed, not merely heard). The quarrel starts on that CONTINUE, so the period passing would put
-  the time box up over a fight or a dialogue and leave it waiting there for the return;
+  red-handed, not merely heard). The quarrel starts on the result's CONTINUE, so the period passing
+  would put the time box up ahead of a fight or a dialogue that is about to take the screen;
 - **focus lost at zero points**;
 - **a wound the body cannot have.** A `WildcardWound` is translated to the acting anatomy's own graze
   of the same `DamageType` — a wolf scraped on scree gets a `BeastScrapeWound` — because a graze
@@ -1235,10 +1638,17 @@ never have avoided — a withholding dressed as a refusal, which is the whole `C
 `ActionRulesChecker` distinction. Read the declared half anywhere and the beast comes out able to
 slay; that was the bug the audit fix caught.
 
-**The "Use Tool" row is greyed only when nothing combinable is carried** — never by category. An
-excluded verb still accepts the attempt and still fails it, at the cost of a point. That is the
-bargain: the player is trusted to choose, and pays for choosing badly. Do not add a category test at
-the `hasItems` gate in `HandleClick`.
+**The implement symbol beside an act is greyed only when nothing combinable is carried** — never
+by category. An excluded verb still accepts the attempt and still fails it, at the cost of a
+point. That is the bargain: the player is trusted to choose, and pays for choosing badly. Do not
+add a category test to `IsEnabled`'s `CommandSymbol` case (greyed only by
+`GetCombinableItems().Count == 0` or an implement already combined). The act itself is greyed
+while it `NeedsTool` — refused once for want of an implement, reaching for one is the only way on.
+
+**A combined act hangs under the act it was combined with** (`CombineItemAsync`): the acting mind's
+reasoning as a thought node, and under it a new act node whose chain ends on the implement. The
+plain act stays waiting beside it — combining does not execute, and the player may still do it
+bare-handed. A refused combination hangs a refusal there instead.
 
 `ToolCombinationRules.Resolve` is the whole pre-LLM ladder, and **the order is load-bearing**:
 
@@ -1369,9 +1779,9 @@ a pick is not a routine that can be walked, whether or not the first pick surviv
 
 ### Routines are entry points
 
-A routine is **an area, an hour and the phase that opens there** — Go to (narration), Meet
-(narration opened on a person), Buy / Sell (the trade menu), Work (the work menu), Gather (the
-gathering phase, `GameMode.Gathering`, which nothing else opens). One subclass of `Routine` per kind,
+A routine is **an area, an hour and the phase that opens there** — Go to (narration), Buy / Sell
+(the trade menu), Work (the work menu), Gather (the gathering phase, `GameMode.Gathering`, which
+nothing else opens), Craft (the crafting menu at a station). One subclass of `Routine` per kind,
 in `src/game/narrative/routines/`. It replaced a recorded chain of verbs replayed headlessly, which
 made every verb and every outcome answer how it bore on a recording (35 verb files of hooks and a
 `RoutineChainEffect` on every report). Now:
@@ -1384,14 +1794,21 @@ made every verb and every outcome answer how it bore on a recording (35 verb fil
   consulted; "you know the way" — every path, door and climb to the area is skipped. **Skipped, and
   shown**: `NarrativeController.WalkTheApproach` plays the map walk from where the location is
   entered to the routine's area, by known ways (`AreaVisits.MoveBack`; a jump when none is known at
-  that hour), and opens the menu on its Continue (a Go to / Meet writes its opening observation
-  behind the walk). Nothing is rolled; nothing new is learned but the two ends visited.
-- **The five moments**: a successful gather/extraction verb (recorder, before the reports apply), a
-  conversation opened with a registered tree (`StartDialogueMode`), a trade or hire agreed
-  (`RecordAgreementRoutines`, called from both the played and the `--auto-dialogue` ending), and
-  walking into an area other than the one the session opened in (Go to — **every** such area, at
-  the hour of arrival, via `OnAreaEntered` after an action's reports apply; the area left from is
-  caught at session end). Recording only the area left from lost every area walked through.
+  that hour), and opens the menu when it ends (a Go to simply leaves the party standing on the
+  map there). Nothing is rolled; nothing new is learned but the two ends visited.
+- **The moments that teach one**: a successful gather/extraction verb (recorder, before the reports
+  apply), a trade or hire agreed (`RecordAgreementRoutines`, called from both the played and the
+  `--auto-dialogue` ending), a crafting menu opened at a station the member may use
+  (`RecordCraftRoutine`), and standing in an area other than the one the session opened in (Go to —
+  **every** such area, at the hour of arrival, via `OnAreaEntered`: after an act's reports apply,
+  and from `StandIn` for a free walk by known ways; the area left from is caught at session end).
+  Recording only the area left from lost every area walked through.
+- **There is no Meet routine.** It opened the narration with the first observation already on a
+  person, which is not a thing a visit does any more: nothing is observed until a symbol is
+  clicked, and a person once observed is remembered with the place and named on its map
+  (`MentalMap.KnownElements`), which is the whole of what Meet bought. `RoutineRecorder.OnConversation`,
+  the category, its menu line and its `[JsonDerivedType]` went together, and `SaveGame.CurrentVersion`
+  moved to 10 so a save holding one reads as no save rather than as corruption found halfway.
 - **Learned again, refreshed.** A routine whose `Signature` is already held is not added, but its
   name and (for a trade) catalogue are rewritten from the new one — how a routine an older build
   recorded wrong mends itself. The catalogue direction is the trade menu's: `TradeMode.Buy` reads
@@ -1406,8 +1823,9 @@ made every verb and every outcome answer how it bore on a recording (35 verb fil
 ### Mental maps: what is remembered of a place
 
 **`MentalMap`** (`src/game/narrative/routines/MentalMap.cs`) is one location as the protagonist
-remembers it: the four `AreaVisits` stores (visited, taken, seen areas, seen links) and the routines
-learned there. They used to live on `LocationInstanceState`, which never forgets; moved here, they
+remembers it: the four `AreaVisits` stores (visited, taken, seen areas, seen links), the things and
+people an observation has taken in there (`KnownElements`, by `ElementMemory.KeyOf` — see "Narration
+is played on the map") and the routines learned there. They used to live on `LocationInstanceState`, which never forgets; moved here, they
 are forgotten with the map. `Protagonist.MentalMaps` is the queue, oldest first, as many as
 `MentalMapsStat` (anamnesis × 4, 0–20). Routines have no cap of their own.
 
@@ -1422,25 +1840,40 @@ are forgotten with the map. `Protagonist.MentalMaps` is the queue, oldest first,
   place forgotten builds with nothing known. Do not put the stores back on the location state.
 - **`viewOnly` builds** (the Chorography tab) skip the debug spawn (it draws from `GameRng`), first-contact
   enmity and name faking (global — the menu may be open over a visit).
-- **The Chorography tab** (`MentalMapsPanelRenderer`): the selected place's `DebugLocationMap` across the
-  whole top, to the right rule, with an icon per routine on its card (`DebugLocationMap.MapIcon`,
+- **The Chorography tab** (`MentalMapsPanelRenderer`): the selected place's `LocationMap` across the
+  whole top, to the right rule, with an icon per routine on its card (`LocationMap.MapIcon`,
   black letter on yellow, `RoutineCategories.Icon`); under it, places newest first on the right
   (☐/☑ the lock), the world porthole, and at the bottom `< n/N >` (steps the routines, centring the map on each; the first is selected by default and its icon blinks) over the selected routine's detail. The tab is Chorography, not Maps: every management tab opens with its first letter, so `ManagementMenuRenderer.CheckShortcuts` refuses two tabs sharing an initial. **The routine
   box** on the travel plan (`TravelRoutinesBox`) is the destination's map the same way (stepper, blink, arrows panning; an icon or the stepper selects, CONFIRM sets out), a walkable
   icon clickable, an unwalkable one grey with its reason on hover.
 - **The map has no legend, anywhere.** What the pointer is over — a card, a line, an icon, the pad —
-  is named by `DebugLocationMap.LabelAt` and put up by `DebugLocationMap.ShowLabel` in the
+  is named by `LocationMap.LabelAt` and put up by `LocationMap.ShowLabel` in the
   mouse-following popup (`PopupTerminalHUD`, lifted 1.5 cells off the pointer so it does not hide
   what it names): black on yellow when a click acts on it, black on grey when it only tells. The popup
   is shared — the Chorography tab clears only a label it put up (`HideLabel`), the narration only while no
   modal popup is open (`NarrativeController.UpdateMapLabel`), the world view redraws it every frame.
+  **Whoever takes the panel from the narration must have its label taken down**: a conversation, a
+  fight or a menu draws no map, the narration's `Update` no longer runs, and the last label ("an
+  unknown way") followed the pointer through the whole conversation. `LocationTravelGameController.Update`
+  calls `NarrativeController.HideMapLabel` whenever the mode is not one of the three narration modes.
+- **The narration's map is darkened, not greyed.** `TerminalPanelUI.DimContent` recolours every cell
+  to one grey on black, which is right for a page of text and flattens a map — drawn in grounds as
+  much as in glyphs — to black with a few grey letters left. `NarrativeUI` overrides `DimFrom` to
+  `TerminalHUD.ShadeRect`, which multiplies text and ground alike and keeps the hue. Unlike the
+  grey-out it is not idempotent, so it is applied once a frame (`_shaded`, reset by `Clear`).
+- **A press kept on the pan pad keeps the map moving** (`LocationMap.Hold`, called every tick with
+  the button's state): the click makes the pad's step, and after a moment each tick makes an arrow
+  key's. All three maps call it: the narration and the routine box from their tick, the
+  Chorography tab from the management menu's, which draws again when the view moved.
 - CLI: `inspect mental-maps`, `travel new` (a bordering vertex not remembered), `manage Chorography <kind>`,
   `manage Chorography lock newest|oldest`, `point card <area>` and `inspect pointer-label`. `cli/system/mental_map_forget.cli` (anamnesis 0),
   `mental_map_queue.cli` (eviction passes over the locked map).
 
-A Meet routine opens on its person through the **opening focus** (`_openingFocus`), the same field a
-finished conversation and an introduction set — an `Element`, so a point of interest can be focused
-the same way when a kind wants it. `inspect opening` reports what the last phase opened on.
+**`LocationMap` is one class drawn in two ways.** The Chorography tab and the routine box draw it
+bare, with routine icons; the narration draws it with `Narration = true`, which leaves each card's
+third row and the rows under it (`TreeRoom`) to an `IMapOverlay`. It was `DebugLocationMap`, a
+developer view toggled with Tab over the narration text; it is now the narration's whole screen, and
+the toggle, the ↹ header button and the map's own RETURN footer are gone.
 
 ### Emotions: what an outcome does to the person who caused it
 
@@ -1470,10 +1903,10 @@ Four rules the rest of it assumes:
   would fire in the rare case and stay silent in the common one, which is backwards — so
   `EmotionResolver.Resolve` takes a `PartyMember`, not the action's chain.
 - **Exactly one emotion per action**, sampled uniformly from the matches. A wolf slain in a private
-  room after a forced door matches five dispositions at once, and five blocks plus five chips for one
+  room after a forced door matches five dispositions at once, and five texts plus five chips for one
   press would bury the action that caused them. Uniformly rather than by level, because a level is
   how well a thing is *done* and nobody feels their strongest feeling most often.
-- **The narration is a second request in a different slot**, and that is the point of the block: the
+- **The narration is a second request in a different slot**, and that is the point of the text: the
   outcome was written by the ACTION modus mentis and this is written by the EMOTION one. A longer
   first request would be one persona speaking twice.
 - **The feeling is named, not implied.** `BodyHumor.FeelsLike` carries one plain first-person
@@ -1492,13 +1925,15 @@ Four rules the rest of it assumes:
 did"** — `StateCaptureOutcome` and `GetUpTransitionOutcome` are pure bookkeeping and are Outcomes
 too. What the base class means is "a thing that applies its own change and can show a chip", which is
 exactly this. Being one buys three things that would otherwise each need building: the chip renderer
-already draws `block.OutcomeReports` and already colours by `Severity` (taken here from the humor's
+(the result box, and the reading box under a hovered node) already draws a block's `OutcomeReports`
+and already colours by `Severity` (taken here from the humor's
 `VitalHeat` sign, so a humor added later is coloured right without anyone saying so), `ApplyTo` is
 already the one door every state change goes through, and `expect-outcome emotion` worked the day it
 was written.
 
-**Own block, own CONTINUE, for free.** The coda is one more `LlmPreviewSession` part after the
-outcome's, and the preview box already gates one part per press — nothing schedules it. It is
+**Own text, own CONTINUE, for free.** The coda is one more `LlmPreviewSession` part after the
+outcome's, and the preview box already gates one part per press — nothing schedules it. Committed,
+it is an `Emotion` node (`♥`) hanging from the outcome it answers, read again under the pointer. It is
 generated ahead while the player reads the outcome, and it is **silent by default**: most actions
 move nothing a disposition answers, `Resolve` returns null, no part is begun and no request is made.
 Both wirings swallow their own exception, and that is the one narration path in the controller that
@@ -1557,14 +1992,15 @@ applying `NpcSlaynOutcome` and a won fight spawning one body per dead enemy. A h
 leaves a plain belongings PoI holding what they carried. Tiny creatures leave nothing.
 
 **A corpse is an ordinary area PoI, not a place you enter.** Its `Items` are the harvestable parts,
-and `SyntheticObservationObject` folds a PoI's items into its own sub-outcomes — so one keyword on
-the body offers "cut the pelt" and "cut the liver" together, in a single phase. Identical parts
+and `SyntheticObservationObject` folds a PoI's items into its own sub-outcomes — so one thought
+about the body may propose "cut the pelt" or "cut the liver", and each part is also a content of the
+body to be looked at on its own. Identical parts
 collapse to one goal (`PersonaChoiceSelector` de-dupes by label): a pig with three `Meat` offers one
 "cut the meat", and each cut removes one instance while the goal remains.
 
 **A body yields four to eight parts; a tiny creature's `catch` yields two or three.** Below four a
 carcass is one cut and a shrug, which does not pay for the kill, the knife and a noetic point per
-attempt; above eight the goals run past what a phase can offer and past what the pack can hold, so
+attempt; above eight the goals run past what a pool of points can reach and past what the pack can hold, so
 the surplus reads as litter. Duplicates count toward the eight and not toward the goals. **A human is
 butchered like anything else** — meat, offal, bone, skull, hair — and their belongings are the
 separate PoI beside the body, because that is grabbed and this is cut.
@@ -1589,21 +2025,23 @@ Two rules the rest of it depends on:
 - **A spawned PoI is not yet observable.** The narration graph is built once, from the areas as the
   factory left them, so anything the game spawns during play has no observation object — and an
   object with no observation object cannot be looked at or acted on, however correct it is in
-  `area.PointsOfInterest`. `NarrativeController.SyncSpawnedObservations` reconciles the two before
-  every observation phase and every thinking request (it runs from `RefreshSceneVerbs`). That sync is
+  `area.PointsOfInterest`. `NarrativeController.SyncSpawnedObservations` reconciles the two on
+  every reconcile and before every thinking request (it runs from `RefreshSceneVerbs`). That sync is
   why a corpse is reachable at all; without it the body existed and the player was never told.
-- **A corpse opens the next narration phase, alone.** `PendingCorpseObservations` collects what fell,
-  `GenerateObservationsAsync` drains it, and `GenerateCorpseObservationAsync` observes every body in
-  the order it fell — first plainly, each later one through a transition — with no persona choice and
-  no length gate, the way the post-dialogue opener imposes the person just spoken to. It runs *ahead*
-  of the threat opener: a corpse is a one-shot event consumed on the spot, while an enemy still
-  standing leads the phase after this one anyway. The list is drained whether or not it is used, so a
-  body left in an area the player has since walked out of cannot open a phase two moves later.
+- **A body is on the map already observed.** `PendingCorpseObservations` collects what fell and
+  `AdoptCorpses` (from `ReconcileTrees`) drains it: for every member standing where a body fell, it
+  becomes the root of a tree with no text — a `Note`, "…, where it fell" — so nobody has to spend a
+  point looking for what they have just killed, and the `?` to cut it is there at once. No mind
+  observed it, so none is counted in a roll made on it. A member standing elsewhere finds it like
+  anything else, as one more `◆` on that card. The list is drained whether or not anybody stood
+  there. This replaced the corpse *opener*, a block imposed at the head of the next phase; with no
+  phases there is nothing to open.
 
-Two bodies in one room are two same-named PoIs, deliberately unmerged. They behave like any other
-pair of identical objects — the observation choice list keeps one representative per phase and the
-ledger retires instances, so the second becomes observable once the first has been seen. This is the
-one place `Scene` does *not* follow `SceneFactory`, which merges same-named PoIs at build time.
+Two bodies in one room are two same-named PoIs, deliberately unmerged, and they are two elements:
+two roots when both fell in front of the member, two symbols otherwise (a choice between them shows
+the name once — `DeduplicateByName` — and one stands for it; the other is still there to be looked
+at next). This is the one place `Scene` does *not* follow `SceneFactory`, which merges same-named
+PoIs at build time.
 
 Historical note: a corpse used to be an enterable `Spot` holding one PoI per body part, and that was
 the only content the `Spot`/`PoV.InSpot` axis ever had — no factory built one. The axis is gone.
@@ -1676,8 +2114,9 @@ does), the decline is withheld and reluctance kept. An imposed refusal (High mor
 **only** off these two — R13 makes a non-Medium value on anything else fatal.
 
 **A Speaking modus mentis puts conversation first** (`SpeakingPriority`, `rules/choice/SpeakingRules.cs`),
-at each stage it holds: observing, it attends only to living humans while any are among the candidates
-and never turns away from one it is handed (`ObservationPhaseController`; `--refuse-focus` still wins);
+at each stage it holds: observing, it never declines a person — asked about the people of an area, or
+about one of them by name, it attends (`ObservationController.ChooseAsync`: no decline when the whole
+pool is people; this too yields to `--refuse-focus` only where a decline is allowed, so not here);
 thinking, only the `DialogueVerb` goals are offered when any is (`SpeakingMindPrefersDialogueRule`,
 registered **after** `LowMoralityPrefersCrimeRule` so an unscrupulous speaker keeps its crimes); the
 means of a dialogue goal are narrowed to speaking action MMs when any is held (`ThinkingExecutor`); and
@@ -1701,17 +2140,17 @@ Three rungs of one ladder, identical for witnesses and enemies except in what th
 | effective | witness | enemy |
 |---|---|---|
 | **Visual** | caught red-handed → the tree | they attack, on their initiative |
-| **Audio** | **they come to look** — `NpcDrawnInOutcome` (chip and narration line) moves them into your area through `Scene.DrawNpcTo` | same |
+| **Audio** | **they come to look** — `NpcDrawnInOutcome` (chip and narration line) moves them into your area through `Scene.DrawNpcTo`, and they are on the map there already observed | same |
 | **None** | nothing | nothing |
 
 **The Audio rung is an approach, not a verdict.** Nothing is confronted yet; what it costs is that
 they are now standing in the room, which closes the free exit and makes the *next* slip a caught one.
 That needs real state, because position is resolved from `NpcSchedules` and
 `SceneNpcPlacement.PlaceForPeriod` re-derives every NPC observation object from it on **every**
-segment — so somebody moved any other way is put straight back one phase later, exactly as a tamed
+reconcile — so somebody moved any other way is put straight back at the next one, exactly as a tamed
 beast's stale observation object is. `Scene.DisplacedNpcs` is consulted inside `GetNpcsAt` and
 `GetAreaOf` instead: one override in one lookup, and the placement, the verb gates, both selectors and
-the exit button follow without knowing it exists. A displaced NPC also reads as going nowhere all day,
+the way out follow without knowing it exists. A displaced NPC also reads as going nowhere all day,
 so `stalk` correctly declines to follow them. One visit's business — what outlasts it is whatever the
 confrontation turned into.
 
@@ -1722,7 +2161,9 @@ merely standing in a public square confronts nobody. Three things read it and mu
 `ConfrontedImpossibleRule` (every verb refused but `CanBeUsedWhenConfronted` — attack, slay,
 `explain_myself` — unless
 the MM `ActsDiscretely`); the failure ladder (`ActionEvaluationResult.Confronter`: **any** failed act,
-lawful or not, is caught red-handed, ahead of the witness rung); and the exit (`RunawayWitness`).
+lawful or not, is caught red-handed, ahead of the witness rung); and the map (`ConfrontationOf`:
+the way out reads RUNAWAY, and looking and thinking are locked to the confronter — see "Narration is
+played on the map").
 The crime the confrontation names is `ConfrontationSelector.CrimeFor` — what a drawn-in witness heard
 (`Scene.HeardCrimes`, written by `NpcDrawnInOutcome`), else the verb's `CrimeKinds.Of`, else
 trespass. `OnDialogueCompleted` releases a drawn-in witness back to their schedule unless the
@@ -1736,7 +2177,7 @@ never below one; failing its roll is a slip in front of the confronter, so the o
 **One `Confrontation`, read by everything that has to tell the kinds apart.**
 `ConfrontationSelector.Current` returns a `Confrontation(Kind, Npc)`: `Enemy` (a Visual threat, ahead of
 every witness), `CameForYou` (displaced by a heard crime), `NoBusinessHere` (Visual witness on ground
-you are trespassing on), `FoundWaiting` (below). The exit button and the rule context read `Current`;
+you are trespassing on), `FoundWaiting` (below). The map (the way out, what may be looked at) and the rule context read `Current`;
 `Confronter` is its witness half. **`ConfrontationSelector.TreeFor` is the one place a confrontation
 becomes a conversation** — the failed act, the failed runaway and `explain_myself` all ask it — so a
 new kind of confrontation is one branch there, not three call sites that drift.
@@ -1748,7 +2189,10 @@ penalty — **not** `hide_and_wait`) brings the period to Night while the player
 resident including the apprentice; else the highest-authority resident whose night area is in the
 section; never an enemy) is `Roused` — or the room's bed would put them to sleep where they stand,
 `IsSleeping` following the displacement — recorded in `Scene.FoundWaitingBy` and drawn to the room
-with `DrawNpcTo`, so the next phase opens on them. Their confrontation opens `FoundWaitingTree`
+with `DrawNpcTo`, so the reconcile that follows stands them on the map there, already observed
+(`AdoptArrivals`). The summons comes *after* `ApplyTimePeriod` has placed everybody for the new
+hour, which is why `ReconcileTrees` re-places people itself: placed only on a change of hour, the
+householder confronted the player from no card at all. Their confrontation opens `FoundWaitingTree`
 (`found_waiting`, the `Grave` ladder, Hard + 1) — unless what failed in front of them is a crime of
 its own (`CrimeKinds.Of` not None/Intruder), which opens caught-red-handed as before. Won:
 `TrespassToleratedOutcome` raises `NpcEntity.ToleratesTrespass`, and `OnDialogueCompleted` adds the
@@ -1775,11 +2219,14 @@ private room's door. **`BuildingAudit.CheckPrivateBehindLocks`** holds the rule 
 Two things lean on it: `AreaVisits.Route` stops only at locks and so never records a walk into private
 ground from outside, and `stalk` follows its quarry until the first door locked against the follower
 (`StalkVerb.Plan`: an unlocked way first, however long; else the shortest way, cut at its first lock),
-says so (`QuarryBeyondOutcome`) and opens the next phase on that door (`Scene.PendingOpeningFocus`).
+says so (`QuarryBeyondOutcome`) and marks that door seen (`AreaVisits.See`), so the map names it and
+the room behind it and a click attends to that door and no other.
 
-An arrival opens the next observation phase, **ahead of the corpse opener** (both are one-shot events,
-but an arrival is the newest and has just changed what is safe to do), and only if they are still in
-the player's area — announcing somebody who came to a room nobody is in reads as materialising.
+An arrival is on the map without being looked for (`AdoptArrivals`, draining
+`Scene.PendingArrivalObservations`): for every member standing where they walked in, they are the
+root of a tree whose text is a note — `NeutralNarration.ArrivalEnemyCaution` for an enemy,
+`ArrivalWitnessNotice` for a witness — and only there: somebody who came to a room nobody is in is
+found like anybody else.
 
 A catch opens `CaughtRedHandedTreeFactory`'s tree, and **its failure outcome is always a fight** — the
 witness's nerve used to be a per-archetype `IsBrave` flag whose timid branch wrote the same affinity
@@ -1788,36 +2235,37 @@ nothing. `IsBrave` is gone; `AuthorityLevel > 0` now carries the two things it a
 fight as an ally, and the fight AI's aggression).
 
 The consequence **lasts**, because `NpcEnemies` persists (see "What survives a visit"). Walking out
-of the fight ends the fight, not the enmity: come back and they are still a Visual threat, the footer
-button is RUNAWAY, and any failed action under threat starts it again.
+of the fight ends the fight, not the enmity: come back and they are still a Visual threat, the way
+out is RUNAWAY, and any failed action under threat starts it again.
 
-**Only a Visual presence gates LEAVE.** `ComputeExitContext` tests `== Visual` on both branches, so
-neither the Audio tier nor discreteness touches the footer button — the exit is a property of who is
-in the room with you. The witness branch additionally needs a *reason*: either the area is private, or
+**Only a Visual presence gates LEAVE.** `ConfrontationSelector.Current` reads the same area on both
+branches, so neither the Audio tier nor discreteness touches the way out — the exit is a property of
+who is in the room with you. The witness branch additionally needs a *reason*: either the area is private, or
 **they came in here after you** (`DisplacedNpcs`). Without that second condition the three crimes that
 happen in the open — `pickpocket`, `stalk`, `attack` — would draw a witness across a public square who
 then watched you stroll off.
 
 **A location is left by its way in, and a RUNAWAY is checked the whole way there.** The location map
-lays a way in for every scene (`DebugLocationMap.LayExit`): the fight arena's exit glyph `⎆` out in
+lays a way in for every real place (`LocationMap.LayExit`, `NarrationPhase.Exploration` only — the
+opening phases have no way out): the fight arena's exit glyph `⎆` out in
 the canvas margin, joined by a line to the card of the area the location is entered by
 (`SceneSyntheticGraphFactory.ResolveEntryArea`, so `--start-area` moves it). The line is a net of its
 own on the routing grid, so views routed later cross it rather than run along it. Three walks use it,
-and all three **end by themselves** after a short dwell, with no Continue (`_walkAuto`; instant under
-`--cli`, and `CliIsIdle` counts them busy until they have):
+and every walk on the map **ends by itself** after a short dwell, with no Continue (`WalkDwellMs`;
+instant under `--cli`, and `CliIsIdle` counts them busy until they have):
 
 | | walk |
 |---|---|
-| an arrival in exploration | `⎆` → the entry card, while the opening observation is written behind it. A routine's approach (`WalkTheApproach`) starts from `⎆` too, and keeps its Continue when it walks on past the entry |
-| LEAVE | where the party stands → the entry area by known ways (`AreaVisits.BackReach`, a jump when none) → `⎆`. **Unchecked** |
-| RUNAWAY, and fleeing a fight in narration | the same way out (`EscapeRoute`), but every area on it — a path opened into the areas it runs past (`ThroughPaths`) — is read with `ConfrontationSelector.Current` as if the party stood there. The walk stops at the first one that confronts, the PoV moves there (`StandAt`), and the roll is made again over the map |
+| an arrival in exploration | `⎆` → the entry card (`ShowEntryWalk`), every member's token together. A routine's approach (`WalkTheApproach`) starts from `⎆` too and walks on to the routine's area |
+| LEAVE | each group of members, from where it stands → the entry area by known ways (`AreaVisits.BackReach`, a jump when none) → `⎆`. **Stopped like any walk**: where somebody on the way would confront one of them they stand, confronted, the leaving ends there and the view goes to whoever was stopped. No roll |
+| RUNAWAY, and fleeing a fight in narration | the same way out (`EscapeRoute`), for the confronted member alone (or the members who were in the fight), but every area on it — a path opened into the areas it runs past (`ThroughPaths`) — is read with `ConfrontationSelector.Current` as if they stood there. The walk stops at the first one that confronts, they stand there (`StandIn`), and the roll is made again over the map |
 
-**Where a runaway fails decides what it costs.** The roll made in the area RUNAWAY was pressed in is
+**Where a runaway fails decides what it costs.** The roll made in the area RUNAWAY was clicked in is
 the narration's own: failing it starts the fight (enemy) or the caught-red-handed tree (witness),
 as it always did. A roll at a stop further along the walk out (`_escape.Done > 0`) is the map's:
-failing it, `StopEscape` resumes the narration in that area, opening on the person who stopped the
-party, without refilling the noetic points. The starting area is never a stop — its own roll, or the
-fight fled in it, already got the party away from it. A fight fled in a
+failing it, `FinishRunaway` simply ends the escape there — the member stands in that area,
+confronted by whoever stopped them, with the pool as it was. The starting area is never a stop —
+its own roll, or the fight fled in it, already got the party away from it. A fight fled in a
 location (`FightAdapterResult.Runaway`) no longer exits straight to the world: the game controller
 calls `FleeAfterFight`, whose checks start at the next area, the fight having been the getting away
 from this one. `cli/system/runaway_route.cli` (two staged enemies: a success, a stop on the way, then the narration's
@@ -1921,14 +2369,12 @@ Two things make the removal actually show:
   beast takes two rolls at two separate phases, and `tame` is not even offered until the first lands.
   A beast that was never hostile is not tameable at all: it sits at Stranger, which `appease` (enemy
   or AnnoyingAcquaintance only) will not touch either.
-- **The observation object goes with the NPC at the next segment boundary, not at the outcome.**
+- **The observation object goes with the NPC at the reconcile that follows the outcome.**
   `SceneNpcPlacement` owns one `SyntheticNpcObservationObject` per scene NPC and re-places them all
-  in `PlaceForPeriod`, which runs from `ApplyTimePeriod` — and `StartObservationPhaseWithHistory`
-  re-applies the current period precisely so every new segment re-places NPCs. Within the segment
-  that tamed it the stale object is still in the node; it is harmless (every verb gate reads
-  `GetNpcsAt`, so only IGNORE survives the refresh, and the segment is over anyway), and the phase
-  after it is gone. `cli/tame_beast.cli` is the regression script — `state` drops one observable
-  across the tame, and `--observe-only` on the beast reports nothing matching afterwards.
+  in `PlaceForPeriod`, which `ReconcileTrees` runs after every outcome. The tamed beast's tree goes
+  with it: its element can no longer be located, so it is not drawn, and the new companion's token
+  appears on the card where the tamer stands (`SyncRoster`). `cli/verb/tame/success.cli` is the
+  regression script.
 
 ### What survives a visit
 
@@ -1981,8 +2427,8 @@ green audit finally covers the path the game takes.
 
 ### What a body can do
 
-A companion may be a beast, and after a Speak-About hand-off a beast **narrates**: it observes,
-thinks, chooses goals and acts. Two things therefore decide what a party member may learn and do, and
+A companion may be a beast, and a beast is **played** like anybody else — click its token and it
+observes, thinks, chooses goals and acts. Two things therefore decide what a party member may learn and do, and
 they are decided separately:
 
 - **Organs — free, no authoring.** Every id in a modus mentis's `Organs` must resolve on the body.
@@ -2001,8 +2447,9 @@ The direction matters: content declares what it *needs*, anatomies declare what 
 an anatomy is one line on its factory — no revisiting 180 modi mentis and 54 verbs.
 
 **A Speaking modus mentis must require `Speech` — R16, fatal at startup.** It is the only thing
-between a beast and Speak About: that option is greyed when the acting member holds no Speaking
-modus mentis, and checks nothing about the body. A forgotten declaration failed nowhere else.
+between a beast and speaking to a companion: the speech mark under an observed element is offered
+to a member who holds a Speaking modus mentis, and checks nothing about the body. A forgotten
+declaration failed nowhere else.
 
 Three consequences worth knowing:
 
@@ -2011,7 +2458,7 @@ Three consequences worth knowing:
   it (a Gather routine asks `actor.Can(verb.EffectiveCapabilities)` directly, having no target). The whole `DialogueVerb` family declares `Speech` once, `ExtractionVerb`
   declares `Handcraft` once.
 - **The gate reads the acting member, not the protagonist.** `RefreshSceneVerbs` passes
-  `_activePartyMember`, and the actor parameter widened from `Protagonist?` to `PartyMember?`
+  `_active`, the member being played, and the actor parameter widened from `Protagonist?` to `PartyMember?`
   throughout (`Scene.View`, `VerbRegistry.GetApplicable`, `IVerbRefreshable.RefreshVerbs`). The two
   places that genuinely need the protagonist — the `max_companions` ceiling in `TameVerb` and
   `propose_to_join` — do `actor as Protagonist`. The old routine replay engine passed
@@ -2024,9 +2471,11 @@ Three consequences worth knowing:
   personality trait offering a skill the drawn anatomy lacks is normal and logged; an *archetype's own*
   trait doing it is a content fault, and `--npc-audit` names it.
 
-`cli/beast_verbs.cli` is the regression: the same flower patch, looked at by the protagonist (offered
-"gather a daisy") and then, after the hand-off, by the cat (`goal gather` finds no such goal, and the
-phase runs on "examine the flower patch closely" instead). `--verb-audit` prints what each anatomy is
+`cli/verb/gather/beast_barred.cli` is the regression: the same thing looked at by the protagonist
+(offered its gathering) and then by the party's beast, played in its turn (`goal gather` finds no
+such goal, and the thought runs on something a beast can do instead). **A second gate sits beside
+the anatomy one**: `Verb.MayBePerformedBy`, in the same sealed `IsPossible`, which `DialogueVerb`
+overrides to the protagonist alone — a human companion has the speech and still opens no tree. `--verb-audit` prints what each anatomy is
 barred from — 25 of 54 verbs for a beast.
 
 ### What a hand can hold: weapons, weights and the arms
@@ -2144,7 +2593,7 @@ the ones that killed it. Three parts now:
   on **species, not class** — `NamedNpcArchetype` carries every wolf and bear as well as every baker;
 - **a sleeper is excluded** from the NPC branch. `SceneNpcPlacement` swaps them and their bed for one
   merged `SleepingNpcPointOfInterest`, which has its own senses and its own lessons; offering both
-  would be two routes to one act, differing only in which object the phase opened on.
+  would be two routes to one act, differing only in which of two symbols was looked at.
 
 ### The affinity ladder, and what gates a conversation
 
@@ -2185,31 +2634,28 @@ a stranger to everyone and an affinity-gated verb is *correctly* never offered.
 
 **A location's arrival period is fixed** — `SceneFactory.ArrivalPeriodFor(locationId)`, one of the
 five daytime periods, hashed from the id and **not** drawn from the build generator (a draw there would
-move every room, name and person of every location). `Scene.ArrivalPeriod` carries it; only
-`StartNarrativeInteraction` passes it, so the childhood, the get-up and a routine (which opens at its
-own hour) are untouched, and `--period` still wins. `StartObservationPhase` keeps making the old
-random draw and discards it, so every later roll of a seeded run is unchanged.
+move every room, name and person of every location). `Scene.ArrivalPeriod` carries it; only an
+arrival passes it to `NarrativeController.StartVisit`, so the childhood, the get-up and a routine
+(`StartAtArea`, which opens at its own hour) are untouched, and `--period` still wins. `StartVisit`
+keeps making the old random draw and discards it, so every later roll of a seeded run is unchanged.
 
-**Fixing it is what makes a settlement greet you cheaply.** Measured before the change, the area a
-visit opens in held a person by day 40% of the time in a village and 6% at a stable, with a dozen
-people indoors. `EnsureArrivalCompany` (on for `SettledSceneFactory` and the farm, through
-`GuaranteesArrivalCompany`) moves **one period of one schedule** into the arrival area when nobody is
-there, choosing in order: someone out of doors in that section, anyone out of doors, someone in a
-private room / not alone in a public one / a trader whose counter a fellow trader keeps and who keeps
-it at another hour, someone away, and last the lone person in a household hall that is manned every
-other daytime period. Never the sole keeper of a counter or store. Runs after `DropDepartedNpcs`, so a
-departed greeter is replaced, and is skipped under `--npc-static`. `--building-audit` warns when it
-fails with somebody to spare and prints the coverage per factory.
+**Nobody is moved to meet an arrival.** A settlement used to guarantee somebody in the area a visit
+opens in (`EnsureArrivalCompany`: one period of one schedule changed when the area was empty),
+because the first text of a visit was an empty square more often than not, with a dozen people
+indoors. The map now shows where everybody is on every card before anything is looked at, so an
+empty square is no longer a place that looks deserted, and the pass, its audit check and
+`GuaranteesArrivalCompany` are gone: people stand where their day puts them. The fixed daytime hour
+stays — a first sight of a place is never of its doors shut for the night.
 
 ### The hours passing, and the turn of a day
 
 **Every period change shows the time box** (`TimePassageBox`, drawn like the dice box over the greyed
-narration). `CommitOutcomeResult` plays it from the period before to the period after, and so does
+map). `CommitOutcomeResult` plays it from the period before to the period after, and so does
 `WalkToPremises`; the period itself is still written only by `ApplyTimePeriod`. **A successful
 `sit_and_wait` asks first:** at the dice CONTINUE, `AskWaitUntil` opens the box with the five other
 periods as buttons, and the choice is `Scene.WaitUntil`, which `SitAndWaitVerb.SuccessReports` reads
 — it has to be chosen before the narration is generated, because the time shift's verbatim ("waited
-until evening") is woven into it. The passage then plays, its Continue starts the narration, and
+until evening") is woven into it. The passage then plays, its Continue starts the outcome's narration, and
 `_passagePlayed` stops the commit playing it twice. A wait chosen past night where the player is
 trespassing in a house with a householder stops at Night (`WaitStopsAt`) — see found waiting above.
 
@@ -2219,44 +2665,55 @@ on the return to the map. Under `--cli`, `advance` presses through the box (taki
 it asks, so older scripts are unchanged), `click period <name>` chooses, `inspect time` reads it, and
 `state` carries `time=`. `cli/system/wait_until_chosen.cli`, `wait_turns_the_day.cli`.
 
-**Every move in exploration is then shown on the location map** — the commit's, an introduction's
-walk and a lead to premises. The map (`DebugLocationMap`, a debug view by origin and by its Tab
-toggle, but this use of it is every player's) stands in for the narration while the party's ☻ walks a
-cell a step from the middle of the card left, along the line of each way `AreaVisits.Move` recorded,
-to the middle of the card reached, then waits for CONTINUE. A line is walked by its **net**, not its own
-cell list: a branch's list starts at the junction where it left its trunk. For the same reason a way's
-knowledge is painted along `Link.Path`, its whole run card to card, or the trunk stretch of a way
-taken stayed dim. A move with no walk the map
-draws is a jump, card to card. It plays after the time box when an act moves both (a stalk), by taking
-over what the box's Continue would have resumed. 90 ms a cell, at most 6 s in all; instant under
-`--cli` (still waiting for its CONTINUE), real time under `--record`. **What the move taught the map is
-revealed as the walk reaches it**: `MoveOnMap` diffs the visit stores across `AreaVisits.Move`, and
-until the glyph is on a way or in a card that key is held back from the paint. Once arrived the view
-is the arrows' and the pad's (`DebugLocationMap.WalkPannable`) until CONTINUE.
+**Every move an act makes is walked on the map** — the commit's, an introduction's walk and a lead
+to premises (`MoveOnMap`). The mover's token leaves its card and walks a cell a step from the middle
+of the card left, along the line of each way `AreaVisits.Move` recorded, to the middle of the card
+reached. A line is walked by its **net**, not its own cell list: a branch's list starts at the
+junction where it left its trunk. For the same reason a way's knowledge is painted along `Link.Path`,
+its whole run card to card, or the trunk stretch of a way taken stayed dim. A move with no walk the
+map draws is a jump, card to card. It plays after the time box when an act moves both (a stalk).
+90 ms a cell, at most 6 s in all, then a dwell of `WalkDwellMs` and it ends by itself — no walk waits
+for a Continue any more, since the map it used to stand in for is now the screen it happens on.
+Instant under `--cli` (and `CliIsIdle` counts it busy until it has ended), real time under
+`--record`. **What the move taught the map is revealed as the walk reaches it**: `MoveOnMap` diffs
+the visit stores across `AreaVisits.Move`, and until the glyph is on a way or in a card that key is
+held back from the paint.
 
-**Seen is what an observation took in, nothing else.** `ObservationLedger.Observed` reaches
+**Seen is what an observation took in, nothing else.** An observation's commit reaches
 `AreaVisits.See`: a neighbouring area looked at, or a connector (door, stair, path, climb, view) and
-the area at its far end, from where the party stood; a group sees its members. Walking through an area
+the area at its far end, from where the member stood. Walking through an area
 does not make its neighbours seen — that was the first rule and it was wrong. `inspect map` lists
 `map seen <area>`. `cli/system/map_visits.cli`.
 
-**A way already known is gone back by, not walked again: `backtrack`.** `AreaVisits.IsWayBack` — a
+**A way already known is walked on the map, for nothing, and is no act.** `AreaVisits.IsWayBack` — a
 neighbour already stood in, or a connector (not a view) already gone by, not a door locked against the
 comer, and never a step from public into private (private ground is gone back to only from within).
 On such a way every verb with `Verb.MovesAlongWay` (move, open_door, the stairs, climbs, scales,
-crossings, swim, follow_path) is withheld in the sealed `IsPossible`, and `BacktrackVerb` is offered
-instead — on a PoI, and on an area observation, which now refreshes its two verbs
-(`SyntheticAreaObservationObject.RefreshVerbs`; it was built once with `move` and never re-read).
-`AreaVisits.BackReach` is every area known ways reach, fewest steps first. Difficulty 2. A success asks
-where on the map (`AskBacktrackTo`: reachable cards lit, hovered as a keyword is, the pad and arrows
-pan; `Scene.BacktrackTo`), like a wait asks its hour; a will's step is settled instead
-(`PathStep.Settled`, `Verb.Settle` — generalised from the wait's hour to any value, the area here) and
-asks nothing. The commit walks the known route (`AreaVisits.MoveBack`). An observation of a known way
-says so (`NeutralNarration.KnownWay`, as a trailing sentence). Lessons, all its own: `withdrawal`
-(enemy in sight), `nightwalking` (night), `houseways` (private ground), then the default — `backtrail`
-(a beast, by scent) before `retracing` (a person). CLI:
-`click area <name>` (pans a card off the view into it), `state` carries `backtrack=`, `advance` takes the
-first on offer. `cli/verb/backtrack/`, `cli/system/will_backtrack.cli`.
+crossings, swim, follow_path) is withheld in the sealed `IsPossible` — and nothing is offered in its
+place: `AreaVisits.BackReach` is every area known ways reach, fewest steps first, and
+`NarrativeController.WalkTo` takes the played member to any of them on a click of its card, with no
+point spent and no roll (see "Narration is played on the map" for where such a walk is stopped). An
+observation of a known way says so (`NeutralNarration.KnownWay`, as a trailing sentence); the plain
+way to a neighbour already stood in is not even a symbol.
+
+This was the `backtrack` verb ("Go Back"): difficulty 2, a second map to pick the destination on
+after the dice, a will's step settled on an area. It priced a walk the party had already made, and
+its question-after-the-dice was a second way to be asked where to go. It is gone with all of that
+(`Scene.BacktrackTo`, `AskBacktrackTo`, `Verb.Settle` for an area — `Settle` remains for a wait's
+hour).
+
+**What going back used to teach, a new way found back now teaches.** `AreaVisits.IsNewWayBack` — a
+connector (never a view) the party has **not** gone by, whose far end it has already stood in: a
+door, a stair, a path or a climb found to come out on known ground. `LessonContext.FindsWayBack`
+carries it (set by the caller, like `Hostile`; the lesson sweep stages it on every connector, since
+no swept scene has a visit behind it), and for a `MovesAlongWay` verb `Verb.ResolveLesson` puts
+`WayBackLessons` **ahead of** the verb's own: `withdrawal` (enemy in sight), `nightwalking` (night),
+`houseways` (private ground), then `backtrail` (a beast, by scent) before `retracing` (a person).
+Ahead, because what was learned is how the place joins up, whichever door showed it. A plain
+neighbour is never one — standing in an area is what makes the way to it known.
+
+CLI: `click area <name>` walks there (panning a card off the view into it); `state` carries `walk=`.
+`cli/system/walk_known_ways.cli` covers the free walk and the lesson.
 
 ### Trade happens on premises
 
@@ -2398,8 +2855,8 @@ generated:
 
 | entry | taken from | so that |
 |---|---|---|
-| narration | `NarrationScrollBuffer.BlockAdded` | a preview part that was reset never commits, so it never reaches the journal |
-| an NPC's line | the same event (`Speaking` blocks), named by the label the player knows | a generated proper name the player was never told does not leak |
+| narration | `NarrativeController.Chronicle(block)`, called from each text's commit — the closure a preview part runs on its CONTINUE, the same one that hangs the node on its tree | a preview part that was reset never commits, so it never reaches the journal |
+| an NPC's line | `NarrationScrollBuffer.BlockAdded` (`Speaking` blocks) — the buffer is a conversation's only, now that the narration has no scrolling text — named by the label the player knows | a generated proper name the player was never told does not leak |
 | the reply picked | `DialogueTreeController.OnOptionSelected` | the options left unpicked are never recorded |
 | a fact | a shown block's `OutcomeReports` with `ShowInUI`, minus bookkeeping by type (practice, grants, spent noetic points, wounds) | not `Outcome.ApplyTo`, which also runs for outcomes nobody saw. The chip text is kept for the screen; the chronicler is given the outcome's `Verbatim` (`Phrase`) — handed "Item received: Knife" it wrote it into the prose |
 | a milestone | the event itself: a lesson (`PartyMember.LearnModusMentis`/`AcquireModusMentis`, party members only), a wound (`FightResolver.ApplyWound`, `WoundInflictionOutcome`), a healing, a companion joining, dying or parted with, a first visit (keyed by vertex, whatever the mental maps forget), a fight won or fled | each once, by `Key` where it could repeat |
@@ -2414,14 +2871,14 @@ and facts whole; an act as what was tried and whether it worked (`NarrationBlock
 phrase the thinking chose, kept on the entry as `Attempt`/`Succeeded`) with the first sentence of its
 telling; an observation as a setting (`SCENE`, its first sentence); no thought at all, and a feeling
 only to the tinted diary. An outcome with no attempt is a mind turning a goal
-down before any button existed, and is left out as a thought; a refusal by a rule or as impossible
+down before any act existed, and is left out as a thought; a refusal by a rule or as impossible
 carries its attempt and reads "FAILED TO". Lines go unquoted, first sentence only. The token cap
 shrinks with the notes (`ChroniclerPrompt.TokensFor`): a thin visit given 140 tokens was filled with
 people and conversations that never happened. Given the narration whole, the observations (a third of
 the notes, the longest) became the paragraph and the visit's events came second.
 
-Narration is credited to whoever is acting when the block commits — the Speak About hand-off commits
-the speech before switching member, so the speech stays the speaker's and what follows is the
+Narration is credited to whoever is being played when the block commits (`_active`): a word to a
+companion is the speaker's, and what the companion then makes of it, played in their turn, is the
 companion's. **A visit is the chronicler's unit**: entering the world map closes the group and its
 entries turn pending, which *is* the queue — saving the entries saves it, and a quit loses nothing.
 

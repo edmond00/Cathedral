@@ -33,8 +33,8 @@ AUDITS=(verb will will-lesson building biome crime mm play dialogue npc item out
 # Overridable from the environment for slow machines (Mesa's software GL under Xvfb, a CI runner):
 # `CLI_TIMEOUT=400 ./run_tests.sh cli`. The default is what a developer's machine needs.
 CLI_TIMEOUT="${CLI_TIMEOUT:-200}"
-# Extra flags for every CLI script, from the environment — e.g. a container without the GloVe file:
-# `CLI_EXTRA_FLAGS=--no-embeddings ./run_tests.sh cli`. Empty by default.
+# Extra flags for every CLI script, from the environment: `CLI_EXTRA_FLAGS=--cpu ./run_tests.sh cli`.
+# Empty by default.
 read -r -a CLI_EXTRA <<< "${CLI_EXTRA_FLAGS:-}"
 JOBS="${JOBS:-$(( $(nproc 2>/dev/null || echo 2) / 2 ))}"
 [ "$JOBS" -ge 1 ] 2>/dev/null || JOBS=1
@@ -247,11 +247,6 @@ dotnet build -v q --nologo > "$LOG_DIR/build.log" 2>&1 || {
 GAME=$(ls bin/Debug/net8.0*/Cathedral.exe bin/Debug/net8.0*/Cathedral 2>/dev/null | head -1)
 [ -n "$GAME" ] || { echo "$(red 'NO GAME BINARY') under bin/Debug — see $LOG_DIR/build.log"; exit 1; }
 echo "Running $JOBS at a time."
-
-# The parsed word vectors are cached on first load (see WordEmbedding), but a script quits before the
-# load finishes, so the copy is made here, once, before the pool starts. Seconds when it already exists.
-"$GAME" --playground --seed 42 --silent --hidden --log-file "$LOG_DIR/game/warm-cache.txt" \
-    --cli-timeout 240 --cli-script tests/warm_cache.cli > "$LOG_DIR/warm-cache.log" 2>&1
 
 case "${1:-all}" in
     audits) queue_audits ;;

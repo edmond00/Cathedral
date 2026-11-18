@@ -417,7 +417,7 @@ public class ManagementMenuRenderer
     }
 
     /// <summary>Called every frame for animations.</summary>
-    public void Update()
+    public void Update(bool buttonDown = false)
     {
         if (_activeTab == ManagementTab.Anatomy && _bodyViewer.UpdateBlink())
         {
@@ -437,7 +437,8 @@ public class ManagementMenuRenderer
         if (_activeTab == ManagementTab.Inventory && _inventoryMenu.Update())
             Render();
 
-        if (_activeTab == ManagementTab.Chorography && _mapsPanel.UpdateBlink())
+        // The map's selected icon blinks, and a press kept on its pan pad keeps it moving.
+        if (_activeTab == ManagementTab.Chorography && (_mapsPanel.UpdateBlink() | _mapsPanel.Hold(buttonDown)))
             Render();
     }
 

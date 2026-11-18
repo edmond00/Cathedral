@@ -256,7 +256,7 @@ Every manner of acting has one fixed relation to implements. It does not change 
 
 **Rules**
 
-1. A refused combination costs 1 **noetic point** (the points a character spends to think and act in a phase of narration; see [Chapter VI §3](06-narration.md#3-phases-and-noetic-points)).
+1. A refused combination costs 1 **noetic point** (the points a character spends to observe and think in a place; see [Chapter VI §3](06-narration.md#3-the-visit-and-noetic-points)).
 2. This applies to every refusal: the wrong implement, an act that allows none, a single-purpose item used outside its purpose, and a hand not skilled enough for the verdict.
 3. An accepted combination costs nothing, because it is part of an act already being attempted.
 
@@ -478,7 +478,7 @@ Coin is the money of the game. Every item has a price, calculated from what it i
 | Level of use | The bonus dice an implement adds, 1 to 10. |
 | Maximum Weight | The total burden a character can carry, set by the backbone. |
 | Medium | The thing a blow is struck through: a weapon or the body. |
-| Noetic point | A point spent to think and act in a phase of narration. |
+| Noetic point | A point spent to observe and think in a place. |
 | Queue | An organ's ordered row of 49 humors. |
 | Recipe | The weighted list of humors a consumable may contain. |
 | Reference price | An item's value in copper, from 1 to 90. |

@@ -167,7 +167,6 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
     Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
     Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
-    Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
     Console.WriteLine("  --soundfont <file>                 With the OpenAL path: play music with <file> instead of assets/audio/soundfont.sf2");
     Console.WriteLine("  --music-engine <synth|legacy>      Music: the composer and synthesiser (default) or the first engine via MIDI, for comparison");
@@ -330,10 +329,6 @@ if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
 
 // --silent: open no audio device. The test suite passes this on every script.
 if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
-
-// --no-embeddings: go on without the GloVe vectors rather than exiting. For CI and containers that do
-// not carry the 822 MB file; keyword ranking falls back to word length. See Config.Debug.NoEmbeddings.
-if (args.Any(a => a == "--no-embeddings")) Cathedral.Config.Debug.NoEmbeddings = true;
 
 // --audio <winmm|openal>: which audio path. Default is the platform's own (WinMM on Windows, OpenAL
 // elsewhere); naming openal on Windows is how the cross-platform path is compared with it.

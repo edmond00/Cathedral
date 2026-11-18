@@ -149,7 +149,7 @@ A **master** is the owner of highest authority of a workshop who is alive and ca
 6. The implement names the trade. If it is the implement of one of the character's trades for that station, that trade is the one at work, whichever was proposed. Otherwise the proposed trade is at work.
 7. The roll uses the one trade at work and the one implement combined. Handiwork does not apply.
 8. Success opens the station (§6) and teaches the trade at work.
-9. Failure costs one of three penalties, drawn at random (see [Chapter VI §8](06-narration.md#8-failure)): a Scrape wound (a mishap wound; see [Chapter I §7](01-anatomy.md#7-wounds)), the period of the day advancing by one, or 1 extra noetic point (a point of the phase's thinking budget).
+9. Failure costs one of three penalties, drawn at random (see [Chapter VI §8](06-narration.md#8-failure)): a Scrape wound (a mishap wound; see [Chapter I §7](01-anatomy.md#7-wounds)), the period of the day advancing by one, or 1 extra noetic point (a point of the character's thinking budget).
 
 ## 6. At the station
 
@@ -237,7 +237,7 @@ A **routine** is a remembered way straight into a spot in a known place (see [Ch
 | Master | A workshop's living, speaking owner of highest authority. |
 | Material | One of 11 substances an item is made of, counted in units. |
 | Modus mentis | A learned skill (plural modi mentis). |
-| Noetic point | A point of a narration phase's budget for thinking and acting. |
+| Noetic point | A point of a character's budget for observing and thinking in a place. |
 | Refined material | Metal, cloth or leather: made from ore, fibre or hide. |
 | Reference price | An item's value in copper; sets the difficulty of making it. |
 | Routine | A remembered way straight into a spot in a known place. |

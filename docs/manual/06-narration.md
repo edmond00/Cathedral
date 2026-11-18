@@ -5,11 +5,11 @@ the main mode of play, and it is where most of the rules of the earlier chapters
 
 **In short**
 
-1. Each phase of narration has a budget of **noetic points** (attention points) = ⌊encephalon score ÷ 2⌋ + 1; extra observations, deliberations and refused acts each cost 1 point (§3).
+1. A character in a place has a budget of **noetic points** (attention points) = ⌊encephalon score ÷ 2⌋ + 1; every observation, deliberation and refused act costs 1 point, and a successful act refills the budget (§3).
 2. Every act passes through a chain of modi mentis: one observes, one thinks, one acts (§5).
 3. The die pool is the sum of the levels of the modi mentis in the chain, plus any implement; the act succeeds when the number of sixes reaches the difficulty (§5).
 4. An act of difficulty 0 is not rolled and always succeeds; a crime is never below difficulty 1 (§5).
-5. A failed act is not refunded at the next phase, may bring a witness or an enemy down on the character, and always carries a penalty: a wound, the way lost, the hour wasted, or a lost noetic point (§7, §8).
+5. A failed act refills nothing, may bring a witness or an enemy down on the character, and always carries a penalty: a wound, the way lost, the hour wasted, or a lost noetic point (§7, §8).
 6. A place is rebuilt identically on every visit; only affinity, enmity, depletion and the dead are remembered (§9).
 
 ## 1. Places and the point of view
@@ -37,22 +37,24 @@ time of day.
 7. Each pair of areas 2 steps apart is joined by a path with a chance of 30 in 100; each pair 3 steps apart, with a chance of 15 in 100.
 8. No area has more than 2 paths, and some locations have none.
 
-### Going back
+### Known ways
 
-1. A known way out is not walked again but **gone back by**. A known way is a neighbouring area already stood in, or a door, stair, path or climb already used.
-2. The narration says so when it takes a known way in.
-3. Going back is a single act of difficulty 2, whatever the distance.
-4. It reaches any area already visited that known ways join to the area the character stands in.
-5. The destination is chosen after the act succeeds, from all the areas it can reach.
-6. Going back never passes a door locked against the character, and never steps from other ground into private ground. The only private rooms it can return to are those of the private ground the character already stands in.
-7. A will (§6) that goes back as a step of its course goes to the area its course needs; nothing is chosen.
-8. What going back teaches depends on how it was done: with an enemy in sight, by night, and on private ground each teach their own modus mentis. Otherwise it teaches the retracing of known ways.
+1. A way is **known** once it has been used: the open way to a neighbouring area, or a door, stair, path, climb or crossing.
+2. Standing in 2 neighbouring areas does not make the way between them known. Each may have been reached by another way.
+3. Walking by known ways is not an act. It costs no noetic point and is not rolled.
+4. A character can walk to any area that known ways join to the area it stands in.
+5. Such a walk never passes a door locked against the character, and never steps from other ground into private ground. The only private rooms it can return to are those of the private ground the character already stands in.
+6. Every area on the way is judged as if the character stood in it, including the areas a path runs past.
+7. In the first area where an enemy or a witness would confront the character (§7), the walk stops. The character stands there confronted, and what it set out to do is dropped.
+8. No roll is made at such a stop. Only running away is rolled (§7).
+9. A way not yet used is still an act, at its own difficulty.
+10. When a way never used leads to an area already stood in, the act teaches how the place joins up instead of its usual modus mentis. With an enemy in sight, by night, and on private ground each teach their own. Otherwise it teaches the retracing of known ways, or, to a beast, the following of its own trail.
 
 ### The mental map
 
-1. What is known of a place (the areas stood in, the ways used, what observations took in) is the place's **mental map**.
+1. What is known of a place (the areas stood in, the ways used, the things and people observed) is the place's **mental map**.
 2. It lasts only as long as the map is remembered (see [Chapter IX §1](09-routines.md)).
-3. A forgotten place is unknown again: none of its ways are known, and none can be gone back by.
+3. A forgotten place is unknown again: none of its ways are known, and nothing in it has a name.
 
 ### The point of view
 
@@ -85,67 +87,97 @@ one moment.
 6. Each play teaches its own modus mentis: skipping stones teaches the skipping of stones. If the body cannot hold that one, it teaches a general playfulness instead.
 7. About a quarter of the areas in the world hold something to play with.
 
-## 3. Phases and noetic points
+## 3. The visit and noetic points
 
-Narration is divided into **phases**, and each phase has a budget of noetic points.
+Narration is not divided into turns. For the whole visit, what a character has observed stays
+observed and what it has decided to do waits to be done. The limit is its budget of noetic points.
 
 **Rules**
 
-1. A phase opens with an observation. Within it, the acting body may observe further things, deliberate, and act.
-2. A phase closes when its text is set aside into history: on moving to another area, on a fight, on a conversation, on handing narration to a companion (§10), or on accepting the outcome of an act.
-3. The budget of a phase is its **noetic points** = ⌊encephalon score ÷ 2⌋ + 1. The encephalon is the brain region; its score is a region score ([Chapter I §6](01-anatomy.md#6-derived-values)).
-4. The budget refills at every phase boundary except one: the boundary that closes a phase after an act failed on the dice.
-5. Reason for rule 4: a miss must cost something. If the budget were handed back, the next attempt would be free.
-6. Accepting an implement for an act costs nothing. It is part of an act already deliberated on, and charging for it would put acts that need an implement out of reach of a small budget.
-7. A successful act's own resolution costs nothing beyond the deliberation that produced it.
-8. A body that has spent its whole budget without succeeding can only leave.
-9. Leaving is blocked only by someone in the area with a reason to stop the character: an enemy, or a confronting witness (§7).
+1. The budget is the character's **noetic points** = ⌊encephalon score ÷ 2⌋ + 1. The encephalon is the brain region; its score is a region score ([Chapter I §6](01-anatomy.md#6-derived-values)).
+2. Each member of a party has its own budget (§10).
+3. A successful act refills the whole budget of the character that performed it, at once.
+4. The budget is also refilled after a fight, a conversation, a trade or a spell of work, for every party member standing in the area where it took place.
+5. A failed act refills nothing.
+6. Reason for rule 5: a miss must cost something. If the budget were handed back, the next attempt would be free.
+7. Accepting an implement for an act costs nothing. It is part of an act already deliberated on, and charging for it would put acts that need an implement out of reach of a small budget.
+8. A successful act's own resolution costs nothing beyond the deliberation that produced it.
+9. Attempting an act already decided on costs nothing, and so does walking by known ways (§1).
+10. A character with no noetic point left can observe nothing and deliberate on nothing until one of its acts succeeds.
+11. It can still attempt the acts it has already decided on, walk by known ways, and leave.
+12. Leaving is blocked only by someone with a reason to stop the character: an enemy, or a confronting witness (§7).
+13. Nothing costs a noetic point in the two opening scenes of a run: the childhood recollection, and getting up after it.
 
 **Each of these costs 1 noetic point:**
 
-1. An observation beyond the phase's opening one.
-2. A deliberation (§5).
-3. An act refused by a rule of action (§6).
-4. An act judged implausible.
-5. An implement offered for an act and refused (see [Chapter IV §7](04-items.md#7-implements)). Only the refusal is charged: the cost is for reaching for the wrong thing, not for reaching.
+1. An observation, including the first of a visit (§5).
+2. A deliberation, with all its second thoughts (§5).
+3. A reconsideration (§5).
+4. An act refused by a rule of action (§6).
+5. An act judged implausible.
+6. An implement offered for an act and refused (see [Chapter IV §7](04-items.md#7-implements)). Only the refusal is charged: the cost is for reaching for the wrong thing, not for reaching.
+7. Speaking of a thing to a companion (§10).
 
 | Encephalon score | 0 | 1 | 2 | 3 | 4 | 5 | 23 |
 |---|---|---|---|---|---|---|---|
 | Noetic points | 1 | 1 | 2 | 2 | 3 | 3 | 12 |
 
-## 4. Nothing offered twice
+## 4. What a visit keeps
 
-Within one phase, nothing is offered twice. Two records enforce this, and both are cleared when the
-phase ends.
+Everything a character observes, decides and does in a place is kept for the whole visit, in a
+**record** of its own.
 
-### What has been observed
+### The three states of a thing
 
-1. What has been observed is recorded by individual thing. Two birch trees are two things, and looking at the first leaves the second available.
-2. A thing already observed is left out of every later choice of what to observe in that phase, so each observation must reach for something new.
+1. To a given character, every thing in a place is unknown, known or observed.
+2. **Unknown**: only its kind is known (a person, an enemy, a thing, or a view of distant ground) and the area it stands in.
+3. Kind and area are known for every area of the place, including areas never entered.
+4. **Known**: an earlier visit observed it and the place is still remembered ([Chapter IX §1](09-routines.md)). It has its name, and can be observed by name.
+5. **Observed**: this character has observed it during this visit.
+6. Only an observed thing can be deliberated on.
+7. A thing stays observed for the rest of the visit.
+8. Each party member has its own record (§10): what one member observed is not observed by another.
+9. When the place is left, the record is closed. What was observed stays known for as long as the place is remembered.
+
+### The record
+
+1. Each observation, each deliberation with its refusals and second thoughts, and each act with its outcome is recorded under the thing it concerned, in the order it happened. It can be read again at any time.
+2. An act decided on and not yet attempted **waits**. It can be attempted at any later moment of the visit, as long as the world still allows it.
+3. When the world no longer allows it (the thing was taken, the person went to bed, the way has been walked), the act lapses and is withdrawn.
+4. A person who moves keeps everything recorded about them, wherever they go in the place.
+5. A person who is killed is removed from the record. Their corpse enters it already observed, for every party member standing in the area (§11).
+6. Someone who comes because of a noise, and someone who confronts the character, also enter the record already observed (§7).
 
 ### What has been offered as an act
 
 1. An offered act is recorded as the actor sees it: this manner of acting, on this thing, together with the particular form it took where there are several (which trade was asked for, which third person one asked to be introduced to).
-2. An act is recorded only when it is actually offered.
-3. A goal chosen in deliberation that the acting modus mentis then refused was never offered, so it stays available. Asking again with a different modus mentis is exactly the move that ought to work.
-4. It stays available to every thinking modus mentis except the one that chose it. That one would choose the same goal again and meet the same refusal, so it is not offered that act again in the phase.
-5. A companion's modus mentis of the same name is a different mind and is not bound by rule 4.
+2. An act is recorded only when it is actually offered, and no act is offered twice while it waits.
+3. Once the act has been attempted or has lapsed, it is removed, and can be decided on again.
+4. A goal chosen in deliberation that the acting modus mentis then refused was never offered, so it stays available. Asking again with a different modus mentis is exactly the move that ought to work.
+5. It stays available to every thinking modus mentis except the one that chose it. That one would choose the same goal again and meet the same refusal, so it is not offered that act again.
+6. A companion's modus mentis of the same name is a different mind and is not bound by rule 5.
 
 ### An act refused once
 
-1. Before an act refused once is offered again in the phase, it is tested against the rules of choice that refuse outright (§6).
-2. If no acting modus mentis the body holds could carry it out under those rules (for example an examination when none of them has the Observation function), it is offered to no modus mentis for the rest of the phase.
+1. Before an act refused once is offered again, it is tested against the rules of choice that refuse outright (§6).
+2. If no acting modus mentis the body holds could carry it out under those rules (for example an examination when none of them has the Observation function), it is offered to no modus mentis.
 3. If some can, the next modus mentis that chooses it is offered only those as the means.
 4. The acting modus mentis chosen then gives only a degree of assent (§5); it may not refuse.
 
 ### A mind that wanted nothing
 
-1. A thinking modus mentis may judge that nothing an object offers is worth doing, and say so.
-2. Its judgement does not vary: asked about the same object, it gives the same answer.
-3. Asked a second time in the phase about the same object, it may not decline, and must choose one of the goals offered.
-4. A different modus mentis asked about the same object may still decline it.
+1. A thinking modus mentis may judge that nothing a thing offers is worth doing, and say so.
+2. Its judgement does not vary: asked about the same thing, it would give the same answer. So it is not asked about that thing again while the judgement stands.
+3. A thing can be declined this way only once. The next thinking modus mentis asked about it may not decline, and must choose one of the goals offered.
+4. Three other answers are treated the same way, and the modus mentis that gave one is not asked the same again: a will (§6) that finds no course through the thing; a modus mentis with nothing left to try on it; and a modus mentis that, reconsidering an act (§5), rejected it or found no other modus mentis to carry it out.
+5. A will's answer depends on the place as it stood. It is forgotten as soon as anything in the place changes.
+6. The other answers last until the budget refills.
 
-A new phase in the same place sees the whole scene, and every act in it, afresh.
+### When the budget refills
+
+1. Every refusal and every declining recorded since the budget was last full is forgotten when the budget refills (§3).
+2. Every modus mentis can then be asked again as if for the first time.
+3. Waiting acts are not affected.
 
 ## 5. Observing, thinking and acting
 
@@ -156,61 +188,50 @@ carries it out.
 
 ### Observation
 
-1. An observing modus mentis is asked what is worth attention among the things present that have not yet been observed, and describes what it finds.
-2. One thing is chosen; the rest wait.
-3. Once something has been observed in the phase, an observing modus mentis may instead decline to observe anything further. Its account closes on that statement.
-4. Declining can be done once per phase. Every observing modus mentis after that must observe something present.
-5. Reason for rule 4: if each could decline in turn, a thing in plain view could go unobserved for the whole phase.
-6. A will turning away from what does not begin its course (§6) is part of what a will is, not this declining, and does not use it up.
-7. Attention may be directed: a thing already described may be given to an observing modus mentis to look at closely.
-8. That modus mentis may decline it. It then turns to another thing of its own choice among those not yet observed, and the refusal and the new observation are given as one account. The new thing can be looked at closely like any other.
-9. Only when nothing is left unobserved does the refusal stand alone and lead nowhere.
+1. To observe is to ask an observing modus mentis to observe 1 thing of a given kind in a given area.
+2. The modus mentis chooses which thing, among the things of that kind in that area that the character has neither observed nor knows (§4).
+3. It describes what it finds, and that thing is then observed.
+4. A known thing is asked for by name, and no other is chosen in its place.
+5. A way is always asked for by itself, known or not: the open way between 2 areas, a door, a stair, a path, a climb or a crossing. The modus mentis does not choose among the ways out of an area.
+6. A way is the same way from both its ends. It is observed once, from the end the character stands at.
+7. Nothing is described of the area as a whole, and nothing is observed unasked. Arriving in a place observes nothing.
+8. Observing needs presence. The character first walks to the area by known ways (§1), and cannot observe what it cannot reach that way.
 
-### Bearings
+### Declining to observe
 
-1. The opening observation of a phase may first take its **bearings**: where the body stands and at what period of the day, in the observing modus mentis's own voice.
-2. Bearings are taken only when the area or the period has changed since they were last taken, so a run of phases in one place does not open on the same account each time.
-3. Bearings are taken only in the waking world. They are never taken in the two opening scenes of a run: the childhood recollection, and getting up after it.
-4. The bearings end by naming, briefly and in no particular order, up to 5 things present that have not yet been observed.
-5. Every thing present that the account names outright (a thing by its own name, a person by role, name or sex) becomes available for a closer look through the word that names it, and counts as observed from then on. No later observation in the phase returns to it.
-6. A word naming the area itself names no thing in it.
-7. A word that several things share goes to the one whose name surrounds it, or to none.
-8. One thing present is always left unnamed, for the observation that follows.
-9. The opening observation covers at most 3 things in all, and takes the later ones only while the account stays brief.
-10. The bearings count as the first of the 3, so at least 1 and at most 2 things are observed after them.
+1. A modus mentis asked to observe may answer that nothing of that kind there draws it, or that the named thing does not. This is **declining**.
+2. Declining costs 1 noetic point, like an observation, and is recorded (§4).
+3. The modus mentis that declined is not asked the same again.
+4. A question can be declined only once. The next modus mentis asked about the same kind in the same area, or about the same thing, may not decline and must observe something.
+5. Reason for rule 4: if each could decline in turn, a thing in plain view could go unobserved for a whole visit.
+6. A character with only 1 observing modus mentis cannot ask again about what that one declined until the budget refills (§4).
+7. A will turning away from what does not begin its course (§6) is part of what a will is, not this declining, and does not use it up. The will is not asked the same again until the place changes, and a modus mentis asked after it may still decline.
+8. No modus mentis declines in the two opening scenes of a run: the childhood recollection, and getting up after it.
 
-### Wholes, groups and contents
+### Contents
 
-1. Things that belong together are not offered to observation one by one.
-2. The parts of one whole are offered as that whole: the door and the outside wall of a building, seen from the street.
-3. Three or more things of one kind in the same place are offered as a group. Kinds that group: buildings; ways onward (neighbouring areas and paths together); doors leading on; distant places seen from a height; things with the same kind name.
-4. People are never grouped, and neither is the door by which a building is left.
-5. Observing a group describes the whole. The next observation in the same account then turns to one of its parts not yet observed, rather than to anything else present.
-6. The same holds for a thing that holds 2 or more different things: its contents are its parts.
-7. Directing attention to a group or to such a container describes its parts in turn, each available for a closer look by its own word.
-8. Deliberation on a group is offered every act its parts allow; deliberation on one part, only that part's acts.
-
-### Arriving
-
-1. The observation that opens a visit to a location must describe a living person, if one stands in the area unobserved.
-2. If its own choices, bearings included, reached nobody, the same modus mentis makes 1 more observation. It chooses only among the people present and may not decline.
-3. If it had declined to observe anything further, the statement is not given; the person is observed instead.
-4. This holds for the arrival only. Every later phase in the place chooses freely.
+1. A thing that holds 2 or more different things reveals them when it is observed.
+2. Each of them becomes known, not observed. It is observed in its own turn, for its own noetic point.
+3. Deliberation on the container is offered every act its contents allow, as well as its own.
+4. Deliberation on one of its contents is offered only that content's acts.
 
 ### Deliberation
 
-1. A thinking modus mentis is asked what to want, among the acts the observed thing allows.
-2. Left out of that list: acts already offered; acts this modus mentis already chose and saw refused; acts refused once that no acting modus mentis held can carry out (§4).
-3. Its moral level and whether it speaks narrow the list before it is asked (§6).
-4. Its answer is a goal, and the goal produces the act.
+1. A thinking modus mentis is asked what to want, among the acts the observed thing allows as the world now stands.
+2. Left out of that list: acts already waiting; acts this modus mentis already chose and saw refused; acts refused once that no acting modus mentis held can carry out (§4).
+3. Deliberation needs no presence: an observed thing can be deliberated on from anywhere in the place.
+4. A thing is offered for deliberation only while it allows some act.
+5. Its moral level and whether it speaks narrow the list before it is asked (§6).
+6. Its answer is a goal, and the goal produces the act.
 
 ### Execution
 
-1. An acting modus mentis is asked whether it is willing, and how willingly.
-2. Its answer is one of three **degrees of assent**, or a refusal. The table gives the effect.
-3. A refusal cancels the act outright.
-4. Its moral level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse a crime (§7).
-5. One that has the Speaking function may not refuse a conversation (§6).
+1. An act is attempted where its object is. The character first walks there by known ways, and if the walk is stopped (§1) the act is not attempted.
+2. An acting modus mentis is asked whether it is willing, and how willingly.
+3. Its answer is one of three **degrees of assent**, or a refusal. The table gives the effect.
+4. A refusal cancels the act outright.
+5. Its moral level may settle the answer before it is asked: a high one refuses a crime, a low one may not refuse a crime (§7).
+6. One that has the Speaking function may not refuse a conversation (§6).
 
 | Answer | Effect on difficulty |
 |---|---|
@@ -244,13 +265,13 @@ carries it out.
 
 ### Reconsideration
 
-1. An act already offered may be thought over again by a thinking modus mentis the player chooses, for 1 noetic point.
+1. A waiting act may be thought over again by a thinking modus mentis the player chooses, for 1 noetic point.
 2. That modus mentis may hold to the act or reject it, but proposes no other.
 3. A will holds to an act of its own course and to no other.
 4. Holding to it, it gives the act to an acting modus mentis other than the one that offered it.
 5. The new one must be one that no rule of choice forbids and no rule of action (§6) would refuse when the act is attempted. So an act that a witness in sight or an enemy in the area would forbid passes to a discreet modus mentis, where one is held.
 6. The new acting modus mentis does not decline it.
-7. The new act replaces the old, which may no longer be attempted.
+7. The new act replaces the old. The old act stays in the record and may no longer be attempted.
 8. If the thinking modus mentis rejects the act, or no other acting modus mentis could carry it out, the act offered before stands unchanged.
 9. Reconsideration is not offered in the two opening scenes of a run, whose one act has one means.
 
@@ -295,7 +316,8 @@ sixes, so it cannot succeed with this chain. With an eager acting modus mentis i
 3. That emotion modus mentis then puts emotion humors into the spleen ([Chapter III §8](03-humors.md#8-emotion-humors)).
 4. It gives its own account: not of what was done, which the acting modus mentis already told, but of what it meant to the one who did it.
 5. The sentiment comes after the consequences and before anything the act set in motion. A body that struck the first blow of a fight is moved by the blow before the fight begins.
-6. Most acts move no emotion modus mentis, so usually nothing is said. A body that holds none is never moved.
+6. What an act sets in motion (a fight, a conversation, work at a station, losing the way) begins only after the act's outcome has been reported.
+7. Most acts move no emotion modus mentis, so usually nothing is said. A body that holds none is never moved.
 
 ## 6. Rules of action and rules of choice
 
@@ -351,21 +373,20 @@ was chosen; **rules of choice** keep an act from being offered in the first plac
 
 1. An acting modus mentis of high moral level chosen to carry out a crime refuses at once, without being asked, while the act is still being deliberated.
 2. No act is offered, and no point is spent on an attempt.
-3. The refusal is recorded like any other (§4): the same thinking modus mentis is not offered that goal again in the phase, and another that chooses it is offered as means only those that would not refuse.
+3. The refusal is recorded like any other (§4): the same thinking modus mentis is not offered that goal again, and another that chooses it is offered as means only those that would not refuse.
 
 ### Speech turns toward people
 
 A modus mentis with the Speaking function puts conversation first, at every step of the chain it
 takes part in.
 
-1. Observing, it observes a living person before any other thing present, and does not decline a person given to it to look at closely.
-2. Once it has observed the people, the record of what has been observed (§4) returns the rest of the scene to it.
-3. Thinking, when the observed thing allows any conversation, only the conversations are offered.
-4. Exception to rule 3: a low-moral thinking modus mentis already narrowed to crimes (§7) keeps the crimes, because its moral level is applied first.
-5. When the goal is a conversation, only the acting modi mentis that speak are offered as means, if any is held.
-6. A speaking acting modus mentis cannot refuse a conversation, though it may be reluctant.
-7. A rule of action that forbids the conversation itself (a hostile listener, a tongue with nothing left to say) still applies.
-8. Where nobody can be spoken to, none of this narrows anything.
+1. Observing, it does not decline (§5) when the thing it is asked to observe is a person.
+2. Thinking, when the observed thing allows any conversation, only the conversations are offered.
+3. Exception to rule 2: a low-moral thinking modus mentis already narrowed to crimes (§7) keeps the crimes, because its moral level is applied first.
+4. When the goal is a conversation, only the acting modi mentis that speak are offered as means, if any is held.
+5. A speaking acting modus mentis cannot refuse a conversation, though it may be reluctant.
+6. A rule of action that forbids the conversation itself (a hostile listener, a tongue with nothing left to say) still applies.
+7. Where nobody can be spoken to, none of this narrows anything.
 
 ### A will follows its own course
 
@@ -375,11 +396,11 @@ of acts from where the body stands to an act of a kind it wants.
 
 1. At every step of the chain, a will attends only to the first act of such a course. If several courses are equally short, any of their first acts will do.
 2. In what it says, a person on its course is named the way the narration names them elsewhere.
-3. A will never opens a phase while the body holds any other observing modus mentis.
-4. Given a thing to look at closely, it keeps it if the thing allows that first act. Otherwise it turns to a thing that does, if one remains unobserved in the phase. Otherwise it declines, naming the act that would begin the course.
+3. Asked to observe a named thing, it does so if the thing allows that first act. Otherwise it declines, naming the act that would begin the course.
+4. Asked to observe one of a kind, it observes the first thing of that kind that allows that first act, and none where none does.
 5. Deliberating, it is less strict. Its candidates are the acts the thing allows that begin a course to what it wants of at most 3 acts, the wanted act included, or of no more acts than the shortest course the place offers, however long.
 6. It is offered only the candidate with the shortest course. Where several courses are equally short, it chooses among their first acts itself.
-7. An act already offered in the phase is not a candidate (§4). So a second deliberation on the same thing takes the next course through it, within the same limits. With none left, the will proposes nothing and lets the thing go.
+7. An act already waiting is not a candidate (§4). So a second deliberation on the same thing takes the next course through it, within the same limits. With none left, the will proposes nothing and lets the thing go.
 8. On a thing that allows no candidate, it proposes nothing and says only what it wants.
 9. A will is never doubted, because its goal is set by its course.
 10. A will is of medium readiness, so it tries again once, and only with another means for an act on its way.
@@ -394,7 +415,7 @@ of acts from where the body stands to an act of a kind it wants.
 1. From the world map, a will may be sent to look for one of its wants among the places in range.
 2. The places are examined in order of the cost of the road to each, nearest first.
 3. The first place in which a course to that want exists from the place's entrance, at the hour of arrival, is proposed as the destination.
-4. A visit reached by that journey is made for that want. While it lasts, the will works out its course to that want alone, however long: the course it observes by, the thing it opens a phase on, and the thing it keeps when given one to look at.
+4. A visit reached by that journey is made for that want. While it lasts, the will works out its course to that want alone, however long: the course it observes by, and the things it will observe.
 5. Deliberating, it first takes a course through the thing to that want, whatever its length.
 6. Only where the thing allows no such course are its other wants candidates, and then only by a course of at most 3 acts.
 7. Where no course to the wanted act remains in the place (the thing is done, or gone), the will works from all its wants again.
@@ -409,7 +430,7 @@ who sees or hears it.
 
 1. No manner of acting is a crime in itself.
 2. Standing in someone's private area makes *anything* done there a **trespass**.
-3. This is never hidden: throughout a phase, the narration states whether the ground underfoot is private.
+3. This is never hidden: throughout a visit, the narration states whether the ground underfoot is private.
 4. Private ground teaches no routine (see [Chapter IX](09-routines.md)).
 5. Beyond trespass, each act that can be a crime has its own condition.
 6. Striking someone who already counts the character an enemy is not a crime: the quarrel was declared before the blow.
@@ -495,7 +516,7 @@ same building, or the same stretch of open ground; a door is a gate, not a wall)
 
 1. The Audio level is an approach, not a verdict. Nothing is said yet. The cost is that someone now stands in the area, having come because of the character, and that is a confrontation (below).
 2. Being heard is announced as a consequence of the failed act.
-3. The one who came opens the next observation: an enemy as the one who came looking, a witness as the one who came to see what the noise was.
+3. The one who came enters the record of every party member in that area, already observed (§4): an enemy as the one who came looking, a witness as the one who came to see what the noise was.
 
 ### Under threat, and confronted
 
@@ -511,11 +532,21 @@ Two kinds of presence in the area restrict the character, and they work alike on
 8. Failing the approach is itself a slip in front of the witness, and the character is caught after all.
 9. In both cases, a discreet modus mentis may still attempt any act. It does not buy safety: a discreet act that fails in the same area is seen.
 
+### While confronted
+
+1. While an enemy or a confronting witness stands over a character, that character can observe only the one confronting it, who is already in its record (§4).
+2. It can deliberate only on them.
+3. It cannot walk away, and cannot speak to a companion (§10).
+4. Acts it had already decided on, in the area where it stands, still wait and can still be attempted. They are judged by the rules above.
+5. Someone asleep confronts nobody and witnesses nothing.
+6. Party members standing in other areas are not confronted.
+
 ### Leaving
 
 1. A place is left the way it was entered: by its one entrance, which lies beyond the area the place was entered by.
 2. Leaving means walking there: from the current area, back along known ways, to that area and out.
-3. A free departure is not stopped on the way.
+3. Every party member leaves, each from where it stands. Members standing together go together.
+4. The departure is a walk like any other (§1): a member who would be confronted on the way is stopped there. The party is then split between those already out and those still inside.
 
 ### Running away
 
@@ -527,7 +558,7 @@ Two kinds of presence in the area restrict the character, and they work alike on
 6. Wherever an enemy or a witness would confront it, it is stopped and rolls again on the same terms.
 7. Each success carries it on to the next such area, or out of the place when none is left.
 8. A failure at such a stop forces nothing: the body stays in the area where it was stopped, and noetic points are not restored.
-9. The next phase opens on whoever stopped it. They now stand in the area with the body, so leaving is a runaway again.
+9. Whoever stopped it enters its record (§4) and stands in the area with it, so leaving is a runaway again.
 10. A confrontation ends with the conversation it opens. A witness who came because of the character then returns to what they were doing, unless the conversation made them an enemy.
 
 ### Found waiting
@@ -552,7 +583,7 @@ Two kinds of presence in the area restrict the character, and they work alike on
 
 A failed act costs three things, in this order.
 
-1. **The budget**: noetic points are not refilled at the phase boundary that follows (§3).
+1. **The budget**: a failure does not refill the noetic points (§3).
 2. **A social consequence**, read from effective proximity (§7): at most one of caught, attacked, or approached. These are three levels of one scale, not separate effects.
 3. **A penalty**, chosen at random from what that manner of acting risks. Every failure has one.
 
@@ -563,7 +594,7 @@ A failed act costs three things, in this order.
 | A wound | Attempts that can hurt the one making them | A wound, dated with the day so that it can heal. |
 | The way lost | Acts that find a way: walking, following a path or a quarry, setting out for a distant view | The visit ends with the act; the party stands again in open country, outside the place. |
 | The hour wasted | Hard and slow acts: a climb, a swim, a crossing, a labour | The period of the day advances by 1, with everything that follows from that. |
-| The thread lost | Acts that risk nothing else: the senses, speech, waiting | 1 noetic point lost beyond the one already spent. Since the budget is not refilled after a failure, it stays lost into the next phase. |
+| The thread lost | Acts that risk nothing else: the senses, speech, waiting | 1 noetic point lost beyond the one already spent. Since a failure does not refill the budget, it stays lost until an act succeeds. |
 
 ### Penalties that cannot apply
 
@@ -597,20 +628,39 @@ survives a visit.
 | Depletion | Which gathering spots have been stripped, and when. |
 | The departed | Everyone this place has lost for good. |
 
-## 10. Handing narration to a companion
+## 10. The party in a place
 
-A companion can be handed the narration, and then observes, thinks and acts in the protagonist's
-place.
+Each member of a party is a separate body in the place, with its own position, its own budget and
+its own record.
 
 **Rules**
 
-1. Handing over costs the speaker 1 noetic point from their own budget.
-2. What was being talked about is passed to the companion.
-3. The companion then observes, deliberates, chooses goals and acts, spending their own noetic points, which are tracked separately, and using their own modi mentis.
-4. Every check of what a body can do consults the acting body, not the protagonist ([Chapter I §5](01-anatomy.md#5-capabilities)).
-5. A beast handed the narration is offered no conversation, no lock, no implement and no letters: about half of everything there is to do.
-6. Tracking, scenting, going places and fighting remain open to a beast.
-7. Two acts consult the protagonist regardless, because they concern the party itself: taming a beast, and proposing that someone join.
+1. All members enter by the same area. After that each stands where it was last moved, and a move moves only the member who made it.
+2. Each member observes, deliberates and acts for itself. It spends its own noetic points (§3), uses its own modi mentis, and keeps its own record of what it has observed (§4).
+3. Which member is played can be changed at any moment, at no cost.
+4. The time of day is shared: it is the same hour for every member.
+5. Every check of what a body can do consults the acting body, not the protagonist ([Chapter I §5](01-anatomy.md#5-capabilities)).
+6. A beast is offered no conversation, no lock, no implement and no letters: about half of everything there is to do.
+7. Tracking, scenting, going places and fighting remain open to a beast.
+8. A conversation with the people of a place belongs to the protagonist. No companion opens one: its replies, the affinity it earns and what it settles are the protagonist's.
+9. Two acts consult the protagonist whoever performs them, because they concern the party itself: taming a beast, and proposing that someone join.
+
+### Speaking to a companion
+
+1. A member with a speaking modus mentis may speak of a thing it has observed to a companion standing in the same area, or in an area joined to it by an open way or by a connector other than a view.
+2. It costs the speaker 1 noetic point.
+3. What was said is recorded under the thing in the speaker's record.
+4. The thing enters the listener's record as observed, with those words in place of an observation of its own. The listener deliberates on it from what it was told.
+5. Speaking does not change which member is played.
+
+### Fights and changes to the party
+
+1. A fight involves the members standing in the area where it breaks out, and nobody else.
+2. Whoever is fought counts those members enemies afterwards.
+3. The protagonist may be absent from a fight.
+4. A fight lost with the protagonist in it ends the run ([Chapter VIII](08-fighting.md)). A fight lost by companions alone kills them, and the protagonist goes on.
+5. Someone who joins during a visit stands where the member who won them stands, having observed nothing.
+6. A member who dies leaves a corpse where it stood (§11).
 
 ## 11. What a killing leaves
 
@@ -644,8 +694,9 @@ a place to enter.
 
 ### When a corpse appears
 
-1. A corpse opens the next phase on its own. Several bodies do so one per phase, in the order they fell.
-2. Anything created during play must be added to the scene's record of what can be observed before it can be observed at all. Until then, a thing can exist in an area and still be invisible to observation.
+1. A corpse needs no observation. It enters the record of every party member standing in the area, already observed (§4), and can be deliberated on at once.
+2. Several bodies enter in the order they fell.
+3. No modus mentis observed it, so a roll made on it counts only the modi mentis that deliberate and act.
 
 ## Terms
 
@@ -653,7 +704,6 @@ a place to enter.
 |---|---|
 | Act | One manner of acting aimed at one particular thing. |
 | Area | One room, yard, track or clearing within a location. |
-| Bearings | The opening account of where the body stands and at what period of the day. |
 | Broken modus mentis | A modus mentis whose level, capped by wounds, is 0 or below; it cannot be used. |
 | Confronting witness | A witness in the area with a reason to stop the character: drawn by a heard crime, or on private ground. |
 | Connector | A door, stair, cliff, crossing, path or the like that joins areas. |
@@ -666,24 +716,28 @@ a place to enter.
 | Emotion modus mentis | A modus mentis with the Emotion function, which answers an act's outcome with a sentiment. |
 | Effective proximity | Proximity after discretion is applied; decides what a failure costs. |
 | Encephalon | The brain region; its score sets the noetic points. |
-| Going back | Returning along known ways to any visited area, as one act of difficulty 2. |
+| Declining | An observing modus mentis's answer that nothing asked for draws it; costs 1 noetic point, and each question can be declined once. |
 | Location | A place on the world map, made of areas. |
-| Mental map | What is known of a place: areas stood in, ways used, things observed. |
+| Known thing | A thing observed on an earlier visit to a place still remembered; it has its name. |
+| Known way | A way already used; walking by known ways is free and is not an act. |
+| Mental map | What is known of a place: areas stood in, ways used, things and people observed. |
 | Moral level | Low, medium or high; decides how a modus mentis treats crimes. |
-| Noetic points | The attention budget of a phase: ⌊encephalon score ÷ 2⌋ + 1. |
+| Noetic points | A character's attention budget in a place: ⌊encephalon score ÷ 2⌋ + 1. A successful act refills it. |
+| Observed thing | A thing this character has observed during this visit; only an observed thing can be deliberated on. |
 | Path | A shortcut across open ground to an area 2 or 3 steps away, followed as one act of difficulty 2. |
 | Penalty | The cost every failure carries: a wound, the way lost, the hour wasted, or the thread lost. |
-| Phase | One stretch of narration, from an opening observation to its close. |
 | Play | An act done for its own sake, whose details come from the thing played with. |
 | Point of interest | A thing in an area that can be observed and acted on. |
 | Point of view | Where the acting body stands and the period of the day. |
 | Readiness to doubt | Low, medium or high; how often a thinking modus mentis may try again and whether it may be doubted. |
+| Record | Everything one character has observed, decided and done in a place, kept for the visit. |
 | Rule of action | A rule that rejects a chosen act when attempted, at a cost of 1 noetic point. |
 | Rule of choice | A rule that silently withholds an act from being offered, at no cost. |
 | Runaway | Leaving while an enemy or confronting witness is present: a roll of the runaway dice, needing 1 six. |
 | Section | A building, or a stretch of open ground; the reach of hearing. |
 | Tenure | Who the ground belongs to: private, protected, public or wild. |
 | Trespass | Any act done on private ground. |
+| Waiting act | An act decided on and not yet attempted; it can be attempted later in the visit while the world allows it. |
 | Will | A modus mentis that wants a few particular kinds of act and works toward them by its course. |
 
 ---

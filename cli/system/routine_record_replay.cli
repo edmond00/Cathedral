@@ -4,8 +4,7 @@
 # back, and the routine enters its own area and hour in the phase it names — here the trade menu,
 # with no walk and no conversation in front of it.
 #
-# WHAT IS LEARNED. Walking into the wood is not recorded at all. Opening a conversation with the
-# farmer teaches a Meet routine; her agreeing to sell teaches a Buy routine (the auto-dialogue path
+# WHAT IS LEARNED. Walking into the wood is not recorded at all. The farmer agreeing to sell teaches a Buy routine (the auto-dialogue path
 # reads the same flags the played one does — LocationTravelGameController.RecordAgreementRoutines);
 # and leaving from the wood, which is not where the visit opened, teaches a Go to routine.
 #
@@ -33,37 +32,35 @@ strategy succeed
 # --- walk into the wood ------------------------------------------------------
 goal move
 advance 12 180
-click keyword 0
-choose 0
+click observe "Test Wood"
+choose childhood_memory
+advance 12 180
+click think "Test Wood"
 choose ripelore
 advance 12 180
-click action 0
-choose 0
+click act 0
 advance 12 180
 click continue
 advance 12 180
 
-# Pinned BEFORE the footer press: that press closes the segment and generates the next phase's
-# observation, so a filter set after it would arrive too late to steer anything.
-# The second phase is clicked into: settle the word-vector load first, or which keyword it
-# highlights depends on a race (see `wait embeddings`).
-wait embeddings 60
-observe farmer
-goal propose_to_buy
-click button
-wait 60
+expect Moved to: Test Wood
+click continue
 advance 12 180
 expect-state where Test Wood
 # Open ground: the wood is nobody's, so what is learned here can be walked.
 expect-state where trespass=no
 
-# --- the trade, which teaches the Meet and the Buy routines -------------------
-click keyword 0
-choose 0
+# --- the trade, which teaches the Buy routine ---------------------------------
+goal propose_to_buy
+click observe "farmer"
+choose childhood_memory
+advance 12 180
+click think "farmer"
 choose ripelore
 advance 12 180
-click action 0
-choose 0
+# Proposing to buy is asked without a roll; the result's CONTINUE opens the conversation, which
+# --auto-dialogue settles as won.
+click act propose_to_buy
 advance 12 180
 click continue
 advance 12 180
@@ -71,14 +68,12 @@ advance 12 180
 # Learned as it happens — asserted by kind and place, never by name: the name carries the
 # farmer's rolled name, which is content.
 inspect routines
-expect-state routines category=meet location=
 expect-state routines category=buy location=
 expect-state routines Test Wood
 expect-state routines time=Noon
 
 # --- leave, go elsewhere, and come back on the routine ------------------------
-observe none
-click button
+click exit
 wait mode WorldView 90
 
 # Leaving from the wood, not the yard it opened in, is the Go to routine.
@@ -86,7 +81,7 @@ expect-state routines category=goto location=
 
 # Routines go into the save as a list of an abstract type, which System.Text.Json drops the fields
 # of — and refuses to read back — unless every kind is registered. One unregistered kind would make
-# the whole save unloadable; this is the assertion that says so, for the three kinds learned here.
+# the whole save unloadable; this is the assertion that says so, for the kinds learned here.
 save roundtrip
 
 # The Chorography tab shows the Buy routine with the merchant's catalogue and their standing with you,
@@ -99,16 +94,16 @@ expect WHAT THEY SELL
 # The line is asserted, not its level: TestSceneFactory spawns its people without the location's
 # affinity store (every real factory passes it), so the test location remembers no standing at all.
 expect relation:
-# Under the porthole, `< n/N >` steps through the place's routines kind by kind (Go to, Meet, Buy),
+# Under the porthole, `< n/N >` steps through the place's routines kind by kind (Go to, Buy),
 # round the end.
-expect 3/3
+expect 2/2
 manage Chorography next
 wait 10
-expect 1/3
+expect 1/2
 expect Go to ·
 manage Chorography prev
 wait 10
-expect 3/3
+expect 2/2
 expect Buy · Test Wood · noon
 # A tab's initial opens it.
 key J
@@ -131,7 +126,7 @@ travel neighbour
 travel-go
 wait mode LocationInteraction 120
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 
 travel back
@@ -139,11 +134,7 @@ routines
 # The box steps through its routines as the Chorography tab does, the one stepped to read out
 # below the map.
 wait 10
-expect 1/3
-routines next
-wait 10
-expect 2/3
-expect MEET
+expect 1/2
 # The box's map has no key either: the pointer over a card names it in a grey label.
 point card Test Wood
 wait 10
@@ -151,18 +142,15 @@ expect-state pointer-label ground=grey text=Test Wood · public
 # Stepping only selects; CONFIRM sets out for the routine selected.
 routines next
 wait 10
-expect 3/3
+expect 2/2
 expect BUY
 expect [ CONFIRM ]
 routines confirm
-wait mode LocationInteraction 150
-wait
-# The way in is shown first: the party walks on the map from the yard, where the location is
-# entered, to the wood, by the ways it knows. The menu opens on the walk's Continue.
+# The way in is shown first: the party walks on the map from the way in to the wood, by the ways
+# it knows, and the menu opens when the walk ends by itself.
+wait mode Trading 150
 inspect map
-expect-state map walk from Test Yard to Test Wood
-click continue
-wait mode Trading 60
+expect-state map walk in to Test Wood
 
 # The point of the whole script: the menu opened in the routine's own area, not the one the rebuilt
 # scene opens at.

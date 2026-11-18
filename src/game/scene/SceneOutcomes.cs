@@ -121,20 +121,20 @@ public sealed class NoticeOutcome : Outcome
 }
 
 /// <summary>
-/// A notice of where somebody followed went on to without the follower: through a door, or into a
-/// room where nobody follows unseen. The next phase opens on that way (<see cref="Scene.PendingOpeningFocus"/>),
-/// so the narration looks at what the quarry is behind.
+/// A notice of where somebody followed went on to without the follower: through a door locked
+/// behind them. The door is seen (<see cref="AreaVisits.See(Scene, Area, ConnectorPointOfInterest)"/>),
+/// so the map names it and the room behind it, and a click attends to that door and no other.
 /// </summary>
 public sealed class QuarryBeyondOutcome : Outcome
 {
-    private readonly Element _way;
+    private readonly ConnectorPointOfInterest _way;
 
-    public QuarryBeyondOutcome(Element way, string text, string verbatim)
+    public QuarryBeyondOutcome(ConnectorPointOfInterest way, string text, string verbatim)
         : base(text, OutcomeSeverity.Neutral, verbatim) => _way = way;
 
     protected override void Apply(OutcomeContext ctx)
     {
-        if (ctx.Scene != null) ctx.Scene.PendingOpeningFocus = _way;
+        if (ctx.Scene != null && ctx.PoV != null) AreaVisits.See(ctx.Scene, ctx.PoV.Where, _way);
     }
 }
 

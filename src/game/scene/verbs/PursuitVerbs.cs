@@ -121,7 +121,7 @@ public class StalkVerb : Verb
                                   $"followed {label} and saw where they went"),
             };
 
-        // A locked door was in the way: say so, and the next phase looks at it.
+        // A locked door was in the way: say so, and mark it on the map.
         return new Outcome[]
         {
             new TimeShiftOutcome(period),

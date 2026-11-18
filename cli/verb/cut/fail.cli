@@ -9,7 +9,7 @@
 #   * a spawned corpse is not observable until NarrativeController.SyncSpawnedObservations reconciles
 #     it into the narration graph, which is built once from the areas as the factory left them. Before
 #     that sync existed the body was in the area and the player was never told;
-#   * the corpse OPENS the next observation phase by itself — PendingCorpseObservations is drained
+#   * the corpse is on the map already OBSERVED — PendingCorpseObservations is drained
 #     ahead of everything else — so the second half of this script does not have to hunt for it.
 #
 # `goal` is set twice for the same reason cli/tame/success.cli sets it twice: two different verbs in
@@ -35,18 +35,18 @@ goal slay
 advance 12 180
 regions
 
-click keyword 0
-choose 0
+click observe "chicken"
+choose childhood_memory
+advance 12 180
+click think "chicken"
 choose ripelore
 advance 12 180
-click action 0
-choose 1
+click tool 0
 regions
 choose 0
 advance 12 180
 regions
-click action 1
-choose 0
+click act 1
 advance 12 180
 click continue
 advance 12 180
@@ -54,8 +54,8 @@ expect SUCCESS
 expect-verb slay
 
 # ── Now cut it ───────────────────────────────────────────────────────────────
-# The corpse opens the phase on its own, so the keyword is whatever it left behind.
-click button
+# The body is on the map already observed: nobody has to look for what was just killed.
+click continue
 advance 12 180
 regions
 
@@ -63,20 +63,17 @@ regions
 # `strategy` is a preset consulted at every roll, so it is switched here rather than at the top.
 strategy fail-dice
 goal cut
-click keyword 0
-choose 0
+click think "chicken"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
-choose 1
+click tool 0
 regions
 choose 0
 advance 12 180
 regions
-click action 1
-choose 0
+click act 1
 advance 12 180
 click continue
 advance 12 180

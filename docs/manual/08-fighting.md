@@ -11,8 +11,8 @@ character has learned; see [Chapter II §1](02-memory.md#1-what-a-modus-mentis-i
 2. A blow is settled by counting sixes: the attacker wins only with more sixes than the defender.
 3. A fight started by striking someone opens with that blow already resolved, and that first blow can
    never kill.
-4. A fight ends when one side has nobody standing. Losing a fight is the protagonist's death, and
-   fleeing is the only alternative.
+4. A fight ends when one side has nobody standing. Losing a fight the protagonist is in is the
+   protagonist's death, and fleeing is the only alternative.
 5. Heat costs in combat drain the same humor queues that pay for travel.
 
 ## 1. Turn order and budget
@@ -328,8 +328,8 @@ A fight ends when one side has nobody left standing.
 
 **Rules**
 
-1. Every party member counts for the party, and every enemy for the other side. Nothing else is
-   counted.
+1. Every party member who fights counts for the party, and every enemy for the other side. Nothing
+   else is counted.
 2. A companion's fall does not end the fight while any other party member still stands.
 3. The protagonist's fall does not end the fight either, if a companion still stands. The companion
    fights on alone.
@@ -343,6 +343,16 @@ A fight ends when one side has nobody left standing.
    ([Chapter VI §11](06-narration.md#11-what-a-killing-leaves)).
 8. An enemy who falls is gone from that place permanently
    ([Chapter VI §9](06-narration.md#9-what-a-place-remembers)).
+
+### Who fights
+
+1. On the road, the whole party fights together.
+2. In a place, each party member stands in an area of its own
+   ([Chapter VI §10](06-narration.md#10-the-party-in-a-place)). A fight there involves the members
+   standing in the area where it breaks out, and nobody else.
+3. The protagonist may be among those elsewhere, and so absent from the fight.
+4. A fight lost without the protagonist in it kills the companions who fought it, and the run goes
+   on.
 9. A companion who falls is gone from the party permanently
    ([Chapter V §9](05-travel.md#9-companions-and-their-loss)).
 10. Losing a fight is the protagonist's death and ends the run, whether the fight happened on the
