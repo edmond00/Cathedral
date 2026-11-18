@@ -1159,7 +1159,7 @@ public static class Config
         /// <see cref="UserSettings.GlowEnabled"/> for this run, as <c>--dither</c> does the dither.
         /// </summary>
         public static bool GlowSetByFlag = false;
-        public static float GlowStrength = 0.7f;  // Intensity of the halo added over the frame
+        public static float GlowStrength = 0.5f;  // Intensity of the halo added over the frame
         public static float GlowTightness = 0.55f; // Share of the halo at 2-4 px against 8-64 px
         public static float GlowProtect = 1.0f;   // Keep dark text on lit fills from the halo (0 = off)
         // The lit ground that triggers it: its brightest channel, averaged around the pixel at mip
