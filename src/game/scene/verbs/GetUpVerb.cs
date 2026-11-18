@@ -28,8 +28,12 @@ public sealed class GetUpVerb : Verb
     /// <summary>What a success teaches: getting a body up and moving.</summary>
     public override string? GrantedModusMentisId(Element? target) => "vigor";
 
+    /// <summary>
+    /// Only what weighs on the body leads to rising: its aching legs, its exhaustion, its
+    /// discouragement. The tree, the road and the horizon are there to be looked at and no more.
+    /// </summary>
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)
-        => scene.Phase == NarrationPhase.GetUp;
+        => scene.Phase == NarrationPhase.GetUp && target is GetUp.GetUpPointOfInterest;
 
     public override string Verbatim(Scene scene, PoV pov, Element target)
         => "get up and continue my journey";

@@ -281,29 +281,18 @@ public partial class NarrativeController
             return;
         }
 
-        // The next memory's scene, in the same controller: the childhood is one sitting, and what was
-        // remembered so far stays on the map.
+        // The next memory's scene, in the same controller: the childhood is one sitting.
         ReplaceMemory(new Cathedral.Game.Scene.Reminescence.ReminescenceSceneFactory(registry).Build(_locationId));
     }
 
     /// <summary>
-    /// Puts the next memory's scene in place of the one just remembered. What hung under "myself"
-    /// is carried over to the new scene's: each memory adds its branch, so by the end the tree is the
-    /// whole childhood. A fragment looked at and not reached for is kept as it was read, with
-    /// nothing left to do about it — its memory has gone by.
+    /// Puts the next memory's scene in place of the one just remembered. Nothing is carried over:
+    /// the childhood's screen holds the memory at hand and no other, so that the first thing a new
+    /// player sees is a handful of fragments and what was made of them.
     /// </summary>
     private void ReplaceMemory(Scene.Scene next)
     {
-        var remembered = Mind.Roots.FirstOrDefault(r => r.Element is Scene.GetUp.SelfPointOfInterest);
         AdoptScene(next);
-        if (remembered != null && Mind.Roots.FirstOrDefault(r => r.Element is Scene.GetUp.SelfPointOfInterest) is { } myself)
-            foreach (var branch in remembered.Children.ToList())
-            {
-                remembered.Remove(branch);
-                foreach (var act in branch.SelfAndDescendants().Where(n => n.IsWaitingAct))
-                    act.State = ActState.Lapsed;
-                myself.Add(branch);
-            }
         ApplyTimePeriod(TimePeriod.Morning);
         Console.WriteLine($"NarrativeController: scene replaced with reminescence '{next.CurrentReminescenceId}'");
     }

@@ -88,13 +88,14 @@ public partial class NarrativeController
         }
 
         AdvanceWalk();
+        _map.Bare = MinimalScreen;
         _overlay.Frame = BuildFrame();
         // The way pointed at — by its symbol, by a node of its tree, or along its line — is lit whole.
+        // Only a way that answers: a symbol a click would observe, or the tree of an observed one.
         _map.LitWay = Busy || IsPopupVisible ? null : _hovered switch
         {
-            WaySymbol way => way.Key,
+            WaySymbol way when IsEnabled(way) => way.Key,
             NodeSymbol { Node: var over } => WayKeyOf(over.ElementNode),
-            null => _map.WayAt(_lastMouseX, _lastMouseY),
             _ => null,
         };
 
@@ -185,6 +186,13 @@ public partial class NarrativeController
 
     // ── What the map shows ───────────────────────────────────────────────────
 
+    /// <summary>
+    /// The childhood is the first screen a player meets, and holds only what it is about: the
+    /// fragments of the memory at hand and what was made of them. No card, no panel, no token, no
+    /// line — there is one place and nobody else in it.
+    /// </summary>
+    private bool MinimalScreen => _scene.Phase == NarrationPhase.ChildhoodReminescence;
+
     /// <summary>Reads off the game everything the overlay draws this frame.</summary>
     private MapFrame BuildFrame()
     {
@@ -205,6 +213,7 @@ public partial class NarrativeController
             Commands     = CommandsOf,
             Enabled      = symbol => !Busy && IsEnabled(symbol),
             Exit         = Exploring,
+            Minimal      = MinimalScreen,
         };
 
         var cards = new Dictionary<Guid, CardFrame>();
@@ -243,9 +252,12 @@ public partial class NarrativeController
             else if (root == null || Locate(root) == null) continue;
             var way = new WayFrame
             {
-                Key  = key,
-                Root = root,
-                From = root != null ? Locate(root)?.Where : _frameWays.TryGetValue(key, out var seenFrom) ? seenFrom.From : null,
+                Key   = key,
+                Root  = root,
+                // What a way turned out to be is its symbol once it is known: seen or gone by.
+                Glyph = connector != null && (_scene.SeenLinks.Contains(key) || _scene.TakenLinks.Contains(key))
+                            ? LocationMap.KindLetter(connector) : Config.Symbols.MapWay,
+                From  = root?.SeenFrom,
             };
             way.Strays.AddRange(Mind.WayStrays.Where(s => s.Way == key).Select(s => s.Node));
             frame.Ways.Add(way);
@@ -265,6 +277,8 @@ public partial class NarrativeController
     private ElementKind KindOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => ElementKinds.IsHostile(npc, _active) ? ElementKind.Hostile : ElementKind.Person,
+        Cathedral.Game.Scene.GetUp.SelfPointOfInterest => ElementKind.Person,
+        LandscapePointOfInterest => ElementKind.Thing,
         Area or ConnectorPointOfInterest => ElementKind.Way,
         _ => ElementKind.Thing,
     };
@@ -278,7 +292,7 @@ public partial class NarrativeController
         var stubs = new List<StubSymbol>();
         // Thinking is offered about what affords an act now: a way since walked, a thing emptied
         // or a person asleep keeps its tree and has nothing to be thought into.
-        if (_active.GetThinkingModiMentis().Count > 0 && Locate(element) is { } at
+        if (ThinkingMinds.Count > 0 && Locate(element) is { } at
             && GoalsOf(at.Anchor).Any(g => g.Verb is not IgnoreVerb))
             stubs.Add(new StubSymbol(element, StubKind.Think));
         if (Exploring && _active.GetSpeakingModiMentis().Count > 0)
@@ -323,9 +337,7 @@ public partial class NarrativeController
                 return !ReferenceEquals(token.Member, _active);
 
             case TraySymbol tray:
-                // While the childhood comes back, nothing around the body answers: only "myself".
-                if (_scene.Phase == NarrationPhase.ChildhoodReminescence) return false;
-                if (!HasPoint || _active.GetObservationModiMentis().Count == 0) return false;
+                if (!HasPoint || ObservingMinds.Count == 0) return false;
                 if (confrontation == null) return _frameReach.ContainsKey(tray.Area.Id);
                 return tray.Area.Id == _pov.Where.Id
                     && (tray.Known != null
@@ -333,12 +345,12 @@ public partial class NarrativeController
                         : Unobserved(tray.Area).Any(u => u.Kind == tray.Kind && !u.Known && IsConfronter(u.Anchor, confrontation)));
 
             case ContentSymbol content:
-                return HasPoint && confrontation == null && _active.GetObservationModiMentis().Count > 0
+                return HasPoint && confrontation == null && ObservingMinds.Count > 0
                     && Locate(content.Container) is { } held && _frameReach.ContainsKey(held.Where.Id);
 
             // A way is looked at from one of its ends: the member must be able to walk to it.
             case WaySymbol way:
-                return HasPoint && confrontation == null && _active.GetObservationModiMentis().Count > 0
+                return HasPoint && confrontation == null && ObservingMinds.Count > 0
                     && _frameWays.TryGetValue(way.Key, out var side) && _frameReach.ContainsKey(side.From.Id);
 
             case ExitSymbol:
@@ -386,7 +398,7 @@ public partial class NarrativeController
 
     /// <summary>
     /// "Myself", and what it holds in the two opening phases — a fragment of a memory, a facet of
-    /// exhaustion: named as they are, not as things of a place ("myself", "aching legs", "nothing").
+    /// exhaustion: named as they are, not as things of a place ("myself", "aching legs", "a scream").
     /// </summary>
     private static bool IsOfMyself(Element element)
         => element is Cathedral.Game.Scene.GetUp.SelfPointOfInterest || Cathedral.Game.Scene.GetUp.SelfPointOfInterest.Holds(element);
@@ -414,6 +426,8 @@ public partial class NarrativeController
                                             => new($"{ElementKinds.Word(tray.Kind)} · no known way there", false),
             TraySymbol { Known: null } tray => new($"observe · {ElementKinds.Word(tray.Kind)}", enabled),
             TraySymbol { Known: { } known } => new($"observe {NameOf(known)}", enabled),
+            // What "myself" holds is not named before it is looked at: a memory, a sensation.
+            ContentSymbol { Container.Element: Scene.GetUp.SelfPointOfInterest self } => new($"observe · {self.Holding}", enabled),
             ContentSymbol content           => new($"observe {NameOf(content.Part)}", enabled),
             WaySymbol way                   => new(WayLabel(way), enabled),
             ExitSymbol                      => new(ExitLabel, enabled),
@@ -572,7 +586,8 @@ public partial class NarrativeController
         if (!Equals(under, _hovered))
         {
             _hovered = under;
-            if (under != null) PlayHoverSound();
+            // The tick is for what answers the pointer: a click, or a text to read.
+            if (under != null && (under is NodeSymbol || IsEnabled(under))) PlayHoverSound();
         }
     }
 
@@ -701,21 +716,21 @@ public partial class NarrativeController
                 break;
 
             case TraySymbol tray:
-                AskMind(new ObservePending(tray.Area, tray.Kind, tray.Known, Container: null), _active.GetObservationModiMentis(), "Observe with");
+                AskMind(new ObservePending(tray.Area, tray.Kind, tray.Known, Container: null), ObservingMinds, "Observe with");
                 break;
 
             case WaySymbol way when _frameWays.TryGetValue(way.Key, out var side):
                 AskMind(new ObservePending(side.From, ElementKind.Way, side.Anchor, Container: null, Way: way.Key),
-                        _active.GetObservationModiMentis(), "Observe with");
+                        ObservingMinds, "Observe with");
                 break;
 
             case ContentSymbol content when Locate(content.Container) is { } held:
                 AskMind(new ObservePending(held.Where, ElementKind.Thing, content.Part, content.Container),
-                        _active.GetObservationModiMentis(), "Observe with");
+                        ObservingMinds, "Observe with");
                 break;
 
             case StubSymbol { Kind: StubKind.Think } stub:
-                AskMind(new ThinkPending(stub.Element), _active.GetThinkingModiMentis(), "Think with");
+                AskMind(new ThinkPending(stub.Element), ThinkingMinds, "Think with");
                 break;
 
             case StubSymbol { Listener: { } listener } stub:
@@ -735,7 +750,7 @@ public partial class NarrativeController
                 break;
 
             case CommandSymbol { Command: ActCommand.Reconsider } reconsider:
-                AskMind(new ReconsiderPending(reconsider.Act), _active.GetThinkingModiMentis(), "Reconsider with");
+                AskMind(new ReconsiderPending(reconsider.Act), ThinkingMinds, "Reconsider with");
                 break;
         }
     }

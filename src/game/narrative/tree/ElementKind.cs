@@ -11,13 +11,13 @@ namespace Cathedral.Game.Narrative.Tree;
 /// </summary>
 public enum ElementKind
 {
-    /// <summary>A way on: a neighbouring area, a door, a stair, a path, a climb, a crossing, a view.</summary>
+    /// <summary>A way on: a neighbouring area, a door, a stair, a path, a climb, a crossing.</summary>
     Way,
     /// <summary>A living thing that does not count the viewer an enemy, shallow wildlife included.</summary>
     Person,
     /// <summary>A living thing that counts the viewer an enemy.</summary>
     Hostile,
-    /// <summary>Every other point of interest, and an item one of them holds.</summary>
+    /// <summary>Every other point of interest — a view of distant ground among them — and an item one of them holds.</summary>
     Thing,
 }
 
@@ -35,7 +35,11 @@ public static class ElementKinds
     /// </summary>
     public static ElementKind Of(NarrativeAnchor anchor, PartyMember viewer) => anchor switch
     {
+        // "Myself", noticed under the tree like anything else there: the one person present.
+        SyntheticObservationObject { PointOfInterest: Scene.GetUp.SelfPointOfInterest } => ElementKind.Person,
         SyntheticAreaObservationObject => ElementKind.Way,
+        // A view is looked at from its area like anything standing there, and is no line on the map.
+        SyntheticObservationObject { PointOfInterest: LandscapePointOfInterest } => ElementKind.Thing,
         SyntheticObservationObject { PointOfInterest: ConnectorPointOfInterest } => ElementKind.Way,
         SyntheticNpcObservationObject npc => IsHostile(npc.SceneNpc, viewer) ? ElementKind.Hostile : ElementKind.Person,
         _ => ElementKind.Thing,

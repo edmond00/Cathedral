@@ -6,8 +6,9 @@ namespace Cathedral.Game.Scene.GetUp;
 /// The place a run opens in: the foot of a lone tree on an open plain, where the protagonist sits
 /// spent. It is built twice and is one place — first as the ground the childhood is remembered on
 /// (<see cref="Reminescence.ReminescenceSceneFactory"/>), then as the scene the protagonist gets up
-/// from (<see cref="GetUpSceneFactory"/>) — so both name it alike and stand the same things around
-/// the body. While remembering, those things are only there; getting up, they may be looked at.
+/// from (<see cref="GetUpSceneFactory"/>) — so both name it alike. Only the second stands anything
+/// around the body: the childhood is the first screen a player meets and holds nothing but the
+/// memory at hand, so the tree, the road and the horizon first appear when it is time to get up.
 /// </summary>
 public static class RestingPlace
 {

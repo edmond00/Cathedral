@@ -47,10 +47,10 @@ advance 20 180
 click continue
 advance 12 180
 
-click observe "nothing"
+click observe "something kept"
 choose childhood_reminescence
 advance 12 180
-click think "nothing"
+click think "something kept"
 choose childhood_reminescence
 advance 12 180
 click act 0
@@ -87,10 +87,28 @@ expect-state music tracks=2 filter=None cold=0.60 fear=0.15 mystery=0.15
 advance 12 180
 regions
 
-# The childhood's branches went with the childhood; the scenery answers now.
-expect-no-state trees "a scream"
-expect-state symbols click observe thing
+# The childhood went with the childhood. Under the tree nothing is observed yet: three things to
+# look at, and one person — "myself", to be noticed like the rest.
+expect-no-state trees element
+expect-state symbols click observe thing in Under the Tree x3
+expect-state symbols click observe person in Under the Tree x1
 expect-no-state symbols "(disabled)"
+
+# The tree can be looked at, and that is all: only what weighs on the body leads to rising.
+click observe "Lone Tree"
+choose childhood_memory
+advance 12 180
+expect-state trees element Lone Tree
+expect-no-state symbols click think Lone Tree
+
+# Myself, once noticed, discloses what it holds as a container does — unnamed until looked at.
+click observe person
+choose childhood_memory
+advance 12 180
+expect-state trees element Myself
+point observe "aching legs"
+wait 1
+expect-state pointer-label ground=yellow text=observe · a sensation
 
 strategy succeed
 click observe "aching legs"
@@ -100,6 +118,13 @@ click think "aching legs"
 choose ripelore
 advance 12 180
 regions
+
+# GET UP is the first roll a player makes: always one six, and shown as that before it is rolled.
+expect-state trees act state=waiting verb=get_up
+expect-state trees difficulty=1
+point act 0
+wait 1
+expect 1 six needed
 
 # Before and after, because the phase's one silent failure is that it pays the chain nothing.
 # The practice loop in CommitOutcomeResult used to sit inside its `deferredCommit` branch, and

@@ -213,11 +213,9 @@ public partial class NarrativeController
         Console.WriteLine($"NarrativeController: {_lastWalk}");
         StartWalk(_map.Walk(_scene, from, leg), leg, "Walking...", then: () =>
         {
-            foreach (var (to, link) in leg)
-            {
-                AreaVisits.Arrive(_scene, to);
-                if (link != null) _scene.TakenLinks.Add(link);
-            }
+            // Nothing new is recorded on the way: a known way's ends were stood in when it was
+            // taken, and the areas a path runs past are gone by, not stood in. Where the walk ends
+            // — or is stopped — is where the member now stands.
             StandIn(mind, arrive);
             // Ground stood on makes the plain ways to it known, and a known way is no act any more.
             ReconcileTrees();
@@ -408,7 +406,9 @@ public partial class NarrativeController
 
         _lastWalk = $"walk out from {from.DisplayName}";
         Console.WriteLine($"NarrativeController: {_lastWalk}");
-        foreach (var (to, _) in hops) AreaVisits.Arrive(_scene, to);
+        // The way out ends in the area the place is entered by, and that one is stood in. What a
+        // path ran past on the way there is not.
+        if (hops.Count > 0) AreaVisits.Arrive(_scene, hops[^1].To);
         StartWalk(_map.WalkOut(_scene, from, hops), hops, "Leaving...", walkers: walkers, then: () =>
         {
             foreach (var m in group) GoneOut(m);
@@ -573,9 +573,9 @@ public partial class NarrativeController
 
         var rest = e.Hops.Skip(e.Done).ToList();
         _escape = null;
-        foreach (var (to, _) in rest) AreaVisits.Arrive(_scene, to);
         _lastWalk = $"walk out from {from.DisplayName}";
         Console.WriteLine($"NarrativeController: {_lastWalk}");
+        if (rest.Count > 0) AreaVisits.Arrive(_scene, rest[^1].To);
         StartWalk(_map.WalkOut(_scene, from, rest), rest, "Running away...", walkers: walkers, then: () =>
         {
             foreach (var m in e.Who) GoneOut(m);

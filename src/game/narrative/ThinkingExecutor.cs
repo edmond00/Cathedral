@@ -397,10 +397,12 @@ public class ThinkingExecutor
 
             // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
             // clamped to 0..10 — 1 at least for a crime (Verb.ActionDifficulty). Difficulty 0 rolls no
-            // dice and succeeds (the ○ glyph), as every act of an auto-success phase does.
+            // dice and succeeds (the ○ glyph), as REMEMBER does. GET UP is the first roll a player
+            // makes and is always the verb's own 1, whatever the mind: it is shown as what it is
+            // rolled at (it used to show ○ and then roll against one six).
             var verbOutcome = (VerbAction)resolved;
-            int difficultyLevel = autoSuccess
-                ? 0
+            int difficultyLevel = isReminescence ? 0
+                : autoSuccess ? verbOutcome.Verb.BaseDifficulty
                 : verbOutcome.Verb.ActionDifficulty(verbOutcome.Target, fit.DifficultyModifier, scene, pov, actingMember);
 
             var action = new ParsedNarrativeAction

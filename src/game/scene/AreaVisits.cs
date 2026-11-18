@@ -24,8 +24,11 @@ namespace Cathedral.Game.Scene;
 /// neighbours, stairs and doors open from this side — and every area and way on it is recorded.
 /// A private room is walked through like any other (a temple's chapel may lie past a private
 /// corridor); only a locked door stops the walk. When there is no such walk (a roof, a far bank, a
-/// house locked from outside), only the arrival is recorded. A path is a named way past the areas between its ends, so
-/// following one records those areas as well. A landscape's voyage records the view taken and,
+/// house locked from outside), only the arrival is recorded. A path is a named way past the areas between its ends:
+/// following one records those areas as seen in passing — named on the map, never stood in — and
+/// makes the path itself the known way, not the plain ways it ran beside. They used to be recorded
+/// as visited, and a body that had followed a track could then walk for nothing to a barn it had
+/// only gone past. A landscape's voyage records the view taken and,
 /// where one exists, the walk.</para>
 ///
 /// <para>Recording only: none of this decides whether a move may happen. The verbs do that.</para>
@@ -201,13 +204,15 @@ public static class AreaVisits
         {
             case PathPointOfInterest path:
                 scene.TakenLinks.Add(path.StableKey);
+                // The areas a path runs past were gone by, not stood in: they are seen, and so are
+                // the plain ways between them. The way known afterwards is the path itself.
                 var route = new List<Area> { path.AreaA };
                 route.AddRange(path.Via);
                 route.Add(path.AreaB);
-                foreach (var area in path.Via) Arrive(scene, area);
+                foreach (var area in path.Via) scene.SeenAreas.Add(area.StableKey);
                 for (int i = 1; i < route.Count; i++)
                     if (IsNeighbour(scene, route[i - 1], route[i]))
-                        scene.TakenLinks.Add(LinkKey(route[i - 1], route[i]));
+                        scene.SeenLinks.Add(LinkKey(route[i - 1], route[i]));
                 return new[] { (to, (string?)path.StableKey) };
 
             case LandscapePointOfInterest view:

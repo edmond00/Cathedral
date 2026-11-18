@@ -399,7 +399,7 @@ internal static class ReminescenceCatalog
                         items:  new Func<Item>[] { () => new ShortSword() }),
                     contextSummary:   "buying a sword with your first earned coin"),
 
-                new("nothing",
+                new("something kept",
                     observationText:  "a closed fist, and the plain satisfaction of keeping it closed",
                     outcomeText:      "choosing to keep your silver coin rather than spend or gamble it",
                     outcome: To("gold_thirst",

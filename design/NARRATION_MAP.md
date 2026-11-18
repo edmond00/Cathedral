@@ -240,7 +240,22 @@ What changed once the map had been played, each answering a remark made on it.
 - **Nobody is moved to meet an arrival.** The map shows where everybody is before anything is
   looked at, so a settlement no longer puts somebody in the area a visit opens in.
 
-## 12. Tests and tools
+## 12. Settled after the second play
+
+- **The childhood is a minimal screen**: the fragments of the memory at hand and what was made of
+  them, and nothing else — no card, no panel, no token, no scenery. Fragments are unnamed until
+  looked at, nothing is carried from one memory to the next, and no will is asked.
+- **Getting up, "myself" is noticed like the tree**: a person on the card. Observed, it discloses
+  three sensations, and only those lead to rising. GET UP is always one six, and shown so.
+- **A way's symbol is its letter once known** (D, S, P…), in place of a badge beside it; its tree
+  stays where the way was observed from; symbols keep apart; a second way between the same two
+  areas stands on the shared line.
+- **A view is a thing of its card**, not a way.
+- **A symbol that cannot be clicked is not highlighted** under the pointer, and lights no line.
+- **A path's passed areas are seen, not visited.**
+- **Failures and refusals are drawn in the light purple.**
+
+## 13. Tests and tools
 
 - `click keyword` goes; the scripts are rewritten against symbols, elements and acts named, never
   coordinates: `click observe <kind|name>`, `click think <name>`, `click speak <name>`,

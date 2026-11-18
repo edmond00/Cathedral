@@ -27,7 +27,7 @@ public sealed class GetUpSceneFactory : SceneFactory
             descriptions:          new List<string>(RestingPlace.Descriptions),
             moods:                 RestingPlace.Moods);
 
-        area.PointsOfInterest.Add(new SelfPointOfInterest("Myself, spent, with my back against the tree."));
+        area.PointsOfInterest.Add(new SelfPointOfInterest("Myself, spent, with my back against the tree.", holding: "a sensation"));
         foreach (var scenery in RestingPlace.Scenery())
             area.PointsOfInterest.Add(scenery);
 

@@ -67,7 +67,15 @@ public sealed record ExitSymbol : MapSymbol;
 public sealed class WayFrame
 {
     public required string Key { get; init; }
-    /// <summary>The end the way is looked at from now: on a long line its tree hangs from the symbol near that card.</summary>
+    /// <summary>
+    /// The symbol it is drawn as: the way's own while nothing is known of it, and the letter of what
+    /// it turned out to be once it is — a door, a stair, a path (<see cref="LocationMap.KindLetter"/>).
+    /// </summary>
+    public char Glyph { get; init; } = Config.Symbols.MapWay;
+    /// <summary>
+    /// The end an observed way was observed from. Its tree hangs from the symbol near that card and
+    /// stays there: a tree that followed the member along the line read as a second way appearing.
+    /// </summary>
     public Area? From { get; init; }
     /// <summary>The observed way's tree, or null while it is only a symbol.</summary>
     public ThoughtNode? Root { get; init; }
@@ -96,6 +104,11 @@ public sealed class MapFrame
     public List<WayFrame> Ways { get; } = new();
     /// <summary>Whether the way out is drawn (a real place), for the pointer to find.</summary>
     public bool Exit { get; set; }
+    /// <summary>
+    /// Whether only what hangs from the one root is drawn: no card, no token, no tray, no trunk.
+    /// The childhood's screen, where the fragments of a memory are all there is.
+    /// </summary>
+    public bool Minimal { get; set; }
     public MapSymbol? Hovered { get; set; }
     public PartyMember? Active { get; set; }
 
@@ -163,7 +176,10 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (Frame == null) return;
         foreach (var card in Frame.Cards)
             if (canvas.CardOf(card.Area) is { } at)
-                PaintCard(canvas, card, at.X, at.Y);
+            {
+                if (Frame.Minimal) PaintMinimal(canvas, card, at.X, at.Y);
+                else PaintCard(canvas, card, at.X, at.Y);
+            }
 
         // The ways after the cards' trees: theirs are the smaller, and where the pointer goes for one.
         _keepOffCards = true;
@@ -171,11 +187,13 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         {
             var spots = canvas.WaySpots(way.Key);
             if (spots.Count == 0) continue;
-            // A long line carries the symbol near each card: the tree hangs from the one near
-            // where the way is seen from, and the other is the same symbol with nothing under it.
+            // A long line carries the symbol near each card while the way is unobserved, so it is
+            // marked wherever it is looked at from. Observed, it is drawn once, where it was
+            // observed from, and its tree does not move.
             var hung = spots.FirstOrDefault(p => p.Near != null && p.Near.Id == way.From?.Id, spots[0]);
             foreach (var spot in spots)
-                PaintWay(canvas, way, spot.X, spot.Y, spot.Vertical, spot.Up, hang: spot == hung);
+                if (way.Root == null || spot == hung)
+                    PaintWay(canvas, way, spot.X, spot.Y, spot.Vertical, spot.Up, hang: spot == hung);
         }
         _keepOffCards = false;
 
@@ -185,6 +203,29 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             canvas.Hit(exit.X, exit.Y, new ExitSymbol());
             if (Frame.Hovered is ExitSymbol) canvas.Put(exit.X, exit.Y, LocationMap.ExitGlyph, HoverInk, HoverGround);
         }
+    }
+
+    /// <summary>
+    /// The minimal screen: what the one root holds and what was made of it, from where its card
+    /// would stand. Each thing looked at is a row — the thing, the thought, the act — and the last
+    /// row is what is still to be looked at. The root itself is not drawn: it is whoever is looking.
+    /// </summary>
+    private void PaintMinimal(LocationMap.MapCanvas canvas, CardFrame card, int bx, int by)
+    {
+        if (card.Roots.FirstOrDefault() is not { } holder) return;
+        int x = bx + 1, y = by;
+        foreach (var item in Hanging(holder))
+            switch (item)
+            {
+                case ThoughtNode child:
+                    Place(canvas, child, x, ref y, live: child.IsLive || child.Kind == ThoughtNodeKind.Element);
+                    y++;
+                    break;
+                case List<MapSymbol> shelf:
+                    PaintShelf(canvas, shelf, x, y);
+                    y += 2;
+                    break;
+            }
     }
 
     private void PaintCard(LocationMap.MapCanvas canvas, CardFrame card, int bx, int by)
@@ -328,13 +369,13 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         var items = new List<object>();
         if (way.Root is { } root)
         {
-            Symbol(canvas, x, y, NodeGlyph(root), NodeInk(root, live: true), new NodeSymbol(root));
+            Symbol(canvas, x, y, way.Glyph, NodeInk(root, live: true), new NodeSymbol(root));
             items.AddRange(Hanging(root));
         }
         else
         {
             var symbol = new WaySymbol(way.Key);
-            Symbol(canvas, x, y, Config.Symbols.MapWay, Frame.Enabled(symbol) ? Config.Colors.BrightYellow : DisabledInk, symbol);
+            Symbol(canvas, x, y, way.Glyph, Frame.Enabled(symbol) ? Config.Colors.BrightYellow : DisabledInk, symbol);
         }
         items.AddRange(way.Strays);
         if (!hang || items.Count == 0) return;
@@ -491,8 +532,9 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
                                 => Frame.Enabled(new NodeSymbol(node)) ? Config.Colors.BrightYellow : Config.Colors.DarkYellow,
         ThoughtNodeKind.Act     => node.State == ActState.Done ? Config.Colors.MediumGray50 : DeadInk,
         ThoughtNodeKind.Success => Config.Colors.GoldYellow,
+        // The light purple: the standard one is too dark to read on the map's near-black ground.
         ThoughtNodeKind.Failure or ThoughtNodeKind.Refusal
-                                => live ? Config.Colors.Purple : Config.Colors.DarkPurple,
+                                => live ? Config.Colors.LightPurple : Config.Colors.Purple,
         ThoughtNodeKind.Emotion => Config.Colors.Ochre,
         _                       => live ? Config.Colors.LightGray75 : DeadInk,
     };
@@ -506,8 +548,11 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     private void Symbol(LocationMap.MapCanvas canvas, int x, int y, char glyph, Vector4 ink, MapSymbol symbol)
     {
         if (_keepOffCards && canvas.IsCard(x, y)) return;
-        if (Equals(symbol, Frame.Hovered)) canvas.Put(x, y, glyph, HoverInk, HoverGround);
-        else canvas.Put(x, y, glyph, ink, Frame.Enabled(symbol) ? ClickGround : null);
+        bool enabled = Frame.Enabled(symbol);
+        // Under the pointer a symbol is inverted when a click would act on it or it has a text to
+        // read; one that answers nothing stays as it is, and only its label says why.
+        if (Equals(symbol, Frame.Hovered) && (enabled || symbol is NodeSymbol)) canvas.Put(x, y, glyph, HoverInk, HoverGround);
+        else canvas.Put(x, y, glyph, ink, enabled ? ClickGround : null);
         canvas.Hit(x, y, symbol);
     }
 

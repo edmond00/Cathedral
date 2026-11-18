@@ -53,7 +53,7 @@ expect-state trees the brewer
 # Nothing else answers: not the views from the roof, not the wall and the stair on their lines,
 # not the goat already thought about.
 inspect symbols
-expect-state symbols click observe way in Test Roof x6 (disabled)
+expect-state symbols click observe thing in Test Roof x5 (disabled)
 expect-state symbols click observe Test Wall in Test Roof (way) (disabled)
 expect-state symbols click observe Test Stair in Test Roof (way) (disabled)
 expect-state symbols click think the goat (disabled)

@@ -65,6 +65,13 @@ public sealed class LocationMap
     public bool Narration { get; init; }
 
     /// <summary>
+    /// Draws nothing of its own — no panel, no card, no line, no way out, no pad — and names nothing
+    /// under the pointer but what the overlay drew: the layout is kept only as the ground the
+    /// overlay stands on. For a screen that is one place with nothing in it to find the way about.
+    /// </summary>
+    public bool Bare { get; set; }
+
+    /// <summary>
     /// The way (by <see cref="AreaVisits"/> key) whose whole line is drawn lit, from card to card:
     /// the one whose symbol the pointer is on, or whose line it is over. A long line is hard to
     /// follow by eye across a large map.
@@ -492,7 +499,7 @@ public sealed class LocationMap
                                  bgs[at.Y * _canvasW + at.X]);
         }
 
-        RenderPad(terminal, left + width - 6, top);
+        if (!Bare) RenderPad(terminal, left + width - 6, top);
     }
 
     /// <summary>
@@ -557,6 +564,12 @@ public sealed class LocationMap
         }
         _paintedKnown.Clear();
         foreach (var a in _boxAt.Keys) _paintedKnown[a] = AreaKnown(a);
+
+        if (Bare)
+        {
+            overlay?.Paint(new MapCanvas(this, glyphs, fgs, bgs));
+            return (glyphs, fgs, bgs);
+        }
 
         // Sections: a tinted panel inside a one-cell frame of a deeper tint, the name on a tab.
         foreach (var (section, sx, sy, sw, sh, title) in _sectionBoxes)
@@ -678,7 +691,8 @@ public sealed class LocationMap
         }
 
         // A connector's letter, as a badge on a straight stretch only it uses. The narration's map
-        // stands the way's symbol there (the overlay draws it), and the letter beside it.
+        // stands the way's symbol there instead (the overlay draws it, as the letter once known),
+        // and keeps the badge for a view, which has no symbol on its line.
         foreach (var link in _links.Concat(_overlayLinks))
         {
             if (!link.Dashed || link.Letter < 0) continue;
@@ -1179,17 +1193,6 @@ public sealed class LocationMap
         return _waySymbols.ContainsKey(key);
     }
 
-    /// <summary>The key of the way whose line is under screen cell (<paramref name="x"/>, <paramref name="y"/>) as last drawn, or null.</summary>
-    public string? WayAt(int x, int y)
-    {
-        var (left, top, w, h) = _shownAt;
-        if (x < left || y < top || x >= left + w || y >= top + h) return null;
-        int cx = _viewX + x - left, cy = _viewY + y - top;
-        if (cx < 0 || cy < 0 || cx >= _canvasW || cy >= _canvasH) return null;
-        int c = cy * _canvasW + cx;
-        return c < _lineAt.Length ? _lineAt[c]?.Key : null;
-    }
-
     /// <summary>
     /// Chooses, for each line, the cells its symbol stands on and the cell of its letter.
     ///
@@ -1200,8 +1203,10 @@ public sealed class LocationMap
     ///
     /// <para>A short line has one symbol, towards its middle. A long one — across a section, or
     /// between two — would carry it far from both cards, off the view of whoever stands in either:
-    /// it has one near each card instead, the same way marked twice. A view keeps its letter and
-    /// gets no symbol: it is looked at from its area's card.</para>
+    /// it has one near each card instead, the same way marked twice until it is observed (its tree
+    /// then stays at the end it was observed from). A cell within a tree's reach of another line's
+    /// symbol is avoided. A view keeps its letter and gets no symbol: it is looked at from its
+    /// area's card.</para>
     /// </summary>
     private void PlaceSymbols(RouteGrid g, List<Link> links)
     {
@@ -1213,8 +1218,13 @@ public sealed class LocationMap
             link.Spots.Clear();
             link.Letter = -1;
             if (link.Net < 0) continue;
-            var own = link.Fresh.Where(c => g.NetB[c] == -1 && g.Kind[c] is Cell.Free or Cell.BesideBox
-                                         && !_exitCells.Contains(c) && !taken.Contains(c)).ToList();
+            bool Usable(int c) => g.NetB[c] == -1 && g.Kind[c] is Cell.Free or Cell.BesideBox
+                                  && !_exitCells.Contains(c) && !taken.Contains(c);
+            var own = link.Fresh.Where(Usable).ToList();
+            // Two ways between the same two areas — a stair and a chimney — are one line on the
+            // map, and the second laid has no cell of its own: it stands on the line they share,
+            // apart from the first (the crowding below sees to that).
+            if (own.Count == 0 && !link.View) own = link.Path.Where(Usable).ToList();
             var straight = own.Where(c => g.MaskA[c] == Vertical || g.MaskA[c] == Horizontal).ToList();
             if (link.View || !Narration)
             {
@@ -1251,14 +1261,6 @@ public sealed class LocationMap
                 }
             }
 
-            // The letter beside the first symbol, on the same stretch.
-            if (link.Dashed && link.Spots.Count > 0)
-            {
-                var first = link.Spots[0];
-                int cell = first.Y * g.W + first.X, step = first.Vertical ? g.W : 1;
-                link.Letter = new[] { cell - step, cell + step }.FirstOrDefault(c => straight.Contains(c) && !taken.Contains(c), -1);
-                if (link.Letter >= 0) taken.Add(link.Letter);
-            }
         }
 
         // The cheapest of the candidates to hang a tree from, the nearer to where it is wanted first.
@@ -1271,9 +1273,15 @@ public sealed class LocationMap
             {
                 if (taken.Contains(c)) continue;
                 bool v = g.MaskA[c] == Vertical;
+                // Two symbols side by side hide each other the moment one grows a tree: the lines
+                // are long, so a cell near another line's symbol is a poor one.
+                float crowd = 0;
+                foreach (int other in taken)
+                    if (Math.Abs(other % g.W - c % g.W) <= HangWidth + 1 && Math.Abs(other / g.W - c / g.W) <= HangRows)
+                        crowd += Crowding;
                 foreach (bool u in new[] { false, true })
                 {
-                    float cost = HangCost(g, c % g.W, c / g.W, v, u) + distance(c) * 0.05f;
+                    float cost = HangCost(g, c % g.W, c / g.W, v, u) + crowd + distance(c) * 0.05f;
                     if (cost >= best) continue;
                     best = cost; cell = c; vertical = v; up = u;
                 }
@@ -1291,6 +1299,8 @@ public sealed class LocationMap
 
     // A line longer than this carries its symbol near each card, within so many cells of it.
     private const int LongLine = 22, NearEnd = 12;
+    /// <summary>What standing within a tree's reach of another line's symbol costs a cell: more than covering a few lines, less than covering a card.</summary>
+    private const float Crowding = 6f;
 
     // The room a way's small tree is weighed for: so many cells across, so many rows.
     private const int HangWidth = 6, HangRows = 3;
@@ -1664,6 +1674,7 @@ public sealed class LocationMap
         var (left, top, w, h) = _shownAt;
         if (x < left || y < top || x >= left + w || y >= top + h) return null;
         if (IconAt(x, y) is { } tag) return iconLabel?.Invoke(tag);
+        if (Bare) return null;
         if (AreaAt(x, y) is { } area) return areaLabel?.Invoke(area) ?? AreaLabel(area);
         int cx = _viewX + x - left, cy = _viewY + y - top;
         if (cx < 0 || cy < 0 || cx >= _canvasW || cy >= _canvasH) return null;
@@ -2004,7 +2015,12 @@ public sealed class LocationMap
         => a.Id.CompareTo(b.Id) < 0 ? (a.Id, b.Id) : (b.Id, a.Id);
 
     /// <summary>The letter on a connector's line, by its type; <see cref="KindName"/> says it in words.</summary>
-    private static char KindLetter(ConnectorPointOfInterest c) => c switch
+    /// <summary>
+    /// The letter a connector is known by on a map: D a door, S a stair, P a path, C a cliff, W a
+    /// water crossing, X a crossing, ^ a scale, I a slip-in, V a view. The menu maps badge a line
+    /// with it; the narration's map draws the way's symbol as it once the way is known.
+    /// </summary>
+    public static char KindLetter(ConnectorPointOfInterest c) => c switch
     {
         DoorPointOfInterest          => 'D',
         StairPointOfInterest         => 'S',

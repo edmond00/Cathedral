@@ -11,8 +11,8 @@ namespace Cathedral.Game.Scene.Reminescence;
 
 /// <summary>
 /// Builds a single-area Scene representing one childhood reminescence, on the ground it is
-/// remembered from: the <see cref="RestingPlace"/> the protagonist will get up from, with the same
-/// things standing around the body and the protagonist among them (<see cref="SelfPointOfInterest"/>).
+/// remembered from: the <see cref="RestingPlace"/> the protagonist will get up from, holding only
+/// the protagonist (<see cref="SelfPointOfInterest"/>) and nothing of what stands around the body.
 /// Each fragment in the reminescence becomes a <see cref="FragmentPointOfInterest"/>
 /// in that area; the only verb available is <see cref="RememberVerb"/>.
 /// The scene's <see cref="Scene.Phase"/> is set to
@@ -45,9 +45,7 @@ public sealed class ReminescenceSceneFactory : SceneFactory
         // Wire the fragments as PoIs, in an order drawn from the world's seed: the catalogue order
         // put the same fragment first in every run. The `rng` handed in is seeded from the location
         // id alone, so it would shuffle every world the same way.
-        area.PointsOfInterest.Add(new SelfPointOfInterest("Myself, and what I was, coming back to me in pieces."));
-        foreach (var scenery in RestingPlace.Scenery())
-            area.PointsOfInterest.Add(scenery);
+        area.PointsOfInterest.Add(new SelfPointOfInterest("Myself, and what I was, coming back to me in pieces.", holding: "a memory"));
 
         var order = GameRng.For($"reminescence-order:{_data.Id}");
         foreach (var fragment in _data.Fragments.OrderBy(_ => order.Next()))

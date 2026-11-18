@@ -33,6 +33,18 @@ public partial class NarrativeController
 
     private Pending? _pending;
 
+    /// <summary>The minds the played member may be asked to observe with, or to think with.</summary>
+    private List<ModusMentis> ObservingMinds => Askable(_active.GetObservationModiMentis());
+    private List<ModusMentis> ThinkingMinds  => Askable(_active.GetThinkingModiMentis());
+
+    /// <summary>
+    /// While the childhood comes back a will is not asked: a will looks and thinks only toward what
+    /// it wants in a place, and a memory is no place. The reminescence's own mind and any other
+    /// that observes or thinks answer.
+    /// </summary>
+    private List<ModusMentis> Askable(List<ModusMentis> minds)
+        => _scene.Phase == NarrationPhase.ChildhoodReminescence ? minds.Where(m => !m.IsWill).ToList() : minds;
+
     /// <summary>
     /// What a mind is asked by <paramref name="pending"/>, and about what: the pair a refusal is
     /// remembered under, so the mind that refused is not offered the same again. A way is the same
@@ -324,7 +336,7 @@ public partial class NarrativeController
     /// to do it, and not in the opening phases, whose one act has one means.
     /// </summary>
     private bool CanReconsider()
-        => !InOpeningPhase && Mind.Noetic > 0 && _active.GetThinkingModiMentis().Count > 0;
+        => !InOpeningPhase && Mind.Noetic > 0 && ThinkingMinds.Count > 0;
 
     /// <summary>
     /// Reconsider (<see cref="ThinkingExecutor.ReconsiderAsync"/>): <paramref name="thinkingMind"/>

@@ -36,6 +36,7 @@ time of day.
 6. A path runs only through public and wild ground. It never runs through a private area and never across a gate, so it is never a way around either.
 7. Each pair of areas 2 steps apart is joined by a path with a chance of 30 in 100; each pair 3 steps apart, with a chance of 15 in 100.
 8. No area has more than 2 paths, and some locations have none.
+9. The areas a path runs past are seen in passing, not stood in. Following a path makes the path a known way (below); it does not make the open ways it ran beside known.
 
 ### Known ways
 
@@ -130,7 +131,7 @@ Everything a character observes, decides and does in a place is kept for the who
 ### The three states of a thing
 
 1. To a given character, every thing in a place is unknown, known or observed.
-2. **Unknown**: only its kind is known (a person, an enemy, a thing, or a view of distant ground) and the area it stands in.
+2. **Unknown**: only its kind is known (a person, an enemy or a thing) and the area it stands in. A view of distant ground is a thing of the area it is seen from.
 3. Kind and area are known for every area of the place, including areas never entered.
 4. **Known**: an earlier visit observed it and the place is still remembered ([Chapter IX §1](09-routines.md)). It has its name, and can be observed by name.
 5. **Observed**: this character has observed it during this visit.
@@ -318,6 +319,20 @@ sixes, so it cannot succeed with this chain. With an eager acting modus mentis i
 5. The sentiment comes after the consequences and before anything the act set in motion. A body that struck the first blow of a fight is moved by the blow before the fight begins.
 6. What an act sets in motion (a fight, a conversation, work at a station, losing the way) begins only after the act's outcome has been reported.
 7. Most acts move no emotion modus mentis, so usually nothing is said. A body that holds none is never moved.
+
+### The two opening scenes
+
+A run opens on two scenes before any place: the childhood recollection, then getting up.
+
+1. Each memory of the childhood recollection holds a few fragments. A fragment has no name until it is observed.
+2. Remembering a fragment is an act of difficulty 0: it is not rolled and always succeeds. It ends that memory and opens the next.
+3. Nothing is kept from one memory to the next except what the memory taught.
+4. A will (§6) is not asked to observe or to deliberate in the childhood recollection. Any other observing or thinking modus mentis may be.
+5. When getting up, the character itself is one of the things present, and is observed like any other.
+6. Observed, it reveals 3 sensations, as a container reveals its contents (above). A sensation has no name until it is observed.
+7. Only a sensation allows an act, and the act is getting up. The other things present can be observed and nothing more.
+8. Getting up is always difficulty 1, whatever the acting modus mentis's degree of assent. A failure has no penalty, and the act can be decided on again.
+9. Nothing in either scene costs a noetic point (§3).
 
 ## 6. Rules of action and rules of choice
 

@@ -185,9 +185,10 @@ Run `help` for the authoritative list. The essentials:
                             A WAY is its own symbol on its line and is always named — the area it
                             leads to (`"Test Yard"`) or the door, stair, path or climb itself
                             (`"Test Door"`); `in <area>` says which end it is looked at from when
-                            both could be. The kind `way` is the first view on the card (views
-                            stay there), else the first way on a line seen from where the member
-                            stands. Every card shows what stands in it, so `regions` lists the
+                            both could be. The kind `way` is the first way on a line seen from
+                            where the member stands (a view is a THING of its card). In the
+                            get-up, "myself" is the one `person` under the tree: `click observe
+                            person`, then its sensations by name (`click observe "aching legs"`). Every card shows what stands in it, so `regions` lists the
                             symbols of areas nobody has been to as `(disabled)`.
                             Follow with `choose <observation mm-id>` and `advance`. A mind that
                             has refused this very thing is listed `(refused)` by `regions`

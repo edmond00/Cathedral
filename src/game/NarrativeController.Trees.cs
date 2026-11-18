@@ -188,8 +188,9 @@ public partial class NarrativeController
             if (WayKeyOf(area, anchor) != null) continue;
             if (Mind.NodeOf(element, area) != null) continue;
             // What "myself" holds — a memory's fragments, the body's exhaustion — is looked at from
-            // there (ContentsOf), and "myself" is on the map from the start.
-            if (element is SelfPointOfInterest || SelfPointOfInterest.Holds(element)) continue;
+            // there (ContentsOf). "Myself" is among the unobserved only while getting up: in the
+            // childhood it is rooted from the start (StandMyself).
+            if (SelfPointOfInterest.Holds(element)) continue;
             // The plain way to ground already stood on is walked on the map and offers nothing to
             // look at: its line is drawn, and a click on the card goes there.
             if (anchor is SyntheticAreaObservationObject { Area: var to } && AreaVisits.IsWayBack(_scene, area, to, Period)) continue;

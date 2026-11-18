@@ -617,7 +617,8 @@ thing it stands for.
 | **observed** | the root of a tree under the card, for the member who observed it | its `?`, its speech mark, its acts |
 | a **way** (any state) | its own symbol **on its line**, and once observed the root of a tree hung from that spot | asks a mind to look at *that way*: one line, one symbol, nothing to choose |
 
-The kinds are `ElementKind`: `Way` (`∩`: a neighbouring area, a door, a stair, a path, a climb),
+The kinds are `ElementKind`: `Way` (`∩` on its line, and the letter of what it is once known:
+a neighbouring area, a door, a stair, a path, a climb),
 `Person` (`☺`), `Hostile` (`☹`, `Config.Symbols.EnemyChar` — the face an enemy wears on the fight's
 board, so what is seen in a place is recognised when the fight opens: a living thing that counts the played member an enemy — the same
 person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). The glyphs are
@@ -637,8 +638,19 @@ small tree can hang without covering a card and with least of the room under one
 hangs from it goes below or above. **A long line carries the symbol twice, near each card it
 leaves** (`WaySpot.Near`): in its middle it stood far from both, and a door looked at from the hall
 grew its tree a screen away, in the yard's section. Both are the same `WaySymbol` — they hover and
-click as one — and the tree hangs from the one near the end the way is now seen from
-(`WayFrame.From`). It replaced the `∩` in the tray, where a click on "a way" let the
+click as one — **until the way is observed**: its tree then hangs from the one near the end it was
+observed from (`WayFrame.From` = the root's `SeenFrom`) and the other is no longer drawn. It used
+to follow the member along the line, which read as a second way appearing and the tree jumping to
+it; a tree may go when what it was about is gone, but it does not move. A cell within a tree's
+reach of another line's symbol costs `Crowding`, so two symbols do not stand side by side where
+the lines leave room, and **a second way between the same two areas** — a stair and a chimney —
+which is one line on the map, stands on that shared line apart from the first rather than
+falling back to the card.
+
+**The symbol is `∩` while nothing is known of the way and the letter of what it is once it is**
+(`WayFrame.Glyph`, `LocationMap.KindLetter`: D door, S stair, P path, C cliff, W water crossing,
+X crossing, ^ scale, I slip-in), seen or gone by. The letter used to be a badge beside the symbol,
+which was two marks for one way. The plain way between neighbours has no letter and stays `∩`. It replaced the `∩` in the tray, where a click on "a way" let the
 mind choose among every way out of the area: exploring is the one thing a player should be able to
 aim exactly, and a symbol on the line says which way it is without a word. Three consequences:
 
@@ -649,12 +661,14 @@ aim exactly, and a symbol on the line says which way it is without a word. Three
   good from that end only — "go to the yard" means nothing in the yard — so `LocateAct` looks for
   it at the located end and then the other, the member is walked to whichever still affords it,
   and `ReconcileTrees` lapses it only when neither does.
-- **Pointing at a way lights its whole line** (`LocationMap.LitWay`): the symbol, a node of its
-  tree, or any cell of the line. A long line across a large map is hard to follow by eye.
-- **A view stays on its card.** A `LandscapePointOfInterest` is looked at from the area that has
-  it and its line is only routed from where the played member stands, so it is a thing of that
-  area (`∩` in the tray, its tree under the card); so is a way whose line could not be routed
-  (`LocationMap.DrawsWay` is the test). The kind `Way` in the tray now means only those.
+- **Pointing at a way lights its whole line** (`LocationMap.LitWay`) — when the way answers: a
+  symbol a click would observe, or a node of an observed way's tree. A symbol that cannot be
+  clicked lights nothing, and neither does the bare line.
+- **A view is a thing of its card.** A `LandscapePointOfInterest` is looked at from the area that
+  has it and its line is only routed from where the played member stands, so `ElementKinds.Of`
+  answers `Thing` for it: a `◆` in the tray, its tree under the card. `∩` on a card was read as a
+  way with no line, which it was not. Only a way whose line could not be routed at all is still a
+  `∩` in the tray (`LocationMap.DrawsWay` is the test).
 
 **The mind chooses, the player aims.** A click on an anonymous symbol names an area and a kind; the
 observation modus mentis then picked from the popup chooses which unobserved element of that kind it
@@ -736,7 +750,9 @@ painter, the label (grey or gold) and the click alike.
 painter's `Symbol` gives it to every symbol `Enabled` says yes to and to nothing else, whatever the
 symbol's ink says of it. Yellow ink alone did not tell a `✓` (a record) from a `◇` (a click), and
 a card a click walks to now says so too ("walk to the test yard", on the clickable label ground).
-Under the pointer a symbol is inverted, the way out included — it is tagged as an `ExitSymbol`, so
+Under the pointer a symbol is inverted **when a click would act on it or it has a text to read**
+(a node of a tree); one that answers nothing stays as it is and does not tick, and only its grey
+label says why. The way out is inverted like the rest — it is tagged as an `ExitSymbol`, so
 it ticks, highlights and labels as every other symbol does rather than through a path of its own.
 
 **What is done is said by the symbol clicked; a popup only ever asks by which mind** — or, for an
@@ -838,7 +854,10 @@ for the plain way between neighbours as for a door. It used to be "a neighbour a
 and a member sent back to an area to look at something walked there by a way nobody had ever
 taken; two areas each reached by other ways are not thereby joined. A plain way never taken that
 leads to ground already stood on is an act like any other, and teaches what a new way back teaches
-(`IsNewWayBack`, the way-back lessons). A click on a card does it; so does acting on, or looking at, something in another
+(`IsNewWayBack`, the way-back lessons). **A path's passed areas are seen, not visited**
+(`AreaVisits.Move`): following a track used to record the areas it ran past as stood in and the
+plain ways between them as taken, so the player could then walk for nothing to a barn they had
+only gone by. The path itself is the way now known. A click on a card does it; so does acting on, or looking at, something in another
 area. It replaced the Go Back verb, which priced the same walk at a difficulty-2 roll and asked for
 its destination on a second map. A move along a way *not* yet taken is still an act: a thought on
 the way's symbol and a roll. Thinking needs no presence; looking and acting do.
@@ -903,28 +922,37 @@ would stop them (see "Crime").
 
 #### The two opening phases
 
-Childhood and get-up are played on the same map: the `RestingPlace` (`AreaName` "Under the Tree",
+Childhood and get-up are played on the same place: the `RestingPlace` (`AreaName` "Under the Tree",
 `SectionName` "The Plain"), built once by `ReminescenceSceneFactory` and once by
-`GetUpSceneFactory`, with the same scenery around the body — a lone tree, the road, the horizon —
-and no way out.
+`GetUpSceneFactory`, with no way out. They are the first two screens a player meets, and each
+teaches one thing.
 
-**"Myself" is an element of that place** (`Scene.GetUp.SelfPointOfInterest`), drawn with the
-protagonist's glyph and rooted from the start by `StandMyself`, observed by nobody. It *holds* what
-each phase is about, exactly as a container holds its contents (`SelfPointOfInterest.Holds`,
+**"Myself" is an element of that place** (`Scene.GetUp.SelfPointOfInterest`). It *holds* what each
+phase is about, exactly as a container holds its contents (`SelfPointOfInterest.Holds`,
 `ContentsOf`): the fragments of the memory at hand in the childhood, the three facets of exhaustion
-in the get-up. Each is a named `◇` on its shelf, looked at one at a time.
+in the get-up. **What it holds is unnamed until it is looked at** — `observe · a memory`,
+`observe · a sensation` (`SelfPointOfInterest.Holding`) — because a memory is not known before it
+comes back; a script still names a fragment (`click observe "a scream"`).
 
-- **Childhood**: only what hangs from myself answers a click; the scenery is drawn and inert
-  (`IsEnabled` refuses the tray in `NarrationPhase.ChildhoodReminescence`). A fragment observed is
-  thought about, REMEMBER carries on to the next memory, and `ReplaceMemory` moves every branch from
-  the old scene's myself to the new one's — so by the last memory the tree under myself is the whole
-  childhood. A fragment looked at and not reached for stays as it was read, its act `Lapsed`.
-- **Get-up**: a new controller, so the childhood's tree is gone. The scenery may be looked at and
-  thought about, and `GetUpVerb` is possible on anything in the phase, so every thought ends on
-  getting up.
+- **Childhood: a minimal screen** (`MinimalScreen` → `LocationMap.Bare`, `MapFrame.Minimal`). No
+  panel, no card, no token, no line, no pad, no scenery: only the fragments (`◇`) and what was
+  made of each (`◆─¶─○`). "Myself" is rooted from the start by `StandMyself` and is not drawn —
+  it is whoever is remembering; `PaintMinimal` draws what hangs from it. REMEMBER carries on to
+  the next memory, and **nothing is carried over** (`ReplaceMemory` is `AdoptScene`): the screen is
+  the memory at hand. **A will is not asked here** (`Askable`, behind `ObservingMinds` /
+  `ThinkingMinds`): a will looks and thinks toward what it wants in a place, and a memory is no
+  place.
+- **Get-up: the first ordinary screen.** A new controller. Nothing is observed: the card shows
+  three things (the tree, the road, the horizon) and **one person, "myself"** (`ElementKinds.Of`
+  answers `Person` for it), to be noticed like the rest. Observed, it is drawn with the
+  protagonist's glyph and discloses its three sensations. **Only those lead to rising**
+  (`GetUpVerb.IsPossibleFor`: a `GetUpPointOfInterest`); the scenery can be looked at and no more.
+  **GET UP is always rolled against one six** and shown as that before the roll
+  (`ThinkingExecutor`: the verb's base, no willingness modifier) — it is the dice's tutorial; it
+  used to show `○` "cannot fail" and then roll.
 - `StandMyself` is called from `AdoptScene` **and** from `ResetSession`. The second matters:
   `ResetSession` clears every root, and with only the first call "myself" vanished the moment a
-  session was restarted, leaving a childhood with nothing on the map to click.
+  session was restarted, leaving a childhood with nothing to click.
 
 #### Driving it from a script
 
@@ -1345,7 +1373,7 @@ tidewatching for the one path that had none.
 Speaking function, a will counting since one that bears Speaking replies in every conversation.
 Without one the character has no reply in any conversation, and no speech mark under what they
 have observed — speaking to a companion needs a speaking mind too. A playtest
-reached exactly that, through 'a scream' → 'manure smelt' → 'nothing' → 'a dirty traveller', and
+reached exactly that, through 'a scream' → 'manure smelt' → 'something kept' (then called 'nothing') → 'a dirty traveller', and
 the farm's manure fragment grants shanty for it. Both rules are also failed (✗) by `--mm-audit`,
 since every audit exits before the launch check runs. Every fragment grants two or three modi mentis;
 the openings and endings three.
