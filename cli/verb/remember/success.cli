@@ -5,7 +5,7 @@
 # run. Every other script in the suite passes it, which is why this verb had no test.
 #
 # The childhood is the first screen of a run and is played in the dark: no sky, no world, no card,
-# no header, no status row — only the panel's frame, which the waking fills. It opens on ONE symbol, whoever is remembering. Looking at it says what
+# no header, no status row. It opens on ONE symbol, whoever is remembering. Looking at it says what
 # has been lost — who they are — and discloses the fragments of the first memory, unnamed until one
 # is looked at ("observe · a memory"). A fragment is looked at, thought about, and reached for; the
 # next memory's fragments then hang from the fragment just remembered, so the whole childhood grows

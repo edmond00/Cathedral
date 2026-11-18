@@ -955,14 +955,12 @@ in the get-up. **What it holds is unnamed until it is looked at** — `observe �
 comes back; a script still names a fragment (`click observe "a scream"`).
 
 - **Childhood: one tree in the dark** (`MinimalScreen` → `LocationMap.Bare`, `MapFrame.Minimal`,
-  `NarrativeUI.Blackout`). The screen is black to the window's edges: no header, no rule and no
-  status row inside the panel (`Chromeless`; the line that says a mind is at work stays), and the
-  sky and the world not drawn at all (`GlyphSphereCore.SkyRenderEnabled`, set with
+  `NarrativeUI.Blackout`). The screen is black to the window's edges: every terminal cell opaque,
+  no border, header or status row (`Chromeless`; the line that says a mind is at work stays), and
+  the sky and the world not drawn at all (`GlyphSphereCore.SkyRenderEnabled`, set with
   `WorldRenderEnabled` in `RunModeEnter` — the terminal is square and the window is not, so the
-  stars showed in the margins whatever the terminal painted). **The panel's frame stays**: it is
-  the one thing that is the same on both sides of the waking, when the sky opens round it and the
-  ordinary screen inside it. With no frame, the panel's edge appeared from nowhere at that moment.
-  The ☰ stays too, because a script and a mouse both pause by it.
+  stars showed in the margins whatever the terminal painted). Only the ☰ is left, because a script
+  and a mouse both pause by it.
   - **It opens on one symbol**: "myself", unobserved, drawn as the protagonist is (`PaintMinimal`,
     label `observe · myself`). Looking at it does not describe it: the observing mind is given
     `NeutralNarration.Awakening` to put in its own voice (`SelfPointOfInterest.Awakening`,
