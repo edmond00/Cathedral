@@ -66,7 +66,6 @@ public class ThinkingExecutor
     public async Task<ThinkingResponse?> GenerateThinkingAsync(
         ModusMentis thinkingModusMentis,
         NarrativeAnchor targetOutcome,
-        string keyword,
         NarrationNode node,
         List<ModusMentis> actionModiMentis,
         Protagonist protagonist,
@@ -165,8 +164,8 @@ public class ThinkingExecutor
             // ones, the will's own pick.
             // What this phase has already put a button on screen for is no way at all: a will is asked
             // for its way only through what is left, so a second thought reaches for another first step
-            // of up to the same length, as a goal choice does. A wait or a backtrack is told apart only
-            // once settled ("…until noon"), so it is read settled, and goes if that much was offered.
+            // of up to the same length, as a goal choice does. A wait is told apart only once
+            // settled ("…until noon"), so it is read settled, and goes if that much was offered.
             var afforded = subOutcomes.OfType<VerbAction>().ToList();
             var fresh = afforded.Where(v => proposed?.WasProposed(v) != true).ToList();
             var ways = Rules.Choice.WillPriority.WaysOn(thinkingModusMentis, scene, pov, actingMember, fresh);
@@ -198,10 +197,9 @@ public class ThinkingExecutor
                                 + (allOffered ? "every way through this has been offered."
                                    : willPath == null ? "no way here." : $"'{targetDescription}' is not on the way."));
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, refusal, NarrationKind.Reasoning, thoughtPart, cancellationToken));
-                return Finish(new List<ParsedNarrativeAction>());
+                return Finish(new List<ParsedNarrativeAction>(), declined: true);
             }
-            // A wait on the way lasts until the hour the path needs, a backtrack goes to the area it
-            // needs: not ones the player picks.
+            // A wait on the way lasts until the hour the path needs, not one the player picks.
             if (willPath!.First.Settled is { } settled && willStep.Verb.Settle(willStep, settled) is { } settledStep)
                 willStep = settledStep;
             willOnTheWay = !thinkingModusMentis.Will!.Matches(willStep);
@@ -211,12 +209,12 @@ public class ThinkingExecutor
             mayDoubt = false;
         }
 
-        // Asked again about an object it has declined this phase, a mind is not offered the decline:
-        // one question has one answer, so the second ask is the player insisting (ActionProposalLedger).
+        // Asked about an object a mind has declined already, a mind is not offered the decline: the
+        // second ask is the player insisting (ActionProposalLedger).
         bool Insisted()
         {
-            if (proposed?.HasDeclined(thinkingModusMentis, targetOutcome) != true) return false;
-            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] already declined this — asked again, no decline.");
+            if (proposed?.HasDeclined(targetOutcome) != true) return false;
+            Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] this was declined already — asked again, no decline.");
             return true;
         }
 
@@ -240,14 +238,14 @@ public class ThinkingExecutor
             if (isIgnore)
             {
                 // The first answer of this mind about this object: asked again, it will not be given.
-                if (!retrying && willStep == null) proposed?.Decline(thinkingModusMentis, targetOutcome);
+                if (!retrying && willStep == null) proposed?.Decline(targetOutcome);
                 await VoiceLeadAsync();
                 string ignoreNeutral = !retrying
                     ? NeutralNarration.ReasoningIgnore(targetDescription, isReminescence)
                     : NeutralNarration.IterationExhausted(targetDescription);
                 if (retrying) Console.WriteLine("ThinkingExecutor: nothing left to try — the chain stops.");
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, ignoreNeutral, NarrationKind.Reasoning, thoughtPart, cancellationToken));
-                return Finish(new List<ParsedNarrativeAction>());
+                return Finish(new List<ParsedNarrativeAction>(), declined: true);
             }
 
             string goalPhrase = resolved.ToNaturalLanguageString();
@@ -311,7 +309,7 @@ public class ThinkingExecutor
                 string noMeansNeutral = NeutralNarration.ReasoningNoMeans(targetDescription, goalPhrase, isReminescence);
                 await VoiceLeadAsync();
                 Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, noMeansNeutral, NarrationKind.Reasoning, thoughtPart, cancellationToken));
-                return Finish(new List<ParsedNarrativeAction>());
+                return Finish(new List<ParsedNarrativeAction>(), declined: true);
             }
 
             // ── Flavor: reasoning (thinking slot) ───────────────────────────────────
@@ -398,11 +396,14 @@ public class ThinkingExecutor
             string bareAction = StripPrefix(styledAction, ActionPrefix);
 
             // Difficulty: verb base ± the persona-fit modifier (eager −1 / willing 0 / reluctant +1),
-            // clamped to 1..10. Auto-success phases carry difficulty 0 (rendered with the ○ glyph).
+            // clamped to 0..10 — 1 at least for a crime (Verb.ActionDifficulty). Difficulty 0 rolls no
+            // dice and succeeds (the ○ glyph), as REMEMBER does. GET UP is the first roll a player
+            // makes and is always the verb's own 1, whatever the mind: it is shown as what it is
+            // rolled at (it used to show ○ and then roll against one six).
             var verbOutcome = (VerbAction)resolved;
-            int difficultyLevel = autoSuccess
-                ? 0
-                : Math.Clamp(verbOutcome.Verb.DifficultyFor(verbOutcome.Target) + fit.DifficultyModifier, 1, 10);
+            int difficultyLevel = isReminescence ? 0
+                : autoSuccess ? verbOutcome.Verb.BaseDifficulty
+                : verbOutcome.Verb.ActionDifficulty(verbOutcome.Target, fit.DifficultyModifier, scene, pov, actingMember);
 
             var action = new ParsedNarrativeAction
             {
@@ -413,7 +414,6 @@ public class ThinkingExecutor
                 DisplayText         = bareAction,
                 NeutralActionText   = goalPhrase,
                 ThinkingModusMentis = thinkingModusMentis,
-                Keyword             = keyword,
                 DifficultyLevel     = difficultyLevel
             };
 
@@ -476,12 +476,13 @@ public class ThinkingExecutor
 
         void Refusal(ModusMentis by, string text) => segments.Add(new ThinkingSegment(by, text, IsThought: false));
 
-        ThinkingResponse Finish(List<ParsedNarrativeAction> actions)
+        ThinkingResponse Finish(List<ParsedNarrativeAction> actions, bool declined = false)
         {
             var lastThought = segments.LastOrDefault(s => s.IsThought);
             var last        = segments.LastOrDefault();
             return new ThinkingResponse
             {
+                Declined           = declined,
                 Segments           = segments,
                 ReasoningText      = lastThought?.Text ?? "",
                 Actions            = actions,
@@ -533,6 +534,7 @@ public class ThinkingExecutor
 
         ThinkingResponse Finish(ParsedNarrativeAction? action) => new()
         {
+            Declined = action == null,
             Segments = segments,
             ReasoningText = segments.LastOrDefault(s => s.IsThought)?.Text ?? "",
             Actions = action == null ? new List<ParsedNarrativeAction>() : new List<ParsedNarrativeAction> { action },
@@ -580,7 +582,6 @@ public class ThinkingExecutor
                 DisplayText         = goalPhrase,
                 NeutralActionText   = goalPhrase,
                 ThinkingModusMentis = thinkingModusMentis,
-                Keyword             = previous.Keyword,
             };
             if (clickProbe(probe) is { } reason) { firstReason ??= reason; continue; }
             able.Add(m);
@@ -621,8 +622,7 @@ public class ThinkingExecutor
             DisplayText         = bareAction,
             NeutralActionText   = goalPhrase,
             ThinkingModusMentis = thinkingModusMentis,
-            Keyword             = previous.Keyword,
-            DifficultyLevel     = Math.Clamp(goal.Verb.DifficultyFor(goal.Target) + fit.DifficultyModifier, 1, 10),
+            DifficultyLevel     = goal.Verb.ActionDifficulty(goal.Target, fit.DifficultyModifier, scene, pov, actingMember),
         });
     }
 
@@ -771,6 +771,13 @@ public class ThinkingExecutor
                 Config.Debug.RefuseMeans--;
                 Console.WriteLine($"ThinkingExecutor: --refuse-means: {skill.DisplayName} refuses '{goalPhrase}' ({Config.Debug.RefuseMeans} left).");
                 return (PersonaFit.Refused, null);
+            }
+            // --willingness: eager or reluctant in place of willing, narrowed to what the rules offer.
+            if (Config.Debug.WillingnessOverride is { } forced and not Willingness.Unwilling)
+            {
+                var forcedFit = Offered(forced);
+                Console.WriteLine($"ThinkingExecutor: --willingness: {skill.DisplayName} is {forced} to '{goalPhrase}' -> {forcedFit}");
+                return (forcedFit, null);
             }
             return (PersonaFit.Willing, null);
         }
@@ -1121,6 +1128,15 @@ public class ThinkingResponse
     /// <summary>The last thought's text (<see cref="Segments"/>).</summary>
     public string ReasoningText { get; set; } = "";
     public List<ParsedNarrativeAction> Actions { get; set; } = new();
+
+    /// <summary>
+    /// The thinking mind itself came to nothing: it wanted none of what the element offers, its will
+    /// has no way through it, nothing was left for it to try, or — reconsidering — it wanted no part
+    /// of the act or found nobody else to carry it out. Its last thought is a refusal, and the same
+    /// mind asked the same again would answer the same. Not set when an acting mind refused a goal
+    /// the thinking mind chose: asked again, the thinking mind chooses another.
+    /// </summary>
+    public bool Declined { get; set; }
 
     /// <summary>
     /// Set when the action modus mentis refused the action (persona-fit reluctant/opposed): the

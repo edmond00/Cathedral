@@ -135,7 +135,7 @@ public sealed class AskToUseWorkshopVerb : DialogueVerb
 
     public override string VerbId            => "ask_to_use_workshop";
     public override string DisplayName       => "Ask to use workshop";
-    public override int    BaseDifficulty    => 1;   // the action only meets the master; the dialogue carries the stakes
+    public override int    BaseDifficulty    => 0;   // the action only meets the master, which is not rolled; the dialogue carries the stakes
     protected override string DialogueTreeId => TreeId;
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

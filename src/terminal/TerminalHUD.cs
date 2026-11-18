@@ -266,6 +266,28 @@ namespace Cathedral.Terminal
             }
         }
 
+        /// <summary>
+        /// Darkens a rectangle in place: every cell keeps its glyph and its hue, text and ground
+        /// alike multiplied by <paramref name="factor"/>. For a screen drawn in grounds as much as in
+        /// glyphs — a map of coloured cards — which <see cref="DimRect"/> would flatten to black with
+        /// a few grey letters left on it. Not idempotent: apply once to a frame freshly drawn.
+        /// Fully transparent cells are left untouched.
+        /// </summary>
+        public void ShadeRect(int x, int y, int width, int height, float factor)
+        {
+            int x0 = Math.Max(0, x), y0 = Math.Max(0, y);
+            int x1 = Math.Min(Width, x + width), y1 = Math.Min(Height, y + height);
+            for (int cy = y0; cy < y1; cy++)
+                for (int cx = x0; cx < x1; cx++)
+                {
+                    var cell = _view[cx, cy];
+                    Vector4 fg = cell.TextColor, bg = cell.BackgroundColor;
+                    if (fg.W >= 0.01f) fg = new Vector4(fg.X * factor, fg.Y * factor, fg.Z * factor, fg.W);
+                    if (bg.W >= 0.01f) bg = new Vector4(bg.X * factor, bg.Y * factor, bg.Z * factor, bg.W);
+                    cell.SetColors(fg, bg);
+                }
+        }
+
         #endregion
 
         #region Drawing Operations

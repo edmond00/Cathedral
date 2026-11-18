@@ -185,9 +185,6 @@ them on a page with seek buttons at the moments that matter.
 ```bash
 pip install numpy scipy soundfile pyloudnorm mido matplotlib librosa
 dotnet build
-# the CLI scripts need GloVe vectors (models/embeddings/, gitignored); Stanford is blocked, gensim's
-# GitHub mirror is not: download glove-wiki-gigaword-100.gz, gunzip, drop its first (header) line
-# into models/embeddings/glove.6B.100d.txt
 # timbre.py's reference SoundFont: GeneralUser GS (assets/audio/README.md says where); never shipped
 # live-path tests: xvfb-run, pulseaudio -D --exit-idle-time=-1, parec -d auto_null.monitor --format=s16le
 ```

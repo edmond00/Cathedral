@@ -21,21 +21,15 @@ public static class NeutralNarration
     // ── Observation ────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Builds the attention sentence that opens an observation, naming the object by a simple noun
-    /// phrase (e.g. "a straw figure", "Hugh Furrow"). The first object of a phase is "drawn to";
-    /// any later object is "shifts to". During the childhood reminescence phase
-    /// (<paramref name="isReminescence"/>) both are reworded as memory surfacing/drifting rather
-    /// than attention being drawn/shifted. The richer detail follows in
-    /// <see cref="ObservationDetail"/>.
+    /// Builds the attention sentence that opens an observation, naming the element by a simple noun
+    /// phrase (e.g. "a straw figure", "Hugh Furrow"). During the childhood reminescence
+    /// (<paramref name="isReminescence"/>) it is a memory surfacing rather than attention being drawn.
+    /// The richer detail follows in <see cref="ObservationDetail"/>.
     /// </summary>
-    public static string ObservationAttention(bool isFirst, string simpleName, bool isReminescence = false)
+    public static string ObservationAttention(string simpleName, bool isReminescence = false)
     {
         var s = NounPhrase(FirstPerson(simpleName));
-        if (isFirst)
-            return isReminescence ? $"A memory surfaces: {s}."
-                                  : $"My attention is drawn to {s}.";
-        return isReminescence ? $"My memory drifts to {s}."
-                              : $"My attention shifts to {s}.";
+        return isReminescence ? $"A memory surfaces: {s}." : $"My attention is drawn to {s}.";
     }
 
     /// <summary>
@@ -74,43 +68,9 @@ public static class NeutralNarration
     /// (<see cref="ObservationDetail"/>). Merged so the persona rewrite can be done in a single
     /// request that yields two or three short styled sentences.
     /// </summary>
-    public static string Observation(bool isFirst, string simpleName, string description, bool isReminescence = false,
+    public static string Observation(string simpleName, string description, bool isReminescence = false,
                                      bool descriptionIsClause = false)
-        => $"{ObservationAttention(isFirst, simpleName, isReminescence)} {ObservationDetail(description, isReminescence, descriptionIsClause)}";
-
-    /// <summary>
-    /// Neutral meaning of the area introduction that opens an observation sequence when the area or
-    /// the time of day has changed: where I am (<paramref name="where"/>, the area's prepositional
-    /// context — "inside the barn", "crossing the open grassland"), when (<paramref name="when"/>,
-    /// "at dawn"), when the area has one, its richer description as a second sentence, and, when
-    /// <paramref name="sights"/> is not empty, a closing list of what is around me — short, already
-    /// articled phrases ("a test bench", "a stranger").
-    /// </summary>
-    public static string AreaIntroduction(string where, string when, string? description,
-                                          IReadOnlyList<string>? sights = null)
-    {
-        var parts = new List<string> { $"I find myself {FirstPerson(where.Trim().TrimEnd('.'))}, {when}." };
-        if (!string.IsNullOrWhiteSpace(description))
-            parts.Add($"This place is {NounPhrase(FirstPerson(description))}.");
-        var listed = sights?.Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => FirstPerson(s.Trim())).ToList();
-        if (listed is { Count: > 0 })
-        {
-            var joined = listed.Count == 1
-                ? listed[0]
-                : $"{string.Join(", ", listed.Take(listed.Count - 1))} and {listed[^1]}";
-            parts.Add($"Around me {(listed.Count == 1 ? "is" : "are")} {joined}.");
-        }
-        return string.Join(" ", parts);
-    }
-
-    /// <summary>
-    /// Trailing sentence appended to a threatening enemy's observation neutral text: it flags the
-    /// just-described object as a present danger so the observation persona rewrites a note of caution
-    /// into the block. Used only when the first observation of a phase leads with a same-area enemy
-    /// (the "under threat" opener), and kept first-person so it merges into the observation voice.
-    /// </summary>
-    public static string ThreatCaution()
-        => "This one means me harm, right here — I must stay wary and ready.";
+        => $"{ObservationAttention(simpleName, isReminescence)} {ObservationDetail(description, isReminescence, descriptionIsClause)}";
 
     /// <summary>
     /// Trailing sentence for a way out already known — a neighbouring place already stood in, or a
@@ -120,16 +80,28 @@ public static class NeutralNarration
         => place ? "I have been there before; I know the way back." : "I have gone that way before; I know where it leads.";
 
     /// <summary>
-    /// Trailing sentence for an enemy who heard an action go wrong and has just walked in (an
-    /// earshot arrival): the caution of <see cref="ThreatCaution"/>, and why they are here.
+    /// What is said of an enemy who heard an act go wrong and has just walked in: nobody observed
+    /// them, so this stands on the map where an observation's text would.
     /// </summary>
     public static string ArrivalEnemyCaution()
         => "They heard me and have come looking for me — this one means me harm, and I must stay wary and ready.";
 
     /// <summary>
-    /// Trailing sentence for a witness who heard a crime go wrong and has just walked in. Not a
-    /// threat: they came to see what the noise was, and what they saw is the trouble — they will not
-    /// simply watch me walk away.
+    /// What is said of whoever confronts me, where an observation of them would be: nobody chose to
+    /// look at them, and nothing else may be looked at while they stand there.
+    /// </summary>
+    public static string ConfrontedBy(Scene.ConfrontationKind kind) => kind switch
+    {
+        Scene.ConfrontationKind.Enemy        => "This one means me harm, right here — I must stay wary and ready.",
+        Scene.ConfrontationKind.CameForYou   => ArrivalWitnessNotice(),
+        Scene.ConfrontationKind.FoundWaiting => "They have found me waiting in their house, and want to know what I am doing here.",
+        _                                    => "They have seen me where I have no business to be; they will not let me simply walk away.",
+    };
+
+    /// <summary>
+    /// The same of a witness who heard a crime go wrong and has just walked in. Not a threat: they
+    /// came to see what the noise was, and what they saw is the trouble — they will not simply watch
+    /// me walk away.
     /// </summary>
     public static string ArrivalWitnessNotice()
         => "They have come to see what the noise was, and they have seen what I was doing; they will not let me simply walk away.";
@@ -144,19 +116,6 @@ public static class NeutralNarration
                           : "Nothing here draws my attention.";
 
     /// <summary>
-    /// Neutral meaning for a Modus Mentis that let its focus go part-way through an observation: it
-    /// had already described something, was offered the objects this narration phase has not looked
-    /// at yet, and chose none of them. Distinct from <see cref="ObservationNothing"/>, which is a
-    /// whole block saying nothing here ever drew it — this one closes a block that <i>did</i> observe,
-    /// and says only that there is nothing further worth attending to right now. Appended as a last
-    /// sentence in the persona's voice, with no clickable keyword.
-    /// </summary>
-    public static string ObservationNothingMore(bool isReminescence = false)
-        => isReminescence
-            ? "Nothing more surfaces from my memory now, and I let the recollection fade."
-            : "Nothing more here is worth my attention now, and I let my focus go.";
-
-    /// <summary>
     /// Neutral meaning for a refused focus: a (new) observation Modus Mentis was handed
     /// <paramref name="targetPhrase"/> (already articled) to focus on, and chose to lose interest
     /// instead of observing it. Re-expressed in that persona's voice as the whole focus block —
@@ -166,16 +125,6 @@ public static class NeutralNarration
         => isReminescence
             ? $"I am not interested in the memory of {targetPhrase}, and let it fade."
             : $"I am not interested in {targetPhrase}, and turn my attention away.";
-
-    /// <summary>
-    /// The same refusal when the Modus Mentis turns to something else instead: just the dismissal of
-    /// <paramref name="targetPhrase"/>, rewritten alone as the block's first sentence; the observation
-    /// of what it turned to (<see cref="Observation"/> with a transition) is a second rewrite after it.
-    /// </summary>
-    public static string ObservationTurnedAway(string targetPhrase, bool isReminescence = false)
-        => isReminescence
-            ? $"I am not interested in the memory of {targetPhrase}."
-            : $"I am not interested in {targetPhrase}.";
 
     // ── Thinking ───────────────────────────────────────────────────────────────
 
@@ -848,6 +797,17 @@ public static class NeutralNarration
 
     /// <summary>"the hairpin" — an item named on its own, definite, lower-cased as <c>Item.WithArticle</c> is.</summary>
     public static string ItemPhrase(string displayName) => $"the {displayName.Trim().ToLowerInvariant()}";
+
+    /// <summary>
+    /// "the cart trail" — a thing of a place named on its own once it has been made out: definite
+    /// and lower-cased, since its display name is a title ("Cart Trail") and reads as a proper name
+    /// in a sentence. A name that opens with an article of its own keeps it ("a scream").
+    /// </summary>
+    public static string ThingPhrase(string displayName)
+    {
+        string name = displayName.Trim().ToLowerInvariant();
+        return name.StartsWith("the ") || name.StartsWith("a ") || name.StartsWith("an ") ? name : $"the {name}";
+    }
 
     // ── Noun-phrase normalisation ──────────────────────────────────────────────
 

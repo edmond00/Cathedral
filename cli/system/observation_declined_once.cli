@@ -1,0 +1,51 @@
+# observation — a thing is declined once, and the mind that declined is not asked again
+#
+# A click on a kind asks the mind chosen to look at one thing of that kind, of its own choosing —
+# or to say that nothing there draws it. The declining costs its point like any observation, stands
+# on the map as a refusal, and is spent for every mind: the next mind asked about the same kind in
+# the same area has to attend to something. The mind that declined is listed greyed in the popup
+# for that question and cannot be picked — asked again it would decline again, and the point would
+# be spent to hear it twice — so the second ask needs another mind.
+#
+# --refuse-focus stands in for the choice judge answering "nothing here", which --playground never
+# does: it forces the decline wherever one is allowed.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --refuse-focus
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Childhood Memory is asked to look at a thing, and declines.
+click observe thing
+choose childhood_memory
+advance 12 180
+expect-state texts "Nothing here draws my attention"
+expect-state trees refusal area="Test Yard" mind=childhood_memory
+expect-no-state trees element
+expect-state noetic points=2/3
+
+# Asked the same again, it is greyed in the popup and cannot be picked: no point is spent on it.
+click observe thing
+expect-state popup childhood_memory(refused)
+choose childhood_memory
+expect-state noetic points=2/3
+expect-no-state trees element
+
+# Another mind is asked, and may not decline: the thing's one declining is spent.
+choose comradeship
+advance 12 180
+expect-state trees element
+expect-state trees observer=comradeship
+expect-state noetic points=1/3
+
+# The refusal was about things in the yard. About people there, Childhood Memory may be asked.
+click observe person
+expect-state popup minds=[
+expect-no-state popup (refused)
+quit

@@ -1,341 +1,386 @@
-# IV. Of Items
+# IV. Items
 
-An item is described by two independent physical measures — what it *costs to carry* and what it
-*takes up* — and by one taxonomic declaration that settles which systems are permitted to consider
-it at all.
+Items are the things a character carries, wears, eats, fights with and sells. This chapter gives the rules that decide where an item can go, what it does, and what it costs.
+
+**In short**
+
+1. Every item has a burden (what it costs to carry) and a bulk (how much room it takes up), and the two are independent.
+2. The total burden a character carries may not exceed its Maximum Weight, set by the backbone score: 10, 50, 100, 150 or 200.
+3. A liquid can exist only inside a vessel; a liquid with no vessel cannot be picked up.
+4. Food, drink and inhalants push humors into one organ's queue: eaten into the paunch, drunk into the hepar, inhaled into the pulmones.
+5. A tool or weapon combined with an act adds dice equal to its level of use, from 1 to 10; a refused combination costs 1 noetic point.
+6. A garment only protects or impresses while it is worn.
 
 ## 1. Burden
 
-**Burden** is stated as a label rather than a mass, since the question is never how many pounds a
-thing weighs but how much of what one can carry it uses up.
+**Burden** is how much of a character's carrying capacity an item uses up.
 
-| Class | Cost | Of the sort |
+**Rules**
+
+1. Every item has one of four burden classes.
+2. The burden costs of everything held, worn, and stowed inside anything worn are added together.
+3. This total is compared with the character's **Maximum Weight** (a derived value of the backbone organ; see [Chapter I §6](01-anatomy.md#6-derived-values)).
+4. A character may not pick up an item that would take its total past its Maximum Weight.
+5. A character already past its Maximum Weight may not travel.
+6. Reason for the wide steps: a heavy item costs as much as 15 trinkets, so carrying armour or a barrel is a real decision.
+
+| Burden | Cost | Examples |
 |---|---|---|
 | Insignificant | 0 | a leaf, a hairpin, a coin |
 | Light | 1 | a knife, a hat, an apple |
 | Medium | 5 | a sword, a coat, a cooking pot |
 | Heavy | 15 | a shield, a cuirass, a barrel, a log |
 
-The intervals are wide by intention: a heavy thing costs as much as fifteen trinkets, so that to
-carry armour or a barrel is a decision rather than a rounding.
+The backbone is an organ scored 0 to 4. Its score sets Maximum Weight:
 
-The costs of everything held, worn, and stowed within anything worn are summed and weighed against
-the **backbone's** measure of capacity — ten at the ruined extreme, then fifty, a hundred, a hundred
-and fifty, two hundred, spread across the organ's own range. A body may not take up what would carry
-it past that sum, and one already past it may not travel.
+| Backbone score | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|
+| Maximum Weight | 10 | 50 | 100 | 150 | 200 |
+
+**Example.** A character with a backbone score of 1 can carry 50. A cuirass (15), a sword (5) and three apples (3) come to 23, which is allowed.
 
 ## 2. Bulk
 
-**Bulk** is the distinct question of room. Three sizes, in slots: **small three, medium six, large
-nine.** They are exact multiples of one another because every place a thing may be put holds three,
-six or nine slots, so that the arithmetic comes out even: a nine-slot place is exactly filled by
-three smalls, or one small and one medium, or one large.
+**Bulk** is how much room an item takes up, measured in **slots** (units of space in a place where items are put).
 
-Burden and bulk do not correlate and are not meant to. A log is heavy and large; a coil of wire may
-be light and large; a coin is insignificant and small.
+**Rules**
+
+1. Every item is small, medium or large.
+2. A small item takes 3 slots, a medium item 6, and a large item 9.
+3. Every place an item can be put holds 3, 6 or 9 slots, so the sizes always add up evenly.
+4. Burden and bulk are independent: a log is heavy and large, a coil of wire may be light and large, a coin is insignificant and small.
+
+**Example.** A 9-slot place is exactly filled by three small items, or by one small and one medium item, or by one large item.
 
 ## 3. Anchors
 
-Thirteen **anchors** exist upon the body: headgear, eyewear, neckwear, outerwear, bodywear,
-underwear, belt gear, right and left handwear, right and left hold, legwear, footwear. Each holds
-three slots (head, eyes, neck, handwear), six (legwear, footwear, underwear) or nine (bodywear,
-outerwear, belt gear, and each hold).
+An **anchor** is a place on the body where an item can be put.
 
-The rule of admission is short:
+**Rules**
 
-- The two **holds** — the hands — take anything their arm can bear (below).
-- Every **other** anchor is a garment slot and takes only a garment whose own slot maps to it.
-- **A liquid is refused everywhere.** It may exist only inside a vessel, never loose upon the body
-  and never in a pack.
+1. There are 13 anchors: headgear, eyewear, neckwear, outerwear, bodywear, underwear, belt gear, right handwear, left handwear, right hold, left hold, legwear and footwear.
+2. The two **holds** are the hands. A hold takes any item its arm can bear (see below).
+3. Every other anchor is a garment slot. It takes only a garment whose own slot belongs to that anchor.
+4. A liquid is refused by every anchor. It can exist only inside a vessel (§4).
+5. An item that has no place to go is kept in overflow until a place is free.
 
-What can be placed nowhere is held in overflow, awaiting a free place.
+| Anchor | Slots |
+|---|---|
+| Headgear, eyewear, neckwear, right handwear, left handwear | 3 |
+| Legwear, footwear, underwear | 6 |
+| Bodywear, outerwear, belt gear, right hold, left hold | 9 |
 
 ### What a hand can bear
 
-Each hold is governed by the arm behind it — the right hold by the right arm, the left by the left —
-and admits nothing heavier than that arm's **Hand Load** allows, the score being taken after its
-wounds:
+Each hold can carry items up to a burden set by the arm on its side.
 
-| Arm | Bears up to |
-|---|---|
-| 0 | light |
-| 1 | medium |
-| 2 | heavy |
+**Rules**
 
-An insignificant thing is within every arm's bearing, and an arm disabled by a High wound bears as
-an arm of nought. Only what sits directly in the hand is weighed: a bag is held by its handle, so a
-heavy thing within a medium bag is a medium burden to the hand that carries the bag. A container
-takes a heavy thing whatever the arms, and a heavy thing that neither a hand nor any container can
-take is refused, exactly as a pack that is full refuses.
+1. The right hold is governed by the right arm, and the left hold by the left arm.
+2. A hold takes nothing heavier than the arm's **Hand Load** allows (a derived value of the arm's score, after wounds; see [Chapter I §6](01-anatomy.md#6-derived-values)).
+3. Every arm can bear an insignificant item.
+4. An arm disabled by a High wound (the most severe wound, which disables what it afflicts; see [Chapter I §7](01-anatomy.md#7-wounds)) bears as an arm of score 0.
+5. Only what sits directly in the hand counts. A bag is held by its handle, so a heavy item inside a medium bag is a medium burden to the hand holding the bag.
+6. A container takes a heavy item whatever the arms can bear.
+7. A heavy item that no hand and no container can take is refused, in the same way a full pack refuses an item.
+8. An item placed in a hand stays there if a wound later weakens the arm. It is then held but no longer borne, which matters only for a weapon (§8).
 
-A thing placed in a hand while its arm was sound stays there when a wound weakens the arm; it is
-then held and no longer borne, which matters only to a weapon (§8).
+| Arm score | 0 | 1 | 2 |
+|---|---|---|---|
+| Heaviest burden held | light | medium | heavy |
 
 ## 4. Vessels and storage
 
-A **container** holds further items, and is of one of two kinds. The distinction is absolute: a
-**vessel** holds liquids and nothing else; a **storage** holds anything except liquids.
+A **container** is an item that holds other items.
 
-A vessel additionally holds **one kind of liquid at a time**. Ale may be added to a flask already
-holding ale, and to nothing else — there is no mixing, and a vessel must be emptied before it will
-take something different.
+**Rules**
 
-Containment is orthogonal to category. A pack is *worn* — it occupies an anchor and is a garment —
-and it *stores*; a jug upon a table stores without being worn. Both answer to the same rules. Slots
-inside a container are counted exactly as slots upon an anchor are, by the bulk of what is put in
-them.
-
-Whence a rule worth stating plainly: **a liquid with no vessel cannot be picked up at all.** It is
-refused by every anchor, refused by every storage, and there is nowhere else for it to go.
+1. Every container is either a **vessel** or a **storage**.
+2. A vessel holds liquids and nothing else.
+3. A storage holds anything except liquids.
+4. A vessel holds one kind of liquid at a time. Ale can be added to a flask that already holds ale, but to nothing else.
+5. Liquids are never mixed. A vessel must be emptied before it takes a different liquid.
+6. Being a container does not depend on category. A pack is a garment worn on an anchor and also a storage. A jug on a table is a storage that is not worn. Both follow the same rules.
+7. Slots inside a container are counted like slots on an anchor, by the bulk of each item put in.
+8. A liquid with no vessel cannot be picked up at all: every anchor and every storage refuses it, and there is nowhere else for it to go.
 
 ## 5. The seven categories
 
-Each item is of exactly one category, and the category decides which systems look at it.
+Every item belongs to exactly one category, and the category decides which game systems use it.
 
-| Category | Admitted to |
+| Category | Used by |
 |---|---|
-| **Weapon** | Combat: it grants a fighting medium and the skills borne upon it. May also be combined with an act. |
-| **Tool** | Narration: it may be combined with an act, lending dice. |
-| **Wearing** | Worn upon an anchor. May protect, may flatter, may hold. |
-| **Consumable** | Eaten, drunk or inhaled; pushes humors into an organ's queue. |
-| **Container** | Holds other items, not being itself worn. |
-| **Crafting** | Stock and goods of no other office — ore, timber, cloth, a padlock, a ledger. Admitted to nothing of its own. |
+| **Weapon** | Combat: it gives a fighting medium (the thing a blow is struck through) and the fighting skills that go with it. It can also be combined with an act. |
+| **Tool** | Narration: it can be combined with an act, adding dice. |
+| **Wearing** | Worn on an anchor. It may protect, impress, or hold items. |
+| **Consumable** | Eaten, drunk or inhaled. It pushes humors into an organ's queue. |
+| **Container** | Holds other items, and is not itself worn. |
+| **Crafting** | Stock and goods with no other use: ore, timber, cloth, a padlock, a ledger. No system uses it on its own. |
 | **Other** | A keepsake, a curiosity, a part cut from a corpse. |
 
-What an item is **made of** is a separate matter from its category, and every category may hold
-materials: a knife, a tunic and a barrel are as much stock for a trade as a bar of iron (see
-[X §1](10-crafting.md)).
+**Rules**
 
-Each category names its own subordinate kind rather than sharing one flat list, so that an
-impossible pairing cannot be stated. A liquid is precisely a drinkable consumable; nothing declares
-itself liquid.
+1. What an item is made of is separate from its category. An item of any category can hold crafting materials: a knife, a tunic and a barrel are as much stock for a trade as a bar of iron (see [Chapter X §1](10-crafting.md#1-materials)).
+2. Each category has its own list of sub-kinds, so an impossible pairing cannot exist.
+3. A liquid is exactly a drinkable consumable. No item is declared liquid in any other way.
 
 ## 6. Consumables
 
-A consumable is the only means by which humors enter the body from outside it, and it is therefore
-the counterpart of everything in [Chapter III](03-humors.md).
+A **consumable** is an item that is eaten, drunk or inhaled. It is the only way humors enter the body from outside (see [Chapter III](03-humors.md)).
 
-**How it is taken decides which organ receives it**, and the three are exhaustive:
+A **humor** is a unit of bodily fluid. Four organs each keep a **queue** of humors (an ordered row of 49 places).
+
+### Where it goes
+
+**Rules**
+
+1. How a consumable is taken decides which organ's queue receives it.
+2. Its **composition** (the list of humors it contains) is pushed one by one into the front of that queue.
+3. Each humor pushed in moves one humor out of the back of the queue.
+4. A rich consumable can therefore push several older humors out of reach.
 
 | Taken | Received by |
 |---|---|
-| Eaten | the paunch |
-| Drunk | the hepar |
-| Inhaled | the pulmones |
+| Eaten | the paunch (stomach) |
+| Drunk | the hepar (liver) |
+| Inhaled | the pulmones (lungs) |
 
-**What it yields is a composition** — a short list of humors, pushed one by one into that organ's
-queue at the front, each displacing whatever stood at the back. Consuming a thing is thus not merely
-nourishment: it is an intervention in the queue, and a rich one can push several places' worth of
-whatever was there out of reach.
+### What it contains
 
-The composition of any particular item is drawn from two declarations.
+**Rules**
 
-**Its recipe** is a weighted set of the humors it may yield. The weights are relative rather than
-proportional: an apple that is mostly pulp with a little sugar will usually yield pulp, sometimes
-sugar. The draw is made **with replacement**, so the same humor may appear several times, and the
-characteristic humor of a thing tends to dominate what it delivers.
+1. Each consumable has a **recipe**: a weighted list of the humors it may contain.
+2. The weights are relative. An apple that is mostly pulp with a little sugar usually yields pulp, and sometimes sugar.
+3. Humors are drawn from the recipe with replacement, so the same humor can appear several times.
+4. The item's **richness** decides how many humors are drawn. It measures how sustaining the item is, not how large.
+5. The draw is made once for each individual item, and kept. Two apples gathered separately can contain different humors.
+6. An item is therefore a specific set of humors, never an average.
 
-**Its richness** decides how many humors are drawn, and reflects how sustaining the thing is rather
-than how large it is:
-
-| Richness | Humors yielded | Of the sort |
+| Richness | Humors drawn | Examples |
 |---|---|---|
-| Sparse | 1–2 | foraged leaves and roots, scraps, barely food |
+| Sparse | 1–2 | foraged leaves and roots, scraps |
 | Modest | 2–3 | small fruit, mushrooms, most drinks |
 | Hearty | 3–4 | vegetables, tree fruit, fresh fish, milk |
 | Rich | 4–5 | bread, meat, cheese, eggs, cured goods |
 
-**The draw is made once, per item, and kept.** Two apples gathered separately are two different
-apples: what each will do to a queue was settled when it came into being and does not change
-afterwards. An item is therefore a specific quantity of specific humors, never an average.
+### Knowing what it contains
 
-**What may be discerned of it beforehand is the nose's business.** The **Humor Recognition** measure
-decides how much of a composition can be read before the thing is taken — nothing at all at a ruined
-nose, the single most characteristic humor at the next, three at the next, and the whole of it at
-the best. A poor nose does not change what a thing will do; it changes whether that was knowable.
+**Rules**
 
-**Hard fare requires teeth.** An item declared hard cannot be eaten by a body whose teeth stand at
-nought or are disabled by a High wound. This is the whole of what the teeth do outside a fight.
+1. A character can read part of a composition before taking the item.
+2. How much is set by **Humor Recognition** (a derived value of the nose's score; see [Chapter I §6](01-anatomy.md#6-derived-values)).
+3. The composition is listed with the most characteristic humors first (those with the highest recipe weight), and recognition reveals it from the front.
+4. A poor nose does not change what an item does. It only changes how much of it can be known beforehand.
+
+| Nose score | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| Humors recognised | none | 1 | 3 | all |
+
+### Hard food
+
+**Rules**
+
+1. Some food is **hard**.
+2. A character whose teeth score is 0, or whose teeth are disabled by a High wound, cannot eat hard food (its **Chewing Strength**, a derived value of the teeth, is "weak").
+3. This is the only thing the teeth do outside a fight.
 
 ## 7. Implements
 
-An item of the **tool** or **weapon** category may be combined with an act during narration — a
-weapon being a tool also, if a specialised and often clumsy one — and lends **bonus dice equal to
-its level of use**, which runs from one to ten. Higher levels denote more specialised or potent
-implements. The level is lent whole: nothing abates it, and a fine implement in an unpractised hand
-lends exactly what it lends in a practised one. An item made for some single act may be combined
-whatever its category, of which more below.
+An **implement** is a tool or weapon combined with an act during narration (see [Chapter VI](06-narration.md)) to add dice to its roll.
 
-Only one implement may be combined with any act.
+### Level of use
 
-### The three standings of an act
+**Rules**
 
-Every manner of acting stands in one of three relations to implements, and the relation is fixed —
-it does not vary with the thing acted upon.
+1. An item of the Tool or Weapon category can be combined with an act. A weapon counts as a tool too, often a clumsy one.
+2. An item made for one single act can be combined with that act whatever its category (see "Made for" below).
+3. Only one implement can be combined with an act.
+4. An accepted implement adds **bonus dice equal to its level of use**, which runs from 1 to 10.
+5. Higher levels belong to more specialised or more powerful implements.
+6. The full level is always added. Nothing reduces it, and a fine implement adds the same dice in an unskilled hand as in a skilled one.
 
-- Most admit an implement without requiring one. The work can be done with the hands, and a thing
-  in them may make it go better.
-- Some **admit none at all**. Where an act is speech, or the turning of a sense upon something, or
-  thought, or waiting, or walking upon level ground, there is no work for a held thing to bear
-  upon, and an implement offered to such an act is refused.
-- Some **require one**, and are refused outright without it. For these it is not enough to carry
-  the thing: it must be combined with the act. Ore is not taken from rock, nor a hide from a
-  carcass, with the fingers.
+### What each act allows
 
-It is to be observed that an implement may be **made for** a particular act. Two sorts are: the
-implement a required act calls for, and the thing whose whole purpose is some single work. Such a
-pairing is accepted without further question, and the second sort is the one road by which an
-implement reaches an act that admits none.
+Every manner of acting has one fixed relation to implements. It does not change with the thing acted on.
 
-**A thing made for one work is good for no other.** The single-purpose implement is refused
-everywhere outside its purpose, as flatly as it is accepted within it: ground lenses will not break
-ore out of a seam, and no measure of resolve or dexterity will make them. This is the price of the
-privilege, and it is what keeps a specialised thing from being simply better than a general one.
-The implement a *required* act calls for is under no such restriction — a knife is what a carcass is
-opened with, and remains an ordinary candidate for anything else.
+**Rules**
 
-Nothing declares which implements are of which sort; it is learned by holding one up to a thing.
+1. **Most acts allow an implement but do not require one.** The work can be done with bare hands, and an implement can help.
+2. **Some acts allow no implement at all**: speech, using a sense, thought, waiting, and walking on level ground. An implement offered to such an act is refused.
+3. **Some acts require an implement**, and are refused without one. Carrying the item is not enough: it must be combined with the act. Ore cannot be taken from rock, nor a hide from a carcass, with bare fingers.
 
-**The act of striking somebody asks a different question altogether.** A blow is not work an
-implement assists with; it is struck *through* a medium, and the things one fights through are a
-closed set — a weapon, or the body. So no judgement is passed there: a weapon offered to a blow is
-accepted whatever else it was made for, and anything that is not a weapon is refused, however
-ingenious the case for it. Which weapon is taken up decides which blow can be thrown, for which see
-[Chapter VIII §5](08-fighting.md#5-the-opening-blow).
+### Made for an act
+
+**Rules**
+
+1. An implement can be **made for** a particular act. Two sorts are: the implement that a requiring act calls for, and an item whose whole purpose is one single kind of work.
+2. An implement made for the act is accepted without further judgement.
+3. A single-purpose item is the only way an implement can reach an act that otherwise allows none.
+4. A single-purpose item is refused for every other act, whatever the character's skill. Ground lenses will not break ore out of a seam.
+5. Reason: this keeps a specialised item from simply being better than a general one.
+6. The implement a requiring act calls for has no such limit. A knife opens a carcass and remains a normal candidate for anything else.
+7. Nothing tells the player which implements are of which sort. It is learned by trying one.
+
+### Striking someone
+
+**Rules**
+
+1. A blow is not work that an implement helps with. It is struck through a **medium**: a weapon or the body.
+2. A weapon offered to a blow is accepted, whatever else it was made for.
+3. Anything that is not a weapon is refused for a blow.
+4. Which weapon is chosen decides which blow can be struck (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)).
 
 ### Proficiency
 
-Whether a combination is accepted at all is governed by the **hands'** measure, which yields four
-bands: None, Low, Medium and High (see [Chapter I §6](01-anatomy.md#6-the-derived-measures)).
+**Tool Usage Proficiency** (a derived value of the hands' score; see [Chapter I §6](01-anatomy.md#6-derived-values)) decides which implements a character can make use of. The hands organ is scored 0 to 6.
 
-The offered implement is weighed against the act, and the verdict returned is of a degree — that
-the implement is the very thing, that it is another thing which would nonetheless serve properly,
-or that it might be made to serve clumsily. **The band decides which degrees suffice.**
+| Hands score | 0 | 1–2 | 3–4 | 5–6 |
+|---|---|---|---|---|
+| Proficiency | None | Low | Medium | High |
+
+**Rules**
+
+1. When an implement is offered, the game judges how well it fits the act and returns one of four verdicts.
+2. The proficiency band decides which verdicts are good enough. A failed check refuses the combination.
+3. At None (hands score 0, or hands disabled by a High wound), every implement is refused for everything.
+4. A skilled hand does not get more dice from an implement. It can use more kinds of things as implements.
 
 | Verdict | Accepted at |
 |---|---|
-| The implement is the thing the work is done with | Low, Medium, High |
-| Another thing, which would do the work properly | Medium, High |
+| It is the thing the work is done with | Low, Medium, High |
+| It is another thing that would do the work properly | Medium, High |
 | It could be made to serve, clumsily and with difficulty | High |
-| It cannot do this work, however handled | never |
+| It cannot do this work | never |
 
-Whence a practised hand is not one that draws more from an implement, but one that can make more
-things serve as implements. A body at **None** — its hands at nought, or disabled by a High wound —
-can use nothing for anything, however well chosen.
+### Cost of a refusal
 
-**A refused combination costs a noetic point** (see [Chapter VI](06-narration.md#3-the-phase-and-its-budget)),
-and this is true of every refusal alike: the wrong implement, an act that admits none, an implement
-held to work it was not made for, and a hand too unpractised for the verdict returned. An accepted
-one costs nothing, being part of an act already deliberated upon. Choosing well is therefore the
-whole of the economy here.
+**Rules**
+
+1. A refused combination costs 1 **noetic point** (the points a character spends to observe and think in a place; see [Chapter VI §3](06-narration.md#3-the-visit-and-noetic-points)).
+2. This applies to every refusal: the wrong implement, an act that allows none, a single-purpose item used outside its purpose, and a hand not skilled enough for the verdict.
+3. An accepted combination costs nothing, because it is part of an act already being attempted.
 
 ## 8. Weapons
 
-A weapon is the one category that reaches into combat, and it does so by two declarations.
+A **weapon** is the only item category used in combat.
 
-**Its level** is the bonus dice it lends when it is the medium a blow is struck through — the same
-office an organ's score performs for an unarmed blow (see [Chapter VIII
-§3](08-fighting.md#3-mediums)). A made weapon always surpasses a bare limb: a hand or a foot reaches
-at most three, and every weapon not improvised is of level four, five or six.
+**Rules**
 
-**Its bulk** is never small. Every weapon is medium or large, so that no hand, of nine slots, can
-hold two.
+1. A weapon's **level** is the bonus dice it adds when a blow is struck through it, in the same way an organ's score does for an unarmed blow (see [Chapter VIII §3](08-fighting.md#3-mediums)).
+2. A bare hand or foot reaches level 3 at most. Every weapon that is not improvised is level 4, 5 or 6.
+3. Every weapon is medium or large in bulk, so no hand (9 slots) can hold two.
+4. A weapon's burden decides which arms can fight with it, by the table in §3: a light weapon suits any arm, a medium weapon an arm of score 1 or more, a heavy weapon only an arm of score 2.
+5. Weapons exist in all three of these burdens.
+6. A weapon's **category** (long blade, axe, bow, blunt and others) decides which **fighting skills** (the moves a fighter learns; see [Chapter VIII §4](08-fighting.md#4-fighting-skills)) it carries.
+7. A fighting skill belongs to a weapon category, not to one weapon. Every long blade carries the same skills, and a skill learned with one long blade works with every other.
+8. Two weapons of the same level but different categories offer different moves. What a fighter can do depends on what it has learned as much as on what it carries.
+9. An **improvised weapon** (a length of wood picked up rather than made) is level 0. It carries its category's skills but adds no dice to them.
+10. As an implement (§7), an improvised weapon adds 1 die.
 
-**Its burden** decides which arms can fight with it, by the bearing of §3: a light weapon serves
-any arm, a medium one an arm of one or more, a heavy one only an arm of two. Weapons are made in all
-three burdens.
+### Using a weapon in a fight
 
-**Its category** — long blade, axe, bow, blunt, and the rest — decides *which fighting skills it
-bears*. A skill is written against a category rather than against a particular weapon, so every long
-blade carries the same repertoire, and a body that has learned it keeps it across every long blade
-it ever holds.
+**Rules**
 
-Whence: a weapon is not simply better or worse than another. Two weapons of the same level and
-different categories offer different things to do, and what a fighter can do with one is decided by
-what they have learned as much as by what they carry.
-
-**An improvised weapon is of level nought.** A length of wood picked up rather than made bears its
-category's skills as any weapon does, but lends no dice to them: the blow it carries is the
-fighter's learning and nothing more. As an implement it lends a single die.
-
-A weapon must be held directly in a hand, and be within that hand's arm's bearing, to serve as a medium within a fight; one in a pack or a bag is a burden and nothing else, and one too heavy for the arm that holds it is held and not wielded. For the blow that *begins* a fight the test is different and stricter: the medium is the weapon combined with the act, and a weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)); a weapon so taken up must be within the bearing of one of the two arms, or the blow is refused.
+1. During a fight, a weapon serves as a medium only if it is held directly in a hand and is within that arm's Hand Load (§3).
+2. A weapon in a pack or a bag is only a burden.
+3. A weapon too heavy for the arm that holds it is held, not wielded.
+4. The blow that starts a fight uses a stricter test: the medium is the weapon combined with that act. A weapon carried but not taken up counts for nothing (see [Chapter VIII §5](08-fighting.md#5-the-opening-blow)).
+5. A weapon taken up for that opening blow must be within the Hand Load of one of the two arms, or the blow is refused.
 
 ## 9. Garments
 
-A garment occupies an anchor, and **must do at least one of three further things** — a garment that
-neither protects, nor flatters, nor holds is dead burden upon an anchor.
+A **garment** is an item worn on an anchor.
+
+**Rules**
+
+1. A garment must do at least one of three things: protect, impress (attire), or hold items.
+2. Protection and attire work only while the garment is **worn**, on an anchor its own slot belongs to. A coat or armour carried in a pack does nothing.
 
 ### Protection
 
-A garment may carry from one to three **defence dice**, added to the defender's pool when a blow is
-aimed at the body section its slot covers. Ordinary clothing carries none. The sections and their
-slots:
+**Rules**
 
-| Section | Covered by |
+1. A garment may carry 1 to 3 **defence dice**. Ordinary clothing carries none.
+2. Defence dice are added to the defender's dice when a blow is aimed at the body section the garment's slot covers.
+3. Contributions add up: legwear and footwear both guard the lower limbs, and the trunk can be covered by three layers.
+4. Left and right are not told apart.
+5. Belt gear guards nothing.
+6. There is no cap on the total. Reason: garments are authored so that no section can be stacked to near-unhittable (three trunk garments of 3 dice each would add 9).
+
+| Body section | Covered by |
 |---|---|
-| Encephalon | headgear |
-| Visage | neckwear, eyewear |
+| Encephalon (head) | headgear |
+| Visage (face) | neckwear, eyewear |
 | Trunk | outerwear, bodywear, underwear |
 | Upper limbs | handwear |
 | Lower limbs | legwear, footwear |
 
-Contributions **accumulate** — legwear and footwear both guard the lower limbs, and a trunk may be
-layered three deep. Left and right are not distinguished. Belt gear guards nothing.
-
-The accumulation is not capped, so the discipline is one of authorship: were three trunk garments
-each to carry three dice, nine would stand upon natural defence and a torso would be practically
-unhittable.
-
 ### Attire
 
-A garment may read well to as many as three **social standings**, and grants one bonus die in
-conversation with a person of that standing. There are eight:
+A **social standing** is the class of person someone belongs to. A garment can appeal to up to 3 standings.
+
+**Rules**
+
+1. A garment gives 1 bonus die in conversation with a person of a standing it appeals to (see [Chapter VII §2](07-social.md#2-the-conversation)).
+2. Garments appealing to the same standing add up.
+3. One garment never gives more than 1 die to any one standing, however many standings it appeals to.
+4. The total bonus from all worn garments for one standing is capped at 6 dice.
+5. Reason for the cap: without it, a character could dress past every difficulty a conversation can set.
+6. Because the Pauper standing exists, every garment appeals to someone. Plain, worn or makeshift dress is a bonus among people who have nothing.
 
 | Standing | Who |
 |---|---|
-| **Bourgeois** | Craftsmen, millers, shopkeepers — those who own their trade |
+| **Bourgeois** | Craftsmen, millers, shopkeepers: those who own their trade |
 | **Aristocrat** | Gentry and titled households |
 | **Peasant** | Those who work another's land: farmhands, herders, bondmen |
-| **Military** | Men-at-arms, guards, any who carry a weapon for a living |
+| **Military** | Men-at-arms, guards, anyone who carries a weapon for a living |
 | **Urban** | Townsfolk without a trade of their own |
 | **Religious** | Those set apart by devotion: druids, hermits |
-| **Outlaw** | Those outside the law, and content there |
-| **Pauper** | The destitute — beggars, vagrants, any who have nothing |
+| **Outlaw** | Those outside the law |
+| **Pauper** | The destitute: beggars, vagrants, anyone who has nothing |
 
-The last is not an afterthought but the thing that makes the set complete. Plain, worn and makeshift
-dress recommends a person nowhere else; among people who have nothing it marks them as one of their
-own rather than as somebody to be wary of. Because that standing exists, **every** garment says
-something to somebody, and the humblest — a sack-cloth mitt, a belt, an empty purse — is never dead
-weight.
-
-Garments appealing to the same standing **accumulate**, so a townsman's cap, tunic and breeches
-together are worth three dice to a craftsman and nothing whatever to a hermit. A single garment
-never grants more than one die to any one standing, however many standings it flatters. The total
-any outfit can earn with one standing stops at **six**: past that a person is already as well turned
-out as that standing can read, and without the ceiling one could dress past every difficulty a
-conversation is able to pose.
-
-Both protection and attire require the garment to be **actually worn** — sitting upon an anchor its
-own slot maps to. A fine coat carried in a pack impresses nobody, and armour in a pack stops
-nothing.
+**Example.** A townsman's cap, tunic and breeches that all appeal to Bourgeois give 3 dice when talking to a craftsman, and 0 when talking to a hermit.
 
 ### Holding
 
-A garment may be a container, as [§4](#4-vessels-and-storage) describes.
+**Rules**
+
+1. A garment may also be a container, following the rules of §4.
 
 ## 10. Coin
 
-Three denominations — copper, silver and gold — and **there is no conversion** between them: a
-purchase must be met with enough coins of the item's own denomination. Every thing offered for sale is
-priced in copper, a copper being about the price of an egg; silver and gold buy no goods.
+Coin is the money of the game. Every item has a price, calculated from what it is.
 
-An item bears a **reference price**, from one to ninety, and it is not set at will: it is reckoned
-from what the thing is, by one rule for everything.
+### Coins
 
-**Price = matter × craftsmanship + labour + function + rarity.**
+**Rules**
 
-**Matter** is what the thing is made of. An item of crafting materials holds as many units of each as
-its burden gives (see [X §1](10-crafting.md)), and is valued at its dearest material:
+1. There are three coins: copper, silver and gold.
+2. Coins never convert into one another. A purchase must be paid in coins of the item's own denomination.
+3. Every item for sale is priced in copper. A copper is about the price of an egg.
+4. Silver and gold buy no goods.
+
+### The reference price
+
+**Rules**
+
+1. Every item has a **reference price** in copper.
+2. **Price = matter × craftsmanship multiplier + labour + function + rarity.**
+3. The result is rounded to the nearest whole copper and kept between 1 and 90.
+4. A few items are worth something no part of the rule measures, and have a fixed price of their own. A promissory note is worth its debt.
+
+### Matter
+
+**Matter** is the value of what the item is made of.
+
+**Rules**
+
+1. An item made of crafting materials holds a number of units of each set by its burden (see [Chapter X §1](10-crafting.md#1-materials)).
+2. Its matter is that number of units × the copper value of its dearest material.
+3. A refined material is always dearer per unit than the raw material it is made from.
+4. An item with no crafting material (food, drink, a feather, a letter) is valued per portion, by what kind of thing it is (second table).
+5. An item with no crafting material is 1 portion when insignificant or light, 2 portions when medium, and 4 when heavy.
+6. An item whose kind is not in the second table is worth 1 copper per portion.
 
 | Material | Copper per unit |
 |---|---|
@@ -348,15 +393,19 @@ its burden gives (see [X §1](10-crafting.md)), and is valued at its dearest mat
 | Cloth | 3 |
 | Leather | 4 |
 
-A refined material is always dearer than the raw one it is made from. A thing of no crafting material
-— food, drink, a feather, a letter — is valued by what it is: one copper for a plant, a flower, an egg,
-water or a page; two for a herb, fodder, seed, fuel or liquor; three for fruit, berries, nuts,
-vegetables, grain, mushrooms, dairy, bread or a remedy; four for fish, shellfish or honey; five for
-meat. That is one portion; a medium burden is two portions, a heavy one four.
+| Copper per portion | Kind of item |
+|---|---|
+| 1 | plant, flower, egg, feather, water and other plain drinks, a page of writing |
+| 2 | herb, fodder, seed, fuel, liquor |
+| 3 | fruit, berries, nuts, vegetables, grain, mushrooms, dairy, bread, remedy |
+| 4 | fish, shellfish, honey |
+| 5 | meat |
 
-**Craftsmanship** is how much labour stands between the thing and the world it came from:
+### Craftsmanship
 
-| Craftsmanship | Matter × | Labour + | Of the sort |
+**Craftsmanship** is how much work stands between the item and the raw world. It multiplies matter and adds a flat labour charge.
+
+| Craftsmanship | Matter × | Labour + | Examples |
 |---|---|---|---|
 | Raw | 1 | 0 | gathered, cut or dug: a log, an ore, a turnip |
 | Stock | 1½ | 1 | a material worked once: an iron bar, flour, ale |
@@ -364,29 +413,82 @@ meat. That is one portion; a medium burden is two portions, a heavy one four.
 | Fine | 4 | 4 | a thing made well: a doublet, a censer, a ledger |
 | Masterwork | 5 | 5 | a master's piece |
 
-Whatever is eaten or drunk, whatever is of no crafting material, and loose raw material are reckoned
-Raw; a thing worked beyond that — flour, ale, spun thread, a thrown jug — is reckoned at its proper
-craftsmanship. A garment worn only by the aristocracy is Fine, one worn only by paupers Stock; every
-other made thing is Plain.
+**Rules**
 
-**Function** is what the thing does: eight copper for each level a weapon stands above the best bare
-limb (see [VIII](08-fighting.md)), twelve for each die of armour, two for each level of use of
-an implement above the first (see §7), and a quarter of a copper for each slot of room in a container.
+1. Anything eaten or drunk, anything with no crafting material, and loose raw material are Raw by default.
+2. An item worked beyond that (flour, ale, spun thread, a thrown jug) has its own craftsmanship.
+3. A garment worn only by aristocrats is Fine. A garment worn only by paupers is Stock.
+4. Every other made item is Plain.
 
-**Rarity** is how hard the thing is to come by, whatever it is made of, and is added rather than
-multiplied: nothing for the common, five for the uncommon, twelve for the scarce, thirty for the rare,
-sixty for the precious. A few things are worth what no part of the rule can see — a promissory note is
-worth its debt — and bear a price of their own.
+### Function
 
-Two consequences follow, and they are the reason for the rule. **Nothing is worth less than what it
-breaks down into** at a station, since craftsmanship never multiplies matter by less than one; and
-**everything a trade makes is worth more than the material it costs** (see [X](10-crafting.md)).
+**Function** is the value of what the item does. The parts below are added together.
 
-A merchant's catalogue applies a variation of up to fifteen parts in a hundred either way atop the
-reference price, rounded and never less than one copper, and confines the result to the range one
-to a hundred, so the same thing is not worth precisely the same in two places. A drink is sold in the
-vessel that holds it, at the two prices together.
+| Item | Copper added |
+|---|---|
+| Weapon (not improvised) | 8 for each level above 3 (the best bare limb; see [Chapter VIII §3](08-fighting.md#3-mediums)) |
+| Armour | 12 for each defence die |
+| Tool | 2 for each level of use above 1 (see §7) |
+| Container | ¼ for each slot of room |
+
+### Rarity
+
+**Rarity** is how hard the item is to come by. It is added, not multiplied.
+
+| Rarity | Common | Uncommon | Scarce | Rare | Precious |
+|---|---|---|---|---|---|
+| Copper added | 0 | 5 | 12 | 30 | 60 |
+
+### What the rule guarantees
+
+**Rules**
+
+1. No item is worth less than the material it breaks down into at a station, because craftsmanship never multiplies matter by less than 1.
+2. Everything a trade makes is worth more than the material it costs (see [Chapter X](10-crafting.md)).
+
+**Example.** A knife is light, so it holds 2 units of metal and 2 of wood. Its dearest material is metal at 2½, so matter is 2 × 2½ = 5. It is Plain: 5 × 2 + 2 = 12. It is a tool of level of use 3, so function adds (3 − 1) × 2 = 4. It is common, so rarity adds 0. Its reference price is 16 copper.
+
+### Merchants' prices
+
+**Rules**
+
+1. A merchant's price varies from the reference price by up to 15 % either way (rounded, and at least 1 copper either way).
+2. The result is kept between 1 and 100 copper.
+3. The same item is therefore not priced exactly the same by two merchants.
+4. A drink is sold in a vessel, at the reference prices of drink and vessel added together.
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| Anchor | A place on the body where an item can be put; there are 13. |
+| Bulk | How much room an item takes: small 3 slots, medium 6, large 9. |
+| Burden | How much carrying capacity an item uses: 0, 1, 5 or 15. |
+| Composition | The specific humors one consumable contains. |
+| Container | An item that holds other items: a vessel or a storage. |
+| Craftsmanship | How much work an item embodies; multiplies its matter in the price. |
+| Defence dice | Dice a worn garment adds to the defender against blows on the section it covers. |
+| Fighting skill | A move in combat, carried by a weapon category. |
+| Hand Load | The heaviest burden a hand can hold, set by the arm on its side. |
+| Hepar, paunch, pulmones | The liver, the stomach and the lungs; three of the organs that keep humor queues. |
+| Hold | One of the two hands, as an anchor. |
+| Humor | A unit of bodily fluid, kept in an organ's queue. |
+| Humor Recognition | How many humors of a consumable the nose can identify. |
+| Implement | A tool or weapon combined with an act to add dice. |
+| Level of use | The bonus dice an implement adds, 1 to 10. |
+| Maximum Weight | The total burden a character can carry, set by the backbone. |
+| Medium | The thing a blow is struck through: a weapon or the body. |
+| Noetic point | A point spent to observe and think in a place. |
+| Queue | An organ's ordered row of 49 humors. |
+| Recipe | The weighted list of humors a consumable may contain. |
+| Reference price | An item's value in copper, from 1 to 90. |
+| Richness | How many humors a consumable contains. |
+| Slot | A unit of space in an anchor or container. |
+| Social standing | One of eight classes of person that a garment can appeal to. |
+| Storage | A container that holds anything except liquids. |
+| Tool Usage Proficiency | The band (None, Low, Medium, High) that decides which implements the hands can use. |
+| Vessel | A container that holds one kind of liquid and nothing else. |
 
 ---
 
-Previous: [III. Of the Humors](03-humors.md) · Next: [V. Of Travel](05-travel.md)
+Previous: [III. Humors](03-humors.md) · Next: [V. Travel](05-travel.md)

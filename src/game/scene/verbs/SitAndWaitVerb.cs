@@ -14,8 +14,9 @@ namespace Cathedral.Game.Scene.Verbs;
 /// downstream of it — the controller noticing the period changed, re-placing NPCs for the new time,
 /// re-gating every verb — has been in place and unused; this is what finally produces one.</para>
 ///
-/// <para>Difficulty 1, and the failure costs a thought rather than a body: sitting still is not a feat.
-/// A failure is having your mind wander, or being moved along, and the default penalty — the thread
+/// <para>Difficulty 0: sitting still is not a feat, so it is not rolled. A reluctant means raises it to
+/// 1, and so does waiting where you have no business (a crime is never free) — that is where the
+/// failure lives: having your mind wander, or being moved along, and the default penalty — the thread
 /// of thought lost — is exactly that.</para>
 /// </summary>
 public class SitAndWaitVerb : Verb
@@ -32,7 +33,7 @@ public class SitAndWaitVerb : Verb
     }
     public override string VerbId         => "sit_and_wait";
     public override string DisplayName    => "Sit and Wait";
-    public override int    BaseDifficulty => 1;
+    public override int    BaseDifficulty => 0;
 
     /// <summary>Sitting still. There is no work here for a thing to be held against.</summary>
     public override ToolUsage ToolUse => ToolUsage.Excluded;

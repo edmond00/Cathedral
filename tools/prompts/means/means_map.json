@@ -1,0 +1,2010 @@
+{
+"the first concern for one's own skin": {
+"name": "Self-Preservation",
+"id": "self_preservation"
+},
+"finding the way through known places in the dark": {
+"name": "Nightwalking",
+"id": "nightwalking"
+},
+"the cutting-away of wood so that the rest may thrive": {
+"name": "Pruning",
+"id": "pruning"
+},
+"the recognition of coats of arms and family emblems": {
+"name": "Heraldry",
+"id": "heraldry"
+},
+"the large claim made loudly and first": {
+"name": "Boasting",
+"id": "boasting"
+},
+"the surge of strength and fury that comes from drawing blood": {
+"name": "Blood Lust",
+"id": "blood_lust"
+},
+"the tracing of an object back to where it came from": {
+"name": "Provenance",
+"id": "provenance"
+},
+"disguise and the passing of oneself off as another": {
+"name": "Masquerade",
+"id": "masquerade"
+},
+"the weighing of dice, coin and odds": {
+"name": "Gambling",
+"id": "gambling"
+},
+"the reading of an animal's mood": {
+"name": "Beast Sense",
+"id": "beast_sense"
+},
+"knowledge of fungi and decay": {
+"name": "Mycology",
+"id": "mycology"
+},
+"the reading of signs for what is coming": {
+"name": "Augury",
+"id": "augury"
+},
+"elaborate formal speech full of long, winding sentences": {
+"name": "Prosaic Grammar",
+"id": "prosaic_grammar"
+},
+"the hearing that works when the eyes do not": {
+"name": "Night Ear",
+"id": "night_ear"
+},
+"finding the way through a cave by its draughts and water": {
+"name": "Speleology",
+"id": "speleology"
+},
+"keen aesthetic sense": {
+"name": "Aesthetic",
+"id": "aesthetic"
+},
+"the reckoning of the farming round by feast and eggmoon": {
+"name": "Almanac",
+"id": "almanac"
+},
+"the reading of tracks, scents and trail signs": {
+"name": "Spoor Reading",
+"id": "spoor_reading"
+},
+"the finding and picking of ripe produce": {
+"name": "Forage-Lore",
+"id": "forage_lore"
+},
+"the picking of one voice out of a room full of them": {
+"name": "Crowd Murmur",
+"id": "crowd_murmur"
+},
+"the bringing of enemies to terms": {
+"name": "Diplomacy",
+"id": "diplomacy"
+},
+"the traveller's knowledge of roads, pace and weather": {
+"name": "Wayfaring",
+"id": "wayfaring"
+},
+"the trained sense of rhythm and graceful movement": {
+"name": "Dance",
+"id": "dance"
+},
+"the watching and reckoning of a herd": {
+"name": "Herd Eye",
+"id": "herd_eye"
+},
+"the hiding of meaning in writing": {
+"name": "Encipherment",
+"id": "encipherment"
+},
+"the robbing of graves": {
+"name": "Grave Robbing",
+"id": "grave_robbing"
+},
+"the standing still that vastness compels": {
+"name": "Awe",
+"id": "awe"
+},
+"low, quiet and continuous speech": {
+"name": "Murmur",
+"id": "murmur"
+},
+"doing as told without quarrel": {
+"name": "Obedience",
+"id": "obedience"
+},
+"the performing of funeral rites": {
+"name": "Obsequies",
+"id": "obsequies"
+},
+"the reading of display and show": {
+"name": "Pageantry",
+"id": "pageantry"
+},
+"the cutting that heals": {
+"name": "Surgery",
+"id": "surgery"
+},
+"the remembering and interpreting of dreams": {
+"name": "Dreamlore",
+"id": "dreamlore"
+},
+"the planted stance that guards the flank with the spiked tail": {
+"name": "Spiked Guard",
+"id": "spiked_guard"
+},
+"the knowledge of the order of worship": {
+"name": "Liturgy",
+"id": "liturgy"
+},
+"playing at it for the fun of it": {
+"name": "Playfulness",
+"id": "playfulness"
+},
+"wading into the shallows and splashing through them": {
+"name": "Paddling",
+"id": "paddling"
+},
+"the serving of drink": {
+"name": "Tapstering",
+"id": "tapstering"
+},
+"leaping, balancing and falling without harm": {
+"name": "Acrobatics",
+"id": "acrobatics"
+},
+"the gathering of herbs at their season": {
+"name": "Simpling",
+"id": "simpling"
+},
+"the reading of illness from its signs": {
+"name": "Diagnosis",
+"id": "diagnosis"
+},
+"the deliberate drawing of air to take a scent apart": {
+"name": "Scent Draw",
+"id": "scent_draw"
+},
+"the opening of ground where the dead are put": {
+"name": "Gravework",
+"id": "gravework"
+},
+"the knowing and gathering of herbs": {
+"name": "Herblore",
+"id": "herblore"
+},
+"the tireless running pace that covers great distances": {
+"name": "Lope",
+"id": "lope"
+},
+"the selling of goods by street cry": {
+"name": "Hawking",
+"id": "hawking"
+},
+"the loading and unloading of ships": {
+"name": "Stevedoring",
+"id": "stevedoring"
+},
+"the persistent asking that is easier to satisfy than refuse": {
+"name": "Wheedling",
+"id": "wheedling"
+},
+"the nose for tide, salt and a fresh catch": {
+"name": "Brine Sense",
+"id": "brine_sense"
+},
+"the appraising hunger for what is fine": {
+"name": "Vanitas",
+"id": "vanitas"
+},
+"the walking of a beat": {
+"name": "Patrol",
+"id": "patrol"
+},
+"the tight-fisted keeping and hoarding of money": {
+"name": "Avarice",
+"id": "avarice"
+},
+"the restraint of appetite and desire": {
+"name": "Continence",
+"id": "continence"
+},
+"the skilled handling of a sword in close combat": {
+"name": "Swordsmanship",
+"id": "swordsmanship"
+},
+"the trading of news about other people": {
+"name": "Gossip",
+"id": "gossip"
+},
+"the knowledge of blood, descent and old family lines": {
+"name": "Lineage Lore",
+"id": "lineage_lore"
+},
+"the getting of the last use out of a thing": {
+"name": "Thrift",
+"id": "thrift"
+},
+"the swift reading of a face and the body under it": {
+"name": "Physiognomy",
+"id": "physiognomy"
+},
+"stealth and silent movement": {
+"name": "Sneak Art",
+"id": "sneak_art"
+},
+"the washing and bleaching of linen": {
+"name": "Laundering",
+"id": "laundering"
+},
+"the hearing of what people are ashamed of": {
+"name": "Confession",
+"id": "confession"
+},
+"the upright carriage that keeps two feet under a body": {
+"name": "Balance",
+"id": "balance"
+},
+"smooth and brazen lying": {
+"name": "Mythomania",
+"id": "mythomania"
+},
+"the need to find out what is behind it": {
+"name": "Curiosity",
+"id": "curiosity"
+},
+"the bargain won by what is not said": {
+"name": "Sharp Practice",
+"id": "sharp_practice"
+},
+"the telling of a fire from its smoke": {
+"name": "Smoke Reading",
+"id": "smoke_reading"
+},
+"the threshing and sifting of grain": {
+"name": "Threshery",
+"id": "threshery"
+},
+"the standing of a watch through the night": {
+"name": "Watchkeeping",
+"id": "watchkeeping"
+},
+"the reading of horses' moods and the comfort of their company": {
+"name": "Horse Sense",
+"id": "horse_sense"
+},
+"the bringing down of a standing tree": {
+"name": "Felling",
+"id": "felling"
+},
+"the knowledge of who goes before whom": {
+"name": "Precedence",
+"id": "precedence"
+},
+"the winning of level ground from a slope": {
+"name": "Terracing",
+"id": "terracing"
+},
+"the running of a plantation as a ledger of land and labour": {
+"name": "Plantership",
+"id": "plantership"
+},
+"the refusal to be treated below one's own measure": {
+"name": "Pride",
+"id": "pride"
+},
+"the calm execution of violence without emotion or hesitation": {
+"name": "Cold Blood",
+"id": "cold_blood"
+},
+"the reckoning of what is owed to the temple": {
+"name": "Tithing",
+"id": "tithing"
+},
+"the crushing and pressing of olives for oil": {
+"name": "Oil Pressing",
+"id": "oil_pressing"
+},
+"the delicate picking of locks and latches": {
+"name": "Lockpicking",
+"id": "lockpicking"
+},
+"the study of the hidden natures of matter": {
+"name": "Alchemy",
+"id": "alchemy"
+},
+"swimming across deep water and staying afloat": {
+"name": "Natation",
+"id": "natation"
+},
+"the stomach that keeps down what would sicken others": {
+"name": "Iron Stomach",
+"id": "iron_stomach"
+},
+"the cutting of cane low and fast with a heavy blade": {
+"name": "Canecraft",
+"id": "canecraft"
+},
+"calling out and reading the echo that answers": {
+"name": "Halloo",
+"id": "halloo"
+},
+"the hearing of wind, thunder and the quiet before them": {
+"name": "Weather Ear",
+"id": "weather_ear"
+},
+"the drawing-out of what someone would rather not tell": {
+"name": "Interrogation",
+"id": "interrogation"
+},
+"fire-making, shelter and woodcraft": {
+"name": "Bushcraft",
+"id": "bushcraft"
+},
+"the making of arrows": {
+"name": "Fletching",
+"id": "fletching"
+},
+"the reading of a country from a height": {
+"name": "Vantage",
+"id": "vantage"
+},
+"the craftsman's judgement of another's work": {
+"name": "Journeyman's Eye",
+"id": "journeyman_eye"
+},
+"the whistling of tunes and signal calls": {
+"name": "Whistling",
+"id": "whistling"
+},
+"persuasion and argumentation": {
+"name": "Rhetoric",
+"id": "rhetoric"
+},
+"telling ice that will bear from ice that will not": {
+"name": "Icecraft",
+"id": "icecraft"
+},
+"underhanded strikes aimed at the body's softest and least-guarded points": {
+"name": "Low Blow",
+"id": "low_blow"
+},
+"the clever avoidance of unnecessary effort": {
+"name": "Sloth",
+"id": "sloth"
+},
+"the fast digging of earth and the uncovering of what it hides": {
+"name": "Digging",
+"id": "digging"
+},
+"moving unheard and unseen": {
+"name": "Stealth",
+"id": "stealth"
+},
+"the sowing and timing of seed": {
+"name": "Seed-Lore",
+"id": "seed_lore"
+},
+"the tending and handling of livestock": {
+"name": "Husbandry",
+"id": "husbandry"
+},
+"the digging of burrows, tunnels and underground passages": {
+"name": "Burrowing",
+"id": "burrowing"
+},
+"the practical skill of staying alive in harsh conditions": {
+"name": "Survivalism",
+"id": "survivalism"
+},
+"the unfelt hand at another body's belt": {
+"name": "Cutpurse",
+"id": "cutpurse"
+},
+"the reading of the world for signs and ill-luck": {
+"name": "Superstition",
+"id": "superstition"
+},
+"the wanting of what others have": {
+"name": "Covetousness",
+"id": "covetousness"
+},
+"the observance kept when nobody is counting": {
+"name": "Piety",
+"id": "piety"
+},
+"the mending of fences and hedges": {
+"name": "Hedgecraft",
+"id": "hedgecraft"
+},
+"the drawing and keeping of company": {
+"name": "Gregariousness",
+"id": "gregariousness"
+},
+"the breaking and turning of soil": {
+"name": "Tillage",
+"id": "tillage"
+},
+"the working-forward from now to what it will require": {
+"name": "Foresight",
+"id": "foresight"
+},
+"the walking undertaken as an act of devotion": {
+"name": "Pilgrimage",
+"id": "pilgrimage"
+},
+"the knowledge of the body's inner parts": {
+"name": "Anatomy Lore",
+"id": "anatomy_lore"
+},
+"the recognising nose that knows a smell by its memory": {
+"name": "Keen Nose",
+"id": "keen_nose"
+},
+"the nose for blood and for the recently dead": {
+"name": "Charnel Sense",
+"id": "charnel_sense"
+},
+"the reading of water and the working of rod and net": {
+"name": "Anglery",
+"id": "anglery"
+},
+"the looking-down on what is common": {
+"name": "Disdain",
+"id": "disdain"
+},
+"the driving-out of what should not be there": {
+"name": "Exorcism",
+"id": "exorcism"
+},
+"emotional reading and compassion": {
+"name": "Empathy",
+"id": "empathy"
+},
+"self-control kept under pressure": {
+"name": "Discipline",
+"id": "discipline"
+},
+"the long memory of wrongs and insults": {
+"name": "Grudgekeeping",
+"id": "grudgekeeping"
+},
+"long-distance calling and answering by voice": {
+"name": "Howling",
+"id": "howling"
+},
+"the hooking twist of the neck that tosses or impales": {
+"name": "Horn Hook",
+"id": "horn_hook"
+},
+"the growing of rice in standing water": {
+"name": "Paddycraft",
+"id": "paddycraft"
+},
+"the reading of rank and belonging within a group": {
+"name": "Pack Sense",
+"id": "pack_sense"
+},
+"the taking of a fleece in one piece": {
+"name": "Shearing",
+"id": "shearing"
+},
+"the understanding of a lock as a made thing": {
+"name": "Keywise",
+"id": "keywise"
+},
+"good looks used deliberately to advantage": {
+"name": "Comeliness",
+"id": "comeliness"
+},
+"picking over the tideline for what the sea brought in": {
+"name": "Beachcombing",
+"id": "beachcombing"
+},
+"legendary accuracy at ranges that others consider impossible": {
+"name": "Deadeye",
+"id": "deadeye"
+},
+"the gathering of what the harvest left behind": {
+"name": "Gleaning",
+"id": "gleaning"
+},
+"the picking of fruit and nuts at their moment": {
+"name": "Berrying",
+"id": "berrying"
+},
+"the counting of men and arms": {
+"name": "Muster",
+"id": "muster"
+},
+"the knowledge of muck and what it does for the ground": {
+"name": "Dunging",
+"id": "dunging"
+},
+"the naming and knowing of living kinds": {
+"name": "Creature Lore",
+"id": "creature_lore"
+},
+"the getting of quarters from unwilling hosts": {
+"name": "Billeting",
+"id": "billeting"
+},
+"the laying of hands on what was set apart": {
+"name": "Sacrilege",
+"id": "sacrilege"
+},
+"the belonging to a company": {
+"name": "Comradeship",
+"id": "comradeship"
+},
+"the moving of goods past toll and tax": {
+"name": "Smuggling",
+"id": "smuggling"
+},
+"the nose for what has gone bad": {
+"name": "Taint Sense",
+"id": "taint_sense"
+},
+"the lending of money at interest": {
+"name": "Usury",
+"id": "usury"
+},
+"the knowledge of law and how it is applied": {
+"name": "Jurisprudence",
+"id": "jurisprudence"
+},
+"skipping a flat stone low across water": {
+"name": "Ducks and Drakes",
+"id": "ducks_and_drakes"
+},
+"the knowing that arrives whole, before any reasoning": {
+"name": "Instinct",
+"id": "instinct"
+},
+"the trapping and stalking of small game": {
+"name": "Hunt",
+"id": "hunt"
+},
+"the reading of hives, swarms and ant roads": {
+"name": "Swarm Sense",
+"id": "swarm_sense"
+},
+"the asking of strangers for what they owe you nothing of": {
+"name": "Beggary",
+"id": "beggary"
+},
+"the reading of a body for its manner and hour of death": {
+"name": "Gravesight",
+"id": "gravesight"
+},
+"the reading of a fight and the seizing of every advantage": {
+"name": "Tactics",
+"id": "tactics"
+},
+"the understanding of trade, markets and foreign goods": {
+"name": "Enterprise",
+"id": "enterprise"
+},
+"the preparing of the dead to be kept": {
+"name": "Embalming",
+"id": "embalming"
+},
+"the telling apart of bird voices and their alarms": {
+"name": "Birdsong",
+"id": "birdsong"
+},
+"the art of being nobody": {
+"name": "Anonymity",
+"id": "anonymity"
+},
+"the travelling over roofs": {
+"name": "Rooftops",
+"id": "rooftops"
+},
+"chasing after something for the sport of the run": {
+"name": "Chasing",
+"id": "chasing"
+},
+"finding a way across sand by its ridges and its wind": {
+"name": "Sandcraft",
+"id": "sandcraft"
+},
+"the precise strike aimed at the one gap in a defense": {
+"name": "Incisiveness",
+"id": "incisiveness"
+},
+"long heavy bodily work": {
+"name": "Hard Labor",
+"id": "hard_labor"
+},
+"the keeping of weapons and armour": {
+"name": "Arms Care",
+"id": "arms_care"
+},
+"the leverage that opens what was shut": {
+"name": "Forcing",
+"id": "forcing"
+},
+"the cutting and sewing of garments": {
+"name": "Tailoring",
+"id": "tailoring"
+},
+"the cutting of carcasses into joints": {
+"name": "Butchery",
+"id": "butchery"
+},
+"the clearing of ditches and channels": {
+"name": "Drainage",
+"id": "drainage"
+},
+"the use of poison": {
+"name": "Poisoning",
+"id": "poisoning"
+},
+"the holding of a district and its arrangements in the head": {
+"name": "Marchstone",
+"id": "marchstone"
+},
+"spatial memory and mapping": {
+"name": "Cartography",
+"id": "cartography"
+},
+"the gritted determination to push through pain": {
+"name": "Clenched Grit",
+"id": "clenched_grit"
+},
+"reading the signs of a flash flood coming down a dry bed": {
+"name": "Floodwatch",
+"id": "floodwatch"
+},
+"knowing the rooms and passages of a house already walked": {
+"name": "Houseways",
+"id": "houseways"
+},
+"the ache a lit window produces at a distance": {
+"name": "Hearth-Longing",
+"id": "hearthlonging"
+},
+"metaphor and lyrical expression": {
+"name": "Poetry",
+"id": "poetry"
+},
+"the finding of the sacred in the hours": {
+"name": "Devotion",
+"id": "devotion"
+},
+"the finding of the way over open water": {
+"name": "Navigation",
+"id": "navigation"
+},
+"easy laughter and a quick jest": {
+"name": "Sense of Humor",
+"id": "sense_of_humor"
+},
+"the ringing of bells": {
+"name": "Bell Ringing",
+"id": "bell_ringing"
+},
+"easy speech with strangers": {
+"name": "Social Interaction",
+"id": "social_interaction"
+},
+"the testing of coin by edge, ring and bite": {
+"name": "Coin Eye",
+"id": "coin_eye"
+},
+"the living made from a road with no destination": {
+"name": "Vagabondage",
+"id": "vagabondage"
+},
+"throwing something at a mark and hitting it square": {
+"name": "Shying",
+"id": "shying"
+},
+"the assumption of the worse motive": {
+"name": "Misanthropy",
+"id": "misanthropy"
+},
+"the enjoying of drink, feasting and long celebration": {
+"name": "Carousal",
+"id": "carousal"
+},
+"the building, feeding and control of fires": {
+"name": "Firecraft",
+"id": "firecraft"
+},
+"the understanding of foreign languages and writing": {
+"name": "Linguistics",
+"id": "linguistic"
+},
+"the bringing-together of buyer and seller": {
+"name": "Brokerage",
+"id": "brokerage"
+},
+"the climbing and working aloft": {
+"name": "Rigging",
+"id": "rigging"
+},
+"the milking, churning and pressing of dairy": {
+"name": "Dairycraft",
+"id": "dairycraft"
+},
+"the keen love of food": {
+"name": "Gluttony",
+"id": "gluttony"
+},
+"theatrical social performance": {
+"name": "Dramaturgy",
+"id": "dramaturgy"
+},
+"disciplined military training and knowledge of warfare": {
+"name": "Battlecraft",
+"id": "battlecraft"
+},
+"the knowledge of hops and the bitterness they give": {
+"name": "Hop Lore",
+"id": "hop_lore"
+},
+"the holding of the way back to a known place": {
+"name": "Homing",
+"id": "homing"
+},
+"keeping a spinning top or a cup and ball going by the knack of the hand": {
+"name": "Whirligig",
+"id": "whirligig"
+},
+"the ease of one who has seen many places": {
+"name": "Worldliness",
+"id": "worldliness"
+},
+"the knowledge of the lives of the saints": {
+"name": "Hagiography",
+"id": "hagiography"
+},
+"intense close examination": {
+"name": "Scrutiny",
+"id": "scrutiny"
+},
+"the instinctive feeling that something is safe or wrong": {
+"name": "Gut Feeling",
+"id": "gut_feeling"
+},
+"the making and mending of sails": {
+"name": "Sailmaking",
+"id": "sailmaking"
+},
+"accurate aiming and shooting at long range": {
+"name": "Marksman",
+"id": "marksman"
+},
+"the glimpsing of things beyond ordinary sight": {
+"name": "Clairvoyance",
+"id": "clairvoyance"
+},
+"the kneading and shaping of bread": {
+"name": "Doughcraft",
+"id": "doughcraft"
+},
+"the leading of a herd up to summer grazing and down again": {
+"name": "Transhumance",
+"id": "transhumance"
+},
+"fang and claw working together to hold and tear": {
+"name": "Rending Grip",
+"id": "rending_grip"
+},
+"the examining of one's own thoughts and feelings": {
+"name": "Introspection",
+"id": "introspection"
+},
+"the giving of voices and life to puppets and objects": {
+"name": "Puppet Theatre",
+"id": "puppet_theather"
+},
+"the knowledge of arms and armour": {
+"name": "Armoury Lore",
+"id": "armoury_lore"
+},
+"the applying of holy oil": {
+"name": "Anointing",
+"id": "anointing"
+},
+"the dignified posture and presence that commands respect": {
+"name": "Bearing",
+"id": "bearing"
+},
+"the keeping and reading of the boundaries of one's own ground": {
+"name": "Territoriality",
+"id": "territoriality"
+},
+"refined manners and polite conversation": {
+"name": "High Society Manners",
+"id": "high_society_manners"
+},
+"the going at it before the doubt arrives": {
+"name": "Recklessness",
+"id": "recklessness"
+},
+"the separating of grain from chaff on the wind": {
+"name": "Winnowing",
+"id": "winnowing"
+},
+"the burning conviction that must speak": {
+"name": "Zeal",
+"id": "zeal"
+},
+"the settled intent to make somebody sorry": {
+"name": "Spite",
+"id": "spite"
+},
+"the hard regard for what is owed and what is due": {
+"name": "Severity",
+"id": "severity"
+},
+"the making of sounds that an animal will answer": {
+"name": "Beast Call",
+"id": "beast_call"
+},
+"the forging of axe, pick and spade heads": {
+"name": "Toolsmithing",
+"id": "toolsmithing"
+},
+"the knowledge of tea from leaf to cup": {
+"name": "Tea Lore",
+"id": "tea_lore"
+},
+"the answers learned by heart through repetition": {
+"name": "Rote",
+"id": "rote"
+},
+"the reading of an animal's condition from its musk": {
+"name": "Musk Reading",
+"id": "musk_reading"
+},
+"the lying-in-wait and the sudden attack": {
+"name": "Ambuscade",
+"id": "ambuscade"
+},
+"building a castle of wet sand with towers and a moat": {
+"name": "Castles in the Sand",
+"id": "sand_castles"
+},
+"the fine carving of small wooden things": {
+"name": "Whittlecraft",
+"id": "whittlecraft"
+},
+"the wanting to rise": {
+"name": "Ambition",
+"id": "ambition"
+},
+"the wariness and cunning learned on rough streets": {
+"name": "Streetwise",
+"id": "streetwise"
+},
+"the tending of the vine from pruning to vintage": {
+"name": "Viniculture",
+"id": "viniculture"
+},
+"a soft soothing song": {
+"name": "Lullaby",
+"id": "lullaby"
+},
+"the patient hunting and cornering of prey": {
+"name": "Predator",
+"id": "predator"
+},
+"terrain and landscape reading": {
+"name": "Topographia",
+"id": "topographia"
+},
+"methodical testing and careful observation": {
+"name": "Learned Research",
+"id": "scientific_research"
+},
+"going back along one's own scent trail": {
+"name": "Backtrail",
+"id": "backtrail"
+},
+"the singling out of a known voice, and the heeding of it": {
+"name": "Hearkening",
+"id": "hearkening"
+},
+"the recognition of another creature's inside": {
+"name": "Fellow Feeling",
+"id": "fellow_feeling"
+},
+"the lifting and setting of stone": {
+"name": "Stonework",
+"id": "stonework"
+},
+"structural and spatial thinking": {
+"name": "Architecture",
+"id": "architecture"
+},
+"swimming into cold water for the shock of it": {
+"name": "Plunge",
+"id": "plunge"
+},
+"the seeking of the divine beyond words": {
+"name": "Mysticism",
+"id": "mysticism"
+},
+"precision and delicate touch": {
+"name": "Finesse",
+"id": "finesse"
+},
+"the delivering and saving of lambs": {
+"name": "Lambing",
+"id": "lambing"
+},
+"the art of ruling": {
+"name": "Statecraft",
+"id": "statecraft"
+},
+"the drawing and tending of teeth": {
+"name": "Tooth Drawing",
+"id": "tooth_drawing"
+},
+"the pricing of goods by look and feel": {
+"name": "Appraisal",
+"id": "appraisal"
+},
+"the welcoming and care of guests and travellers": {
+"name": "Hospitality",
+"id": "hospitality"
+},
+"the holding still that makes a body stop being a presence": {
+"name": "Stillness",
+"id": "stillness"
+},
+"pitch, rhythm, and harmony": {
+"name": "Solfege",
+"id": "solfege"
+},
+"the throwing and firing of clay": {
+"name": "Potcraft",
+"id": "potcraft"
+},
+"the balance and timing of a swinging tail": {
+"name": "Counterweight",
+"id": "counterweight"
+},
+"the leaping over obstacles without breaking stride": {
+"name": "Vaulting",
+"id": "vaulting"
+},
+"the reaping and gathering of ripe crops": {
+"name": "Harvestry",
+"id": "harvestry"
+},
+"the thrill of the line already crossed": {
+"name": "Temerity",
+"id": "temerity"
+},
+"the sensing of nearby gaps, walls and movement by whisker": {
+"name": "Vibrissae",
+"id": "vibrissae"
+},
+"the swimming done in water you cannot see the bottom of": {
+"name": "Moonwater",
+"id": "moonwater"
+},
+"the quiet theft of livestock": {
+"name": "Rustling",
+"id": "rustling"
+},
+"street fighting, improvised violence, and winning by any means": {
+"name": "Brawling",
+"id": "brawling"
+},
+"the pleasure of a made thing coming apart": {
+"name": "Ruination",
+"id": "ruination"
+},
+"the moving through crowds": {
+"name": "Throng",
+"id": "throng"
+},
+"the setting of broken bones and joints": {
+"name": "Bonesetting",
+"id": "bonesetting"
+},
+"the show of horn and spike that warns a rival off": {
+"name": "Threat Display",
+"id": "threat_display"
+},
+"the overhearing of what is not meant to be heard": {
+"name": "Eavesdropping",
+"id": "eavesdropping"
+},
+"the forbidden doubting of doctrine": {
+"name": "Heresy",
+"id": "heresy"
+},
+"the buying and selling of stolen goods": {
+"name": "Receiving",
+"id": "receiving"
+},
+"the ordinary knowledge of the soldier's life": {
+"name": "Soldiery",
+"id": "soldiery"
+},
+"the love of one's town": {
+"name": "Civic Pride",
+"id": "civic_pride"
+},
+"the teaching of what one knows": {
+"name": "Pedagogy",
+"id": "pedagogy"
+},
+"the lash of the armed tail swung from the spine": {
+"name": "Tail Lashing",
+"id": "tail_lashing"
+},
+"the observing of the small forms between people": {
+"name": "Courtesy",
+"id": "courtesy"
+},
+"the keeping of stores to feed many": {
+"name": "Provisioning",
+"id": "provisioning"
+},
+"the hearing that silence teaches": {
+"name": "Cloister Silence",
+"id": "cloister_silence"
+},
+"the ache for a home left behind": {
+"name": "Homesickness",
+"id": "homesickness"
+},
+"cruelty and predatory instinct": {
+"name": "Cruelty",
+"id": "cruelty"
+},
+"the reckoning of breeding across generations": {
+"name": "Bloodlines",
+"id": "bloodlines"
+},
+"the beautiful writing of letters": {
+"name": "Calligraphy",
+"id": "calligraphy"
+},
+"the language and lore of sailors and ships": {
+"name": "Nautical Jargon",
+"id": "nautical_jargon"
+},
+"the one honest price, named and held": {
+"name": "Plain Dealing",
+"id": "plain_dealing"
+},
+"the slow, silent approach toward a target": {
+"name": "Stalking",
+"id": "stalking"
+},
+"the drawing and measuring of lines, shapes and angles": {
+"name": "Geometric Scheme",
+"id": "geometric_scheme"
+},
+"the speaking within a chain of command": {
+"name": "Rank",
+"id": "rank"
+},
+"the slow recovery of childhood memories": {
+"name": "Childhood Reminescence",
+"id": "childhood_reminescence"
+},
+"the performing in the street for coin": {
+"name": "Busking",
+"id": "busking"
+},
+"the loading and carrying of heavy loads": {
+"name": "Haulage",
+"id": "haulage"
+},
+"the reading of print, bent stem and turned stone": {
+"name": "Spoor Eye",
+"id": "spoor_eye"
+},
+"the knowledge of fruit trees and their keeping": {
+"name": "Pomology",
+"id": "pomology"
+},
+"the small right thing said to the grieving": {
+"name": "Condolence",
+"id": "condolence"
+},
+"the sorrow for harm done": {
+"name": "Contrition",
+"id": "contrition"
+},
+"the riding and handling of horses": {
+"name": "Horsemanship",
+"id": "horsemanship"
+},
+"the fierce gladness of a blow that lands": {
+"name": "Exultation",
+"id": "exultation"
+},
+"claw-hooked climbing over bark and stone": {
+"name": "Clambering",
+"id": "clambering"
+},
+"the knowledge found in books and old manuscripts": {
+"name": "Scholarship",
+"id": "scholarship"
+},
+"the knowledge of pigs and their keeping": {
+"name": "Swine Lore",
+"id": "swine_lore"
+},
+"the building and mending of ships": {
+"name": "Shipwrighting",
+"id": "shipwrighting"
+},
+"the correct address of those set above you": {
+"name": "Deference",
+"id": "deference"
+},
+"the working of iron at the forge": {
+"name": "Metalcraft",
+"id": "metalcraft"
+},
+"sharp insults and cutting words": {
+"name": "Invective",
+"id": "invective"
+},
+"the savage and overwhelming attack that leaves no room for defense": {
+"name": "Ferocity",
+"id": "ferocity"
+},
+"the keeping of the water's timetable": {
+"name": "Tide Watching",
+"id": "tidewatching"
+},
+"the joining of one tree's wood to another's root": {
+"name": "Grafting",
+"id": "grafting"
+},
+"the single closing movement of a waiting hand": {
+"name": "Snatch",
+"id": "snatch"
+},
+"striking with a fist or palm conditioned into a weapon": {
+"name": "Iron Fist",
+"id": "iron_fist"
+},
+"the hunting of hidden treasure and lost riches": {
+"name": "Treasure Hunting",
+"id": "treasure_hunting"
+},
+"the right of sanctuary and its keeping": {
+"name": "Asylum",
+"id": "asylum"
+},
+"taking eggs from the nests on a cliff ledge": {
+"name": "Fowling",
+"id": "fowling"
+},
+"steady bracing and balance under load": {
+"name": "Steady Hand",
+"id": "steady_hand"
+},
+"the quick stripping of the fallen for valuables": {
+"name": "Looting",
+"id": "looting"
+},
+"the patient tending of coat, claw and companion": {
+"name": "Grooming",
+"id": "grooming"
+},
+"the expressionless face that shows nothing": {
+"name": "Stoneface",
+"id": "stoneface"
+},
+"the weariness of one who has seen too much killing": {
+"name": "War Weariness",
+"id": "war_weariness"
+},
+"the holding of a body against what it wants to do": {
+"name": "Self-Command",
+"id": "self_command"
+},
+"overwhelming physical force": {
+"name": "Brute Force",
+"id": "brute_force"
+},
+"the giving of a word that will be kept": {
+"name": "Oath-Making",
+"id": "oathmaking"
+},
+"the reading of maker's marks and finishing": {
+"name": "Hallmark",
+"id": "hallmark"
+},
+"the reasoning about the divine": {
+"name": "Theology",
+"id": "theology"
+},
+"the keeping and flying of hunting birds": {
+"name": "Falconry",
+"id": "falconry"
+},
+"the word put in on somebody else's behalf": {
+"name": "Intercession",
+"id": "intercession"
+},
+"the wheeling fury of horn and tail together": {
+"name": "Armoured Wrath",
+"id": "armoured_wrath"
+},
+"the pause taken before the step that cannot be undone": {
+"name": "Caution",
+"id": "caution"
+},
+"the following of paths worn but unmarked": {
+"name": "Trailcraft",
+"id": "trailcraft"
+},
+"the tasting and judging of food and drink": {
+"name": "Trencherman",
+"id": "trencherman"
+},
+"the calming and stilling of the mind": {
+"name": "Meditation",
+"id": "meditation"
+},
+"the giving of forgiveness that is believed": {
+"name": "Absolution",
+"id": "absolution"
+},
+"the moving of water by sluice, channel and lift": {
+"name": "Sluicecraft",
+"id": "sluicecraft"
+},
+"the head-down charge that drives a horn home": {
+"name": "Goring",
+"id": "goring"
+},
+"the picking of pockets and small thefts": {
+"name": "Petty Thief",
+"id": "petty_thief"
+},
+"the gentle grip that carries without harming": {
+"name": "Soft Mouth",
+"id": "soft_mouth"
+},
+"the knotting, mending and setting of nets": {
+"name": "Silverhaul",
+"id": "silverhaul"
+},
+"working truffles out of the sand by hand": {
+"name": "Truffling",
+"id": "truffling"
+},
+"the brewing and fermenting of ale": {
+"name": "Brewcraft",
+"id": "brewcraft"
+},
+"the stepping forward when others step back": {
+"name": "Valor",
+"id": "valor"
+},
+"the keeping of accounts": {
+"name": "Bookkeeping",
+"id": "bookkeeping"
+},
+"the keeping of an oath sworn to a lord": {
+"name": "Fealty",
+"id": "fealty"
+},
+"the unsayable thing said to the face": {
+"name": "Insolence",
+"id": "insolence"
+},
+"the watching through the night": {
+"name": "Vigil",
+"id": "vigil"
+},
+"the reading of a seam and the metal in it": {
+"name": "Veinsight",
+"id": "veinsight"
+},
+"the smelling and identifying of scents on the air": {
+"name": "Scenting",
+"id": "scenting"
+},
+"the praising of people for what they want to hear": {
+"name": "Flattery",
+"id": "flattery"
+},
+"the swing and wedge that part stone": {
+"name": "Delving",
+"id": "delving"
+},
+"the constant alertness that notices threats and openings first": {
+"name": "Vigilance",
+"id": "vigilance"
+},
+"the drawing-up of official documents": {
+"name": "Clerkship",
+"id": "clerkship"
+},
+"the hammering of iron on the anvil": {
+"name": "Blacksmithing",
+"id": "blacksmithing"
+},
+"the copying of texts by hand": {
+"name": "Copying",
+"id": "copying"
+},
+"the selling of holy things": {
+"name": "Simony",
+"id": "simony"
+},
+"the hunger that follows a colour in the rock": {
+"name": "Gold Fever",
+"id": "gold_fever"
+},
+"crossing and working a fen with a pole and a testing foot": {
+"name": "Fencraft",
+"id": "fencraft"
+},
+"the making of leather from hides": {
+"name": "Tanning",
+"id": "tanning"
+},
+"dirty tricks and deception": {
+"name": "Foul Play",
+"id": "foul_play"
+},
+"the sure placing of each step on bad ground": {
+"name": "Surefoot",
+"id": "surefoot"
+},
+"the spinning, weaving and working of fibre": {
+"name": "Threadwork",
+"id": "threadwork"
+},
+"the storing and keeping of goods": {
+"name": "Cellarcraft",
+"id": "cellarcraft"
+},
+"the finding of breath and running past the body's first refusal": {
+"name": "Second Wind",
+"id": "second_wind"
+},
+"the moving in step that holds a line together": {
+"name": "Drill",
+"id": "drill"
+},
+"the tracking of a fugitive": {
+"name": "Manhunt",
+"id": "manhunt"
+},
+"the fret of an hour spent on nothing": {
+"name": "Impatience",
+"id": "impatience"
+},
+"the battle fury that burns through pain, fear, and doubt": {
+"name": "Rage",
+"id": "rage"
+},
+"the copying of a voice or call closely enough to pass": {
+"name": "Mimicry",
+"id": "mimicry"
+},
+"the smelling of death from afar and the judging of what remains": {
+"name": "Carrion Sense",
+"id": "carrion_sense"
+},
+"the shaping and joining of timber": {
+"name": "Woodcraft",
+"id": "woodcraft"
+},
+"the getting of money by threat": {
+"name": "Extortion",
+"id": "extortion"
+},
+"the singing of worship": {
+"name": "Chant",
+"id": "chant"
+},
+"the cutting and stacking of peat and turf": {
+"name": "Turf Cutting",
+"id": "turfcutting"
+},
+"going straight through the mud instead of round it": {
+"name": "Mudlarking",
+"id": "mudlarking"
+},
+"the naming of herbs and simples by their smell": {
+"name": "Apothecary's Nose",
+"id": "apothecary_nose"
+},
+"the knowing of rats, mice and their runs": {
+"name": "Ratcatcher",
+"id": "ratcatcher"
+},
+"going back by ways already walked": {
+"name": "Retracing",
+"id": "retracing"
+},
+"the finding of patterns and logic in abstract problems": {
+"name": "Algebraic Analysis",
+"id": "algebraic_analysis"
+},
+"the steady finishing of what was begun": {
+"name": "Diligence",
+"id": "diligence"
+},
+"the painting of manuscripts": {
+"name": "Illumination",
+"id": "illumination"
+},
+"the reading of cloth by thread and weave": {
+"name": "Weave Reading",
+"id": "weave_reading"
+},
+"the hardening that follows one's own hurt": {
+"name": "Obduracy",
+"id": "obduracy"
+},
+"the grinding of grain into flour": {
+"name": "Millcraft",
+"id": "millcraft"
+},
+"the reading of water by the sound it makes": {
+"name": "Water Voice",
+"id": "water_voice"
+},
+"the managing of an estate's work, goods and dues": {
+"name": "Stewardry",
+"id": "stewardry"
+},
+"the handling of muck, gut and stink": {
+"name": "Dirty Labor",
+"id": "dirty_labor"
+},
+"the deciphering of damaged, coded or obscure writing": {
+"name": "Decipher",
+"id": "decipher"
+},
+"the steadiness and patience for long journeys": {
+"name": "Voyage",
+"id": "voyage"
+},
+"the pull that a road exerts": {
+"name": "Wanderlust",
+"id": "wanderlust"
+},
+"the finding of paths, shelter and safe ways through unknown land": {
+"name": "Exploration",
+"id": "exploration"
+},
+"the past arriving whole out of an ordinary object": {
+"name": "Recollection",
+"id": "recollection"
+},
+"the treating of illness by medicine": {
+"name": "Physic",
+"id": "physic"
+},
+"the judging of depth and current by eye": {
+"name": "Waterline",
+"id": "waterline"
+},
+"the reading of a mash or cask by its smell": {
+"name": "Bouquet",
+"id": "bouquet"
+},
+"the reading of hour and direction from the sky": {
+"name": "Sky Reading",
+"id": "sky_reading"
+},
+"the talk of the guardroom": {
+"name": "Barrack Wit",
+"id": "barrack_wit"
+},
+"finding where water rises out of the ground": {
+"name": "Dowsing",
+"id": "dowsing"
+},
+"the working of a ship": {
+"name": "Seamanship",
+"id": "seamanship"
+},
+"waiting and endurance": {
+"name": "Patience",
+"id": "patience"
+},
+"the sense of wrongness that arrives before its reason": {
+"name": "Dread",
+"id": "dread"
+},
+"the challenging of whoever comes to a gate": {
+"name": "Gatekeeping",
+"id": "gatekeeping"
+},
+"the plain ways of country folk": {
+"name": "Peasantry",
+"id": "peasantry"
+},
+"the hearing of crickets, bees and the small chorus": {
+"name": "Insect Chorus",
+"id": "insect_chorus"
+},
+"the asking of the powerful for favours": {
+"name": "Petitioning",
+"id": "petitioning"
+},
+"the disciplining of the body for the soul": {
+"name": "Mortification",
+"id": "mortification"
+},
+"the measuring of a rival's weapons against one's own": {
+"name": "Rival Reading",
+"id": "rival_reading"
+},
+"the plotting among factions": {
+"name": "Intrigue",
+"id": "intrigue"
+},
+"warm and open friendliness": {
+"name": "Friendship",
+"id": "friendship"
+},
+"the knowledge of old stories and the lessons they hold": {
+"name": "Fables and Tales",
+"id": "fables_and_tales"
+},
+"the delivering of children and the tending of the mother": {
+"name": "Midwifery",
+"id": "midwifery"
+},
+"the keeping on after everyone else has given up": {
+"name": "Resolve",
+"id": "resolve"
+},
+"boxing and hand-to-hand combat": {
+"name": "Pugilitas",
+"id": "pugilitas"
+},
+"the cooking of food for many": {
+"name": "Cookery",
+"id": "cookery"
+},
+"rolling over and over down a slope with the head tucked": {
+"name": "Tumbling",
+"id": "tumbling"
+},
+"the bared-teeth warning that ends fights before they start": {
+"name": "Snarling",
+"id": "snarling"
+},
+"the tying and handling of ropes and knots": {
+"name": "Knotwork",
+"id": "knotwork"
+},
+"the grieving for every death": {
+"name": "Mourning",
+"id": "mourning"
+},
+"the preaching of a lesson from a text": {
+"name": "Homily",
+"id": "homily"
+},
+"the making and mimicking of faces and expressions": {
+"name": "Grimacery",
+"id": "grimacery"
+},
+"the driving of loaded carts": {
+"name": "Carting",
+"id": "carting"
+},
+"the stubborn working at a thing until it gives way": {
+"name": "Worry the Bone",
+"id": "worry_the_bone"
+},
+"the trained hand that works before thought does": {
+"name": "Knack",
+"id": "knack"
+},
+"the swinging of the censer and the knowledge of resins": {
+"name": "Incensing",
+"id": "incensing"
+},
+"the violent shake that kills caught prey at once": {
+"name": "Death Shake",
+"id": "death_shake"
+},
+"the making and mending of saddles and harness": {
+"name": "Saddlery",
+"id": "saddlery"
+},
+"the hearing of timber, rope and ice under strain": {
+"name": "Timber Ear",
+"id": "timber_ear"
+},
+"an explosive upward strike": {
+"name": "Uppercut",
+"id": "uppercut"
+},
+"the sense for loss, endings and the passing of things": {
+"name": "Elegy",
+"id": "elegy"
+},
+"sliding on ice, snow or sand with the weight kept low": {
+"name": "Glissade",
+"id": "glissade"
+},
+"the reading of what has been left to fall down": {
+"name": "Ruin Sense",
+"id": "ruin_sense"
+},
+"the marking of beasts with a hot iron": {
+"name": "Branding",
+"id": "branding"
+},
+"the study of ruins, relics and ancient remains": {
+"name": "Archeology",
+"id": "archeology"
+},
+"the trained composure that does not break when things go wrong": {
+"name": "Iron Nerves",
+"id": "iron_nerves"
+},
+"the keeping of a burial ground": {
+"name": "Sextonry",
+"id": "sextonry"
+},
+"the drawing out of what someone knows": {
+"name": "Inquiry",
+"id": "inquiry"
+},
+"the making and mending of shoes": {
+"name": "Cobbling",
+"id": "cobbling"
+},
+"the estimating of wealth at a glance": {
+"name": "Assessment",
+"id": "assessment"
+},
+"the relentless desire to have more": {
+"name": "Greed",
+"id": "greed"
+},
+"swinging out on a rope or a vine and letting go at the right moment": {
+"name": "Swinging",
+"id": "swinging"
+},
+"gathering nuts from the hazels and the oaks": {
+"name": "Nutting",
+"id": "nutting"
+},
+"the cooling down and recovery of breath": {
+"name": "Panting",
+"id": "panting"
+},
+"the crossing of water on foot": {
+"name": "Fording",
+"id": "fording"
+},
+"the knowledge of holy relics and their histories": {
+"name": "Relic Lore",
+"id": "relic_lore"
+},
+"the cutting of a wood so that it grows again": {
+"name": "Coppicing",
+"id": "coppicing"
+},
+"running, climbing, and exertion": {
+"name": "Athletics",
+"id": "athletics"
+},
+"the making of false documents": {
+"name": "Forgery",
+"id": "forgery"
+},
+"climbing the last pitch to stand on top": {
+"name": "Summit Fever",
+"id": "summit_fever"
+},
+"the leading of work-songs": {
+"name": "Shanty",
+"id": "shanty"
+},
+"the understanding of sacred images and symbols": {
+"name": "Iconography",
+"id": "iconography"
+},
+"the knowledge of the sky and its motions": {
+"name": "Astronomy",
+"id": "astronomy"
+},
+"the silent patrolling that spots others before being seen": {
+"name": "Prowl",
+"id": "prowl"
+},
+"the reckoning of how a walled place falls or holds": {
+"name": "Siegecraft",
+"id": "siegecraft"
+},
+"the making-oneself-understood without a common tongue": {
+"name": "Pidgin",
+"id": "pidgin"
+},
+"the open and honest shedding of tears": {
+"name": "Weeping",
+"id": "weeping"
+},
+"the careful manners of the highborn": {
+"name": "Aristocracy",
+"id": "aristocracy"
+},
+"working old ivory out of a thawing bank": {
+"name": "Tusk Hunting",
+"id": "tusk_hunting"
+},
+"the giving of alms and the joy of it": {
+"name": "Almsgiving",
+"id": "almsgiving"
+},
+"skilled haggling and the striking of good bargains": {
+"name": "Bargaining",
+"id": "bargaining"
+},
+"the eye for defensible ground": {
+"name": "Bastion Eye",
+"id": "bastion_eye"
+},
+"the forcing of crops in darkness": {
+"name": "Blanching",
+"id": "blanching"
+},
+"energy and natural philosophy principles": {
+"name": "Thermodynamics",
+"id": "thermodynamics"
+},
+"the reading of walls and their weaknesses": {
+"name": "Fortification",
+"id": "fortification"
+},
+"the gladness of anything gathered in": {
+"name": "Harvest Joy",
+"id": "harvest_joy"
+},
+"the steadiness on moving ground": {
+"name": "Sea Legs",
+"id": "sea_legs"
+},
+"the eye for what is about to come on": {
+"name": "Quickening",
+"id": "quickening"
+},
+"the steadiness that carries a body somewhere it should not be": {
+"name": "Nerve",
+"id": "nerve"
+},
+"the reading of wind, breath and moving air": {
+"name": "Wind Reading",
+"id": "wind_reading"
+},
+"the formal argument put in its proper order": {
+"name": "Disputation",
+"id": "disputation"
+},
+"the sending of word by horn, flag and fire": {
+"name": "Signalling",
+"id": "signalling"
+},
+"the rendering of fat and the making of candles": {
+"name": "Chandlery",
+"id": "chandlery"
+},
+"the declining of what is freely offered": {
+"name": "Abstinence",
+"id": "abstinence"
+},
+"the making and laying-on of scent": {
+"name": "Perfumery",
+"id": "perfumery"
+},
+"the open-handed giving of the great": {
+"name": "Largesse",
+"id": "largesse"
+},
+"the stockman's nose for a byre and what is kept in it": {
+"name": "Byre Sense",
+"id": "byre_sense"
+},
+"the practical knowledge of farm work and the land": {
+"name": "Fieldcraft",
+"id": "fieldcraft"
+},
+"the offering of money that can be taken without admitting it": {
+"name": "Bribery",
+"id": "bribery"
+},
+"the playing of the lute": {
+"name": "Lute Playing",
+"id": "lute_playing"
+},
+"the stamina to keep going long after others tire": {
+"name": "Endurance",
+"id": "endurance"
+},
+"the keeping of poultry": {
+"name": "Henwifery",
+"id": "henwifery"
+},
+"the moving of herds over long distances": {
+"name": "Droving",
+"id": "droving"
+},
+"the throwing of a loop over a running beast": {
+"name": "Roping",
+"id": "roping"
+},
+"the marking and claiming of territory by scent": {
+"name": "Musk Marking",
+"id": "musk_marking"
+},
+"the deliberate starting and spreading of fires": {
+"name": "Arson Fire",
+"id": "arson_fire"
+},
+"the keeping of prisoners and their keys": {
+"name": "Jailcraft",
+"id": "jailcraft"
+},
+"flexible, open-ended thinking": {
+"name": "Open-Mindedness",
+"id": "open_mindedness"
+},
+"the cut spit and thrown spoil of digging by tool": {
+"name": "Spadework",
+"id": "spadework"
+},
+"the judging of ripeness and the right moment": {
+"name": "Ripelore",
+"id": "ripelore"
+},
+"getting clear of danger by going back the way one came": {
+"name": "Withdrawal",
+"id": "withdrawal"
+},
+"the recovering of what the sea took": {
+"name": "Salvage",
+"id": "salvage"
+},
+"the taking of the low place on purpose": {
+"name": "Humility",
+"id": "humility"
+},
+"the carrying of water on the yoke": {
+"name": "Water-Bearing",
+"id": "water_bearing"
+},
+"the smell of rain coming and of ground turned over": {
+"name": "Petrichor",
+"id": "petrichor"
+},
+"robbing a wild hive of its comb": {
+"name": "Honey Hunting",
+"id": "honey_hunting"
+},
+"the steady gnawing through tough or hard material": {
+"name": "Gnawing",
+"id": "gnawing"
+},
+"telling a slope that will slide from one that will hold": {
+"name": "Snowcraft",
+"id": "snowcraft"
+},
+"stroking and soothing an animal until it settles": {
+"name": "Cosseting",
+"id": "cosseting"
+},
+"the reuse of hard-won childhood experience": {
+"name": "Childhood Reminescence",
+"id": "childhood_memory"
+},
+"the cheating at games of chance": {
+"name": "Card Sharping",
+"id": "card_sharping"
+},
+"the counting and tallying of goods": {
+"name": "Tallycraft",
+"id": "tallycraft"
+},
+"the questioning of deeper meanings behind the obvious": {
+"name": "Philosophy",
+"id": "philosophy"
+},
+"the level talk that takes a fight off the table": {
+"name": "Parley",
+"id": "parley"
+},
+"the hauling climb of arm and shoulder": {
+"name": "Scaling",
+"id": "scaling"
+},
+"the stopping short of what is allowed": {
+"name": "Mercy",
+"id": "mercy"
+},
+"the reading and stirring of desire": {
+"name": "Seduction",
+"id": "seduction"
+},
+"the careful counting and calculating of numbers": {
+"name": "Arithmetic Logic",
+"id": "arithmetic_logic"
+},
+"the cold that settles when the trouble begins": {
+"name": "Sangfroid",
+"id": "sangfroid"
+},
+"the trimming and shoeing of hooves": {
+"name": "Farriery",
+"id": "farriery"
+},
+"abundant physical energy and vitality": {
+"name": "Vigor",
+"id": "vigor"
+},
+"squeezing through a narrow gap in the rock": {
+"name": "Potholing",
+"id": "potholing"
+},
+"the knowledge of a coast and its dangers": {
+"name": "Pilotage",
+"id": "pilotage"
+},
+"the reading of use, age and mending": {
+"name": "Wear Reading",
+"id": "wear_reading"
+},
+"the pursuit and enjoyment of a good table": {
+"name": "Gourmandise",
+"id": "gourmandise"
+},
+"the hearing of a trade at work by its rhythm": {
+"name": "Forge Ear",
+"id": "forge_ear"
+},
+"the observing of what has been set apart": {
+"name": "Reverence",
+"id": "reverence"
+},
+"the hearing of a space by the way it answers": {
+"name": "Hollow Ear",
+"id": "hollow_ear"
+},
+"the still crouch and the sudden leap onto a target": {
+"name": "Pounce",
+"id": "pounce"
+},
+"the tasting of food and drink for what it truly is": {
+"name": "Relish",
+"id": "relish"
+},
+"the close hearing of a place and everything moving in it": {
+"name": "Keen Ear",
+"id": "keen_ear"
+},
+"the easy talk that makes strangers into company": {
+"name": "Banter",
+"id": "banter"
+},
+"hopping square to square on one foot without touching a line": {
+"name": "Hopscotch",
+"id": "hopscotch"
+},
+"the keeping of a bond to one's own, over any distance of time": {
+"name": "Loyalty",
+"id": "loyalty"
+}
+}

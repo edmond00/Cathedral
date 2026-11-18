@@ -167,7 +167,6 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     about the verb rather than walk somebody else's tree");
     Console.WriteLine("  --npc-static                       DEBUG: pin every NPC to one area all day instead of following their schedule.");
     Console.WriteLine("  --silent                           DEBUG: open no audio device — no music, no sound effects. Used by the test suite.");
-    Console.WriteLine("  --no-embeddings                    DEBUG: run without models/embeddings/glove.6B.100d.txt (keywords ranked by length). For CI.");
     Console.WriteLine("  --audio <winmm|openal>             Audio path: WinMM + system MIDI (Windows default) or OpenAL + SoundFont (elsewhere)");
     Console.WriteLine("  --soundfont <file>                 With the OpenAL path: play music with <file> instead of assets/audio/soundfont.sf2");
     Console.WriteLine("  --music-engine <synth|legacy>      Music: the composer and synthesiser (default) or the first engine via MIDI, for comparison");
@@ -212,6 +211,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --dither [mode[:levels[:scale]]]   Retune the final full-screen dither layer (mode off|bayer|mono|noise).");
     Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
     Console.WriteLine("                                     In-game: F cycles the mode, G the palette depth, H the grain, J the event pulses");
+    Console.WriteLine("  --glow [on|off|<strength>]         The glow layer: the halo every lit glyph sheds into the dark. Outranks the");
+    Console.WriteLine("                                     saved Settings switch for this run; a number sets its strength (default 0.5)");
     Console.WriteLine("  --no-encounters                    DEBUG: never roll a random travel encounter. For scripted runs: an");
     Console.WriteLine("                                     encounter puts the game in EncounterPrompt, where a script waiting");
     Console.WriteLine("                                     for LocationInteraction hangs until its timeout");
@@ -244,6 +245,8 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("  --refuse-means <n>                 DEBUG: under --playground, the first n willingness questions answer \"unwilling\"");
     Console.WriteLine("                                     and observes another instead. --playground never declines, so this is the only");
     Console.WriteLine("                                     way a script reaches that branch");
+    Console.WriteLine("  --willingness <eager|reluctant>    DEBUG: under --playground, willingness answers this instead of \"willing\" (difficulty");
+    Console.WriteLine("                                     -1 / +1). Eager takes a difficulty-1 act to 0, which rolls no dice; reluctant raises 0 to 1");
     Console.WriteLine("  --doubt <low|medium|high>          DEBUG: every thinking modus mentis thinks at this level of doubt instead of its");
     Console.WriteLine("                                     own: low takes no retry and never doubts, medium one, high two");
     Console.WriteLine("  --penalty-only <kind>              DEBUG: a failed act draws only this kind of penalty from its verb's table:");
@@ -328,10 +331,6 @@ if (args.Any(a => a == "--npc-static")) Cathedral.Config.Debug.NpcStatic = true;
 
 // --silent: open no audio device. The test suite passes this on every script.
 if (args.Any(a => a == "--silent")) Cathedral.Config.Debug.Silent = true;
-
-// --no-embeddings: go on without the GloVe vectors rather than exiting. For CI and containers that do
-// not carry the 822 MB file; keyword ranking falls back to word length. See Config.Debug.NoEmbeddings.
-if (args.Any(a => a == "--no-embeddings")) Cathedral.Config.Debug.NoEmbeddings = true;
 
 // --audio <winmm|openal>: which audio path. Default is the platform's own (WinMM on Windows, OpenAL
 // elsewhere); naming openal on Windows is how the cross-platform path is compared with it.
@@ -1054,6 +1053,15 @@ for (int i = 0; i < args.Length; i++)
     if (args[i] == "--refuse-means" && i + 1 < args.Length && int.TryParse(args[i + 1], out var refuseMeans))
         Cathedral.Config.Debug.RefuseMeans = Math.Max(0, refuseMeans);
 
+    if (args[i] == "--willingness" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        if (Enum.TryParse<Cathedral.Game.Narrative.Willingness>(args[i + 1], ignoreCase: true, out var willingness)
+            && Enum.IsDefined(willingness) && willingness != Cathedral.Game.Narrative.Willingness.Unwilling)
+            Cathedral.Config.Debug.WillingnessOverride = willingness;
+        else
+            Console.Error.WriteLine($"--willingness: unknown stance '{args[i + 1]}' (eager, willing, reluctant; a refusal is --refuse-means)");
+    }
+
     if (args[i] == "--doubt" && i + 1 < args.Length && !args[i + 1].StartsWith("--"))
     {
         if (Enum.TryParse<Cathedral.Game.Narrative.DoubtLevel>(args[i + 1], ignoreCase: true, out var doubt)
@@ -1135,6 +1143,27 @@ for (int i = 0; i < args.Length; i++)
 
     Console.WriteLine($"Post-process: dither mode={Cathedral.Config.PostProcess.DitherMode} " +
                       $"levels={Cathedral.Config.PostProcess.Levels} pixelScale={Cathedral.Config.PostProcess.PixelScale}");
+    break;
+}
+
+// Check for --glow [on|off|<strength>] — the halo layer. Like --dither, it outranks the saved switch.
+for (int i = 0; i < args.Length; i++)
+{
+    if (args[i] != "--glow") continue;
+
+    Cathedral.Config.PostProcess.GlowSetByFlag = true;
+    Cathedral.Config.PostProcess.GlowEnabled = true;
+    if (i + 1 < args.Length && !args[i + 1].StartsWith("--"))
+    {
+        string v = args[i + 1].ToLowerInvariant();
+        if (v == "off") Cathedral.Config.PostProcess.GlowEnabled = false;
+        else if (float.TryParse(v, System.Globalization.NumberStyles.Float,
+                     System.Globalization.CultureInfo.InvariantCulture, out float k))
+        {
+            Cathedral.Config.PostProcess.GlowStrength = Math.Max(0f, k);
+            Cathedral.Config.PostProcess.GlowEnabled = k > 0f;
+        }
+    }
     break;
 }
 

@@ -1,0 +1,67 @@
+# out of points, confronted — an attempt costs a point, and with none left the box says RUNAWAY
+#
+# Carrying an act out costs a point like looking and thinking do, and there is none to carry one out
+# without: a pool of 3 buys exactly one chain — a look, a thought, the attempt. A success hands the
+# pool back; a failure does not. Here the failure is also heard: the wolf comes to the noise and
+# stands over the member, who can then neither look, think nor act. The box that says so names who
+# bars the way and its button is RUNAWAY, the roll it always was.
+#
+# Examine's whole failure table is the thread lost, which cannot take hold with no point left, so
+# the failure costs the attempt's point and nothing more.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Crown" --period dawn --observe-only "Test Giant Tree" --grant-mm woodcraft --means-only woodcraft
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy fail-dice
+goal examine
+advance 12 180
+
+click observe "Test Giant Tree"
+choose childhood_memory
+advance 12 180
+click think "Test Giant Tree"
+choose ripelore
+advance 12 180
+
+# --- one point left: the act is offered ---
+expect-state noetic points=1/3
+expect-state where out_of_points=no
+expect-state symbols click act 0
+expect-no-state symbols (disabled) click act
+
+# --- the attempt costs it, and failing gives nothing back ---
+click act 0
+advance 12 180
+click continue
+advance 12 180
+click continue
+advance 12 180
+expect-verb examine
+expect-state noetic points=0/3
+
+# --- the wolf heard it: confronted, with nothing to answer it with ---
+expect-state where confronted=Enemy:wolf exit=RUNAWAY out_of_points=yes
+expect NO NOETIC POINT LEFT
+expect wolf stands in the way
+expect [ RUNAWAY ]
+expect-not [ LEAVE ]
+
+# --- the wolf is on the map already observed, and cannot be thought about: that costs a point ---
+expect-state trees element "the wolf"
+expect-state symbols click think "the wolf" (disabled)
+
+# --- its button is the runaway's roll ---
+strategy succeed
+click exit
+wait
+click continue
+advance 12 180
+wait mode WorldView 60
+quit

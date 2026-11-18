@@ -18,16 +18,14 @@ wait mode LocationInteraction 60
 inspect npcs
 expect-state npcs "wolf alive=True affinity=Stranger enemy=True"
 advance 12 180
-expect wolf
 
 strategy succeed
 goal appease
-click keyword 0
-choose 0
+# The beast confronts whoever walks in, and so is on the map already observed.
+click think "wolf"
 choose ripelore
 advance 12 180
-click action 0
-choose 0
+click act 0
 advance 12 180
 click continue
 advance 12 180

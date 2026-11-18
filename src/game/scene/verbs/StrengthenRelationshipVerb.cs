@@ -15,7 +15,7 @@ public class StrengthenRelationshipVerb : DialogueVerb
 {
     public override string VerbId            => "strengthen_relationship";
     public override string DisplayName       => "Talk";
-    public override int    BaseDifficulty    => 1;
+    public override int    BaseDifficulty    => 0;   // going over to speak is not rolled; the dialogue carries the stakes
     protected override string DialogueTreeId => "strengthen_relationship";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

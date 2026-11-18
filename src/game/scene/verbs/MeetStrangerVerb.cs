@@ -14,7 +14,7 @@ public class MeetStrangerVerb : DialogueVerb
 {
     public override string VerbId            => "meet_stranger";
     public override string DisplayName       => "Meet";
-    public override int    BaseDifficulty    => 1;
+    public override int    BaseDifficulty    => 0;   // going over to speak is not rolled; the dialogue carries the stakes
     protected override string DialogueTreeId => "meet_stranger";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

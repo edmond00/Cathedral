@@ -1,0 +1,75 @@
+# out of points, in company — the view goes to a companion who still has a point
+#
+# Each member has a pool of their own. When the played member spends their last point and a
+# companion still has one, the view goes to that companion by itself — no box — and the member with
+# nothing left cannot be played again until their pool refills: there is nothing to play them for.
+# The box that says to leave comes up only when nobody in the party has a point.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect [KENRYC GREYGATE]
+inspect party
+
+# --- the protagonist's three points go on three looks ---
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+click observe "Test Rock"
+choose childhood_memory
+advance 12 180
+click observe thing
+choose childhood_memory
+advance 12 180
+wait
+
+# --- the view has gone to the companion, and no box is up ---
+expect [BRINDLETAIL]
+expect-not NO NOETIC POINT LEFT
+expect-state party member Kenryc Greygate area=Test Yard noetic=0/3 played=no
+expect-state where out_of_points=no
+
+# --- the member with nothing left cannot be played ---
+click member Kenryc
+wait
+expect [BRINDLETAIL]
+point member Kenryc
+wait 1
+expect-state pointer-label no noetic point left
+
+# --- the companion's five points go the same way ---
+click observe thing
+choose birdsong
+advance 12 180
+click observe thing
+choose birdsong
+advance 12 180
+click observe thing
+choose birdsong
+advance 12 180
+click observe person
+choose birdsong
+advance 12 180
+expect-state where out_of_points=no
+click observe person
+choose birdsong
+advance 12 180
+wait
+
+# --- nobody has a point: the box, on the member played last, and the party leaves together ---
+expect-state party member Brindletail area=Test Yard noetic=0/5 played=yes
+expect-state where exit=LEAVE out_of_points=yes
+expect NO NOETIC POINT LEFT
+expect Brindletail has no noetic point left
+expect [ LEAVE ]
+expect-not [ PLAY
+click exit
+wait mode WorldView 30
+quit

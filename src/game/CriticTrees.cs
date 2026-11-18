@@ -103,25 +103,11 @@ public static class CriticTarget
 /// Factory for the Item-Use Critic's evaluation trees. The critic LLM is now scoped to judging
 /// whether an item helps accomplish an action; all other adjudication
 /// (plausibility, difficulty, wounds, witnesses, threats) has moved to the modus-mentis persona-fit
-/// enum and to deterministic coded rules. A couple of pure helpers used by the difficulty/movement
-/// display also live here.
+/// enum and to deterministic coded rules. A pure helper used by the difficulty display also lives here.
 /// </summary>
 public static class CriticTrees
 {
-    #region Difficulty / movement helpers (no LLM)
-
-    /// <summary>
-    /// Returns true if the action's leading verb is a movement/exit verb
-    /// (enter, go, leave, move). Used to decide whether Continue exits to world view
-    /// or restarts observation in the current scene.
-    /// </summary>
-    public static bool IsMovementVerb(string actionText)
-    {
-        var verb = actionText.Trim()
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault()?.ToLowerInvariant() ?? "";
-        return verb is "enter" or "go" or "leave" or "move";
-    }
+    #region Difficulty helper (no LLM)
 
     /// <summary>
     /// Converts a 1–10 difficulty level to a 0.0–1.0 score used for success probability.

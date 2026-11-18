@@ -1,0 +1,47 @@
+# ways — a mind that will not look at a way is not asked about it again
+#
+# A way on its line is asked for by itself: the mind chosen attends to that way or declines it, and
+# has no other way to turn to. A declining hangs from the way's symbol, which stays where it was;
+# the mind that declined is greyed in the popup for that way and for no other, and the next mind
+# asked may not decline — a thing is declined once.
+#
+# --refuse-focus stands in for the choice judge answering "not this", which --playground never does.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --refuse-focus
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Childhood Memory is asked about the way to the field, and declines.
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+expect-state trees refusal way="the way to Test Field" mind=childhood_memory
+expect-no-state trees element
+expect-state noetic points=2/3
+# The way is still to be looked at.
+expect-state symbols click observe "the way to Test Field" in "Test Yard" (way)
+
+# About that way it is not asked again...
+click observe "Test Field"
+expect-state popup childhood_memory(refused)
+choose childhood_memory
+expect-state noetic points=2/3
+
+# ...and the mind asked after it attends: the way's one declining is spent.
+choose comradeship
+advance 12 180
+expect-state trees element "the way to Test Field"
+expect-state noetic points=1/3
+
+# About another way, Childhood Memory may be asked.
+click observe "Test Rock"
+expect-state popup minds=[
+expect-no-state popup (refused)
+quit

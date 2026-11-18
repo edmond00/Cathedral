@@ -9,7 +9,7 @@
 # this a test of THAT conversation. --auto-dialogue then settles the conversation this verb opens,
 # so the assertion is about the verb. The trees are covered by cli/_systems/dialogue_*.cli.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --npc-affinity CloseFriend --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer" --organs encephalon=2
 
 wait
 click menu New
@@ -24,14 +24,15 @@ goal propose_to_join
 advance 12 180
 regions
 
-click keyword 0
-choose 0
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
 choose ripelore
 advance 12 180
 regions
 
-click action 0
-choose 0
+click act 0
 advance 12 180
 click continue
 advance 12 180

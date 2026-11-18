@@ -21,7 +21,7 @@ public class RequestJobVerb : DialogueVerb
 
     public override string VerbId            => "request_job";
     public override string DisplayName       => "Request job";
-    public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    public override int    BaseDifficulty    => 0;   // the action only meets the NPC, which is not rolled; the dialogue carries the real stakes
     protected override string DialogueTreeId => "request_job";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

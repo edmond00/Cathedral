@@ -21,6 +21,14 @@ public abstract class DialogueVerb : Verb
     public override AnatomyCapability RequiredCapabilities => AnatomyCapability.Speech;
 
     /// <summary>
+    /// A conversation with the people of a place is the protagonist's to hold. Its replies are
+    /// theirs, and what it settles — a trade, a hire, an introduction, a quarrel — is settled with
+    /// them. A companion played somewhere else in the place looks, thinks and acts, and does not
+    /// speak for the party; among themselves the members speak through the map (Speak).
+    /// </summary>
+    protected override bool MayBePerformedBy(PartyMember actor) => actor is Protagonist;
+
+    /// <summary>
     /// No implement bears on speech, so the whole family is excluded here rather than twelve times
     /// over. The roll only <i>opens</i> the conversation — everything that follows is the tree's, and
     /// a tree cannot see what was in the speaker's hand. Lending dice to "may I be presented to your

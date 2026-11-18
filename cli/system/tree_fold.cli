@@ -1,0 +1,63 @@
+# trees — a click on an observed element folds its tree away, and another brings it back
+#
+# An observed element is the root of what was made of it: thoughts, acts, outcomes. A click on the
+# element puts all of that away — the element alone is drawn, with a mark that there is more — and
+# a second click brings it back. Folding is the screen's: nothing under the element is lost, but
+# none of it is drawn and none of it answers a click while it is folded, so a waiting act cannot be
+# carried out until its tree is unfolded again.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+strategy succeed
+goal move
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+click think "Test Field"
+choose ripelore
+advance 12 180
+
+# --- unfolded: the element offers its fold, and its act waits ---
+expect-state symbols click fold "the way to Test Field"
+expect-no-state symbols click fold "the way to Test Field" (disabled)
+expect-state symbols click act 0
+expect-no-state trees folded=yes
+point fold "Test Field"
+wait 1
+inspect pointer-label
+expect-state pointer-label ground=yellow
+expect-state pointer-label · fold
+
+# --- folded: the element alone, and nothing under it answers ---
+click fold "Test Field"
+expect-state trees element "the way to Test Field"
+expect-state trees folded=yes
+expect-state trees act state=waiting
+expect-state symbols element "the way to Test Field" in "Test Yard" (folded)
+expect-no-state symbols click act
+expect-no-state symbols click think "the way to Test Field"
+click act 0
+expect-state where Test Yard
+point fold "Test Field"
+wait 1
+expect-state pointer-label · unfold
+
+# --- unfolded again: the act is where it was, and is carried out ---
+click fold "Test Field"
+expect-no-state trees folded=yes
+expect-state symbols click act 0
+click act 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Field
+quit

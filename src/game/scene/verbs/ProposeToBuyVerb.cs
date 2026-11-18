@@ -16,7 +16,7 @@ public class ProposeToBuyVerb : DialogueVerb
 {
     public override string VerbId            => "propose_to_buy";
     public override string DisplayName       => "Propose to buy";
-    public override int    BaseDifficulty    => 1;   // the action only meets the NPC; the dialogue carries the real stakes
+    public override int    BaseDifficulty    => 0;   // the action only meets the NPC, which is not rolled; the dialogue carries the real stakes
     protected override string DialogueTreeId => "propose_to_buy";
 
     protected override bool IsPossibleFor(Scene scene, PoV pov, Element target, PartyMember? actor = null)

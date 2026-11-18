@@ -354,18 +354,24 @@ public sealed class RecordGate
 
         switch (what)
         {
-            case "keyword":
+            case "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member":
             {
-                var words = narration?.CliKeywords();
-                string word = int.TryParse(arg, out int ki) && words != null && ki >= 0 && ki < words.Count ? words[ki] : arg;
-                return narration?.CliKeywordSpan(arg) is { } k ? Span(k, word) : Fail($"no clickable keyword '{arg}' on screen");
+                // A symbol of the location map, found as the script driver finds it and aimed at where
+                // it is drawn (panned into view first).
+                if (narration == null) return Fail("not in narration");
+                string rest = arg, name = arg;
+                string? area = null, listener = null;
+                int at = rest.LastIndexOf(" in ", StringComparison.OrdinalIgnoreCase);
+                if (what == "observe" && at > 0) { area = rest[(at + 4)..].Trim().Trim('"'); name = rest[..at].Trim().Trim('"'); }
+                int to = rest.LastIndexOf(" to ", StringComparison.OrdinalIgnoreCase);
+                if (what == "speak" && to > 0) { listener = rest[(to + 4)..].Trim().Trim('"'); name = rest[..to].Trim().Trim('"'); }
+                var (symbol, error) = narration.CliFindSymbol(what, name, area, playerOnly: true, listenerName: listener);
+                if (symbol == null) return Fail(error ?? "no such symbol");
+                return narration.CliSymbolCell(symbol) is { } sc0 ? At(sc0, $"{what} {name}") : Fail($"'{name}' is not drawn on the map");
             }
 
-            case "action":
-                if (!int.TryParse(arg, out int ai)) return Fail("click action <n>");
-                return narration?.CliActionSpan(ai) is { } act
-                    ? Span(act, narration.CliActions().FirstOrDefault(x => x.Index == ai).Text ?? $"action {ai}")
-                    : Fail($"no action {ai} on screen");
+            case "exit":
+                return narration?.CliExitCell() is { } xc ? At(xc, narration.CliExitLabel ?? "exit") : Fail("no way out on screen");
 
             case "option":
                 if (!int.TryParse(arg, out int oi)) return Fail("click option <n>");
@@ -398,7 +404,6 @@ public sealed class RecordGate
 
             case "button":
                 if (dialogue?.CliExitSpan() is { } de) return Span(de, "footer button");
-                if (narration?.CliExitButton() is { Present: true } nb) return Span((nb.X, nb.Y, nb.Width), "footer button");
                 return Fail("no footer button on screen");
 
             case "continue":
@@ -490,19 +495,9 @@ public sealed class RecordGate
 
             case "area":
             {
-                // A card on the location map while a backtrack asks where to; one off the view is
-                // panned into it first, as a player would.
-                var n = _game.CliNarration;
-                if (n == null || n.CliBacktrackState() != "choosing") return Fail("no backtrack is asking where to");
+                // A card on the location map, panned into view first, as a player would.
                 string name = string.Join(' ', a[1..]).Trim('"');
-                var choice = n.CliBacktrackChoices().FirstOrDefault(c => c.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-                if (choice.Name == null) return Fail($"'{name}' is not on offer");
-                if (choice.Cell == null)
-                {
-                    n.CliShowBacktrackChoice(choice.Name);
-                    choice = n.CliBacktrackChoices().First(c => c.Name == choice.Name);
-                }
-                return choice.Cell is { } ac ? At(ac, $"area {choice.Name}") : Fail($"'{choice.Name}' cannot be brought into view");
+                return _game.CliNarration?.CliAreaCell(name) is { } ac ? At(ac, $"area {name}") : Fail($"no card for '{name}' on the map");
             }
 
             case "want":

@@ -206,7 +206,7 @@ public abstract class TerminalPanelUI
     // ── Content grey-out + generating header ──────────────────────────────────
 
     /// <summary>Grey out every row from <paramref name="startY"/> to the bottom of the panel.</summary>
-    private void DimFrom(int startY)
+    protected virtual void DimFrom(int startY)
     {
         _terminal.DimRect(
             _layout.LEFT_PADDING,

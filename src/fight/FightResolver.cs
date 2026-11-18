@@ -178,16 +178,18 @@ public static class FightResolver
         (int)Math.Ceiling(pathCost / (double)mover.EffectiveMoveSpeed);
 
     /// <summary>
-    /// Compute the total movement cost of a path (cardinal step = 1.0, diagonal step = 1.5).
-    /// <paramref name="fromX"/>/<paramref name="fromY"/> is the position before the first step.
+    /// Compute the total movement cost of a path, step by step with <see cref="MovementStepCost"/>
+    /// (cardinal 1.0, diagonal 1.5, ×3 into Soft terrain). <paramref name="fromX"/>/<paramref name="fromY"/>
+    /// is the position before the first step. It used to ignore terrain, so a move into soft ground
+    /// was previewed and capped at triple cost and then charged as if the ground were open.
     /// </summary>
-    public static double PathCost(int fromX, int fromY, IList<(int X, int Y)> path)
+    public static double PathCost(FightArea area, int fromX, int fromY, IList<(int X, int Y)> path)
     {
         double cost = 0;
         int px = fromX, py = fromY;
         foreach (var (x, y) in path)
         {
-            cost += (x != px && y != py) ? 1.5 : 1.0;
+            cost += MovementStepCost(area, px, py, x, y);
             px = x; py = y;
         }
         return cost;

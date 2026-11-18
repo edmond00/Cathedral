@@ -4,7 +4,7 @@
 # there is nothing for an implement to make go better. Three things follow, and none is visible from
 # the other two:
 #
-#   * the "Use Tool" row is NOT greyed. Greying is decided by what is carried and by nothing else —
+#   * the implement symbol beside the act is NOT greyed. Greying is decided by what is carried and by nothing else —
 #     a knife is carried, so the row is live. That is deliberate: the player is trusted to choose,
 #     and the noetic cost below is what pays for that trust;
 #   * the attempt FAILS, and without a critic call. Under --playground the item critic picks its
@@ -28,8 +28,10 @@ strategy succeed
 goal examine
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+click think "Test Rack"
 choose ripelore
 advance 12 180
 
@@ -37,25 +39,24 @@ advance 12 180
 # against this number less one.
 inspect noetic
 
-click action 0
-
-# Row 1 is "Use Tool" and it must be LIVE. Were a verb category ever to start greying this row, the
-# `regions` line below would report "(disabled)" and `choose 1` would error — which is the
+# The implement symbol beside the act must be LIVE. Were a verb category ever to start greying
+# it, `inspect symbols` would report "(disabled)" and the click would error — which is the
 # regression this script exists to catch.
 regions
-choose 1
+expect-no-state symbols click tool 0 (disabled)
+click tool 0
 regions
 choose 0
 advance 12 180
 
 # No reformulated action was offered: the combination was refused, so there is no action 1 and the
-# original button stands alone.
+# original act stands alone.
 regions
 inspect noetic
 
 # The point was taken. A starting protagonist's encephalon gives a pool of 3, of which the
 # deliberation above spent one and this refusal spent another.
-expect-state noetic points=1/3
+expect-state noetic points=0/3
 
 # And the band is Low, not None — so the refusal above was the VERB's doing and not the body's.
 # Without this the script would still pass if hands ever fell to nought, having proved the wrong

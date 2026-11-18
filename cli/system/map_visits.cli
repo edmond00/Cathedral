@@ -2,11 +2,13 @@
 #
 # AreaVisits writes them to the location's saved state, and the location map draws from them. The
 # Field–Rock Track runs past the Test Yard, so following it from the field to the rock records the
-# yard as visited too, and the two neighbour ways the track follows as taken — a path is a walk past
-# the areas between its ends, not a jump. Then the location is left and entered again: the scene is
-# rebuilt from its factory on arrival, and the record must come back with it.
+# yard as SEEN — gone by, never stood in — and the track itself as the way taken: the plain ways it
+# ran beside are seen, not taken, so nobody can afterwards walk for nothing to an area they only
+# passed. Then the location is left and entered again: the scene is rebuilt from its factory on
+# arrival, and the record must come back with it — and walking out along the track must not have
+# turned the yard into ground stood on.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track" --organs encephalon=2
 
 wait
 click menu New
@@ -21,17 +23,24 @@ expect-state map visited Test Field
 expect-no-state map visited Test Rock
 expect-no-state map taken
 
+# A look at the mud, the crossing to the wood: the way is seen, and the wood at its far end with it.
+click observe "Test Mud"
+choose childhood_memory
+advance 12 180
+expect-state map seen Test Wood
+
 strategy succeed
 goal follow_path
 advance 12 180
 
-click keyword 0
-choose 0
+click observe "Field–Rock Track"
+choose childhood_memory
+advance 12 180
+click think "Field–Rock Track"
 choose ripelore
 advance 12 180
 
-click action 0
-choose 0
+click act 0
 advance 12 180
 click continue
 advance 12 180
@@ -40,32 +49,36 @@ expect Moved to: Test Rock
 
 inspect map
 expect-state map visited Test Rock
-expect-state map visited Test Yard
 expect-state map taken Field–Rock Track
-expect-state map taken between Test Field and Test Yard
-expect-state map taken between Test Rock and Test Yard
+# The yard was gone by: seen, not visited, and the plain ways through it are not known ways.
+expect-state map seen Test Yard
+expect-no-state map visited Test Yard
+expect-no-state map taken between Test Field and Test Yard
+expect-no-state map taken between Test Rock and Test Yard
 # The move was shown on the map: the party walked the track's own line, from card to card.
 expect-state map walk from Test Field to Test Rock
 expect-state map via=line
-# The wood is off the path: neither visited nor any way to it taken.
-expect-no-state map Test Wood
+# The wood is off the path: seen from the field, never stood in, and no way to it taken.
+expect-no-state map visited Test Wood
+expect-no-state map taken Test Mud
 save roundtrip
 
 # Leave, come back: a rebuilt scene, the same record.
 observe none
-click button
+click continue
 wait 60
 advance 12 180
-click button
+click exit
 wait mode WorldView 90
 travel here
 wait mode LocationInteraction 60
 inspect map
-expect-state map visited Test Yard
 expect-state map visited Test Rock
 expect-state map taken Field–Rock Track
-expect-state map taken between Test Field and Test Yard
-# What the observations took in is seen, and only that: the field's introduction named the Test Mud,
-# the crossing to the wood, so the wood is seen without ever being stood in.
+expect-state map seen Test Yard
+expect-no-state map visited Test Yard
+expect-no-state map taken between Test Field and Test Yard
+# What an observation took in is seen, and only that: the Test Mud was looked at from the field, so
+# the wood is seen without ever being stood in.
 expect-state map seen Test Wood
 quit

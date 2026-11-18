@@ -125,7 +125,7 @@ public class Fighter
 
     // ── Display ───────────────────────────────────────────────────
     public string DisplayName => Member.DisplayName;
-    public char DisplayChar  => Faction == FighterFaction.Party ? '☻' : '☹';
+    public char DisplayChar  => Faction == FighterFaction.Party ? Config.GlyphSphere.ProtagonistChar : Config.Symbols.EnemyChar;
     public Vector4 DisplayColor => Faction == FighterFaction.Party
         ? Config.Colors.White
         : Config.Colors.Purple;

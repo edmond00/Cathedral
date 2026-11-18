@@ -9,8 +9,8 @@
 #     wanted, that bare hands cannot do it, which tool it takes, and that it was left undone —
 #     never "find" or "take it in hand", which came back as done. Under --playground the rewrite
 #     is a stand-in, so this asserts the neutral text the persona is handed — the half a test can see;
-#   * clicking the action again offers "Use Tool" only — Execute is disabled;
-#   * "Use Tool" with the knife then carries the cut through.
+#   * the act itself no longer answers a click — only the implement symbol beside it does;
+#   * reaching for the knife there then carries the cut through.
 #
 # The corpse is made the way cli/verb/cut/success.cli makes it: slay the chicken, knife combined.
 #
@@ -28,49 +28,46 @@ wait mode LocationInteraction 60
 strategy succeed
 goal slay
 advance 12 180
-click keyword 0
-choose 0
+click observe "chicken"
+choose childhood_memory
+advance 12 180
+click think "chicken"
 choose ripelore
 advance 12 180
-click action 0
-choose 1
+click tool 0
 choose 0
 advance 12 180
-click action 1
-choose 0
+click act 1
 advance 12 180
 click continue
 advance 12 180
 expect Slain:
 
 # ── Cut it bare-handed ───────────────────────────────────────────────────────
-click button
+click continue
 advance 12 180
 goal cut
-click keyword 0
-choose 0
+click think "chicken"
 choose ripelore
 advance 12 180
 
-click action 0
-choose 0
+click act 0
 advance 12 180
 # Short fragments, because `expect` matches one row and the sentence wraps.
-expect my bare hands could not do it
-expect it takes a knife
-expect So I left it undone
+expect-state texts "my bare hands could not do it"
+expect-state texts "it takes a knife"
+expect-state texts "So I left it undone"
 expect-not I would need to find
 
 # ── The action is still the way on, and only through a tool ──────────────────
-click action 0
-inspect popup
-expect-state popup Execute(disabled)
-expect-no-state popup Use Tool(disabled)
-choose 1
+regions
+inspect symbols
+expect-state symbols on Dead Chicken (disabled)
+expect-no-state symbols click tool 0 (disabled)
+click tool 0
 choose 0
 advance 12 180
-click action 1
-choose 0
+click act 1
 advance 12 180
 click continue
 advance 12 180

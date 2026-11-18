@@ -90,7 +90,7 @@ public static class Config
         /// <para>What it gates: the render-debug keys (D shader mode, M markers), the post-process
         /// tuning keys (F dither, G levels, H grain, J pulses), the debug camera (C, V), the
         /// window's diagnostic dumps (D, G), the narration's location map (Tab,
-        /// <see cref="Game.DebugLocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
+        /// <see cref="Game.LocationMap"/>), <b>and camera zoom (W, S)</b>.</para>
         ///
         /// <para>Zoom is in that list on purpose even though it is not a debug feature. The game
         /// frames its own camera — narration, travel and fights each set a distance — and a player
@@ -277,20 +277,6 @@ public static class Config
         /// <para>Inert at its default of false.</para>
         /// </summary>
         public static bool Silent { get; set; } = false;
-
-        /// <summary>
-        /// Runs without the GloVe word vectors (<c>models/embeddings/glove.6B.100d.txt</c>) instead of
-        /// exiting for want of them. Set by <c>--no-embeddings</c>.
-        ///
-        /// <para>For a machine that cannot have the file: a CI runner or container that does not fetch
-        /// 822 MB, or a sandbox whose network policy blocks the download. Keyword ranking then takes the
-        /// path it already takes before the vectors finish loading — by word length — so a
-        /// <c>--playground</c> script sees what it would see racing an unfinished load. <c>wait
-        /// embeddings</c> returns at once and says so.</para>
-        ///
-        /// <para>Inert at its default of false: without the flag a missing file still ends the run.</para>
-        /// </summary>
-        public static bool NoEmbeddings { get; set; } = false;
 
         /// <summary>
         /// Which audio path to take (<c>--audio winmm|openal</c>). Null means the platform's own:
@@ -580,6 +566,18 @@ public static class Config
         public static int RefuseMeans { get; set; } = 0;
 
         /// <summary>
+        /// What the playground's willingness stand-in answers in place of "willing": eager (−1 difficulty)
+        /// or reluctant (+1). Set by <c>--willingness &lt;eager|willing|reluctant&gt;</c>; null (the default)
+        /// answers "willing" every time. Narrowed like a real answer to the stances the rules leave on offer,
+        /// and <c>--refuse-means</c> still answers first.
+        ///
+        /// <para>The difficulty of an action is the verb's base plus this modifier, and difficulty 0 rolls
+        /// no dice, so this is how a script reaches both ends of it: an eager means taking a difficulty-1 act
+        /// to 0 (no roll), and a reluctant one raising a difficulty-0 act to 1 (rolled, and so able to fail).</para>
+        /// </summary>
+        public static Cathedral.Game.Narrative.Willingness? WillingnessOverride { get; set; } = null;
+
+        /// <summary>
         /// Every thinking modus mentis's <see cref="Cathedral.Game.Narrative.DoubtLevel"/>, in place of
         /// the one it declares. Set by <c>--doubt &lt;low|medium|high&gt;</c>. Null (the default) leaves
         /// each mind its own. A script about iterative thinking or doubt pins it, so that which mind the
@@ -650,6 +648,7 @@ public static class Config
             // Add characters here that need fallback font
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
+            '✗', '✓', '❝', '⚒', // location map: a failure, a success, speech, an implement
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };
@@ -1150,6 +1149,29 @@ public static class Config
         // event, the visual counterpart of the UI sound effects. See PostProcessRenderer.
         public static bool PulsesEnabled = true;
         public static float PulseDuration = 0.15f; // Seconds a pulse lasts before decaying back
+
+        // Glow: every lit glyph bleeds its own light into the dark around it (see
+        // PostProcessRenderer). Independent of the dither; the Settings screen and --glow switch it.
+        public static bool GlowEnabled = true;
+
+        /// <summary>
+        /// True once <c>--glow</c> has spoken for the glow, which then outranks the saved
+        /// <see cref="UserSettings.GlowEnabled"/> for this run, as <c>--dither</c> does the dither.
+        /// </summary>
+        public static bool GlowSetByFlag = false;
+        public static float GlowStrength = 0.5f;  // Intensity of the halo added over the frame
+        public static float GlowTightness = 0.55f; // Share of the halo at 2-4 px against 8-64 px
+        public static float GlowProtect = 1.0f;   // Keep dark text on lit fills from the halo (0 = off)
+        // The lit ground that triggers it: its brightest channel, averaged around the pixel at mip
+        // level GlowProtectLod of the half-size bright-pass (2.5 = about 10 px, a glyph cell).
+        public static float GlowProtectLow = 0.10f;
+        public static float GlowProtectHigh = 0.28f;
+        public static float GlowProtectLod = 2.5f;
+        public static float GlowFlicker = 0.15f;   // How far the halo falters (0 = steady); text never does
+        // Bright-pass knee, on a pixel's brightest channel: below the first nothing shines, above
+        // the second all of it does. Keeps dim panel fills and dark bands from glowing.
+        public static float GlowKneeLow = 0.08f;
+        public static float GlowKneeHigh = 0.45f;
     }
 
     #endregion
@@ -1415,6 +1437,34 @@ public static class Config
         // Difficulty level glyphs (1-10)
         public static readonly char[] DifficultyGlyphs = new[] { '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩' };
 
+        // Difficulty 0: an act that cannot fail, and rolls no dice (REMEMBER, and any plain act)
+        public const char AutomaticDifficultyGlyph = '○';
+
+        // ── The location map's symbols (narration) ──────────────────────────────
+        // What stands on a card before it is observed, by kind, and what a thought tree is made of.
+        /// <summary>
+        /// An enemy, wherever one is drawn: a fighter of the other side on the fight's board, and on
+        /// the location map a living thing that counts the member played an enemy. One face, so the
+        /// thing seen in a place is recognised when the fight opens against it.
+        /// </summary>
+        public const char EnemyChar   = '☹';
+
+        public const char MapWay      = '∩';   // a way on: a neighbouring area, a door, a stair, a path
+        public const char MapPerson   = '☺';   // a living thing that is no enemy
+        public const char MapHostile  = EnemyChar; // one that is: the face an enemy wears in a fight
+        public const char MapThing    = '◆';   // any other point of interest
+        public const char MapContent  = '◇';   // what a container holds, disclosed and not yet observed
+        public const char MapThink    = '?';   // think about this
+        public const char MapSpeak    = '❝';   // speak of this to a companion; and what was said
+        public const char MapTool     = '⚒';   // beside a waiting act: reach for an implement
+        public const char MapReconsider = '↺'; // beside a waiting act: think it over again
+        public const char MapThought  = '¶';   // a text a mind wrote: three thin bars read as a grey block at this size
+        public const char MapRefusal  = '⊘';   // a refusal, whoever refused and whatever was asked
+        public const char MapFolded   = '…';   // beside an element whose tree is folded away: there is more
+        public const char MapFailure  = '✗';   // an act that failed
+        public const char MapSuccess  = '✓';   // an act that succeeded
+        public const char MapEmotion  = '♥';   // what it stirred
+
         // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
         public const char GoldCoinSymbol   = '⎊'; // yellow
         public const char SilverCoinSymbol = '◉'; // grey
@@ -1497,9 +1547,9 @@ public static class Config
         public static readonly Vector4 HeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for location title
         public static readonly Vector4 ModusMentisHeaderColor = Colors.DarkYellowGrey; // Dark yellow-grey for modusMentis headers
         public static readonly Vector4 NarrativeColor = Colors.MediumGray60; // Medium grey for base text (darker for better contrast)
-        public static readonly Vector4 KeywordNormalColor = Colors.White; // White for interactive elements
-        public static readonly Vector4 KeywordHoverColor = Colors.BrightYellow; // Yellow text on hover
-        public static readonly Vector4 KeywordHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
+        public static readonly Vector4 MapArrowColor = Colors.White; // The map's pan arrows
+        public static readonly Vector4 MapArrowHoverColor = Colors.BrightYellow; // Yellow text on hover
+        public static readonly Vector4 MapArrowHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
         public static readonly Vector4 ActionNormalColor = Colors.White; // White for interactive elements
         public static readonly Vector4 ActionHoverColor = Colors.BrightYellow; // Yellow text on hover
         public static readonly Vector4 ActionHoverBackgroundColor = Colors.DarkYellow; // Dark yellow background on hover
@@ -1730,14 +1780,6 @@ public static class Config
         public const string PlayerName = "character";
         
         /// <summary>
-        /// Target number of keywords to include in observations.
-        /// For overall observations: if more outcomes than this, sample this many outcomes.
-        /// If fewer outcomes, sample multiple keywords per outcome until reaching this target.
-        /// For focus observations: if more keywords than this, sample this many keywords.
-        /// </summary>
-        public const int TargetKeywordCount = 10;
-
-        /// <summary>
         /// Maximum character length of an LLM-generated narrative text — observation, thinking,
         /// action, outcome, speaking, dialogue, and sanitizer rewrites all share this cap. It is
         /// encoded straight into the GBNF grammar as the upper bound of the free-text body.
@@ -1750,33 +1792,6 @@ public static class Config
         /// <c>ActionPathPlanner.WaysThrough</c>). The shortest path is accepted however long it is.
         /// </summary>
         public const int WillMaxPathSteps = 3;
-
-        // ── Observation phase length thresholds (see ObservationPhaseController) ──────────────
-        // All in characters of the final (sanitized) observation text. Kept here so the pacing of a
-        // multi-object observation phase can be tuned without touching the controller.
-
-        /// <summary>
-        /// If the first object's observation text alone is longer than this, the phase stops there and
-        /// no second (or third) observation is started — one rich paragraph stands on its own.
-        /// </summary>
-        public const int ObservationSkipSecondThreshold = 500;
-
-        /// <summary>
-        /// If the first + second observation texts together stay below this, and more than
-        /// <see cref="ObservationThirdMinRemaining"/> other objects could still be observed, a third
-        /// observation is added over the remaining objects.
-        /// </summary>
-        public const int ObservationTriggerThirdThreshold = 400;
-
-        /// <summary>Minimum number of still-observable objects required before a third observation is added.</summary>
-        public const int ObservationThirdMinRemaining = 5;
-
-        /// <summary>
-        /// If a single observation's text is longer than this, two distinct keywords (both linked to the
-        /// same object, so either click does the same thing) are highlighted instead of one.
-        /// </summary>
-        public const int ObservationTwoKeywordsThreshold = 400;
-
 
         /// <summary>Length clause used for single-sentence rewrites (the default).</summary>
         private const string OneSentenceClause = "Answer in one short sentence and stop.";

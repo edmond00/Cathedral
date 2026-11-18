@@ -211,7 +211,7 @@ behind it. Work in this order — cheapest first, and stop to fix rather than pr
    covered by a `cli/verb/`, `cli/outcome/` or `cli/system/` script or by an audit — say which. For
    anything left uncovered, write a script and run it. **Copy a known-good script from the range it
    belongs to and adapt it**; never compose a `.cli` sequence out of the command vocabulary in
-   `CLAUDE.md`, because the preview box between a keyword click and the action list will stall it
+   `CLAUDE.md`, because the preview box between a `click think` and the act it comes to will stall it
    and the failure says nothing about why. A feature that cannot be reached from a cold start needs
    a debug flag, and adding one is expected — see "Adding a debug flag" in `CLAUDE.md`.
 6. **Read the diff for the classes of bug the tests cannot see.** The save round trip catches a

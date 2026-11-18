@@ -1,253 +1,356 @@
-# II. Of Memory
+# II. Memory
 
-A **modus mentis** — a manner of the mind, a settled cast of thought; plural *modi mentis* — is the
-unit of everything a character has learned. Modi mentis are what narrate, what deliberate, what act,
-what speak and what fight. The body sets which of them may be held and how far each may be raised;
-the memory sets how many may be held at once, and which are lost when there is no more room.
+A **modus mentis** (plural *modi mentis*) is one thing a character has learned: a way of perceiving,
+thinking, acting, speaking, fighting, feeling or wanting. The body decides which modi mentis a
+character can hold and how high each can rise. The memory decides how many it can hold at once, and
+which are lost when there is no room.
+
+**In short**
+
+1. Every modus mentis rests on exactly one body region or exactly two organs, and those organs set
+   its maximum level.
+2. Maximum level = 1 + the contribution of each organ (0 to +3) and region (0 to +6) it names.
+   Wounds lower it, and a modus mentis whose usable level falls to 0 or below cannot be used.
+3. A modus mentis gains a level after 6 to 12 experience points, set by the pineal gland.
+4. Everything learned arrives in working memory, which is a queue: when it is full, the oldest entry
+   is lost for good.
+5. To keep a modus mentis, move it from working memory into the long-term module of its kind
+   (procedural, semantic or sensory).
 
 ## 1. What a modus mentis is
 
-Every modus mentis declares the following, and these declarations are the whole of it.
+A modus mentis is defined by a fixed set of properties, listed below.
 
-**An identity.** A stable name, and the manner in which it operates — the phrase by which an act
-performed through it is described.
+**Rules**
 
-**Its functions**, at least one and at most three, drawn from eight:
+1. A modus mentis has a name, and a **manner**: the phrase used to describe an act done through it.
+2. It has at least 1 and at most 3 **functions**, from the 8 in the table below.
+3. It has **sources**: the organs or the region it draws on (see §3).
+4. It may require **capabilities**: speech, handcraft or abstraction (see
+   [Chapter I §5](01-anatomy.md#5-capabilities)). Most require none.
+5. Every modus mentis with the Speaking function requires speech.
+6. Modi mentis of letters and of institutions require abstraction.
+7. It has a **kind of memory**: procedural, semantic or sensory. This decides which long-term module
+   can store it (see §5).
+8. It has a **moral level**: low, medium or high.
+9. It has a **readiness to doubt** if it has the Thinking function (see the subsection below).
+10. It may be **discreet**: it acts quietly, out of sight. A discreet modus mentis is one degree
+    harder to notice (see [Chapter VI](06-narration.md)).
+11. It has a **level**, and progress in experience points toward the next level.
 
-| Function | Office |
+| Function | What it does |
 |---|---|
-| **Observation** | It perceives. It attends to the scene and renders what it finds. |
-| **Thinking** | It deliberates. It settles on a goal and produces the acts that might serve it. |
-| **Action** | It performs. It is consulted when an act is carried out, and may refuse. |
-| **Speaking** | It speaks. It furnishes the replies of a conversation. |
-| **Fighting** | Declarative only: it unlocks fighting skills. It performs nothing itself. |
-| **Emotion** | It feels. It answers what an act came to, and renders a humor into the spleen. |
-| **Will** | It wants. It observes and deliberates, but only toward the few kinds of act it desires. |
-| **Craft** | It knows a trade: one station, one implement, the few things made there (see [X](10-crafting.md)). Borne always beside Will and Action. |
+| **Observation** | Perceives: chooses what in the scene to attend to, and describes what it finds. |
+| **Thinking** | Deliberates: chooses a goal and proposes acts that might reach it. |
+| **Action** | Performs: it is consulted when an act is carried out, and may refuse. |
+| **Speaking** | Speaks: it supplies the replies in a conversation. |
+| **Fighting** | Unlocks fighting skills. It does nothing else by itself. |
+| **Emotion** | Feels: it reacts to the result of an act and produces a humor in the spleen. |
+| **Will** | Wants: it observes and deliberates, but only toward the few kinds of act it desires. |
+| **Craft** | Knows a trade: one station, one implement, and the few things made there (see [Chapter X](10-crafting.md)). Always comes with Will and Action. |
 
-**Action and emotion are exclusive**, as thinking and action already are. These are the three
-offices a mind holds toward a single event — to want it, to do it, to be moved by it — and one
-manner of the mind is asked to be exactly one of them at a time. A body that both performs an act
-and is moved by it does so through two modi mentis, not one.
+### Which functions can be combined
 
-**A will observes and deliberates, and does nothing else of the kind.** It holds both offices, so it
-bears neither the Observation nor the Thinking function beside them; it may bear Action, Speaking,
-Emotion or Fighting as any other may, save that action and emotion remain exclusive. What it wants is
-declared once, as between one and five wants in an order of preference — each a manner of acting,
-that manner upon one kind of thing, or a family of them, and a family of things may be named by what
-they are, so that every mushroom answers a will for mushrooms, or by what they teach, so that a want
-may be a manner of acting upon whatever, so acted upon, teaches that very will. Every will that some
-thing teaches holds a want of this last kind, for a mind indifferent to the thing that taught it
-would decline the one object most plainly its own — and everything it attends to and proposes
-follows from that declaration (see §7). A will is learnable only by a body able to do every
-one of the things it wants. A will is a desire for recognisable things and not a general competence:
-a modus mentis whose manner wants particular acts — of fungi, of a trade, of the hunt — may be a will
-of several wants that its manner covers, while one whose manner is general, a sense or a temper or a
-touch that serves any act, is an ordinary modus mentis. Some two in five of the catalogue are wills.
+1. Thinking and Action cannot be on the same modus mentis.
+2. Action and Emotion cannot be on the same modus mentis.
+3. Reason: wanting an act, doing it and being moved by it are three separate roles, and one modus
+   mentis plays only one of them. A character who both performs an act and is moved by it does so
+   through two modi mentis.
+4. A will already observes and deliberates, so it never also has the Observation or Thinking
+   function.
+5. A will may also have Action, Speaking, Emotion or Fighting, like any other modus mentis, except
+   that Action and Emotion still exclude each other.
 
-**Its anatomical sources** — the organs or regions it draws upon. The rule here is strict and admits
-no mixture: **exactly one region, or exactly two distinct organs.** No source is the principal one;
-each contributes equally to the ceiling, so a modus mentis resting on a region and one resting on
-two organs are differently, not unequally, constituted.
+### Wills
 
-This is also the *only* way anatomy reaches an outcome. Organs set the ceiling and nothing further:
-an act succeeds upon the dice alone, and a better organ helps only by permitting a modus mentis to
-be raised higher — never by nudging a roll.
+A **will** is a modus mentis with the Will function: a desire for particular, recognisable things.
 
-**Its required capabilities**, if any (see [Chapter I §5](01-anatomy.md#5-the-three-capabilities)).
-Every modus mentis bearing the Speaking function requires speech; the lettered and institutional
-ones require abstraction. The common case requires nothing.
+1. A will lists 1 to 5 **wants**, in order of preference.
+2. A want is a manner of acting, alone or applied to one kind of thing or to a family of things.
+3. A family of things can be named by what the things are: every mushroom answers a will for
+   mushrooms.
+4. A family of things can also be named by what the things teach: the want is then to act on
+   whatever, acted on that way, teaches this same will.
+5. Every will that some thing teaches has a want of that last kind.
+6. Reason: otherwise the will would ignore the very object that taught it.
+7. A character can learn a will only if its body can do every one of the things the will wants.
+8. A modus mentis whose manner wants particular acts (of mushrooms, of a trade, of the hunt) can be a
+   will with several wants within that manner.
+9. A modus mentis whose manner is general (a sense, a temper, a touch that serves any act) is an
+   ordinary modus mentis, not a will.
+10. About 2 in 5 modi mentis in the game are wills.
+11. Everything a will attends to and proposes follows from its wants (see §7).
 
-**Its kind of memory** — procedural, semantic or sensory — which decides where it may be lodged.
+### Sources
 
-**Its moral level** — low, medium or high. Low modi mentis are disposed to deception and violence;
-high ones resist them. This is read **only** off the two that deliberate and act; one bearing
-neither of those functions is always medium, since a principled organ of perception is a claim
-nothing could honour.
+1. A modus mentis rests on **exactly one region, or exactly two different organs**. No other mixture
+   is allowed.
+2. No source is the main one. Each contributes equally to the maximum level (see §3).
+3. Sources are the only way the body affects an act. An organ score never changes a roll. A better
+   organ helps only by letting a modus mentis rise to a higher level.
 
-**Its readiness to doubt** — low, medium or high — declared by every modus mentis bearing the
-Thinking function, and suited to its temper: a mind that questions, weighs and checks is high, one
-that knows at a glance, trusts a sense, a feeling or an instinct, or keeps to a fixed code is low. It sets how often a thinking may be taken up
-again when its proposal comes to nothing, and whether that proposal may be doubted; it is treated in
-[Chapter VI §5](06-narration.md#5-the-three-steps-of-an-act). A will declares none, and is medium.
+### Moral level
 
-**Whether it acts discreetly** — quietly, out of sight. A discreet modus mentis is one degree harder
-to notice, which is treated in [Chapter VI](06-narration.md).
+1. A low moral level is inclined to deception and violence. A high one resists them.
+2. The moral level matters only for the Thinking and Action functions (see §7).
+3. A modus mentis with neither Thinking nor Action always has a medium moral level.
+4. Reason: a principled way of perceiving would be a claim nothing in the game could honour.
 
-**Its level and its progress** toward the next.
+### Readiness to doubt
 
-## 2. Learnability
+1. Every modus mentis with the Thinking function has a readiness to doubt: low, medium or high.
+2. It matches the modus mentis's temper. One that questions, weighs and checks is high. One that
+   knows at a glance, trusts a sense, a feeling or an instinct, or follows a fixed code is low.
+3. It sets how often a thought can be tried again when its proposal comes to nothing, and whether
+   that proposal can be doubted (see
+   [Chapter VI §5](06-narration.md#5-observing-thinking-and-acting)).
+4. A will declares no readiness to doubt, and counts as medium.
 
-A body may hold a modus mentis when both of the following hold:
+## 2. Who can learn a modus mentis
 
-1. **Structurally** — every organ or region the modus mentis names resolves upon that body.
-2. **By capability** — the body has everything the modus mentis requires.
+A character can hold a modus mentis only if its body fits it.
 
-Failing either, the modus mentis is **refused**, not merely capped. This matters: an absent organ
-contributes nothing to the ceiling, so a modus mentis naming one could otherwise be held and stuck
-at the first level for ever — carried, useless, and unexplained. Nothing may be granted that cannot
-be raised.
+**Rules**
 
-The composition of the catalogue is bound by this in turn. No organ or region of any anatomy is left
-with fewer than three modi mentis its owner can actually learn, and no modus mentis exists that no
-anatomy can learn at all.
+1. Every organ or region the modus mentis names must exist on the character's body.
+2. The body must have every capability the modus mentis requires (see
+   [Chapter I §5](01-anatomy.md#5-capabilities)).
+3. If either condition fails, the modus mentis is **refused**: it cannot be learned at all.
+4. Reason: a missing organ contributes nothing to the maximum level. Without this rule, a character
+   could hold a modus mentis stuck at level 1 forever, with no explanation.
+5. In every anatomy, every organ and every region has at least 3 modi mentis its owner can learn.
+6. Every modus mentis can be learned by at least one anatomy.
 
-## 3. Level and its ceiling
+## 3. Level and maximum level
 
-A modus mentis's level begins at one and rises by experience. Its **maximum** is
+A modus mentis starts at level 1 and rises with experience, up to a maximum set by its sources.
 
-> 1 + the sum of the contributions of every source it names
+**Rules**
 
-where an **organ** contributes from nought to **+3** and a **region** from nought to **+6**, scaled
-linearly against that source's own maximum score.
+1. Maximum level = 1 + the sum of the contributions of every source the modus mentis names.
+2. An organ with a score of 0 or more contributes 0 to +3: 3 × organ score ÷ the organ's maximum
+   score, rounded to the nearest whole number.
+3. A region with a score of 0 or more contributes 0 to +6: 6 × region score ÷ the region's maximum
+   score, rounded to the nearest whole number.
+4. A modus mentis on two organs, or on one region, can therefore reach level 7, but only if its
+   sources are at their maximum scores.
+5. The 25 points used to build a protagonist cannot raise every organ to its maximum (see
+   [Chapter I §9](01-anatomy.md#9-creating-a-protagonist)).
+6. A wounded source does not just stop contributing: it subtracts (see the table).
+7. A maximum level can therefore be 0 or lower.
+8. The **usable level** is the lower of two numbers: the level reached, and the current maximum
+   level.
+9. A wound can lower the maximum level below the level already reached. The level reached is not
+   changed, and the usable level returns when the wound heals.
+10. A modus mentis whose usable level is 0 or lower **cannot be used at all**. No die can be rolled
+    with it.
+11. Every step that would call on it refuses instead, and names the damaged body parts and the
+    wounds responsible (see [Chapter VI §6](06-narration.md#6-rules-of-action-and-rules-of-choice), and for
+    combat [Chapter VIII §4](08-fighting.md#4-fighting-skills)).
 
-Whence: a modus mentis upon two organs may in principle reach level 7, one upon a region level 7
-also — but only if the sources are carried to their ceilings, which the budget of composition does
-not allow across the whole frame. A modus mentis whose sources sit at half their maxima has a
-ceiling near the middle of that range.
-
-Wounds enter here directly, and they do not merely withhold a contribution — **they take one away**.
-A source is reckoned in one of three states:
-
-| the source | contributes |
+| State of the source | Contribution |
 |---|---|
-| disabled by a **High** wound | **−2** |
-| driven below nought by **Medium** wounds | **−1** |
-| at nought, whether spent to nothing or never invested in | nothing, and the scale above resumes |
+| Disabled by a **High** wound (a wound that disables what it hits) | −2 |
+| Score pushed below 0 by **Medium** wounds (each subtracts 1 from the score) | −1 |
+| Score 0, whether wounded to 0 or never raised | 0 |
+| Score above 0, including a score lowered but not below 0 by Medium wounds | by rules 2 and 3 |
 
-The sum is therefore not bounded below by the base of one, and a sufficiently injured frame carries a
-ceiling of nought or beneath it.
+Wounds are explained in [Chapter I §7](01-anatomy.md#7-wounds).
 
-**What a body can bring to bear** is accordingly the lesser of two numbers: the level attained, and
-the ceiling the frame presently allows. **A wound can therefore lower a modus mentis's ceiling below
-the level already attained**, and does; the level itself is untouched, being the record of what was
-learned, and the reach returns of its own accord when the wound closes.
-
-**A modus mentis whose reach has fallen to nought or beneath cannot be used at all.** It is not
-merely a weak manner of the mind but an unusable one: there is no die left to cast with it, and every
-phase that might have called upon it refuses instead, naming the parts of the frame that failed and
-the wounds responsible. The terms of that refusal are set out in
-[Chapter VI §6](06-narration.md#6-the-two-families-of-rule) and, for combat,
-[Chapter VIII §4](08-fighting.md#4-fighting-skills).
+**Example.** A modus mentis rests on the cerebellum and the hands. The cerebellum has score 3 of a
+maximum 5: 3 × 3 ÷ 5 = 1.8, so it contributes +2. The hands have score 4 of a maximum 6:
+3 × 4 ÷ 6 = 2, so they contribute +2. The maximum level is 1 + 2 + 2 = 5. A High wound to the hands
+changes their contribution to −2, so the maximum level becomes 1 + 2 − 2 = 1. If the modus mentis
+had reached level 4, its usable level is now 1.
 
 ## 4. Experience
 
-Experience is granted a point at a time, from four sources: the chain of modi mentis that carried a
-successful act; a blow that lands in combat; a branch of conversation won; and the lesson a
-particular act teaches of itself.
+Experience points raise a modus mentis's level.
 
-The number of points required for one level is the **pineal gland's** measure — from twelve at the
-weakest to six at the strongest. On reaching that number the bar resets to nought and the level
-advances by one.
+**Rules**
 
-A modus mentis already at its ceiling earns nothing and is told nothing. This is deliberate: were it
-otherwise, every act would end with a remark upon how one cannot become better at walking.
+1. Experience is gained 1 point at a time.
+2. Experience comes from 4 sources: the modi mentis that carried out a successful act; a blow that
+   lands in combat; a won branch of a conversation; and the lesson a particular act teaches.
+3. The points needed for one level are the **Experience per Level** value of the pineal gland (an
+   organ-derived value, see [Chapter I §6](01-anatomy.md#6-derived-values)). Lower is better.
+4. When the points reach that number, the progress resets to 0 and the level rises by 1.
+5. A modus mentis already at its maximum level gains nothing, and no message is shown.
+6. Reason: otherwise every act would end with a note that the character cannot get any better at
+   walking.
 
-## 5. The five modules of memory
+| Pineal gland score | 0 | 1 | 2 | 3 |
+|---|---|---|---|---|
+| Experience per Level | 12 | 12 | 9 | 6 |
 
-Memory is not one store but five, each of a size dictated by an organ of the encephalon.
+A body without a pineal gland (a beast or a reptile) always needs 12.
 
-| Module | Sized by | Capacity | Admits |
+## 5. The five memory modules
+
+Memory is made of five separate stores, called modules. Each is sized by one part of the encephalon
+(the head region holding the brain organs).
+
+**Rules**
+
+1. Each module has a number of slots. One slot holds at most one modus mentis.
+2. Only the first slots, up to the module's capacity, can be used. The rest are shown but locked, to
+   show what a stronger organ would allow.
+3. The modules are built once, when character creation ends, from the scores at that moment.
+4. Procedural, semantic and sensory modi mentis can be stored long-term only in the module of their
+   own kind.
+
+| Module | Sized by | Capacity | Accepts |
 |---|---|---|---|
-| **Working** | encephalon (region) | score + 2, bounded 1–25 | anything |
-| **Procedural** | cerebellum | score × 4, bounded 1–20 | procedural modi mentis only |
-| **Semantic** | cerebrum | score × 4, bounded 1–20 | semantic modi mentis only |
-| **Sensory** | hippocampus | score × 4, bounded 1–20 | sensory modi mentis only |
-| **Residual** | anamnesis | score × 4, bounded 1–20 | anything; ordered, first in first out |
+| **Working** | encephalon (region) | score + 2, from 1 to 25 | anything |
+| **Procedural** | cerebellum | score × 4, from 1 to 20 | procedural modi mentis only |
+| **Semantic** | cerebrum | score × 4, from 1 to 20 | semantic modi mentis only |
+| **Sensory** | hippocampus | score × 4, from 1 to 20 | sensory modi mentis only |
+| **Residual** | anamnesis | score × 4, from 1 to 20 | anything; a queue, first in, first out |
 
-Each module holds a pool of slots of which only the first *capacity* are unlocked; the remainder
-stand visible and unusable, so that the shape of what a stronger organ would afford is apparent. A
-slot holds at most one modus mentis.
+## 6. Learning, filing and losing
 
-The modules are built once, at the close of composition, from the scores then standing.
+A newly learned modus mentis is not safe until it is filed in a long-term module.
 
-## 6. Acquisition, filing, and loss
+### Arriving
 
-**Everything learned arrives in working memory, at the front.** This holds however it was learned —
-by carrying out an act, by winning a branch of conversation, by taking up a fighting skill in the
-midst of a fight, or by working a stint at a trade. Nothing is ever filed away for the body
-automatically.
+1. Everything learned arrives at the front of working memory.
+2. This is true however it was learned: by an act, by winning a branch of a conversation, by taking
+   up a fighting skill during a fight, or by working a stint at a trade.
+3. Nothing is ever filed automatically.
+4. Working memory is a queue. When it is full and something new arrives, the modus mentis at the far
+   end is pushed out.
+5. A modus mentis pushed out of working memory is **lost**: it is removed from the character
+   entirely, and does not move to another module.
+6. Whatever is not filed by the time the next thing is learned is at risk.
+7. A modus mentis the body cannot hold (§2) is never placed anywhere; the lesson simply teaches
+   nothing.
 
-Working memory is therefore a holding pen and not a home, and it is a queue. When it is full, the
-modus mentis at the far end is pushed out and **lost outright** — struck from the character
-altogether. It does not fall back into any other module. Whatever has not been filed by the time the
-next thing is learned is what stands to be lost.
+### The four filing moves
 
-Filing is done deliberately, and there are four moves.
+1. **Consolidate**: move a modus mentis from working memory into the long-term module of its kind
+   (procedural, semantic or sensory).
+2. Consolidating needs a free slot in that module. There is no other place it can go: a procedural
+   modus mentis can never be stored in the semantic module.
+3. Consolidating is what makes a modus mentis safe. Working memory is a queue precisely so that
+   neglecting this has a price.
+4. **Archive**: move a modus mentis from a long-term module to the front of the residual queue.
+5. At least 1 modus mentis must remain in the module it leaves, so archiving can never empty a
+   module.
+6. Archiving makes room in a full long-term module for something better.
+7. **Reject**: delete a modus mentis from working memory at once.
+8. The freed slot goes to the back of the queue, so the next thing learned has a place. Rejecting
+   makes room before the queue chooses what to lose.
+9. **Reject for good**: delete it the same way, and also add it to the character's list of refused
+   modi mentis, kept for the rest of the run.
+10. A modus mentis on that list is never learned again. An act, a conversation or a stint of work
+    that would teach it teaches nothing instead.
+11. A fighting skill that a refused modus mentis unlocks is no longer offered to be taken up in a
+    fight.
+12. The list affects learning only. It removes nothing already held, and nothing can be taken off
+    the list.
 
-**Consolidate** takes a modus mentis out of working memory and lodges it in the long-term module of
-its own kind — procedural, semantic or sensory. It requires a free slot in that module, and there is
-nowhere else it may go: a procedural modus mentis can never be lodged in the semantic module. This
-is the move that makes a modus mentis safe, and the whole reason working memory is a queue is to put
-a price on neglecting it.
+### The residual queue
 
-**Archive** takes a modus mentis out of a long-term module and pushes it to the front of the
-**residual** queue. At least one modus mentis must remain in the module it leaves, so a module can
-never be emptied this way. Archiving is how room is made in a full long-term module for something
-better.
+1. The residual queue holds modi mentis taken out of active use.
+2. It is a delay, not a store: enough archiving after a modus mentis enters will push it out of
+   memory for good.
+3. Its length, and so the length of that delay, is set by the anamnesis.
+4. In sum: the encephalon decides how much can be learned before something is lost, and the other
+   four organs decide how much can be kept. A character who learns faster than it files will forget.
 
-**Reject** discards a modus mentis from working memory on the spot. It exists so that room can be
-banked *before* the queue takes the choice away — the slot freed goes to the back of the queue, so
-the next thing learned has somewhere to sit.
-
-**Reject for good** discards it in the same manner and further sets it on the character's list of
-refusals, which is kept with the character for the rest of the run. A modus mentis on that list is
-never learned again: an act, a conversation or a stint of work that would teach it teaches nothing
-in its place, and a fighting skill that it unlocks is no longer offered to be taken up in a fight. The list governs learning only; it takes nothing from what is
-already held, and nothing removes a modus mentis from it once set there.
-
-The **residual** queue is the last holding, and it is a reprieve rather than a store: what enters it
-has been put out of active use, and enough archiving after it will push it out of memory for good.
-Its length — and so the length of that reprieve — is the anamnesis.
-
-A modus mentis the body cannot hold (§2) is never lodged at all; the grant simply teaches nothing.
-
-Whence the shape of the whole system: **the encephalon decides how much can be learned before
-something is lost, and the other four organs decide how much can be kept.** A body that learns
-faster than it files is a body that forgets.
+**Example.** A protagonist's encephalon has score 6, so working memory holds 8. It has learned 8
+modi mentis and filed none. A ninth arrives at the front, and the oldest of the 8 is lost. Had one
+been consolidated or rejected first, nothing would have been lost.
 
 ## 7. What the modi mentis are for
 
-The catalogue itself is content and is not enumerated here. What matters structurally is which
-function a modus mentis bears, since that decides where in the machinery it is consulted:
+Which function a modus mentis has decides where in the game it is consulted. The game's list of modi
+mentis is content and is not listed here.
 
-- An **observation** modus mentis is asked what is worth attending to, and renders what it finds.
-  Its choice is constrained by what has already been attended to this phase.
-- A **thinking** modus mentis is asked what to want. It settles on a goal from what the observed
-  object affords, and its moral level decides whether crimes are offered to it at all.
-- An **action** modus mentis is asked whether it is willing, and how willingly. Its moral level
-  decides whether it refuses a crime outright or may not refuse one at all. Its discretion decides
-  what a failure costs.
-- A **speaking** modus mentis furnishes a reply in conversation, and its level joins the pool that
-  settles the exchange.
-- A **fighting** modus mentis unlocks a fighting skill and lends its level to that skill's dice. It
-  is never consulted directly.
-- A **will** is asked nothing either, in the sense the others are: it is told the shortest course of
-  acts that leads, from where the body stands, to an act of any kind it wants, and it attends only to
-  the first act of such a course. Its wants are weighed by distance alone: the nearest is pursued,
-  whichever it is, and between wants equally near, the one it holds first. Where several courses are
-  equally short — two people to strike, two bushes to pick — the first act of any of them will serve. In deliberation it is less strict: it
-  proposes the first act of any course of at most three acts, the wanted act included, or of one as
-  short as the shortest the place offers (see [VI §6](06-narration.md#6-the-two-families-of-rule)). The course is reckoned through the place itself —
-  walking, climbing, crossing, opening doors, waiting for another hour — and, where the act it wants
-  needs an implement the body lacks, through taking one up or proposing to buy one from somebody whose
-  wares include it — the act's own implement, or anything made for that act, as keys are for a lock. An implement is never a condition of the course: where none can be had in the place the course is reckoned without one, whatever the body carries, and an act the will wants that is offered where the body stands is proposed even while one could be fetched. The implement is asked for only when the act is carried out ([VI](06-narration.md)). It cannot be reckoned through anything whose issue is not known beforehand — a fight, a
-  roll, a conversation — save two conversations whose success says all the course needs: the leave of a
-  workshop, and a trader's leading the way to their premises. A want is either to buy or to sell, never both. A will to sell
-  accepts as its end only a trader who would buy something the body carries, and it searches a place for no other. Where no course to any of its wants exists within the place, the will
-  refuses everything there, and says it would have to leave to find what it wants. A will that bears the
-  Action function carries out the act it wants itself, and never refuses one of its own course. The
-  acts that lead to it are another matter: their means is chosen as for any goal, the will among
-  the candidates, and where the means chosen refuses, the same act may be tried again with another. Speech is not
-  narrowed by the will: one bearing the Speaking function replies in any conversation, whatever it
-  wants, and one without it replies in none. Nearly every will whose wanted act is a conversation
-  bears it.
-- An **emotion** modus mentis is asked nothing. It declares in advance which kinds of consequence
-  move it and to what, and is consulted only after an act has resolved and its consequences are
-  known. Its level does not enter into it; see [Chapter III §8](03-humors.md#8-the-humors-of-the-passions).
+**Rules**
 
-A modus mentis may bear several of these and is then consulted in each capacity.
+1. A modus mentis with several functions is consulted in each role.
+2. An **observation** modus mentis is asked what is worth attending to, and describes what it finds.
+   It chooses among the things of the kind asked for that the character has not yet observed.
+3. A **thinking** modus mentis is asked what to want. It picks a goal from what the observed object
+   allows. Its moral level decides whether crimes are offered to it at all.
+4. An **action** modus mentis is asked whether it is willing, and how willingly. Its moral level
+   decides whether it refuses a crime outright or cannot refuse one at all. Whether it is discreet
+   decides what a failure costs.
+5. A **speaking** modus mentis supplies a reply in a conversation, and its level joins the pool that
+   decides the exchange.
+6. A **fighting** modus mentis unlocks a fighting skill and adds its level to that skill's dice. It
+   is never consulted directly.
+7. An **emotion** modus mentis is asked nothing. It declares in advance which kinds of result move
+   it and which humor each produces. It is consulted only after an act has been resolved. Its level
+   plays no part (see [Chapter III §8](03-humors.md#8-emotion-humors)).
+
+### How a will chooses
+
+A will is asked nothing either. It is told the shortest course of acts from where the character
+stands to an act it wants.
+
+1. In observation, a will attends only to the first act of such a course.
+2. Wants are weighed by distance alone: the nearest is pursued, whichever it is.
+3. Between wants equally near, the will pursues the one listed first.
+4. If several courses are equally short (two people to strike, two bushes to pick), the first act of
+   any of them will do.
+5. In deliberation a will is less strict. It proposes the first act of any course of at most 3 acts,
+   the wanted act included, or of any course as short as the shortest in the place (see
+   [Chapter VI §6](06-narration.md#6-rules-of-action-and-rules-of-choice)).
+6. A course is worked out through the place itself: walking, climbing, crossing, opening doors,
+   waiting for another hour.
+7. If the wanted act needs an implement the character lacks, the course can include taking one up,
+   or proposing to buy one from someone whose wares include it.
+8. The implement can be the act's own implement, or anything made for that act, as a key is made for
+   a lock.
+9. An implement is never a condition of the course. If none can be had in the place, the course is
+   worked out without one, whatever the character carries.
+10. A wanted act offered where the character stands is proposed even if an implement could be fetched
+    first. The implement is asked for only when the act is carried out (see
+    [Chapter VI](06-narration.md)).
+11. A course cannot pass through anything whose result is not known in advance: a fight, a roll, a
+    conversation.
+12. There are two exceptions, conversations whose success is all the course needs: getting a
+    workshop's leave, and a trader leading the way to their premises.
+13. A want is either to buy or to sell, never both.
+14. A will to sell accepts as its goal only a trader who would buy something the character carries,
+    and looks for nothing else in a place.
+15. If no course to any of its wants exists in the place, the will refuses everything there, and says
+    it would have to leave to find what it wants.
+16. A will with the Action function carries out the act it wants itself, and never refuses an act of
+    its own course.
+17. The acts that lead up to the wanted act are chosen like any goal's means: the will is one of the
+    candidates, and if the chosen modus mentis refuses, the same act can be tried with another.
+18. A will does not narrow speech. A will with the Speaking function replies in any conversation,
+    whatever it wants. A will without it replies in none.
+19. Nearly every will whose wanted act is a conversation has the Speaking function.
+
+## Terms
+
+| Term | Meaning |
+|---|---|
+| Modus mentis (plural modi mentis) | One learned way of perceiving, thinking, acting, speaking, fighting, feeling or wanting. |
+| Function | One of 8 roles a modus mentis can play: Observation, Thinking, Action, Speaking, Fighting, Emotion, Will, Craft. |
+| Will | A modus mentis that wants particular acts, listed as 1 to 5 wants. |
+| Want | One act a will desires: a manner of acting, alone or on a kind or family of things. |
+| Manner | The phrase describing an act done through a modus mentis. |
+| Source | An organ or region a modus mentis rests on: one region, or two organs. |
+| Capability | Speech, handcraft or abstraction; what an anatomy has and a modus mentis may require. |
+| Moral level | Low, medium or high; how readily a thinking or action modus mentis accepts deception and violence. |
+| Readiness to doubt | Low, medium or high; how often a thinking modus mentis retries or doubts a proposal. |
+| Discreet | Acting quietly; one degree harder to notice. |
+| Maximum level | 1 + the contributions of a modus mentis's sources; lowered by wounds. |
+| Contribution | What one source adds to a maximum level: 0 to +3 for an organ, 0 to +6 for a region, −1 or −2 when wounded. |
+| Usable level | The lower of the level reached and the current maximum level; 0 or less means unusable. |
+| Experience per Level | Points needed for one level: 12, 9 or 6, from the pineal gland. |
+| Encephalon | The head region holding the anamnesis, cerebellum, cerebrum, hippocampus and pineal gland. |
+| Working memory | The queue where everything learned arrives; its overflow is lost. |
+| Long-term module | The procedural, semantic or sensory module, each storing one kind of modus mentis. |
+| Residual queue | The module that holds archived modi mentis until they are pushed out. |
+| Consolidate, archive, reject, reject for good | The four moves that file or discard a modus mentis. |
+| Low, Medium, High wound | Wound degrees: costs 1 health only; subtracts 1 from a score; disables what it hits. |
 
 ---
 
-Previous: [I. Of Anatomy](01-anatomy.md) · Next: [III. Of the Humors](03-humors.md)
+Previous: [I. Anatomy](01-anatomy.md) · Next: [III. Humors](03-humors.md)

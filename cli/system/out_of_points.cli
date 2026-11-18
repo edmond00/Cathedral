@@ -1,0 +1,56 @@
+# out of points — the last noetic point spent leaves only the way out, and a box says so
+#
+# Every look, every thought and every attempt at an act costs a point, so a member with none left
+# has nothing a click answers but the way out — one small glyph at the map's edge. A box stands over
+# the map instead: why nothing answers, and a LEAVE button (RUNAWAY while somebody confronts the
+# member — out_of_points_confronted.cli; a PLAY button for each companion who still has a point).
+# The map under it takes no click. `click exit` presses its button.
+#
+# Here the pool of 3 goes on three looks.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+click observe "Test Field"
+choose childhood_memory
+advance 12 180
+click observe "Test Rock"
+choose childhood_memory
+advance 12 180
+
+# --- one point left: the map answers, and no box is up ---
+expect-state noetic points=1/3
+expect-state where out_of_points=no
+expect-not NO NOETIC POINT LEFT
+
+click observe thing
+choose childhood_memory
+advance 12 180
+
+# --- none left: the box, what it says, and the one way on ---
+expect-state noetic points=0/3
+expect-state where exit=LEAVE out_of_points=yes
+expect NO NOETIC POINT LEFT
+expect has no noetic point left
+expect [ LEAVE ]
+
+# --- nothing on the map answers under it, and no card is walked to ---
+expect-state symbols click fold "the way to Test Field" (disabled)
+expect-state symbols click fold "the way to Test Rock" (disabled)
+click observe thing
+click area "Test Field"
+expect-state where Test Yard
+expect-state noetic points=0/3
+
+# --- its button is the way out ---
+click exit
+wait mode WorldView 30
+quit

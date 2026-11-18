@@ -142,6 +142,9 @@ public class FightModeAdapter
     /// <summary>Whether the fight has ended.</summary>
     public bool IsOver => Result != FightAdapterResult.Ongoing;
 
+    /// <summary>The members fighting on the party's side, the one who opened the fight first.</summary>
+    public IReadOnlyList<PartyMember> Party { get; }
+
     /// <summary>The NPC that was fought.</summary>
     public NpcEntity TargetNpc => _targetNpc;
 
@@ -232,7 +235,8 @@ public class FightModeAdapter
         IReadOnlyList<NpcEntity>? allies = null,
         Action<GameEventType>? sfxTrigger = null,
         Action<MusicFilter>? setMusicFilter = null,
-        bool enemyInitiative = false)
+        bool enemyInitiative = false,
+        IReadOnlyList<PartyMember>? party = null)
     {
         _terminal = terminal;
         _ = popup; // unused (popups removed; the param is kept for caller compatibility)
@@ -257,7 +261,10 @@ public class FightModeAdapter
         var area = arenaGenerator.Generate();
 
         // Build fighters
-        var fighters = BuildFighters(protagonist, targetNpc, _allies);
+        // Who fights on the party's side: those handed in — the members standing where a fight broke
+        // out in a place, the one who started it first — or, on the road, everybody.
+        Party = party ?? new List<PartyMember> { protagonist }.Concat(protagonist.CompanionParty).ToList();
+        var fighters = BuildFighters(Party, targetNpc, _allies);
 
         // Roll initiative
         foreach (var f in fighters)
@@ -329,27 +336,16 @@ public class FightModeAdapter
         }
     }
 
-    private static List<Fighter> BuildFighters(Protagonist protagonist, NpcEntity npc, IReadOnlyList<NpcEntity> allies)
+    private static List<Fighter> BuildFighters(IReadOnlyList<PartyMember> party, NpcEntity npc, IReadOnlyList<NpcEntity> allies)
     {
         var fighters = new List<Fighter>();
 
-        // Player party
-        var partyFighter = new Fighter(protagonist,
-            FightArea.ZoneColStart + 2, FightArea.PlayerRowStart + 1,
-            isPlayerControlled: true, FighterFaction.Party);
-        fighters.Add(partyFighter);
-
-        // Add companions as party fighters. Like the protagonist, they are player-controlled:
-        // the player takes each companion's turn when it comes up in the initiative order.
-        int companionOffset = 0;
-        foreach (var companion in protagonist.CompanionParty)
-        {
-            companionOffset++;
-            var cf = new Fighter(companion,
-                FightArea.ZoneColStart + 2 + companionOffset * 2, FightArea.PlayerRowStart + 1,
-                isPlayerControlled: true, FighterFaction.Party);
-            fighters.Add(cf);
-        }
+        // The party's side, every one of them player-controlled: the player takes each member's
+        // turn when it comes up in the initiative order.
+        for (int i = 0; i < party.Count; i++)
+            fighters.Add(new Fighter(party[i],
+                FightArea.ZoneColStart + 2 + i * 2, FightArea.PlayerRowStart + 1,
+                isPlayerControlled: true, FighterFaction.Party));
 
         // Main enemy NPC
         var enemyFighter = new Fighter(npc.Combatant,
@@ -656,19 +652,7 @@ public class FightModeAdapter
             }
             if (y == FightModeUI.RunButtonRow)
             {
-                // Survival Instinct lifts the once-per-turn limit on the runaway check, so a
-                // failed roll can be attempted again for as long as the turn lasts.
-                bool mayRetry = active.ActiveEffects.Any(e => e.AllowsRunawayRetry);
-                if (_state.RunUsedThisTurn && !mayRetry) return;
-                if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
-                {
-                    _state.RunUsedThisTurn = true;
-                    ExecuteAction(new Actions.RunawayAction(active));
-                }
-                else
-                {
-                    _state.AddLog("Must reach the exit tile (⎆) to run away.");
-                }
+                TryRunaway(active);
                 return;
             }
 
@@ -994,15 +978,32 @@ public class FightModeAdapter
         }
         if (key == OpenTK.Windowing.GraphicsLibraryFramework.Keys.R)
         {
-            if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
-                ExecuteAction(new Actions.RunawayAction(active));
-            else
-                _state.AddLog("Must reach the exit tile (⎆) to run away.");
+            TryRunaway(active);
             return;
         }
         // ESC is routed through TryCancelSelection by the launcher, not handled here — see that
         // method. The log is not scrollable any more (it shows the most recent lines and nothing
         // else), so PageUp/PageDown are gone with it.
+    }
+
+    /// <summary>
+    /// The runaway attempt, for the RUN button and the R key alike. Once per turn unless a state
+    /// lifts the limit (Survival Instinct), and only from the exit tile. The key used to skip the
+    /// once-per-turn test, so a failed roll could be retried by pressing R again.
+    /// </summary>
+    private void TryRunaway(Fighter active)
+    {
+        bool mayRetry = active.ActiveEffects.Any(e => e.AllowsRunawayRetry);
+        if (_state.RunUsedThisTurn && !mayRetry) return;
+        if (active.X == FightArea.ExitCol && active.Y == FightArea.ExitRow)
+        {
+            _state.RunUsedThisTurn = true;
+            ExecuteAction(new Actions.RunawayAction(active));
+        }
+        else
+        {
+            _state.AddLog("Must reach the exit tile (⎆) to run away.");
+        }
     }
 
     /// <summary>

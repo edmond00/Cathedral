@@ -155,17 +155,9 @@ namespace Cathedral.Game
             var biomes = new List<string>();
             string? lastBiome = null;
 
-            // Nose-derived encounter avoidance: scales down each biome's per-cell chance.
-            // 0 at level 0, up to 0.30 at level 3. Falls back to no reduction when the
-            // protagonist is unavailable or lacks a usable nose.
-            float avoidance = 0f;
-            if (protagonist != null)
-            {
-                var avoidanceStat = new EncounterAvoidanceStat();
-                if (avoidanceStat.IsUsable(protagonist))
-                    avoidance = avoidanceStat.GetValue(protagonist) / 100f;
-            }
-            float encounterFactor = MathClamp01(1f - avoidance);
+            // Nose-derived encounter avoidance: scales down each biome's per-cell chance,
+            // exactly as the per-cell roll does (EncounterAvoidanceStat.ChanceFactorFor).
+            float encounterFactor = EncounterAvoidanceStat.ChanceFactorFor(protagonist);
 
             for (int i = 1; i < path.Count; i++)
             {
@@ -214,7 +206,6 @@ namespace Cathedral.Game
             };
         }
 
-        private static float MathClamp01(float v) => v < 0f ? 0f : (v > 1f ? 1f : v);
 
         /// <summary>
         /// Mean-field starvation risk estimate based on the protagonist's current humor

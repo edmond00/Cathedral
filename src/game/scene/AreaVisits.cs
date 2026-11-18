@@ -24,8 +24,11 @@ namespace Cathedral.Game.Scene;
 /// neighbours, stairs and doors open from this side — and every area and way on it is recorded.
 /// A private room is walked through like any other (a temple's chapel may lie past a private
 /// corridor); only a locked door stops the walk. When there is no such walk (a roof, a far bank, a
-/// house locked from outside), only the arrival is recorded. A path is a named way past the areas between its ends, so
-/// following one records those areas as well. A landscape's voyage records the view taken and,
+/// house locked from outside), only the arrival is recorded. A path is a named way past the areas between its ends:
+/// following one records those areas as seen in passing — named on the map, never stood in — and
+/// makes the path itself the known way, not the plain ways it ran beside. They used to be recorded
+/// as visited, and a body that had followed a track could then walk for nothing to a barn it had
+/// only gone past. A landscape's voyage records the view taken and,
 /// where one exists, the walk.</para>
 ///
 /// <para>Recording only: none of this decides whether a move may happen. The verbs do that.</para>
@@ -46,9 +49,8 @@ public static class AreaVisits
     /// <summary>
     /// An observation made from <paramref name="here"/> took in <paramref name="observed"/>. A
     /// neighbouring area looked at is seen, and so is the way to it; a door, a stair, a path, a climb
-    /// or a view looked at is a way seen, and the area at its far end with it. A group (the ways out,
-    /// taken in together) sees each of its members. Anything else teaches the map nothing. What is
-    /// seen is drawn named but dimmed until it is visited or gone by.
+    /// or a view looked at is a way seen, and the area at its far end with it. Anything else teaches
+    /// the map nothing. What is seen is drawn named but dimmed until it is visited or gone by.
     /// </summary>
     public static void See(Scene scene, Area here, NarrativeAnchor observed)
     {
@@ -61,34 +63,59 @@ public static class AreaVisits
                 break;
 
             case SyntheticObservationObject { PointOfInterest: ConnectorPointOfInterest connector }:
-                scene.SeenLinks.Add(connector.StableKey);
-                foreach (var end in new[] { connector.AreaA, connector.AreaB })
-                    if (end.Id != here.Id && scene.SeenAreas.Add(end.StableKey))
-                        Console.WriteLine($"AreaVisits: {end.DisplayName} seen from {here.DisplayName} by {connector.DisplayName}");
-                break;
-
-            case ObservationGroup group:
-                foreach (var member in group.Members) See(scene, here, member);
+                See(scene, here, connector);
                 break;
         }
+    }
+
+    /// <summary>A way seen from <paramref name="here"/>, and the area at its far end with it.</summary>
+    public static void See(Scene scene, Area here, ConnectorPointOfInterest connector)
+    {
+        scene.SeenLinks.Add(connector.StableKey);
+        foreach (var end in new[] { connector.AreaA, connector.AreaB })
+            if (end.Id != here.Id && scene.SeenAreas.Add(end.StableKey))
+                Console.WriteLine($"AreaVisits: {end.DisplayName} seen from {here.DisplayName} by {connector.DisplayName}");
     }
 
     // ── Going back ───────────────────────────────────────────────────────────
 
     /// <summary>
     /// Whether <paramref name="way"/>, seen from <paramref name="here"/>, is a way the party knows and
-    /// may go back by: a neighbouring area already stood in, or a connector already gone by. Never a
+    /// may go back by: the plain way to a neighbour, or a connector, already gone by. Never a
     /// view (one way, and not back), a door locked against the comer at <paramref name="when"/>, or a
     /// step from public ground into private — private ground is gone back to only from within it.
     /// </summary>
     public static bool IsWayBack(Scene scene, Area here, Element way, TimePeriod when)
         => BackStep(scene, here, way, when) != null;
 
-    /// <summary>Whether <paramref name="way"/> is a way already known from here, walkable back or not: what an observation of it remarks on.</summary>
+    /// <summary>
+    /// Whether <paramref name="way"/> is a way already known from here, walkable back or not: what an
+    /// observation of it remarks on. Known is <b>gone by</b>, for a neighbour as for a door: an area
+    /// stood in is not thereby joined to every area beside it — the party may have come to both by
+    /// other ways, and the plain way between them is then as new as any.
+    /// </summary>
     public static bool IsKnownWay(Scene scene, Area here, Element way) => way switch
     {
-        Area area => area.Id != here.Id && IsNeighbour(scene, here, area) && scene.VisitedAreas.Contains(area.StableKey),
+        Area area => area.Id != here.Id && IsNeighbour(scene, here, area) && scene.TakenLinks.Contains(LinkKey(here, area)),
         ConnectorPointOfInterest c => c is not LandscapePointOfInterest && c.Touches(here) && scene.TakenLinks.Contains(c.StableKey),
+        _ => false,
+    };
+
+    /// <summary>
+    /// Whether <paramref name="way"/>, seen from <paramref name="here"/>, is a way the party has never
+    /// gone by that leads somewhere it has already stood: a door, a stair, a path, a climb, a
+    /// crossing or the plain way to a neighbour, found to come out on known ground. What such a way
+    /// teaches is how places join up (<see cref="Verbs.Verb.ResolveLesson"/>).
+    /// </summary>
+    public static bool IsNewWayBack(Scene scene, Area here, Element? way) => way switch
+    {
+        Area area => area.Id != here.Id && IsNeighbour(scene, here, area)
+                     && !scene.TakenLinks.Contains(LinkKey(here, area))
+                     && scene.VisitedAreas.Contains(area.StableKey),
+        ConnectorPointOfInterest c and not LandscapePointOfInterest
+            => c.AreaA.Id != c.AreaB.Id && c.Touches(here)
+               && !scene.TakenLinks.Contains(c.StableKey)
+               && scene.VisitedAreas.Contains(c.Other(here).StableKey),
         _ => false,
     };
 
@@ -177,13 +204,15 @@ public static class AreaVisits
         {
             case PathPointOfInterest path:
                 scene.TakenLinks.Add(path.StableKey);
+                // The areas a path runs past were gone by, not stood in: they are seen, and so are
+                // the plain ways between them. The way known afterwards is the path itself.
                 var route = new List<Area> { path.AreaA };
                 route.AddRange(path.Via);
                 route.Add(path.AreaB);
-                foreach (var area in path.Via) Arrive(scene, area);
+                foreach (var area in path.Via) scene.SeenAreas.Add(area.StableKey);
                 for (int i = 1; i < route.Count; i++)
                     if (IsNeighbour(scene, route[i - 1], route[i]))
-                        scene.TakenLinks.Add(LinkKey(route[i - 1], route[i]));
+                        scene.SeenLinks.Add(LinkKey(route[i - 1], route[i]));
                 return new[] { (to, (string?)path.StableKey) };
 
             case LandscapePointOfInterest view:
