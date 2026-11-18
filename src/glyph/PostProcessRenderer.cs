@@ -754,9 +754,9 @@ vec3 addGlow(vec3 c, vec2 uv)
     float lum = max(max(c.r, c.g), c.b);
     // How far below the ground this pixel sits: 0 for the fill itself, 1 for a black stroke on it.
     float below = 1.0 - lum / max(ground, 1e-3);
-    float shade = protect * smoothstep(0.20, 0.60, below);   // kept from the halo
-    float ink   = protect * smoothstep(0.45, 0.85, below);   // and deepened
-    c *= 1.0 - 0.55 * ink;
+    float shade = protect * smoothstep(0.12, 0.45, below);   // kept from the halo
+    float ink   = protect * smoothstep(0.35, 0.75, below);   // and deepened
+    c *= 1.0 - 0.70 * ink;
 
     vec3 g = c + (1.0 - shade) * uGlow * glow(uv);
     float m = max(max(g.r, g.g), g.b);

@@ -212,7 +212,7 @@ if (args.Length >= 1 && (args[0] == "--help" || args[0] == "-h"))
     Console.WriteLine("                                     Resting state is bayer:6:1; game events pulse it for 0.15s.");
     Console.WriteLine("                                     In-game: F cycles the mode, G the palette depth, H the grain, J the event pulses");
     Console.WriteLine("  --glow [on|off|<strength>]         The glow layer: the halo every lit glyph sheds into the dark. Outranks the");
-    Console.WriteLine("                                     saved Settings switch for this run; a number sets its strength (default 0.9)");
+    Console.WriteLine("                                     saved Settings switch for this run; a number sets its strength (default 0.7)");
     Console.WriteLine("  --no-encounters                    DEBUG: never roll a random travel encounter. For scripted runs: an");
     Console.WriteLine("                                     encounter puts the game in EncounterPrompt, where a script waiting");
     Console.WriteLine("                                     for LocationInteraction hangs until its timeout");
