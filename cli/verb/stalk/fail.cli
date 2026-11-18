@@ -6,7 +6,7 @@
 # That flag pins everyone to their workplace all day, which is exactly what this verb cannot have:
 # it needs somebody who goes somewhere, and a pinned NPC stays put all day.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Wood" --period morning --observe-only "farmer"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Wood" --period morning --observe-only "farmer" --organs encephalon=2
 
 wait
 click menu New

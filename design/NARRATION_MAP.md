@@ -255,7 +255,23 @@ What changed once the map had been played, each answering a remark made on it.
 - **A path's passed areas are seen, not visited.**
 - **Failures and refusals are drawn in the light purple.**
 
-## 13. Tests and tools
+## 13. Settled after the third play
+
+- **A tree is drawn over the map's lines, gaps included**: on each of its rows, whatever the map
+  had between the tree's first and last cell is taken off. The way out's line no longer runs
+  between an act and the symbols beside it.
+- **A click on an observed element folds its tree away, and another brings it back.** Folded, the
+  element stands alone with `…` beside it. Nothing under it is lost; none of it answers a click.
+- **An act costs a noetic point**, like a look and a thought, and cannot be attempted without one.
+  A pool of 3 is one chain; a success still refills it.
+- **A member with no point left hands over**: the view goes to a companion who still has one, and
+  a member with none cannot be played until their pool refills.
+- **When nobody has a point a box takes the screen**: why nothing answers, and LEAVE — RUNAWAY when
+  confronted.
+- **Where the party stands is a warm grey card**, not a gold one, so the lit symbols on it stand
+  out; the sections' grounds are darker.
+
+## 14. Tests and tools
 
 - `click keyword` goes; the scripts are rewritten against symbols, elements and acts named, never
   coordinates: `click observe <kind|name>`, `click think <name>`, `click speak <name>`,

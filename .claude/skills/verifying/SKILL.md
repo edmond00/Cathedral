@@ -217,13 +217,22 @@ Run `help` for the authoritative list. The essentials:
   click reconsider <n|word> the think-again symbol beside a waiting act: then
                             `choose <thinking mm-id>`. A popup is only ever a list of minds, or
                             of things carried — never of commands
+  click fold <name>         an observed element: folds its tree away, or unfolds it. What is
+                            folded is not drawn, is not listed by `regions` and answers no click
+                            (`click act` finds no act under it); `inspect trees` says `folded=yes`
   click member <name>       play another member of the party (their token on a card)
   click area <name>         walk the played member to an area by ways the party knows — a click on
                             its card (panned into view first). Free: no point, no roll. Refused
                             when no known way leads there, or while they are confronted
   click exit                the way out of the place, the glyph in the map's margin: LEAVE (the
                             whole party walks out), or RUNAWAY while somebody confronts the played
-                            member (a roll). `inspect where` says which, as exit=
+                            member (a roll). `inspect where` says which, as exit=. When the
+                            played member spends their last noetic point the view goes by itself
+                            to a companion who still has one (`inspect party` → played=), and a
+                            member with none cannot be played (`click member` is refused). With
+                            nobody left a box holds the screen (`inspect where` →
+                            `out_of_points=yes`; `expect NO NOETIC POINT LEFT`): every other
+                            click is refused and `click exit` presses its button
   click period <name>       the hour a successful sit_and_wait lasts until, while the time box
                             asks (dawn…night, the five other than now). `advance` presses through
                             the box by itself, taking the NEXT period when it asks — so a script
@@ -488,8 +497,9 @@ unreachable.
 A visit is played on a map of the location. Nothing is observed on arrival: each card carries one
 symbol per kind of thing not yet looked at, and everything a script does is one of three clicks —
 **observe** something, **think** about what was observed, carry out the **act** the thought came to.
-Each of the first two costs a noetic point and writes a text that is read in the preview box (drain
-it with `advance`); the act rolls, narrates, and ends on a result box.
+Each of the three costs a noetic point. The first two write a text that is read in the preview box
+(drain it with `advance`); the act rolls, narrates, and ends on a result box — and a success hands
+the whole pool back.
 
 ```
 # FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Test Ford"
@@ -541,10 +551,12 @@ Things this shape depends on, each of which has cost a script:
 - **Difficulty 0 has no dice.** `open_door`, the stairs, `sit_and_wait` and the plain conversation
   openers go from `click act` straight to the outcome: one `advance`, then `expect SUCCESS`. A
   `click continue` written there for dice that are not coming closes the result box instead.
-- **Observing costs a point, so a pool of 3 is observe + think + one more.** A script that fails an
-  act and then needs to think again runs out one step earlier than it used to; give it room with
-  `--organs encephalon=2` (as `cli/verb/explain_myself/` does) rather than rearranging its steps. A
-  successful act refills the pool; a failed one does not.
+- **Observing, thinking and acting each cost a point, so a pool of 3 is exactly one chain.** A
+  success refills the pool; a failure, a rule's refusal and a refused implement do not, and at zero
+  the out-of-points box takes the screen and nothing but `click exit` answers. A script that looks
+  twice, combines a wrong implement, reconsiders, or fails and goes on needs a bigger pool: give it
+  room with `--organs encephalon=2` (6 points) or `=4` (11) rather than rearranging its steps, and
+  assert the pool with `expect-state noetic points=`.
 - **A second act on the same element needs no second observation**: `click think "<name>"` again.
   Somebody who walked in (drawn by a noise, a householder at nightfall), whoever **confronts** the
   member (the wolf in the den the visit opens in, whoever stopped a walk) and a body that has just
@@ -621,6 +633,11 @@ cli/system/                       scripts that test a system rather than a verb 
 ```
 
 `./run_tests.sh cli verb` runs a whole range; `./run_tests.sh cli gather` runs one folder inside one.
+
+**A `fail.cli` whose verb's only penalty is the thread lost runs on a pool of 6**
+(`--organs encephalon=2`). On the default 3 the attempt itself spends the last point, a thread
+cannot be lost from an empty pool, and a failure with no chip shows no result box — so
+`expect FAILURE` finds nothing, and the out-of-points box is what comes up instead.
 
 **The two ranges compose, and that composition is the point.** A verb test asserts that the verb
 declares the right outcome; an outcome test asserts that the outcome really changes the world. Put

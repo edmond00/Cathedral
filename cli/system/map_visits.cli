@@ -8,7 +8,7 @@
 # arrival, and the record must come back with it — and walking out along the track must not have
 # turned the yard into ground stood on.
 #
-# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track"
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track" --organs encephalon=2
 
 wait
 click menu New

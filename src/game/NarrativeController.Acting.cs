@@ -194,6 +194,16 @@ public partial class NarrativeController
                 return;
             }
 
+            // Carrying an act out costs a point, whatever comes of it: refused by a rule, judged
+            // impossible, rolled and failed. A success hands the whole pool back. With none left
+            // there is nothing to attempt it with (the symbol is not lit; this is the backstop).
+            if (!HasPoint)
+            {
+                Console.WriteLine("NarrativeController: no noetic point left — the act is not attempted");
+                return;
+            }
+            SpendPoint();
+
             if (DebugMode.IsActive)
                 DebugMode.PromptActionStrategy(action.ActionText,
                     $"{action.PreselectedOutcome.GetType().Name} → {action.PreselectedOutcome.DisplayName}");
@@ -314,7 +324,7 @@ public partial class NarrativeController
 
     /// <summary>
     /// An act refused before any roll — by a coded rule, or as implausible: the refusal hangs under
-    /// the act, which stays where it was, and the attempt costs a point.
+    /// the act, which stays where it was. The attempt has cost its point already (<see cref="ActAsync"/>).
     /// </summary>
     private void Refuse(ThoughtNode actNode, PreviewPart? part, NarrationBlock refusal)
     {
@@ -324,7 +334,6 @@ public partial class NarrativeController
             Chronicle(refusal);
             actNode.Add(new ThoughtNode(ThoughtNodeKind.Refusal) { Block = refusal });
         });
-        SpendPoint();
     }
 
     /// <summary>Dice values that show the given result.</summary>

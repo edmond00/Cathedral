@@ -39,6 +39,7 @@ public partial class NarrativeController
     /// </summary>
     public IReadOnlyList<string> CliSymbols()
     {
+        SettleSpent();
         var lines = new List<string>();
         if (_overlay.Frame is not { } frame) return lines;
         string On(MapSymbol s) => IsEnabled(s) ? "" : " (disabled)";
@@ -55,9 +56,12 @@ public partial class NarrativeController
         // The ways on their lines, each named from the end it would be looked at from.
         foreach (var (key, side) in _frameWays)
             lines.Add($"click observe \"{HandleOf(side.Anchor)}\" in \"{side.From.DisplayName}\" (way){On(new WaySymbol(key))}");
-        foreach (var element in Mind.ElementNodes.Where(n => Locate(n) != null))
+        // What an element folded away holds and offers is not drawn, and is not listed.
+        foreach (var element in Mind.ElementNodes.Where(n => Locate(n) != null && !FoldedAway(n)))
         {
-            lines.Add($"element \"{HandleOf(element)}\" in \"{Locate(element)!.Value.Where.DisplayName}\"");
+            lines.Add($"element \"{HandleOf(element)}\" in \"{Locate(element)!.Value.Where.DisplayName}\"{(element.Folded ? " (folded)" : "")}");
+            if (CanFold(element)) lines.Add($"click fold \"{HandleOf(element)}\"{On(new NodeSymbol(element))}");
+            if (element.Folded) continue;
             foreach (var part in ContentsOf(element))
                 lines.Add($"click observe \"{HandleOf(part)}\" in \"{HandleOf(element)}\"{On(new ContentSymbol(element, part))}");
             foreach (var stub in StubsOf(element))
@@ -79,7 +83,7 @@ public partial class NarrativeController
     }
 
     /// <summary>The acts waiting on the played member's trees, in the order they were proposed.</summary>
-    private List<ThoughtNode> CliActs() => Mind.WaitingActs.Where(a => LocateAct(a) != null).ToList();
+    private List<ThoughtNode> CliActs() => Mind.WaitingActs.Where(a => LocateAct(a) != null && !FoldedAway(a)).ToList();
 
     /// <summary>
     /// Whether <paramref name="name"/> names something that answers to <paramref name="names"/>: the
@@ -141,6 +145,7 @@ public partial class NarrativeController
     public (MapSymbol? Symbol, string? Error) CliFindSymbol(string what, string name, string? areaName = null,
                                                              bool playerOnly = false, string? listenerName = null)
     {
+        SettleSpent();
         var frame = _overlay.Frame;
         if (frame == null) return (null, "the map has not been drawn yet");
         var area = CliArea(areaName);
@@ -227,6 +232,11 @@ public partial class NarrativeController
                 return CommandsOf(act).Contains(command) ? (new CommandSymbol(act, command), null)
                                                          : (null, $"that act offers no '{what}' here");
             }
+            case "fold":
+            {
+                var element = Best(Mind.ElementNodes.Where(n => Locate(n) != null && !FoldedAway(n)), n => MatchRank(NamesOf(n), name));
+                return element != null ? (new NodeSymbol(element), null) : (null, $"no observed element named '{name}'");
+            }
             case "member":
             {
                 var member = Best(_minds.Keys, m => MatchRank(new[] { m.DisplayName }, name));
@@ -243,6 +253,13 @@ public partial class NarrativeController
     public string? CliClickSymbol(MapSymbol symbol)
     {
         if (Busy || IsPopupVisible) return "the map does not answer a click now";
+        SettleSpent();
+        // The out-of-points box holds the screen: its buttons are the way out (`click exit`) and
+        // the members who can still act (`click member`).
+        if (OutOfPoints && symbol is not TokenSymbol) return "no noetic point left: only the way out and another member answer";
+        if (Exploring && symbol is TokenSymbol { Member: var other } && !ReferenceEquals(other, _active)
+            && _minds.TryGetValue(other, out var theirs) && theirs.Noetic <= 0)
+            return $"{other.DisplayName} has no noetic point left and cannot be played";
         if (!IsEnabled(symbol)) return "that symbol is disabled";
         ClickSymbol(symbol);
         return null;
@@ -253,6 +270,7 @@ public partial class NarrativeController
     {
         if (Busy || IsPopupVisible) return "the map does not answer a click now";
         if (!Exploring) return "there is no way out of this phase";
+        SettleSpent();
         OnExitClicked();
         return null;
     }
@@ -266,6 +284,7 @@ public partial class NarrativeController
         if (Busy || IsPopupVisible) return "the map does not answer a click now";
         if (CliArea(areaName) is not { } area) return $"no area '{areaName}'";
         if (area.Id == _pov.Where.Id) return null;
+        if (OutOfPoints) return "no noetic point left: only the way out and another member answer";
         if (ConfrontationOf(Mind) != null) return "confronted: only the way out leads away";
         if (!CanReach(area)) return $"no known way to '{area.DisplayName}'";
         WalkTo(area, then: () => { });
@@ -278,6 +297,10 @@ public partial class NarrativeController
     /// </summary>
     public (int X, int Y)? CliSymbolCell(MapSymbol symbol)
     {
+        // With the out-of-points box up a member is played from its button, not from their token.
+        if (SpentBoxUp && symbol is TokenSymbol { Member: var member } && MembersWithPoints.IndexOf(member) is >= 0 and var i
+            && i + 1 < _spentRegions.Count)
+            return (_spentRegions[i + 1].X + 2, _spentRegions[i + 1].Y);
         if (_map.CellOf(tag => Equals(tag, symbol)) is not { } cell) return null;
         if (_map.ScreenCellOf(cell.X, cell.Y) == null) _map.CentreOnCell(cell.X, cell.Y);
         return _map.ScreenCellOf(cell.X, cell.Y);
@@ -286,6 +309,8 @@ public partial class NarrativeController
     /// <summary>The screen cell of the way out's glyph, panned into view; null where there is none.</summary>
     public (int X, int Y)? CliExitCell()
     {
+        // With the out-of-points box up the way out is its first button, not the glyph under it.
+        if (SpentBoxUp && _spentRegions.Count > 0) return (_spentRegions[0].X + 2, _spentRegions[0].Y);
         if (!Exploring || _map.ExitCellOf(_scene) is not { } cell) return null;
         if (_map.ScreenCellOf(cell.X, cell.Y) == null) _map.CentreOnCell(cell.X, cell.Y);
         return _map.ScreenCellOf(cell.X, cell.Y);
@@ -490,6 +515,7 @@ public partial class NarrativeController
     /// </summary>
     public IReadOnlyList<string> CliInspect(string subject)
     {
+        SettleSpent();
         var outp = new List<string>();
         bool All(string s) => subject is "all" or "" || subject == s;
         var actor = _active;
@@ -556,7 +582,7 @@ public partial class NarrativeController
             outp.Add($"where area=\"{_pov.Where.DisplayName}\" period={_pov.When} "
                    + $"day={(int)Cathedral.Game.Narrative.GameClock.Days} trespass={(IsTrespassing ? "yes" : "no")} "
                    + $"confronted={(confrontation == null ? "none" : $"{confrontation.Kind}:{confrontation.Npc.Archetype.ArchetypeId}")}"
-                   + (Exploring ? $" exit={ExitLabel}" : ""));
+                   + (Exploring ? $" exit={ExitLabel} out_of_points={(OutOfPoints ? "yes" : "no")}" : ""));
         }
 
         // What the location map knows: every area stood in, every way gone by (AreaVisits). Read from
@@ -619,7 +645,8 @@ public partial class NarrativeController
                     case ThoughtNodeKind.Element:
                         var at = Locate(node);
                         outp.Add($"tree {pad}element \"{HandleOf(node)}\" kind={ElementKinds.Word(KindOf(node))} "
-                               + $"area=\"{at?.Where.DisplayName ?? "-"}\" observer={node.Mind?.ModusMentisId ?? "none"}");
+                               + $"area=\"{at?.Where.DisplayName ?? "-"}\" observer={node.Mind?.ModusMentisId ?? "none"}"
+                               + (node.Folded ? " folded=yes" : ""));
                         break;
                     case ThoughtNodeKind.Act:
                         outp.Add($"tree {pad}act state={node.State.ToString().ToLowerInvariant()} verb={node.Action!.Verb.VerbId} "

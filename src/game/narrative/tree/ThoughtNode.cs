@@ -76,6 +76,13 @@ public sealed class ThoughtNode
 
     public ActState State { get; set; } = ActState.Waiting;
 
+    /// <summary>
+    /// An element whose tree the player has folded away: only its own symbol is drawn, with a mark
+    /// that there is more, until a click unfolds it. Nothing under it is lost or changed — folding
+    /// is the screen's, not the game's — and what is folded offers no click of its own meanwhile.
+    /// </summary>
+    public bool Folded { get; set; }
+
     public ThoughtNode? Parent { get; private set; }
 
     private readonly List<ThoughtNode> _children = new();

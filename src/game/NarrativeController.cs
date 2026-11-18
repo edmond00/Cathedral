@@ -575,6 +575,74 @@ public partial class NarrativeController
     private bool HasPoint => InOpeningPhase || Mind.Noetic > 0;
 
     /// <summary>
+    /// The played member has spent their last point in a place: nothing is left to them there but
+    /// the way out — every look, every thought and every act costs one. The screen says so in a box
+    /// of its own (<see cref="SpentBoxUp"/>) rather than leaving a small glyph at the map's edge as
+    /// the only thing that still answers.
+    /// </summary>
+    private bool OutOfPoints => Exploring && Mind.Noetic <= 0 && !_requestedExit;
+
+    /// <summary>Whether the box that says so is up: when nothing else holds the screen, and the view is not about to go to a companion.</summary>
+    private bool SpentBoxUp => OutOfPoints && !Busy && !IsPopupVisible && !SwitchDue;
+
+    /// <summary>
+    /// The members who could still do something here, those standing with the played member first:
+    /// who the view goes to when the played member's last point is spent, and who that box offers.
+    /// </summary>
+    private List<PartyMember> MembersWithPoints
+        => _minds.Values.Where(m => !ReferenceEquals(m, Mind) && m.Noetic > 0)
+                 .OrderBy(m => m.Pov.Where.Id == _pov.Where.Id ? 0 : 1).Select(m => m.Member).ToList();
+
+    // The members seen played with an empty pool, until it refills: the view leaves each of them once.
+    private readonly HashSet<MemberMind> _spentSeen = new();
+
+    /// <summary>The played member has just spent their last point and a companion still has one.</summary>
+    private bool SwitchDue => OutOfPoints && !_spentSeen.Contains(Mind) && MembersWithPoints.Count > 0;
+
+    /// <summary>
+    /// A member with nothing left hands over: the first time the played member is found with an
+    /// empty pool and nothing holding the screen, the view goes to a companion who still has a
+    /// point — and a member with none cannot be played again until their pool refills. Only once:
+    /// a member the game itself puts in front of the player with an empty pool (stopped on the way
+    /// out, the one left standing) stays there, with the box that says what is left to them. When
+    /// nobody has a point, that box is all there is.
+    /// </summary>
+    private void SettleSpent()
+    {
+        _spentSeen.RemoveWhere(m => m.Noetic > 0 || !_minds.ContainsValue(m));
+        if (!OutOfPoints || Busy || IsPopupVisible || _spentSeen.Contains(Mind)) return;
+        var others = MembersWithPoints;
+        _spentSeen.Add(Mind);
+        if (others.Count == 0) return;
+        Console.WriteLine($"NarrativeController: {_active.DisplayName} has no noetic point left — the view goes to {others[0].DisplayName}");
+        Switch(others[0]);
+        // What the screen offers is read off the frame: it is the new member's from now, not from
+        // the next render.
+        _overlay.Frame = BuildFrame();
+    }
+
+    /// <summary>
+    /// Whether <paramref name="node"/> is under an element the player has folded away
+    /// (<see cref="ThoughtNode.Folded"/>) — or, with <paramref name="self"/>, is that element: what
+    /// it holds and offers is folded with it.
+    /// </summary>
+    private static bool FoldedAway(ThoughtNode node, bool self = false)
+    {
+        for (var n = self ? node : node.Parent; n != null; n = n.Parent)
+            if (n.Folded) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Whether a click on an observed element folds or unfolds its tree: when there is something
+    /// under it to put away, or it is folded already. Not in the two opening phases, whose screens
+    /// hold one thing and teach one click each.
+    /// </summary>
+    private bool CanFold(ThoughtNode element)
+        => Exploring && element.Kind == ThoughtNodeKind.Element
+           && (element.Folded || element.Children.Count > 0 || ContentsOf(element).Count > 0 || StubsOf(element).Count > 0);
+
+    /// <summary>
     /// Puts a text a mind wrote in the journal, credited to the member who was played when it was
     /// written. The trees are the screen's; the journal is what is kept.
     /// </summary>

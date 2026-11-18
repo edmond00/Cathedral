@@ -126,13 +126,13 @@ public sealed class LocationMap
     //
     // A schema chalked on a blackboard: every fill is near black and only just lifted off the
     // canvas, so the light lines and text carry the drawing. The game's own scheme throughout —
-    // yellow-grey for open ground, purple for interiors and private rooms, yellow for where you are.
-    private static readonly Vector4 OutdoorFill     = new(0.040f, 0.038f, 0.028f, 1f);
-    private static readonly Vector4 OutdoorFrame    = new(0.110f, 0.100f, 0.060f, 1f);
+    // yellow-grey for open ground, purple for interiors and private rooms, a warm grey for where you are.
+    private static readonly Vector4 OutdoorFill     = new(0.026f, 0.024f, 0.018f, 1f);
+    private static readonly Vector4 OutdoorFrame    = new(0.085f, 0.077f, 0.046f, 1f);
     private static readonly Vector4 OutdoorTab      = new(0.200f, 0.180f, 0.090f, 1f);
     private static readonly Vector4 OutdoorTitle    = Config.Colors.DarkYellowGrey;
-    private static readonly Vector4 InteriorFill    = new(0.040f, 0.028f, 0.052f, 1f);
-    private static readonly Vector4 InteriorFrame   = new(0.100f, 0.065f, 0.135f, 1f);
+    private static readonly Vector4 InteriorFill    = new(0.026f, 0.018f, 0.034f, 1f);
+    private static readonly Vector4 InteriorFrame   = new(0.077f, 0.050f, 0.104f, 1f);
     private static readonly Vector4 InteriorTab     = new(0.180f, 0.115f, 0.240f, 1f);
     private static readonly Vector4 InteriorTitle   = Config.Colors.LightPurple;
     private static readonly Vector4 DarkText        = new(0.04f, 0.04f, 0.04f, 1f);
@@ -145,9 +145,11 @@ public sealed class LocationMap
     private static readonly Vector4 ProtectedBand   = new(0.185f, 0.155f, 0.215f, 1f);
     private static readonly Vector4 ProtectedFill   = new(0.078f, 0.066f, 0.090f, 1f);
     private static readonly Vector4 ProtectedName   = Config.Colors.LightGray85;
-    private static readonly Vector4 HereBand        = new(0.360f, 0.290f, 0.030f, 1f);
-    private static readonly Vector4 HereFill        = new(0.130f, 0.105f, 0.015f, 1f);
-    private static readonly Vector4 HereName        = Config.Colors.BrightYellow;
+    // Where the party stands: a warm grey, lighter than any other card, and not the gold it was —
+    // gold is what a click answers, and a gold card drowned the lit symbols standing on it.
+    private static readonly Vector4 HereBand        = new(0.290f, 0.270f, 0.185f, 1f);
+    private static readonly Vector4 HereFill        = new(0.110f, 0.102f, 0.070f, 1f);
+    private static readonly Vector4 HereName        = Config.Colors.White;
     private static readonly Vector4 UnknownBand     = new(0.050f, 0.050f, 0.055f, 1f);
     private static readonly Vector4 UnknownFill     = new(0.025f, 0.025f, 0.030f, 1f);
     private const float SeenShade = 0.45f, UnknownShade = 0.3f;
@@ -875,6 +877,16 @@ public sealed class LocationMap
             int c = y * Width + x;
             _glyphs[c] = ch; _fgs[c] = fg;
             if (bg is { } b) _bgs[c] = b;
+        }
+
+        /// <summary>
+        /// Takes the map's own glyph off a cell — a line running through a tree — and leaves its
+        /// ground. Never a card's: a card is not something a tree is drawn over.
+        /// </summary>
+        public void Blank(int x, int y)
+        {
+            if (!InBounds(x, y) || IsCard(x, y)) return;
+            _glyphs[y * Width + x] = ' ';
         }
 
         /// <summary>Names what stands on a cell, for <see cref="IconAt"/>.</summary>

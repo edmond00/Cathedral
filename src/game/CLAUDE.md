@@ -786,6 +786,25 @@ open map and is never drawn over a card (`MapCanvas.IsCard`). When a card's tree
 elements with something left to do — an act waiting, a `?`, a content — are drawn first and the last
 row reads `+N` for the finished ones not shown. Nothing clickable is ever what is cut.
 
+**A tree is drawn over the map's lines, gaps included.** The overlay paints last, so a tree's own
+cells always covered a line — but a line still showed through the cells *between* them, and the way
+out's line running down between an act and its `↺` read as the line drawn over the tree. The overlay
+notes the cells of each tree as it draws them (`Track` / `Took`) and, once it is down, takes the
+map's glyph off whatever lies between the first and the last of them on each row (`Settle`,
+`MapCanvas.Blank` — never a card's cell). Only between: a line beside a tree, or under a card where
+no tree reaches, is left alone, which is what the old card-wide panel got wrong.
+
+**A click on an observed element folds its tree away, and another brings it back**
+(`ThoughtNode.Folded`, `CanFold`). Folded, the element is drawn alone with `…` beside it
+(`Config.Symbols.MapFolded`, the same symbol as the element for the pointer and the click) and takes
+one row, so folding is also how a crowded card is given room. It is the screen's and not the game's:
+nothing under the element is lost, lapsed or withdrawn, but none of it is drawn and none of it
+answers a click (`FoldedAway`, read first in `IsEnabled`; `CliActs` and `regions` leave it out). Any
+element node folds — a root, a way on its line, a container's content — once it has something under
+it; a folded one always unfolds. Because the click acts, such an element stands on the lit ground
+and its label says which ("the cart · fold"). Not in the two opening phases, whose screens teach one
+click each.
+
 #### One reconciler keeps the trees true
 
 `ReconcileTrees` is the only place scene and trees are brought into line, and nothing in it decides
@@ -839,8 +858,9 @@ on the tick the outcome committed, which under the new screen meant its SUCCESS 
 chip were never seen. With no chip to show, the box is skipped and what follows starts at once.
 
 **The noetic rules in one place** (the reasons are in "The economy of a visit"): every observation,
-thinking, reconsidering and speech costs a point and nothing is looked at for free; a successful act
-refills the acting member's pool then and there, a failed one does not; a fight, a conversation or
+thinking, reconsidering, speech **and attempt at an act** costs a point and nothing is looked at for
+free; a successful act refills the acting member's pool then and there, a failed one does not; with
+no point left nothing answers but the way out and another member; a fight, a conversation or
 a menu hands back a full pool to every member standing where it happened (`ResumeNarration`); the
 two opening phases cost nothing.
 
@@ -966,10 +986,11 @@ skill for the whole of it):
 | `click think <name>` / `click speak <name> [to <member>]` | the stubs of an observed element; a speech mark is to one companion, the first within hearing when none is named. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
 | `click act <n\|word>` | carries out a waiting act, by position or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it. No popup follows |
 | `click tool <n\|word>` / `click reconsider <n\|word>` | the two symbols beside a waiting act: then `choose <n>` picks the implement, or `choose <mm-id>` the mind that thinks it over |
+| `click fold <name>` | folds an observed element's tree away, or unfolds it. What is folded is not listed by `regions` and answers no click; `inspect trees` says `folded=yes` |
 | `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
 | `click continue` | the dice's, the preview's or the result box's CONTINUE |
 | `inspect trees` / `texts` / `known` / `symbols` | the played member's trees node by node; what each node says; what the place remembers; what `regions` lists, for `expect-state symbols` |
-| `inspect where` | carries `confronted=` and `exit=LEAVE\|RUNAWAY` |
+| `inspect where` | carries `confronted=`, `exit=LEAVE\|RUNAWAY` and `out_of_points=yes\|no` (the box that says the last point is spent is up) |
 | `inspect popup` | the open popup: `options=[…]` with `(disabled)` rows, or `minds=[…]` by id with `(refused)` on a mind that has already refused what is asked — `choose` reports an error for one |
 | `inspect map` | ends on the last walk, which names the areas it went by: `walk from Test Field to Test Yard by way of Test Shore > Test Yard` |
 
@@ -1417,7 +1438,7 @@ only `anglery` wants it.
 ### The economy of a visit: noetic points and what has been proposed
 
 A member's budget is **noetic points**: one per observation, one per thinking (the whole chain of
-it), one per Reconsider, one per speech to a companion, one per refused tool. Each member has their
+it), one per act attempted, one per Reconsider, one per speech to a companion, one per refused tool. Each member has their
 own pool (`MemberMind.Noetic`), and the rules that decide how far it reaches were designed together —
 changing one alone re-breaks what the others fix.
 
@@ -1428,9 +1449,18 @@ changing one alone re-breaks what the others fix.
   three proved too tight.
 - **Every observation costs a point; nothing is looked at for free.** A visit used to open on an
   observation nobody paid for, so the weakest pool of 3 bought that look, three thoughts and no
-  more. It now buys a look, a thought and one point over — a second thought, a second look, or a
-  word to a companion. That is a real tightening and it is deliberate: what is on a card is shown
-  as symbols for nothing, and the point is what choosing one to look at costs.
+  more. It now buys exactly one chain — a look, a thought and the attempt — with nothing over. That
+  is a real tightening and it is deliberate: what is on a card is shown as symbols for nothing, and
+  the point is what choosing one to look at costs.
+- **Carrying an act out costs a point, and there is none to carry it out without.** `ActAsync`
+  spends it first, whatever follows — refused by a coded rule, judged implausible, rolled and
+  failed, rolled and won — so `Refuse` no longer charges anything of its own, and a success hands
+  the pool back a moment later. It used to be free, and an act already waiting could be tried at
+  zero: a member with nothing left kept trying the acts on their trees, which made the pool a limit
+  on thinking only. `IsEnabled` withholds the act and its implement symbol without a point
+  (`HasPoint`). **A pool under 3 can no longer reach an act alone** (`encephalon` 3 or less: a look
+  and a thought, and nothing to attempt with); only a companion's word, which plants the element on
+  the listener's trees for nothing, gets a pool of 2 to one.
 - **A successful act refills it, per act.** `CommitOutcomeResult` calls `MemberMind.Refill` for the
   member who acted, the moment the outcome is committed. There is no phase boundary any more: the
   trees stay, the other acts still waiting stay, and only what the world no longer allows lapses.
@@ -1559,12 +1589,31 @@ and the keep-focus question is never asked (`ObservationController.MustCommit`, 
 `ChooseGoalAsync(offerDecline: !autoSuccess)`). Their one verb is the only way onward, so a mind
 that stopped left the player with nothing on screen that led on.
 
-**A member who spends the pool without succeeding can still walk, act and leave.** Looking and
-thinking are withheld at zero (`IsEnabled` reads `HasPoint` for the tray, the contents and the `?`),
-but the acts already waiting on the trees stay clickable, walking by known ways is free, another
-member with points of their own can be played, and the way out is always there. That is the
-intended shape, not an oversight — but it is why the way out must stay ungated by anything except
-whoever confronts the member, who turns it into RUNAWAY rather than closing it.
+**A member who spends the pool without succeeding can only leave, and the screen says so.** At
+zero nothing is free: looking, thinking, speaking and acting are all withheld (`OutOfPoints`, first
+in `IsEnabled`), which leaves the way out — a single glyph at the map's edge. Two things follow,
+both in `SettleSpent` (every tick, and ahead of every CLI seam so a script sees it at once):
+
+- **The view goes to a companion who still has a point**, one standing in the same area first
+  (`MembersWithPoints`), the first time the played member is found with an empty pool and nothing
+  holding the screen. **A member with none cannot be played** until their pool refills: their token
+  is not lit and says "no noetic point left" (`IsEnabled`'s `TokenSymbol` case). Once per empty
+  pool (`_spentSeen`): a member the game itself puts in front of the player with nothing left —
+  stopped on the way out, or the one left standing when the played member died — stays there, or a
+  LEAVE stopped by a confronted companion would bounce the view straight back off them.
+- **When nobody has a point, a box stands over the map** (`SpentBoxUp`,
+  `NarrativeUI.RenderSpentBox`): why nothing answers and a LEAVE button — RUNAWAY while somebody
+  confronts the member, naming them. In the one case above where a member with nothing left is
+  played while a companion still has a point, it carries a PLAY button for each such companion. It
+  is modal: the map under it takes no click and no hover, and `click area` is refused with it. Its
+  buttons do exactly what the glyph and the tokens do (`OnExitClicked`, `Switch`), so `click exit`
+  and `click member` drive it, and a recording is given the button's cell (`CliExitCell`,
+  `CliSymbolCell`). `inspect where` reports `out_of_points=yes`. Its wording avoids "success" and
+  "failure", which scripts assert on the screen.
+
+It is why the way out must stay ungated by anything except whoever confronts the member, who turns
+it into RUNAWAY rather than closing it. `cli/system/out_of_points.cli`,
+`out_of_points_confronted.cli` and `out_of_points_party.cli`.
 
 ### Difficulty 0: the act that is not rolled
 
@@ -1670,7 +1719,8 @@ slay; that was the bug the audit fix caught.
 by category. An excluded verb still accepts the attempt and still fails it, at the cost of a
 point. That is the bargain: the player is trusted to choose, and pays for choosing badly. Do not
 add a category test to `IsEnabled`'s `CommandSymbol` case (greyed only by
-`GetCombinableItems().Count == 0` or an implement already combined). The act itself is greyed
+`GetCombinableItems().Count == 0`, an implement already combined, or no noetic point left — the act
+it is for costs one). The act itself is greyed
 while it `NeedsTool` — refused once for want of an implement, reaching for one is the only way on.
 
 **A combined act hangs under the act it was combined with** (`CombineItemAsync`): the acting mind's

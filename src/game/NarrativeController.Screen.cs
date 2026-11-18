@@ -29,6 +29,10 @@ public partial class NarrativeController
     private string _lastPreviewText = "";
     private (int X, int Y, int Width) _resultContinueRegion;
     private bool _resultContinueHovered;
+    // The out-of-points box: its buttons as last drawn (the way out first, then a member each), and
+    // the one under the pointer.
+    private readonly List<(int X, int Y, int Width)> _spentRegions = new();
+    private int _spentHovered = -1;
     private bool _diceButtonHovered;
 
     // Read once a frame, for every symbol's state.
@@ -53,8 +57,9 @@ public partial class NarrativeController
         // The party changes under the narration — somebody recruited by a conversation, somebody
         // dead of a wound — and nothing tells it so.
         if (SyncRoster()) ReconcileTrees();
+        SettleSpent();
         // A press kept on the pan pad keeps the map moving.
-        _map.Hold(!Busy && !IsPopupVisible && !_core.VirtualPointerOnly
+        _map.Hold(!Busy && !IsPopupVisible && !OutOfPoints && !_core.VirtualPointerOnly
                   && _core.MouseState.IsButtonDown(OpenTK.Windowing.GraphicsLibraryFramework.MouseButton.Left));
         RenderPanel();
         // A popup is a modal choice, so the panel behind it is greyed the way the preview box greys
@@ -111,6 +116,7 @@ public partial class NarrativeController
         _previewContinueRegion = default;
         _previewAnswerRegions  = default;
         _resultContinueRegion  = default;
+        _spentRegions.Clear();
 
         if (_dice.IsVisible)
         {
@@ -170,6 +176,15 @@ public partial class NarrativeController
             return;
         }
 
+        // The last point is spent: the box says what that means and holds the only ways on.
+        if (SpentBoxUp)
+        {
+            var (message, buttons) = SpentNotice();
+            _spentRegions.AddRange(_ui.RenderSpentBox(" NO NOETIC POINT LEFT ", message, buttons, _spentHovered));
+            _ui.RenderStatusBar(SceneInfoLine());
+            return;
+        }
+
         // Idle: what the pointer is over is read again.
         if (!IsPopupVisible && _hovered is NodeSymbol { Node: var node } && ReadingOf(node) is { } reading)
             _ui.RenderReadingBox(reading.Title, reading.Text, node.Block?.OutcomeReports, reading.Odds);
@@ -182,6 +197,41 @@ public partial class NarrativeController
         string biome = _worldContext.DisplayName;
         string where = $"{_pov.Where.DisplayName}  |  {Period}";
         return biome.Length > 0 ? $"{biome}  —  {where}" : where;
+    }
+
+    /// <summary>
+    /// What the out-of-points box says and offers: why nothing else answers, the way out — LEAVE,
+    /// or RUNAWAY from whoever confronts the member — and each companion who still has a point,
+    /// to be played instead.
+    /// </summary>
+    private (string Message, List<string> Buttons) SpentNotice()
+    {
+        string name = _active.DisplayName;
+        var others = MembersWithPoints;
+        string message;
+        if (ConfrontationOf(Mind) is { } confrontation)
+            message = $"{name} has no noetic point left, and {NpcLabelResolver.ShortLabel(confrontation.Npc)} stands in the way. "
+                    + "Looking, thinking and acting each cost a point: all that is left is to run.";
+        else
+            message = $"{name} has no noetic point left. Looking, thinking and acting each cost a point, "
+                    + "and the points only come back when an act succeeds or on the next visit to a place: it is time to leave this one.";
+        if (others.Count > 0)
+            message += others.Count == 1 ? $" {others[0].DisplayName} can still act." : " The others can still act.";
+
+        // The way out under its own name: what the glyph at the map's edge is called.
+        var buttons = new List<string> { ExitLabel };
+        buttons.AddRange(others.Select(m => $"PLAY {m.DisplayName.ToUpperInvariant()}"));
+        return (message, buttons);
+    }
+
+    /// <summary>A press on one of that box's buttons: the way out, or the member to play.</summary>
+    private void ClickSpent(int button)
+    {
+        PlayClickSound();
+        _spentHovered = -1;
+        if (button == 0) { OnExitClicked(); return; }
+        var others = MembersWithPoints;
+        if (button - 1 < others.Count) Switch(others[button - 1]);
     }
 
     // ── What the map shows ───────────────────────────────────────────────────
@@ -322,19 +372,38 @@ public partial class NarrativeController
     /// <summary>
     /// Whether a click on <paramref name="symbol"/> would act now.
     ///
-    /// <para>Observing and thinking cost a point and are withheld without one; observing and acting
-    /// need the member there, and are withheld where no known way leads. Confronted, a member may
-    /// look only at whoever confronts them and think only about them — though an act already
-    /// proposed stays theirs to try where they stand: the coded rules judge it on the click, and a
-    /// discreet means may pass where another is refused.</para>
+    /// <para>Observing, thinking and acting each cost a point and are withheld without one — with
+    /// none left, only the way out and another member answer (<see cref="OutOfPoints"/>). Observing
+    /// and acting need the member there, and are withheld where no known way leads. Confronted, a
+    /// member may look only at whoever confronts them and think only about them — though an act
+    /// already proposed stays theirs to try where they stand: the coded rules judge it on the
+    /// click, and a discreet means may pass where another is refused.</para>
     /// </summary>
     private bool IsEnabled(MapSymbol symbol)
     {
         var confrontation = _frameConfrontation;
+        // With the last point spent only the way out and another member answer.
+        if (OutOfPoints && symbol is not (ExitSymbol or TokenSymbol)) return false;
+        // What an element folded away holds and offers is put away with it.
+        if (symbol switch
+            {
+                NodeSymbol { Node: var under }       => FoldedAway(under),
+                StubSymbol { Element: var of }       => FoldedAway(of, self: true),
+                ContentSymbol { Container: var box } => FoldedAway(box, self: true),
+                CommandSymbol { Act: var beside }    => FoldedAway(beside),
+                _ => false,
+            }) return false;
         switch (symbol)
         {
+            // Another member is played by a click on their token — one who has a point to spend:
+            // there is nothing to play a member with none for.
             case TokenSymbol token:
-                return !ReferenceEquals(token.Member, _active);
+                return !ReferenceEquals(token.Member, _active)
+                    && (!Exploring || (_minds.TryGetValue(token.Member, out var theirs) && theirs.Noetic > 0));
+
+            // An observed element: a click folds its tree away, or brings it back.
+            case NodeSymbol { Node: { Kind: ThoughtNodeKind.Element } element }:
+                return CanFold(element);
 
             case TraySymbol tray:
                 if (!HasPoint || ObservingMinds.Count == 0) return false;
@@ -366,13 +435,16 @@ public partial class NarrativeController
 
             // An act refused for want of an implement is not carried out bare-handed: reaching for
             // one is then the only way on.
+            // Carrying it out costs a point.
             case NodeSymbol { Node: { IsWaitingAct: true } act }:
-                return !act.Action!.NeedsTool && CanReachAct(act);
+                return HasPoint && !act.Action!.NeedsTool && CanReachAct(act);
 
-            // Reaching for an implement is part of the act already proposed: it costs nothing, only
-            // one thing may ever be combined with it, and something combinable must be carried.
+            // Reaching for an implement is part of the act already proposed: it costs nothing when
+            // it serves — but the act it is for costs a point, and so does reaching for the wrong
+            // thing — only one thing may ever be combined with it, and something combinable must be
+            // carried.
             case CommandSymbol { Command: ActCommand.Tool, Act: { IsWaitingAct: true } act }:
-                return act.Action!.CombinedItem == null && CanReachAct(act) && GetCombinableItems().Count > 0;
+                return HasPoint && act.Action!.CombinedItem == null && CanReachAct(act) && GetCombinableItems().Count > 0;
 
             // Reconsidering is a thinking, and costs its point.
             case CommandSymbol { Command: ActCommand.Reconsider, Act: { IsWaitingAct: true } act }:
@@ -431,11 +503,17 @@ public partial class NarrativeController
             ContentSymbol content           => new($"observe {NameOf(content.Part)}", enabled),
             WaySymbol way                   => new(WayLabel(way), enabled),
             ExitSymbol                      => new(ExitLabel, enabled),
-            TokenSymbol token               => new(ReferenceEquals(token.Member, _active) ? token.Member.DisplayName : $"play {token.Member.DisplayName}", enabled),
+            TokenSymbol token when ReferenceEquals(token.Member, _active) => new(token.Member.DisplayName, enabled),
+            TokenSymbol token when Exploring && _minds.TryGetValue(token.Member, out var theirs) && theirs.Noetic <= 0
+                                            => new($"{token.Member.DisplayName} · no noetic point left", false),
+            TokenSymbol token               => new($"play {token.Member.DisplayName}", enabled),
             StubSymbol { Kind: StubKind.Think } stub => new($"think about {NameOf(stub.Element)}", enabled),
             StubSymbol stub                 => new($"speak of {NameOf(stub.Element)} to {stub.Listener?.DisplayName}", enabled),
             CommandSymbol { Command: ActCommand.Tool } tool => new(ToolLabel(tool.Act), enabled),
             CommandSymbol                   => new("think it over again", enabled),
+            // An observed element says what a click on it does to its tree.
+            NodeSymbol { Node: { Kind: ThoughtNodeKind.Element } element } when CanFold(element)
+                                            => new($"{NameOf(element)} · {(element.Folded ? "unfold" : "fold")}", enabled),
             NodeSymbol { Node: var node }   => new(LabelOf(node), enabled),
             _ => null,
         };
@@ -581,6 +659,19 @@ public partial class NarrativeController
         Hover(ref _resultContinueHovered, Over(_resultContinueRegion, mouseX, mouseY));
         if (Busy) return;
 
+        // The out-of-points box is modal: its buttons, and nothing of the map under it.
+        if (SpentBoxUp)
+        {
+            int over = _spentRegions.FindIndex(r => Over(r, mouseX, mouseY));
+            if (over != _spentHovered)
+            {
+                _spentHovered = over;
+                if (over >= 0) PlayHoverSound();
+            }
+            _hovered = null;
+            return;
+        }
+
         if (_map.SetHover(mouseX, mouseY)) PlayHoverSound();
         var under = _map.IconAt(mouseX, mouseY) as MapSymbol;
         if (!Equals(under, _hovered))
@@ -673,6 +764,14 @@ public partial class NarrativeController
             return;
         }
 
+        // The out-of-points box takes every click: one of its buttons, or nothing.
+        if (SpentBoxUp)
+        {
+            int button = _spentRegions.FindIndex(r => Over(r, mouseX, mouseY));
+            if (button >= 0) ClickSpent(button);
+            return;
+        }
+
         // The map's pan pad sits in the panel's top-right corner.
         if (_map.HandleClick(mouseX, mouseY))
         {
@@ -735,6 +834,11 @@ public partial class NarrativeController
 
             case StubSymbol { Listener: { } listener } stub:
                 AskMind(new SpeakPending(stub.Element, listener), _active.GetSpeakingModiMentis(), "Speak with");
+                break;
+
+            // An observed element: its tree is folded away, or brought back.
+            case NodeSymbol { Node: { Kind: ThoughtNodeKind.Element } element }:
+                element.Folded = !element.Folded;
                 break;
 
             // The act itself: carried out. Acting needs presence, so the member goes to where it

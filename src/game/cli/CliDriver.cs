@@ -441,6 +441,9 @@ public sealed class CliDriver
                                     act is the click
           click tool <n|word>       the implement symbol beside a waiting act: then `choose <n>`
                                     picks what is carried to do it with
+          click fold <name>         an observed element: fold its tree away, or unfold it. What
+                                    is folded is not drawn and answers no click (`inspect trees`
+                                    says folded=yes)
           click reconsider <n|word> the symbol beside a waiting act that has it thought over
                                     again: then `choose <thinking mm-id>`
           click member <name>       play another member of the party (their token on the map)
@@ -974,9 +977,10 @@ public sealed class CliDriver
 
         switch (a[0].ToLowerInvariant())
         {
-            case "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member":
+            case "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member" or "fold":
             {
                 // A symbol of the location map, by what it stands for:
+                //   click fold <name>                     fold an observed element's tree away, or unfold it
                 //   click observe person [in <area>]     one of a kind, the observing mind's to choose
                 //   click observe <name> [in <area>]     an element remembered, or disclosed by a container
                 //   click think <name> | click speak <name> [to <member>]   an element already observed
@@ -1342,7 +1346,7 @@ public sealed class CliDriver
     {
         // A symbol of the narration's map, named as `click` names it: the pointer is put on it and
         // nothing is pressed, which is how its label, its text and its line are read.
-        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member")
+        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member" or "fold")
         {
             if (FindSymbol(a) is not { } found) return;
             if (found.Narration.CliSymbolCell(found.Symbol) is not { } cell)

@@ -150,6 +150,11 @@ public sealed class MapFrame
 /// <para><b>Room.</b> The rows of cards stand a fixed distance apart, so a card has a fixed number
 /// of rows to hang its trees in. When they do not all fit, the elements with something left to do
 /// are drawn first and the last row says how many finished ones are not shown.</para>
+///
+/// <para><b>Over the lines.</b> A tree is drawn over the map's lines, and on each of its rows what
+/// the map had between its first and last cell is taken off (<see cref="Settle"/>), so no line runs
+/// through the middle of one. An element the player folded away (<see cref="ThoughtNode.Folded"/>)
+/// is drawn alone, with a mark that there is more.</para>
 /// </summary>
 public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 {
@@ -167,6 +172,13 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 
     // Set while a way's tree is drawn: it hangs in the open map, and stops at a card.
     private bool _keepOffCards;
+
+    // The cells of the tree being drawn, and on each of its rows the first and the last of them.
+    // A tree is drawn over the map's lines: once it is down, whatever the map had between two of
+    // its cells on a row is taken off (Settle), so a line never runs through the middle of one.
+    private readonly HashSet<(int X, int Y)> _treeCells = new();
+    private readonly Dictionary<int, (int Min, int Max)> _treeSpans = new();
+    private bool _tracking;
 
     public int BandRoom(Area area)
         => Frame?.Cards.FirstOrDefault(c => c.Area.Id == area.Id)?.Tokens.Count ?? 0;
@@ -193,7 +205,11 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             var hung = spots.FirstOrDefault(p => p.Near != null && p.Near.Id == way.From?.Id, spots[0]);
             foreach (var spot in spots)
                 if (way.Root == null || spot == hung)
+                {
+                    Track();
                     PaintWay(canvas, way, spot.X, spot.Y, spot.Vertical, spot.Up, hang: spot == hung);
+                    Settle(canvas);
+                }
         }
         _keepOffCards = false;
 
@@ -247,6 +263,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         var hanging = card.Roots.Concat(card.Strays).ToList();
         if (hanging.Count == 0) return;
 
+        Track();
         // What does not fit is what is finished: the elements with something left to do come first.
         int room = canvas.TreeRows;
         int shown = hanging.Count, used = hanging.Sum(Rows);
@@ -273,8 +290,41 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         {
             for (int r = last + 1; last >= 0 && r < y; r++) Line(canvas, trunk, r, '│');
             string more = $"└ +{hidden}";
-            for (int i = 0; i < more.Length; i++) canvas.Put(trunk + i, y, more[i], DeadInk);
+            for (int i = 0; i < more.Length; i++)
+            {
+                canvas.Put(trunk + i, y, more[i], DeadInk);
+                Took(trunk + i, y);
+            }
         }
+        Settle(canvas);
+    }
+
+    /// <summary>Starts taking note of the cells a tree is drawn on.</summary>
+    private void Track()
+    {
+        _treeCells.Clear();
+        _treeSpans.Clear();
+        _tracking = true;
+    }
+
+    private void Took(int x, int y)
+    {
+        if (!_tracking) return;
+        _treeCells.Add((x, y));
+        _treeSpans[y] = _treeSpans.TryGetValue(y, out var span) ? (Math.Min(span.Min, x), Math.Max(span.Max, x)) : (x, x);
+    }
+
+    /// <summary>
+    /// The tree is down: on each of its rows, what the map had between its first and its last cell
+    /// is taken off. Only there — a line beside a tree, or under a card where no tree reaches, is
+    /// left as it was.
+    /// </summary>
+    private void Settle(LocationMap.MapCanvas canvas)
+    {
+        _tracking = false;
+        foreach (var (y, (min, max)) in _treeSpans)
+            for (int x = min + 1; x < max; x++)
+                if (!_treeCells.Contains((x, y))) canvas.Blank(x, y);
     }
 
     /// <summary>The rows <paramref name="node"/> and everything under it are drawn on.</summary>
@@ -370,6 +420,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (way.Root is { } root)
         {
             Symbol(canvas, x, y, way.Glyph, NodeInk(root, live: true), new NodeSymbol(root));
+            if (root.Folded) FoldMark(canvas, root, x + 1, y);
             items.AddRange(Hanging(root));
         }
         else
@@ -427,6 +478,8 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     private List<object> Hanging(ThoughtNode node)
     {
         var items = new List<object>();
+        // Folded away: the element alone, whatever it holds and whatever was made of it.
+        if (node.Folded) return items;
         var shelf = new List<MapSymbol>();
         if (node.IsWaitingAct)
         {
@@ -451,6 +504,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     {
         int row = y;
         Symbol(canvas, x, row, NodeGlyph(node), NodeInk(node, live), new NodeSymbol(node));
+        if (node.Folded) FoldMark(canvas, node, x + 1, row);
 
         var hanging = Hanging(node);
         if (hanging.Count == 0) { y = row + 1; return; }
@@ -554,11 +608,17 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (Equals(symbol, Frame.Hovered) && (enabled || symbol is NodeSymbol)) canvas.Put(x, y, glyph, HoverInk, HoverGround);
         else canvas.Put(x, y, glyph, ink, enabled ? ClickGround : null);
         canvas.Hit(x, y, symbol);
+        Took(x, y);
     }
+
+    /// <summary>The mark beside a folded element: there is more under it, and it is part of the same click.</summary>
+    private void FoldMark(LocationMap.MapCanvas canvas, ThoughtNode node, int x, int y)
+        => Symbol(canvas, x, y, Config.Symbols.MapFolded, Config.Colors.BrightYellow, new NodeSymbol(node));
 
     private void Line(LocationMap.MapCanvas canvas, int x, int y, char glyph)
     {
         if (_keepOffCards && canvas.IsCard(x, y)) return;
         canvas.Put(x, y, glyph, LineInk);
+        Took(x, y);
     }
 }

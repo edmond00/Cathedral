@@ -172,6 +172,46 @@ public class NarrativeUI : TerminalPanelUI
     }
 
     /// <summary>
+    /// The box that stands over the map when the played member's last noetic point is spent: a
+    /// title, why nothing else answers, and one button a row — the way out first, then each member
+    /// who can still act. Purple, as a loss is. Returns each button's cells, in order.
+    /// </summary>
+    public List<(int X, int Y, int Width)> RenderSpentBox(string title, string message, IReadOnlyList<string> buttons, int hovered)
+    {
+        DimContent();
+        int width = Math.Clamp(60, 40, _layout.CONTENT_WIDTH - 2);
+        int inner = width - 8;
+        var lines = WrapText(message, inner);
+        // Border, blank, the message, blank, a button a row with a blank between, blank, border.
+        int height = lines.Count + buttons.Count * 2 + 4;
+        int x = (_layout.TERMINAL_WIDTH - width) / 2;
+        int y = _layout.CONTENT_START_Y + (_layout.NARRATIVE_HEIGHT - height) / 2;
+        var ground = Config.NarrativeUI.BackgroundColor;
+
+        _terminal.FillRect(x, y, width, height, ' ', Config.Colors.White, ground);
+        _terminal.DrawBox(x, y, width, height, BoxStyle.Single, Config.Colors.DarkPurple, ground);
+        _terminal.Text(x + width / 2, y, title, Config.Colors.LightPurple, ground, TextAlignment.Center);
+
+        int row = y + 2;
+        foreach (var line in lines)
+            _terminal.Text(x + 4, row++, line, Config.Colors.LightGray85, ground);
+        row++;
+
+        var regions = new List<(int X, int Y, int Width)>();
+        for (int i = 0; i < buttons.Count; i++, row += 2)
+        {
+            string button = $"[ {buttons[i]} ]";
+            int buttonX = x + (width - button.Length) / 2;
+            bool over = i == hovered;
+            _terminal.Text(buttonX, row, button,
+                over ? Config.NarrativeUI.ContinueButtonHoverColor : Config.NarrativeUI.ContinueButtonColor,
+                over ? Config.NarrativeUI.ContinueButtonHoverBackgroundColor : Config.NarrativeUI.ContinueButtonBackgroundColor);
+            regions.Add((buttonX, row, button.Length));
+        }
+        return regions;
+    }
+
+    /// <summary>
     /// What an act came to, one line each: a mark and the text in the ink of its severity — gold
     /// for a gain, purple for a loss, grey for what is neither — on the box's own ground.
     /// </summary>

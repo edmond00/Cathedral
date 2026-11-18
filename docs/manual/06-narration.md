@@ -5,7 +5,7 @@ the main mode of play, and it is where most of the rules of the earlier chapters
 
 **In short**
 
-1. A character in a place has a budget of **noetic points** (attention points) = ⌊encephalon score ÷ 2⌋ + 1; every observation, deliberation and refused act costs 1 point, and a successful act refills the budget (§3).
+1. A character in a place has a budget of **noetic points** (attention points) = ⌊encephalon score ÷ 2⌋ + 1; every observation, deliberation and attempted act costs 1 point, and a successful act refills the budget (§3).
 2. Every act passes through a chain of modi mentis: one observes, one thinks, one acts (§5).
 3. The die pool is the sum of the levels of the modi mentis in the chain, plus any implement; the act succeeds when the number of sixes reaches the difficulty (§5).
 4. An act of difficulty 0 is not rolled and always succeeds; a crime is never below difficulty 1 (§5).
@@ -102,22 +102,22 @@ observed and what it has decided to do waits to be done. The limit is its budget
 5. A failed act refills nothing.
 6. Reason for rule 5: a miss must cost something. If the budget were handed back, the next attempt would be free.
 7. Accepting an implement for an act costs nothing. It is part of an act already deliberated on, and charging for it would put acts that need an implement out of reach of a small budget.
-8. A successful act's own resolution costs nothing beyond the deliberation that produced it.
-9. Attempting an act already decided on costs nothing, and so does walking by known ways (§1).
-10. A character with no noetic point left can observe nothing and deliberate on nothing until one of its acts succeeds.
-11. It can still attempt the acts it has already decided on, walk by known ways, and leave.
-12. Leaving is blocked only by someone with a reason to stop the character: an enemy, or a confronting witness (§7).
-13. Nothing costs a noetic point in the two opening scenes of a run: the childhood recollection, and getting up after it.
+8. Attempting an act costs 1 noetic point, whatever comes of it. A successful act then refills the budget (rule 3), so only an attempt that does not succeed keeps its point spent.
+9. Reaching one act from nothing therefore takes 3 points: 1 to observe, 1 to deliberate, 1 to attempt. Walking by known ways (§1) costs nothing.
+10. A character with no noetic point left can observe nothing, deliberate on nothing and attempt nothing, including the acts it had already decided on.
+11. It can only leave the place, or run away when it is confronted (§7).
+12. In a party, a member with no noetic point left cannot be played until its budget refills. When the member being played spends its last point, play passes to a member who still has one, a member standing in the same area first (§10).
+13. Leaving is blocked only by someone with a reason to stop the character: an enemy, or a confronting witness (§7).
+14. Nothing costs a noetic point in the two opening scenes of a run: the childhood recollection, and getting up after it.
 
 **Each of these costs 1 noetic point:**
 
 1. An observation, including the first of a visit (§5).
 2. A deliberation, with all its second thoughts (§5).
 3. A reconsideration (§5).
-4. An act refused by a rule of action (§6).
-5. An act judged implausible.
-6. An implement offered for an act and refused (see [Chapter IV §7](04-items.md#7-implements)). Only the refusal is charged: the cost is for reaching for the wrong thing, not for reaching.
-7. Speaking of a thing to a companion (§10).
+4. An attempt at an act, whether it is refused by a rule of action (§6), judged implausible, failed or successful.
+5. An implement offered for an act and refused (see [Chapter IV §7](04-items.md#7-implements)). Only the refusal is charged: the cost is for reaching for the wrong thing, not for reaching.
+6. Speaking of a thing to a companion (§10).
 
 | Encephalon score | 0 | 1 | 2 | 3 | 4 | 5 | 23 |
 |---|---|---|---|---|---|---|---|
@@ -342,7 +342,7 @@ was chosen; **rules of choice** keep an act from being offered in the first plac
 ### Rules of action
 
 1. A rule of action judges an act already chosen, at the moment it is attempted.
-2. It **rejects** the act, gives the reason in the acting modus mentis's own voice, and **costs 1 noetic point**.
+2. It **rejects** the act and gives the reason in the acting modus mentis's own voice. The attempt's **1 noetic point stays spent** (§3).
 3. These rules are about circumstance: someone is watching, the door needs a key, there is nowhere left to put a log.
 4. The rules are checked in the order of the table, and the first that applies gives the refusal.
 5. The broken-modus-mentis rule comes first because it alone is about the body, not the circumstance. A character told that a witness is watching will try another way; one told the arm is ruined will not. Its refusal names the failed parts and the wounds behind them.
@@ -552,7 +552,7 @@ Two kinds of presence in the area restrict the character, and they work alike on
 1. While an enemy or a confronting witness stands over a character, that character can observe only the one confronting it, who is already in its record (§4).
 2. It can deliberate only on them.
 3. It cannot walk away, and cannot speak to a companion (§10).
-4. Acts it had already decided on, in the area where it stands, still wait and can still be attempted. They are judged by the rules above.
+4. Acts it had already decided on, in the area where it stands, still wait and can still be attempted, each for 1 noetic point (§3). They are judged by the rules above.
 5. Someone asleep confronts nobody and witnesses nothing.
 6. Party members standing in other areas are not confronted.
 
@@ -737,7 +737,7 @@ a place to enter.
 | Known way | A way already used; walking by known ways is free and is not an act. |
 | Mental map | What is known of a place: areas stood in, ways used, things and people observed. |
 | Moral level | Low, medium or high; decides how a modus mentis treats crimes. |
-| Noetic points | A character's attention budget in a place: ⌊encephalon score ÷ 2⌋ + 1. A successful act refills it. |
+| Noetic points | A character's attention budget in a place: ⌊encephalon score ÷ 2⌋ + 1. Observing, deliberating and attempting each cost 1; a successful act refills it. |
 | Observed thing | A thing this character has observed during this visit; only an observed thing can be deliberated on. |
 | Path | A shortcut across open ground to an area 2 or 3 steps away, followed as one act of difficulty 2. |
 | Penalty | The cost every failure carries: a wound, the way lost, the hour wasted, or the thread lost. |
@@ -746,7 +746,7 @@ a place to enter.
 | Point of view | Where the acting body stands and the period of the day. |
 | Readiness to doubt | Low, medium or high; how often a thinking modus mentis may try again and whether it may be doubted. |
 | Record | Everything one character has observed, decided and done in a place, kept for the visit. |
-| Rule of action | A rule that rejects a chosen act when attempted, at a cost of 1 noetic point. |
+| Rule of action | A rule that rejects a chosen act when attempted; the attempt's noetic point stays spent. |
 | Rule of choice | A rule that silently withholds an act from being offered, at no cost. |
 | Runaway | Leaving while an enemy or confronting witness is present: a roll of the runaway dice, needing 1 six. |
 | Section | A building, or a stretch of open ground; the reach of hearing. |
