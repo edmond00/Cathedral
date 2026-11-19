@@ -126,6 +126,15 @@ namespace Cathedral.Glyph
         public float GlowOutline { get; set; } = Cathedral.Config.PostProcess.GlowOutline;
 
         /// <summary>
+        /// Keeps the holes inside a glyph - the eyes and mouth of a face, the counter of an "e" -
+        /// from filling with light. A pixel with lit pixels on two opposite sides within two
+        /// pixels is inside a glyph, not beside it: it is kept from the halo and deepened a little.
+        /// A stroke's own soft edge has light on one side only and is left alone, so nothing gets
+        /// thinner. 0 = off, 1 = full.
+        /// </summary>
+        public float GlowDetail { get; set; } = Cathedral.Config.PostProcess.GlowDetail;
+
+        /// <summary>
         /// Pins the flicker's clock to a given second instead of real time. Null (the default) runs
         /// it on the frame clock. For filming: a script steps it by a fixed amount between snaps so
         /// the frames are evenly spaced whatever the renderer's frame rate.
@@ -485,8 +494,10 @@ namespace Cathedral.Glyph
             GL.Uniform1(_uGlowTime, GlowTime);
             GL.Uniform1(_uGlowFlicker, flicker);
             GL.Uniform1(_uGlowProtect, Math.Clamp(GlowProtect, 0f, 1f));
-            GL.Uniform2(_uGlowOutline, Math.Clamp(GlowOutline, 0f, 1f),
-                        Math.Max(1f, Cathedral.Config.PostProcess.GlowOutlineWidth) / (_zoomActive ? ZoomFactor : 1f));
+            float pixelStep = 1f / (_zoomActive ? ZoomFactor : 1f);
+            GL.Uniform4(_uGlowOutline, Math.Clamp(GlowOutline, 0f, 1f),
+                        Math.Max(1f, Cathedral.Config.PostProcess.GlowOutlineWidth) * pixelStep,
+                        Math.Clamp(GlowDetail, 0f, 1f), pixelStep);
             GL.Uniform3(_uGlowProtectKnee, Cathedral.Config.PostProcess.GlowProtectLow,
                         Cathedral.Config.PostProcess.GlowProtectHigh, Cathedral.Config.PostProcess.GlowProtectLod);
             GL.Uniform1(_uGlowTight, Math.Clamp(GlowTightness, 0f, 1f));
@@ -697,7 +708,7 @@ uniform float uGlowMaxLod;  // last mip level of the frame
 uniform float uGlowTime;    // seconds, for the falter
 uniform float uGlowFlicker; // how far the halo falters, as a share of it
 uniform float uGlowProtect; // how firmly dark ink on a lit surface is kept from the halo
-uniform vec2  uGlowOutline;     // contour strength round light strokes, its width in frame pixels
+uniform vec4  uGlowOutline;     // contour strength, its width; detail strength, one frame pixel
 uniform vec3  uGlowProtectKnee; // ground at which protection starts, is full; the mip level it is read at
 
 float vhash(vec3 p)
@@ -780,9 +791,29 @@ float contourAt(vec2 uv, float lum)
     return smoothstep(0.25, 0.55, near) * smoothstep(0.35, 0.65, 1.0 - lum / max(near, 1e-3));
 }
 
+// How much this pixel is a hole inside a glyph: lit pixels on two opposite sides of it (across,
+// down, or either diagonal), at one and at two pixels. Light on both sides means it is enclosed;
+// a stroke's anti-aliased edge has light on one side only and scores nothing.
+float holeAt(vec2 uv, float lum)
+{
+    float encl = 0.0;
+    for (int r = 1; r <= 2; r++)
+    {
+        float d = float(r) * uGlowOutline.w;
+        encl = max(encl, min(litAt(uv, vec2( d, 0)), litAt(uv, vec2(-d, 0))));
+        encl = max(encl, min(litAt(uv, vec2(0,  d)), litAt(uv, vec2(0, -d))));
+        encl = max(encl, min(litAt(uv, vec2( d,  d)), litAt(uv, vec2(-d, -d))));
+        encl = max(encl, min(litAt(uv, vec2( d, -d)), litAt(uv, vec2(-d,  d))));
+    }
+    return smoothstep(0.30, 0.60, encl) * smoothstep(0.06, 0.30, 1.0 - lum / max(encl, 1e-3));
+}
+
 vec3 addGlow(vec3 c, vec2 uv)
 {
     if (uGlow <= 0.0) return c;
+
+    // A hole inside a glyph, read before anything below changes c.
+    float hole = uGlowOutline.z > 0.0 ? uGlowOutline.z * holeAt(uv, max(max(c.r, c.g), c.b)) : 0.0;
 
     // The contour round light strokes, read before the ink step below changes c.
     float edge = uGlowOutline.x > 0.0 ? uGlowOutline.x * contourAt(uv, max(max(c.r, c.g), c.b)) : 0.0;
@@ -799,8 +830,9 @@ vec3 addGlow(vec3 c, vec2 uv)
     float ink   = protect * smoothstep(0.35, 0.75, below);   // and deepened
     c *= 1.0 - 0.70 * ink;
     c *= 1.0 - 0.60 * edge;
+    c *= 1.0 - 0.50 * hole;
 
-    vec3 g = c + (1.0 - max(shade, edge)) * uGlow * glow(uv);
+    vec3 g = c + (1.0 - max(max(shade, edge), hole)) * uGlow * glow(uv);
     float m = max(max(g.r, g.g), g.b);
     return m > 1.0 ? g / m : g;
 }
