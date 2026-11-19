@@ -42,6 +42,10 @@ public static class ElementKinds
         SyntheticObservationObject { PointOfInterest: LandscapePointOfInterest } => ElementKind.Thing,
         SyntheticObservationObject { PointOfInterest: ConnectorPointOfInterest } => ElementKind.Way,
         SyntheticNpcObservationObject npc => IsHostile(npc.SceneNpc, viewer) ? ElementKind.Hostile : ElementKind.Person,
+        // Somebody asleep in their bed is one element with the bed (SleepingNpcPointOfInterest) and
+        // is still somebody: a person on the card, not a thing among the chests.
+        SyntheticObservationObject { PointOfInterest: SleepingNpcPointOfInterest asleep }
+            => IsHostile(asleep.Sleeper, viewer) ? ElementKind.Hostile : ElementKind.Person,
         _ => ElementKind.Thing,
     };
 

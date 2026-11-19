@@ -345,6 +345,12 @@ public sealed class LocationMap
     /// <summary>Whether the cursor is on an arm of the pad, as last recorded by <see cref="SetHover"/>.</summary>
     public bool PadArrowHovered => _hovered != PadArrow.None;
 
+    /// <summary>
+    /// Which arm of the pad the cursor is on, as a hover key ("pad:Up"…), or null. Each arm is its own
+    /// button: one key for the whole pad meant sliding from one arm to the next made no tick.
+    /// </summary>
+    public string? PadArrowHoverKey => _hovered == PadArrow.None ? null : $"pad:{_hovered}";
+
     // A press kept on an arm goes on panning: the click made the first step, and after a moment
     // every tick makes a smaller one.
     private const int HoldDelayMs = 350;

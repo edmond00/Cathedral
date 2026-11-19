@@ -194,7 +194,9 @@ public class NarrativeUI : TerminalPanelUI
     public List<(int X, int Y, int Width)> RenderSpentBox(string title, string message, IReadOnlyList<string> buttons, int hovered)
     {
         DimContent();
-        int width = Math.Clamp(60, 40, _layout.CONTENT_WIDTH - 2);
+        // As wide as its line asks, so a short notice is one line and not a word left over on a
+        // second; a long one wraps within the same bounds.
+        int width = Math.Clamp(message.Length + 8, 40, Math.Min(72, _layout.CONTENT_WIDTH - 2));
         int inner = width - 8;
         var lines = WrapText(message, inner);
         // Border, blank, the message, blank, a button a row with a blank between, blank, border.

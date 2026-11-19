@@ -372,6 +372,7 @@ public sealed class CliDriver
           glow flicker <amount>     how far the halo falters (0 = steady, default 0.15)
           glow protect <0..1>       how firmly dark text on a lit fill is kept from the halo
           glow outline <0..1> [px]  the dark contour round light text, and its width
+          glow detail <0..1>        keep holes inside glyphs (a face's eyes) from the halo
           glow clock <secs|live>    pin the falter's clock, so frames snapped at fixed steps
                                     film it evenly; `live` hands it back to the frame clock
           dither [on|off]           the same for the dither layer
@@ -677,6 +678,11 @@ public sealed class CliDriver
             post.GlowOutline = Math.Clamp(ol, 0f, 1f);
             if (args.Length >= 3 && float.TryParse(args[2], System.Globalization.NumberStyles.Float, inv, out float ow))
                 Config.PostProcess.GlowOutlineWidth = Math.Max(1f, ow);
+        }
+        else if (args.Length >= 2 && args[0].Equals("detail", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float dt))
+        {
+            post.GlowDetail = Math.Clamp(dt, 0f, 1f);
         }
         else if (args.Length >= 2 && args[0].Equals("clock", StringComparison.OrdinalIgnoreCase))
         {

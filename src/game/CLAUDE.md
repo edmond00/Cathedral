@@ -622,7 +622,12 @@ The kinds are `ElementKind`: `Way` (`∩` on its line, and the letter of what it
 a neighbouring area, a door, a stair, a path, a climb),
 `Person` (`☺`), `Hostile` (`☹`, `Config.Symbols.EnemyChar` — the face an enemy wears on the fight's
 board, so what is seen in a place is recognised when the fight opens: a living thing that counts the played member an enemy — the same
-person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). The glyphs are
+person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). **Somebody asleep in
+their bed is a person too**: sleeper and bed are one element while the sleep lasts
+(`SleepingNpcPointOfInterest`), and `ElementKinds.Of` reads the sleeper through it — it used to fall
+to `Thing`, a `◆` among the chests. It is named as anybody is, by role until introduced
+(`SleepingNpcPointOfInterest.Label`, "the weaver, asleep"): its title was built from the proper
+name, which is a leak. The glyphs are
 `Config.Symbols.Map*`; four of them (`✗ ✓ ❝ ⚒`) are not in the main font and had to be added to
 `Config.Terminal.FallbackGlyphs`, without which they draw as an empty cell and nothing says why.
 
@@ -788,7 +793,10 @@ the thing, a mind that declined, a faculty the body cannot carry: each would ans
 and the point would be spent to hear it twice. A will's refusal is its course through the place as
 it stood, so `ReconcileTrees` forgets those (`ForgetWillRefusals`) whenever the plans are; the
 rest stand until the pool refills. The popup lists each mind with its level, one `⟐` a level — a
-level is a die — and so do the titles of the preview and reading boxes (`PreviewTitles.For`).
+level is a die — and so do the titles of the preview and reading boxes (`PreviewTitles.For`). **A will is
+listed in a pale straw where a general mind is white** (`Config.ThinkingModusMentisPopup.
+ModusMentisWillColor`): one shade apart, enough to see which minds look and think only toward what
+they want, without sorting the list into two kinds.
 
 **The trees hang in a fixed room.** Rows of cards stand `TreeRoom` apart (the map's layout is
 routed once and does not move as trees grow), which leaves `canvas.TreeRows` = 11 rows under a card.
@@ -1649,10 +1657,10 @@ both in `SettleSpent` (every tick, and ahead of every CLI seam so a script sees 
   is modal: the map under it takes no click and no hover, and `click area` is refused with it. Its
   buttons do exactly what the glyph and the tokens do (`OnExitClicked`, `Switch`), so `click exit`
   and `click member` drive it, and a recording is given the button's cell (`CliExitCell`,
-  `CliSymbolCell`). `inspect where` reports `out_of_points=yes`. **It speaks in the played member's
-  own voice** — "I have run out of ideas… my mind gave nothing more" — and still states the rule
-  outright (no noetic point left; every look, thought and act costs one; leave, or run), under a
-  title that names the mechanic. Its wording avoids "success" and "failure", which scripts assert
+  `CliSymbolCell`). `inspect where` reports `out_of_points=yes`. **It is one short line in the
+  played member's voice** — "I am out of ideas here: no noetic point left. Time to leave." — under
+  a title that names the mechanic. It is a notice of the screen's, and a longer one read as one
+  more inner thought written by a mind. Its wording avoids "success" and "failure", which scripts assert
   on the screen.
 
 It is why the way out must stay ungated by anything except whoever confronts the member, who turns

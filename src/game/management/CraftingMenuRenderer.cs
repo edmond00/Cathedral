@@ -165,6 +165,16 @@ public sealed class CraftingMenuRenderer
     private int[]? _pendingValues;
     private DateTime _rollStarted;
 
+    /// <summary>
+    /// The UI tick, for the dice box's own sounds: the spinning dice and the hover over a humor button
+    /// or a clickable die. Every other dice box (narration, dialogue, fight) wires both hooks; this one
+    /// was left unwired, so its humor buttons lit in silence.
+    /// </summary>
+    public Action? OnTick
+    {
+        set { _dice.OnDiceTick = value; _dice.OnButtonHover = value; }
+    }
+
     /// <summary>The dice box while a make is on it, for the CLI and <c>--record</c>; null otherwise.</summary>
     public DiceRollComponent? CliDice => _dice.IsVisible ? _dice : null;
 

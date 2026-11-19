@@ -227,18 +227,11 @@ public partial class NarrativeController
     private (string Message, List<string> Buttons) SpentNotice()
     {
         var others = MembersWithPoints;
-        // In the played member's own voice — a mind with nothing left to give — and still saying
-        // the rule in so many words: no point left, and every look, thought and act costs one.
-        string message;
-        if (ConfrontationOf(Mind) is { } confrontation)
-            message = $"I have run out of ideas, and {NpcLabelResolver.ShortLabel(confrontation.Npc)} stands in my way. "
-                    + "I have no noetic point left, and every look, every thought and every act costs one. "
-                    + "All I can do is run.";
-        else
-            message = "I have run out of ideas. I have looked, thought and tried until my mind gave nothing more: "
-                    + "I have no noetic point left, and every look, every thought and every act costs one. "
-                    + "There is nothing more I can do here. It is time to leave: my mind will be clear again "
-                    + "in the next place I come to.";
+        // A notice of the screen's, not a text a mind wrote: one short line in the played member's
+        // voice, naming the rule. Longer, it read as one more inner thought to be weighed.
+        string message = ConfrontationOf(Mind) is { } confrontation
+            ? $"I am out of ideas, and {NpcLabelResolver.ShortLabel(confrontation.Npc)} stands in my way: no noetic point left. I can only run."
+            : "I am out of ideas here: no noetic point left. Time to leave.";
         if (others.Count > 0)
             message += others.Count == 1 ? $" But {others[0].DisplayName} can still act." : " But the others can still act.";
 
@@ -354,6 +347,7 @@ public partial class NarrativeController
     private ElementKind KindOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => ElementKinds.IsHostile(npc, _active) ? ElementKind.Hostile : ElementKind.Person,
+        SleepingNpcPointOfInterest asleep => ElementKinds.IsHostile(asleep.Sleeper, _active) ? ElementKind.Hostile : ElementKind.Person,
         Cathedral.Game.Scene.GetUp.SelfPointOfInterest => ElementKind.Person,
         LandscapePointOfInterest => ElementKind.Thing,
         Area or ConnectorPointOfInterest => ElementKind.Way,
@@ -490,6 +484,8 @@ public partial class NarrativeController
     {
         SyntheticNpcObservationObject npc => NpcLabelResolver.ShortLabel(npc.SceneNpc.Entity),
         SyntheticAreaObservationObject area => $"the way to {NeutralNarration.AreaPhrase(area.Area.DisplayName)}",
+        // A sleeper is named as anybody is: by role until introduced.
+        SyntheticObservationObject { PointOfInterest: SleepingNpcPointOfInterest asleep } => asleep.Label(_active),
         SyntheticObservationObject { PointOfInterest: var poi } when IsOfMyself(poi) => poi.DisplayName.ToLowerInvariant(),
         ObservationObject obs => NeutralNarration.ThingPhrase(obs.NeutralName),
         _ => NeutralNarration.ThingPhrase(anchor.DisplayName),
@@ -505,6 +501,7 @@ public partial class NarrativeController
     private string NameOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => NpcLabelResolver.ShortLabel(npc.Entity),
+        SleepingNpcPointOfInterest asleep => asleep.Label(_active),
         // A way is named from the end it is now seen from.
         Area or ConnectorPointOfInterest when Locate(element) is { } at => NameOf(at.Anchor),
         Area area    => $"the way to {NeutralNarration.AreaPhrase(area.DisplayName)}",
