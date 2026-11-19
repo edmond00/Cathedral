@@ -199,9 +199,13 @@ Run `help` for the authoritative list. The essentials:
   click think <name|last>   the ? after an observed element: think about it. Then `choose <mm-id>`.
                             `last` is whatever was observed last — for a script on the real
                             model, where the mind chooses what it looks at (`speak` takes it too).
-                            Naming an observed holder in `click observe` asks for whatever it
-                            holds first (`click observe Myself` — in the childhood that is the
-                            memory at hand, even once it hangs from the fragment remembered last)
+                            What an observed holder holds is anonymous on the screen and the
+                            mind chooses which it looks at: naming one (`click observe "a
+                            scream"`) pins that observation to it, and naming the holder
+                            (`click observe Myself` — in the childhood the memory at hand, even
+                            once it hangs from the fragment remembered last) leaves the choice
+                            to the mind. Several unknown ways between the same two areas are
+                            chosen among the same way; naming one pins it
   click speak <name> [to <member>]
                             a speech mark after an observed element: speak of it to a companion
                             in the same or an adjacent area. There is one mark for each

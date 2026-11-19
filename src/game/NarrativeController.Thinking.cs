@@ -21,10 +21,15 @@ public partial class NarrativeController
     private abstract record Pending;
     /// <summary>
     /// Observe in <paramref name="Area"/>: one of a kind, or the element <paramref name="Named"/> —
-    /// which, when it is a way on a line, is recorded as <paramref name="Way"/>.
+    /// which, when it is a way on a line, is recorded as <paramref name="Way"/>. With nothing named
+    /// the observing mind chooses: among what <paramref name="Container"/> holds, among the ways
+    /// <paramref name="Among"/> that join the same two areas (<paramref name="Way"/> is then the one
+    /// whose symbol was clicked, and <paramref name="Pair"/> names the two areas), or among
+    /// everything of the kind in the area.
     /// </summary>
     private sealed record ObservePending(Area Area, ElementKind Kind, NarrativeAnchor? Named, ThoughtNode? Container,
-                                         string? Way = null) : Pending;
+                                         string? Way = null, IReadOnlyList<NarrativeAnchor>? Among = null,
+                                         string? Pair = null) : Pending;
     private sealed record ThinkPending(ThoughtNode Element) : Pending;
     /// <summary>Speak of an element to <paramref name="Listener"/>: the speech mark clicked said to whom.</summary>
     private sealed record SpeakPending(ThoughtNode Element, PartyMember Listener) : Pending;
@@ -52,8 +57,12 @@ public partial class NarrativeController
     /// </summary>
     private static (MindOffice Office, object About) AskedOf(Pending pending) => pending switch
     {
+        // Several ways between the same two areas are one question, whichever symbol was clicked.
+        ObservePending { Among: not null, Pair: { } pair } => (MindOffice.Observe, pair),
         ObservePending { Way: { } way }     => (MindOffice.Observe, way),
         ObservePending { Named: { } named } => (MindOffice.Observe, (object?)ElementKinds.ElementOf(named) ?? named),
+        // What a container holds is one question about that container.
+        ObservePending { Container: { } box } => (MindOffice.Observe, box),
         ObservePending observe              => (MindOffice.Observe, (observe.Area.Id, observe.Kind)),
         ThinkPending think                  => (MindOffice.Think, think.Element),
         ReconsiderPending reconsider        => (MindOffice.Reconsider, reconsider.Act),
@@ -154,7 +163,9 @@ public partial class NarrativeController
                 pool = new List<NarrativeAnchor> { what.Named };
             else
             {
-                pool = Unobserved(area).Where(u => u.Kind == what.Kind && !u.Known).Select(u => u.Anchor).ToList();
+                pool = what.Among != null     ? what.Among.ToList()
+                     : what.Container != null ? ContentsOf(what.Container).ToList()
+                     : Unobserved(area).Where(u => u.Kind == what.Kind && !u.Known).Select(u => u.Anchor).ToList();
                 // A script that named one of them has made the mind's choice for it.
                 if (_cliObservePin is { } pinned && pool.Contains(pinned)) pool = new List<NarrativeAnchor> { pinned };
                 _cliObservePin = null;

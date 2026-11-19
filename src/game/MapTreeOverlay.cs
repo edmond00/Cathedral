@@ -51,7 +51,7 @@ public enum ActCommand
 public sealed record CommandSymbol(ThoughtNode Act, ActCommand Command) : MapSymbol;
 
 /// <summary>Something an observed container holds, disclosed and not yet observed itself.</summary>
-public sealed record ContentSymbol(ThoughtNode Container, NarrativeAnchor Part) : MapSymbol;
+public sealed record ContentSymbol(ThoughtNode Container, int Index) : MapSymbol;
 
 /// <summary>
 /// A way not yet observed, standing on its line: the plain way between two neighbours, a door, a
@@ -492,7 +492,9 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         }
         items.AddRange(node.Children);
         if (node.Kind != ThoughtNodeKind.Element) return items;
-        foreach (var part in Frame.Contents(node)) shelf.Add(new ContentSymbol(node, part));
+        // One symbol for each thing it holds not yet looked at, and none of them any one of them:
+        // which is looked at is the observing mind's to choose.
+        for (int i = 0, held = Frame.Contents(node).Count; i < held; i++) shelf.Add(new ContentSymbol(node, i));
         shelf.AddRange(Frame.Stubs(node));
         if (shelf.Count > 0) items.Add(shelf);
         return items;
