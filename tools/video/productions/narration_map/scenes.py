@@ -639,6 +639,8 @@ class Confronted(BrandScene):
         closed = VGroup(self.text("closed", 26, LIGHT_PURPLE),
                         self.text("looking at anything else", 23, GRAY60),
                         self.text("thinking about anything else", 23, GRAY60),
+                        self.text("thoughts of any other act", 23, GRAY60),
+                        self.text(" (unless a discreet mind could act)", 20, GRAY60),
                         self.text("walking away", 23, GRAY60),
                         self.text("speaking to a companion", 23, GRAY60)).arrange(DOWN, aligned_edge=LEFT, buff=0.15)
         VGroup(allowed, closed).arrange(RIGHT, buff=1.6, aligned_edge=UP).shift(DOWN * 0.5)

@@ -147,19 +147,6 @@
        500
       ]
      }
-    },
-    {
-     "recording": "opening",
-     "from": 2690.0,
-     "to": 2694.0,
-     "speed": 1.0,
-     "zoom": {
-      "factor": 2.0,
-      "center": [
-       720,
-       540
-      ]
-     }
     }
    ],
    "vo": [
@@ -1054,7 +1041,7 @@
    "type": "manim",
    "scene": "Confronted",
    "vo": [
-    "An enemy in the room, or a witness with a reason to stop you, confronts you, and the map closes around them. You may answer them, explain yourself, which makes every check of that conversation one six easier, or carry out an act already waiting, if a discreet mind will. You may not look at anything else, think about anything else, walk away, or speak to a companion. And somebody asleep confronts nobody."
+    "An enemy in the room, or a witness with a reason to stop you, confronts you, and the map closes around them. You may answer them, explain yourself, which makes every check of that conversation one six easier, or carry out an act already waiting, if a discreet mind will. Thinking about them, a mind is offered only those answers, unless a discreet mind could act. You may not look at anything else, think about anything else, walk away, or speak to a companion. And somebody asleep confronts nobody."
    ],
    "params": {
     "step": "closed"
@@ -1064,7 +1051,7 @@
    "type": "game",
    "recording": "flee",
    "from": 45.43,
-   "to": 310.77,
+   "to": 62.69,
    "fade": true,
    "zoom": {
     "factor": 1.33,
@@ -1074,17 +1061,7 @@
     ]
    },
    "vo": [
-    "To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the cobbler is a skull, already on our map. Confronted, he is all we may look at or think about. Heraldry wants to introduce itself.",
-    {
-     "text": "I behold the cobbler of this city, a man well-known for his steady finishing. I want to introduce myself, hoping our conversation might mend a small tear in this busy street.",
-     "style": "reading",
-     "at": 136.9
-    },
-    {
-     "text": "I will introduce myself, striking up a conversation with him here in this city.",
-     "style": "reading",
-     "at": 263.8
-    }
+    "To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the cobbler is a skull, already on our map. Confronted, he is all we may look at or think about."
    ]
   },
   {
@@ -1113,192 +1090,6 @@
    "params": {
     "step": "exit"
    }
-  },
-  {
-   "type": "game",
-   "recording": "old_opening",
-   "from": 2416.34,
-   "to": 2470.0,
-   "fade": true,
-   "vo": [
-    "Childhood used the old screen too. You clicked the words of a memory, one after the other."
-   ],
-   "speed": 2.0
-  },
-  {
-   "type": "game",
-   "recording": "opening",
-   "from": 55.22,
-   "to": 175.04,
-   "fade": true,
-   "zoom": {
-    "factor": 2.0,
-    "center": [
-     720,
-     540
-    ]
-   },
-   "vo": [
-    "Now it is a tree. Myself is an element of the place, and it holds the fragments of the memory, one at a time. Recollection never declines, and is never rolled.",
-    {
-     "text": "I almost have it, a lullaby surfaces. A fading soft melody, half-heard and warm, pulls me toward sleep, half-familiar in its faint aching.",
-     "style": "reading",
-     "at": 91.0
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "opening",
-   "from": 181.05,
-   "to": 538.4,
-   "fade": false,
-   "zoom": {
-    "factor": 2.0,
-    "center": [
-     720,
-     540
-    ]
-   },
-   "vo": [
-    {
-     "text": "I remember a fading soft melody, half-heard and warm, pulling me toward sleep. I will try to remember the lullaby from my childhood, allowing the slow recovery of these gentle memories to guide me.",
-     "style": "reading",
-     "at": 222.9
-    },
-    {
-     "text": "I will try to remember a lullaby from my childhood, something gentle and wistful that floats just out of reach.",
-     "style": "reading",
-     "at": 337.2
-    },
-    {
-     "text": "I tried to recall the lullaby my mother sang, and it did come back. The castle, the bedroom, and the soft tones linger on in a half-familiar haze.",
-     "style": "reading",
-     "at": 423.4
-    },
-    {
-     "text": "Remember carries on to the next memory, and the branches pile up under Myself.",
-     "wait": true
-    }
-   ]
-  },
-  {
-   "type": "montage",
-   "fade": true,
-   "shots": [
-    {
-     "recording": "opening",
-     "from": 543.4,
-     "to": 550.4,
-     "speed": 3.0,
-     "zoom": {
-      "factor": 2.0,
-      "center": [
-       720,
-       540
-      ]
-     }
-    },
-    {
-     "recording": "opening",
-     "from": 1018.05,
-     "to": 1025.05,
-     "speed": 3.0,
-     "zoom": {
-      "factor": 2.0,
-      "center": [
-       720,
-       540
-      ]
-     }
-    },
-    {
-     "recording": "opening",
-     "from": 1433.35,
-     "to": 1440.35,
-     "speed": 3.0,
-     "zoom": {
-      "factor": 2.0,
-      "center": [
-       720,
-       540
-      ]
-     }
-    },
-    {
-     "recording": "opening",
-     "from": 1869.45,
-     "to": 1876.45,
-     "speed": 3.0,
-     "zoom": {
-      "factor": 2.0,
-      "center": [
-       720,
-       540
-      ]
-     }
-    }
-   ],
-   "vo": [
-    "Five memories, five branches."
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "opening",
-   "from": 2355.0,
-   "to": 2689.97,
-   "fade": false,
-   "zoom": {
-    "factor": 2.0,
-    "center": [
-     720,
-     540
-    ]
-   },
-   "vo": [
-    "Then the body gets up, on the same map. Myself now holds the states of exhaustion, and every thought ends on getting up.",
-    {
-     "text": "I remember running to escape the looters, and now my legs ache, a deep, grinding soreness where every step has pressed into the bone.",
-     "style": "reading",
-     "at": 2387.6
-    },
-    {
-     "text": "I observe the subtle discomfort in my limbs, each step etching upon the bones, a reminder of my position. I shall rise, for precedence demands, and press on despite the body's initial reluctance.",
-     "style": "reading",
-     "at": 2521.2
-    },
-    {
-     "text": "I will drop and breathe, then press on, steady - the pain is real but not a stop sign.",
-     "style": "reading",
-     "at": 2627.2
-    }
-   ]
-  },
-  {
-   "type": "game",
-   "recording": "opening",
-   "from": 2689.97,
-   "to": 2759.75,
-   "fade": false,
-   "zoom": {
-    "factor": 2.0,
-    "center": [
-     720,
-     540
-    ]
-   },
-   "vo": [
-    {
-     "text": "I crossed it. The burn fades, the hill ends.",
-     "style": "reading",
-     "at": 2706.4
-    },
-    {
-     "text": "And the run begins.",
-     "wait": true
-    }
-   ]
   },
   {
    "type": "montage",

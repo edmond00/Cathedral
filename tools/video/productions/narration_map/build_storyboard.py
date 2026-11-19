@@ -125,7 +125,6 @@ segments.append({"type": "montage", "fade": True, "min": 22.0, "shots": [
     shot("farm", 1110.0, 1114.0, zoom=MAP),
     shot("shop", 1415.5, 1419.5, zoom=MAP),
     shot("flee", 312.5, 316.5, zoom=MAP),
-    shot("opening", 2690.0, 2694.0, zoom=TREE),
 ], "vo": [
     "Proscribed Palimpsest has a new narration screen. The page of text with its clickable words is gone. "
     "In its place, the place itself: a map you read, click and fill as you play.",
@@ -310,42 +309,15 @@ game("shop", S.mark("reconsider"), S.mark("leave"),
      W("The old act is kept, struck through, and the new one waits: Petty Thief, difficulty one. A swing at "
        "him would start a fight, so we leave it there."))
 manim("Confronted", "closed")
-game("flee", X.mark("confronted") - 12.0, X.mark("runaway"),
+game("flee", X.mark("confronted") - 12.0, X.mark("think_enemy"),
      "To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the "
-     "cobbler is a skull, already on our map. Confronted, he is all we may look at or think about. "
-     "Heraldry wants to introduce itself.",
-     X.R(4), X.R(5), fade=True)
+     "cobbler is a skull, already on our map. Confronted, he is all we may look at or think about.",
+     fade=True)
 game("flee", X.mark("runaway"), X.mark("end"),
      "The exit reads Runaway. The feet's dice: two of them, one six needed, and a five and a six. We are "
      "out. Raggedbrow is not: he stands in the same shop, but the cobbler's quarrel is with us, not with "
      "him. Nothing confronts him, and his exit reads Leave.")
 manim("Confronted", "exit")
-
-# ── 6. childhood and getting up ───────────────────────────────────────────────
-
-game("old_opening", 2416.34, 2470.0,
-     "Childhood used the old screen too. You clicked the words of a memory, one after the other.",
-     zoom=None, speed=2.0, fade=True)
-game("opening", O.mark("memory_1"), O.click("CONTINUE", O.mark("memory_1")) + 1.5,
-     "Now it is a tree. Myself is an element of the place, and it holds the fragments of the memory, "
-     "one at a time. Recollection never declines, and is never rolled.",
-     O.R(0), zoom=TREE, fade=True)
-game("opening", O.click("think last", O.mark("memory_1")) - 1.0, O.mark("memory_2"),
-     O.R(5), O.R(6), O.R(7),
-     W("Remember carries on to the next memory, and the branches pile up under Myself."), zoom=TREE)
-segments.append({"type": "montage", "fade": True, "shots": [
-    shot("opening", O.mark("memory_2") + 5, O.mark("memory_2") + 12, 3.0, TREE),
-    shot("opening", O.mark("memory_3") + 5, O.mark("memory_3") + 12, 3.0, TREE),
-    shot("opening", O.mark("memory_4") + 5, O.mark("memory_4") + 12, 3.0, TREE),
-    shot("opening", O.mark("memory_5") + 5, O.mark("memory_5") + 12, 3.0, TREE),
-], "vo": ["Five memories, five branches."]})
-game("opening", O.mark("get_up"), O.click("Execute", O.mark("get_up")) + 1.0,
-     "Then the body gets up, on the same map. Myself now holds the states of exhaustion, and every thought "
-     "ends on getting up.",
-     O.R(40), O.R(45), O.R(46), zoom=TREE)
-game("opening", O.click("Execute", O.mark("get_up")) + 1.0, O.events[-1]["t"],
-     O.R(47),
-     W("And the run begins."), zoom=TREE)
 
 # ── closing ───────────────────────────────────────────────────────────────────
 

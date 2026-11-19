@@ -120,6 +120,7 @@ MANIM = {
         "An enemy in the room, or a witness with a reason to stop you, confronts you, and the map "
         "closes around them. You may answer them, explain yourself, which makes every check of that "
         "conversation one six easier, or carry out an act already waiting, if a discreet mind will. "
+        "Thinking about them, a mind is offered only those answers, unless a discreet mind could act. "
         "You may not look at anything else, think about anything else, walk away, or speak to a "
         "companion. And somebody asleep confronts nobody.",
     ],
