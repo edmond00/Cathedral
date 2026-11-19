@@ -49,6 +49,7 @@ public static class CrimeAudit
         AuditGoalRules(sb, failures);
         AuditWillingnessRules(sb, failures);
         AuditDiscreetWillingness(sb, failures);
+        AuditConfrontedGoals(sb, failures);
         AuditExamineRules(sb, failures);
         AuditFailurePenalties(sb, failures);
         AuditFoundWaiting(sb, failures);
@@ -453,6 +454,58 @@ public static class CrimeAudit
         Case("discreet, lawful with an enemy in the room",  watched, MoralLevel.Medium, true,  lawful!, false);
         Case("not discreet, lawful with an enemy in the room", watched, MoralLevel.Medium, false, lawful!, true);
         foe.AffinityTable.ClearEnemy(Protagonist.AffinityKeyConstant);
+        sb.AppendLine();
+    }
+
+    // ── 4a'. Confronted, a mind is offered only what answers the confronter ──
+
+    /// <summary>
+    /// <see cref="ConfrontedOffersOnlyAnswersRule"/>: with an enemy in the room, the goals a thinking
+    /// modus mentis is offered are the acts that face them, unless a discreet means is held; nobody
+    /// confronting, every goal stands. Medium morality, so no other rule narrows the list.
+    /// </summary>
+    private static void AuditConfrontedGoals(StringBuilder sb, List<string> failures)
+    {
+        sb.AppendLine("--- CHOICE RULES: goals offered while confronted ---");
+
+        var scene = new Village.VillageSceneFactory().Build(1);
+        var actor = new Protagonist();
+        var key   = Protagonist.AffinityKeyConstant;
+        var pov = scene.AllAreas.Where(a => !a.IsPrivate)
+            .SelectMany(a => Enum.GetValues<TimePeriod>().Select(t => new PoV(a, t)))
+            .FirstOrDefault(p => scene.GetNpcsAt(p.Where, p.When).Any(n => n.IsAlive && n.Entity is NpcEntity)
+                                 && p.Where.PointsOfInterest.Any()
+                                 && ConfrontationSelector.Current(scene, p, actor) == null);
+        if (pov == null)
+        {
+            failures.Add("village#1 offers no public standing with somebody and something in it — confronted cases skipped");
+            sb.AppendLine("  (no standing with a person and a thing — skipped)"); sb.AppendLine(); return;
+        }
+        var sceneNpc = scene.GetNpcsAt(pov.Where, pov.When).First(n => n.IsAlive && n.Entity is NpcEntity);
+        var thing    = pov.Where.PointsOfInterest.First();
+        var examine  = new ExamineVerb();
+        var attack   = new AttackVerb();
+        var look     = new VerbAction(examine, examine.Verbatim(scene, pov, thing), thing);
+        var strike   = new VerbAction(attack, attack.Verbatim(scene, pov, sceneNpc), sceneNpc);
+        var offered  = new List<NarrativeAnchor> { look, strike };
+
+        var plain    = new MoralityProbe(MoralLevel.Medium);
+        var discreet = new MoralityProbe(MoralLevel.Medium, discreet: true);
+
+        void Case(string name, IReadOnlyList<ModusMentis> means, params NarrativeAnchor[] expect)
+        {
+            var got = ChoiceRulesChecker.FilterGoals(offered, new ChoiceRuleContext(scene, pov, actor, plain, Probe: true, Means: means));
+            bool ok = got.Count == expect.Length && expect.All(got.Contains);
+            string Names(IEnumerable<NarrativeAnchor> g) => string.Join(", ", g.OfType<VerbAction>().Select(v => v.Verb.GetType().Name));
+            sb.AppendLine($"  {(ok ? "✓" : "✗")} {name,-52} offered: {Names(got)}");
+            if (!ok) failures.Add($"confronted goals, {name}: expected {Names(expect)}, got {Names(got)}");
+        }
+
+        Case("nobody confronting",                          new[] { plain }, look, strike);
+        ((NpcEntity)sceneNpc.Entity).AffinityTable.SetEnemy(key);
+        Case("an enemy in the room, no discreet means",     new[] { plain }, strike);
+        Case("an enemy in the room, a discreet means held", new ModusMentis[] { plain, discreet }, look, strike);
+        ((NpcEntity)sceneNpc.Entity).AffinityTable.ClearEnemy(key);
         sb.AppendLine();
     }
 
