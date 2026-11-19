@@ -73,7 +73,7 @@ wait
 expect-state party member Brindletail area=Test Yard noetic=0/7 played=yes
 expect-state where exit=LEAVE out_of_points=yes
 expect NO NOETIC POINT LEFT
-expect Brindletail has no noetic point left
+expect I have run out of ideas
 expect [ LEAVE ]
 expect-not [ PLAY
 click exit

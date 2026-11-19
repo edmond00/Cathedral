@@ -226,17 +226,21 @@ public partial class NarrativeController
     /// </summary>
     private (string Message, List<string> Buttons) SpentNotice()
     {
-        string name = _active.DisplayName;
         var others = MembersWithPoints;
+        // In the played member's own voice — a mind with nothing left to give — and still saying
+        // the rule in so many words: no point left, and every look, thought and act costs one.
         string message;
         if (ConfrontationOf(Mind) is { } confrontation)
-            message = $"{name} has no noetic point left, and {NpcLabelResolver.ShortLabel(confrontation.Npc)} stands in the way. "
-                    + "Looking, thinking and acting each cost a point: all that is left is to run.";
+            message = $"I have run out of ideas, and {NpcLabelResolver.ShortLabel(confrontation.Npc)} stands in my way. "
+                    + "I have no noetic point left, and every look, every thought and every act costs one. "
+                    + "All I can do is run.";
         else
-            message = $"{name} has no noetic point left. Looking, thinking and acting each cost a point, "
-                    + "and the points only come back when an act succeeds or on the next visit to a place: it is time to leave this one.";
+            message = "I have run out of ideas. I have looked, thought and tried until my mind gave nothing more: "
+                    + "I have no noetic point left, and every look, every thought and every act costs one. "
+                    + "There is nothing more I can do here. It is time to leave: my mind will be clear again "
+                    + "in the next place I come to.";
         if (others.Count > 0)
-            message += others.Count == 1 ? $" {others[0].DisplayName} can still act." : " The others can still act.";
+            message += others.Count == 1 ? $" But {others[0].DisplayName} can still act." : " But the others can still act.";
 
         // The way out under its own name: what the glyph at the map's edge is called.
         var buttons = new List<string> { ExitLabel };
