@@ -54,6 +54,9 @@ class Take:
     def click(self, label, after=0.0):
         return next(e["t"] for e in self.events if e["type"] == "click" and e.get("label") == label and e["t"] >= after)
 
+    def events_t(self, kind, after=0.0):
+        return next(e["t"] for e in self.events if e["type"] == kind and e["t"] >= after)
+
     def text(self, i):
         raw = self.P[i]["text"].strip()
         best, score = raw, 0.0
@@ -267,9 +270,20 @@ game("city", C.mark("steal"), C.mark("caught"),
 manim("Proximity", "effective")
 game("city", C.mark("caught"), C.click("footer button") + 25.0,
      "A confrontation is a conversation, and losing it is a fight.",
-     C.R(7), C.R(11),
-     W("We spend a humor on the last roll, and it is not enough. The conversation is lost, and the cobbler "
-       "fights. On the map, the exit now reads Runaway."), speed=1.5)
+     C.R(7),
+     A("We answer. Every reply on offer is written by one of our minds, its name before it. Diligence "
+       "denies it.", C.events_t("model-busy", 674.2)),
+     C.R(10),
+     C.R(11),
+     A("Social Interaction answers next.", C.click("CONTINUE", 830.0)),
+     C.R(14),
+     C.R(15),
+     C.R(18),
+     A("That reply is a check. Five dice: the levels of the minds that spoke, our looks, our coat. Four sixes "
+       "needed, and one comes up. We spend a humor, and a die turns to six: two. Not enough.",
+       C.click("humor hepar") - 12.0),
+     C.R(19),
+     W("The conversation is lost, and the cobbler fights. On the map, the exit now reads Runaway."), speed=1.5)
 manim("Wages")
 game("shop", S.mark("steal") - 3.0, S.mark("speak"),
      "Same shop, another try. This time Sloth thought of the theft, and Petty Thief was chosen to do it. "
