@@ -573,8 +573,7 @@ public class MentalMapsPanelRenderer
         => MapRowAt(_hover.X, _hover.Y) is { } m ? $"map:{m.Map.LocationId}:{_hover.X < ListX + CheckboxCols}"
          : _map.IconAt(_hover.X, _hover.Y) is { } tag ? $"icon:{tag}"
          : StepAt(_hover.X, _hover.Y) is var step and not 0 ? $"step:{step}"
-         : _map.PadArrowHovered ? "pad"
-         : null;
+         : _map.PadArrowHoverKey;
 
     /// <summary>
     /// A click on a location's checkbox toggles its lock; on its name shows its map (and refocuses

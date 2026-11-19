@@ -7217,6 +7217,7 @@ public class LocationTravelGameController : IDisposable
 
         _craftingFromRoutine = fromRoutine;
         _craftingAdapter = new CraftingMenuAdapter(member, request.Station, trade, _core.Terminal);
+        _craftingAdapter.Renderer.OnTick = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         if (!fromRoutine)
             _narrativeController.RecordCraftRoutine(request);
         SetMode(GameMode.Crafting);

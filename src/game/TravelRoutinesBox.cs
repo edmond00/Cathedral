@@ -277,8 +277,7 @@ public class TravelRoutinesBox
          : OverConfirm(_hover.X, _hover.Y) && _selected is { Available: true } ? "confirm"
          : OverStep(_hover.X, _hover.Y) is var step and not 0 ? $"step:{step}"
          : EntryOf(_map.IconAt(_hover.X, _hover.Y)) is { } e ? $"icon:{e.Routine.Id}"
-         : _map.PadArrowHovered ? "pad"
-         : null;
+         : _map.PadArrowHoverKey;
 
     /// <summary>Returns the click outcome; for <see cref="ResultKind.Selected"/> the routine is set.</summary>
     public (ResultKind kind, Routine? routine) OnMouseClick(int x, int y)

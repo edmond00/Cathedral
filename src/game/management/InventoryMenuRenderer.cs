@@ -130,7 +130,10 @@ public sealed class InventoryMenuRenderer
     private EquipmentAnchor? _hoveredAnchor  = null;
     private int              _hoveredItemIdx = -1;
 
-    public bool IsHovering => _hoveredAnchor.HasValue || _hoveredContent >= 0;
+    // The right panel's buttons count too: the management screen ticks only while this is true, and
+    // CONSUME, THROW, MOVE and the move destinations used to light up without a sound.
+    public bool IsHovering => _hoveredAnchor.HasValue || _hoveredContent >= 0
+        || _consumeButtonHovered || _throwButtonHovered || _moveButtonHovered || _hoveredMoveDest >= 0;
     private EquipmentAnchor? _selectedAnchor = null;
     private int              _selectedItemIdx = -1; // -1 = anchor header selected
     private int              _hoveredContent  = -1;
