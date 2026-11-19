@@ -33,10 +33,12 @@ public static class DialogueAutoResolve
 {
     /// <summary>
     /// Applies the outcome of a won conversation with <paramref name="npc"/>, and reports what it did.
-    /// Returns false when the tree cannot be resolved, so the caller can fall back to the real thing
-    /// rather than silently skipping a conversation that was supposed to happen.
+    /// Returns null when the tree cannot be resolved, so the caller can fall back to the real thing
+    /// rather than silently skipping a conversation that was supposed to happen. What it returns
+    /// otherwise is the record a held conversation would have left, with no reply in it: nothing
+    /// was said.
     /// </summary>
-    public static bool TryResolve(
+    public static DialogueRecord? TryResolve(
         NpcEntity      npc,
         Protagonist    protagonist,
         string?        treeId,
@@ -47,11 +49,12 @@ public static class DialogueAutoResolve
         {
             Console.Error.WriteLine(
                 $"[debug] --auto-dialogue: no tree resolved for '{treeId ?? "(none)"}' — holding the conversation instead.");
-            return false;
+            return null;
         }
 
         string partyMemberId = protagonist.AffinityKey;
         var applied = new List<string>();
+        var record  = new DialogueRecord(npc) { Ending = DialogueEnding.Success };
 
         // The same three writes DialogueTreeController makes on a successful resolution, in the same
         // order: the tree's outcomes, then what it teaches, then the first-contact stamp (which only
@@ -60,6 +63,7 @@ public static class DialogueAutoResolve
         {
             outcome.ApplyTo(OutcomeContext.ForDialogue(npc, partyMemberId, protagonist));
             applied.Add(outcome.DisplayName);
+            record.Came(new[] { outcome });
         }
 
         // Only the tree's own lesson. AdditionalGrantedModusMentisIds is keyed on WHICH branch was
@@ -71,12 +75,13 @@ public static class DialogueAutoResolve
             if (lesson == null) continue;
             lesson.ApplyTo(OutcomeContext.For(protagonist, null, null));
             applied.Add($"learned {id}");
+            record.Came(new Outcome[] { lesson });
         }
 
         npc.AffinityTable.MarkFirstContact(partyMemberId);
 
         Console.WriteLine($"[debug] --auto-dialogue: '{tree.TreeId}' with {npc.DisplayName} settled as a success"
                           + (applied.Count == 0 ? " (no outcomes)" : $" — {string.Join("; ", applied)}"));
-        return true;
+        return record;
     }
 }

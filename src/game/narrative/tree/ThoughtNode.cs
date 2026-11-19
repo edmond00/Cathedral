@@ -23,6 +23,8 @@ public enum ThoughtNodeKind
     Emotion,
     /// <summary>What was said of the element to a companion.</summary>
     Speech,
+    /// <summary>A conversation held with somebody of the place: what was said in it and what it came to.</summary>
+    Dialogue,
 }
 
 /// <summary>Where an act node stands.</summary>
@@ -73,6 +75,12 @@ public sealed class ThoughtNode
     /// where the text of a mind would be.
     /// </summary>
     public string? Note { get; init; }
+
+    /// <summary>
+    /// The conversation, for a <see cref="ThoughtNodeKind.Dialogue"/> node: the replies chosen and
+    /// what it changed. Its own screen is gone once it closes, so this is where it is read again.
+    /// </summary>
+    public Cathedral.Game.Dialogue.Runtime.DialogueRecord? Dialogue { get; init; }
 
     public ActState State { get; set; } = ActState.Waiting;
 

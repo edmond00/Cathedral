@@ -723,6 +723,7 @@ is `ThoughtNode`s:
 | `Success` / `Failure` | `✓` / `✗` | the outcome's block, with its chips. A failure is not a refusal and no longer shares its glyph |
 | `Emotion` | `♥` | what the outcome stirred |
 | `Speech` | `❝` | what was said of the element to a companion |
+| `Dialogue` | `«` | a conversation held with somebody of the place: the replies the protagonist chose, how it ended, the chips it came to (`ThoughtNode.Dialogue`, a `DialogueRecord`) |
 
 Each node keeps the very `NarrationBlock` or action the dice read (`ChainOrigin`), so a roll needs
 nothing the tree does not hold: observation → thinking → act is still the pool, and the tree is that
@@ -876,6 +877,26 @@ what the act did, and with the scrolling text gone there is no history to read i
 was `attack`'s own rule (the first blow) and is now the general one; a conversation used to start
 on the tick the outcome committed, which under the new screen meant its SUCCESS and its "learned"
 chip were never seen. With no chip to show, the box is skipped and what follows starts at once.
+
+**A conversation is kept on the tree, under the outcome of the act that opened it**
+(`ThoughtNodeKind.Dialogue`, `«`; `KeepConversation`). A conversation has no result box of its own
+and needs none: its own screen lists what it changed as chips before its END button. But that screen
+is gone on the press, and with no scrolling text behind the map there was nowhere to read it again.
+`DialogueTreeController.Record` (a `DialogueRecord`) therefore keeps the replies as they were
+chosen, the ending (success, failure, interrupted, nothing settled) and the very outcomes applied,
+emotional coda included; the game controller hands it to `NarrativeController.OnDialogueCompleted`,
+and it hangs from the node `SetPendingDialogue` was given — the `✓` of the act, or the `✗` of the
+failed act a witness caught. A conversation no act opened (a flight a witness stopped) hangs from
+whoever it was with, who is on the member's map already (`AdoptConfronters`). Under the pointer it
+is "talked with the reeve · success" and the reading box gives the protagonist's lines, a line each,
+the ending where an act's odds stand, and the chips. It is a record: it answers no click, and it
+keeps its ink whatever becomes of its branch — gold won, purple lost or walked away from.
+`--auto-dialogue` leaves one too, with no reply in it.
+
+**Walking away is the one ending put up as a result** (`INTERRUPTED`, `ActResult.Title`): the footer
+INTERRUPT closes the conversation's screen on the press, so the standing it costs was shown nowhere
+— its chip went to the scrolling text, which no longer exists. `cli/system/dialogue_record.cli`,
+`dialogue_record_lost.cli` and `dialogue_record_interrupted.cli`.
 
 **The noetic rules in one place** (the reasons are in "The economy of a visit"): every observation,
 thinking, reconsidering, speech **and attempt at an act** costs a point and nothing is looked at for
@@ -1033,6 +1054,7 @@ skill for the whole of it):
 | `click think <name>` / `click speak <name> [to <member>]` | the stubs of an observed element; a speech mark is to one companion, the first within hearing when none is named. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
 | `click act <n\|word>` | carries out a waiting act, by position or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it. No popup follows |
 | `click tool <n\|word>` / `click reconsider <n\|word>` | the two symbols beside a waiting act: then `choose <n>` picks the implement, or `choose <mm-id>` the mind that thinks it over |
+| `point dialogue <who\|last>` | puts the pointer on a conversation kept on the trees, by whom it was with (name, role or archetype id) or the latest: its replies, its ending and its chips are then on screen for `expect`. `inspect trees` prints `dialogue with=<archetype> ending=<word> replies=<n> chips=<n>`, `inspect texts` a `text dialogue reply "…"` and a `text dialogue chip "…"` line each |
 | `click fold <name>` | folds an observed element's tree away, or unfolds it. What is folded is not listed by `regions` and answers no click; `inspect trees` says `folded=yes` |
 | `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
 | `click continue` | the dice's, the preview's or the result box's CONTINUE |

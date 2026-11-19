@@ -1,0 +1,72 @@
+# A conversation is kept on the thought tree once it is over: one node under the outcome of the
+# act that opened it, read back under the pointer — what the protagonist said, how it ended and
+# the chips it came to.
+#
+# The conversation's own screen lists those chips before its END button and is gone on the press;
+# with no scrolling text behind the map there was then nowhere to read them again. This script
+# wins a conversation, leaves it, and reads all of it back off the tree.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Reach the conversation through the verb that opens it.
+strategy succeed
+goal meet_stranger
+advance 12 180
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
+choose ripelore
+advance 12 180
+click act 0
+advance 12 180
+click continue
+advance 12 180
+wait mode Dialogue 60
+advance 20 180
+
+# Two replies to the resolution, the roll, the outcome.
+click option 0
+advance 20 180
+click option 0
+advance 20 180
+click continue
+advance 20 180
+expect Courteous, and you know when to stop
+
+# END: back on the map, with nothing standing over it — the conversation's screen showed its chips.
+click button
+wait mode LocationInteraction 60
+expect-not SUCCESS
+expect-not CONTINUE
+
+# The node: under the act's outcome, with both replies and everything the conversation changed.
+expect-state trees act state=done verb=meet_stranger
+expect-state trees dialogue with=brewer ending=success replies=2 chips=5
+expect-state texts dialogue reply "My name is Kenryc Greygate."
+expect-state texts dialogue reply "Good to meet you. I will not keep you from your work."
+expect-state texts dialogue chip "Modus mentis learned: Hospitality"
+
+# Under the pointer: named by whom it was with and how it ended, and read in the box at the foot
+# of the map. It is a record — pointing reads it, and it is not on the clickable ground.
+point dialogue last
+wait 1
+expect-state pointer-label ground=grey text=talked with Aeemilyus · success
+expect CONVERSATION WITH AEEMILYUS
+expect "My name is Kenryc Greygate."
+expect it came to: success
+expect Stranger
+expect Modus mentis learned: Deference
+expect Modus mentis practised: Friendship
+
+# `brewer` names the same conversation as `last`: by archetype, by role or by name.
+point dialogue brewer
+quit

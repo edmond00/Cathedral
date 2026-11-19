@@ -262,6 +262,19 @@ public partial class NarrativeController
                 var element = Best(Mind.ElementNodes.Where(n => Locate(n) != null && !FoldedAway(n)), n => MatchRank(NamesOf(n), name));
                 return element != null ? (new NodeSymbol(element), null) : (null, $"no observed element named '{name}'");
             }
+            case "dialogue":
+            {
+                // A conversation held, by whom it was with (their name, their role or their
+                // archetype id) — or `last`, the latest of the visit.
+                var talks = Mind.AllNodes.Where(n => n.Kind == ThoughtNodeKind.Dialogue && !FoldedAway(n)).ToList();
+                var talk = name.Equals("last", StringComparison.OrdinalIgnoreCase) ? talks.LastOrDefault()
+                         : Best(Enumerable.Reverse(talks), n => MatchRank(new[]
+                           {
+                               n.Dialogue!.Npc.DisplayName, NpcLabelResolver.ShortLabel(n.Dialogue.Npc, _active),
+                               n.Dialogue.Npc.Archetype.ArchetypeId,
+                           }, name));
+                return talk != null ? (new NodeSymbol(talk), null) : (null, $"no conversation held with '{name}' ({talks.Count} kept)");
+            }
             case "member":
             {
                 var member = Best(_minds.Keys, m => MatchRank(new[] { m.DisplayName }, name));
@@ -410,7 +423,7 @@ public partial class NarrativeController
     /// <summary>The result box: its title and chips, and its [ CONTINUE ] region; null when no result is up.</summary>
     public (string Title, IReadOnlyList<string> Chips, int X, int Y, int Width)? CliResult()
         => _result == null ? null
-         : ($"{(_result.Succeeded ? "SUCCESS" : "FAILURE")}{(_result.Act.Length > 0 ? $" — {_result.Act}" : "")}",
+         : ($"{_result.Title}{(_result.Act.Length > 0 ? $" — {_result.Act}" : "")}",
             _result.Chips.Select(c => c.Text).ToList(),
             _resultContinueRegion.X, _resultContinueRegion.Y, _resultContinueRegion.Width);
 
@@ -648,8 +661,18 @@ public partial class NarrativeController
         // preview box, and after that only by hovering its symbol. Asked for by name only.
         if (subject == "texts")
             foreach (var node in Mind.AllNodes)
+            {
                 if ((node.Block?.Text ?? node.Note) is { Length: > 0 } said)
                     outp.Add($"text {node.Kind.ToString().ToLowerInvariant()} mind={node.Mind?.ModusMentisId ?? "-"} \"{said}\"");
+                // A conversation: each reply the protagonist chose, then each chip it came to.
+                if (node.Dialogue is { } talk)
+                {
+                    foreach (var reply in talk.Replies)
+                        outp.Add($"text dialogue reply \"{reply}\"");
+                    foreach (var chip in talk.Reports)
+                        outp.Add($"text dialogue chip \"{chip.Text}\"");
+                }
+            }
 
         // The played member's thought trees: every observed element with where it now is, and under
         // each every node in order. What the screen draws as symbols, as lines a script can assert on.
@@ -676,6 +699,10 @@ public partial class NarrativeController
                     case ThoughtNodeKind.Act:
                         outp.Add($"tree {pad}act state={node.State.ToString().ToLowerInvariant()} verb={node.Action!.Verb.VerbId} "
                                + $"means={node.Action.ActionModusMentisId} difficulty={node.Action.DifficultyLevel} text=\"{node.Action.DisplayText}\"");
+                        break;
+                    case ThoughtNodeKind.Dialogue:
+                        outp.Add($"tree {pad}dialogue with={node.Dialogue!.Npc.Archetype.ArchetypeId} "
+                               + $"ending={node.Dialogue.EndingWord.Replace(' ', '_')} replies={node.Dialogue.Replies.Count} chips={node.Dialogue.Reports.Count}");
                         break;
                     default:
                         outp.Add($"tree {pad}{node.Kind.ToString().ToLowerInvariant()} mind={node.Mind?.ModusMentisId ?? "-"}");

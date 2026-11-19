@@ -157,6 +157,16 @@ Run `help` for the authoritative list. The essentials:
                             after it: the symbol's label (`inspect pointer-label`, with
                             `ground=yellow` when a click would act), an act's dice and sixes or
                             a node's text in the reading box (`expect`), a way's whole line lit
+  point dialogue <who|last> hover a conversation kept on the trees (the « under the outcome of
+                            the act that opened it), by whom it was with — name, role or
+                            archetype id — or the latest. The reading box then holds the replies
+                            the protagonist chose, `it came to: success|failure|interrupted` and
+                            the chips, for `expect`; `inspect trees` prints
+                            `dialogue with=<archetype> ending=<word> replies=<n> chips=<n>` and
+                            `inspect texts` a `text dialogue reply` / `text dialogue chip` line
+                            each. A conversation walked away from (`click button` while it runs)
+                            comes back to the map under an INTERRUPTED result box, which
+                            `click continue` takes down
   point exit                hover the way out: LEAVE, or RUNAWAY
   point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
                             left_hand…), so the panel shows that part's derived stats — the

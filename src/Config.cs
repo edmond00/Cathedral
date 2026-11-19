@@ -1467,6 +1467,7 @@ public static class Config
         public const char MapFailure  = '✗';   // an act that failed
         public const char MapSuccess  = '✓';   // an act that succeeded
         public const char MapEmotion  = '♥';   // what it stirred
+        public const char MapDialogue = '«';   // a conversation held: what was said and what it came to
 
         // Coin denomination glyphs (gold ≈ horse, silver ≈ sword, copper ≈ egg)
         public const char GoldCoinSymbol   = '⎊'; // yellow

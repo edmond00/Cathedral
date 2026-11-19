@@ -191,7 +191,7 @@ public partial class NarrativeController
 
         if (_result != null)
         {
-            _resultContinueRegion = _ui.RenderResultBox(_result.Succeeded, _result.Act, _result.Chips, _resultContinueHovered);
+            _resultContinueRegion = _ui.RenderResultBox(_result.Succeeded, _result.Title, _result.Act, _result.Chips, _resultContinueHovered);
             _ui.RenderStatusBar("Click Continue");
             return;
         }
@@ -207,7 +207,7 @@ public partial class NarrativeController
 
         // Idle: what the pointer is over is read again.
         if (!IsPopupVisible && _hovered is NodeSymbol { Node: var node } && ReadingOf(node) is { } reading)
-            _ui.RenderReadingBox(reading.Title, reading.Text, node.Block?.OutcomeReports, reading.Odds);
+            _ui.RenderReadingBox(reading.Title, reading.Text, node.Block?.OutcomeReports ?? node.Dialogue?.Reports, reading.Odds);
         _ui.RenderStatusBar(SceneInfoLine());
     }
 
@@ -597,6 +597,8 @@ public partial class NarrativeController
         ThoughtNodeKind.Failure => "it failed",
         ThoughtNodeKind.Emotion => $"{node.Mind?.DisplayName}",
         ThoughtNodeKind.Speech  => $"said {node.Note}",
+        ThoughtNodeKind.Dialogue when node.Dialogue is { } talk
+                                => $"talked with {NpcLabelResolver.ShortLabel(talk.Npc, _active)} · {talk.EndingWord}",
         _ => "",
     };
 
@@ -615,6 +617,15 @@ public partial class NarrativeController
                         : action.DifficultyLevel > 0 ? $"{marks} {dice} {(dice == 1 ? "die" : "dice")} · {action.DifficultyGlyph} {action.DifficultyLevel} {(action.DifficultyLevel == 1 ? "six" : "sixes")} needed"
                         : $"{marks} {dice} {(dice == 1 ? "die" : "dice")}";
             return (PreviewTitles.For(action.ChainModusMentis), action.DisplayText, odds);
+        }
+        if (node.Kind == ThoughtNodeKind.Dialogue && node.Dialogue is { } talk)
+        {
+            // What the protagonist said, a reply a line; how it ended goes where an act's odds do,
+            // in the reckoning's ink — it is the screen's word, not something anybody said.
+            string said = talk.Replies.Count == 0 ? "Nothing was said."
+                        : string.Join("\n", talk.Replies.Select(r => $"\"{r.Trim().Trim('"')}\""));
+            return ($"CONVERSATION WITH {NpcLabelResolver.ShortLabel(talk.Npc, _active).ToUpper()}", said,
+                    $"it came to: {talk.EndingWord}");
         }
         if (node.Block is { } block)
             return (block.ModusMentis is { } mind ? PreviewTitles.For(mind) : "", block.Text, null);
