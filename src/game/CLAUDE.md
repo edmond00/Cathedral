@@ -793,7 +793,10 @@ the thing, a mind that declined, a faculty the body cannot carry: each would ans
 and the point would be spent to hear it twice. A will's refusal is its course through the place as
 it stood, so `ReconcileTrees` forgets those (`ForgetWillRefusals`) whenever the plans are; the
 rest stand until the pool refills. The popup lists each mind with its level, one `⟐` a level — a
-level is a die — and so do the titles of the preview and reading boxes (`PreviewTitles.For`).
+level is a die — and so do the titles of the preview and reading boxes (`PreviewTitles.For`). **A will is
+listed in a pale straw where a general mind is white** (`Config.ThinkingModusMentisPopup.
+ModusMentisWillColor`): one shade apart, enough to see which minds look and think only toward what
+they want, without sorting the list into two kinds.
 
 **The trees hang in a fixed room.** Rows of cards stand `TreeRoom` apart (the map's layout is
 routed once and does not move as trees grow), which leaves `canvas.TreeRows` = 11 rows under a card.

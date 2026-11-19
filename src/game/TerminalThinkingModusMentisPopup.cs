@@ -253,7 +253,9 @@ public class TerminalThinkingModusMentisPopup
             bool refused = _refused.Contains(modusMentis);
             bool isHovered = !refused && _hoveredModusMentisIndex == i;
             Vector4 textColor = refused ? Config.Colors.DarkGray35
-                              : isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverColor : Config.ThinkingModusMentisPopup.ModusMentisNormalColor;
+                              : isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverColor
+                              : modusMentis.IsWill ? Config.ThinkingModusMentisPopup.ModusMentisWillColor
+                              : Config.ThinkingModusMentisPopup.ModusMentisNormalColor;
             Vector4 bgColor = isHovered ? Config.ThinkingModusMentisPopup.ModusMentisHoverBackgroundColor : Config.ThinkingModusMentisPopup.BackgroundColor;
 
             // The name, and at the right its level: one mark a level, which is one die a level.
