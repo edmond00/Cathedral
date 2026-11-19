@@ -1,0 +1,54 @@
+# ways — several ways between the same two areas are one line, and the mind chooses among them
+#
+# The Test Roof and the Test Hall are joined twice: by the Test Stair and by the Test Chimney. That
+# is one line on the map, and both symbols stand on it side by side. While nothing is known of
+# either, they are one question to a mind — "one of the ways between these two areas" — and the mind
+# chooses which it looks at, as it does among the things of a kind on a card. So a mind that turns
+# the question down is not asked it again whichever of the two symbols is clicked, and the next
+# mind asked must look at one of them. Once one is observed the other is alone and is itself.
+#
+# --refuse-focus stands in for the choice judge answering "none of these", which --playground never
+# does. A script may still name one of them: that pins the observation to it.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Roof" --period dawn --refuse-focus
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# --- both on the line, both unknown ---
+expect-state symbols click observe "Test Stair" in "Test Roof" (way)
+expect-state symbols click observe "Test Chimney" in "Test Roof" (way)
+point observe "Test Stair"
+wait 1
+expect-state pointer-label ground=yellow text=observe · an unknown way
+
+# --- asked about one of them, Childhood Memory turns the pair down ---
+click observe "Test Stair"
+choose childhood_memory
+advance 12 180
+expect-state trees refusal way="Test Stair" mind=childhood_memory
+expect-no-state trees element
+
+# --- and is not asked again about the other either: it is the same question ---
+click observe "Test Chimney"
+expect-state popup childhood_memory(refused)
+
+# --- the next mind asked must look at one of the two: the declining is spent ---
+choose comradeship
+advance 12 180
+expect-state trees element "Test Chimney"
+expect-no-state symbols click observe "Test Chimney"
+
+# --- the one left is alone on its question: Childhood Memory may be asked about it ---
+click observe "Test Stair"
+expect-no-state popup (refused)
+choose childhood_memory
+advance 12 180
+expect-state trees refusal way="Test Stair" mind=childhood_memory
+quit

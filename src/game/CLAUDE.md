@@ -615,7 +615,8 @@ thing it stands for.
 | **unknown** | one anonymous symbol of its **kind** on its card's third row (the tray) | asks a mind to look at *something of that kind there*; the mind picks which |
 | **known** | its own symbol in the tray, a shade brighter, named under the pointer | asks a mind to look at *that one* |
 | **observed** | the root of a tree under the card, for the member who observed it | its `?`, its speech mark, its acts |
-| a **way** (any state) | its own symbol **on its line**, and once observed the root of a tree hung from that spot | asks a mind to look at *that way*: one line, one symbol, nothing to choose |
+| a **way** (any state) | its own symbol **on its line**, and once observed the root of a tree hung from that spot | asks a mind to look at *that way*: one line, one symbol, nothing to choose — unless several unknown ways join the same two areas, which stand side by side on their one line and are one question, the mind choosing which |
+| what a **container holds** | one anonymous `◇` for each thing in it, joined on one row under the container | asks a mind to look at *something it holds*; the mind picks which |
 
 The kinds are `ElementKind`: `Way` (`∩` on its line, and the letter of what it is once known:
 a neighbouring area, a door, a stair, a path, a climb),
@@ -643,9 +644,14 @@ observed from (`WayFrame.From` = the root's `SeenFrom`) and the other is no long
 to follow the member along the line, which read as a second way appearing and the tree jumping to
 it; a tree may go when what it was about is gone, but it does not move. A cell within a tree's
 reach of another line's symbol costs `Crowding`, so two symbols do not stand side by side where
-the lines leave room, and **a second way between the same two areas** — a stair and a chimney —
-which is one line on the map, stands on that shared line apart from the first rather than
-falling back to the card.
+the lines leave room. **Several ways between the same two areas** — a stair and a chimney — are one
+line on the map, and their symbols stand **side by side** on it, a cell between
+(`PlaceSymbols`' `Beside`: the first is placed as any way is, the others next to each of its spots,
+each hanging its tree on the other side of the line from its neighbour's). They used to be kept
+apart by the crowding rule; they are together now because **they are one question**: while nothing
+is known of them, a click on any of them asks a mind to look at one of the ways between those two
+areas, and the mind chooses which (`SiblingWays`, `ObservePending.Among`, declined and refused
+under `PairKey`). A way already seen or gone by is itself and no other, and so is the last one left.
 
 **The symbol is `∩` while nothing is known of the way and the letter of what it is once it is**
 (`WayFrame.Glyph`, `LocationMap.KindLetter`: D door, S stair, P path, C cliff, W water crossing,
@@ -675,7 +681,11 @@ observation modus mentis then picked from the popup chooses which unobserved ele
 attends to (`ObservationController.ObserveAsync`, the Focus judge). That keeps the old game's rule —
 what a faculty notices is the faculty's — while giving the player the one lever the old screen
 lacked. When a kind holds more symbols than the tray has room for they fold into one with a count:
-the symbols of a kind are interchangeable until one is observed.
+the symbols of a kind are interchangeable until one is observed. **The same rule holds wherever
+several unknown things are offered together**: what an observed container holds (`ContentSymbol`
+is an index, not a part — a chest's contents, a body's parts, a memory's fragments, the body's
+sensations) and the unknown ways between the same two areas. Each used to be a named symbol the
+player picked; a thing is now named by being looked at, never before.
 
 **Known is what a place remembers.** An observation of a thing or a person writes
 `ElementMemory.KeyOf(element)` — `npc|<PersistentId>`, `poi|<StableKey>` — into
@@ -712,7 +722,9 @@ is `ThoughtNode`s:
 Each node keeps the very `NarrationBlock` or action the dice read (`ChainOrigin`), so a roll needs
 nothing the tree does not hold: observation → thinking → act is still the pool, and the tree is that
 chain drawn. A node's first child follows it on its row; the others each start a row under it. An
-element's contents (`◇`, one per part) and its stubs (`?`, `❝`) share **one last row**, its shelf.
+element's contents (`◇`, one per part, **joined by a line**: `└◇─◇─◇` — they came out of one look,
+and a gap between them read as unrelated symbols) and its stubs (`?`, `❝`, a space apart) share
+**one last row**, its shelf.
 A branch with no act left waiting is the record of a thought and is drawn dimmed, never removed —
 trees last the visit and are thrown away with it.
 
@@ -951,8 +963,11 @@ teaches one thing.
 phase is about, exactly as a container holds its contents (`SelfPointOfInterest.Holds`,
 `ContentsOf`): the fragments of the memory at hand in the childhood, the three facets of exhaustion
 in the get-up. **What it holds is unnamed until it is looked at** — `observe · a memory`,
-`observe · a sensation` (`SelfPointOfInterest.Holding`) — because a memory is not known before it
-comes back; a script still names a fragment (`click observe "a scream"`).
+`observe · a sensation` (`SelfPointOfInterest.Holding`, `UnnamedHolding`) — because a memory is not
+known before it comes back, whatever it hangs from: the later memories' fragments hang from a
+fragment, not from "myself", and used to be named at once for it. **Which of them is looked at is
+the mind's choice**, as for anything a container holds. A script still names a fragment
+(`click observe "a scream"`), which pins that one observation to it.
 
 - **Childhood: one tree in the dark** (`MinimalScreen` → `LocationMap.Bare`, `MapFrame.Minimal`,
   `NarrativeUI.Blackout`). The screen is black to the window's edges: every terminal cell opaque,
@@ -1005,7 +1020,7 @@ skill for the whole of it):
 
 | | |
 |---|---|
-| `click observe <kind\|name> [in <area>]` | a kind (`person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element, a way on its line (`"Test Yard"`, `"Test Door"`) or a container's content — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run. `way` is the first view in the tray, else the first way on a line looked at from where the member stands |
+| `click observe <kind\|name> [in <area>]` | a kind (`person`, `hostile`, `thing`) is the anonymous symbol; a name is a known element or a way on its line (`"Test Yard"`, `"Test Door"`) — or, for a script only, something still unknown, which pins that one observation to it (`_cliObservePin`) as `--observe-only` pins a whole run: a thing on a card, a container's content, one of several unknown ways between two areas. Naming the container asks for whatever it holds, the mind choosing. `way` is the first view in the tray, else the first way on a line looked at from where the member stands |
 | `point observe\|think\|speak\|act\|member <what>` / `point exit` / `point card <area>` | puts the pointer on a symbol, named as `click` names it, and presses nothing: `inspect pointer-label` then reads its label and whether it is on the clickable ground, a node's text is in the reading box, a way's line is lit |
 | `click think <name>` / `click speak <name> [to <member>]` | the stubs of an observed element; a speech mark is to one companion, the first within hearing when none is named. `last` names whatever the played member's trees took in last (`_lastRooted`): on the real model the mind chooses what it looks at, and a script has no name to give |
 | `click act <n\|word>` | carries out a waiting act, by position or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it. No popup follows |
@@ -1188,7 +1203,9 @@ Things to know:
   Several things of one name are still one choice (`DeduplicateByName`): the judge is shown "a birch
   tree" once. **Containers stay**: a `SyntheticObservationObject` holding two or more distinct items has `Parts`, one
   `SyntheticItemObservationObject` per item, whose goals are read live from the container's. Observing
-  the container discloses each part as a named symbol under it, to be observed one at a time; and
+  the container discloses one anonymous symbol per part under it; a click on any of them asks a
+  mind to look at something it holds, and the mind chooses which (the Focus judge over
+  `ContentsOf`, declined once per container); and
   thinking about the container still proposes its contents' acts beside its own, since
   `SyntheticObservationObject` folds a PoI's items into its sub-outcomes.
 - **The selector used to reset the modus mentis's slot** before every choice. Rewrites that keep

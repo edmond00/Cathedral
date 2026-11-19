@@ -81,6 +81,10 @@ expect-state trees element "Myself"
 expect-state trees element "a scream"
 expect-state trees element "a whisper"
 expect-state symbols click observe "manure smelt" in "a scream"
+# ...unnamed like the first ones, until one is looked at.
+point observe "manure smelt"
+wait 1
+expect-state pointer-label ground=yellow text=observe · a memory
 
 # --- what is behind is a record: no fragment of the first memory is offered, the act that was
 # --- waiting on the other one has lapsed, and nothing is thought about either ---

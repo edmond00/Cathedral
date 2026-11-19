@@ -1,0 +1,48 @@
+# contents — what a container holds is unknown, and the observing mind chooses which it looks at
+#
+# Observing a container discloses how many things it holds and nothing else: one anonymous symbol
+# each, joined on one row under it. A click on any of them asks a mind to look at SOMETHING it
+# holds, and the mind chooses which — exactly as with the things of a kind on a card. A thing is
+# named by being looked at, never before. A script may still name one (that pins the observation
+# to it); naming the holder leaves the choice to the mind, which is what a player's click does.
+#
+# Played in the childhood, whose "myself" holds the fragments of the memory at hand as a chest holds
+# what is in it: the one container a script reaches with no preparation. --seed 42 fixes both the
+# memory and what the playground's mind picks.
+#
+# FLAGS: --playground --debug --seed 42 --no-encounters
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode ChildhoodReminescence 60
+advance 12 180
+
+click observe person
+choose childhood_reminescence
+advance 12 180
+
+# --- six things held, none of them named on the screen ---
+expect-state symbols click observe "a scream" in "Myself"
+expect-state symbols click observe "a whisper" in "Myself"
+point observe Myself
+wait 1
+expect-state pointer-label ground=yellow text=observe · a memory
+expect-no-state trees element "a
+
+# --- asked for something it holds, the mind chooses which ---
+click observe Myself
+choose childhood_reminescence
+advance 12 180
+# (at this seed the playground's mind takes the laugh)
+expect-state trees element "a laugh"
+expect-no-state symbols click observe "a laugh"
+expect-state symbols click observe "a scream" in "Myself"
+
+# --- a script that names one has made the choice for it ---
+click observe "sobs"
+choose childhood_reminescence
+advance 12 180
+expect-state trees element "sobs"
+quit

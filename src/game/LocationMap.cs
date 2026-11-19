@@ -1225,6 +1225,8 @@ public sealed class LocationMap
         if (ReferenceEquals(links, _links)) _waySymbols.Clear();
         var taken = new HashSet<int>(_links.Concat(_overlayLinks).Where(l => !links.Contains(l))
                                            .SelectMany(l => l.Spots.Select(p => p.Y * g.W + p.X).Append(l.Letter)).Where(c => c >= 0));
+        // The first way placed between two areas: any other between the same two stands beside it.
+        var firstOf = new Dictionary<string, (Link Link, int Others)>();
         foreach (var link in links)
         {
             link.Spots.Clear();
@@ -1232,6 +1234,18 @@ public sealed class LocationMap
             if (link.Net < 0) continue;
             bool Usable(int c) => g.NetB[c] == -1 && g.Kind[c] is Cell.Free or Cell.BesideBox
                                   && !_exitCells.Contains(c) && !taken.Contains(c);
+
+            // Several ways between the same two areas — a stair and a chimney — are one line on the
+            // map, and their symbols stand side by side on it: they are looked at as one thing,
+            // the mind choosing which, so they belong together and not a stretch apart.
+            string pair = AreaVisits.LinkKey(link.From, link.To);
+            if (Narration && !link.View && firstOf.TryGetValue(pair, out var first) && first.Link.Spots.Count > 0)
+            {
+                firstOf[pair] = (first.Link, first.Others + 1);
+                Beside(link, first.Link, first.Others + 1, Usable);
+                if (link.Spots.Count > 0) continue;
+            }
+
             var own = link.Fresh.Where(Usable).ToList();
             // Two ways between the same two areas — a stair and a chimney — are one line on the
             // map, and the second laid has no cell of its own: it stands on the line they share,
@@ -1248,6 +1262,7 @@ public sealed class LocationMap
             {
                 // Nothing straight: the way stands on a bend.
                 if (own.Count > 0) Stand(link, own[own.Count / 2], vertical: false, up: false, near: null);
+                if (!firstOf.ContainsKey(pair)) firstOf[pair] = (link, 0);
                 continue;
             }
 
@@ -1272,7 +1287,32 @@ public sealed class LocationMap
                         Best(link, rest, c => Math.Abs(rest.IndexOf(c) - rest.Count / 2), head.Count == 0 ? link.From : link.To);
                 }
             }
+            if (!firstOf.ContainsKey(pair)) firstOf[pair] = (link, 0);
+        }
 
+        // Stands <paramref name="link"/>'s symbol beside each of <paramref name="first"/>'s, the
+        // <paramref name="nth"/> along the line they share: a cell between, the same stretch, and
+        // its tree on the other side of the line from its neighbour's, so that two observed side
+        // by side do not grow into each other.
+        void Beside(Link link, Link first, int nth, Func<int, bool> usable)
+        {
+            var line = first.Path.Count > 0 ? first.Path : first.Cells;
+            foreach (var spot in first.Spots.ToList())
+            {
+                int at = line.IndexOf(spot.Y * g.W + spot.X);
+                if (at < 0) continue;
+                int want = spot.Vertical ? Vertical : Horizontal;
+                foreach (int step in new[] { 2 * nth, -2 * nth })
+                {
+                    int i = at + step;
+                    if (i < 0 || i >= line.Count) continue;
+                    int c = line[i];
+                    // The same straight stretch: the cell between is on it too.
+                    if (g.MaskA[c] != want || g.MaskA[line[at + step / 2]] != want || !usable(c)) continue;
+                    Stand(link, c, spot.Vertical, nth % 2 == 1 ? !spot.Up : spot.Up, spot.Near);
+                    break;
+                }
+            }
         }
 
         // The cheapest of the candidates to hang a tree from, the nearer to where it is wanted first.

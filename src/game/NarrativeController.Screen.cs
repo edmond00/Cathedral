@@ -40,7 +40,25 @@ public partial class NarrativeController
     /// <summary>The areas the played member may walk to by known ways, each with how many steps away; where they stand is 0.</summary>
     private Dictionary<Guid, int> _frameReach = new();
     /// <summary>The unobserved ways drawn on their lines: the end each is looked at from, and its observation object there.</summary>
-    private readonly Dictionary<string, (Area From, NarrativeAnchor Anchor)> _frameWays = new();
+    private readonly Dictionary<string, (Area From, NarrativeAnchor Anchor, string Pair)> _frameWays = new();
+
+    /// <summary>
+    /// The ways nothing is known of that join the same two areas as the way recorded as
+    /// <paramref name="key"/>, seen from the same end, that way among them — or none when it is
+    /// itself known. Several of them are one line on the map and one question to a mind: which of
+    /// them it looks at is its own to choose, as with the things of a kind on a card.
+    /// </summary>
+    private List<NarrativeAnchor> SiblingWays(string key)
+    {
+        if (!_frameWays.TryGetValue(key, out var mine) || ElementMemory.IsKnown(_scene, mine.From, mine.Anchor))
+            return new List<NarrativeAnchor>();
+        return _frameWays.Values
+            .Where(w => w.Pair == mine.Pair && w.From.Id == mine.From.Id && !ElementMemory.IsKnown(_scene, w.From, w.Anchor))
+            .Select(w => w.Anchor).ToList();
+    }
+
+    /// <summary>What a question about the unknown ways between two areas is remembered under.</summary>
+    private string PairKey(string key) => _frameWays.TryGetValue(key, out var way) ? $"ways|{way.Pair}" : key;
 
     /// <summary>
     /// Whether something holds the screen: a mind at work, a text being read, a roll, the hours
@@ -300,7 +318,7 @@ public partial class NarrativeController
         {
             if (a.Id == b.Id || connector is LandscapePointOfInterest || !_map.DrawsWay(_scene, key)) continue;
             var root = WayRoot(Mind, key);
-            if (root == null && WaySide(a, b, connector) is { } side) _frameWays[key] = side;
+            if (root == null && WaySide(a, b, connector) is { } side) _frameWays[key] = (side.From, side.Anchor, AreaVisits.LinkKey(a, b));
             else if (root == null || Locate(root) == null) continue;
             var way = new WayFrame
             {
@@ -505,9 +523,12 @@ public partial class NarrativeController
             TraySymbol when MinimalScreen   => new("observe · myself", enabled),
             TraySymbol { Known: null } tray => new($"observe · {ElementKinds.Word(tray.Kind)}", enabled),
             TraySymbol { Known: { } known } => new($"observe {NameOf(known)}", enabled),
-            // What "myself" holds is not named before it is looked at: a memory, a sensation.
-            ContentSymbol { Container.Element: Scene.GetUp.SelfPointOfInterest self } => new($"observe · {self.Holding}", enabled),
-            ContentSymbol content           => new($"observe {NameOf(content.Part)}", enabled),
+            // What "myself" holds is not named before it is looked at: a memory, a sensation —
+            // whatever it hangs from. In the childhood that is the fragment remembered last, once
+            // the first memory is behind.
+            // Nothing a container holds is named before it is looked at, and which is looked at
+            // is the mind's to choose.
+            ContentSymbol content           => new(ContentLabel(content.Container), enabled),
             WaySymbol way                   => new(WayLabel(way), enabled),
             ExitSymbol                      => new(ExitLabel, enabled),
             TokenSymbol token when ReferenceEquals(token.Member, _active) => new(token.Member.DisplayName, enabled),
@@ -524,6 +545,21 @@ public partial class NarrativeController
             NodeSymbol { Node: var node }   => new(LabelOf(node), enabled),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// What a symbol of something <paramref name="container"/> holds says under the pointer. Nothing
+    /// held is named before it is looked at: what "myself" holds is "a memory" or "a sensation"
+    /// (<see cref="Scene.GetUp.SelfPointOfInterest.Holding"/>) whatever it hangs from, and what a
+    /// chest or a body holds is something in it.
+    /// </summary>
+    private string ContentLabel(ThoughtNode container)
+    {
+        bool ofMyself = ContentsOf(container).Any(p => Cathedral.Game.Scene.GetUp.SelfPointOfInterest.Holds(ElementKinds.ElementOf(p)));
+        string? holding = ofMyself
+            ? _pov.Where.PointsOfInterest.OfType<Cathedral.Game.Scene.GetUp.SelfPointOfInterest>().FirstOrDefault()?.Holding
+            : null;
+        return holding != null ? $"observe · {holding}" : $"observe · something in {NameOf(container)}";
     }
 
     /// <summary>An unobserved way under the pointer: named once seen or gone by, a way and no more before.</summary>
@@ -825,13 +861,21 @@ public partial class NarrativeController
                 AskMind(new ObservePending(tray.Area, tray.Kind, tray.Known, Container: null), ObservingMinds, "Observe with");
                 break;
 
+            // A way nothing is known of, with others like it between the same two areas: they are
+            // one line and the mind chooses which of them it looks at. A way alone on its line, or
+            // one already seen or gone by, is that way and no other.
             case WaySymbol way when _frameWays.TryGetValue(way.Key, out var side):
-                AskMind(new ObservePending(side.From, ElementKind.Way, side.Anchor, Container: null, Way: way.Key),
+                var alike = SiblingWays(way.Key);
+                AskMind(alike.Count > 1
+                            ? new ObservePending(side.From, ElementKind.Way, Named: null, Container: null, Way: way.Key,
+                                                 Among: alike, Pair: PairKey(way.Key))
+                            : new ObservePending(side.From, ElementKind.Way, side.Anchor, Container: null, Way: way.Key),
                         ObservingMinds, "Observe with");
                 break;
 
+            // Something a container holds: which, the mind chooses.
             case ContentSymbol content when Locate(content.Container) is { } held:
-                AskMind(new ObservePending(held.Where, ElementKind.Thing, content.Part, content.Container),
+                AskMind(new ObservePending(held.Where, ElementKind.Thing, Named: null, content.Container),
                         ObservingMinds, "Observe with");
                 break;
 

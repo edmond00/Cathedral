@@ -62,8 +62,10 @@ public partial class NarrativeController
             lines.Add($"element \"{HandleOf(element)}\" in \"{Locate(element)!.Value.Where.DisplayName}\"{(element.Folded ? " (folded)" : "")}");
             if (CanFold(element)) lines.Add($"click fold \"{HandleOf(element)}\"{On(new NodeSymbol(element))}");
             if (element.Folded) continue;
+            // What it holds is anonymous on the screen — the mind chooses which it looks at — and
+            // listed by name here: a script may name one, which pins that observation to it.
             foreach (var part in ContentsOf(element))
-                lines.Add($"click observe \"{HandleOf(part)}\" in \"{HandleOf(element)}\"{On(new ContentSymbol(element, part))}");
+                lines.Add($"click observe \"{HandleOf(part)}\" in \"{HandleOf(element)}\"{On(new ContentSymbol(element, 0))}");
             foreach (var stub in StubsOf(element))
                 lines.Add(stub.Kind == StubKind.Think
                     ? $"click think \"{HandleOf(element)}\"{On(stub)}"
@@ -182,18 +184,34 @@ public partial class NarrativeController
                 var named = ways.Where(w => !playerOnly || ElementMemory.IsKnown(_scene, w.Value.From, w.Value.Anchor))
                                 .Select(w => (w.Key, Rank: MatchRank(NamesOf(w.Value.Anchor), name)))
                                 .Where(w => w.Rank != int.MaxValue).OrderBy(w => w.Rank).ToList();
-                if (named.Count > 0) return (new WaySymbol(named[0].Key), null);
-                var contents = Mind.ElementNodes.SelectMany(n => ContentsOf(n).Select(p => new ContentSymbol(n, p)));
-                if (Best(contents, c => MatchRank(NamesOf(c.Part), name)) is { } content) return (content, null);
-                // Naming the holder asks for whatever it holds first: a memory's fragments are not
-                // something a script on the real model can name ahead.
+                if (named.Count > 0)
+                {
+                    // Several unknown ways between the same two areas are one question, the mind
+                    // choosing which: a script that named one has made that choice for it.
+                    if (_frameWays.TryGetValue(named[0].Key, out var chosen)) _cliObservePin = chosen.Anchor;
+                    return (new WaySymbol(named[0].Key), null);
+                }
+                // What a container holds is anonymous, and which is looked at is the mind's to
+                // choose. A script may name one — the observation is then pinned to it, as for
+                // anything unknown — but a recording may not: a player cannot.
+                var contents = Mind.ElementNodes.Where(n => !FoldedAway(n, self: true))
+                                   .SelectMany(n => ContentsOf(n).Select(p => (Holder: n, Part: p)));
+                if (Best(contents.Select(c => Tuple.Create(c.Holder, c.Part)), c => MatchRank(NamesOf(c.Item2), name)) is { } content)
+                {
+                    if (playerOnly) return (null, $"'{name}' is not known yet — name what holds it (\"{HandleOf(content.Item1)}\")");
+                    _cliObservePin = content.Item2;
+                    return (new ContentSymbol(content.Item1, 0), null);
+                }
+                // Naming the holder asks for whatever it holds, the mind choosing: what a player's
+                // click on one of its symbols does.
                 if (Best(Mind.ElementNodes.Where(n => ContentsOf(n).Count > 0), n => MatchRank(NamesOf(n), name)) is { } holder)
-                    return (new ContentSymbol(holder, ContentsOf(holder)[0]), null);
+                    return (new ContentSymbol(holder, 0), null);
                 // In the childhood the memory at hand hangs from whatever was remembered last, which
-                // such a script cannot name either: "Myself" asks for its first fragment all the same.
+                // a script on the real model cannot name: "Myself" asks for one of its fragments
+                // all the same.
                 if (name.Equals("Myself", StringComparison.OrdinalIgnoreCase) && MemoryHolder is { } tip
-                    && ContentsOf(tip) is { Count: > 0 } recalled)
-                    return (new ContentSymbol(tip, recalled[0]), null);
+                    && ContentsOf(tip).Count > 0)
+                    return (new ContentSymbol(tip, 0), null);
 
                 // A script may name what a player cannot: something not yet known. The symbol is the
                 // anonymous one of its kind, and the observation that follows is pinned to it — the

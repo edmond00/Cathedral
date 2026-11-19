@@ -131,7 +131,7 @@ Everything a character observes, decides and does in a place is kept for the who
 ### The three states of a thing
 
 1. To a given character, every thing in a place is unknown, known or observed.
-2. **Unknown**: only its kind is known (a person, an enemy or a thing) and the area it stands in. A view of distant ground is a thing of the area it is seen from.
+2. **Unknown**: only its kind is known (a person, an enemy or a thing) and the area it stands in, or the container that holds it (§5). A view of distant ground is a thing of the area it is seen from.
 3. Kind and area are known for every area of the place, including areas never entered.
 4. **Known**: an earlier visit observed it and the place is still remembered ([Chapter IX §1](09-routines.md)). It has its name, and can be observed by name.
 5. **Observed**: this character has observed it during this visit.
@@ -193,17 +193,18 @@ carries it out.
 2. The modus mentis chooses which thing, among the things of that kind in that area that the character has neither observed nor knows (§4).
 3. It describes what it finds, and that thing is then observed.
 4. A known thing is asked for by name, and no other is chosen in its place.
-5. A way is always asked for by itself, known or not: the open way between 2 areas, a door, a stair, a path, a climb or a crossing. The modus mentis does not choose among the ways out of an area.
-6. A way is the same way from both its ends. It is observed once, from the end the character stands at.
-7. Nothing is described of the area as a whole, and nothing is observed unasked. Arriving in a place observes nothing.
-8. Observing needs presence. The character first walks to the area by known ways (§1), and cannot observe what it cannot reach that way.
+5. A way is asked for by the 2 areas it joins: the open way between them, a door, a stair, a path, a climb or a crossing. The modus mentis does not choose among the ways out of an area.
+6. When 2 or more ways that the character neither knows nor has observed join the same 2 areas, the modus mentis chooses which of them to observe. A way that is known, or the only one between its 2 areas, is asked for by itself.
+7. A way is the same way from both its ends. It is observed once, from the end the character stands at.
+8. Nothing is described of the area as a whole, and nothing is observed unasked. Arriving in a place observes nothing.
+9. Observing needs presence. The character first walks to the area by known ways (§1), and cannot observe what it cannot reach that way.
 
 ### Declining to observe
 
-1. A modus mentis asked to observe may answer that nothing of that kind there draws it, or that the named thing does not. This is **declining**.
+1. A modus mentis asked to observe may answer that nothing of that kind there draws it, that nothing a container holds does, or that the named thing does not. This is **declining**.
 2. Declining costs 1 noetic point, like an observation, and is recorded (§4).
 3. The modus mentis that declined is not asked the same again.
-4. A question can be declined only once. The next modus mentis asked about the same kind in the same area, or about the same thing, may not decline and must observe something.
+4. A question can be declined only once. The next modus mentis asked about the same kind in the same area, the same container's contents, the ways between the same 2 areas, or the same thing, may not decline and must observe something.
 5. Reason for rule 4: if each could decline in turn, a thing in plain view could go unobserved for a whole visit.
 6. A character with only 1 observing modus mentis cannot ask again about what that one declined until the budget refills (§4).
 7. A will turning away from what does not begin its course (§6) is part of what a will is, not this declining, and does not use it up. The will is not asked the same again until the place changes, and a modus mentis asked after it may still decline.
@@ -211,8 +212,8 @@ carries it out.
 
 ### Contents
 
-1. A thing that holds 2 or more different things reveals them when it is observed.
-2. Each of them becomes known, not observed. It is observed in its own turn, for its own noetic point.
+1. A thing that holds 2 or more different things reveals how many when it is observed, and nothing else about them: each is unknown (§4).
+2. To observe one is to ask an observing modus mentis to observe 1 thing the container holds. The modus mentis chooses which, among those the character has not observed, and each observation costs its own noetic point.
 3. Deliberation on the container is offered every act its contents allow, as well as its own.
 4. Deliberation on one of its contents is offered only that content's acts.
 
@@ -325,12 +326,12 @@ sixes, so it cannot succeed with this chain. With an eager acting modus mentis i
 A run opens on two scenes before any place: the childhood recollection, then getting up.
 
 1. The childhood recollection begins with the character observing itself. This observation says what the character has lost, the knowledge of who it is, and reveals the fragments of the first memory, as a container reveals its contents (above).
-2. Each memory holds a few fragments. A fragment has no name until it is observed.
+2. Each memory holds a few fragments. A fragment has no name until it is observed, and which fragment is observed is the observing modus mentis's choice, as for any contents.
 3. Remembering a fragment is an act of difficulty 0: it is not rolled and always succeeds. It ends that memory and opens the next, whose fragments are revealed by the fragment just remembered.
 4. A memory that has ended cannot be returned to. Its other fragments can no longer be observed, deliberated on or remembered, and an act still waiting on one of them is withdrawn. What was written about them can still be read.
 5. A will (§6) is not asked to observe or to deliberate in the childhood recollection. Any other observing or thinking modus mentis may be.
 6. When getting up, the character itself is one of the things present, and is observed like any other.
-7. Observed, it reveals 3 sensations, as a container reveals its contents (above). A sensation has no name until it is observed.
+7. Observed, it reveals 3 sensations, as a container reveals its contents (above). A sensation has no name until it is observed, and the observing modus mentis chooses which.
 8. Only a sensation allows an act, and the act is getting up. The other things present can be observed and nothing more.
 9. Getting up is always difficulty 1, whatever the acting modus mentis's degree of assent. A failure has no penalty, and the act can be decided on again.
 10. Nothing in either scene costs a noetic point (§3).

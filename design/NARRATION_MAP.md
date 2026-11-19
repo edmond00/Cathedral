@@ -278,7 +278,15 @@ What changed once the map had been played, each answering a remark made on it.
   after it hangs from the fragment remembered before, and what is behind is a record that answers
   no click. The hand-over to the get-up is struck like a blow in a fight.
 
-## 14. Tests and tools
+## 14. Settled after the fourth play
+
+- **What a container discloses is joined by a line** (`└◇─◇─◇`), and **is unknown**: one anonymous
+  symbol each, and the observing mind chooses which it looks at — a chest's contents, a memory's
+  fragments, the body's sensations alike.
+- **Several ways between the same two areas stand side by side on their one line**, and while
+  nothing is known of them the mind chooses which it looks at.
+
+## 15. Tests and tools
 
 - `click keyword` goes; the scripts are rewritten against symbols, elements and acts named, never
   coordinates: `click observe <kind|name>`, `click think <name>`, `click speak <name>`,
