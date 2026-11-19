@@ -2138,6 +2138,11 @@ public class LocationTravelGameController : IDisposable
         GameMode.ProtagonistCreation => _protagonistCreationRenderer?.GetHoveredElementId(x, y),
         // The travel box has three buttons, not two: ROUTINES was left out and so was the only one
         // of them that highlighted without a sound.
+        // The will picker and a running will search are modal over the travel box, so their buttons
+        // answer first and the box under them does not: both used to highlight without a sound.
+        GameMode.WorldView when _willPicker != null => _willPicker.HoveredControlId(x, y),
+        GameMode.WorldView when _willSearch != null => _willSearchRenderer?.IsOverCancelButton(x, y) == true
+            ? "will-search-cancel" : null,
         GameMode.WorldView => _travelInfoRenderer == null ? null
             : _travelInfoRenderer.IsOverTravelButton(x, y)   ? "travel-button"
             : _travelInfoRenderer.IsOverClearButton(x, y)    ? "travel-clear-button"
@@ -7212,6 +7217,7 @@ public class LocationTravelGameController : IDisposable
 
         _craftingFromRoutine = fromRoutine;
         _craftingAdapter = new CraftingMenuAdapter(member, request.Station, trade, _core.Terminal);
+        _craftingAdapter.Renderer.OnTick = () => _ambianceEngine?.TriggerGameEvent(GameEventType.SmallInteraction);
         if (!fromRoutine)
             _narrativeController.RecordCraftRoutine(request);
         SetMode(GameMode.Crafting);
