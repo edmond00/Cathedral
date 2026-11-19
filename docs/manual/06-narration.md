@@ -493,7 +493,12 @@ discreet act that fails in the same room is seen.
 
 **What a confrontation closes.** While either presence stands over a body, that body may attend to
 nobody and nothing but the one confronting it — who is in its account already, without having been
-looked at — may deliberate upon them alone, may not walk away, and speaks to no companion. The acts
+looked at — may deliberate upon them alone, may not walk away, and speaks to no companion. A thinking
+modus mentis so deliberating is offered only the acts the presence permits: to strike, to kill, to
+appease, to reconcile or to tame before an enemy; to strike, to kill or to explain oneself before a
+witness. This is a rule of choice, and withholds the rest silently, before the other rules of choice
+are read. It is lifted while the body holds a discreet acting modus mentis, which alone could
+attempt them. The acts
 it had resolved upon before, in the area where it stands, still wait and may still be attempted, to
 be judged as above. Somebody asleep confronts nobody and witnesses nothing: a sleeper is woken, or
 stepped past. The other members of a party, standing elsewhere, are not confronted by it.

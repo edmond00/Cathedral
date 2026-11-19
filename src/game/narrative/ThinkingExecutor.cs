@@ -121,7 +121,7 @@ public class ThinkingExecutor
         // The coded choice rules need somewhere to judge from; without a scene (tooling, tests) they
         // are simply not run and every option stands.
         var choiceCtx = scene != null && pov != null
-            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis)
+            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis, Means: actionModiMentis)
             : null;
 
         // An auto-success phase (reminescence, get-up) cannot be refused, so it has nothing to retry.
@@ -526,7 +526,7 @@ public class ThinkingExecutor
         string overallLocation = worldContext.GenerateContextDescription(locationId);
         string areaLocation = node.GenerateNeutralDescription(locationId);
         var choiceCtx = scene != null && pov != null
-            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis)
+            ? new Rules.Choice.ChoiceRuleContext(scene, pov, actingMember, thinkingModusMentis, Means: actionModiMentis)
             : null;
         var segments = new List<ThinkingSegment>();
 

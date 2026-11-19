@@ -26,13 +26,19 @@ namespace Cathedral.Game.Narrative.Rules.Choice;
 /// mentis held could carry a goal out — and nothing is being offered or refused. Rules stay silent
 /// in the log then, so a probe never reads as a refusal that did not happen.
 /// </param>
+/// <param name="Means">
+/// The action modi mentis the acting member holds, the pool a goal's means will be drawn from, when
+/// the caller knows it. A goal rule reads it to ask whether any means could carry a goal out at all
+/// (a discreet one, at close quarters). Null in tooling: read as "no such means".
+/// </param>
 public sealed record ChoiceRuleContext(
     Scene.Scene      Scene,
     PoV              PoV,
     PartyMember      Actor,
     ModusMentis      ModusMentis,
     NarrativeAnchor? Goal = null,
-    bool             Probe = false);
+    bool             Probe = false,
+    IReadOnlyList<ModusMentis>? Means = null);
 
 /// <summary>
 /// A deterministic, coded restriction on what a modus mentis may be <b>offered</b> — as opposed to
