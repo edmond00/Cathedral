@@ -87,6 +87,25 @@ namespace Cathedral.Game
             return true;
         }
 
+        /// <summary>
+        /// What a press at (x, y) would act on, as a stable id for the hover tick; null over nothing that
+        /// answers. Read off the last Draw with the same tests the highlight uses, so a row ticks exactly
+        /// when it lights — the selected will is already lit and does not.
+        /// </summary>
+        public string? HoveredControlId(int x, int y)
+        {
+            if (!_painted) return null;
+            if (y == _closeY && x >= _closeX && x < _closeX + CloseLabel.Length) return "picker:close";
+            if (y == _upY && x > _boxX && x <= _boxX + ListW + 1 && _scroll > 0) return "picker:up";
+            if (y == _downY && x > _boxX && x <= _boxX + ListW + 1 && _scroll < MaxScroll) return "picker:down";
+            foreach (var (index, ry) in _listRows)
+                if (y == ry && x > _boxX && x < _boxX + ListW + 2)
+                    return index == _selected ? null : $"picker:will:{index}";
+            foreach (var (want, wx, wy, ww) in _wantRows)
+                if (y == wy && x >= wx && x < wx + ww) return $"picker:want:{want}";
+            return null;
+        }
+
         public Click OnClick(int x, int y)
         {
             if (!_painted) return default;
