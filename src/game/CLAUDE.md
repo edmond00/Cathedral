@@ -1657,10 +1657,10 @@ both in `SettleSpent` (every tick, and ahead of every CLI seam so a script sees 
   is modal: the map under it takes no click and no hover, and `click area` is refused with it. Its
   buttons do exactly what the glyph and the tokens do (`OnExitClicked`, `Switch`), so `click exit`
   and `click member` drive it, and a recording is given the button's cell (`CliExitCell`,
-  `CliSymbolCell`). `inspect where` reports `out_of_points=yes`. **It speaks in the played member's
-  own voice** — "I have run out of ideas… my mind gave nothing more" — and still states the rule
-  outright (no noetic point left; every look, thought and act costs one; leave, or run), under a
-  title that names the mechanic. Its wording avoids "success" and "failure", which scripts assert
+  `CliSymbolCell`). `inspect where` reports `out_of_points=yes`. **It is one short line in the
+  played member's voice** — "I am out of ideas here: no noetic point left. Time to leave." — under
+  a title that names the mechanic. It is a notice of the screen's, and a longer one read as one
+  more inner thought written by a mind. Its wording avoids "success" and "failure", which scripts assert
   on the screen.
 
 It is why the way out must stay ungated by anything except whoever confronts the member, who turns

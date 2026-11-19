@@ -50,8 +50,8 @@ expect-state noetic points=0/3
 # --- the wolf heard it: confronted, with nothing to answer it with ---
 expect-state where confronted=Enemy:wolf exit=RUNAWAY out_of_points=yes
 expect NO NOETIC POINT LEFT
-expect I have run out of ideas, and the wolf stands in my
-expect All I can do
+expect I am out of ideas, and the wolf stands in my way
+expect I can only run
 expect [ RUNAWAY ]
 expect-not [ LEAVE ]
 
