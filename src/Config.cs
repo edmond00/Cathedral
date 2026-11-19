@@ -1164,6 +1164,7 @@ public static class Config
         public static float GlowProtect = 1.0f;   // Keep dark text on lit fills from the halo (0 = off)
         public static float GlowOutline = 1.0f;   // Dark contour round light text, the halo outside it (0 = off)
         public static float GlowOutlineWidth = 3f; // Its width in frame pixels
+        public static float GlowDetail = 1.0f;    // Keep holes inside glyphs (a face's eyes) from the halo (0 = off)
         // The lit ground that triggers it: its brightest channel, averaged around the pixel at mip
         // level GlowProtectLod of the half-size bright-pass (2.5 = about 10 px, a glyph cell).
         public static float GlowProtectLow = 0.10f;
