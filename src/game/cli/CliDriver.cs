@@ -371,6 +371,7 @@ public sealed class CliDriver
                                     way to take a before/after of one frame
           glow flicker <amount>     how far the halo falters (0 = steady, default 0.15)
           glow protect <0..1>       how firmly dark text on a lit fill is kept from the halo
+          glow outline <0..1> [px]  the dark contour round light text, and its width
           glow clock <secs|live>    pin the falter's clock, so frames snapped at fixed steps
                                     film it evenly; `live` hands it back to the frame clock
           dither [on|off]           the same for the dither layer
@@ -668,6 +669,14 @@ public sealed class CliDriver
                 Config.PostProcess.GlowProtectHigh = hi;
                 Config.PostProcess.GlowProtectLod = lod;
             }
+        }
+        else if (args.Length >= 2 && args[0].Equals("outline", StringComparison.OrdinalIgnoreCase)
+            && float.TryParse(args[1], System.Globalization.NumberStyles.Float, inv, out float ol))
+        {
+            // glow outline <amount> [<width px>]
+            post.GlowOutline = Math.Clamp(ol, 0f, 1f);
+            if (args.Length >= 3 && float.TryParse(args[2], System.Globalization.NumberStyles.Float, inv, out float ow))
+                Config.PostProcess.GlowOutlineWidth = Math.Max(1f, ow);
         }
         else if (args.Length >= 2 && args[0].Equals("clock", StringComparison.OrdinalIgnoreCase))
         {
