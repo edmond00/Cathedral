@@ -108,6 +108,7 @@ public partial class NarrativeController
     private static string HandleOf(NarrativeAnchor anchor) => anchor switch
     {
         SyntheticNpcObservationObject npc => NpcLabelResolver.ShortLabel(npc.SceneNpc.Entity),
+        SyntheticObservationObject { PointOfInterest: SleepingNpcPointOfInterest asleep } => asleep.Label(),
         SyntheticAreaObservationObject area => $"the way to {area.Area.DisplayName}",
         ObservationObject obs => obs.NeutralName,
         _ => anchor.DisplayName,
@@ -116,6 +117,7 @@ public partial class NarrativeController
     private string HandleOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => NpcLabelResolver.ShortLabel(npc.Entity),
+        SleepingNpcPointOfInterest asleep => asleep.Label(),
         // A way is named from the end it is now seen from.
         Area or ConnectorPointOfInterest when Locate(element) is { } at => HandleOf(at.Anchor),
         Area area    => $"the way to {area.DisplayName}",

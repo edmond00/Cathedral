@@ -21,9 +21,14 @@ goal wake_up
 advance 12 180
 regions
 
+# Somebody asleep in their bed is one element with the bed, and is still somebody: a person on the
+# card, named by their role until they have been introduced.
+expect-state symbols click observe person in "Test Room" x1
+
 click observe "weaver"
 choose childhood_memory
 advance 12 180
+expect-state trees element "the weaver, asleep" kind=person
 click think "weaver"
 choose ripelore
 advance 12 180

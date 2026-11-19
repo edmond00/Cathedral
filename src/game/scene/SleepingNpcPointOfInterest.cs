@@ -29,8 +29,19 @@ public class SleepingNpcPointOfInterest : PointOfInterest
     /// <summary>The bed they are in, kept so it can be put back when they get out of it.</summary>
     public PointOfInterest Bed { get; }
 
+    /// <summary>
+    /// The sleeper as <paramref name="actor"/> may name them, asleep: by their role until they have
+    /// been introduced, by their name after ("the weaver, asleep"). A proper name read before the
+    /// introduction is a leak (<see cref="Npc.NpcLabelResolver.ShortLabel"/>), asleep as awake.
+    /// </summary>
+    public string Label(PartyMember? actor = null)
+        => $"{Npc.NpcLabelResolver.ShortLabel(Sleeper.Entity, actor)}, asleep";
+
+    // The title and the description are fixed when the sleeper lies down, so they are worded then
+    // as the protagonist may name them: this is what the prompts and the judges read. What the map
+    // says under the pointer is asked afresh, for whoever is played (Label).
     public SleepingNpcPointOfInterest(SceneNpc sleeper, PointOfInterest bed)
-        : base($"{sleeper.Entity.DisplayName}, asleep",
+        : base($"{Npc.NpcLabelResolver.ShortLabelCapitalized(sleeper.Entity)}, asleep",
                "sleeper",
                new List<string> { Describe(sleeper, bed) },
                items: null,
@@ -54,6 +65,8 @@ public class SleepingNpcPointOfInterest : PointOfInterest
     }
 
     private static string Describe(SceneNpc sleeper, PointOfInterest bed)
-        => $"{sleeper.Entity.DisplayName} is asleep on the {bed.DisplayName.ToLowerInvariant()}, "
+        // A noun phrase, not a clause: an observation wraps it as "This is …", and "This is the
+        // weaver is asleep on the pallet" is what a clause came out as.
+        => $"{Npc.NpcLabelResolver.ShortLabel(sleeper.Entity)}, asleep on the {bed.DisplayName.ToLowerInvariant()}, "
          + "breathing slowly, turned away from the door";
 }

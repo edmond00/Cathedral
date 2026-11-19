@@ -354,6 +354,7 @@ public partial class NarrativeController
     private ElementKind KindOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => ElementKinds.IsHostile(npc, _active) ? ElementKind.Hostile : ElementKind.Person,
+        SleepingNpcPointOfInterest asleep => ElementKinds.IsHostile(asleep.Sleeper, _active) ? ElementKind.Hostile : ElementKind.Person,
         Cathedral.Game.Scene.GetUp.SelfPointOfInterest => ElementKind.Person,
         LandscapePointOfInterest => ElementKind.Thing,
         Area or ConnectorPointOfInterest => ElementKind.Way,
@@ -490,6 +491,8 @@ public partial class NarrativeController
     {
         SyntheticNpcObservationObject npc => NpcLabelResolver.ShortLabel(npc.SceneNpc.Entity),
         SyntheticAreaObservationObject area => $"the way to {NeutralNarration.AreaPhrase(area.Area.DisplayName)}",
+        // A sleeper is named as anybody is: by role until introduced.
+        SyntheticObservationObject { PointOfInterest: SleepingNpcPointOfInterest asleep } => asleep.Label(_active),
         SyntheticObservationObject { PointOfInterest: var poi } when IsOfMyself(poi) => poi.DisplayName.ToLowerInvariant(),
         ObservationObject obs => NeutralNarration.ThingPhrase(obs.NeutralName),
         _ => NeutralNarration.ThingPhrase(anchor.DisplayName),
@@ -505,6 +508,7 @@ public partial class NarrativeController
     private string NameOf(ThoughtNode element) => element.Element switch
     {
         SceneNpc npc => NpcLabelResolver.ShortLabel(npc.Entity),
+        SleepingNpcPointOfInterest asleep => asleep.Label(_active),
         // A way is named from the end it is now seen from.
         Area or ConnectorPointOfInterest when Locate(element) is { } at => NameOf(at.Anchor),
         Area area    => $"the way to {NeutralNarration.AreaPhrase(area.DisplayName)}",

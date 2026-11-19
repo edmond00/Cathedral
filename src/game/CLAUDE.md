@@ -622,7 +622,12 @@ The kinds are `ElementKind`: `Way` (`∩` on its line, and the letter of what it
 a neighbouring area, a door, a stair, a path, a climb),
 `Person` (`☺`), `Hostile` (`☹`, `Config.Symbols.EnemyChar` — the face an enemy wears on the fight's
 board, so what is seen in a place is recognised when the fight opens: a living thing that counts the played member an enemy — the same
-person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). The glyphs are
+person is a `Person` to a member they have no quarrel with) and `Thing` (`◆`). **Somebody asleep in
+their bed is a person too**: sleeper and bed are one element while the sleep lasts
+(`SleepingNpcPointOfInterest`), and `ElementKinds.Of` reads the sleeper through it — it used to fall
+to `Thing`, a `◆` among the chests. It is named as anybody is, by role until introduced
+(`SleepingNpcPointOfInterest.Label`, "the weaver, asleep"): its title was built from the proper
+name, which is a leak. The glyphs are
 `Config.Symbols.Map*`; four of them (`✗ ✓ ❝ ⚒`) are not in the main font and had to be added to
 `Config.Terminal.FallbackGlyphs`, without which they draw as an empty cell and nothing says why.
 
