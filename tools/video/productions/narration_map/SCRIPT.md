@@ -10,7 +10,7 @@ The old screen was a page of text. Arriving at a place, a mind wrote a paragraph
 To act on the farmer, you clicked the word farmer, then chose what to do with it, then which mind would do it.
 
 **[Principles]**
-The new screen stands on five ideas. The place is the page: the location map is now the narration screen. One click, one thing, one text: you choose what is looked at, the mind chooses how. A symbol says what it is, so you always know what a click will look at. Nothing scrolls away: every text becomes a node on a tree, kept for the whole visit. And where you have already been, you walk for free.
+Now the place is the page. Every area is a card, every way a line between them, and under each card stands a row of symbols: what there is to look at. Think of it as a mind map of the place, and the visit grows on it. You click one symbol, one thing, and the mind you choose looks at it. The symbol drops under its card and becomes a root, with the text the mind wrote. Think about it, and a branch grows: what the mind wants, and the act it proposes, waiting, with the sixes it needs. Carry it out, and the branch ends in what it came to, and what it stirred. The old page scrolled away as you read it. Here nothing does: every text stays where it grew, and as the visit goes on, trees fill the map, the whole visit readable at a glance. And where you have been, you walk again for free. A way not yet taken is an act like any other.
 
 Here is the same farm, under the new screen. Every card is an area. The one lit is where we stand. Lines are the ways between them. The header keeps our name and our noetic points, six of them, and at the top, a single symbol: the way out.
 
@@ -138,8 +138,16 @@ Second: what does failing cost? Three rungs. In the same room, a witness catches
 
 A confrontation is a conversation, and losing it is a fight.
 > *There, stop. I have seen you take what's not yours.*
+We answer. Every reply on offer is written by one of our minds, its name before it. Diligence denies it.
+> *Nay, it was not me, nor doth my guilt besmirch your tale.*
 > *It's someone else's fault. That's always the case. I'm listening, and it better be worth it.*
-We spend a humor on the last roll, and it is not enough. The conversation is lost, and the cobbler fights. On the map, the exit now reads Runaway.
+Social Interaction answers next.
+> *Though I confess, my hands were not stained with this theft, yet I shall share with you what I can to clear my name.*
+> *Whose fault is this? Name the culprit or I'll have none of this nonsense.*
+> *I was informed I had permission. Should they have deceived me, the blame lies with those who gave the order.*
+That reply is a check. Five dice: the levels of the minds that spoke, our looks, our coat. Four sixes needed, and one comes up. We spend a humor, and a die turns to six: two. Not enough.
+> *Answer my insult with silence, for I expect no less.*
+The conversation is lost, and the cobbler fights. On the map, the exit now reads Runaway.
 
 **[Wages]**
 A failure costs three things. The pool is not refilled. At most one social consequence: caught, attacked, or someone comes to look. And one penalty, drawn from what that act risks. A wound, for an attempt that can hurt you. The way lost, for finding a way: the visit ends and you stand outside. The hour wasted, for the hard and the slow. Or the thread lost, one more noetic point, for the senses, speech and waiting.
@@ -167,36 +175,14 @@ Reconsider asks a thinking mind to look at the act again. Holding to it, it hand
 The old act is kept, struck through, and the new one waits: Petty Thief, difficulty one. A swing at him would start a fight, so we leave it there.
 
 **[Confronted closed]**
-An enemy in the room, or a witness with a reason to stop you, confronts you, and the map closes around them. You may answer them, explain yourself, which makes every check of that conversation one six easier, or carry out an act already waiting, if a discreet mind will. You may not look at anything else, think about anything else, walk away, or speak to a companion. And somebody asleep confronts nobody.
+An enemy in the room, or a witness with a reason to stop you, confronts you, and the map closes around them. You may answer them, explain yourself, which makes every check of that conversation one six easier, or carry out an act already waiting, if a discreet mind will. Thinking about them, a mind is offered only those answers, unless a discreet mind could act. You may not look at anything else, think about anything else, walk away, or speak to a companion. And somebody asleep confronts nobody.
 
-To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the cobbler is a skull, already on our map. Confronted, he is all we may look at or think about. Heraldry wants to introduce itself.
-> *I behold the cobbler of this city, a man well-known for his steady finishing. I want to introduce myself, hoping our conversation might mend a small tear in this busy street.*
-> *I will introduce myself, striking up a conversation with him here in this city.*
+To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the cobbler is a skull, already on our map. Confronted, he is all we may look at or think about.
 
 The exit reads Runaway. The feet's dice: two of them, one six needed, and a five and a six. We are out. Raggedbrow is not: he stands in the same shop, but the cobbler's quarrel is with us, not with him. Nothing confronts him, and his exit reads Leave.
 
 **[Confronted exit]**
 The way out is one symbol. When nobody stops you, it reads Leave: every member walks out by known ways, for free, and a walk that meets someone who would confront you stops there. Confronted, it reads Runaway: the feet's dice, needing a single six, which the humors can bend. It is checked again at every area on the way, and failing it starts the fight, or the conversation.
-
-Childhood used the old screen too. You clicked the words of a memory, one after the other.
-
-Now it is a tree. Myself is an element of the place, and it holds the fragments of the memory, one at a time. Recollection never declines, and is never rolled.
-> *I almost have it, a lullaby surfaces. A fading soft melody, half-heard and warm, pulls me toward sleep, half-familiar in its faint aching.*
-
-> *I remember a fading soft melody, half-heard and warm, pulling me toward sleep. I will try to remember the lullaby from my childhood, allowing the slow recovery of these gentle memories to guide me.*
-> *I will try to remember a lullaby from my childhood, something gentle and wistful that floats just out of reach.*
-> *I tried to recall the lullaby my mother sang, and it did come back. The castle, the bedroom, and the soft tones linger on in a half-familiar haze.*
-Remember carries on to the next memory, and the branches pile up under Myself.
-
-Five memories, five branches.
-
-Then the body gets up, on the same map. Myself now holds the states of exhaustion, and every thought ends on getting up.
-> *I remember running to escape the looters, and now my legs ache, a deep, grinding soreness where every step has pressed into the bone.*
-> *I observe the subtle discomfort in my limbs, each step etching upon the bones, a reminder of my position. I shall rise, for precedence demands, and press on despite the body's initial reluctance.*
-> *I will drop and breathe, then press on, steady - the pain is real but not a stop sign.*
-
-> *I crossed it. The burn fades, the hill ends.*
-And the run begins.
 
 That is narration on the map. Nothing you read scrolls away, every symbol says what a click will look at, and every rule that was hidden in a page of text now shows where it acts. The rules did not change: the minds, the dice, the wills and the crimes are as they were. What changed is that you can see them.
 

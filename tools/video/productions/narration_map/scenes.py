@@ -137,7 +137,7 @@ class Principles(BrandScene):
         self.play(Create(ring), target.animate.set_color(GOLD), run_time=0.4)
         chip = self.text("the mind you choose looks", 19, LIGHT_PURPLE).next_to(cards[0][0], DOWN, buff=0.35)
         chip.align_to(cards[0][0], LEFT)
-        self.play(FadeOut(ring), FadeIn(chip, shift=UP * 0.1), cursor.animate.move_to([-1.0, -3.0, 0]),
+        self.play(FadeOut(ring), FadeIn(chip, shift=UP * 0.1), FadeOut(cursor),
                   run_time=0.6)
         self.wait_until(0.35)
         root = target.copy()
@@ -159,7 +159,6 @@ class Principles(BrandScene):
             parent = stack[depth - 1] if depth - 1 < len(stack) else stack[-1]
             tree0.add(self.grow(parent, n), n)
             stack = stack[:depth] + [n[0]]
-        self.play(FadeOut(cursor), run_time=0.3)
 
         # 3. the old page scrolled away; the map keeps every tree
         self.wait_until(0.665)
