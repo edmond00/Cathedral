@@ -5,10 +5,10 @@ the takes' timelines."""
 
 MANIM = {
     ("Principles", None): [
-        "The old screen was a page of text. Arriving at a place, a mind wrote a paragraph about it, "
-        "some words in it lit up, and you clicked a word to look closer. It read well, but you could "
-        "not see the place, you could not tell what a word would lead to, and everything you read "
-        "scrolled away.",
+        "The old screen had its charm. Arriving at a place, a mind wrote a paragraph about it, some words "
+        "in it lit up, and you clicked a word to look closer. It read a little like a book. But a book is "
+        "perhaps a poor place to stand in. You could not quite see where things were, nor tell what a word "
+        "would lead to, and what you read scrolled away, often just when it was needed again.",
         "Now the place is the page. Every area is a card, every way a line between them, and under each "
         "card stands a row of symbols: what there is to look at. Think of it as a mind map of the place, "
         "and the visit grows on it. You click one symbol, one thing, and the mind you choose looks at it. "
@@ -150,4 +150,67 @@ MANIM = {
         "listener's map, already observed. A beast is offered no conversation, no lock, no tool and "
         "no letters, and a fight takes only those standing where it breaks out.",
     ],
+}
+
+
+# The reasons behind each rule, said over each scene once its picture is complete: the scene's beats follow
+# the MANIM parts (the storyboard's "core"), and these follow them. Each is drawn from the design note
+# (design/NARRATION_MAP.md) or the rule's own comments in the code; said softly, never in the first person.
+WHY = {
+    ("Principles", None):
+        "That is more or less the whole idea: a screen that looks like what happens underneath, minds at "
+        "work on a place, leaving their marks where they worked. By the end of a visit, the map should "
+        "read almost like an account of what happened there.",
+    ("Legend", "kinds"):
+        "Only four kinds, and that is deliberate. A symbol is meant to say what a click will look at, not "
+        "what will be found. Finding out stays the mind's work.",
+    ("Legend", "states"):
+        "That last rule may be the important one. It is hard to plan around something nobody has looked "
+        "at, so every tree starts with a mind paying attention, and paying for it.",
+    ("Legend", "tree"):
+        "Nothing in a tree is meant as decoration. Every node is something that happened, and it stays "
+        "there, for as long as you remain in the place.",
+    ("Chain", "steps"):
+        "Those costs are what set the pace. Looking and thinking are where attention goes, so they cost "
+        "something. And a success refills everything as a way of favouring doing over pondering: a visit "
+        "that goes well tends to keep going, one that goes badly slowly runs out of breath.",
+    ("Chain", "dice"):
+        "The pool being the chain is perhaps the point. A good roll should come from matching the right "
+        "mind to each step, rather than from one strong number.",
+    ("Functions", None):
+        "This split tries to mimic how a mind might work. The part of you that wants a drink is maybe not "
+        "the part that pours it, nor the part that feels bad about it later. Here, each of those is a "
+        "mind, and the one you listen to is up to you.",
+    ("Properties", None):
+        "None of these is really a number to push up. They are there so that two minds, facing the same "
+        "thing, might behave differently, and so that you can tell why.",
+    ("Rules", None):
+        "The difference is meant to matter. A refusal at the moment of acting is the world pushing back, "
+        "so it seems fair that it costs. A thing that never crosses a mind is simply who that mind is, and "
+        "it would be odd to pay for it.",
+    ("Will", "course"):
+        "A will is single-minded because a want perhaps is. It does not weigh options; it sees what leads "
+        "to it, and the rest is noise. Which makes a will a rather poor observer, and possibly a very good "
+        "guide.",
+    ("Will", "leave"):
+        "This may be the way to find things now. Less by wandering until something happens, more by "
+        "listening to what your minds want, and letting them lead.",
+    ("Morality", None):
+        "The idea is that morality belongs to the minds, not to the character. A character has no "
+        "alignment as such. It has a scrupulous mind and a greedy one, and which one is heard, at which "
+        "step, is a choice.",
+    ("Proximity", "effective"):
+        "Discretion is the one property that bends the rules of presence, so it is kept narrow. It buys "
+        "the attempt, and probably nothing more: never a way out of what failing costs, face to face.",
+    ("Confronted", "closed"):
+        "Someone who has just caught you with a hand on his shelf is unlikely to leave you room to admire "
+        "the rest of the shop. When you are cornered, the screen tries to corner you too.",
+    ("Wages", None):
+        "Each failure tries to cost something that fits it. A failed climb hurts. A failed search loses "
+        "the way. A failed conversation loses the thread. Ideally, the price can be guessed before the "
+        "roll.",
+    ("Party", None):
+        "This is probably the deepest change. Companions used to be something like extra minds for the "
+        "protagonist. Now they are people standing somewhere else, and splitting the party becomes a real "
+        "decision.",
 }

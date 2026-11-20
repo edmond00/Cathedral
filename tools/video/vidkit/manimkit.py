@@ -47,6 +47,11 @@ class BrandScene(Scene):
         self.camera.background_color = P.BACKGROUND
         self.target = float(os.environ.get("VID_TARGET_SECONDS", "0") or 0)
         self.params = json.loads(os.environ.get("VID_PARAMS", "{}") or "{}")
+        # The span of the narration the scene's beats follow (VID_CORE "start,end", seconds): a segment
+        # whose narration adds parts before or after the ones the scene was paced to keeps its beats on
+        # their sentences. Without it, the whole narration.
+        core = os.environ.get("VID_CORE")
+        self.core = tuple(map(float, core.split(","))) if core else (0.0, self.target)
         self._seen: list[Mobject] = []
 
     def add(self, *mobjects):
@@ -83,13 +88,14 @@ class BrandScene(Scene):
     def wait_until(self, fraction: float):
         """Waits until a share of the narration's length has gone by — for a build-up whose later steps
         belong to a later sentence."""
-        left = self.target * fraction - self.elapsed
+        a, b = self.core
+        left = a + (b - a) * fraction - self.elapsed
         if left > 0.05:
             self.wait(left)
 
     def beat(self, fraction: float, minimum: float = 0.4):
         """Waits a share of the narration's length — for spacing the steps of a build-up."""
-        self.wait(max(minimum, self.target * fraction))
+        self.wait(max(minimum, (self.core[1] - self.core[0]) * fraction))
 
     # ── type ────────────────────────────────────────────────────────────────
 

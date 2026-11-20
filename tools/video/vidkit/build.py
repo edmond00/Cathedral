@@ -563,6 +563,24 @@ class Build:
         graph = ";".join(parts) + ";" + "".join(labels) + f"concat=n={len(pieces)}:v=1:a=0[out]"
         ffmpeg.run("-i", src, "-filter_complex", graph, "-map", "[out]", "-an", *ffmpeg.INTERMEDIATE, dst)
 
+    def core_span(self, seg: Segment, core: list) -> str:
+        """Where narration parts core[0]..core[1]-1 sit in the segment, as "start,end" seconds: the span a
+        scene's beats were paced to, when the segment adds parts before or after it. The lead-in counts with
+        a span that starts the narration, the tail with one that ends it, so a span of every part is the
+        whole target."""
+        lead, tail = self.voice["lead_in"], self.voice["tail"]
+        gap = float(self.voice.get("part_gap", 0.35))
+        n = len(seg.spec["vo"])
+        durs = [len(tts.read_wav(self.out_dir / f"seg{seg.index:02d}_vo{i}.wav")) / audio.RATE for i in range(n)]
+        starts, t = [], lead
+        for d in durs:
+            starts.append(t)
+            t += d + gap
+        a, b = core
+        start = 0.0 if a == 0 else starts[a]
+        end = starts[b - 1] + durs[b - 1] + (tail if b == n else 0.0)
+        return f"{start:.3f},{end:.3f}"
+
     def manim_picture(self, seg: Segment, target: float) -> None:
         s = seg.spec
         if s["type"] == "manim":
@@ -588,6 +606,7 @@ class Build:
             self.log(f"segment {seg.index}: manim {scene} ({target:.1f}s of narration)")
             media = self.out_dir / "manim"
             env = dict(os.environ, VID_TARGET_SECONDS=f"{target:.3f}", VID_PARAMS=json.dumps(params),
+                       **({"VID_CORE": self.core_span(seg, s["core"])} if s.get("core") else {}),
                        PYTHONPATH=str(TOOLS) + os.pathsep + os.environ.get("PYTHONPATH", ""))
             name = f"seg{seg.index:02d}_{key}"
             cmd = [sys.executable, "-m", "manim", "render", str(scene_file), scene,

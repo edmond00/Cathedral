@@ -19,7 +19,7 @@ import json
 import re
 from pathlib import Path
 
-from narration import MANIM
+from narration import MANIM, WHY
 
 HERE = Path(__file__).parent
 SHOWS = 1.5          # seconds between the model's first word and the first word on screen
@@ -104,7 +104,11 @@ def game(rec, t0, t1, *vo, fade=False, zoom=MAP, **kw):
 
 
 def manim(scene, step=None, **kw):
-    seg = {"type": "manim", "scene": scene, "vo": list(MANIM[(scene, step)]), **kw}
+    core = list(MANIM[(scene, step)])
+    why = [WHY[(scene, step)]] if (scene, step) in WHY else []
+    seg = {"type": "manim", "scene": scene, "vo": core + why, **kw}
+    if why:
+        seg["core"] = [0, len(core)]                  # the scene's beats follow these parts; the reason, after
     if step:
         seg["params"] = {"step": step}
     segments.append(seg)
@@ -128,17 +132,20 @@ segments.append({"type": "montage", "fade": True, "min": 22.0, "shots": [
 ], "vo": [
     "Proscribed Palimpsest has a new narration screen. The page of text with its clickable words is gone. "
     "In its place, the place itself: a map you read, click and fill as you play.",
-    "In this video: why it changed, how to play it, and, since everything is now in plain sight, a closer "
-    "look at the rules underneath: what the minds do, how a will finds its way, and what a crime costs.",
+    "What follows: why it changed, how it plays, and, since the rules now sit in plain sight, what each of "
+    "them is trying to do: what the minds are for, how a will finds its way, and what a crime should cost.",
 ]})
 
 # ── 1. before, and why ────────────────────────────────────────────────────────
 
 game("old_farm", 457.39, 520.0, MANIM[("Principles", None)][0], zoom=None, fade=True, speed=2.0)
 game("old_farm", 811.89, 828.81,
-     "To act on the farmer, you clicked the word farmer, then chose what to do with it, then which mind would do it.",
+     "To act on the farmer, you clicked the word farmer, then chose what to do with it, then which mind "
+     "would do it. Three menus, though perhaps only one of them was a real choice: which mind. The new "
+     "screen keeps that one, and only that one.",
      zoom=None)
-segments.append({"type": "manim", "scene": "Principles", "vo": [MANIM[("Principles", None)][1]]})
+segments.append({"type": "manim", "scene": "Principles", "vo": [MANIM[("Principles", None)][1], WHY[("Principles", None)]],
+                 "core": [0, 1]})
 game("farm", F.mark("arrival") - 10.0, F.mark("observe_person"),
      "Here is the same farm, under the new screen. Every card is an area. The one lit is where we stand. "
      "Lines are the ways between them. The header keeps our name and our noetic points, six of them, and "
@@ -153,14 +160,15 @@ manim("Legend", "tree")
 # ── 3. a visit, as a player ───────────────────────────────────────────────────
 
 game("farm", F.mark("observe_person"), F.click("CONTINUE", F.mark("observe_person")) + 1.5,
-     "Let's play. Under the Courtyard stands one person, still unknown. We click it. The popup asks which "
-     "mind will look: every mind we hold that can observe. We pick Lullaby.",
+     "Let's play. Under the Courtyard stands one person, still unknown. We click it, and the popup asks the "
+     "one question left in it: which mind will look. We pick Lullaby.",
      F.R(0),
-     W("Lullaby declined. A mind may say that nothing of that kind draws it. That costs the point, and it "
-       "hangs on the map as a crossed circle, with its words. But a thing can be declined only once."),
+     W("Lullaby declined. Minds are meant to have tastes: a mind may say that nothing of that kind draws it. "
+       "That costs the point, and it hangs on the map as a crossed circle, with its words. But a thing can be "
+       "declined only once. A mind's taste may colour a visit, but it should not lock you out of it."),
      fade=True)
 game("farm", F.mark("observe_again"), F.click("CONTINUE", F.mark("observe_again")) + 2.0,
-     "We click again. Lullaby is greyed in the popup: it has answered. And whoever we ask now must look. "
+     "We click again. Lullaby is greyed in the popup: it has had its say. And whoever we ask now must look. "
      "Social Interaction.",
      F.R(1),
      W("A butterfly. The symbol drops under the card and becomes the root of a tree, with the text beneath "
@@ -172,13 +180,15 @@ game("farm", F.mark("will_ratcatcher"), F.click("CONTINUE", F.mark("will_ratcatc
      "Now a will. Ratcatcher wants one thing: to catch vermin. We ask it to think about the butterfly.",
      F.R(4),
      F.R(5),
-     W("To Ratcatcher, a butterfly is small game. Its course here is a single act, catching it, which now "
-       "waits under the tree. Hunt was chosen to carry it out."))
+     W("To Ratcatcher, a butterfly is small game. That is rather the charm of wills: they see the whole world through "
+       "one want. Its course here is a single act, catching it, which now waits under the tree. Hunt was "
+       "chosen to carry it out."))
 manim("Chain", "dice")
 game("farm", F.mark("observe_way"), F.click("CONTINUE", F.mark("observe_way")) + 1.5,
      "Hover that act and the map tells you its dice and the sixes it needs. This one needs four sixes, and "
      "the chain that made it casts three dice. It cannot succeed, so we leave it waiting. Instead, a way. "
-     "Each way has its own symbol, on its line. We ask Heraldry to look at the way to the Chicken Coop.",
+     "Each way has its own symbol, on its line: exploring is perhaps the one thing worth aiming exactly, so no "
+     "mind picks the way for you. We ask Heraldry to look at the way to the Chicken Coop.",
      F.R(6),
      W("Declined again: one way, one decline."))
 game("farm", F.mark("observe_way2"), F.click("CONTINUE", F.mark("observe_way2")) + 1.5,
@@ -189,10 +199,11 @@ game("farm", F.mark("think_way"), F.mark("act_move"),
      F.R(10),
      F.R(11),
      W("It will. The coop is on its course, and an act a will proposes for its own course is something it "
-       "is eager for. A plain way is difficulty one; eager, nought. And notice the header: that thought "
-       "spent our last point."))
+       "is eager for. A plain way is difficulty one; eager, nought. Following a will is meant to be easy: that is "
+       "what wills are for. And notice the header: that thought spent our last point."))
 game("farm", F.mark("act_move"), F.mark("coop"),
-     "With no points left we can still do what is already waiting. We click the act, and Execute. "
+     "With no points left we can still do what is already waiting: an empty pool should not be "
+     "a dead end. We click the act, and Execute. "
      "Difficulty nought is not rolled.",
      F.R(12),
      W("Success, and the result box says so on its border, with what it came to, one line each. Look at the "
@@ -209,7 +220,8 @@ game("farm", F.mark("coop_sloth"), F.mark("think_hen"),
      "Third asking: now the mind must look. Sloth, a low-moral mind that observes and thinks.",
      F.R(15))
 game("farm", F.mark("think_hen"), F.mark("coop_thing"),
-     "Watch what a low moral level does. We ask Sloth to think about the hen.",
+     "This may be the most telling moment of the run. Watch what a low moral level does. We ask Sloth to "
+     "think about the hen.",
      F.R(20),
      A("Behind that thought, the game log says: Sloth is unscrupulous, offering only the two illegal goals "
        "of seven. Striking a hen that is not wild is a crime: the bird is somebody's. Sloth chose to attack "
@@ -237,7 +249,8 @@ game("farm", F.mark("rag_think"), F.mark("leave"),
      F.R(31))
 game("farm", F.mark("leave"), F.mark("end"),
      "Everybody is out of points, so we leave. Leave walks every member out, each from where it stands, by "
-     "the ways they know.")
+     "the ways they know. Go Back is gone for the same reason: walking where you have already been should "
+     "hardly cost a thought.")
 
 # ── 4. wills, more closely ────────────────────────────────────────────────────
 
@@ -251,7 +264,8 @@ game("city", C.mark("diligence_think"), C.mark("thief_think"),
      "Diligence wants work: a job, a bench, stores to lay in. We ask it to think about the same rack.",
      C.R(1),
      W("No course to any of its wants exists here, so it declines, saying it would have to leave. "
-       "Diligence is also principled, so it would never have been offered the theft."))
+       "Diligence is also principled, so it would never have been offered the theft. Such a refusal is not "
+       "quite a dead end, it tells you what this mind is looking for."))
 manim("Will", "leave")
 
 # ── 5. crime, discretion, getting out ─────────────────────────────────────────
@@ -265,7 +279,7 @@ manim("Proximity", "raw")
 game("city", C.mark("steal"), C.mark("caught"),
      "Execute. Three dice, one six. It fails.",
      C.R(6),
-     W("And in the same room, a failure is seen. Caught red-handed."))
+     W("And in the same room, a failure is seen. Caught red-handed. This is where a crime is meant to bite."))
 manim("Proximity", "effective")
 game("city", C.mark("caught"), C.click("footer button") + 25.0,
      "A confrontation is a conversation, and losing it is a fight.",
@@ -328,10 +342,9 @@ segments.append({"type": "montage", "fade": True, "min": 20.0, "shots": [
     shot("shop", 1715.0, 1719.0, zoom=MAP),
     shot("flee", 300.0, 304.0, zoom=MAP),
 ], "vo": [
-    "That is narration on the map. Nothing you read scrolls away, every symbol says what a click will look "
-    "at, and every rule that was hidden in a page of text now shows where it acts. The rules did not "
-    "change: the minds, the dice, the wills and the crimes are as they were. What changed is that you can "
-    "see them.",
+    "That is narration on the map. The rules underneath did not change: the minds, the dice, the wills and "
+    "the crimes are as they were. What changed is that you can see them, and see what your minds made of "
+    "a place. Hopefully it makes their choices, and yours, a little easier to read. Thank you for playing.",
 ]})
 
 storyboard = {
