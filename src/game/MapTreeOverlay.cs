@@ -63,6 +63,12 @@ public sealed record WaySymbol(string Key) : MapSymbol;
 /// <summary>The way out of the place: LEAVE, or RUNAWAY while somebody confronts the member played.</summary>
 public sealed record ExitSymbol : MapSymbol;
 
+/// <summary>
+/// The root of an area's tree, on the first row under its card: every element observed there
+/// branches from under it, and a click on it folds the whole of that tree away, or brings it back.
+/// </summary>
+public sealed record RootSymbol(Area Area) : MapSymbol;
+
 /// <summary>One way drawn on its line this frame: its tree once observed, and the refusals to look at it.</summary>
 public sealed class WayFrame
 {
@@ -92,6 +98,8 @@ public sealed class CardFrame
     public List<TraySymbol> Tray { get; } = new();
     /// <summary>The observed elements shown under this card: the played member's, located here.</summary>
     public List<ThoughtNode> Roots { get; } = new();
+    /// <summary>The whole tree of this area is folded away: only its root symbol is drawn.</summary>
+    public bool Folded { get; set; }
     /// <summary>Refusals made here that hang on no element.</summary>
     public List<ThoughtNode> Strays { get; } = new();
 }
@@ -109,6 +117,8 @@ public sealed class MapFrame
     /// The childhood's screen, where the fragments of a memory are all there is.
     /// </summary>
     public bool Minimal { get; set; }
+    /// <summary>An area's tree hangs from a root symbol of its own, which folds it. Not in the get-up, whose screen teaches one click.</summary>
+    public bool AreaRoots { get; set; }
     public MapSymbol? Hovered { get; set; }
     public PartyMember? Active { get; set; }
 
@@ -266,8 +276,24 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (hanging.Count == 0) return;
 
         Track();
+        int y = by + canvas.CardHeight, trunk = bx, last = -1;
+        // The tree's own root, over everything observed here: the elements branch from under it,
+        // and a click on it folds the whole tree away. Folded, it stands alone with the mark that
+        // there is more.
+        if (Frame.AreaRoots)
+        {
+            var root = new RootSymbol(card.Area);
+            Symbol(canvas, trunk, y, Config.Symbols.MapRoot, Config.Colors.GoldYellow, root);
+            if (card.Folded)
+            {
+                Symbol(canvas, trunk + 1, y, Config.Symbols.MapFolded, Config.Colors.BrightYellow, root);
+                Settle(canvas);
+                return;
+            }
+            last = y++;
+        }
         // What does not fit is what is finished: the elements with something left to do come first.
-        int room = canvas.TreeRows;
+        int room = canvas.TreeRows - (Frame.AreaRoots ? 1 : 0);
         int shown = hanging.Count, used = hanging.Sum(Rows);
         if (used > room)
         {
@@ -279,7 +305,6 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         }
         int hidden = hanging.Count - shown;
 
-        int y = by + canvas.CardHeight, trunk = bx, last = -1;
         for (int i = 0; i < shown; i++)
         {
             for (int r = last + 1; last >= 0 && r < y; r++) Line(canvas, trunk, r, '│');

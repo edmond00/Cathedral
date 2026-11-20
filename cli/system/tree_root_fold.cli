@@ -1,0 +1,69 @@
+# The root of an area's tree folds the whole of it.
+#
+# Everything observed in an area hangs under its card from one root symbol, on the first row under
+# the card. A click on it puts the whole of that area's tree away — every element, every thought,
+# every waiting act — and another brings it back as it was. Like an element's own fold it is the
+# screen's and not the game's: nothing is lost, lapsed or withdrawn, but nothing under it is drawn
+# or answers a click while it is folded. A way's tree hangs from its line and is no area's.
+#
+# --grant-mm woodcraft --means-only woodcraft: examining is refused by an acting mind that does not
+# also observe, and the script wants an act left waiting under the tree.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period dawn --grant-mm woodcraft --means-only woodcraft
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Nothing observed: no tree, and so no root.
+expect-no-state symbols click root
+
+# Two things of the yard are looked at, and one is thought into an act.
+strategy succeed
+goal examine
+click observe thing
+choose childhood_memory
+advance 12 180
+click observe thing
+choose childhood_memory
+advance 12 180
+click think last
+choose ripelore
+advance 12 180
+expect-state symbols click root "Test Yard"
+expect-no-state symbols click root "Test Yard" (folded)
+expect-state symbols click act 0
+
+# Under the pointer the root says what a click does, on the clickable ground.
+point root "Test Yard"
+wait 1
+expect-state pointer-label ground=yellow
+expect-state pointer-label all I made of the test yard · fold
+
+# Folded: the elements, their marks and the waiting act are put away, and still there.
+click root "Test Yard"
+expect-state symbols click root "Test Yard" (folded)
+expect-no-state symbols element
+expect-no-state symbols click act
+expect-no-state symbols click think
+expect-state trees area_folded=yes
+expect-state trees act state=waiting
+click act 0
+point root "Test Yard"
+wait 1
+expect-state pointer-label · unfold
+
+# What is not yet observed is not part of the tree: the card's own symbols still answer.
+expect-state symbols click observe thing in "Test Yard"
+
+# Unfolded: as it was.
+click root "Test Yard"
+expect-no-state trees area_folded=yes
+expect-state symbols click act 0
+expect-state symbols click think
+quit

@@ -56,6 +56,10 @@ public partial class NarrativeController
         // The ways on their lines, each named from the end it would be looked at from.
         foreach (var (key, side) in _frameWays)
             lines.Add($"click observe \"{HandleOf(side.Anchor)}\" in \"{side.From.DisplayName}\" (way){On(new WaySymbol(key))}");
+        // The root of each area's tree: a click folds the whole of it away, or brings it back.
+        if (AreaRoots)
+            foreach (var card in frame.Cards.Where(c => c.Roots.Count + c.Strays.Count > 0))
+                lines.Add($"click root \"{card.Area.DisplayName}\"{(Mind.FoldedAreas.Contains(card.Area.Id) ? " (folded)" : "")}");
         // What an element folded away holds and offers is not drawn, and is not listed.
         foreach (var element in Mind.ElementNodes.Where(n => Locate(n) != null && !FoldedAway(n)))
         {
@@ -274,6 +278,15 @@ public partial class NarrativeController
                                n.Dialogue.Npc.Archetype.ArchetypeId,
                            }, name));
                 return talk != null ? (new NodeSymbol(talk), null) : (null, $"no conversation held with '{name}' ({talks.Count} kept)");
+            }
+            case "root":
+            {
+                // The root of an area's tree, by the area's name: there once something observed
+                // there (or a refusal standing alone) hangs under its card.
+                if (!AreaRoots) return (null, "no area tree has a root to fold here");
+                var cards = frame.Cards.Where(c => c.Roots.Count + c.Strays.Count > 0).ToList();
+                var card = Best(cards, c => MatchRank(new[] { c.Area.DisplayName }, name));
+                return card != null ? (new RootSymbol(card.Area), null) : (null, $"no tree under an area named '{name}' ({cards.Count} with one)");
             }
             case "member":
             {
@@ -694,7 +707,8 @@ public partial class NarrativeController
                         var at = Locate(node);
                         outp.Add($"tree {pad}element \"{HandleOf(node)}\" kind={ElementKinds.Word(KindOf(node))} "
                                + $"area=\"{at?.Where.DisplayName ?? "-"}\" observer={node.Mind?.ModusMentisId ?? "none"}"
-                               + (node.Folded ? " folded=yes" : ""));
+                               + (node.Folded ? " folded=yes" : "")
+                               + (depth == 0 && AreaFolded(node) ? " area_folded=yes" : ""));
                         break;
                     case ThoughtNodeKind.Act:
                         outp.Add($"tree {pad}act state={node.State.ToString().ToLowerInvariant()} verb={node.Action!.Verb.VerbId} "

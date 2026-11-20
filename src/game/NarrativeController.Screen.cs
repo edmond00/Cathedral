@@ -281,6 +281,7 @@ public partial class NarrativeController
             Enabled      = symbol => !Busy && IsEnabled(symbol),
             Exit         = Exploring,
             Minimal      = MinimalScreen,
+            AreaRoots    = AreaRoots,
         };
 
         var cards = new Dictionary<Guid, CardFrame>();
@@ -339,6 +340,8 @@ public partial class NarrativeController
                 Card(at.Where).Roots.Add(root);
         foreach (var (area, refusal) in Mind.Strays)
             Card(area).Strays.Add(refusal);
+        foreach (var card in frame.Cards)
+            card.Folded = Mind.FoldedAreas.Contains(card.Area.Id);
 
         return frame;
     }
@@ -451,6 +454,10 @@ public partial class NarrativeController
             case ExitSymbol:
                 return Exploring;
 
+            // The root of an area's tree: a click folds the whole of it away, or brings it back.
+            case RootSymbol:
+                return AreaRoots;
+
             case StubSymbol { Kind: StubKind.Think } think:
                 return HasPoint && Locate(think.Element) is { } thought
                     && (confrontation == null || thought.Where.Id == _pov.Where.Id);
@@ -545,6 +552,9 @@ public partial class NarrativeController
             StubSymbol stub                 => new($"speak of {NameOf(stub.Element)} to {stub.Listener?.DisplayName}", enabled),
             CommandSymbol { Command: ActCommand.Tool } tool => new(ToolLabel(tool.Act), enabled),
             CommandSymbol                   => new("think it over again", enabled),
+            // The root of an area's tree says what a click on it does to the whole of it.
+            RootSymbol root                 => new($"all I made of {NeutralNarration.AreaPhrase(root.Area.DisplayName)} · "
+                                                   + (Mind.FoldedAreas.Contains(root.Area.Id) ? "unfold" : "fold"), enabled),
             // An observed element says what a click on it does to its tree.
             NodeSymbol { Node: { Kind: ThoughtNodeKind.Element } element } when CanFold(element)
                                             => new($"{NameOf(element)} · {(element.Folded ? "unfold" : "fold")}", enabled),
@@ -902,6 +912,11 @@ public partial class NarrativeController
 
             case StubSymbol { Listener: { } listener } stub:
                 AskMind(new SpeakPending(stub.Element, listener), _active.GetSpeakingModiMentis(), "Speak with");
+                break;
+
+            // The root of an area's tree: the whole of it is folded away, or brought back.
+            case RootSymbol root:
+                if (!Mind.FoldedAreas.Remove(root.Area.Id)) Mind.FoldedAreas.Add(root.Area.Id);
                 break;
 
             // An observed element: its tree is folded away, or brought back.

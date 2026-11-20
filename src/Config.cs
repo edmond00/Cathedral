@@ -1464,6 +1464,7 @@ public static class Config
         public const char MapThought  = '¶';   // a text a mind wrote: three thin bars read as a grey block at this size
         public const char MapRefusal  = '⊘';   // a refusal, whoever refused and whatever was asked
         public const char MapFolded   = '…';   // beside an element whose tree is folded away: there is more
+        public const char MapRoot     = '♣';   // the root of an area's tree, over its observed elements: folds the whole of it
         public const char MapFailure  = '✗';   // an act that failed
         public const char MapSuccess  = '✓';   // an act that succeeded
         public const char MapEmotion  = '♥';   // what it stirred

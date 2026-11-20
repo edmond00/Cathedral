@@ -826,6 +826,18 @@ it; a folded one always unfolds. Because the click acts, such an element stands 
 and its label says which ("the cart · fold"). Not in the two opening phases, whose screens teach one
 click each.
 
+**An area's tree has a root of its own, and a click on it folds the whole tree** (`RootSymbol`,
+`Config.Symbols.MapRoot` `♣`, `MemberMind.FoldedAreas`). It stands on the first row under a card
+that has anything observed, in the trunk's column, and the observed elements branch from under it —
+so the trees have ten rows and not eleven while exploring (`canvas.TreeRows - 1`). Folded, it is
+drawn alone with `…` beside it and nothing of that area's tree is drawn or answers a click:
+`FoldedAway` asks `AreaFolded` after the element folds, which is what keeps `IsEnabled`, `CliActs`
+and `regions` in step with the screen. The area is the one the element stands in **now**
+(`Locate`), so somebody who walks out of a folded area is seen again on the card they walked to. A
+way's tree hangs from its line and is no area's; what is not yet observed is the card's, not the
+tree's, and still answers. Per member, the screen's only, and not in the two opening phases
+(`AreaRoots`). Its label is "all I made of the test yard · fold". `cli/system/tree_root_fold.cli`.
+
 #### One reconciler keeps the trees true
 
 `ReconcileTrees` is the only place scene and trees are brought into line, and nothing in it decides
@@ -1066,6 +1078,7 @@ skill for the whole of it):
 | `click act <n\|word>` | carries out a waiting act, by position or by a word of its text or its verb id. Prefer the word once more than one act waits: a combined act leaves the uncombined one waiting beside it. No popup follows |
 | `click tool <n\|word>` / `click reconsider <n\|word>` | the two symbols beside a waiting act: then `choose <n>` picks the implement, or `choose <mm-id>` the mind that thinks it over |
 | `point dialogue <who\|last>` | puts the pointer on a conversation kept on the trees, by whom it was with (name, role or archetype id) or the latest: its replies, its ending and its chips are then on screen for `expect`. `inspect trees` prints `dialogue with=<archetype> ending=<word> replies=<n> chips=<n>`, `inspect texts` a `text dialogue reply "…"` and a `text dialogue chip "…"` line each |
+| `click root <area>` | the root symbol under an area's card: folds the whole of that area's tree away, or unfolds it. `regions` lists `click root "<area>"`, with `(folded)`; `inspect trees` says `area_folded=yes` on the elements under it |
 | `click fold <name>` | folds an observed element's tree away, or unfolds it. What is folded is not listed by `regions` and answers no click; `inspect trees` says `folded=yes` |
 | `click member <name>` / `click area <name>` / `click exit` | play another member; walk by known ways; LEAVE or RUNAWAY |
 | `click continue` | the dice's, the preview's or the result box's CONTINUE |

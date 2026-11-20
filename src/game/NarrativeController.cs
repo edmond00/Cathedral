@@ -608,12 +608,31 @@ public partial class NarrativeController
     /// (<see cref="ThoughtNode.Folded"/>) — or, with <paramref name="self"/>, is that element: what
     /// it holds and offers is folded with it.
     /// </summary>
-    private static bool FoldedAway(ThoughtNode node, bool self = false)
+    private bool FoldedAway(ThoughtNode node, bool self = false)
     {
         for (var n = self ? node : node.Parent; n != null; n = n.Parent)
             if (n.Folded) return true;
-        return false;
+        return AreaFolded(node);
     }
+
+    /// <summary>
+    /// Whether <paramref name="node"/> belongs to the tree of an area the player has folded whole
+    /// (<see cref="MemberMind.FoldedAreas"/>, the root symbol under the card): the tree of an
+    /// element standing there now, or a refusal standing alone on that card. A way's tree hangs
+    /// from its line and is no area's.
+    /// </summary>
+    private bool AreaFolded(ThoughtNode node)
+    {
+        if (Mind.FoldedAreas.Count == 0) return false;
+        var top = node;
+        while (top.Parent != null) top = top.Parent;
+        if (top.Kind != ThoughtNodeKind.Element)
+            return Mind.Strays.Any(s => ReferenceEquals(s.Node, top) && Mind.FoldedAreas.Contains(s.Area.Id));
+        return WayKeyOf(top) == null && Locate(top) is { } at && Mind.FoldedAreas.Contains(at.Where.Id);
+    }
+
+    /// <summary>Whether an area's tree hangs from a root symbol that folds it: while exploring, as an element's own fold.</summary>
+    private bool AreaRoots => Exploring;
 
     /// <summary>
     /// Whether a click on an observed element folds or unfolds its tree: when there is something

@@ -295,6 +295,8 @@ What changed once the map had been played, each answering a remark made on it.
   (`INTERRUPTED`): the conversation's screen closes on the press and showed nothing.
 - **Whoever confronts a member must be looked at like anything else** (this undoes §10's "already
   observed"): a thought always comes after a look.
+- **An area's tree hangs from a root symbol of its own** (`♣`, first row under the card), and a
+  click on it folds the whole of that area's tree away or brings it back.
 - **A confrontation no longer locks looking and thinking to the confronter.** Everything in the
   member's own area answers; the rules of choice and of action decide what may be done about it.
 

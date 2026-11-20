@@ -234,6 +234,10 @@ Run `help` for the authoritative list. The essentials:
   click reconsider <n|word> the think-again symbol beside a waiting act: then
                             `choose <thinking mm-id>`. A popup is only ever a list of minds, or
                             of things carried — never of commands
+  click root <area>         the root symbol under an area's card: folds the whole tree of what
+                            was observed there away, or unfolds it. `regions` lists it with
+                            `(folded)`; `inspect trees` says `area_folded=yes`. What is not yet
+                            observed in the area still answers
   click fold <name>         an observed element: folds its tree away, or unfolds it. What is
                             folded is not drawn, is not listed by `regions` and answers no click
                             (`click act` finds no act under it); `inspect trees` says `folded=yes`

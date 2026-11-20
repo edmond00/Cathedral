@@ -30,6 +30,13 @@ public sealed class MemberMind
     public List<ThoughtNode> Roots { get; } = new();
 
     /// <summary>
+    /// The areas whose whole tree the player has folded away: only the tree's root symbol is drawn
+    /// under those cards. The screen's and not the game's, like an element's own
+    /// <see cref="ThoughtNode.Folded"/>: nothing under it is lost or changed.
+    /// </summary>
+    public HashSet<System.Guid> FoldedAreas { get; } = new();
+
+    /// <summary>
     /// Refusals that hang on no element: a mind that looked over a kind of thing in an area and
     /// found nothing worth attending to. Kept with the area they were made in.
     /// </summary>
