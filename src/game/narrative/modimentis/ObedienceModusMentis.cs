@@ -28,5 +28,5 @@ public class ObedienceModusMentis : ModusMentis
 
 When acting, you commit to the instruction. You do not improvise. You do not ask why a second time. You measure the right pace, the right place, the right amount, and you deliver. There is no quarrel in your hands, no slackness in your back. You finish, and then you wait for the next.
 
-Your language is short and respectful: 'as you wish,' 'at once,' 'it is done.' You do not boast and you do not sulk. You take satisfaction in the smooth completion of a task that did not need to be repeated.";
+Your language is short and respectful: 'as ordered,' 'at once,' 'it is done.' You do not boast and you do not sulk. You take satisfaction in the smooth completion of a task that did not need to be repeated.";
 }

@@ -672,8 +672,10 @@ namespace Cathedral.Glyph
             int texLoc = GL.GetUniformLocation(program, "uAtlas");
             GL.Uniform1(texLoc, 0);
 
-            // Set initial projection - use ClientSize (actual renderable area, not including title bar/borders)
-            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+            GlfwErrors.Install();
+
+            // The viewport is in framebuffer pixels; everything else is in ClientSize units (see DrawSurface)
+            GL.Viewport(0, 0, FramebufferSize.X, FramebufferSize.Y);
             UpdateProjection();
 
             // For mouse click reading
@@ -1049,8 +1051,12 @@ namespace Cathedral.Glyph
             int outputFbo = FrameSink?.BeginFrame(ClientSize.X, ClientSize.Y) ?? 0;
             _postProcess.OutputFramebuffer = outputFbo;
 
+            // Every frame, since a snapshot frame leaves its own viewport behind it.
+            var surface = DrawSurface;
+            GL.Viewport(0, 0, surface.X, surface.Y);
+
             // Redirect the whole frame into the post-process target (no-op when disabled)
-            _postProcess.Begin(ClientSize.X, ClientSize.Y);
+            _postProcess.Begin(surface.X, surface.Y);
 
             // Clear
             GL.ClearColor(0f, 0f, 0f, 1f);
@@ -1100,7 +1106,7 @@ namespace Cathedral.Glyph
             }
 
             // Final shader layer: resolve the offscreen frame to the window (no-op when disabled)
-            _postProcess.End(ClientSize.X, ClientSize.Y);
+            _postProcess.End(surface.X, surface.Y);
 
             FrameSink?.EndFrame(ClientSize.X, ClientSize.Y);
 
@@ -1952,9 +1958,9 @@ namespace Cathedral.Glyph
         protected override void OnResize(ResizeEventArgs e)
         {
             base.OnResize(e);
-            GL.Viewport(0, 0, ClientSize.X, ClientSize.Y);
+            GL.Viewport(0, 0, FramebufferSize.X, FramebufferSize.Y);
             UpdateProjection();
-            
+
             // Force terminal to recalculate its layout immediately
             if (_terminal != null)
             {
@@ -1962,7 +1968,23 @@ namespace Cathedral.Glyph
             }
             
             // Log window info on resize
-            Console.WriteLine($"Window resized - Client: {ClientSize}, Total: {Size}");
+            Console.WriteLine($"Window resized - Client: {ClientSize}, Framebuffer: {FramebufferSize}, Total: {Size}");
+        }
+
+        /// <summary>
+        /// A scaled Wayland or macOS display hands the window more pixels than its size in screen
+        /// units: at 200%, a 1200x900 window draws into 2400x1800. Only the viewport and the
+        /// post-process target are in pixels; the projections, the terminal layout and the mouse
+        /// stay in ClientSize units, which map onto the whole surface through NDC. Windows reports
+        /// the two as equal, so nothing there changes.
+        /// </summary>
+        private Vector2i DrawSurface => FrameSink != null ? ClientSize : FramebufferSize;
+
+        protected override void OnFramebufferResize(FramebufferResizeEventArgs e)
+        {
+            base.OnFramebufferResize(e);
+            GL.Viewport(0, 0, e.Width, e.Height);
+            Console.WriteLine($"Framebuffer resized - {e.Width}x{e.Height} (client {ClientSize})");
         }
 
         private void UpdateProjection()

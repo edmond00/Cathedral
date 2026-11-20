@@ -1929,6 +1929,14 @@ public sealed class CliDriver
         if (!Enum.TryParse<Keys>(a[0], ignoreCase: true, out var key))
         { CliMode.Emit($"error: unknown key '{a[0]}'"); return; }
 
+        // F11 is the window's own, in every mode, ahead of the routing below — as the launcher does.
+        if (key == Keys.F11)
+        {
+            bool full = _game.ToggleFullscreen();
+            CliMode.Emit($"ok: sent F11 (fullscreen={(full ? "on" : "off")})");
+            return;
+        }
+
         // The window's own rule, not a shortcut around it: a key the player's keyboard would not
         // deliver here fails the run. Calling the controller directly once let `key K` pass while K
         // did nothing for a player.
