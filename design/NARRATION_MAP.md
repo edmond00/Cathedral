@@ -293,6 +293,10 @@ What changed once the map had been played, each answering a remark made on it.
   shows those chips before END and nothing kept them after.
 - **Walking away from a conversation shows what it cost**, in a result box of its own
   (`INTERRUPTED`): the conversation's screen closes on the press and showed nothing.
+- **Whoever confronts a member must be looked at like anything else** (this undoes §10's "already
+  observed"): a thought always comes after a look.
+- **A confrontation no longer locks looking and thinking to the confronter.** Everything in the
+  member's own area answers; the rules of choice and of action decide what may be done about it.
 
 ## 16. Tests and tools
 

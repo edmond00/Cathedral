@@ -173,7 +173,7 @@ public partial class NarrativeController
         _dialogueFrom = null;
         if (record == null) return;
 
-        from ??= _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, npc)) is { } spoken ? Mind.NodeOf(spoken, null) : null;
+        from ??= RootSpokenWith(Mind, npc);
         if (from == null)
         {
             Console.WriteLine($"NarrativeController: conversation with {npc.DisplayName} has no node to hang from — not kept");

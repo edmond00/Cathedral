@@ -147,7 +147,7 @@ Everything a character observes, decides and does in a place is kept for the who
 3. When the world no longer allows it (the thing was taken, the person went to bed, the way has been walked), the act lapses and is withdrawn.
 4. A person who moves keeps everything recorded about them, wherever they go in the place.
 5. A person who is killed is removed from the record. Their corpse enters it already observed, for every party member standing in the area (§11).
-6. Someone who comes because of a noise, and someone who confronts the character, also enter the record already observed (§7).
+6. Someone who comes because of a noise also enters the record already observed (§7). Anyone else who confronts the character does not: they must be observed like anything else.
 
 ### What has been offered as an act
 
@@ -551,12 +551,14 @@ Two kinds of presence in the area restrict the character, and they work alike on
 
 ### While confronted
 
-1. While an enemy or a confronting witness stands over a character, that character can observe only the one confronting it, who is already in its record (§4).
-2. It can deliberate only on them, and a thinking modus mentis doing so is offered only the acts the presence permits (above). This is a rule of choice: the other acts are withheld silently, and cost nothing. It does not apply while the character holds a discreet acting modus mentis, which alone could attempt them.
-3. It cannot walk away, and cannot speak to a companion (§10).
-4. Acts it had already decided on, in the area where it stands, still wait and can still be attempted, each for 1 noetic point (§3). They are judged by the rules above.
-5. Someone asleep confronts nobody and witnesses nothing.
-6. Party members standing in other areas are not confronted.
+1. While an enemy or a confronting witness stands over a character, that character cannot walk away. It can observe and deliberate only on what stands in the area where it is.
+2. The one confronting it is observed like anything else, for 1 noetic point (§3), before it can be deliberated on. An observation of their kind in that area is of them first.
+3. A thinking modus mentis is offered only the acts the presence permits (above). This is a rule of choice: the other acts are withheld silently, and cost nothing. It does not apply while the character holds a discreet acting modus mentis, which alone could attempt them.
+4. A thing that affords none of the acts still offered cannot be deliberated on while the confrontation lasts. It can still be observed.
+5. The character cannot speak to a companion (§10).
+6. Acts it had already decided on, in the area where it stands, still wait and can still be attempted, each for 1 noetic point (§3). They are judged by the rules above.
+7. Someone asleep confronts nobody and witnesses nothing.
+8. Party members standing in other areas are not confronted.
 
 ### Leaving
 

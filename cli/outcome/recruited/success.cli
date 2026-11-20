@@ -25,6 +25,11 @@ state
 strategy succeed
 goal appease
 # The beast confronts whoever walks in, and so is on the map already observed.
+# The beast stands over me, but nothing is thought about before it has been looked at: it is
+# the hostile symbol on the card until a mind observes it.
+click observe hostile
+choose childhood_memory
+advance 12 180
 click think "wolf"
 choose ripelore
 advance 12 180

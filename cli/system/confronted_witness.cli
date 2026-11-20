@@ -1,10 +1,11 @@
 # confronted — a witness who came for you blocks every act but the few that answer them
 #
 # A crime on the Test Roof fails within earshot of the hall, and the brewer comes up to look. He came
-# because of you, so he confronts you: he is on the map already observed, the way out reads RUNAWAY,
-# nothing but him may be looked at or thought about, and a lawful act (contemplating him) is refused
-# on the click before any roll — the witness-side twin of an enemy in the room. Walking off to the
-# next area used to end it for the price of one move.
+# because of you, so he confronts you: he is on the map as somebody who has just walked in, the way
+# out reads RUNAWAY, and you cannot walk away — nothing in another area answers. What stands on the
+# roof with you may still be looked at and thought about; it is on the click that a lawful act which
+# does not answer him (contemplating him) is refused, before any roll — the witness-side twin of an
+# enemy in the room. Walking off to the next area used to end it for the price of one move.
 #
 # --doubt low: one try, no iterative thinking — a retry would step around the refusal this script is
 # about (see thinking_iterates.cli and thinking_click_rules_not_retried.cli for the retries).
@@ -50,13 +51,15 @@ advance 12 180
 expect-state where confronted=CameForYou:brewer exit=RUNAWAY
 expect-state trees the brewer
 
-# Nothing else answers: not the views from the roof, not the wall and the stair on their lines,
-# not the goat already thought about.
+# He holds me where I stand, and no more than that: the views from the roof and the wall on its
+# line may still be looked at, while nothing in another area answers and no card can be walked to.
 inspect symbols
-expect-state symbols click observe thing in Test Roof x5 (disabled)
-expect-state symbols click observe Test Wall in Test Roof (way) (disabled)
-expect-state symbols click observe Test Stair in Test Roof (way) (disabled)
-expect-state symbols click think the goat (disabled)
+expect-state symbols click observe thing in Test Roof x5
+expect-no-state symbols click observe thing in Test Roof x5 (disabled)
+expect-state symbols click observe Test Wall in Test Roof (way)
+expect-no-state symbols click observe Test Wall in Test Roof (way) (disabled)
+expect-state symbols click observe thing in Test Yard x6 (disabled)
+expect-state symbols click observe Test Door in Test Yard (way) (disabled)
 
 # He does. Now try something lawful about him.
 goal contemplate

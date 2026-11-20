@@ -104,16 +104,10 @@ public static class NeutralNarration
         => "They heard me and have come looking for me — this one means me harm, and I must stay wary and ready.";
 
     /// <summary>
-    /// What is said of whoever confronts me, where an observation of them would be: nobody chose to
-    /// look at them, and nothing else may be looked at while they stand there.
+    /// What is said of somebody a conversation was held with before they were ever looked at — they
+    /// stopped me on my way out and spoke first — where an observation of them would be.
     /// </summary>
-    public static string ConfrontedBy(Scene.ConfrontationKind kind) => kind switch
-    {
-        Scene.ConfrontationKind.Enemy        => "This one means me harm, right here — I must stay wary and ready.",
-        Scene.ConfrontationKind.CameForYou   => ArrivalWitnessNotice(),
-        Scene.ConfrontationKind.FoundWaiting => "They have found me waiting in their house, and want to know what I am doing here.",
-        _                                    => "They have seen me where I have no business to be; they will not let me simply walk away.",
-    };
+    public static string SpokenWith() => "They stopped me and had their say before I had so much as looked at them.";
 
     /// <summary>
     /// The same of a witness who heard a crime go wrong and has just walked in. Not a threat: they

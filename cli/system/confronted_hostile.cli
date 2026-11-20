@@ -1,0 +1,61 @@
+# Confronted by an enemy: they must be looked at like anything else, and the rest of the room is
+# still there.
+#
+# The wolf in the Test Den confronts whoever walks in. Two things used to follow that no longer do:
+#
+#  - the wolf stood on the trees already observed, so it could be thought about without a look, the
+#    one case in the game where a thought came before an observation. It is now the hostile symbol
+#    on the card until a mind observes it, for a point, as anything is;
+#  - nothing but the wolf could be looked at or thought about. A confrontation now holds the member
+#    where they stand and no more: what is in their own area answers, what is elsewhere does not.
+#    What may be DONE is the rules' business — the rules of choice offer only the acts that answer
+#    the confronter unless a discreet means is held (this kit holds two), and the rules of action
+#    refuse on the click a means that is not discreet.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Den" --period noon
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# Confronted on arrival, and nothing observed: the wolf is a symbol, not a tree.
+expect-state where confronted=Enemy:wolf exit=RUNAWAY
+expect-no-state trees wolf
+inspect symbols
+expect-state symbols click observe hostile in Test Den x1
+expect-no-state symbols click observe hostile in Test Den x1 (disabled)
+
+# The way out of the den is in my own area: it answers. What stands in another area does not, and
+# no card can be walked to.
+expect-state symbols click observe the way to Test Wood in Test Den (way)
+expect-no-state symbols click observe the way to Test Wood in Test Den (way) (disabled)
+expect-state symbols click observe thing in Test Wood x1 (disabled)
+click area "Test Wood"
+expect-state where area=Test Den
+
+# Something other than the wolf is looked at, and thought about: a discreet means is held, so the
+# acts it affords are still offered.
+click observe "Test Wood"
+choose childhood_memory
+advance 12 180
+expect-state trees element "the way to Test Wood" kind=way
+expect-state symbols click think the way to Test Wood
+expect-no-state symbols click think the way to Test Wood (disabled)
+
+# The wolf, now: a look first, then the thought.
+click observe hostile
+choose childhood_memory
+advance 12 180
+expect-state trees wolf
+strategy succeed
+goal appease
+click think "wolf"
+choose ripelore
+advance 12 180
+expect-state trees act state=waiting verb=appease
+quit

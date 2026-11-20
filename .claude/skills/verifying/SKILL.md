@@ -576,12 +576,13 @@ Things this shape depends on, each of which has cost a script:
   needs less with `--organs encephalon=0` (3: exactly one chain). Assert the pool with
   `expect-state noetic points=`.
 - **A second act on the same element needs no second observation**: `click think "<name>"` again.
-  Somebody who walked in (drawn by a noise, a householder at nightfall), whoever **confronts** the
-  member (the wolf in the den the visit opens in, whoever stopped a walk) and a body that has just
+  Somebody who walked in (drawn by a noise, a householder at nightfall) and a body that has just
   fallen are on the map *already observed* — think about them directly, with no `click observe`.
+  Whoever merely **confronts** the member is not (the wolf in the den the visit opens in, whoever
+  stopped a walk): `click observe hostile` (or `person`) first, which lands on the confronter.
 - **Private ground, by day.** Arriving in a private room whose householder is awake means being
   confronted at once (`inspect where` → `confronted=NoBusinessHere:…`, `exit=RUNAWAY`), and a
-  confronted member may look only at the confronter. Scripts about what is *in* such a room run at
+  confronted member is offered only the acts that answer the confronter unless a discreet means is held. Scripts about what is *in* such a room run at
   `--period night`: asleep, the householder witnesses nothing (`cli/verb/steal/`).
 - **State assertions ignore double quotes.** The tokenizer has no `\"`, and `inspect symbols` and
   `inspect trees` print names in quotes — so `expect-state` compares with the quotes taken out of
@@ -715,8 +716,8 @@ Four things that are not obvious until a script hits them, all of them learned b
 a reason that had nothing to do with its verb:
 
 - **An enemy in the room confronts whoever stands there, whatever `--observe-only` says.** A
-  confronted member may look only at the confronter and think only about them, and the way out reads
-  RUNAWAY. A wolf in the wood would therefore lock every script that started there out of the thing
+  confronted member cannot walk away, is offered only the acts that answer the confronter unless a
+  discreet means is held, has any other means refused on the click, and the way out reads RUNAWAY. A wolf in the wood would therefore lock every script that started there out of the thing
   it came for. The wolf has a den of its own, and only the scripts that want it go in.
 - **A verb that produces an item is refused by the carry rule before it reaches the dice** if nothing
   carried can hold the result — "I have nowhere left to put a log", with no roll and no banner. A `Log`

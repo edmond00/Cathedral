@@ -169,9 +169,12 @@ public partial class NarrativeController
                 // A script that named one of them has made the mind's choice for it.
                 if (_cliObservePin is { } pinned && pool.Contains(pinned)) pool = new List<NarrativeAnchor> { pinned };
                 _cliObservePin = null;
-                // Confronted, a member looks only at whoever confronts them.
-                if (ConfrontationOf(owner) is { } confrontation)
-                    pool = pool.Where(a => IsConfronter(a, confrontation)).ToList();
+                // Confronted, a look at their kind lands on whoever confronts the member before
+                // anybody else of that kind: they are the one standing in the way. Once they have
+                // been looked at, the mind chooses among the rest as it always does.
+                if (ConfrontationOf(owner) is { } confrontation
+                    && pool.Where(a => IsConfronter(a, confrontation)).ToList() is { Count: > 0 } facing)
+                    pool = facing;
             }
             if (pool.Count == 0) { _loading = null; return; }
 

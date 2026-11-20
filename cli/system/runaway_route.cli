@@ -46,8 +46,10 @@ click continue
 advance 12 180
 expect-state where exit=RUNAWAY
 expect-state where Test Rock
-# Whoever confronts is on the map already, observed by nobody.
-expect-state trees the brewer
+# Whoever confronts me is not looked at for me: he is the hostile symbol on the card until a mind
+# observes him.
+expect-no-state trees the brewer
+expect-state symbols click observe hostile in Test Rock
 
 # Away from the brewer: the dice settle, then the second roll is set to fail before the walk on.
 click exit
@@ -60,7 +62,8 @@ advance 12 180
 expect-state map walk from Test Rock to Test Yard
 expect-state where Test Yard
 expect-state where confronted=Enemy:weaver exit=RUNAWAY
-expect-state trees the weaver
+expect-no-state trees the weaver
+expect-state symbols click observe hostile in Test Yard
 expect-no-state dialogue caught_red_handed
 
 # From here it is the narration's own RUNAWAY again, and failing that one is what it always was: the

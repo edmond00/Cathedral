@@ -362,10 +362,18 @@ public partial class NarrativeController
     {
         var stubs = new List<StubSymbol>();
         // Thinking is offered about what affords an act now: a way since walked, a thing emptied
-        // or a person asleep keeps its tree and has nothing to be thought into.
-        if (ThinkingMinds.Count > 0 && Locate(element) is { } at
-            && GoalsOf(at.Anchor).Any(g => g.Verb is not IgnoreVerb))
-            stubs.Add(new StubSymbol(element, StubKind.Think));
+        // or a person asleep keeps its tree and has nothing to be thought into. Confronted, that is
+        // what the rules of choice would leave a mind to choose from (ConfrontedOffersOnlyAnswersRule):
+        // the acts that answer the confronter, or any act while a discreet means is held. A thought
+        // about a chest under a wolf's eyes would otherwise cost a point to find nothing to do.
+        if (ThinkingMinds.Count > 0 && Locate(element) is { } at)
+        {
+            var confrontation = ConfrontationOf(Mind);
+            bool anyAct = confrontation == null || _active.GetActionModiMentis().Any(m => m.ActsDiscretely);
+            if (GoalsOf(at.Anchor).Any(g => g.Verb is not IgnoreVerb
+                    && (anyAct || Narrative.Rules.Choice.ConfrontedOffersOnlyAnswersRule.Answers(g.Verb, confrontation!))))
+                stubs.Add(new StubSymbol(element, StubKind.Think));
+        }
         if (Exploring && _active.GetSpeakingModiMentis().Count > 0)
             foreach (var listener in WithinSpeech())
                 stubs.Add(new StubSymbol(element, StubKind.Speak, listener));
@@ -396,9 +404,10 @@ public partial class NarrativeController
     /// <para>Observing, thinking and acting each cost a point and are withheld without one — with
     /// none left, only the way out and another member answer (<see cref="OutOfPoints"/>). Observing
     /// and acting need the member there, and are withheld where no known way leads. Confronted, a
-    /// member may look only at whoever confronts them and think only about them — though an act
-    /// already proposed stays theirs to try where they stand: the coded rules judge it on the
-    /// click, and a discreet means may pass where another is refused.</para>
+    /// member cannot walk away: only what stands in their own area answers. Everything there may
+    /// still be looked at and thought about — the rules of choice then offer only the acts that
+    /// answer the confronter, unless a discreet means is held (<see cref="StubsOf"/>), and the
+    /// rules of action judge whatever is attempted on the click.</para>
     /// </summary>
     private bool IsEnabled(MapSymbol symbol)
     {
@@ -428,27 +437,23 @@ public partial class NarrativeController
 
             case TraySymbol tray:
                 if (!HasPoint || ObservingMinds.Count == 0) return false;
-                if (confrontation == null) return _frameReach.ContainsKey(tray.Area.Id);
-                return tray.Area.Id == _pov.Where.Id
-                    && (tray.Known != null
-                        ? IsConfronter(tray.Known, confrontation)
-                        : Unobserved(tray.Area).Any(u => u.Kind == tray.Kind && !u.Known && IsConfronter(u.Anchor, confrontation)));
+                return confrontation == null ? _frameReach.ContainsKey(tray.Area.Id) : tray.Area.Id == _pov.Where.Id;
 
             case ContentSymbol content:
-                return HasPoint && confrontation == null && ObservingMinds.Count > 0
-                    && Locate(content.Container) is { } held && _frameReach.ContainsKey(held.Where.Id);
+                return HasPoint && ObservingMinds.Count > 0 && Locate(content.Container) is { } held
+                    && (confrontation == null ? _frameReach.ContainsKey(held.Where.Id) : held.Where.Id == _pov.Where.Id);
 
             // A way is looked at from one of its ends: the member must be able to walk to it.
             case WaySymbol way:
-                return HasPoint && confrontation == null && ObservingMinds.Count > 0
-                    && _frameWays.TryGetValue(way.Key, out var side) && _frameReach.ContainsKey(side.From.Id);
+                return HasPoint && ObservingMinds.Count > 0 && _frameWays.TryGetValue(way.Key, out var side)
+                    && (confrontation == null ? _frameReach.ContainsKey(side.From.Id) : side.From.Id == _pov.Where.Id);
 
             case ExitSymbol:
                 return Exploring;
 
             case StubSymbol { Kind: StubKind.Think } think:
                 return HasPoint && Locate(think.Element) is { } thought
-                    && (confrontation == null || IsConfronter(thought.Anchor, confrontation));
+                    && (confrontation == null || thought.Where.Id == _pov.Where.Id);
 
             case StubSymbol { Kind: StubKind.Speak, Listener: { } listener } speak:
                 return Mind.Noetic > 0 && confrontation == null && Locate(speak.Element) != null

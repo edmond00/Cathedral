@@ -839,7 +839,7 @@ anything about the world — the scene is the truth and the trees are an account
    another.
 5. Dead people lose their trees (their waiting acts withdrawn from the ledger).
 6. Waiting acts of the played member that the element no longer affords become `Lapsed`.
-7. `AdoptCorpses`, `AdoptArrivals`, `AdoptConfronters` — below.
+7. `AdoptCorpses`, `AdoptArrivals` — below.
 
 It runs after every outcome (`CommitOutcomeResult`), every change of hour (`ApplyTimePeriod`), every
 free walk (`WalkTo`), every switch of member, and from `Update` whenever the roster changed under
@@ -853,15 +853,18 @@ phase. A body made in front of a member is rooted on their map already observed 
 draining `Scene.PendingCorpseObservations`, for every member standing where it fell, with a `Note`
 in place of a text — nobody has to look for what they have just killed, and no mind is counted in
 a roll made on it). Somebody who heard an act go wrong and walked in is rooted the same way
-(`AdoptArrivals`, with `NeutralNarration.ArrivalEnemyCaution` or `ArrivalWitnessNotice`). And
-**whoever confronts a member is on that member's map already observed** (`AdoptConfronters`, with
-`NeutralNarration.ConfrontedBy(kind)`): the enemy in the room walked into, the householder who sees
-them where they have no business, whoever stopped a walk or an escape. Confronted, a member may look
-at nobody else, so leaving the confronter to be looked at first made answering them cost a point
-more than anything else in the place — and with the pool at zero, impossible: the only symbol that
-answered was RUNAWAY. An enemy who confronts nobody (asleep, appeased, in another area) is simply a
-`☹` in the tray. A script therefore thinks about a beast that opens on it without observing it
-first.
+(`AdoptArrivals`, with `NeutralNarration.ArrivalEnemyCaution` or `ArrivalWitnessNotice`).
+
+**Whoever confronts a member is NOT rooted for them.** The enemy in the room walked into, the
+householder who sees them where they have no business, whoever stopped a walk: each is the symbol
+of its kind in the tray (`☹`, `☺`) until a mind observes it, for a point, like anything else. They
+used to be put on the trees already observed (`AdoptConfronters`), on the reasoning that a
+confronted member could look at nobody else and so should not pay to answer the one person who
+would not wait. That made the confronter the one thing in the game thought about before it was
+looked at, and the reasoning went with the lock it came from (below). A look at the confronter's
+kind in the member's area lands on the confronter first (`ObserveAsync`, `IsConfronter`): they are
+the one standing in the way, and among several people on a card nothing else says which. A script
+observes a beast that opens on it (`click observe hostile`) before thinking about it.
 
 #### An act, its result, and what it sets going
 
@@ -887,7 +890,8 @@ chosen, the ending (success, failure, interrupted, nothing settled) and the very
 emotional coda included; the game controller hands it to `NarrativeController.OnDialogueCompleted`,
 and it hangs from the node `SetPendingDialogue` was given — the `✓` of the act, or the `✗` of the
 failed act a witness caught. A conversation no act opened (a flight a witness stopped) hangs from
-whoever it was with, who is on the member's map already (`AdoptConfronters`). Under the pointer it
+whoever it was with, put on the trees for it when nothing of theirs was there (`RootSpokenWith`:
+having spoken with somebody is having seen them). Under the pointer it
 is "talked with the reeve · success" and the reading box gives the protagonist's lines, a line each,
 the ending where an act's odds stand, and the chips. It is a record: it answers no click, and it
 keeps its ink whatever becomes of its branch — gold won, purple lost or walked away from.
@@ -928,12 +932,19 @@ but the last is weighed as though the member stood in it (`ConfrontationAt`, the
 past among them): in the first where an enemy or a witness would stop them they stand, confronted,
 and what they set out to do is dropped. Only RUNAWAY rolls.
 
-**A confrontation locks what may be looked at and thought about** (`IsEnabled`, from
-`ConfrontationOf(Mind)`): the confronted member may observe only whoever confronts them and think
-only about them, cannot be walked away, and speaks to nobody. **The discreet exception is kept**:
-acts already waiting where they stand stay clickable, and the rules judge them on the click as they
-always did — `ConfrontedImpossibleRule` refuses a plain means and lets a discreet one try. Members
-elsewhere are untouched. Two things had to change for the lock to be liveable:
+**A confrontation holds the member where they stand, and no more** (`IsEnabled`, from
+`ConfrontationOf(Mind)`): they cannot be walked away and speak to nobody, so only what is in their
+own area answers — but all of it does: every symbol on their card, the ways leaving it, the `?` of
+what they have observed there. It used to lock looking and thinking to the confronter alone, which
+made a room with an enemy in it a room with one thing in it. **What may be done is left to the
+rules, which already said it**: the rules of choice offer a thinking mind only the acts that answer
+the confronter unless a discreet means is held (`ConfrontedOffersOnlyAnswersRule`), and the rules
+of action refuse on the click a means that is not discreet (`UnderThreatImpossibleRule`,
+`ConfrontedImpossibleRule`). `StubsOf` applies the first of those to the `?` itself: an element
+that would be left no act to choose from shows none, where a thought would cost a point to find
+nothing to do. Acts already waiting where the member stands stay clickable as before. Members
+elsewhere are untouched. `cli/system/confronted_hostile.cli`, `confronted_witness.cli`. Two things
+had to change for a confrontation to be liveable:
 
 - **Somebody asleep witnesses nothing** (`WitnessSelector.SelectFrom` skips `IsSleeping`). And
   `SceneNpc.IsSleeping` had been answering *awake* about everybody actually asleep: it asked for a
