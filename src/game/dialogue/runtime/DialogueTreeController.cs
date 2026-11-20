@@ -126,6 +126,13 @@ public class DialogueTreeController
 
     public bool HasRequestedExit => _state.RequestedExit;
 
+    /// <summary>
+    /// What this conversation has been so far: the replies chosen, how it ended, what it changed.
+    /// Read by the game controller when the conversation closes and kept by the narration as a node
+    /// on the thought tree — this screen is gone by then.
+    /// </summary>
+    public DialogueRecord Record { get; private set; }
+
     private readonly Cathedral.Audio.AmbianceEngine? _ambianceEngine;
 
     public DialogueTreeController(
@@ -143,6 +150,7 @@ public class DialogueTreeController
         _buffer        = buffer;
         _tree          = tree;
         _npc           = npc;
+        Record         = new DialogueRecord(npc);
         _protagonist   = protagonist;
         _partyMemberId = protagonist.AffinityKey;
         _npcSlotId     = npcSlotId;
@@ -172,6 +180,7 @@ public class DialogueTreeController
         _state.Clear();
         _accumulatedDice = 0;
         _chosenMMs.Clear();
+        Record = new DialogueRecord(_npc);
         _pendingResolution = null;
         _optionsBlock = null;
         _lastNpcNeutralLine = null;
@@ -318,14 +327,17 @@ public class DialogueTreeController
     {
         _npc.AffinityTable.MarkFirstContact(_partyMemberId);
 
-        // Walking away costs standing, so it gets the same chip a resolved outcome would — the panel
-        // closes immediately, but the buffer is shared and the player reads it back in narration.
+        // Walking away costs standing, so it gets the same chip a resolved outcome would. The panel
+        // closes on this very press, so the chip is never read here: it goes into the record, and the
+        // narration puts it up as a result over the map (NarrativeController.KeepConversation).
         // One object does both: an ordinary outcome applies the step and words its own chip, and
         // stays silent when the step was a no-op. This used to adjust the table by hand and then
         // build a separate report describing what it had just done.
         var walkedOut = new AffinityIncrementOutcome(-1);
         walkedOut.ApplyTo(OutcomeContext.ForDialogue(_npc, _partyMemberId, _protagonist));
         if (walkedOut.ShowInUI) AppendOutcomeReports(new List<Outcome> { walkedOut });
+        Record.Ending = DialogueEnding.Interrupted;
+        Record.Came(new[] { walkedOut });
 
         Console.WriteLine(
             $"DialogueTreeController: Conversation with {_npc.DisplayName} interrupted — " +
@@ -614,6 +626,7 @@ public class DialogueTreeController
         _optionsBlock = null;
         // The one reply spoken; the options left unpicked never reach the journal.
         JournalRecorder.Line(_protagonist.DisplayName, option.ReplicaText);
+        Record.Said(option.ReplicaText);
 
         // This reply's Modus Mentis contributes its level to the branch dice pool.
         _accumulatedDice += option.Skill.Level;
@@ -832,6 +845,8 @@ public class DialogueTreeController
                     reports.Add(fallbackNothing);
                 }
                 AppendOutcomeReports(reports);
+                Record.Ending = succeeded ? DialogueEnding.Success : DialogueEnding.Failure;
+                Record.Came(reports);
 
                 EndConversation();
             }
@@ -883,6 +898,7 @@ public class DialogueTreeController
             part.AttachCommit(() =>
             {
                 chip.ApplyTo(OutcomeContext.For(_protagonist, null, null));
+                Record.Came(new[] { chip });
                 Append(new NarrationBlock(
                     Type:        NarrationBlockType.Emotion,
                     ModusMentis: emotion.ModusMentis,

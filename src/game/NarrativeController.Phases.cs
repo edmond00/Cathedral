@@ -22,10 +22,21 @@ public partial class NarrativeController
     /// <summary>The tree id of the last conversation queued — <c>inspect dialogue</c>, for scripts.</summary>
     private string _lastDialogueTreeId = "-";
 
-    /// <summary>Queues a conversation for the game controller's next tick. It opens at once: nothing waits on it.</summary>
-    private void SetPendingDialogue(DialogueTriggerOutcome outcome)
+    /// <summary>
+    /// The node the conversation about to be held hangs from once it is over: the outcome of the act
+    /// that opened it. Null for a conversation no act opened (a flight stopped by a witness), which
+    /// hangs from whoever it was with.
+    /// </summary>
+    private ThoughtNode? _dialogueFrom;
+
+    /// <summary>
+    /// Queues a conversation for the game controller's next tick. It opens at once: nothing waits on
+    /// it. <paramref name="from"/> is the outcome of the act that opened it, where its record is kept.
+    /// </summary>
+    private void SetPendingDialogue(DialogueTriggerOutcome outcome, ThoughtNode? from = null)
     {
         _result = null;
+        _dialogueFrom = from;
         _pendingDialogueOutcome = outcome;
         _lastDialogueTreeId     = (outcome.Tree?.TreeId ?? outcome.TreeId ?? "-")
                                 + (CaughtRedHandedTreeFactory.IsCameForward(outcome.Tree) ? " came_forward" : "");
@@ -113,11 +124,13 @@ public partial class NarrativeController
     /// <summary>
     /// Called by the game controller when a conversation ends: what it settled that only the scene
     /// can keep — leave to stay the night, leave to use a workshop — and the end of the confrontation
-    /// it may have been.
+    /// it may have been. <paramref name="record"/> is what was said and what came of it, kept on the
+    /// thought tree; null when the conversation never started.
     /// </summary>
-    public void OnDialogueCompleted(NpcEntity npc)
+    public void OnDialogueCompleted(NpcEntity npc, Cathedral.Game.Dialogue.Runtime.DialogueRecord? record = null)
     {
         Console.WriteLine($"NarrativeController: conversation ended with {npc.DisplayName}");
+        KeepConversation(npc, record);
 
         // A householder who found the member waiting and let them stay: the house is theirs to wait
         // in for the rest of the visit. Read before the release below forgets who found them.
@@ -144,6 +157,35 @@ public partial class NarrativeController
 
         // A witness who came for the member has had their say: the confrontation is over.
         ConfrontationSelector.Release(_scene, npc, _active);
+    }
+
+    /// <summary>
+    /// Hangs a conversation on the played member's trees: under the outcome of the act that opened
+    /// it, or — when no act did — under whoever it was with. The conversation's screen showed what it
+    /// changed and is gone; the node is where that is read again, with what the protagonist said.
+    ///
+    /// <para>A conversation walked away from never showed its cost at all: the screen closes on the
+    /// press. That one is put up as a result here, with its chip, as an act's is.</para>
+    /// </summary>
+    private void KeepConversation(NpcEntity npc, Cathedral.Game.Dialogue.Runtime.DialogueRecord? record)
+    {
+        var from = _dialogueFrom;
+        _dialogueFrom = null;
+        if (record == null) return;
+
+        from ??= _scene.Npcs.FirstOrDefault(n => ReferenceEquals(n.Entity, npc)) is { } spoken ? Mind.NodeOf(spoken, null) : null;
+        if (from == null)
+        {
+            Console.WriteLine($"NarrativeController: conversation with {npc.DisplayName} has no node to hang from — not kept");
+            return;
+        }
+        from.Add(new ThoughtNode(ThoughtNodeKind.Dialogue) { Dialogue = record });
+        Console.WriteLine($"NarrativeController: conversation with {npc.DisplayName} kept — {record.EndingWord}, "
+                        + $"{record.Replies.Count} repl{(record.Replies.Count == 1 ? "y" : "ies")}, {record.Reports.Count} chip(s)");
+
+        if (record.Ending == Cathedral.Game.Dialogue.Runtime.DialogueEnding.Interrupted)
+            ShowResult(succeeded: false, $"I walked away from {NpcLabelResolver.ShortLabel(npc, _active)}", record.Reports, then: null,
+                       title: "INTERRUPTED");
     }
 
     // ── The member played ────────────────────────────────────────────────────

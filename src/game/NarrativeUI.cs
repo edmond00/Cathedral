@@ -149,11 +149,11 @@ public class NarrativeUI : TerminalPanelUI
     }
 
     /// <summary>
-    /// The box an act's result is read in, centred over the darkened map: SUCCESS or FAILURE on its
-    /// border, the act, then what it came to — one line each, marked and inked by whether it is a
+    /// The box an act's result is read in, centred over the darkened map: its <paramref name="title"/>
+    /// on its border (SUCCESS or FAILURE for an act), the act, then what it came to — one line each, marked and inked by whether it is a
     /// gain, a loss or neither — and a CONTINUE. Returns the button's region.
     /// </summary>
-    public (int X, int Y, int Width) RenderResultBox(bool succeeded, string act, IReadOnlyList<Outcome> chips, bool continueHovered)
+    public (int X, int Y, int Width) RenderResultBox(bool succeeded, string title, string act, IReadOnlyList<Outcome> chips, bool continueHovered)
     {
         DimContent();
         // As wide as its longest line asks, within the panel.
@@ -170,7 +170,7 @@ public class NarrativeUI : TerminalPanelUI
 
         _terminal.FillRect(x, y, width, height, ' ', Config.Colors.White, ground);
         _terminal.DrawBox(x, y, width, height, BoxStyle.Single, succeeded ? Config.Colors.DarkYellow : Config.Colors.DarkPurple, ground);
-        _terminal.Text(x + width / 2, y, succeeded ? " SUCCESS " : " FAILURE ", ink, ground, TextAlignment.Center);
+        _terminal.Text(x + width / 2, y, $" {title} ", ink, ground, TextAlignment.Center);
 
         int row = y + 2;
         foreach (var line in actLines)

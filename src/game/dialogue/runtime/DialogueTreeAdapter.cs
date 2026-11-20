@@ -53,6 +53,12 @@ public class DialogueTreeAdapter
     /// </summary>
     public DialogueTreeController? Controller => _controller;
 
+    /// <summary>
+    /// What the conversation was, for the narration to keep once it closes; null when it never
+    /// started (no slot, no tree), which leaves nothing to keep.
+    /// </summary>
+    public DialogueRecord? Record => _controller?.Record;
+
     /// <param name="scrollBuffer">
     /// The narration session's shared text history. The conversation appends its lines to it live and
     /// the dialogue panel renders from it, so the player can scroll back into the greyed narration

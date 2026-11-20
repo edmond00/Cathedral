@@ -286,13 +286,21 @@ What changed once the map had been played, each answering a remark made on it.
 - **Several ways between the same two areas stand side by side on their one line**, and while
   nothing is known of them the mind chooses which it looks at.
 
-## 15. Tests and tools
+## 15. Settled after the fifth play
+
+- **A conversation leaves a node on the tree** (`«`), under the outcome of the act that opened it:
+  pointing at it reads what the protagonist said, how it ended and what it changed. Its own screen
+  shows those chips before END and nothing kept them after.
+- **Walking away from a conversation shows what it cost**, in a result box of its own
+  (`INTERRUPTED`): the conversation's screen closes on the press and showed nothing.
+
+## 16. Tests and tools
 
 - `click keyword` goes; the scripts are rewritten against symbols, elements and acts named, never
   coordinates: `click observe <kind|name>`, `click think <name>`, `click speak <name>`,
   `click act <n|word>`, `click member <name>`, `click area <name>`, `click exit`.
 - `inspect trees`, `inspect texts` and `inspect known` read what the map shows; `inspect where`
   carries `exit=LEAVE|RUNAWAY`.
-- `point observe|think|speak|act|member <what>`, `point exit` and `point card <area>` put the
-  pointer on a symbol without pressing it, for what only hovering shows.
+- `point observe|think|speak|act|member <what>`, `point dialogue <who|last>`, `point exit` and
+  `point card <area>` put the pointer on a symbol without pressing it, for what only hovering shows.
 - The flags that pinned text behaviour (`--refuse-focus`, the group scripts) go or are redefined.

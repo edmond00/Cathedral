@@ -6838,7 +6838,7 @@ public class LocationTravelGameController : IDisposable
         if (Config.Debug.AutoDialogue
             && Cathedral.Game.Dialogue.Runtime.DialogueAutoResolve.TryResolve(
                    dialogueOutcome.Target, _narrativeController.Protagonist,
-                   dialogueOutcome.TreeId, dialogueOutcome.Tree))
+                   dialogueOutcome.TreeId, dialogueOutcome.Tree) is { } settled)
         {
             // The flags a won trade or hire leaves are read here as well as in OnDialogueCompleted,
             // which this path never reaches: they are what teach a Buy, Sell or Work routine.
@@ -6858,7 +6858,7 @@ public class LocationTravelGameController : IDisposable
                 dialogueOutcome.Target.LeadToPremisesGranted = false;
                 _narrativeController.WalkToPremises(dialogueOutcome.Target);
             }
-            _narrativeController.OnDialogueCompleted(dialogueOutcome.Target);
+            _narrativeController.OnDialogueCompleted(dialogueOutcome.Target, settled);
             return;
         }
 
@@ -7036,7 +7036,7 @@ public class LocationTravelGameController : IDisposable
 
         Console.WriteLine($"LocationTravelGameController: Dialogue completed with {npc.DisplayName}");
 
-        _narrativeController.OnDialogueCompleted(npc);
+        _narrativeController.OnDialogueCompleted(npc, _dialogueAdapter.Record);
 
         // If the NPC demanded a fight during the dialogue (caught-red-handed provoke/rejection),
         // transition directly into fight mode instead of returning to narrative.

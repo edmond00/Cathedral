@@ -552,7 +552,7 @@ Two kinds of presence in the area restrict the character, and they work alike on
 ### While confronted
 
 1. While an enemy or a confronting witness stands over a character, that character can observe only the one confronting it, who is already in its record (§4).
-2. It can deliberate only on them.
+2. It can deliberate only on them, and a thinking modus mentis doing so is offered only the acts the presence permits (above). This is a rule of choice: the other acts are withheld silently, and cost nothing. It does not apply while the character holds a discreet acting modus mentis, which alone could attempt them.
 3. It cannot walk away, and cannot speak to a companion (§10).
 4. Acts it had already decided on, in the area where it stands, still wait and can still be attempted, each for 1 noetic point (§3). They are judged by the rules above.
 5. Someone asleep confronts nobody and witnesses nothing.

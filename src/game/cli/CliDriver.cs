@@ -491,6 +491,9 @@ public sealed class CliDriver
           point observe|think|speak|act|member <what>   hover a symbol of the narration's map, named
                                     as `click` names it, without pressing it: its label
                                     (`inspect pointer-label`), its line lit, a node's text read
+          point dialogue <who|last> hover a conversation kept on the trees (the « under the act
+                                    that opened it), by whom it was with or `last`: the replies
+                                    chosen, how it ended and its chips are then on screen
           point exit                hover the way out of the place
           point organ <part-id>     hover an organ part on the Anatomy tab's body art (right_arm,
                                     left_hand…), so the panel shows that part's stats
@@ -1428,7 +1431,8 @@ public sealed class CliDriver
     {
         // A symbol of the narration's map, named as `click` names it: the pointer is put on it and
         // nothing is pressed, which is how its label, its text and its line are read.
-        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member" or "fold")
+        // `dialogue` is pointed at and never clicked: a conversation held is a record to read.
+        if (a.Length >= 1 && a[0].ToLowerInvariant() is "observe" or "think" or "speak" or "act" or "tool" or "reconsider" or "member" or "fold" or "dialogue")
         {
             if (FindSymbol(a) is not { } found) return;
             if (found.Narration.CliSymbolCell(found.Symbol) is not { } cell)
@@ -1456,7 +1460,7 @@ public sealed class CliDriver
             return;
         }
         if (a.Length < 2 || !a[0].Equals("moon", StringComparison.OrdinalIgnoreCase))
-        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id> | point <observe|think|speak|act|member> <what> | point exit"); return; }
+        { CliMode.Emit("error: point moon <name|ordinal> | point card <area> | point organ <part-id> | point <observe|think|speak|act|member> <what> | point dialogue <who|last> | point exit"); return; }
 
         int ordinal = ResolveMoon(string.Join(' ', a[1..]).Trim('"'));
         if (ordinal < 0) return;

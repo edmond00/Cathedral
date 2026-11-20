@@ -1,0 +1,53 @@
+# A conversation lost is kept on the tree as one won is, and says so: the node under the act that
+# opened it reads "failure", in the ink of a loss, with the replies that led there. He is named in
+# it all the same: a conversation lost is still a meeting.
+#
+# The mirror of dialogue_record.cli — same tree, same branch, opposite roll.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --location-type test --location-id 0 --npc-static --start-area "Test Hall" --period noon --observe-only "brewer"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+# Reach the conversation through the verb that opens it.
+strategy succeed
+goal meet_stranger
+advance 12 180
+click observe "brewer"
+choose childhood_memory
+advance 12 180
+click think "brewer"
+choose ripelore
+advance 12 180
+click act 0
+advance 12 180
+click continue
+advance 12 180
+wait mode Dialogue 60
+
+# The verb had to succeed for there to be a conversation; the roll under test is the resolution's.
+strategy fail-dice
+advance 20 180
+click option 0
+advance 20 180
+click option 0
+advance 20 180
+click continue
+advance 20 180
+expect Then keep walking
+
+click button
+wait mode LocationInteraction 60
+
+expect-state trees dialogue with=brewer ending=failure replies=2
+point dialogue last
+wait 1
+expect-state pointer-label ground=grey text=talked with Aeemilyus · failure
+expect CONVERSATION WITH AEEMILYUS
+expect it came to: failure
+quit

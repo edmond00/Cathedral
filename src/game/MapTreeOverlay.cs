@@ -586,6 +586,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         ThoughtNodeKind.Failure => Config.Symbols.MapFailure,
         ThoughtNodeKind.Emotion => Config.Symbols.MapEmotion,
         ThoughtNodeKind.Speech  => Config.Symbols.MapSpeak,
+        ThoughtNodeKind.Dialogue => Config.Symbols.MapDialogue,
         _                       => Config.Symbols.MapRefusal,
     };
 
@@ -600,6 +601,15 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         ThoughtNodeKind.Failure or ThoughtNodeKind.Refusal
                                 => live ? Config.Colors.LightPurple : Config.Colors.Purple,
         ThoughtNodeKind.Emotion => Config.Colors.Ochre,
+        // A conversation is a record to read back, whatever became of the branch it hangs on: it
+        // keeps its ink, gold when it was won and purple when it was lost or walked away from.
+        ThoughtNodeKind.Dialogue => node.Dialogue?.Ending switch
+        {
+            Cathedral.Game.Dialogue.Runtime.DialogueEnding.Success => Config.Colors.GoldYellow,
+            Cathedral.Game.Dialogue.Runtime.DialogueEnding.Failure or
+            Cathedral.Game.Dialogue.Runtime.DialogueEnding.Interrupted => Config.Colors.LightPurple,
+            _ => Config.Colors.LightGray75,
+        },
         _                       => live ? Config.Colors.LightGray75 : DeadInk,
     };
 

@@ -23,6 +23,7 @@ public static class ChoiceRulesChecker
     /// <summary>Rules that narrow the goals a thinking modus mentis may be offered.</summary>
     private static readonly IReadOnlyList<IGoalChoiceRule> GoalRules = new List<IGoalChoiceRule>
     {
+        new ConfrontedOffersOnlyAnswersRule(),   // first: the rest choose among what answers the confronter
         new HighMoralityAvoidsCrimeRule(),
         new LowMoralityPrefersCrimeRule(),
         new SpeakingMindPrefersDialogueRule(),   // after the crime rule: an unscrupulous mind's crime wins

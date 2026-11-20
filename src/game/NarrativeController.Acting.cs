@@ -62,6 +62,8 @@ public partial class NarrativeController
         /// <summary>The act as it was offered; empty for a result no act of the member's made.</summary>
         public required string Act { get; init; }
         public required bool Succeeded { get; init; }
+        /// <summary>The word on the box's border: SUCCESS or FAILURE unless the result is of another kind.</summary>
+        public string Title { get; init; } = "";
         public List<Outcome> Chips { get; } = new();
         public Action? Then { get; init; }
     }
@@ -717,7 +719,7 @@ public partial class NarrativeController
         { Attempt = action == null ? null : new ActionAttempt(OutcomeNarrator.ActionDisplay(action), result.Succeeded) };
         Chronicle(outcomeBlock);
         actNode.State = ActState.Done;
-        actNode.Add(new ThoughtNode(result.Succeeded ? ThoughtNodeKind.Success : ThoughtNodeKind.Failure) { Block = outcomeBlock });
+        var outcomeNode = actNode.Add(new ThoughtNode(result.Succeeded ? ThoughtNodeKind.Success : ThoughtNodeKind.Failure) { Block = outcomeBlock });
         if (action != null) owner.Proposals.Withdraw(action.PreselectedOutcome);
         _ambianceEngine?.TriggerGameEvent(result.Succeeded ? GameEventType.PositiveOutcome : GameEventType.NegativeOutcome);
         NarrationDiceClear();
@@ -772,7 +774,7 @@ public partial class NarrativeController
             var catchTree = ConfrontationSelector.TreeFor(_scene, result.CaughtByWitness, action!.Verb, _pov.Where.IsPrivate);
             Console.WriteLine($"NarrativeController: witness '{result.CaughtByWitness.DisplayName}' caught the failed act ({catchTree.TreeId})");
             var caught = new DialogueTriggerOutcome(result.CaughtByWitness, tree: catchTree);
-            then = () => SetPendingDialogue(caught);
+            then = () => SetPendingDialogue(caught, outcomeNode);
         }
         // Only heard, from a room away: they come to look. That rung is NpcDrawnInOutcome, applied
         // with the other reports above, and the trees have already taken them in.
@@ -785,7 +787,7 @@ public partial class NarrativeController
         {
             Console.WriteLine($"NarrativeController: a conversation with {dialogueRequest.Npc.DisplayName} ('{dialogueRequest.Tree?.TreeId ?? dialogueRequest.TreeId}') — held for CONTINUE");
             var talk = new DialogueTriggerOutcome(dialogueRequest.Npc, dialogueRequest.TreeId, dialogueRequest.Tree);
-            then = () => SetPendingDialogue(talk);
+            then = () => SetPendingDialogue(talk, outcomeNode);
         }
         else if (_scene.PendingGetUpTransition)
             then = FinishGetUp;
@@ -804,7 +806,7 @@ public partial class NarrativeController
     /// Puts the result of an act up: what it came to and its chips, with what follows on its
     /// CONTINUE. With no chip to read the box is not shown and what follows starts at once.
     /// </summary>
-    private void ShowResult(bool succeeded, string act, IReadOnlyList<Outcome> chips, Action? then)
+    private void ShowResult(bool succeeded, string act, IReadOnlyList<Outcome> chips, Action? then, string? title = null)
     {
         if (chips.Count == 0)
         {
@@ -816,6 +818,7 @@ public partial class NarrativeController
         {
             Act       = act,
             Succeeded = succeeded,
+            Title     = title ?? (succeeded ? "SUCCESS" : "FAILURE"),
             Then      = then,
         };
         _result.Chips.AddRange(chips);
