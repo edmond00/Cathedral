@@ -48,7 +48,7 @@ def step(scene) -> str:
 
 # ── principles ────────────────────────────────────────────────────────────────
 
-PRINCIPLES = [
+PRINCIPLES = [  # the five ideas, now drawn by Principles rather than listed
     ("the place is the page", "no scrolling text, no keywords: the location map is the narration screen"),
     ("one click, one thing, one text", "you choose what is looked at; the mind chooses how"),
     ("a symbol says what it is", "a way, a person, a hostile, a thing: you know what a click will look at"),
@@ -57,24 +57,169 @@ PRINCIPLES = [
 ]
 
 
+AREAS = [  # (name, x, the symbols under it)
+    ("Courtyard", -5.1, [PERSON, THING, THING]),
+    ("Chicken Coop", -1.7, [THING, PERSON]),
+    ("Barn", 1.7, [THING, THING, THING]),
+    ("Orchard", 5.1, [THING, PERSON]),
+]
+CARD_Y = 2.0
+ROW = 0.62          # one tree row
+
+
 class Principles(BrandScene):
-    """Five lines, one after the other, each a principle and what it means."""
+    """The idea, drawn rather than listed: the place as a map of cards and ways, one click on one
+    symbol, a tree of thought growing from it and staying, trees filling the map where a page of text
+    used to scroll away, and a known way walked for free. Timed to MANIM[("Principles", None)][1]."""
+
+    def card(self, name, x):
+        box = RoundedRectangle(corner_radius=0.08, width=2.9, height=1.2, stroke_color=GRAY50, stroke_width=2,
+                               fill_color=BLACK_, fill_opacity=1).move_to([x, CARD_Y, 0])
+        label = self.text(name, 21, GRAY75).move_to(box).align_to(box, UP).shift(DOWN * 0.12)
+        return VGroup(box, label)
+
+    def node(self, g, label, col, at):
+        sym = glyph(g, 30, col)
+        lab = self.text(label, 19, col if col != GRAY50 else GRAY60)
+        return VGroup(sym, lab).arrange(RIGHT, buff=0.16).move_to(at, aligned_edge=LEFT)
+
+    def grow(self, parent_sym, child, run_time=0.5):
+        a = parent_sym.get_bottom() + DOWN * 0.04
+        b = child[0].get_left() + LEFT * 0.06
+        line = VMobject(stroke_color=GRAY35, stroke_width=2).set_points_as_corners([a, [a[0], b[1], 0], b])
+        self.play(Create(line), FadeIn(child, shift=RIGHT * 0.12), run_time=run_time)
+        return line
+
+    def tree(self, root_sym, rows, x0, lag=0.12):
+        """A whole tree at once, for the trees that sprout while the old page scrolls away."""
+        made, anims, y = VGroup(), [], root_sym.get_y() - ROW
+        stack = [root_sym]
+        for depth, g, label, col in rows:
+            n = self.node(g, label, col, [x0 + 0.28 * depth, y, 0])
+            parent = stack[depth - 1] if depth - 1 < len(stack) else stack[-1]
+            a = parent.get_bottom() + DOWN * 0.04
+            b = n[0].get_left() + LEFT * 0.06
+            line = VMobject(stroke_color=GRAY35, stroke_width=2).set_points_as_corners([a, [a[0], b[1], 0], b])
+            anims.append(AnimationGroup(Create(line), FadeIn(n, shift=RIGHT * 0.1)))
+            made.add(line, n)
+            stack = stack[:depth] + [n[0]]
+            y -= ROW
+        return made, LaggedStart(*anims, lag_ratio=lag)
 
     def construct(self):
-        h = self.header("narration on the map", "what the new screen stands on")
+        title = self.text(self.spaced("the place is the page"), 26, GOLD).to_edge(UP, buff=0.3)
+
+        # 1. the map: cards, ways, and what stands in each
+        cards = VGroup(*[self.card(n, x) for n, x, _ in AREAS])
+        ways, way_marks = VGroup(), VGroup()
+        for i in range(len(AREAS) - 1):
+            a, b = cards[i][0].get_right(), cards[i + 1][0].get_left()
+            ways.add(Line(a, b, stroke_color=GRAY50, stroke_width=2))
+            way_marks.add(glyph(WAY, 24, GRAY60).move_to((a + b) / 2 + UP * 0.24))
         rows = VGroup()
-        for i, (title, what) in enumerate(PRINCIPLES):
-            n = self.text(f"{i + 1}", 30, LIGHT_PURPLE)
-            t = self.text(title, 30, GOLD)
-            w = self.text(what, 20, GRAY75)
-            VGroup(t, w).arrange(DOWN, aligned_edge=LEFT, buff=0.1)
-            rows.add(VGroup(n, VGroup(t, w)).arrange(RIGHT, buff=0.4, aligned_edge=UP))
-        rows.arrange(DOWN, aligned_edge=LEFT, buff=0.32)
-        rows.scale_to_fit_width(min(rows.width, config.frame_width - 1.2))
-        rows.next_to(h, DOWN, buff=0.45)
-        for i, r in enumerate(rows):
-            self.wait_until(0.05 + 0.17 * i)
-            self.play(FadeIn(r, shift=RIGHT * 0.2), run_time=0.7)
+        for (name, x, syms), c in zip(AREAS, cards):
+            row = VGroup(*[glyph(s, 34, GRAY60) for s in syms]).arrange(RIGHT, buff=0.36)
+            rows.add(row.move_to(c[0]).align_to(c[0], DOWN).shift(UP * 0.14))
+        self.play(FadeIn(title), run_time=0.5)
+        self.play(LaggedStart(*[FadeIn(c, shift=DOWN * 0.15) for c in cards], lag_ratio=0.25), run_time=1.6)
+        self.play(*[Create(w) for w in ways], FadeIn(way_marks), run_time=0.8)
+        self.play(LaggedStart(*[FadeIn(r, scale=0.6) for r in rows], lag_ratio=0.2), run_time=1.2)
+
+        # 2. one click, on one thing; the mind chosen looks, and the symbol becomes a root
+        self.wait_until(0.24)
+        target = rows[0][1]
+        cursor = Polygon([0, 0, 0], [0, -0.42, 0], [0.11, -0.31, 0], [0.24, -0.5, 0], [0.31, -0.46, 0],
+                         [0.18, -0.27, 0], [0.32, -0.27, 0], stroke_color=BLACK_, stroke_width=1,
+                         fill_color=GRAY85, fill_opacity=1).scale(0.8).move_to([-2.5, -2.6, 0])
+        self.play(FadeIn(cursor), run_time=0.3)
+        self.play(cursor.animate.move_to(target.get_center() + [0.12, -0.2, 0], aligned_edge=UL), run_time=0.9)
+        ring = Circle(radius=0.34, stroke_color=GOLD, stroke_width=3).move_to(target)
+        self.play(Create(ring), target.animate.set_color(GOLD), run_time=0.4)
+        chip = self.text("the mind you choose looks", 19, LIGHT_PURPLE).next_to(cards[0][0], DOWN, buff=0.35)
+        chip.align_to(cards[0][0], LEFT)
+        self.play(FadeOut(ring), FadeIn(chip, shift=UP * 0.1), cursor.animate.move_to([-1.0, -3.0, 0]),
+                  run_time=0.6)
+        self.wait_until(0.35)
+        root = target.copy()
+        x0 = cards[0][0].get_left()[0] + 0.25
+        self.play(root.animate.move_to([x0 + 0.1, CARD_Y - 1.15, 0]), FadeOut(chip),
+                  target.animate.set_opacity(0.25), run_time=0.6)
+        root_lab = self.text("the hen", 19, GOLD).next_to(root, RIGHT, buff=0.15)
+        self.play(FadeIn(root_lab), run_time=0.3)
+        y = root.get_y()
+        steps = [(1, TEXT, "what it saw", GRAY75), (1, THINK, "think about it", LIGHT_PURPLE),
+                 (2, TEXT, "what it wants", GRAY75), (2, DIFF[1], "the act, waiting", GOLD),
+                 (3, OK, "what it came to", GOLD), (3, FEEL, "what it stirred", LIGHT_PURPLE)]
+        when = [0.38, 0.45, 0.49, 0.52, 0.59, 0.64]
+        stack, tree0 = [root], VGroup(root, root_lab)
+        for (depth, g, label, col), w in zip(steps, when):
+            self.wait_until(w)
+            y -= ROW
+            n = self.node(g, label, col, [x0 + 0.1 + 0.28 * depth, y, 0])
+            parent = stack[depth - 1] if depth - 1 < len(stack) else stack[-1]
+            tree0.add(self.grow(parent, n), n)
+            stack = stack[:depth] + [n[0]]
+        self.play(FadeOut(cursor), run_time=0.3)
+
+        # 3. the old page scrolled away; the map keeps every tree
+        self.wait_until(0.665)
+        page_box = Rectangle(width=4.2, height=3.4, stroke_color=GRAY60, stroke_width=2).move_to([3.4, -0.9, 0])
+        words = ["The yard smells of", "wet straw. A hen", "scratches by the", "coop, and the farmer",
+                 "watches the gate.", "A cart stands empty", "by the barn door,", "its shafts in the mud.",
+                 "Past the orchard", "a path climbs on.", "The hen pecks at", "the dust again."]
+        lines = VGroup(*[self.text(w, 19, GRAY60) for w in words]).arrange(DOWN, buff=0.14, aligned_edge=LEFT)
+        lines.move_to(page_box).align_to(page_box, UP).shift(DOWN * 0.2)
+        old = self.text("the old page", 19, GRAY75).next_to(page_box, UP, buff=0.12)
+        top, bottom = page_box.get_top()[1] - 0.15, page_box.get_bottom()[1] + 0.15
+
+        start = lines.copy()
+        travel = lines.height + 0.3
+
+        def scroll(m, alpha):
+            for line, orig in zip(m, start):
+                yy = orig.get_y() + travel * alpha
+                line.move_to([orig.get_x(), yy, 0])
+                line.set_opacity(1.0 if bottom < yy < top else 0.0)
+        scroll(lines, 0)
+        self.add(lines)
+        self.play(FadeIn(page_box), FadeIn(old), run_time=0.4)
+        self.play(UpdateFromAlphaFunc(lines, scroll), run_time=2.6, rate_func=linear)
+        self.remove(lines)
+        self.play(FadeOut(page_box), FadeOut(old), run_time=0.4)
+
+        self.wait_until(0.73)
+        for i, (sym_i, label, tree_rows) in enumerate([
+            (1, "the nest box", [(1, TEXT, "what it saw", GRAY75), (1, REFUSAL, "would not", GRAY50),
+                                 (1, THINK, "think", LIGHT_PURPLE), (2, DIFF[0], "an act", GOLD)]),
+            (0, "a cart", [(1, TEXT, "what it saw", GRAY75), (1, THINK, "think", LIGHT_PURPLE),
+                           (2, DIFF[2], "an act", GOLD), (3, FAIL, "it failed", LIGHT_PURPLE)]),
+            (1, "the farmer", [(1, TEXT, "what it saw", GRAY75), (1, SPEAK, "spoken of", GRAY85)]),
+        ]):
+            ci = i + 1
+            r = rows[ci][sym_i]
+            r.set_color(GOLD)
+            rt = r.copy()
+            xl = cards[ci][0].get_left()[0] + 0.25
+            rt.move_to([xl + 0.1, CARD_Y - 1.15, 0])
+            lab = self.text(label, 19, GOLD).next_to(rt, RIGHT, buff=0.15)
+            made, grow = self.tree(rt, tree_rows, xl + 0.1)
+            self.play(TransformFromCopy(r, rt), FadeIn(lab), r.animate.set_opacity(0.25), run_time=0.5)
+            self.play(grow, run_time=1.1)
+        keep = self.text("nothing scrolls away: every text stays where it grew", 22, GRAY75).to_edge(DOWN, buff=0.3)
+        self.play(FadeIn(keep, shift=UP * 0.1), run_time=0.6)
+
+        # 4. where you have been, you walk for free
+        self.wait_until(0.875)
+        token = glyph("@", 28, GOLD).move_to([cards[0][0].get_right()[0] - 0.2, cards[0][0].get_top()[1] + 0.22, 0])
+        self.play(FadeIn(token, scale=0.6), run_time=0.4)
+        walked = ways[0].copy().set_stroke(GOLD, 4)
+        free = self.text("walked: free", 19, GOLD).move_to([way_marks[0].get_x(), cards[0][0].get_top()[1] + 0.3, 0])
+        self.play(Create(walked), way_marks[0].animate.set_color(GOLD), FadeIn(free), run_time=0.6)
+        self.play(token.animate.move_to([cards[1][0].get_right()[0] - 0.2, cards[1][0].get_top()[1] + 0.22, 0]), run_time=1.2)
+        self.wait_until(0.94)
+        unknown = DashedLine(ways[2].get_start(), ways[2].get_end(), stroke_color=GRAY35, stroke_width=2)
+        cost = self.text("never taken: an act", 19, GRAY60).move_to([way_marks[2].get_x(), cards[0][0].get_top()[1] + 0.3, 0])
+        self.play(FadeOut(ways[2]), FadeIn(unknown), FadeIn(cost), run_time=0.5)
         self.fill_to_target()
 
 
