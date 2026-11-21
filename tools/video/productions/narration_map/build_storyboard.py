@@ -130,26 +130,26 @@ segments.append({"type": "montage", "fade": True, "min": 22.0, "shots": [
     shot("shop", 1415.5, 1419.5, zoom=MAP),
     shot("flee", 312.5, 316.5, zoom=MAP),
 ], "vo": [
-    "Proscribed Palimpsest has a new narration screen. The page of text with its clickable words is gone. "
-    "In its place, the place itself: a map you read, click and fill as you play.",
-    "What follows: why it changed, how it plays, and, since the rules now sit in plain sight, what each of "
-    "them is trying to do: what the minds are for, how a will finds its way, and what a crime should cost.",
+    "Proscribed Palimpsest has a new narration screen. The page of text with clickable words is gone. "
+    "Instead, you see the place itself: a map you read, click, and fill as you play.",
+    "This video shows why it changed, and how it plays. The rules are now easier to see, so it also looks "
+    "at what each rule is for: what the minds do, how a will finds its way, and what a crime costs.",
 ]})
 
 # ── 1. before, and why ────────────────────────────────────────────────────────
 
 game("old_farm", 457.39, 520.0, MANIM[("Principles", None)][0], zoom=None, fade=True, speed=2.0)
 game("old_farm", 811.89, 828.81,
-     "To act on the farmer, you clicked the word farmer, then chose what to do with it, then which mind "
-     "would do it. Three menus, though perhaps only one of them was a real choice: which mind. The new "
-     "screen keeps that one, and only that one.",
+     "To act on the farmer, you clicked the word farmer. Then you chose what to do. Then you chose which "
+     "mind would do it. Three menus, but only one was a real choice: which mind. The new screen keeps only "
+     "that one.",
      zoom=None)
 segments.append({"type": "manim", "scene": "Principles", "vo": [MANIM[("Principles", None)][1], WHY[("Principles", None)]],
                  "core": [0, 1]})
 game("farm", F.mark("arrival") - 10.0, F.mark("observe_person"),
-     "Here is the same farm, under the new screen. Every card is an area. The one lit is where we stand. "
-     "Lines are the ways between them. The header keeps our name and our noetic points, six of them, and "
-     "at the top, a single symbol: the way out.", fade=True)
+     "Here is the same farm on the new screen. Each card is an area. The lit card is where we stand. The "
+     "lines are the ways between areas. At the top, the header shows our name and our six noetic points. "
+     "And one symbol up there is the way out.", fade=True)
 
 # ── 2. reading the map ────────────────────────────────────────────────────────
 
@@ -160,19 +160,19 @@ manim("Legend", "tree")
 # ── 3. a visit, as a player ───────────────────────────────────────────────────
 
 game("farm", F.mark("observe_person"), F.click("CONTINUE", F.mark("observe_person")) + 1.5,
-     "Let's play. Under the Courtyard stands one person, still unknown. We click it, and the popup asks the "
-     "one question left in it: which mind will look. We pick Lullaby.",
+     "Let's play. In the Courtyard there is one person we don't know yet. We click it. The popup asks only "
+     "one thing: which mind will look. We pick Lullaby.",
      F.R(0),
-     W("Lullaby declined. Minds are meant to have tastes: a mind may say that nothing of that kind draws it. "
-       "That costs the point, and it hangs on the map as a crossed circle, with its words. But a thing can be "
-       "declined only once. A mind's taste may colour a visit, but it should not lock you out of it."),
+     W("Lullaby says no. Minds have tastes, and a mind can say this kind of thing does not interest it. That "
+       "still costs the point, and the refusal stays on the map as a crossed circle. But each thing can only "
+       "be refused once. A mind's taste can shape a visit, but it should not block you."),
      fade=True)
 game("farm", F.mark("observe_again"), F.click("CONTINUE", F.mark("observe_again")) + 2.0,
-     "We click again. Lullaby is greyed in the popup: it has had its say. And whoever we ask now must look. "
-     "Social Interaction.",
+     "We click again. Lullaby is now greyed out in the popup. Whichever mind we ask now has to look. We "
+     "pick Social Interaction.",
      F.R(1),
-     W("A butterfly. The symbol drops under the card and becomes the root of a tree, with the text beneath "
-       "it and a question mark: something to think about."))
+     W("It's a butterfly. The symbol moves under the card and becomes the root of a tree. The text is under "
+       "it, with a question mark: something to think about."))
 manim("Chain", "steps")
 manim("Functions")
 manim("Properties")
@@ -180,92 +180,92 @@ game("farm", F.mark("will_ratcatcher"), F.click("CONTINUE", F.mark("will_ratcatc
      "Now a will. Ratcatcher wants one thing: to catch vermin. We ask it to think about the butterfly.",
      F.R(4),
      F.R(5),
-     W("To Ratcatcher, a butterfly is small game. That is rather the charm of wills: they see the whole world through "
-       "one want. Its course here is a single act, catching it, which now waits under the tree. Hunt was "
-       "chosen to carry it out."))
+     W("To Ratcatcher, a butterfly is small game. That is the charm of a will: it sees the whole world "
+       "through one want. Here, its course is a single act: catch it. That act now waits under the tree. "
+       "Hunt was chosen to do it."))
 manim("Chain", "dice")
 game("farm", F.mark("observe_way"), F.click("CONTINUE", F.mark("observe_way")) + 1.5,
-     "Hover that act and the map tells you its dice and the sixes it needs. This one needs four sixes, and "
-     "the chain that made it casts three dice. It cannot succeed, so we leave it waiting. Instead, a way. "
-     "Each way has its own symbol, on its line: exploring is perhaps the one thing worth aiming exactly, so no "
-     "mind picks the way for you. We ask Heraldry to look at the way to the Chicken Coop.",
+     "Hover over that act, and the map shows its dice and the sixes it needs. It needs four sixes, but the "
+     "chain only gives three dice. It cannot succeed, so we leave it. Let's try a way instead. Each way has "
+     "its own symbol, on its line. You choose exactly where to explore. No mind picks the way for you. We "
+     "ask Heraldry to look at the way to the Chicken Coop.",
      F.R(6),
-     W("Declined again: one way, one decline."))
+     W("Another refusal. Each way can be refused once."))
 game("farm", F.mark("observe_way2"), F.click("CONTINUE", F.mark("observe_way2")) + 1.5,
-     "So the next mind must look. Childhood Memory.",
+     "So the next mind has to look. Childhood Memory.",
      F.R(7))
 game("farm", F.mark("think_way"), F.mark("act_move"),
-     "Ratcatcher again, on the way. Will it go in?",
+     "Ratcatcher again, about the way. Will it go in?",
      F.R(10),
      F.R(11),
-     W("It will. The coop is on its course, and an act a will proposes for its own course is something it "
-       "is eager for. A plain way is difficulty one; eager, nought. Following a will is meant to be easy: that is "
-       "what wills are for. And notice the header: that thought spent our last point."))
+     W("Yes. The coop is on its course, and a will is eager to follow its own course. A plain way normally "
+       "needs one six. Eager, it needs none. Following a will should be easy: that is what wills are for. "
+       "And look at the header: that thought used our last point."))
 game("farm", F.mark("act_move"), F.mark("coop"),
-     "With no points left we can still do what is already waiting: an empty pool should not be "
-     "a dead end. We click the act, and Execute. "
-     "Difficulty nought is not rolled.",
+     "With no points left, we can still do an act that is already waiting. An empty pool should not be a "
+     "dead end. We click the act. It needs no sixes, so there is no roll.",
      F.R(12),
-     W("Success, and the result box says so on its border, with what it came to, one line each. Look at the "
-       "header: a success refills the whole pool. Six points again. And going by a way for the first time "
-       "taught Wayfaring: from now on that way is known, and walking it is free."))
+     W("Success. The result box says so, and lists what happened, one line each. Look at the header: a "
+       "success refills all our points. Six again. And taking a way for the first time taught us Wayfaring. "
+       "From now on, this way is known, and walking it is free."))
 game("farm", F.mark("coop"), F.mark("coop_sloth"),
-     "In the coop, Ratcatcher is asked to look at the people. As a will, it only looks at what begins its "
-     "course, and nothing here does.",
+     "In the coop, we ask Ratcatcher to look at the people. A will only looks at the first step of its "
+     "course, and nothing here is one.",
      F.R(13),
-     A("Then Hunt. A will turning away is not the one decline a thing allows, so Hunt may still decline, "
-       "and does.", F.mark("coop_hunt")),
+     A("Then we ask Hunt. A will's refusal does not count as the one refusal a thing allows. So Hunt can "
+       "still refuse, and it does.", F.mark("coop_hunt")),
      F.R(14))
 game("farm", F.mark("coop_sloth"), F.mark("think_hen"),
-     "Third asking: now the mind must look. Sloth, a low-moral mind that observes and thinks.",
+     "Third try: now the mind has to look. Sloth is a low-moral mind that observes and thinks.",
      F.R(15))
 game("farm", F.mark("think_hen"), F.mark("coop_thing"),
-     "This may be the most telling moment of the run. Watch what a low moral level does. We ask Sloth to "
-     "think about the hen.",
+     "This may be the most telling moment of the run. Watch what low morals do. We ask Sloth to think about "
+     "the hen.",
      F.R(20),
-     A("Behind that thought, the game log says: Sloth is unscrupulous, offering only the two illegal goals "
-       "of seven. Striking a hen that is not wild is a crime: the bird is somebody's. Sloth chose to attack "
-       "it. Then the means: Diligence, a principled mind, refuses a crime before it is even offered.",
+     A("The game log explains it. Sloth is unscrupulous, so of the seven possible goals, it is only offered "
+       "the two illegal ones. Hitting a hen that is not wild is a crime: the bird belongs to someone. Sloth "
+       "chose to attack it. Then comes the choice of who does it. Diligence is a principled mind, so it "
+       "refuses the crime before it is even offered.",
        F.click("CONTINUE", F.mark("think_hen"))),
      F.R(21))
 manim("Morality")
 manim("Rules")
 game("farm", F.mark("coop_thing"), F.mark("party"),
-     "Two more observations. Gourmandise declines the things in the coop; Heraldry, asked next, must look, "
-     "and finds the nest box.",
+     "Two more looks. Gourmandise refuses the things in the coop. Heraldry, asked next, has to look, and "
+     "finds the nest box.",
      F.R(22), F.R(23),
-     W("That is the pool spent again. Nothing more for this member, until an act succeeds."))
+     W("Our points are gone again. This member can do nothing more until an act succeeds."))
 manim("Party")
 game("farm", F.mark("party"), F.mark("rag_think"),
-     "But a member is only one body. We click the other token: Raggedbrow, still in the Courtyard. "
-     "His own three points, his own minds, his own map, empty. The butterfly is known to him by name, "
-     "since the party has seen it, but he has not observed it. Caution declines; Curiosity looks.",
+     "But a member is only one body. We click the other token: Raggedbrow, still in the Courtyard. He has "
+     "his own three points, his own minds, and his own map, which is empty. He knows the butterfly's name, "
+     "because the party has seen it. But he has not observed it himself. Caution refuses. Curiosity looks.",
      F.R(24), F.R(25))
 game("farm", F.mark("rag_think"), F.mark("leave"),
      "Curiosity wants to examine it closely.",
      F.R(30),
-     A("And Digging, chosen to do it, refuses at once. A mind that does not observe will not stand and look: "
-       "a rule of choice, the game tells you why.", F.click("CONTINUE", F.mark("rag_think"))),
+     A("We pick Digging to do it, and it refuses at once. Digging does not observe, so it will not stand and "
+       "look. That is a rule of choice, and the game tells you why.", F.click("CONTINUE", F.mark("rag_think"))),
      F.R(31))
 game("farm", F.mark("leave"), F.mark("end"),
-     "Everybody is out of points, so we leave. Leave walks every member out, each from where it stands, by "
-     "the ways they know. Go Back is gone for the same reason: walking where you have already been should "
-     "hardly cost a thought.")
+     "Everybody is out of points, so we leave. Leave walks every member out, from where they stand, by the "
+     "ways they know. That is also why Go Back is gone: walking back where you have been should cost "
+     "nothing.")
 
 # ── 4. wills, more closely ────────────────────────────────────────────────────
 
 manim("Will", "course")
 manim("Will", "candidates")
 game("city", C.mark("arrival") - 8.0, C.mark("diligence_think"),
-     "A cobbler's shop, in the city. Five things, two people. We ask Petty Thief to look at a thing: as a "
-     "will, it goes straight to what begins its course.",
+     "A cobbler's shop, in the city. Five things, two people. We ask Petty Thief to look at a thing. As a "
+     "will, it goes straight to the first step of its course.",
      C.R(0), fade=True)
 game("city", C.mark("diligence_think"), C.mark("thief_think"),
-     "Diligence wants work: a job, a bench, stores to lay in. We ask it to think about the same rack.",
+     "Diligence wants work: a job, a bench, supplies to stock. We ask it to think about the same rack.",
      C.R(1),
-     W("No course to any of its wants exists here, so it declines, saying it would have to leave. "
-       "Diligence is also principled, so it would never have been offered the theft. Such a refusal is not "
-       "quite a dead end, it tells you what this mind is looking for."))
+     W("Nothing here leads to what it wants, so it refuses, and says it would have to leave. Diligence is "
+       "also principled, so it would never be offered the theft anyway. This kind of refusal is not really a "
+       "dead end. It tells you what this mind is looking for."))
 manim("Will", "leave")
 
 # ── 5. crime, discretion, getting out ─────────────────────────────────────────
@@ -273,64 +273,67 @@ manim("Will", "leave")
 game("city", C.mark("thief_think"), C.mark("steal"),
      "Petty Thief thinks about the rack.",
      C.R(4), C.R(5),
-     W("A theft, difficulty two. A will cannot refuse an act it wants, and an unscrupulous one cannot refuse "
-       "a crime. The cobbler is in the room, but Petty Thief is discreet, and a discreet mind may try."))
+     W("A theft, needing two sixes. A will cannot refuse what it wants, and a low-moral mind cannot refuse a "
+       "crime. The cobbler is in the room. But Petty Thief is discreet, and a discreet mind may try."))
 manim("Proximity", "raw")
 game("city", C.mark("steal"), C.mark("caught"),
-     "Execute. Three dice, one six. It fails.",
+     "We do it. Three dice, one six. It fails.",
      C.R(6),
-     W("And in the same room, a failure is seen. Caught red-handed. This is where a crime is meant to bite."))
+     W("In the same room, a failure is seen. We are caught red-handed. This is where a crime should hurt."))
 manim("Proximity", "effective")
 game("city", C.mark("caught"), C.click("footer button") + 25.0,
-     "A confrontation is a conversation, and losing it is a fight.",
+     "Being caught starts a conversation. Losing it starts a fight.",
      C.R(7),
-     A("We answer. Every reply on offer is written by one of our minds, its name before it. Diligence "
+     A("We answer. Each reply on offer is written by one of our minds, with its name in front. Diligence "
        "denies it.", C.events_t("model-busy", 674.2)),
      C.R(10),
      C.R(11),
-     A("Social Interaction answers next.", C.click("CONTINUE", 830.0)),
+     A("Then Social Interaction answers.", C.click("CONTINUE", 830.0)),
      C.R(14),
      C.R(15),
      C.R(18),
-     A("That reply is a check. Five dice: the levels of the minds that spoke, our looks, our coat. Four sixes "
-       "needed, and one comes up. We spend a humor, and a die turns to six: two. Not enough.",
+     A("That reply is a check. We roll five dice, from the minds that spoke, our looks, and our coat. We "
+       "need four sixes, and get one. We spend a humor to turn a die into a six. That makes two. Not "
+       "enough.",
        C.click("humor hepar") - 12.0),
      C.R(19),
-     W("The conversation is lost, and the cobbler fights. On the map, the exit now reads Runaway."), speed=1.5)
+     W("We lose the conversation, and the cobbler attacks. On the map, the exit now says Runaway."), speed=1.5)
 manim("Wages")
 game("shop", S.mark("steal") - 3.0, S.mark("speak"),
      "Same shop, another try. This time Sloth thought of the theft, and Petty Thief was chosen to do it. "
-     "Same dice, five, six, four, but this time we turn one with a humor: success, a shoe last in the pack, "
-     "and the pool refilled.", S.R(7), fade=True)
+     "The dice are the same, five, six, four. But this time we use a humor to turn one into a six. Success: "
+     "a shoe last goes in the pack, and our points refill.", S.R(7), fade=True)
 game("shop", S.mark("speak"), S.mark("rag_think"),
-     "Under the rack, a quotation mark: speak of it. Social Interaction tells Raggedbrow, standing nearby.",
+     "Under the rack there is a quotation mark: tell someone about it. Social Interaction tells Raggedbrow, "
+     "who is standing nearby.",
      S.R(8, text=S.text(8).replace("Helen", "Raggedbrow")),
-     W("It cost us a point. Switch to Raggedbrow, and the rack is on his map, observed, with our words as "
-       "his observation."))
+     W("That cost us a point. Switch to Raggedbrow, and the rack is on his map, already observed, with our "
+       "words as his description."))
 game("shop", S.mark("observe_cobbler"), S.mark("attack_refused"),
-     "Back to us. We observe the cobbler, and ask Sloth about him.",
+     "Back to us. We look at the cobbler, and ask Sloth about him.",
      S.R(15), S.R(20), S.R(21),
-     W("Only crimes again, and this time an assault, with Vigor as the means. Vigor is not discreet."))
+     W("Only crimes again. This time it is an assault, and Vigor is chosen to do it. Vigor is not discreet."))
 game("shop", S.mark("attack_refused"), S.mark("reconsider"),
-     "Execute.",
+     "We do it.",
      S.R(22),
-     W("A rule of action. The cobbler is in the room, and an ordinary mind is refused. The act was chosen, "
-       "so the refusal costs a point, and the act stays, waiting."))
+     W("A rule of action stops it. The cobbler is in the room, and an ordinary mind is refused. We chose "
+       "this act, so the refusal costs a point, and the act keeps waiting."))
 game("shop", S.mark("reconsider"), S.mark("leave"),
-     "Reconsider asks a thinking mind to look at the act again. Holding to it, it hands the act to another "
-     "acting mind, one no rule would refuse here: a discreet one.",
+     "Reconsider asks a thinking mind to look at the act again. It keeps the goal, but gives the act to a "
+     "different mind, one that no rule refuses here: a discreet one.",
      S.R(27), S.R(28),
-     W("The old act is kept, struck through, and the new one waits: Petty Thief, difficulty one. A swing at "
-       "him would start a fight, so we leave it there."))
+     W("The old act stays, crossed out, and the new one waits: Petty Thief, needing one six. Hitting him "
+       "would start a fight, so we leave it there."))
 manim("Confronted", "closed")
 game("flee", X.mark("confronted") - 12.0, X.mark("think_enemy"),
-     "To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the "
-     "cobbler is a skull, already on our map. Confronted, he is all we may look at or think about.",
+     "To show the rest, a debug option makes everyone treat us as an enemy. We walk into the shop. The "
+     "cobbler is a skull, already on our map. While he confronts us, he is the only thing we can look at or "
+     "think about.",
      fade=True)
 game("flee", X.mark("runaway"), X.mark("end"),
-     "The exit reads Runaway. The feet's dice: two of them, one six needed, and a five and a six. We are "
-     "out. Raggedbrow is not: he stands in the same shop, but the cobbler's quarrel is with us, not with "
-     "him. Nothing confronts him, and his exit reads Leave.")
+     "The exit says Runaway. We roll the feet's two dice and need one six. A five and a six. We are out. "
+     "Raggedbrow is still in the shop, but the cobbler's problem is with us, not him. Nothing stops him, so "
+     "his exit says Leave.")
 manim("Confronted", "exit")
 
 # ── closing ───────────────────────────────────────────────────────────────────
@@ -342,9 +345,10 @@ segments.append({"type": "montage", "fade": True, "min": 20.0, "shots": [
     shot("shop", 1715.0, 1719.0, zoom=MAP),
     shot("flee", 300.0, 304.0, zoom=MAP),
 ], "vo": [
-    "That is narration on the map. The rules underneath did not change: the minds, the dice, the wills and "
-    "the crimes are as they were. What changed is that you can see them, and see what your minds made of "
-    "a place. Hopefully it makes their choices, and yours, a little easier to read. Thank you for playing.",
+    "That is narration on the map. The rules underneath did not change. The minds, the dice, the wills and "
+    "the crimes are the same. What changed is that you can see them, and see what your minds did in a "
+    "place. Hopefully, that makes their choices, and yours, a little easier to follow. Thank you for "
+    "playing.",
 ]})
 
 # ── the short cut ─────────────────────────────────────────────────────────────
@@ -370,21 +374,21 @@ def first_says(text):
 
 short = [
     pick("Proscribed Palimpsest has a new", lambda vo: [vo[0],
-         "What follows: why it changed, and what the rules underneath it are trying to do: what a mind is, "
-         "how a will finds its way, and what a crime should cost."]),
+         "This video shows why it changed, and what the rules underneath are for: what a mind is, how a "
+         "will finds its way, and what a crime costs."]),
     pick("The old screen had its charm"),
     pick("Now the place is the page"),
-    pick("So which mind is asked what?"),
+    pick("So which mind does what?"),
     pick("Now a will.", first_says(
-         "Here is the farm, played. Every mind is chosen by hand, and some minds are wills. Ratcatcher wants "
-         "one thing: to catch vermin. We ask it to think about a butterfly.")),
-    pick("And when no course exists"),
+         "Here is the farm, being played. You choose a mind for each step, and some minds are wills. "
+         "Ratcatcher wants one thing: to catch vermin. We ask it to think about a butterfly.")),
+    pick("And when the place offers no course"),
     pick("This may be the most telling moment", first_says(
          "Now a mind with low morals: Sloth. We ask it to think about a hen.")),
     pick("Petty Thief thinks about the rack.", first_says(
          "A cobbler's shop, in the city. Petty Thief, a will to steal, thinks about a rack of shoes.")),
-    pick("Execute. Three dice, one six."),
-    pick("A confrontation is a conversation"),
+    pick("We do it. Three dice, one six."),
+    pick("Being caught starts a conversation"),
     pick("That is narration on the map."),
 ]
 

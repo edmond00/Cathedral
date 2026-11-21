@@ -150,8 +150,8 @@
     }
    ],
    "vo": [
-    "Proscribed Palimpsest has a new narration screen. The page of text with its clickable words is gone. In its place, the place itself: a map you read, click and fill as you play.",
-    "What follows: why it changed, how it plays, and, since the rules now sit in plain sight, what each of them is trying to do: what the minds are for, how a will finds its way, and what a crime should cost."
+    "Proscribed Palimpsest has a new narration screen. The page of text with clickable words is gone. Instead, you see the place itself: a map you read, click, and fill as you play.",
+    "This video shows why it changed, and how it plays. The rules are now easier to see, so it also looks at what each rule is for: what the minds do, how a will finds its way, and what a crime costs."
    ]
   },
   {
@@ -161,7 +161,7 @@
    "to": 520.0,
    "fade": true,
    "vo": [
-    "The old screen had its charm. Arriving at a place, a mind wrote a paragraph about it, some words in it lit up, and you clicked a word to look closer. It read a little like a book. But a book is perhaps a poor place to stand in. You could not quite see where things were, nor tell what a word would lead to, and what you read scrolled away, often just when it was needed again."
+    "The old screen had its charm. When you arrived somewhere, a mind wrote a paragraph about it. Some words lit up, and you clicked a word to look closer. It read a bit like a book. But a book is not a good place to stand in. You could not see where things were. You could not tell where a word would lead. And the text scrolled away, often just when you needed it again."
    ],
    "speed": 2.0
   },
@@ -172,15 +172,15 @@
    "to": 828.81,
    "fade": false,
    "vo": [
-    "To act on the farmer, you clicked the word farmer, then chose what to do with it, then which mind would do it. Three menus, though perhaps only one of them was a real choice: which mind. The new screen keeps that one, and only that one."
+    "To act on the farmer, you clicked the word farmer. Then you chose what to do. Then you chose which mind would do it. Three menus, but only one was a real choice: which mind. The new screen keeps only that one."
    ]
   },
   {
    "type": "manim",
    "scene": "Principles",
    "vo": [
-    "Now the place is the page. Every area is a card, every way a line between them, and under each card stands a row of symbols: what there is to look at. Think of it as a mind map of the place, and the visit grows on it. You click one symbol, one thing, and the mind you choose looks at it. The symbol drops under its card and becomes a root, with the text the mind wrote. Think about it, and a branch grows: what the mind wants, and the act it proposes, waiting, with the sixes it needs. Carry it out, and the branch ends in what it came to, and what it stirred. The old page scrolled away as you read it. Here nothing does: every text stays where it grew, and as the visit goes on, trees fill the map, the whole visit readable at a glance. And where you have been, you walk again for free. A way not yet taken is an act like any other.",
-    "That is more or less the whole idea: a screen that looks like what happens underneath, minds at work on a place, leaving their marks where they worked. By the end of a visit, the map should read almost like an account of what happened there."
+    "Now the place is the page. Each area is a card, and each way is a line between two cards. Under each card is a row of symbols: the things you can look at. Think of it as a mind map of the place. The visit grows on it. You click one symbol, and the mind you choose looks at that thing. The symbol moves under its card and becomes a root, with the text the mind wrote. Think about it, and a branch grows. It shows what the mind wants, and the act it proposes, with the sixes it needs. Do the act, and the branch ends with the result, and how it made you feel. The old page scrolled away as you read. Here nothing does. Every text stays where it grew. As the visit goes on, trees fill the map, and you can read the whole visit at a glance. Walking back where you have been is free. A way you have never taken is an act, like any other.",
+    "That is the whole idea. The screen should look like what happens underneath: minds working on a place, and leaving marks where they worked. At the end of a visit, the map should tell you what happened there."
    ],
    "core": [
     0,
@@ -201,15 +201,15 @@
     ]
    },
    "vo": [
-    "Here is the same farm, under the new screen. Every card is an area. The one lit is where we stand. Lines are the ways between them. The header keeps our name and our noetic points, six of them, and at the top, a single symbol: the way out."
+    "Here is the same farm on the new screen. Each card is an area. The lit card is where we stand. The lines are the ways between areas. At the top, the header shows our name and our six noetic points. And one symbol up there is the way out."
    ]
   },
   {
    "type": "manim",
    "scene": "Legend",
    "vo": [
-    "Every card on the map is an area, and under its name stands a row of symbols, one per thing in it, in four kinds. An arch is a way: a neighbouring area, a door, a stair, a path or a climb. A face is a person, or any creature that does not count you an enemy. A skull is one that does. A diamond is any other thing: a cart, a bush, a chest, a corpse. And a hollow diamond is something a container was seen to hold.",
-    "Only four kinds, and that is deliberate. A symbol is meant to say what a click will look at, not what will be found. Finding out stays the mind's work."
+    "Each card is an area. Under its name is a row of symbols, one for each thing in it. There are four kinds. An arch is a way out: a neighbouring area, a door, a stair, a path or a climb. A face is a person, or any creature that is not your enemy. A skull is an enemy. A diamond is any other thing: a cart, a bush, a chest, a body. A hollow diamond is something seen inside a container.",
+    "Only four kinds, on purpose. A symbol tells you what a click will look at, not what you will find. Finding out is still the mind's job."
    ],
    "core": [
     0,
@@ -223,8 +223,8 @@
    "type": "manim",
    "scene": "Legend",
    "vo": [
-    "Everything in a place stands in one of three states, for each member of the party. Unknown: all you have is its kind and where it stands. You click the kind, and the mind you choose picks which one to look at. Known: remembered from an earlier visit, or seen inside a container. It has a name, and a click looks at that one. Observed: looked at on this visit. Only what is observed can be thought about, and it becomes the root of a tree.",
-    "That last rule may be the important one. It is hard to plan around something nobody has looked at, so every tree starts with a mind paying attention, and paying for it."
+    "Each thing in a place is in one of three states, for each member of the party. Unknown: you only know its kind and where it is. You click the kind, and the mind you choose picks which one to look at. Known: you remember it from an earlier visit, or saw it inside a container. It has a name, and a click looks at that one. Observed: you looked at it on this visit. You can only think about what you observed, and it becomes the root of a tree.",
+    "That last rule may be the most important. You cannot plan around something nobody has looked at. So every tree starts with a mind paying attention, and paying for it."
    ],
    "core": [
     0,
@@ -238,8 +238,8 @@
    "type": "manim",
    "scene": "Legend",
    "vo": [
-    "A tree is everything the visit wrote about one thing, where it grew. The root, and under it the text the observing mind wrote. A question mark, to think about it, while it still affords something. The thought, and the act it produced, waiting, with the number of sixes it needs. Click it whenever you like. Then the outcome: a tick, or a cross, and what the act stirred. A refusal, from any mind, for any reason, is a crossed circle. And a quotation mark is a thing spoken of to a companion. Hover any node to read its text again.",
-    "Nothing in a tree is meant as decoration. Every node is something that happened, and it stays there, for as long as you remain in the place."
+    "A tree holds everything the visit wrote about one thing. First the root, and under it the text the observing mind wrote. Then a question mark, to think about it, as long as there is something to do with it. Then the thought, and the act it proposed, with the number of sixes it needs. You can click it whenever you like. Then the result: a tick or a cross, and how it made you feel. A refusal, from any mind, for any reason, is a crossed circle. A quotation mark is something told to a companion. Hover over any node to read its text again.",
+    "Nothing in a tree is decoration. Every node is something that happened. And it stays there as long as you are in the place."
    ],
    "core": [
     0,
@@ -263,14 +263,14 @@
     ]
    },
    "vo": [
-    "Let's play. Under the Courtyard stands one person, still unknown. We click it, and the popup asks the one question left in it: which mind will look. We pick Lullaby.",
+    "Let's play. In the Courtyard there is one person we don't know yet. We click it. The popup asks only one thing: which mind will look. We pick Lullaby.",
     {
      "text": "I pass by fields where the corn whispers secrets to the wind, my voice a gentle hum that soothes the beating hearts of these gentle creatures. Nothing here draws my attention, only the soft, steady beat of the world around me.",
      "style": "reading",
      "at": 109.0
     },
     {
-     "text": "Lullaby declined. Minds are meant to have tastes: a mind may say that nothing of that kind draws it. That costs the point, and it hangs on the map as a crossed circle, with its words. But a thing can be declined only once. A mind's taste may colour a visit, but it should not lock you out of it.",
+     "text": "Lullaby says no. Minds have tastes, and a mind can say this kind of thing does not interest it. That still costs the point, and the refusal stays on the map as a crossed circle. But each thing can only be refused once. A mind's taste can shape a visit, but it should not block you.",
      "wait": true
     }
    ]
@@ -289,14 +289,14 @@
     ]
    },
    "vo": [
-    "We click again. Lullaby is greyed in the popup: it has had its say. And whoever we ask now must look. Social Interaction.",
+    "We click again. Lullaby is now greyed out in the popup. Whichever mind we ask now has to look. We pick Social Interaction.",
     {
      "text": "I find my gaze drawn to a butterfly, a broad-winged chalk-blue one, lifting away effortlessly on the warm breeze.",
      "style": "reading",
      "at": 259.9
     },
     {
-     "text": "A butterfly. The symbol drops under the card and becomes the root of a tree, with the text beneath it and a question mark: something to think about.",
+     "text": "It's a butterfly. The symbol moves under the card and becomes the root of a tree. The text is under it, with a question mark: something to think about.",
      "wait": true
     }
    ]
@@ -305,9 +305,9 @@
    "type": "manim",
    "scene": "Chain",
    "vo": [
-    "Under the map, the rules of an act did not change. An act still takes three minds. An observing mind looks: you must stand in the area, and it costs a noetic point. A thinking mind wants something: it can think from anywhere in the place, and it costs a point. An acting mind carries it out: the body walks there first, and attempting it costs nothing more.",
-    "Your noetic points are the encephalon's measure. A success refills the whole pool, there and then. A failure refills nothing. And with no points left you can still walk where you know the way, carry out the acts already waiting, and leave.",
-    "Those costs are what set the pace. Looking and thinking are where attention goes, so they cost something. And a success refills everything as a way of favouring doing over pondering: a visit that goes well tends to keep going, one that goes badly slowly runs out of breath."
+    "The rules of an act did not change. An act still takes three minds. One mind looks. You must be in the area, and it costs one noetic point. One mind thinks, and decides what it wants. It can think from anywhere in the place, and it costs one point. One mind acts. The body walks there first, and the act itself costs nothing more.",
+    "Your noetic points come from your brain. A success refills all of them, right away. A failure refills nothing. With no points left, you can still walk where you know the way, do the acts already waiting, and leave.",
+    "These costs set the pace. Looking and thinking take attention, so they cost something. A success refills everything, to reward doing over thinking. A visit that goes well keeps going. One that goes badly slowly runs out of breath."
    ],
    "core": [
     0,
@@ -321,9 +321,9 @@
    "type": "manim",
    "scene": "Functions",
    "vo": [
-    "So which mind is asked what? Every mind bears one to three functions, out of eight. It observes, it thinks, it acts, it speaks, it fights, it feels, it wants, or it knows a trade. Thinking and action are never in the same mind, and neither are action and emotion: to want a thing, to do it and to be moved by it are three minds, not one.",
-    "The will is the one to understand. A will does not weigh options. It wants a few kinds of act, and it observes and thinks only toward them.",
-    "This split tries to mimic how a mind might work. The part of you that wants a drink is maybe not the part that pours it, nor the part that feels bad about it later. Here, each of those is a mind, and the one you listen to is up to you."
+    "So which mind does what? Each mind has one to three functions, out of eight. It can observe, think, act, speak, fight, feel, want, or know a trade. No mind both thinks and acts. No mind both acts and feels. Wanting something, doing it, and being moved by it are three minds, not one.",
+    "The will is the one to understand. A will does not weigh options. It wants a few kinds of act, and it only looks and thinks in that direction.",
+    "This split tries to copy how a mind might work. The part of you that wants a drink may not be the part that pours it. And neither is the part that feels bad about it later. Here, each of those is a mind, and you choose which one to listen to."
    ],
    "core": [
     0,
@@ -334,9 +334,9 @@
    "type": "manim",
    "scene": "Properties",
    "vo": [
-    "Besides its functions, a mind declares a handful of properties, and each of them changes how it behaves on the map. Here are three real ones: Beast Sense, which looks and thinks; Petty Thief, a will to steal that acts; and Diligence, a will to work that speaks and acts.",
-    "Its sources, one region or two organs, set the ceiling its level can reach, and a wound lowers it. Its memory type says where it can be filed. Its moral level, low, medium or high, only matters when it thinks or acts. Its readiness to doubt says how many second thoughts it gets. And a discreet mind may act with someone in the room, and is not heard through a wall.",
-    "None of these is really a number to push up. They are there so that two minds, facing the same thing, might behave differently, and so that you can tell why."
+    "Each mind also has a few properties, and each one changes how it behaves on the map. Here are three real minds. Beast Sense looks and thinks. Petty Thief is a will to steal, and it acts. Diligence is a will to work, and it speaks and acts.",
+    "Its sources, a body region or two organs, set how high its level can go. A wound lowers it. Its memory type says where it can be stored. Its moral level, low, medium or high, only matters when it thinks or acts. Its doubt says how many second thoughts it gets. And a discreet mind can act with someone in the room, and is not heard through a wall.",
+    "None of these is really a number to raise. They are there so that two minds can act differently with the same thing, and so you can see why."
    ],
    "core": [
     0,
@@ -369,7 +369,7 @@
      "at": 524.1
     },
     {
-     "text": "To Ratcatcher, a butterfly is small game. That is rather the charm of wills: they see the whole world through one want. Its course here is a single act, catching it, which now waits under the tree. Hunt was chosen to carry it out.",
+     "text": "To Ratcatcher, a butterfly is small game. That is the charm of a will: it sees the whole world through one want. Here, its course is a single act: catch it. That act now waits under the tree. Hunt was chosen to do it.",
      "wait": true
     }
    ]
@@ -378,8 +378,8 @@
    "type": "manim",
    "scene": "Chain",
    "vo": [
-    "The dice are the sum of the levels of every mind in the chain, the one that looked, the one that thought and the one that acts, and the level of a tool, if you combine one. The difficulty is the number of sixes needed. An eager mind needs one six fewer, a reluctant one, one more. An act harder than its pool cannot succeed, and an act of difficulty nought is not rolled at all.",
-    "The pool being the chain is perhaps the point. A good roll should come from matching the right mind to each step, rather than from one strong number."
+    "You roll one die for each level of each mind in the chain: the one that looked, the one that thought, and the one that acts. A tool adds its own level. The difficulty is how many sixes you need. An eager mind needs one six less. A reluctant mind needs one more. If you need more sixes than you have dice, the act cannot succeed. And an act of difficulty zero needs no roll.",
+    "That may be the point of the chain. A good roll should come from picking the right mind for each step, not from one big number."
    ],
    "core": [
     0,
@@ -403,14 +403,14 @@
     ]
    },
    "vo": [
-    "Hover that act and the map tells you its dice and the sixes it needs. This one needs four sixes, and the chain that made it casts three dice. It cannot succeed, so we leave it waiting. Instead, a way. Each way has its own symbol, on its line: exploring is perhaps the one thing worth aiming exactly, so no mind picks the way for you. We ask Heraldry to look at the way to the Chicken Coop.",
+    "Hover over that act, and the map shows its dice and the sixes it needs. It needs four sixes, but the chain only gives three dice. It cannot succeed, so we leave it. Let's try a way instead. Each way has its own symbol, on its line. You choose exactly where to explore. No mind picks the way for you. We ask Heraldry to look at the way to the Chicken Coop.",
     {
      "text": "I behold no need for a chicken coop here, and my eye wanders to other matters.",
      "style": "reading",
      "at": 749.3
     },
     {
-     "text": "Declined again: one way, one decline.",
+     "text": "Another refusal. Each way can be refused once.",
      "wait": true
     }
    ]
@@ -429,7 +429,7 @@
     ]
    },
    "vo": [
-    "So the next mind must look. Childhood Memory.",
+    "So the next mind has to look. Childhood Memory.",
     {
      "text": "I recall my childhood barn, where the smell of damp hay and hay bales was just as strong. Now, here is this cramped coop filled with chickens, their feathers wet from dewy mornings.",
      "style": "reading",
@@ -451,7 +451,7 @@
     ]
    },
    "vo": [
-    "Ratcatcher again, on the way. Will it go in?",
+    "Ratcatcher again, about the way. Will it go in?",
     {
      "text": "I notice the coop is crowded with damp feathers and droppings, a clear sign of vermin. To catch them, I must step into the coop and then the courtyard, using trapping and stalking as a small game hunter.",
      "style": "reading",
@@ -463,7 +463,7 @@
      "at": 1076.8
     },
     {
-     "text": "It will. The coop is on its course, and an act a will proposes for its own course is something it is eager for. A plain way is difficulty one; eager, nought. Following a will is meant to be easy: that is what wills are for. And notice the header: that thought spent our last point.",
+     "text": "Yes. The coop is on its course, and a will is eager to follow its own course. A plain way normally needs one six. Eager, it needs none. Following a will should be easy: that is what wills are for. And look at the header: that thought used our last point.",
      "wait": true
     }
    ]
@@ -482,14 +482,14 @@
     ]
    },
    "vo": [
-    "With no points left we can still do what is already waiting: an empty pool should not be a dead end. We click the act, and Execute. Difficulty nought is not rolled.",
+    "With no points left, we can still do an act that is already waiting. An empty pool should not be a dead end. We click the act. It needs no sixes, so there is no roll.",
     {
      "text": "I found my path, stepped into the coop, and learned the way between the rows of chickens.",
      "style": "reading",
      "at": 1121.3
     },
     {
-     "text": "Success, and the result box says so on its border, with what it came to, one line each. Look at the header: a success refills the whole pool. Six points again. And going by a way for the first time taught Wayfaring: from now on that way is known, and walking it is free.",
+     "text": "Success. The result box says so, and lists what happened, one line each. Look at the header: a success refills all our points. Six again. And taking a way for the first time taught us Wayfaring. From now on, this way is known, and walking it is free.",
      "wait": true
     }
    ]
@@ -508,14 +508,14 @@
     ]
    },
    "vo": [
-    "In the coop, Ratcatcher is asked to look at the people. As a will, it only looks at what begins its course, and nothing here does.",
+    "In the coop, we ask Ratcatcher to look at the people. A will only looks at the first step of its course, and nothing here is one.",
     {
      "text": "I see no sign of life here, just the usual pests and vermin. To catch what I want, I must remain hidden and observe, like an unseen hunter in the upturned cart.",
      "style": "reading",
      "at": 1210.7
     },
     {
-     "text": "Then Hunt. A will turning away is not the one decline a thing allows, so Hunt may still decline, and does.",
+     "text": "Then we ask Hunt. A will's refusal does not count as the one refusal a thing allows. So Hunt can still refuse, and it does.",
      "at": 1311.82
     },
     {
@@ -539,7 +539,7 @@
     ]
    },
    "vo": [
-    "Third asking: now the mind must look. Sloth, a low-moral mind that observes and thinks.",
+    "Third try: now the mind has to look. Sloth is a low-moral mind that observes and thinks.",
     {
      "text": "I catch a glimpse of a small russet hen, clucking and scratching in the dirt, her presence heavy with the weight of the day.",
      "style": "reading",
@@ -561,14 +561,14 @@
     ]
    },
    "vo": [
-    "This may be the most telling moment of the run. Watch what a low moral level does. We ask Sloth to think about the hen.",
+    "This may be the most telling moment of the run. Watch what low morals do. We ask Sloth to think about the hen.",
     {
      "text": "I notice a small russet hen, clucking and scratching in the dirt. Tomorrow, perhaps, when the sun is lower, I will rely on the steady finishing of what was begun.",
      "style": "reading",
      "at": 1561.4
     },
     {
-     "text": "Behind that thought, the game log says: Sloth is unscrupulous, offering only the two illegal goals of seven. Striking a hen that is not wild is a crime: the bird is somebody's. Sloth chose to attack it. Then the means: Diligence, a principled mind, refuses a crime before it is even offered.",
+     "text": "The game log explains it. Sloth is unscrupulous, so of the seven possible goals, it is only offered the two illegal ones. Hitting a hen that is not wild is a crime: the bird belongs to someone. Sloth chose to attack it. Then comes the choice of who does it. Diligence is a principled mind, so it refuses the crime before it is even offered.",
      "at": 1645.05
     },
     {
@@ -582,8 +582,8 @@
    "type": "manim",
    "scene": "Morality",
    "vo": [
-    "Morality is read twice, because the goal and the means are two decisions. A high thinking mind is never offered a crime. A high acting mind refuses a crime unasked, before it is even offered. A low thinking mind, when a crime is on offer, is offered only crimes, and must choose one. And a low acting mind cannot refuse a crime at all. Which is why a scrupulous hand can still be chosen to carry out what a low mind decided.",
-    "The idea is that morality belongs to the minds, not to the character. A character has no alignment as such. It has a scrupulous mind and a greedy one, and which one is heard, at which step, is a choice."
+    "Morality is checked twice, because choosing a goal and choosing who does it are two decisions. A high-moral thinking mind is never offered a crime. A high-moral acting mind refuses a crime before it is even offered. A low-moral thinking mind, when a crime is possible, is offered only crimes, and must pick one. And a low-moral acting mind cannot refuse a crime at all. So an honest hand can still be chosen to carry out what a low mind decided.",
+    "The idea is that morality belongs to the minds, not to the character. Your character has no alignment. It has an honest mind and a greedy one. Which one you listen to, at which step, is your choice."
    ],
    "core": [
     0,
@@ -594,8 +594,8 @@
    "type": "manim",
    "scene": "Rules",
    "vo": [
-    "Two families of rule stand between you and an act. Rules of action judge an act already chosen: they reject it, in the acting mind's own voice, and it costs a point. That man is watching. That door needs a key. My arm is ruined. Rules of choice narrow what is offered in the first place: they withhold silently, and cost nothing. A principled mind is never offered a crime. A speaking mind turns to people. It simply never occurred to it.",
-    "The difference is meant to matter. A refusal at the moment of acting is the world pushing back, so it seems fair that it costs. A thing that never crosses a mind is simply who that mind is, and it would be odd to pay for it."
+    "Two kinds of rule can stop an act. Rules of action judge an act you already chose. They refuse it, in the acting mind's own voice, and that costs a point. That man is watching. That door needs a key. My arm is ruined. Rules of choice decide what is offered at all. They hide options silently, and cost nothing. A principled mind is never offered a crime. A speaking mind turns to people. The idea simply never occurs to it.",
+    "The difference matters. A refusal when you act is the world pushing back, so it seems fair that it costs. Something that never crosses a mind is just who that mind is. It would be strange to pay for that."
    ],
    "core": [
     0,
@@ -616,7 +616,7 @@
     ]
    },
    "vo": [
-    "Two more observations. Gourmandise declines the things in the coop; Heraldry, asked next, must look, and finds the nest box.",
+    "Two more looks. Gourmandise refuses the things in the coop. Heraldry, asked next, has to look, and finds the nest box.",
     {
      "text": "I don't see anything here that promises a good meal.",
      "style": "reading",
@@ -628,7 +628,7 @@
      "at": 1813.9
     },
     {
-     "text": "That is the pool spent again. Nothing more for this member, until an act succeeds.",
+     "text": "Our points are gone again. This member can do nothing more until an act succeeds.",
      "wait": true
     }
    ]
@@ -637,8 +637,8 @@
    "type": "manim",
    "scene": "Party",
    "vo": [
-    "The party changed the most. Each member is now its own body in the place. It stands where it was last taken, spends its own points, uses its own minds, and keeps its own trees. Click a token to switch member, for free. A member with a speaking mind can speak of something it observed to a companion nearby: that costs the speaker a point, and plants it on the listener's map, already observed. A beast is offered no conversation, no lock, no tool and no letters, and a fight takes only those standing where it breaks out.",
-    "This is probably the deepest change. Companions used to be something like extra minds for the protagonist. Now they are people standing somewhere else, and splitting the party becomes a real decision."
+    "The party changed the most. Each member is now a separate body in the place. It stays where you last took it. It spends its own points, uses its own minds, and keeps its own trees. Click a token to switch member, for free. A member with a speaking mind can tell a nearby companion about something it observed. That costs the speaker a point, and puts that thing on the listener's map, already observed. A beast gets no conversation, no lock, no tool and no letters. And a fight only involves the members standing where it starts.",
+    "This is probably the biggest change. Companions used to be like extra minds for the hero. Now they are people standing somewhere else. Splitting the party becomes a real decision."
    ],
    "core": [
     0,
@@ -659,7 +659,7 @@
     ]
    },
    "vo": [
-    "But a member is only one body. We click the other token: Raggedbrow, still in the Courtyard. His own three points, his own minds, his own map, empty. The butterfly is known to him by name, since the party has seen it, but he has not observed it. Caution declines; Curiosity looks.",
+    "But a member is only one body. We click the other token: Raggedbrow, still in the Courtyard. He has his own three points, his own minds, and his own map, which is empty. He knows the butterfly's name, because the party has seen it. But he has not observed it himself. Caution refuses. Curiosity looks.",
     {
      "text": "I am not drawn to the butterfly, and I pause to note the slight wrongness that persists.",
      "style": "reading",
@@ -693,7 +693,7 @@
      "at": 2093.9
     },
     {
-     "text": "And Digging, chosen to do it, refuses at once. A mind that does not observe will not stand and look: a rule of choice, the game tells you why.",
+     "text": "We pick Digging to do it, and it refuses at once. Digging does not observe, so it will not stand and look. That is a rule of choice, and the game tells you why.",
      "at": 2205.06
     },
     {
@@ -717,15 +717,15 @@
     ]
    },
    "vo": [
-    "Everybody is out of points, so we leave. Leave walks every member out, each from where it stands, by the ways they know. Go Back is gone for the same reason: walking where you have already been should hardly cost a thought."
+    "Everybody is out of points, so we leave. Leave walks every member out, from where they stand, by the ways they know. That is also why Go Back is gone: walking back where you have been should cost nothing."
    ]
   },
   {
    "type": "manim",
    "scene": "Will",
    "vo": [
-    "Take Petty Thief. It wants one thing: to steal. The game reckons its course, the shortest chain of acts from where you stand to a theft: open the shop door, walk to the shelf, steal. Asked to look, it looks only at what begins that course, and asked about anything else it declines, naming the first step. That refusal is a rule of its nature, and costs nothing. And when it does the act it wants, it is eager: one six fewer, and it never refuses.",
-    "A will is single-minded because a want perhaps is. It does not weigh options; it sees what leads to it, and the rest is noise. Which makes a will a rather poor observer, and possibly a very good guide."
+    "Take Petty Thief. It wants one thing: to steal. The game works out its course. That is the shortest chain of acts from here to a theft: open the shop door, walk to the shelf, steal. Asked to look, it only looks at the first step of that course. Asked about anything else, it says no, and names the first step. That refusal is part of its nature, and costs nothing. And when it does what it wants, it is eager: it needs one six less, and it never refuses.",
+    "A will is single-minded because a want probably is. It does not compare options. It sees what leads to what it wants, and ignores the rest. That makes a will a poor observer, but maybe a very good guide."
    ],
    "core": [
     0,
@@ -739,7 +739,7 @@
    "type": "manim",
    "scene": "Will",
    "vo": [
-    "Thinking, a will is less strict. Any act that begins a course of at most three acts is a candidate. Of those, it proposes the shortest, and a second thought takes the next. A course longer than that is not considered, unless it is the shortest the place offers."
+    "When it thinks, a will is less strict. Any act that starts a course of three acts or fewer is a candidate. It proposes the shortest one. A second thought takes the next. Longer courses are ignored, unless the place has nothing shorter."
    ],
    "params": {
     "step": "candidates"
@@ -759,7 +759,7 @@
     ]
    },
    "vo": [
-    "A cobbler's shop, in the city. Five things, two people. We ask Petty Thief to look at a thing: as a will, it goes straight to what begins its course.",
+    "A cobbler's shop, in the city. Five things, two people. We ask Petty Thief to look at a thing. As a will, it goes straight to the first step of its course.",
     {
      "text": "I spy a rack of lasts, dark-handled wooden feet for shoes, each chalked with names. That's my chance to lift one, easy as pie.",
      "style": "reading",
@@ -781,14 +781,14 @@
     ]
    },
    "vo": [
-    "Diligence wants work: a job, a bench, stores to lay in. We ask it to think about the same rack.",
+    "Diligence wants work: a job, a bench, supplies to stock. We ask it to think about the same rack.",
     {
      "text": "I notice the labelled wooden feet, each chalked with a customer's name, and I find myself drawn to find work, to seek a bench where I can take in honest tasks waiting to be done. Yet, it seems no such place exists here, and I must leave this place to find where my efforts are truly valued in this old world.",
      "style": "reading",
      "at": 195.2
     },
     {
-     "text": "No course to any of its wants exists here, so it declines, saying it would have to leave. Diligence is also principled, so it would never have been offered the theft. Such a refusal is not quite a dead end, it tells you what this mind is looking for.",
+     "text": "Nothing here leads to what it wants, so it refuses, and says it would have to leave. Diligence is also principled, so it would never be offered the theft anyway. This kind of refusal is not really a dead end. It tells you what this mind is looking for.",
      "wait": true
     }
    ]
@@ -797,8 +797,8 @@
    "type": "manim",
    "scene": "Will",
    "vo": [
-    "And when no course exists in the place at all, the will declines everything, and says it would have to leave to find what it wants. That is not a dead end: it is a hint. From the world map, a will can be sent to search: the places in range are tried nearest first, and the first where its course exists becomes the journey's end. The visit is then made for that want, however long the course.",
-    "This may be the way to find things now. Less by wandering until something happens, more by listening to what your minds want, and letting them lead."
+    "And when the place offers no course at all, the will refuses everything. It says it would have to leave to find what it wants. That is not a dead end. It is a hint. From the world map, you can send a will to search. It tries the nearest places first. The first place where its course exists becomes your destination. The visit is then made for that want, however long the course.",
+    "This may be the new way to find things. Not by wandering until something happens, but by listening to what your minds want, and letting them lead."
    ],
    "core": [
     0,
@@ -834,7 +834,7 @@
      "at": 465.0
     },
     {
-     "text": "A theft, difficulty two. A will cannot refuse an act it wants, and an unscrupulous one cannot refuse a crime. The cobbler is in the room, but Petty Thief is discreet, and a discreet mind may try.",
+     "text": "A theft, needing two sixes. A will cannot refuse what it wants, and a low-moral mind cannot refuse a crime. The cobbler is in the room. But Petty Thief is discreet, and a discreet mind may try.",
      "wait": true
     }
    ]
@@ -843,7 +843,7 @@
    "type": "manim",
    "scene": "Proximity",
    "vo": [
-    "Being seen is two separate questions. First: may I act at all? With someone in the room, an ordinary mind is refused, and that refusal is a rule of action, so it costs a point. A discreet mind may try. That permission is the whole of what discretion buys at close quarters, and a discreet mind may not back out of an act that only its discretion allows."
+    "Being seen raises two separate questions. First: can I act at all? With someone in the room, an ordinary mind is refused. That is a rule of action, so it costs a point. A discreet mind can try. That is all discretion gives you up close. And a discreet mind cannot back out of an act that only its discretion allows."
    ],
    "params": {
     "step": "raw"
@@ -863,14 +863,14 @@
     ]
    },
    "vo": [
-    "Execute. Three dice, one six. It fails.",
+    "We do it. Three dice, one six. It fails.",
     {
      "text": "I know not, thought I saw a shoe last time, but no luck. Lost the flow, just like always.",
      "style": "reading",
      "at": 542.4
     },
     {
-     "text": "And in the same room, a failure is seen. Caught red-handed. This is where a crime is meant to bite.",
+     "text": "In the same room, a failure is seen. We are caught red-handed. This is where a crime should hurt.",
      "wait": true
     }
    ]
@@ -879,8 +879,8 @@
    "type": "manim",
    "scene": "Proximity",
    "vo": [
-    "Second: what does failing cost? Three rungs. In the same room, a witness catches you in the act, and an enemy attacks. In the same section, through a wall, they come to look: they walk into your room, and now someone stands there. Further off, nothing. Discretion silences you through a wall, never in the same room.",
-    "Discretion is the one property that bends the rules of presence, so it is kept narrow. It buys the attempt, and probably nothing more: never a way out of what failing costs, face to face."
+    "Second: what does failing cost? There are three levels. In the same room, a witness catches you, and an enemy attacks. Behind a wall, in the same building, they come to look. They walk into your room, and now someone is there. Further away, nothing happens. Discretion keeps you quiet through a wall, but never in the same room.",
+    "Discretion is the only property that bends these rules, so it is kept narrow. It lets you try. It never saves you from what failing costs, face to face."
    ],
    "core": [
     0,
@@ -904,14 +904,14 @@
     ]
    },
    "vo": [
-    "A confrontation is a conversation, and losing it is a fight.",
+    "Being caught starts a conversation. Losing it starts a fight.",
     {
      "text": "There, stop. I have seen you take what's not yours.",
      "style": "reading",
      "at": 631.8
     },
     {
-     "text": "We answer. Every reply on offer is written by one of our minds, its name before it. Diligence denies it.",
+     "text": "We answer. Each reply on offer is written by one of our minds, with its name in front. Diligence denies it.",
      "at": 674.98
     },
     {
@@ -925,7 +925,7 @@
      "at": 771.0
     },
     {
-     "text": "Social Interaction answers next.",
+     "text": "Then Social Interaction answers.",
      "at": 830.4
     },
     {
@@ -944,7 +944,7 @@
      "at": 1033.9
     },
     {
-     "text": "That reply is a check. Five dice: the levels of the minds that spoke, our looks, our coat. Four sixes needed, and one comes up. We spend a humor, and a die turns to six: two. Not enough.",
+     "text": "That reply is a check. We roll five dice, from the minds that spoke, our looks, and our coat. We need four sixes, and get one. We spend a humor to turn a die into a six. That makes two. Not enough.",
      "at": 1128.47
     },
     {
@@ -953,7 +953,7 @@
      "at": 1164.2
     },
     {
-     "text": "The conversation is lost, and the cobbler fights. On the map, the exit now reads Runaway.",
+     "text": "We lose the conversation, and the cobbler attacks. On the map, the exit now says Runaway.",
      "wait": true
     }
    ],
@@ -963,8 +963,8 @@
    "type": "manim",
    "scene": "Wages",
    "vo": [
-    "A failure costs three things. The pool is not refilled. At most one social consequence: caught, attacked, or someone comes to look. And one penalty, drawn from what that act risks. A wound, for an attempt that can hurt you. The way lost, for finding a way: the visit ends and you stand outside. The hour wasted, for the hard and the slow. Or the thread lost, one more noetic point, for the senses, speech and waiting.",
-    "Each failure tries to cost something that fits it. A failed climb hurts. A failed search loses the way. A failed conversation loses the thread. Ideally, the price can be guessed before the roll."
+    "A failure costs three things. Your points are not refilled. There can be one social consequence: you are caught, attacked, or someone comes to look. And there is one penalty, based on what the act risked. A wound, for something that can hurt you. A lost way, for finding a way: the visit ends and you are outside. A lost hour, for hard and slow work. Or a lost thread, one more noetic point, for the senses, speech and waiting.",
+    "Each failure tries to cost something that fits it. A failed climb hurts. A failed search loses the way. A failed conversation loses the thread. Ideally, you can guess the price before you roll."
    ],
    "core": [
     0,
@@ -985,7 +985,7 @@
     ]
    },
    "vo": [
-    "Same shop, another try. This time Sloth thought of the theft, and Petty Thief was chosen to do it. Same dice, five, six, four, but this time we turn one with a humor: success, a shoe last in the pack, and the pool refilled.",
+    "Same shop, another try. This time Sloth thought of the theft, and Petty Thief was chosen to do it. The dice are the same, five, six, four. But this time we use a humor to turn one into a six. Success: a shoe last goes in the pack, and our points refill.",
     {
      "text": "I got a shoe, didn't I? Walked right out of there. Thanks to this little score, I'm feeling pretty slick.",
      "style": "reading",
@@ -1007,14 +1007,14 @@
     ]
    },
    "vo": [
-    "Under the rack, a quotation mark: speak of it. Social Interaction tells Raggedbrow, standing nearby.",
+    "Under the rack there is a quotation mark: tell someone about it. Social Interaction tells Raggedbrow, who is standing nearby.",
     {
      "text": "Raggedbrow, come over now! I spied those dark-handled wooden feet, all sizes, neatly hung on pegs. Each one was marked with a customer's name in chalk. What a fascinating detail!",
      "style": "reading",
      "at": 562.7
     },
     {
-     "text": "It cost us a point. Switch to Raggedbrow, and the rack is on his map, observed, with our words as his observation.",
+     "text": "That cost us a point. Switch to Raggedbrow, and the rack is on his map, already observed, with our words as his description.",
      "wait": true
     }
    ]
@@ -1033,7 +1033,7 @@
     ]
    },
    "vo": [
-    "Back to us. We observe the cobbler, and ask Sloth about him.",
+    "Back to us. We look at the cobbler, and ask Sloth about him.",
     {
      "text": "I find myself drawn to the cobbler of the city, a man with an old army boot over his knee, hammering in hobnails without looking up. It's thick and entirely untroubled by the process.",
      "style": "reading",
@@ -1050,7 +1050,7 @@
      "at": 1354.6
     },
     {
-     "text": "Only crimes again, and this time an assault, with Vigor as the means. Vigor is not discreet.",
+     "text": "Only crimes again. This time it is an assault, and Vigor is chosen to do it. Vigor is not discreet.",
      "wait": true
     }
    ]
@@ -1069,14 +1069,14 @@
     ]
    },
    "vo": [
-    "Execute.",
+    "We do it.",
     {
      "text": "I cannot step into that room, for there I meet him. The cobbler is here, and I would be caught red-handed, so I leave it undone. Hearty and eager, I see the task ahead with appetite, but this one must wait, for the cobbler stands between.",
      "style": "reading",
      "at": 1432.3
     },
     {
-     "text": "A rule of action. The cobbler is in the room, and an ordinary mind is refused. The act was chosen, so the refusal costs a point, and the act stays, waiting.",
+     "text": "A rule of action stops it. The cobbler is in the room, and an ordinary mind is refused. We chose this act, so the refusal costs a point, and the act keeps waiting.",
      "wait": true
     }
    ]
@@ -1095,7 +1095,7 @@
     ]
    },
    "vo": [
-    "Reconsider asks a thinking mind to look at the act again. Holding to it, it hands the act to another acting mind, one no rule would refuse here: a discreet one.",
+    "Reconsider asks a thinking mind to look at the act again. It keeps the goal, but gives the act to a different mind, one that no rule refuses here: a discreet one.",
     {
      "text": "I think again about how to bypass him, but another path seems more suitable. I will proceed with stealth, picking pockets and small thefts, as it requires less effort and fuss.",
      "style": "reading",
@@ -1107,7 +1107,7 @@
      "at": 1739.6
     },
     {
-     "text": "The old act is kept, struck through, and the new one waits: Petty Thief, difficulty one. A swing at him would start a fight, so we leave it there.",
+     "text": "The old act stays, crossed out, and the new one waits: Petty Thief, needing one six. Hitting him would start a fight, so we leave it there.",
      "wait": true
     }
    ]
@@ -1116,8 +1116,8 @@
    "type": "manim",
    "scene": "Confronted",
    "vo": [
-    "An enemy in the room, or a witness with a reason to stop you, confronts you, and the map closes around them. You may answer them, explain yourself, which makes every check of that conversation one six easier, or carry out an act already waiting, if a discreet mind will. Thinking about them, a mind is offered only those answers, unless a discreet mind could act. You may not look at anything else, think about anything else, walk away, or speak to a companion. And somebody asleep confronts nobody.",
-    "Someone who has just caught you with a hand on his shelf is unlikely to leave you room to admire the rest of the shop. When you are cornered, the screen tries to corner you too."
+    "An enemy in the room confronts you. So does a witness with a reason to stop you. The map then closes around them. You can answer them. Explaining yourself makes every check of that conversation one six easier. Or you can do an act already waiting, if a discreet mind will. A thinking mind is only offered those answers, unless a discreet mind could act. You cannot look at anything else, think about anything else, walk away, or talk to a companion. And someone asleep confronts nobody.",
+    "Someone who just caught you stealing will not give you time to look around the shop. When you are cornered, the screen tries to corner you too."
    ],
    "core": [
     0,
@@ -1141,7 +1141,7 @@
     ]
    },
    "vo": [
-    "To see the rest, a debug flag makes every person count us an enemy. We walk into the shop, and the cobbler is a skull, already on our map. Confronted, he is all we may look at or think about."
+    "To show the rest, a debug option makes everyone treat us as an enemy. We walk into the shop. The cobbler is a skull, already on our map. While he confronts us, he is the only thing we can look at or think about."
    ]
   },
   {
@@ -1158,14 +1158,14 @@
     ]
    },
    "vo": [
-    "The exit reads Runaway. The feet's dice: two of them, one six needed, and a five and a six. We are out. Raggedbrow is not: he stands in the same shop, but the cobbler's quarrel is with us, not with him. Nothing confronts him, and his exit reads Leave."
+    "The exit says Runaway. We roll the feet's two dice and need one six. A five and a six. We are out. Raggedbrow is still in the shop, but the cobbler's problem is with us, not him. Nothing stops him, so his exit says Leave."
    ]
   },
   {
    "type": "manim",
    "scene": "Confronted",
    "vo": [
-    "The way out is one symbol. When nobody stops you, it reads Leave: every member walks out by known ways, for free, and a walk that meets someone who would confront you stops there. Confronted, it reads Runaway: the feet's dice, needing a single six, which the humors can bend. It is checked again at every area on the way, and failing it starts the fight, or the conversation."
+    "The way out is one symbol. When nobody stops you, it says Leave. Every member walks out by known ways, for free. If a walk meets someone who would confront you, it stops there. When you are confronted, it says Runaway. You roll your feet's dice and need a single six. The humors can help. The roll is made again in every area on the way, and failing it starts the fight, or the conversation."
    ],
    "params": {
     "step": "exit"
@@ -1243,7 +1243,7 @@
     }
    ],
    "vo": [
-    "That is narration on the map. The rules underneath did not change: the minds, the dice, the wills and the crimes are as they were. What changed is that you can see them, and see what your minds made of a place. Hopefully it makes their choices, and yours, a little easier to read. Thank you for playing."
+    "That is narration on the map. The rules underneath did not change. The minds, the dice, the wills and the crimes are the same. What changed is that you can see them, and see what your minds did in a place. Hopefully, that makes their choices, and yours, a little easier to follow. Thank you for playing."
    ]
   }
  ]
