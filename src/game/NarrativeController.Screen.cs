@@ -102,6 +102,9 @@ public partial class NarrativeController
                         : _loading != null                    ? MusicFilter.Loading
                         : MusicFilter.None;
             if (_ambianceEngine.ActiveFilter != desired) _ambianceEngine.SetFilter(desired);
+            // While somebody confronts a member the place's music is its standoff: the same place,
+            // held tense. Asked for every tick and acted on when it changes.
+            _ambianceEngine.SetConfronted(Exploring && ConfrontedMinds.Count > 0);
         }
 
         _ui.RenderHeader(_active.DisplayName, Mind.Noetic, _active.MaxNoeticPoints,
@@ -345,6 +348,24 @@ public partial class NarrativeController
             Card(area).Strays.Add(refusal);
         foreach (var card in frame.Cards)
             card.Folded = Mind.FoldedAreas.Contains(card.Area.Id);
+
+        // A confrontation is framed where it stands, and whoever confronts beats with the frame:
+        // their tree's root once looked at, else their symbol in the tray — every anonymous one of
+        // their kind there, since a look at that kind lands on them first.
+        frame.BeatLit = Environment.TickCount64 / Config.NarrativeUI.ConfrontationBeatMs % 2 == 0;
+        foreach (var mind in ConfrontedMinds)
+        {
+            if (ConfrontationOf(mind) is not { } confrontation) continue;
+            var card = Card(mind.Pov.Where);
+            card.Confronted = true;
+            foreach (var root in card.Roots.Where(r => Locate(r) is { } at && IsConfronter(at.Anchor, confrontation)))
+                frame.Confronters.Add(new NodeSymbol(root));
+            var unobserved = Unobserved(card.Area).Where(u => IsConfronter(u.Anchor, confrontation)).ToList();
+            foreach (var tray in card.Tray)
+                if (tray.Known != null ? unobserved.Any(u => ReferenceEquals(u.Anchor, tray.Known))
+                                       : unobserved.Any(u => !u.Known && u.Kind == tray.Kind))
+                    frame.Confronters.Add(tray);
+        }
 
         return frame;
     }

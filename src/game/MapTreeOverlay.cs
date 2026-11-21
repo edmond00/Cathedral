@@ -100,6 +100,8 @@ public sealed class CardFrame
     public List<ThoughtNode> Roots { get; } = new();
     /// <summary>The whole tree of this area is folded away: only its root symbol is drawn.</summary>
     public bool Folded { get; set; }
+    /// <summary>Somebody confronts a member standing here: the card is framed, and the frame beats.</summary>
+    public bool Confronted { get; set; }
     /// <summary>Refusals made here that hang on no element.</summary>
     public List<ThoughtNode> Strays { get; } = new();
 }
@@ -120,6 +122,13 @@ public sealed class MapFrame
     /// <summary>An area's tree hangs from a root symbol of its own, which folds it. Not in the get-up, whose screen teaches one click.</summary>
     public bool AreaRoots { get; set; }
     public MapSymbol? Hovered { get; set; }
+    /// <summary>
+    /// The symbols of whoever confronts a member — in the tray until they are looked at, the root
+    /// of their tree after — which beat with the frame round the card they stand on.
+    /// </summary>
+    public HashSet<MapSymbol> Confronters { get; } = new();
+    /// <summary>Which half of the beat this frame is drawn on: the frame and the confronters are lit, or dark.</summary>
+    public bool BeatLit { get; set; }
     public PartyMember? Active { get; set; }
 
     /// <summary>The symbol an element node is drawn with (its kind's).</summary>
@@ -177,6 +186,9 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     private static readonly Vector4 HoverGround  = Config.Colors.GoldYellow;
     /// <summary>The ground of everything a click acts on: a dark gold, a button's face.</summary>
     private static readonly Vector4 ClickGround  = new(0.300f, 0.225f, 0.030f, 1f);
+    // A confrontation: the frame round the card and the confronter's symbol, on the two halves of a beat.
+    private static readonly Vector4 AlarmLit     = Config.Colors.BrightPurple;
+    private static readonly Vector4 AlarmDark    = Config.Colors.DarkPurple;
 
     public MapFrame Frame { get; set; } = null!;
 
@@ -269,6 +281,9 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
                    active ? Config.Colors.BrightYellow : Config.Colors.Ochre, symbol);
         }
 
+        // A confrontation frames the card, under everything else drawn on those cells.
+        if (card.Confronted) PaintAlarm(canvas, bx, by);
+
         PaintTray(canvas, card, bx + 1, by + 2, canvas.CardWidth - 2);
 
         // The trunk, and each observed element on a row of its own under the card.
@@ -324,6 +339,27 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             }
         }
         Settle(canvas);
+    }
+
+    /// <summary>
+    /// The frame round a card somebody is confronted on: a double line one cell outside it, in the
+    /// purple of a danger, lit and dark on the two halves of a beat. Only its ink changes with the
+    /// beat — the glyphs stand — so the screen reads the same on either half. Where a line of the
+    /// map already runs, the line is kept and takes the frame's ink: the frame is crossed, not cut.
+    /// </summary>
+    private void PaintAlarm(LocationMap.MapCanvas canvas, int bx, int by)
+    {
+        var ink = Frame.BeatLit ? AlarmLit : AlarmDark;
+        int x0 = bx - 1, x1 = bx + canvas.CardWidth, y0 = by - 1, y1 = by + canvas.CardHeight;
+        void Edge(int x, int y, char glyph)
+        {
+            if (!canvas.InBounds(x, y) || canvas.IsCard(x, y)) return;
+            if (canvas.GlyphAt(x, y) == ' ') canvas.Put(x, y, glyph, ink);
+            else canvas.Ink(x, y, ink);
+        }
+        for (int x = x0 + 1; x < x1; x++) { Edge(x, y0, '═'); Edge(x, y1, '═'); }
+        for (int y = y0 + 1; y < y1; y++) { Edge(x0, y, '║'); Edge(x1, y, '║'); }
+        Edge(x0, y0, '╔'); Edge(x1, y0, '╗'); Edge(x0, y1, '╚'); Edge(x1, y1, '╝');
     }
 
     /// <summary>Starts taking note of the cells a tree is drawn on.</summary>
@@ -648,6 +684,8 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     {
         if (_keepOffCards && canvas.IsCard(x, y)) return;
         bool enabled = Frame.Enabled(symbol);
+        // Whoever confronts a member beats with the frame round the card, whatever their own ink.
+        if (Frame.Confronters.Contains(symbol)) ink = Frame.BeatLit ? AlarmLit : AlarmDark;
         // Under the pointer a symbol is inverted when a click would act on it or it has a text to
         // read; one that answers nothing stays as it is, and only its label says why.
         if (Equals(symbol, Frame.Hovered) && (enabled || symbol is NodeSymbol)) canvas.Put(x, y, glyph, HoverInk, HoverGround);

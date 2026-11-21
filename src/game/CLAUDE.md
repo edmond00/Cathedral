@@ -955,8 +955,31 @@ of action refuse on the click a means that is not discreet (`UnderThreatImpossib
 `ConfrontedImpossibleRule`). `StubsOf` applies the first of those to the `?` itself: an element
 that would be left no act to choose from shows none, where a thought would cost a point to find
 nothing to do. Acts already waiting where the member stands stay clickable as before. Members
-elsewhere are not confronted, and wait (see "The party"). `cli/system/confronted_hostile.cli`, `confronted_witness.cli`. Two things
-had to change for a confrontation to be liveable:
+elsewhere are not confronted, and wait (see "The party"). `cli/system/confronted_hostile.cli`, `confronted_witness.cli`.
+
+**A confrontation is framed, beats, and changes the music.** Nothing on the screen used to say a
+member was confronted but the way out reading RUNAWAY, and with the confronter no longer put on
+the trees nothing said who it was either.
+
+- **The frame** (`CardFrame.Confronted`, `MapTreeOverlay.PaintAlarm`): a double line one cell
+  outside the card of every confronted member, in purple. Where a line of the map already runs
+  the line is kept and takes the frame's ink, so the frame is crossed and not cut; the tree's root
+  symbol and the ways' symbols are drawn after it, over it.
+- **The beat** (`MapFrame.BeatLit`, `Config.NarrativeUI.ConfrontationBeatMs` = 450): the frame is
+  bright purple on one half and dark purple on the other. **Only the ink changes** — the glyphs
+  stand on both halves, so `dump` and `expect` read the same screen whenever they look.
+- **Whoever confronts beats with it** (`MapFrame.Confronters`, read in the painter's `Symbol`
+  ahead of every other ink): the root of their tree once looked at, else their symbol in the tray
+  — every anonymous symbol of their kind on that card, since a look at that kind lands on them
+  first. A witness's `☺` beats purple like an enemy's `☹`: which of four people on a card is the
+  one who will not let you leave is exactly what the screen did not say.
+- **The music** (`AmbianceEngine.SetConfronted`, asked every tick from `RenderPanel` and acted on
+  when it changes): the place's own mood as `MusicMoodState.Confronted()`, its standoff — see the
+  `music` skill. It opens on a 0.6 s break so it is heard at once, and ends on a glide.
+  `inspect music` ends on `confronted=yes|no`. `cli/system/confronted_hostile.cli` asserts the
+  frame and the request.
+
+Two things had to change for a confrontation to be liveable:
 
 - **Somebody asleep witnesses nothing** (`WitnessSelector.SelectFrom` skips `IsSleeping`). And
   `SceneNpc.IsSleeping` had been answering *awake* about everybody actually asleep: it asked for a

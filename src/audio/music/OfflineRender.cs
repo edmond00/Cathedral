@@ -142,6 +142,14 @@ public static class OfflineRender
             mood = day.AtNight();
             return ok;
         }
+        // "forest:3@confronted", "tavern:12@night@confronted": the place's standoff, as a visit
+        // plays it while somebody confronts a member.
+        if (name.EndsWith("@confronted", StringComparison.OrdinalIgnoreCase))
+        {
+            bool ok = TryMood(name[..^"@confronted".Length], out var place);
+            mood = place.Confronted();
+            return ok;
+        }
         foreach (var (n, m) in Presets())
             if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) { mood = m; return true; }
         // "0.5,0.2,0.3,1,0.6,0.4,0.2": the gauges themselves (cold, fear, mystery, intensity,

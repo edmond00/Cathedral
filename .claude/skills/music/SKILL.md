@@ -63,7 +63,8 @@ three are each a whole idiom, set per kind of place, and lead only where they ar
 | Far | `LocationMoodProfiles.Far` | leads from ~0.5: strange modes, an in-between third, bends, new voices; lower, a stranger sits in |
 
 Track count (`SetActiveTrackCount`, 0–4) gates the same layers from the game's side. The fight
-filter, night (`SetNight`, the place's `AtNight()`) and breaks (`Transition`) act on top.
+filter, night (`SetNight`, the place's `AtNight()`), a standoff (`SetConfronted`, the place's
+`Confronted()`: see `idioms.md`) and breaks (`Transition`) act on top.
 
 ## Recipes
 
@@ -162,7 +163,7 @@ dotnet bin/Debug/net8.0/Cathedral.dll --render-music out.wav --journey tools/mus
    Lament and the others stayed note for note identical through the festive, sacred and far work
    because every new random draw sits behind a condition that is false for them (`if (chant &&
    _rng.NextDouble() < …)`, never a bare draw).
-5. **Journeys** (`journeys/tour.json`, `opening.json`, `encounter.json`) catch transitions, fights
+5. **Journeys** (`journeys/tour.json`, `opening.json`, `encounter.json`, `confrontation.json`) catch transitions, fights
    and events that still moods cannot. `render_speed` must stay over 8x (a temple full of
    choirs once fell to 8.1x).
 6. **Game scripts**: `./run_tests.sh audits` plus `cli/system/pause_music_resumes.cli`,

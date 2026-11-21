@@ -1,0 +1,5 @@
+[
+ {"t": 0, "mood": "forest:3", "tracks": 4},
+ {"t": 40, "mood": "forest:3@confronted", "break": 0.6},
+ {"t": 110, "filter": "fighting"}
+]

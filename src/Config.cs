@@ -1510,6 +1510,9 @@ public static class Config
     
     public static class NarrativeUI
     {
+        /// <summary>Half the beat of a confrontation's frame and of the confronter's symbol, in milliseconds: lit, then dark.</summary>
+        public const long ConfrontationBeatMs = 450;
+
         // Layout padding - transparent lines/columns at edges for menu size control
         public const int TopPadding = 10;    // Number of transparent lines above header
         public const int BottomPadding = 10; // Number of transparent lines below status bar

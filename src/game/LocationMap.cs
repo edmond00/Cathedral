@@ -895,6 +895,15 @@ public sealed class LocationMap
             _glyphs[y * Width + x] = ' ';
         }
 
+        /// <summary>The glyph the map has on a cell: a space where it drew nothing.</summary>
+        public char GlyphAt(int x, int y) => InBounds(x, y) ? _glyphs[y * Width + x] : ' ';
+
+        /// <summary>Re-inks what is already on a cell, glyph and ground kept.</summary>
+        public void Ink(int x, int y, Vector4 fg)
+        {
+            if (InBounds(x, y)) _fgs[y * Width + x] = fg;
+        }
+
         /// <summary>Names what stands on a cell, for <see cref="IconAt"/>.</summary>
         public void Hit(int x, int y, object tag)
         {

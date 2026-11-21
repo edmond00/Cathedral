@@ -101,6 +101,31 @@ x0.82 so the ostinato and percussion thin first). Each place keeps its own chara
 Any new `SetMood` is day again; the pause menu hands the night back. Other periods have no
 variant. The harness renders one as `tavern:12@night`.
 
+## A standoff
+
+While somebody confronts a member of the party in a place (an enemy in the room, a witness who
+will not let them leave), the place plays its `MusicMoodState.Confronted()` variant, asked through
+`AmbianceEngine.SetConfronted` exactly as night is asked through `SetNight`, and applied after
+night. It is not an idiom of its own: it is the place's music held tense. Fear is raised by 0.45
+and kept between 0.62 and 0.70, coldness to at least 0.45, mystery by 0.10; festivity is zeroed
+and sacred halved; **intensity is held at 0.70 to 0.72**, which lets in the melody, the counter
+and the bass and keeps out the ostinato and the drums, so a standoff is quieter than the fight it
+may become. In a forest it reads as: the place at 62 bpm on recorder and choir, the standoff at
+75 bpm in pentatonic minor on harp over the dark pad, the fight at 94 bpm.
+
+It opens on a break of 0.6 s (`ConfrontationBreakSeconds`): a glide would be heard a section
+late. It ends on a glide, since what ends it (a fight, a conversation, the way out) usually takes
+the music anyway. The pause menu gives it back without the break.
+
+**Why these numbers.** The first setting was fear 0.82 with every layer in, for the processional
+drum that fear above 0.8 brings. Measured on forest, village and cave it came out 2 to 3 dB louder
+than both the place and a fight (−13.5 LUFS against −16 and −15.3) and dissonant 43% of the time
+(71% in a forest: Locrian over the drone) against 6% for a fight. At the present values it sits at
+the place's loudness (−14.5 median) with 5 to 13% dissonance. It still leaves the general bands on
+`mel_step_ratio` (0.36, the tense palette leaps more) and `onset_rate` (it is slow and sustained).
+Render it with the `@confronted` suffix (`forest:3@confronted`, `tavern:12@night@confronted`) and
+`journeys/confrontation.json`, which goes place, standoff, fight.
+
 ## Mood changes
 
 `SetMood` glides the mood (≈2 s). Structure is decided at piece and section starts; a

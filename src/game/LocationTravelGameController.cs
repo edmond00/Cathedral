@@ -4535,10 +4535,10 @@ public class LocationTravelGameController : IDisposable
             var r = _ambianceEngine.Requested;
             // The mood playing: at night, the place's night variant. Invariant: a script asserts
             // "cold=0.60", and a French or Japanese locale would print "0,60".
-            string mood = (r.Night && r.Mood is { } day ? day.AtNight() : r.Mood) is { } m
+            string mood = (r.Mood is { } day ? AmbianceEngine.Variant(day, r) : r.Mood) is { } m
                 ? FormattableString.Invariant($"cold={m.Coldness:0.00} fear={m.Fear:0.00} mystery={m.Mystery:0.00} intensity={m.Intensity:0.00} festivity={m.Festivity:0.00}")
                 : "mood=none";
-            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood} night={(r.Night ? "yes" : "no")} sacred={(r.Mood is { } sm ? sm.Sacred : 0f):0.00} far={(r.Mood is { } fm ? fm.Far : 0f):0.00}" };
+            return new List<string> { $"music tracks={r.Tracks} filter={r.Filter} {mood} night={(r.Night ? "yes" : "no")} sacred={(r.Mood is { } sm ? sm.Sacred : 0f):0.00} far={(r.Mood is { } fm ? fm.Far : 0f):0.00} confronted={(r.Confronted ? "yes" : "no")}" };
         }
 
         if (_protagonist == null) return null;
