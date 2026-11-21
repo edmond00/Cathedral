@@ -141,24 +141,6 @@ public struct MusicMoodState
     public MusicMoodState AtNight() =>
         new(Coldness + 0.18f, Fear + 0.06f, Mystery + 0.14f, Intensity * 0.82f, 0f, Sacred, Far);
 
-    /// <summary>
-    /// The same place while somebody confronts a member of the party: a standoff. Fear is raised
-    /// well into the tense palette and held short of where it turns harsh; nobody dances, the
-    /// place's holiness recedes, and the layers are thinned to a melody, a second voice and a bass
-    /// over the drone — no ostinato and no drums, which are the fight's. Colder at least a little:
-    /// no warm mode under a threat. Each place keeps its own character, so every place has its own
-    /// standoff, and it is a held breath, quieter than the fight it may become.
-    /// <para>
-    /// Measured, not guessed (tools/music, three kinds of place): with fear at 0.82 and every layer
-    /// in, it came out 2 to 3 dB louder than both the place and a fight and dissonant 43% of the
-    /// time (71% in a forest), against 6% for a fight. At these values it sits at the place's
-    /// loudness with 5 to 13% dissonance.
-    /// </para>
-    /// </summary>
-    public MusicMoodState Confronted() =>
-        new(Math.Max(Coldness, 0.45f), Math.Clamp(Fear + 0.45f, 0.62f, 0.70f), Mystery + 0.10f,
-            Math.Clamp(Intensity, 0.70f, 0.72f), 0f, Sacred * 0.5f, Far);
-
     /// <summary>Returns a copy with Intensity changed by delta, clamped.</summary>
     public MusicMoodState WithIntensity(float delta) =>
         new(Coldness, Fear, Mystery, Intensity + delta, Festivity, Sacred, Far);

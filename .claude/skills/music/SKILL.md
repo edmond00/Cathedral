@@ -63,8 +63,8 @@ three are each a whole idiom, set per kind of place, and lead only where they ar
 | Far | `LocationMoodProfiles.Far` | leads from ~0.5: strange modes, an in-between third, bends, new voices; lower, a stranger sits in |
 
 Track count (`SetActiveTrackCount`, 0–4) gates the same layers from the game's side. The fight
-filter, night (`SetNight`, the place's `AtNight()`), a standoff (`SetConfronted`, the place's
-`Confronted()`: see `idioms.md`) and breaks (`Transition`) act on top.
+filter, night (`SetNight`, the place's `AtNight()`), a standoff (`SetConfronted`: an idiom of its
+own, as a fight is, see `idioms.md`) and breaks (`Transition`) act on top.
 
 ## Recipes
 

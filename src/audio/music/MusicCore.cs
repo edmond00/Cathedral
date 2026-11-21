@@ -109,6 +109,22 @@ internal sealed class MusicCore : IScoreObserver
     });
     public void SetTraveling(bool on) => Post(() => _composer.Traveling = on);
 
+    /// <summary>
+    /// A standoff starts on a held breath: what is planned is dropped, the music falls away in a
+    /// little over half a second and, after as much silence, the heart comes in alone. Not while a
+    /// fight plays — the fight is what a standoff turns into, and has the music already. Its end
+    /// goes through the ordinary bridge.
+    /// </summary>
+    public void SetStandoff(bool on) => Post(() =>
+    {
+        bool starts = on && !_composer.Standoff && !_composer.Fighting;
+        _composer.Standoff = on;
+        if (starts) CutNow(StandoffSilence, 0.6f);
+    });
+
+    /// <summary>The silence a standoff opens on, in seconds.</summary>
+    public const double StandoffSilence = 0.6;
+
     /// <summary>A sound effect: notes on the SFX bus, starting now, outside the composer.</summary>
     public void Sting(IEnumerable<(double at, Instrument inst, int midi, double dur, float vel)> notes) => Post(() =>
     {
@@ -195,10 +211,12 @@ internal sealed class MusicCore : IScoreObserver
     {
         // A fight is never quiet. It can open from the world map's mood (Intensity 0.25, drone and pad
         // only), as a travel encounter does, and would then be written as a fight and heard as a pad.
-        float I = _composer.Fighting ? 1f : _active.Intensity;
+        // Nor is a standoff thinned by the place's own intensity: its layers are few by design, and
+        // its heart is the last layer a quiet place would let in.
+        float I = _composer.Fighting || _composer.Standoff ? 1f : _active.Intensity;
         // A dance or a fight stands on its rhythm section: the strummed chords and the drum, or the riff
         // and the kit, come in with the melody's tier rather than at Intensity 0.75.
-        bool driven = _composer.Current is { Dance: not Dance.None } or { Fight: true };
+        bool driven = _composer.Current is { Dance: not Dance.None } or { Fight: true } or { Standoff: true };
         static float Window(float x, float a, float b) => Math.Clamp((x - a) / (b - a), 0f, 1f);
         foreach (Part part in Enum.GetValues<Part>())
         {

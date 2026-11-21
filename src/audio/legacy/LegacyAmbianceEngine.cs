@@ -283,6 +283,9 @@ internal sealed class LegacyAmbianceEngine : IMusicEngine
     /// <summary>The first engine has no notion of a piece to end: its walks just follow the mood.</summary>
     public void Transition(float silenceSeconds) { }
 
+    /// <summary>The first engine has no standoff: it plays the place on.</summary>
+    public void SetStandoff(bool on) { }
+
     public void SetActiveTrackCount(int count)
     {
         _activeTrackCount = Math.Clamp(count, 0, 4);

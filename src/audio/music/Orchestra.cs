@@ -24,7 +24,7 @@ internal enum CounterStyle
 /// The accompaniment's figure. Comp is the strummed boom-chick under a dance tune; Riff the fight's
 /// martial ostinato (staccato strings, brass stabs), played in a section's <see cref="RiffStyle"/>.
 /// </summary>
-internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp, Riff, Additive }
+internal enum OstinatoStyle { Arpeggio, Broken, Pulse, Comp, Riff, Additive, Unease }
 
 /// <summary>
 /// How a fight's section drives. Gallop: a march, the staccato strings on an eighth and two
@@ -159,6 +159,49 @@ internal static class Orchestra
         o.OpenVoicing = true;
         return o;
     }
+
+    /// <summary>
+    /// A standoff's band: the dread before a fight. A dark pad in open fifths over the bourdon, low
+    /// staccato strings creeping between the tonic and the note a semitone above it, a drum that beats like
+    /// a heart, and one cold voice — bowed glass most often — for the few notes there are. No tune
+    /// to follow and nothing warm: what is left of the place is its key.
+    /// </summary>
+    public static Orchestration ChooseStandoff(MusicMoodState m, Random rng)
+    {
+        Instrument Pick((Instrument i, double w)[] pool, Instrument? avoid = null)
+        {
+            var p = pool.Where(x => x.i != avoid).ToArray();
+            double r = rng.NextDouble() * p.Sum(x => x.w);
+            foreach (var (i, w) in p) { r -= w; if (r <= 0) return i; }
+            return p[^1].i;
+        }
+        var cold = new[] { (Instrument.Glass, 3.0), (Instrument.ChoirOoh, 2.0), (Instrument.Organ, 1.0), (Instrument.Metallophone, 1.0) };
+        var o = new Orchestration { Pole = "standoff" };
+        o.Melody = Pick(cold);
+        o.MelodyAlt = Pick(cold, o.Melody);
+        o.Counter = Instrument.ChoirOoh;
+        o.Pad = Instrument.DarkPad;
+        o.PadAlt = rng.NextDouble() < 0.5 ? Instrument.Choir : Instrument.DarkPad;
+        o.Drone = Instrument.Bourdon;
+        // Staccato strings: a bowed section does not speak inside an eighth, and the figure was
+        // measured 15 dB under the pad it was meant to creep over.
+        o.Ostinato = Instrument.Staccato;
+        o.Bass = Instrument.Bourdon;
+        o.Perc = Instrument.Timpani;
+        o.Percussion = true;
+        o.Ambience = true;
+        o.OstinatoStyle = OstinatoStyle.Unease;
+        o.OstinatoPattern = new[] { 0 };
+        o.OstinatoStep = 0.5;
+        o.Liveliness = 0.1f;
+        o.Chant = 0.9f;
+        o.Fall = 1f;
+        o.OpenVoicing = true;
+        return o;
+    }
+
+    /// <summary>A standoff's tempo: its drum is a heart, two strokes to the beat, at 76 to 88 a minute.</summary>
+    public static double StandoffTempo(MusicMoodState m, Random rng) => 76 + rng.NextDouble() * 8 + 4 * m.Fear;
 
     /// <summary>A fight's tempo: a quarter at 84-100, felt in sixteenths by the riff and the kick.</summary>
     public static double FightTempo(MusicMoodState m, Random rng) => 84 + rng.NextDouble() * 12 + 6 * (1 - m.Coldness);
@@ -373,8 +416,14 @@ internal static class Orchestra
     /// Level of each layer in the mix. A fight is led by its drums: they come up, and the ostinato
     /// under them goes down.
     /// </summary>
-    public static float PartLevel(Part p, bool fight = false) => p switch
+    public static float PartLevel(Part p, bool fight = false, bool standoff = false) => p switch
     {
+        // A standoff stands on its heart: the drum is as forward as a fight's, the pad and the
+        // creeping strings sit back under it, and the few cold notes carry over everything.
+        Part.Perc when standoff => 0.95f,
+        Part.Pad when standoff => 0.34f,
+        Part.Ostinato when standoff => 0.6f,
+        Part.Melody when standoff => 0.8f,
         Part.Perc when fight => 0.95f,
         Part.Ostinato when fight => 0.5f,
         Part.Drone => 0.2f, Part.Pad => 0.42f, Part.Melody => 0.8f, Part.Counter => 0.5f, Part.Ostinato => 0.6f,

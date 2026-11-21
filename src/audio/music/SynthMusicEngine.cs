@@ -44,6 +44,7 @@ internal sealed class SynthMusicEngine : IMusicEngine
         _core = new MusicCore(GameRng.DerivedSeed("music.synth"), n => GameRng.For($"music.piece.{n}"));
         _core.SetVolumes(_musicVolume, _sfxVolume);
         _core.SetTrackCount(_trackCount);
+        _core.SetStandoff(_standoff);
         _running = true;
 
         // A quarter of a second rendered and thrown away before the stream opens: every DSP path is
@@ -117,6 +118,14 @@ internal sealed class SynthMusicEngine : IMusicEngine
         // The first mood a session is given is where it starts, not somewhere to glide to.
         if (!_moodSet) { _moodSet = true; _core.JumpMood(mood); }
         else _core.SetMood(mood);
+    }
+
+    private bool _standoff;
+
+    public void SetStandoff(bool on)
+    {
+        _standoff = on;
+        _core?.SetStandoff(on);
     }
 
     public void Transition(float silenceSeconds)

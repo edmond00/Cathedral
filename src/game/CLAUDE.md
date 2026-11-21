@@ -981,9 +981,10 @@ the trees nothing said who it was either.
   same statement `IsEnabled` makes — nothing out there answers while this lasts — made before the
   pointer has to find it out.
 - **The music** (`AmbianceEngine.SetConfronted`, asked every tick from `RenderPanel` and acted on
-  when it changes): the place's own mood as `MusicMoodState.Confronted()`, its standoff — see the
-  `music` skill. It opens on a 0.6 s break so it is heard at once, and ends on a glide.
-  `inspect music` ends on `confronted=yes|no`. `cli/system/confronted_hostile.cli` asserts the
+  when it changes): the composer writes standoff pieces while it lasts — an idiom of its own, a
+  heartbeat drum under a creeping semitone figure and a few cold notes; see the `music` skill's
+  `idioms.md`. It opens on 0.6 s of silence so it is heard at once, and ends through the ordinary
+  bridge. The mood asked for is still the place's; `inspect music` ends on `confronted=yes|no`. `cli/system/confronted_hostile.cli` asserts the
   frame and the request.
 
 Two things had to change for a confrontation to be liveable:

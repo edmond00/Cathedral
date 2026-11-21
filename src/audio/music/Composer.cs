@@ -61,6 +61,7 @@ internal sealed class Piece
     public double Start;
     public int Center;                                   // melody's central degree
     public bool Fight;
+    public bool Standoff;                               // written as a standoff: the dread before a fight
     public bool FarLeads;                               // the far pole leads: strange throughout
     public bool NeutralThird;                           // ...and its third sits between minor and major
     public bool UsesTheme;
@@ -143,6 +144,9 @@ internal sealed class Composer
 
     public MusicMoodState Mood;                       // the smoothed mood; set by the owner every block
     public bool Fighting;                             // the fight overlay asks for battle music
+    public bool Standoff;                             // somebody confronts the party: the place holds its breath
+    /// <summary>A standoff is written only while no fight is: the fight is what it turns into.</summary>
+    private bool Dread => Standoff && !Fighting;
     public bool Traveling;                            // footfalls under the music
     public string ModeName => _piece?.Key.Mode.DisplayName ?? "—";
     public double Bpm => _piece?.Bpm ?? 0;
@@ -251,6 +255,7 @@ internal sealed class Composer
         _rng = _pieceRng(index);
         var mood = EffectiveMood();
         var p = new Piece { Index = index, Mood = mood, Start = _cursor };
+        if (Dread) { NewStandoff(p, index, mood); return; }
         p.Dance = Fighting ? Dance.None : Orchestra.DanceFor(mood, _rng);
         // A dance stays in the two minor modes the old session tunes favour: Dorian above all, then Aeolian.
         var mode = p.Dance != Dance.None ? (_rng.NextDouble() < 0.6 ? Mode.Dorian : Mode.Aeolian) : Mode.ForMood(mood, _rng);
@@ -337,6 +342,147 @@ internal sealed class Composer
     /// session tunes have (the B part is a new strain, usually higher, not the A turned over). The
     /// world's theme is taken up as a jig or a reel figure when its note count fits one.
     /// </summary>
+    /// <summary>
+    /// A standoff's piece. Always Phrygian: the note a semitone over the tonic is the sound of it,
+    /// in the low strings' creeping figure, in the chord that leans on the drone, in the cold voice's
+    /// falling step. The tonic moves as any piece's does, so the key is still the place's neighbour.
+    /// </summary>
+    private void NewStandoff(Piece p, int index, MusicMoodState mood)
+    {
+        int[] moves = { 0, 5, -5, 7, -7 };
+        int tonic = _lastTonic + moves[_rng.Next(moves.Length)];
+        while (tonic > 61) tonic -= 12;
+        while (tonic < 50) tonic += 12;
+        _lastTonic = tonic;
+        p.Key = new Key(tonic, Mode.Phrygian);
+        p.Bpm = Orchestra.StandoffTempo(mood, _rng);
+        p.Meter = 4;
+        p.Standoff = true;
+        p.Orch = Orchestra.ChooseStandoff(mood, _rng);
+        p.Center = Mode.Phrygian.Size + 1;
+        p.M = p.N = p.MB = p.NB = Melodist.NewMotif(p.Meter, 0.1f, 0.9f, 1f, _rng, Mode.Phrygian.Size);
+        PlanStandoffForm(p);
+        _piece = p;
+        _section = 0;
+        _bar = 0;
+        _lastPadVoicing = null;
+        _observer?.Piece(_cursor, p);
+    }
+
+    /// <summary>
+    /// The heart alone, then the dread under it, then the cold voice over it, then a held breath
+    /// with the strings gone — and round again, never resolving: every section but the first ends
+    /// leaning on the chord a semitone up.
+    /// </summary>
+    private void PlanStandoffForm(Piece p)
+    {
+        var o = p.Orch;
+        p.Form = "I A A' C A' C";
+        int aCount = 0;
+        foreach (var tok in p.Form.Split(' '))
+        {
+            var s = new Section { Label = tok, Melody = o.Melody, Pad = o.Pad, Counter = CounterStyle.Tenor };
+            switch (tok)
+            {
+                case "I":
+                    s.Kind = SectionKind.Intro;
+                    s.Bars = 2;
+                    s.Chords = new[] { 0, 0 };
+                    s.Layers = new() { Part.Drone, Part.Perc, Part.Ambience };
+                    break;
+                case "A":
+                case "A'":
+                    s.Kind = aCount == 0 ? SectionKind.A : SectionKind.AVar;
+                    s.Bars = 8;
+                    s.Chords = new[] { 0, 0, 1, 0, 0, 0, 1, 1 };
+                    // No bass: the bourdon holds the tonic already, and with the drum the low end was
+                    // over half the energy.
+                    s.Layers = new() { Part.Drone, Part.Pad, Part.Perc, Part.Ostinato, Part.Ambience };
+                    if (aCount > 0) s.Layers.Add(Part.Melody);
+                    if (aCount > 1) { s.Melody = o.MelodyAlt; s.Pad = o.PadAlt; }
+                    aCount++;
+                    break;
+                case "C":
+                    s.Kind = SectionKind.C;
+                    s.Bars = 4;
+                    s.Chords = new[] { 0, 0, 1, 1 };
+                    s.Layers = new() { Part.Drone, Part.Pad, Part.Perc, Part.Bell, Part.Ambience, Part.Melody };
+                    break;
+            }
+            p.Sections.Add(s);
+        }
+    }
+
+    /// <summary>
+    /// The cold voice of a standoff: not a tune but a few long notes with silence round them, each
+    /// cell a step that falls onto the tonic or the fifth from the semitone above it. One cell
+    /// every two bars at most, and not every time.
+    /// </summary>
+    private List<LineNote> StandoffLine(Piece p, Section s)
+    {
+        int n = p.Key.Mode.Size;
+        // Degrees over the tonic an octave up: the flat second falling home, the flat sixth falling
+        // to the fifth, the third sinking by step, and one held tonic.
+        int[][] cells = { new[] { n + 1, n }, new[] { n + 5, n + 4 }, new[] { n + 2, n + 1, n }, new[] { n + 4, n + 5, n + 4 }, new[] { n } };
+        var line = new List<LineNote>();
+        for (int bar = 0; bar + 1 < s.Bars; bar += 2)
+        {
+            if (_rng.NextDouble() < 0.2) continue;
+            var cell = cells[_rng.Next(cells.Length)];
+            double beat = bar * p.Meter + (_rng.NextDouble() < 0.5 ? 1 : 2);
+            for (int i = 0; i < cell.Length; i++)
+            {
+                double dur = i == cell.Length - 1 ? 3 : 1.5;
+                line.Add(new LineNote(beat, dur, cell[i], i == 0 ? 0.9f : 0.78f));
+                beat += 1.5;
+            }
+        }
+        return line;
+    }
+
+    /// <summary>
+    /// The low staccato strings of a standoff: eighths creeping between the tonic and the note a semitone
+    /// above it, under whatever chord stands. Short bows, soft, the upper note leaned on; the last
+    /// eighth of every other bar is left out, which is where the ear waits for it.
+    /// </summary>
+    private void EmitUnease(List<ScoreEvent> output, Piece p, double barStart, float arc)
+    {
+        var key = p.Key;
+        int low = LowPitch(key, 0, key.Tonic - 12);
+        int[] figure = { 0, 0, 1, 0, 0, 1, 0, 0 };
+        double step = 0.5 * p.BeatSeconds;
+        for (int i = 0; i < p.Meter * 2; i++)
+        {
+            if (i == p.Meter * 2 - 1 && _bar % 2 == 1) continue;
+            bool leans = figure[i % figure.Length] == 1;
+            float v = (leans ? 0.72f : i == 0 ? 0.6f : 0.46f) * arc * Orchestra.Trim(p.Orch.Ostinato) * Jitter(0.1f);
+            output.Add(new(barStart + i * step + Humanise() * 0.5, step * (leans ? 0.95 : 0.6), Part.Ostinato, p.Orch.Ostinato,
+                           low + (leans ? key.Pitch(1) - key.Pitch(0) : 0), v, i % 2 == 0 ? -0.4f : 0.4f));
+        }
+    }
+
+    /// <summary>
+    /// The heart: two strokes to the beat, the second closer and softer, on a low drum. Every
+    /// fourth bar it misses its last beat. In the held breath (the C section) it beats alone and a
+    /// little harder.
+    /// </summary>
+    private void EmitHeartbeat(List<ScoreEvent> output, Piece p, Section s, double barStart, float arc)
+    {
+        int low = p.Key.Tonic - 12;
+        double beat = p.BeatSeconds;
+        float push = s.Kind == SectionKind.C ? 1.15f : 1f;
+        for (int i = 0; i < p.Meter; i++)
+        {
+            if (i == p.Meter - 1 && _bar % 4 == 3) continue;
+            float v = (i == 0 ? 0.9f : 0.74f) * arc * push;
+            // The drum for the note of it, the kick under it for the thump in the chest.
+            output.Add(new(barStart + i * beat, 0.5, Part.Perc, Instrument.Timpani, low, v, 0f));
+            output.Add(new(barStart + i * beat, 0.3, Part.Perc, Instrument.Kick, low - 12, v * 0.8f * Orchestra.Trim(Instrument.Kick), 0f));
+            output.Add(new(barStart + (i + 0.3) * beat, 0.4, Part.Perc, Instrument.Timpani, low, v * 0.62f, 0f));
+            output.Add(new(barStart + (i + 0.3) * beat, 0.3, Part.Perc, Instrument.Kick, low - 12, v * 0.45f * Orchestra.Trim(Instrument.Kick), 0f));
+        }
+    }
+
     private void ComposeDanceMotifs(Piece p, int index)
     {
         var o = p.Orch;
@@ -683,6 +829,9 @@ internal sealed class Composer
     /// <summary>The mood a new piece is written for: a fight hardens the place's own mood into battle.</summary>
     private MusicMoodState EffectiveMood() => Fighting
         ? new MusicMoodState(Math.Max(Mood.Coldness, 0.4f), Math.Max(Mood.Fear, 0.85f), Mood.Mystery * 0.5f, 1f, 0f, 0f, 0f)
+        // A standoff: the place's own mood gone cold and afraid, short of the fight's. Nobody dances
+        // and nothing is holy while it lasts.
+        : Dread ? new MusicMoodState(Math.Max(Mood.Coldness, 0.55f), Math.Max(Mood.Fear, 0.75f), Mood.Mystery, 1f, 0f, 0f, 0f)
         : Mood;
 
     private void CheckDrift(Piece p)
@@ -690,7 +839,8 @@ internal sealed class Composer
         var m = EffectiveMood();
         float d = MathF.Sqrt(Sq(m.Coldness - p.Mood.Coldness) + Sq(m.Fear - p.Mood.Fear) + Sq(m.Mystery - p.Mood.Mystery)
                              + Sq(m.Festivity - p.Mood.Festivity) + Sq(m.Sacred - p.Mood.Sacred) + Sq(m.Far - p.Mood.Far));
-        bool fightChanged = Fighting != p.Fight;
+        // A standoff beginning or ending is a change of piece as a fight is, whatever the gauges say.
+        bool fightChanged = Fighting != p.Fight || Dread != p.Standoff;
         // A new place is a new mood, and a new mood is a new piece: anything past a small change ends
         // this one, through a short bridge.
         if (d < 0.12f && !fightChanged) return;
@@ -700,7 +850,7 @@ internal sealed class Composer
         if (!large && _bar % 2 != 0) return;
         var cur = p.Sections[_section];
         if (cur.Kind == SectionKind.Bridge) return;
-        if (fightChanged && Fighting)
+        if (Fighting != p.Fight && Fighting)
         {
             // A fight does not wait for a bridge: the piece stops at this bar line and the fight's
             // riff comes in on the next downbeat, with a crash.
@@ -756,7 +906,7 @@ internal sealed class Composer
         foreach (Part part in new[] { Part.Drone, Part.Pad, Part.Melody, Part.Counter, Part.Ostinato, Part.Bass, Part.Perc, Part.Bell, Part.Ambience, Part.Cantus })
         {
             bool on = s.Layers.Contains(part);
-            output.Add(new(t, 0, part, default, 0, on ? Orchestra.PartLevel(part, p.Fight) : 0f, 0, IsGain: true,
+            output.Add(new(t, 0, part, default, 0, on ? Orchestra.PartLevel(part, p.Fight, p.Standoff) : 0f, 0, IsGain: true,
                            FadeSeconds: (float)(on ? p.BarSeconds * 0.5 : p.BarSeconds * 1.5)));
         }
 
@@ -823,6 +973,12 @@ internal sealed class Composer
         // A dance tune's B part is a strain higher: its range moves up a third.
         int lift = p.Dance != Dance.None ? 2 : 0;
         bool chant = p.Orch.Pole == "sacred";
+        if (p.Standoff)
+        {
+            s.MelodyLine = s.Layers.Contains(Part.Melody) ? StandoffLine(p, s) : new List<LineNote>();
+            s.CounterLine = new();
+            return;
+        }
         s.MelodyLine = s.Kind switch
         {
             // Chant is written as chant, not as a period of motifs: see Plainchant.
@@ -1240,6 +1396,7 @@ internal sealed class Composer
         if (o.OstinatoStyle == OstinatoStyle.Comp) { EmitComp(output, p, chord, barStart, arc); return; }
         if (o.OstinatoStyle == OstinatoStyle.Riff) { EmitRiff(output, p, chord, barStart, arc); return; }
         if (o.OstinatoStyle == OstinatoStyle.Additive) { EmitAdditive(output, p, chord, barStart, arc); return; }
+        if (o.OstinatoStyle == OstinatoStyle.Unease) { EmitUnease(output, p, barStart, arc); return; }
         int n = key.Mode.Size;
         // Chord tones as degrees, the root in the octave of the tonic (low for a pulse).
         int rootDeg = chord.Root;
@@ -1265,6 +1422,7 @@ internal sealed class Composer
     {
         var key = p.Key;
         double beat = p.BeatSeconds;
+        if (p.Standoff) { EmitHeartbeat(output, p, s, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.Bodhran) { EmitBodhran(output, p, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.WarDrum) { EmitKit(output, p, s, barStart, arc); return; }
         if (p.Orch.Perc == Instrument.BentDrum) { EmitBentDrums(output, p, barStart, arc); return; }

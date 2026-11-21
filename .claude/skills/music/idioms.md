@@ -104,27 +104,48 @@ variant. The harness renders one as `tavern:12@night`.
 ## A standoff
 
 While somebody confronts a member of the party in a place (an enemy in the room, a witness who
-will not let them leave), the place plays its `MusicMoodState.Confronted()` variant, asked through
-`AmbianceEngine.SetConfronted` exactly as night is asked through `SetNight`, and applied after
-night. It is not an idiom of its own: it is the place's music held tense. Fear is raised by 0.45
-and kept between 0.62 and 0.70, coldness to at least 0.45, mystery by 0.10; festivity is zeroed
-and sacred halved; **intensity is held at 0.70 to 0.72**, which lets in the melody, the counter
-and the bass and keeps out the ostinato and the drums, so a standoff is quieter than the fight it
-may become. In a forest it reads as: the place at 62 bpm on recorder and choir, the standoff at
-75 bpm in pentatonic minor on harp over the dark pad, the fight at 94 bpm.
+will not let them leave) the composer writes **standoff** pieces: `Composer.Standoff`, set through
+`AmbianceEngine.SetConfronted` → `IMusicEngine.SetStandoff` → `MusicCore.SetStandoff`, as a fight
+is set through the filter. A fight outranks it (`Dread` is `Standoff && !Fighting`): the fight is
+what a standoff turns into. It is an idiom of its own, the dread before a fight, and deliberately
+not a tune:
 
-It opens on a break of 0.6 s (`ConfrontationBreakSeconds`): a glide would be heard a section
-late. It ends on a glide, since what ends it (a fight, a conversation, the way out) usually takes
-the music anyway. The pause menu gives it back without the break.
+- **Always Phrygian.** The note a semitone over the tonic is the sound of it. The tonic still
+  moves by a fourth or a fifth from the last piece's, so the key is the place's neighbour.
+- **The heart** (`EmitHeartbeat`): a low timpani with a kick under it, two strokes to the beat
+  (the second 0.3 of a beat later and softer), at 76 to 88 bpm. Every fourth bar it misses its
+  last beat. It is as forward as a fight's kit (`PartLevel(Perc, standoff)` 0.95).
+- **The creeping figure** (`EmitUnease`, `OstinatoStyle.Unease`): low staccato strings in eighths,
+  tonic tonic flat-second tonic tonic flat-second tonic tonic, the upper note leaned on, the last
+  eighth of every other bar left out. It does not follow the chords.
+- **The bed**: the bourdon, a dark pad in open fifths, wind. Chords are the tonic and the chord a
+  semitone up, and every section but the intro ends leaning on the upper one. No bass part.
+- **The cold voice** (`StandoffLine`): bowed glass, a wordless choir, an organ or the metallophone
+  on a cell of two or three long notes every two bars at most, each a step falling onto the tonic
+  or the fifth. No motif, no period, no counter.
+- **The form** is `I A A' C A' C`: the heart alone for two bars; the dread under it; the cold
+  voice over it; a held breath with the strings gone and a bell; and round again.
 
-**Why these numbers.** The first setting was fear 0.82 with every layer in, for the processional
-drum that fear above 0.8 brings. Measured on forest, village and cave it came out 2 to 3 dB louder
-than both the place and a fight (−13.5 LUFS against −16 and −15.3) and dissonant 43% of the time
-(71% in a forest: Locrian over the drone) against 6% for a fight. At the present values it sits at
-the place's loudness (−14.5 median) with 5 to 13% dissonance. It still leaves the general bands on
-`mel_step_ratio` (0.36, the tense palette leaps more) and `onset_rate` (it is slow and sustained).
-Render it with the `@confronted` suffix (`forest:3@confronted`, `tavern:12@night@confronted`) and
-`journeys/confrontation.json`, which goes place, standoff, fight.
+It opens on 0.6 s of silence (`MusicCore.StandoffSilence`), since a confrontation is a turn of the
+visit; it ends through the ordinary bridge back to the place. The layer gates treat it as a fight
+is treated: intensity reads 1, and the drum and the strings come in at the melody's tier.
+
+**How it got here.** The first two versions were the place's own mood pushed toward fear
+(`MusicMoodState.Confronted()`, since removed). With fear at 0.82 and every layer in it was 2 to 3
+dB louder than both the place and a fight and dissonant 43% of the time. Backed off to fear 0.70
+and intensity 0.72 it measured well and was heard, by the developer, as "simple quiet location
+music". A mood cannot do this job: the gauges choose among tunes, and a standoff is not one.
+
+**Measured** (four kinds of place, four seeds): −14 to −17.6 LUFS, at the place's level and a
+fight's; dissonant 53 to 54% of the time, which is the idiom and has its own band
+(`poles.standoff`); stems perc −26 to −28 dB, melody −24 to −29, pad −30, ostinato −34. Two faults
+were found by the stems and by nothing else: the heartbeat at its first velocities registered no
+onsets at all, and the creeping figure on bowed strings sat at −45 dB, 15 under the pad, because a
+bowed section does not speak inside an eighth. Every other mood is note for note what it was
+(Tavern, forest, DarkDungeon, Battle and a temple compared as multisets against the build before).
+
+Render it with the `@confronted` suffix (`forest:3@confronted`) or a journey's
+`"filter": "standoff"`; `journeys/confrontation.json` goes place, standoff, fight.
 
 ## Mood changes
 

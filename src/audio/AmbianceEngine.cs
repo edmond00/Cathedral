@@ -18,6 +18,8 @@ internal interface IMusicEngine : IDisposable
     void SetMood(MusicMoodState mood);
     void SetActiveTrackCount(int count);
     void Transition(float silenceSeconds);
+    /// <summary>Somebody confronts the party in the place being played: its standoff, until told otherwise.</summary>
+    void SetStandoff(bool on);
     void TriggerGameEvent(GameEventType evt);
     void PlaySoundEffect(SoundEffectType sfx);
     void SetMasterMusicVolume(float v01);
@@ -89,7 +91,12 @@ public sealed class AmbianceEngine : IDisposable
     public void SetFilter(MusicFilter filter) { _asked = _asked with { Filter = filter }; _engine.SetFilter(filter); }
 
     /// <summary>Sets the target mood; the music glides toward it over a few seconds.</summary>
-    public void SetMood(MusicMoodState mood) { _asked = _asked with { Mood = mood, Night = false, Confronted = false }; _engine.SetMood(mood); }
+    public void SetMood(MusicMoodState mood)
+    {
+        if (_asked.Confronted) _engine.SetStandoff(false);
+        _asked = _asked with { Mood = mood, Night = false, Confronted = false };
+        _engine.SetMood(mood);
+    }
 
     /// <summary>
     /// Whether the place whose mood was last set is being played at night: its
@@ -104,32 +111,22 @@ public sealed class AmbianceEngine : IDisposable
     }
 
     /// <summary>
-    /// Whether somebody confronts a member of the party in the place whose mood was last set: its
-    /// <see cref="MusicMoodState.Confronted"/> variant, the standoff. It begins on a short break —
-    /// the music stops, and the place's tense piece starts from its beginning — because a
-    /// confrontation is a turn of the visit and a glide would be heard too late. It ends on a
-    /// glide: what ends it usually takes the music anyway (a fight, a conversation, the way out).
-    /// Any new <see cref="SetMood"/> is no confrontation again.
+    /// Whether somebody confronts a member of the party in the place whose mood was last set. The
+    /// music is then that place's <b>standoff</b>: an idiom of its own (the composer's, see the
+    /// music skill's idioms) in the place's neighbouring key — a drum that beats like a heart, low
+    /// strings creeping a semitone, a hollow dark pad, a few cold notes. It begins on a short
+    /// silence and ends through the ordinary bridge back to the place. Any new
+    /// <see cref="SetMood"/> is no confrontation again.
     /// </summary>
     public void SetConfronted(bool confronted)
     {
         if (_asked.Confronted == confronted) return;
         _asked = _asked with { Confronted = confronted };
-        if (_asked.Mood is not { } m) return;
-        _engine.SetMood(Variant(m, _asked));
-        if (confronted) _engine.Transition(ConfrontationBreakSeconds);
+        _engine.SetStandoff(confronted);
     }
 
-    /// <summary>The silence a confrontation opens on, in seconds: a held breath, not a scene change.</summary>
-    public const float ConfrontationBreakSeconds = 0.6f;
-
-    /// <summary>The place's mood as the request plays it: at night, and under a confrontation.</summary>
-    public static MusicMoodState Variant(MusicMoodState mood, MusicRequest r)
-    {
-        if (r.Night) mood = mood.AtNight();
-        if (r.Confronted) mood = mood.Confronted();
-        return mood;
-    }
+    /// <summary>The place's mood as the request plays it: at night. A standoff is not a mood but an idiom over it.</summary>
+    public static MusicMoodState Variant(MusicMoodState mood, MusicRequest r) => r.Night ? mood.AtNight() : mood;
 
     /// <summary>Sets the number of active tracks (0–4).</summary>
     public void SetActiveTrackCount(int count) { _asked = _asked with { Tracks = count }; _engine.SetActiveTrackCount(count); }
@@ -157,12 +154,7 @@ public sealed class AmbianceEngine : IDisposable
     {
         if (r.Mood is { } m) SetMood(m);
         SetNight(r.Night);
-        // Given back without its break: the menu was a pause, not a new confrontation.
-        if (r.Confronted && !_asked.Confronted && _asked.Mood is { } held)
-        {
-            _asked = _asked with { Confronted = true };
-            _engine.SetMood(Variant(held, _asked));
-        }
+        SetConfronted(r.Confronted);
         if (r.Tracks >= 0) SetActiveTrackCount(r.Tracks);
         SetFilter(r.Filter);
     }

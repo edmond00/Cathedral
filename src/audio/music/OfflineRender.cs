@@ -52,6 +52,7 @@ public static class OfflineRender
         // Battle is the fight's preset, and in the game a fight is the fight filter over a place's
         // mood: render it the way the game plays it.
         if (moodName.Equals("Battle", StringComparison.OrdinalIgnoreCase)) core.SetFighting(true);
+        if (moodName.EndsWith(StandoffSuffix, StringComparison.OrdinalIgnoreCase)) core.SetStandoff(true);
 
         var clock = Stopwatch.StartNew();
         const int chunk = 4096;
@@ -121,11 +122,15 @@ public static class OfflineRender
             string name = f.GetString() ?? "none";
             core.SetFighting(name == "fighting");
             core.SetTraveling(name == "traveling");
+            core.SetStandoff(name == "standoff");
         }
         if (e.TryGetProperty("tracks", out var tr)) core.SetTrackCount(tr.GetInt32());
         // Last, as the game calls it: after the new mood and track count are set.
         if (e.TryGetProperty("break", out var br)) core.Cut(br.GetDouble(), 1.2f);
     }
+
+    /// <summary>A mood name's suffix that asks for the place's standoff (<c>forest:3@confronted</c>).</summary>
+    private const string StandoffSuffix = "@confronted";
 
     private static (string Name, MusicMoodState Mood)[] Presets() =>
         typeof(MusicMoodState).GetFields(BindingFlags.Public | BindingFlags.Static)
@@ -142,14 +147,10 @@ public static class OfflineRender
             mood = day.AtNight();
             return ok;
         }
-        // "forest:3@confronted", "tavern:12@night@confronted": the place's standoff, as a visit
-        // plays it while somebody confronts a member.
-        if (name.EndsWith("@confronted", StringComparison.OrdinalIgnoreCase))
-        {
-            bool ok = TryMood(name[..^"@confronted".Length], out var place);
-            mood = place.Confronted();
-            return ok;
-        }
+        // "forest:3@confronted", "tavern:12@night@confronted": the place's mood; that it is played
+        // as its standoff is the composer's flag, set by the caller (see Standoff below).
+        if (name.EndsWith(StandoffSuffix, StringComparison.OrdinalIgnoreCase))
+            return TryMood(name[..^StandoffSuffix.Length], out mood);
         foreach (var (n, m) in Presets())
             if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) { mood = m; return true; }
         // "0.5,0.2,0.3,1,0.6,0.4,0.2": the gauges themselves (cold, fear, mystery, intensity,

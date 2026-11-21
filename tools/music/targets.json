@@ -400,6 +400,59 @@
     "lo": 0.0,
     "hi": 1.8
    }
+  },
+  "standoff": {
+   "dissonance_time": {
+    "lo": 0.3,
+    "hi": 0.7,
+    "why": "A standoff is not a tune: a heart, a creeping semitone figure and a few long cold notes, in Phrygian over the drone. The semitone against the drone IS the idiom (measured 0.53-0.54); under 0.3 it has gone soft."
+   },
+   "mel_step_ratio": {
+    "lo": 0.4,
+    "hi": 1.0,
+    "why": "A standoff is not a tune: a heart, a creeping semitone figure and a few long cold notes, in Phrygian over the drone. Its cells are all steps."
+   },
+   "mel_leap_ratio": {
+    "lo": 0.0,
+    "hi": 0.22
+   },
+   "mel_range_phrase": {
+    "lo": 1,
+    "hi": 15
+   },
+   "mel_distinct_phrase": {
+    "lo": 1,
+    "hi": 10
+   },
+   "motif_recurrence": {
+    "lo": 0.0,
+    "hi": 0.9,
+    "why": "No motif is developed; the recurrence is the ostinato's."
+   },
+   "pc_entropy": {
+    "lo": 1.5,
+    "hi": 2.95,
+    "why": "Few pitch classes on purpose: tonic, flat second, fifth, flat sixth."
+   },
+   "onset_rate": {
+    "lo": 0.08,
+    "hi": 4.5,
+    "why": "The drum is low and its strokes register weakly as spectral flux; read the perc stem instead."
+   },
+   "low_share": {
+    "lo": 0.06,
+    "hi": 0.62,
+    "why": "A bourdon, a low drum and low strings: measured 0.46-0.58."
+   },
+   "drone_vs_melody": {
+    "lo": -16.0,
+    "hi": 4.0
+   },
+   "envelope_roughness": {
+    "lo": 0.0,
+    "hi": 1.8,
+    "why": "A drum struck twice a beat over held notes: measured 1.3-1.46."
+   }
   }
  }
 }

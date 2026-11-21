@@ -27,11 +27,10 @@ advance 12 180
 expect-state where confronted=Enemy:wolf exit=RUNAWAY
 
 # The screen and the music say so: the card is framed (the frame's glyphs stand, only their ink
-# beats), and the place's music is asked for as its standoff.
+# beats), and the music is asked for the place's standoff.
 expect ╔═
 expect ╚
 expect-state music confronted=yes
-expect-state music fear=0.70 mystery=0.51 intensity=0.72
 expect-no-state trees wolf
 inspect symbols
 expect-state symbols click observe hostile in Test Den x1
