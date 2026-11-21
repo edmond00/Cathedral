@@ -728,9 +728,10 @@ is `ThoughtNode`s:
 Each node keeps the very `NarrationBlock` or action the dice read (`ChainOrigin`), so a roll needs
 nothing the tree does not hold: observation → thinking → act is still the pool, and the tree is that
 chain drawn. A node's first child follows it on its row; the others each start a row under it. An
-element's contents (`◇`, one per part, **joined by a line**: `└◇─◇─◇` — they came out of one look,
-and a gap between them read as unrelated symbols) and its stubs (`?`, `❝`, a space apart) share
-**one last row**, its shelf.
+element's contents (`◇`, one per part) and its stubs (`?`, `❝`) share **one last row**, its shelf,
+and **every symbol on a shelf is joined to the next by a line**: `└◇─◇─?─❝`, and beside a waiting
+act `①─⚒─↺` (`PaintShelf`). A gap left a symbol standing beside the tree and not on it: the
+contents read as unrelated symbols, and the `↺` as belonging to nothing.
 A branch with no act left waiting is the record of a thought and is drawn dimmed, never removed —
 trees last the visit and are thrown away with it.
 
@@ -827,7 +828,12 @@ and its label says which ("the cart · fold"). Not in the two opening phases, wh
 click each.
 
 **An area's tree has a root of its own, and a click on it folds the whole tree** (`RootSymbol`,
-`Config.Symbols.MapRoot` `♣`, `MemberMind.FoldedAreas`). It stands on the first row under a card
+`Config.Symbols.MapRoot` `⨀`, `MemberMind.FoldedAreas`). It is drawn **in the trunk's own ink
+(`LineInk`) and on no lit ground** — the one clickable symbol without one (`Symbol`'s `RootSymbol`
+case): it is where the tree's lines start, not one more thing standing in the place. It was a gold
+`♣`, which read as a kind of element to learn; on the lit ground the line-coloured glyph was a
+brown square. The pointer still inverts it and its label says what a click does. The glyph is in
+`Config.Terminal.FallbackGlyphs`. It stands on the first row under a card
 that has anything observed, in the trunk's column, and the observed elements branch from under it —
 so the trees have ten rows and not eleven while exploring (`canvas.TreeRows - 1`). Folded, it is
 drawn alone with `…` beside it and nothing of that area's tree is drawn or answers a click:
@@ -1696,6 +1702,11 @@ out by an able means with no decline. A goal tried with every means is dropped; 
 the ignore branch says `IterationExhausted`. The response is a list of `ThinkingSegment`s — thoughts
 and refusals in order — and the controller hangs one node per segment under the element, each from
 the last, the act from the last thought (`ThinkAsync`). **One noetic point for the whole chain.**
+**A doubt's texts are segments of their own** (`Think(text, apart: true)`): the thought that asks,
+the answer it was given (`DoubtConfirmed` / `DoubtRejected`) and the thought that follows a NO are
+three `¶` on the tree, each read on its own — they used to run together into one text, and a
+thinking doubted twice was one symbol holding five paragraphs. The dice are unchanged: an act's
+chain is the last thought and the observation, however many came before.
 
 **Reconsider: the `↺` beside a waiting act, and the one place the action rules are asked ahead.**
 It asks a thinking modus mentis the player picks

@@ -295,8 +295,10 @@ What changed once the map had been played, each answering a remark made on it.
   (`INTERRUPTED`): the conversation's screen closes on the press and showed nothing.
 - **Whoever confronts a member must be looked at like anything else** (this undoes §10's "already
   observed"): a thought always comes after a look.
-- **An area's tree hangs from a root symbol of its own** (`♣`, first row under the card), and a
+- **An area's tree hangs from a root symbol of its own** (first row under the card), and a
   click on it folds the whole of that area's tree away or brings it back.
+- **The area root is a circled dot in the tree line's colour** (`⨀`), every symbol on a row is joined to the tree by a line
+  (`①─⚒─↺`, `◇─◇─?─❝`), and each text a doubt writes is a thought symbol of its own.
 - **A confrontation holds the whole party**: only the confronted members may be played or do
   anything until it is settled.
 - **Known things and people are each member's own**; areas, ways and routines stay the party's.

@@ -130,6 +130,8 @@ public class ThinkingExecutor
         bool mayDoubt   = !autoSuccess && preview != null && doubtLevel.MayDoubt();
         var chain       = new ThinkingChain();
         var segments    = new List<ThinkingSegment>();
+        // The thought just written was the answer to a doubt: the next one starts a segment of its own.
+        bool thoughtBroken = false;
         if (retriesLeft > 0)
             Console.WriteLine($"ThinkingExecutor: [{thinkingModusMentis.DisplayName}] ({doubtLevel} doubt) may try again {retriesLeft} time(s)"
                             + (mayDoubt ? ", and the player may doubt" : "") + ".");
@@ -341,11 +343,11 @@ public class ThinkingExecutor
                     retriesLeft--;
                     // Voiced now and alone, like a YES: the player sees their answer taken while the next
                     // goal is chosen, and the next reasoning is rewritten on its own (see VoiceLeadAsync).
-                    Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.DoubtRejected(goalPhrase), NarrationKind.Reasoning, thoughtPart, cancellationToken));
+                    Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.DoubtRejected(goalPhrase), NarrationKind.Reasoning, thoughtPart, cancellationToken), apart: true);
                     retrying = true;
                     continue;
                 }
-                Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.DoubtConfirmed(goalPhrase), NarrationKind.Reasoning, thoughtPart, cancellationToken));
+                Think(await VoiceAsync(thinkingSlot, thinkingModusMentis, NeutralNarration.DoubtConfirmed(goalPhrase), NarrationKind.Reasoning, thoughtPart, cancellationToken), apart: true);
             }
 
             // Reasoning is done — make it continue-able now while the action (different MM) streams behind it.
@@ -466,12 +468,16 @@ public class ThinkingExecutor
         }
 
         // A thought joins the thinking block in progress; a refusal closes it and is a block of its own.
-        void Think(string text)
+        // So is the answer to a doubt (apart): the thought that asked, the answer it was given and the
+        // thought that follows the answer are three texts written at three moments, and each is a
+        // symbol of its own on the tree, read on its own. The dice still read one thought — the last.
+        void Think(string text, bool apart = false)
         {
-            if (segments.Count > 0 && segments[^1].IsThought)
+            if (!apart && !thoughtBroken && segments.Count > 0 && segments[^1].IsThought)
                 segments[^1] = segments[^1] with { Text = segments[^1].Text + " " + text };
             else
                 segments.Add(new ThinkingSegment(thinkingModusMentis, text, IsThought: true));
+            thoughtBroken = apart;
         }
 
         void Refusal(ModusMentis by, string text) => segments.Add(new ThinkingSegment(by, text, IsThought: false));

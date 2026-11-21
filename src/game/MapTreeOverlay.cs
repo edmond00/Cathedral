@@ -329,7 +329,9 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (Frame.AreaRoots)
         {
             var root = new RootSymbol(card.Area);
-            Symbol(canvas, trunk, y, Config.Symbols.MapRoot, Config.Colors.GoldYellow, root);
+            // In the trunk's own ink: the root is where the tree's lines start, not one more thing
+            // standing in the place. What says it can be clicked is the pointer over it.
+            Symbol(canvas, trunk, y, Config.Symbols.MapRoot, LineInk, root);
             if (card.Folded)
             {
                 Symbol(canvas, trunk + 1, y, Config.Symbols.MapFolded, Config.Colors.BrightYellow, root);
@@ -642,18 +644,20 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     }
 
     /// <summary>
-    /// A shelf: one row. An element's is what it holds — joined by a line, one thing to the next —
-    /// then what it offers, a space apart; a waiting act's is what may be done with it besides
-    /// carrying it out.
+    /// A shelf: one row, every symbol on it joined to the next by a line. An element's is what it
+    /// holds, then what it offers; a waiting act's is what may be done with it besides carrying it
+    /// out.
     /// </summary>
     private void PaintShelf(LocationMap.MapCanvas canvas, List<MapSymbol> shelf, int x, int y)
     {
         MapSymbol? before = null;
         foreach (var symbol in shelf)
         {
-            // What a container holds is one row of things joined by a line, as a tree's nodes are:
-            // they came out of the same look, and a gap between them read as unrelated symbols.
-            if (symbol is ContentSymbol && before is ContentSymbol) Line(canvas, x - 1, y, '─');
+            // Everything on a shelf is joined by a line, one symbol to the next, as a tree's nodes
+            // are: what a container holds, what an element offers, what may be done with a waiting
+            // act. A gap left a symbol standing beside the tree and not on it — the mark that has an
+            // act thought over again read as belonging to nothing.
+            if (before != null) Line(canvas, x - 1, y, '─');
             before = symbol;
             char glyph = symbol switch
             {
@@ -722,7 +726,10 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         // read; one that answers nothing stays as it is, and only its label says why.
         if (_alarm && enabled) _lit.Add((x, y));
         if (Equals(symbol, Frame.Hovered) && (enabled || symbol is NodeSymbol)) canvas.Put(x, y, glyph, HoverInk, HoverGround);
-        else canvas.Put(x, y, glyph, ink, enabled ? ClickGround : null);
+        // The root of an area's tree is drawn as the trunk is, with no ground of its own: on the
+        // lit ground its line-coloured glyph was a brown square with nothing legible in it. It
+        // still answers the pointer (inverted above) and the click.
+        else canvas.Put(x, y, glyph, ink, enabled && symbol is not RootSymbol ? ClickGround : null);
         canvas.Hit(x, y, symbol);
         Took(x, y);
     }
