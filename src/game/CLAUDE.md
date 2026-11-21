@@ -973,6 +973,13 @@ the trees nothing said who it was either.
   — every anonymous symbol of their kind on that card, since a look at that kind lands on them
   first. A witness's `☺` beats purple like an enemy's `☹`: which of four people on a card is the
   one who will not let you leave is exactly what the screen did not say.
+- **The rest of the map goes into the shade** (`MapCanvas.Shade`, at the end of the overlay's
+  `Paint`): every cell loses its hue and most of its light (ink ×0.42, ground ×0.55 of its
+  luminance), glyphs standing. What stays lit is `_lit`: the framed cards with their frames, every
+  cell of the trees under them (`_litTree`, records included), every symbol a click still acts on
+  wherever it stands (a way leaving the area, on its line) and the way out. So the shade is the
+  same statement `IsEnabled` makes — nothing out there answers while this lasts — made before the
+  pointer has to find it out.
 - **The music** (`AmbianceEngine.SetConfronted`, asked every tick from `RenderPanel` and acted on
   when it changes): the place's own mood as `MusicMoodState.Confronted()`, its standoff — see the
   `music` skill. It opens on a 0.6 s break so it is heard at once, and ends on a glide.

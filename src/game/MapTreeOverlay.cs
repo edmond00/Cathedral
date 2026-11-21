@@ -200,6 +200,14 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     // its cells on a row is taken off (Settle), so a line never runs through the middle of one.
     private readonly HashSet<(int X, int Y)> _treeCells = new();
     private readonly Dictionary<int, (int Min, int Max)> _treeSpans = new();
+
+    // While somebody is confronted, the cells left lit: the framed cards, the trees under them and
+    // whatever still answers a click. Everything else on the map goes into the shade.
+    private readonly HashSet<(int X, int Y)> _lit = new();
+    private bool _alarm;
+    // The tree being drawn hangs under a confronted card: all of it stays lit, records included.
+    private bool _litTree;
+    private const float ShadeInk = 0.42f, ShadeGround = 0.55f;
     private bool _tracking;
 
     public int BandRoom(Area area)
@@ -208,6 +216,8 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
     public void Paint(LocationMap.MapCanvas canvas)
     {
         if (Frame == null) return;
+        _lit.Clear();
+        _alarm = Frame.Cards.Any(c => c.Confronted);
         foreach (var card in Frame.Cards)
             if (canvas.CardOf(card.Area) is { } at)
             {
@@ -240,7 +250,13 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         {
             canvas.Hit(exit.X, exit.Y, new ExitSymbol());
             if (Frame.Hovered is ExitSymbol) canvas.Put(exit.X, exit.Y, LocationMap.ExitGlyph, HoverInk, HoverGround);
+            _lit.Add((exit.X, exit.Y));
         }
+
+        // A confrontation takes the rest of the map out of the light: only the framed cards, what
+        // hangs under them and what a click still acts on keep their colours. Nothing else answers
+        // while it lasts, and the shade says so before the pointer has to.
+        if (_alarm) canvas.Shade((x, y) => _lit.Contains((x, y)), ShadeInk, ShadeGround);
     }
 
     /// <summary>
@@ -281,14 +297,29 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
                    active ? Config.Colors.BrightYellow : Config.Colors.Ochre, symbol);
         }
 
-        // A confrontation frames the card, under everything else drawn on those cells.
-        if (card.Confronted) PaintAlarm(canvas, bx, by);
+        // A confrontation frames the card, under everything else drawn on those cells. The card
+        // and its frame stay lit while the rest of the map is shaded.
+        if (card.Confronted)
+        {
+            PaintAlarm(canvas, bx, by);
+            for (int y = by - 1; y <= by + canvas.CardHeight; y++)
+                for (int x = bx - 1; x <= bx + canvas.CardWidth; x++)
+                    _lit.Add((x, y));
+        }
 
         PaintTray(canvas, card, bx + 1, by + 2, canvas.CardWidth - 2);
 
         // The trunk, and each observed element on a row of its own under the card.
         var hanging = card.Roots.Concat(card.Strays).ToList();
         if (hanging.Count == 0) return;
+        _litTree = card.Confronted;
+        try { PaintTrees(canvas, card, hanging, bx, by); }
+        finally { _litTree = false; }
+    }
+
+    /// <summary>The trees under a card: its root symbol, then each observed element on rows of its own.</summary>
+    private void PaintTrees(LocationMap.MapCanvas canvas, CardFrame card, List<ThoughtNode> hanging, int bx, int by)
+    {
 
         Track();
         int y = by + canvas.CardHeight, trunk = bx, last = -1;
@@ -372,6 +403,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
 
     private void Took(int x, int y)
     {
+        if (_litTree) _lit.Add((x, y));
         if (!_tracking) return;
         _treeCells.Add((x, y));
         _treeSpans[y] = _treeSpans.TryGetValue(y, out var span) ? (Math.Min(span.Min, x), Math.Max(span.Max, x)) : (x, x);
@@ -688,6 +720,7 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
         if (Frame.Confronters.Contains(symbol)) ink = Frame.BeatLit ? AlarmLit : AlarmDark;
         // Under the pointer a symbol is inverted when a click would act on it or it has a text to
         // read; one that answers nothing stays as it is, and only its label says why.
+        if (_alarm && enabled) _lit.Add((x, y));
         if (Equals(symbol, Frame.Hovered) && (enabled || symbol is NodeSymbol)) canvas.Put(x, y, glyph, HoverInk, HoverGround);
         else canvas.Put(x, y, glyph, ink, enabled ? ClickGround : null);
         canvas.Hit(x, y, symbol);

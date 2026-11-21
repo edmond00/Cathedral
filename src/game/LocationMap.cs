@@ -904,6 +904,29 @@ public sealed class LocationMap
             if (InBounds(x, y)) _fgs[y * Width + x] = fg;
         }
 
+        /// <summary>
+        /// Puts every cell <paramref name="keep"/> does not answer for in the shade: ink and ground
+        /// lose their hue and most of their light, the glyphs stand. What is left lit is what the
+        /// eye is meant to go to.
+        /// </summary>
+        public void Shade(Func<int, int, bool> keep, float ink, float ground)
+        {
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                {
+                    if (keep(x, y)) continue;
+                    int c = y * Width + x;
+                    _fgs[c] = Grey(_fgs[c], ink);
+                    _bgs[c] = Grey(_bgs[c], ground);
+                }
+
+            static Vector4 Grey(Vector4 colour, float light)
+            {
+                float l = (0.299f * colour.X + 0.587f * colour.Y + 0.114f * colour.Z) * light;
+                return new Vector4(l, l, l, colour.W);
+            }
+        }
+
         /// <summary>Names what stands on a cell, for <see cref="IconAt"/>.</summary>
         public void Hit(int x, int y, object tag)
         {
