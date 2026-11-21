@@ -1869,14 +1869,8 @@ namespace Cathedral.Glyph
                 int x = cx * cellSize;
                 int y = cy * cellSize;
                 
-                // Determine which font to use for this glyph
-                Font fontToUse = font;
-                
-                // Use fallback font if this glyph is in the fallback list
-                if (Config.Terminal.FallbackGlyphs.Contains(glyphChar) && fallbackFont != null)
-                {
-                    fontToUse = fallbackFont;
-                }
+                // The font that has the glyph draws it; the fallback list is only a preference.
+                Font fontToUse = Cathedral.Terminal.GlyphFonts.Choose(glyphChar, font, fallbackFont);
 
                 // Emboldening, the rastered half of a world-weight step. Zero at the shipped
                 // weight, so this draws exactly what it always did until the player asks for

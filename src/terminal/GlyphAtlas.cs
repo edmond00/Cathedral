@@ -262,14 +262,12 @@ namespace Cathedral.Terminal
             if (_font == null)
                 return;
 
-            // Determine which font to use for this glyph
-            Font? baseFont = _font;
-            
-            // Use fallback font if this glyph is in the fallback list
-            if (Config.Terminal.FallbackGlyphs.Contains(glyph) && _fallbackFont != null)
-            {
-                baseFont = _fallbackFont;
-            }
+            // Nothing to draw: half an emoji, a zero-width character. An empty cell, not a box.
+            if (!GlyphFonts.IsDrawable(glyph))
+                return;
+
+            // The font that has the glyph draws it; the fallback list is only a preference.
+            Font baseFont = GlyphFonts.Choose(glyph, _font, _fallbackFont);
 
             // Get glyph-specific size factor from config
             float sizeFactor = Cathedral.Config.GlyphSizeFactors.GetFactor(glyph);

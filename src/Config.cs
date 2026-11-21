@@ -640,8 +640,12 @@ public static class Config
         public const string FallbackFontPath = "assets/fonts/DejaVuSansMono.ttf";
         
         /// <summary>
-        /// Characters that should use the fallback font instead of the main font.
-        /// Add any special characters here that don't render properly in FreeMono.
+        /// Characters the fallback font draws <b>better</b> than the main one. A preference only:
+        /// which font can draw a character at all is asked of the fonts themselves
+        /// (<c>Terminal.GlyphFonts.Choose</c>), so a character only the fallback font has needs no
+        /// entry here, and an entry the fallback font lacks is drawn by the main font. Listing was
+        /// once what routed a character, and a character listed for a font without it — or unlisted
+        /// while only the fallback had it — drew as an empty box. <c>tools/glyph_audit.py</c> checks.
         /// </summary>
         public static readonly HashSet<char> FallbackGlyphs = new HashSet<char>
         {
@@ -649,7 +653,6 @@ public static class Config
             // Example: '█', '▓', '▒', '░', etc.
             '♞', '⚓',
             '✗', '✓', '❝', '⚒', // location map: a failure, a success, speech, an implement
-            '⨀', // U+2A00 — location map: the root of an area's tree
             '⨯', // U+2A2F — vector cross used for the forbidden-travel flash on the world sphere
             '⎊', '◉', '⊚', // coin denomination glyphs (gold / silver / copper)
         };

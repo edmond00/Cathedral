@@ -628,8 +628,16 @@ their bed is a person too**: sleeper and bed are one element while the sleep las
 to `Thing`, a `◆` among the chests. It is named as anybody is, by role until introduced
 (`SleepingNpcPointOfInterest.Label`, "the weaver, asleep"): its title was built from the proper
 name, which is a leak. The glyphs are
-`Config.Symbols.Map*`; four of them (`✗ ✓ ❝ ⚒`) are not in the main font and had to be added to
-`Config.Terminal.FallbackGlyphs`, without which they draw as an empty cell and nothing says why.
+`Config.Symbols.Map*`. **Which font draws a glyph is asked of the fonts** (`Terminal.GlyphFonts.Choose`,
+for the terminal's atlas and the sphere's alike): the one whose character map has it, the main font
+first unless `Config.Terminal.FallbackGlyphs` prefers the fallback. That list used to be what routed
+a character, and a character sent to the font that lacked it drew as the font's "missing" box with
+no error and no log line — the tree root (listed for a fallback font without it), the journal's `✦`
+and the `☣` and `⚡` of two humors (unlisted, and only the fallback has them) were all boxes at once.
+A character neither font has still draws as a box and says so once on stderr (`[glyphs] U+…`), and
+`python3 tools/glyph_audit.py` checks every literal and asset ahead of time. Note the trap behind
+it: `Font.TryGetGlyphs` answers *yes* for a character a face lacks, handing back the placeholder, so
+coverage is read from `FontMetrics.GetAvailableCodePoints()`.
 
 **Every card shows its tray, visited or not.** What stands in a place nobody has been to — a
 person, an enemy, a thing — is on its card, so the map says where things are before anybody goes;
@@ -832,8 +840,7 @@ click each.
 (`LineInk`) and on no lit ground** — the one clickable symbol without one (`Symbol`'s `RootSymbol`
 case): it is where the tree's lines start, not one more thing standing in the place. It was a gold
 `♣`, which read as a kind of element to learn; on the lit ground the line-coloured glyph was a
-brown square. The pointer still inverts it and its label says what a click does. The glyph is in
-`Config.Terminal.FallbackGlyphs`. It stands on the first row under a card
+brown square. The pointer still inverts it and its label says what a click does. It stands on the first row under a card
 that has anything observed, in the trunk's column, and the observed elements branch from under it —
 so the trees have ten rows and not eleven while exploring (`canvas.TreeRows - 1`). Folded, it is
 drawn alone with `…` beside it and nothing of that area's tree is drawn or answers a click:
