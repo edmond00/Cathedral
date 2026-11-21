@@ -204,7 +204,7 @@ public partial class NarrativeController
             // The plain way to ground already stood on is walked on the map and offers nothing to
             // look at: its line is drawn, and a click on the card goes there.
             if (anchor is SyntheticAreaObservationObject { Area: var to } && AreaVisits.IsWayBack(_scene, area, to, Period)) continue;
-            yield return (anchor, ElementKinds.Of(anchor, _active), ElementMemory.IsKnown(_scene, area, anchor));
+            yield return (anchor, ElementKinds.Of(anchor, _active), ElementMemory.IsKnown(_scene, area, anchor, _active));
         }
     }
 

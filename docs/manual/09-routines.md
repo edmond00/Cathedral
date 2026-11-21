@@ -28,7 +28,7 @@ A mental map holds what the character remembers of one location.
 9. If every map is locked, or the anamnesis allows none, the visit keeps a temporary map. It works like any other while the visit lasts: its walks are recorded and its known ways can be taken again. It is forgotten when the visit ends, routines and all.
 10. If the anamnesis score drops, the maps over the new number are forgotten at the next visit, oldest first. Locked maps are kept.
 11. Routines have no limit of their own. A map keeps every routine learned in its location, and they are forgotten only with the map.
-12. A thing or a person observed during a visit is remembered with the map. On a later visit it is **known** ([Chapter VI §4](06-narration.md#4-what-a-visit-keeps)): it has its name, and is observed by name instead of being chosen among its kind.
+12. A thing or a person observed during a visit is remembered with the map, for the party member who observed it or was told of it. On a later visit it is **known** to that member ([Chapter VI §4](06-narration.md#4-what-a-visit-keeps)): it has its name, and is observed by name instead of being chosen among its kind.
 13. Only the fact that it is there is kept. What it allowed, and what was deliberated about it, is not.
 14. Nothing created during a visit is remembered this way: a corpse, a sleeper in a bed.
 

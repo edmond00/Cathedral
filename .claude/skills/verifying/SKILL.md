@@ -241,7 +241,11 @@ Run `help` for the authoritative list. The essentials:
   click fold <name>         an observed element: folds its tree away, or unfolds it. What is
                             folded is not drawn, is not listed by `regions` and answers no click
                             (`click act` finds no act under it); `inspect trees` says `folded=yes`
-  click member <name>       play another member of the party (their token on a card)
+  click member <name>       play another member of the party (their token on a card). Refused
+                            for a member with no noetic point left, and — while somebody
+                            confronts a member — for every member who is not confronted: the
+                            view goes to a confronted one by itself. `inspect known` lists what
+                            is known per member (`Protagonist>poi|…`, `<Name>>npc|…`)
   click area <name>         walk the played member to an area by ways the party knows — a click on
                             its card (panned into view first). Free: no point, no roll. Refused
                             when no known way leads there, or while they are confronted

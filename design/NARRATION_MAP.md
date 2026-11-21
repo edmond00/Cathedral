@@ -297,6 +297,10 @@ What changed once the map had been played, each answering a remark made on it.
   observed"): a thought always comes after a look.
 - **An area's tree hangs from a root symbol of its own** (`♣`, first row under the card), and a
   click on it folds the whole of that area's tree away or brings it back.
+- **A confrontation holds the whole party**: only the confronted members may be played or do
+  anything until it is settled.
+- **Known things and people are each member's own**; areas, ways and routines stay the party's.
+  Speaking of a thing to a companion makes it known to them.
 - **A confrontation no longer locks looking and thinking to the confronter.** Everything in the
   member's own area answers; the rules of choice and of action decide what may be done about it.
 

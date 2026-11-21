@@ -37,6 +37,8 @@ public partial class NarrativeController
 
     // Read once a frame, for every symbol's state.
     private Confrontation? _frameConfrontation;
+    // The members somebody confronts, this frame: while there is one, only they answer.
+    private HashSet<PartyMember> _frameConfronted = new();
     /// <summary>The areas the played member may walk to by known ways, each with how many steps away; where they stand is 0.</summary>
     private Dictionary<Guid, int> _frameReach = new();
     /// <summary>The unobserved ways drawn on their lines: the end each is looked at from, and its observation object there.</summary>
@@ -50,10 +52,10 @@ public partial class NarrativeController
     /// </summary>
     private List<NarrativeAnchor> SiblingWays(string key)
     {
-        if (!_frameWays.TryGetValue(key, out var mine) || ElementMemory.IsKnown(_scene, mine.From, mine.Anchor))
+        if (!_frameWays.TryGetValue(key, out var mine) || ElementMemory.IsKnown(_scene, mine.From, mine.Anchor, _active))
             return new List<NarrativeAnchor>();
         return _frameWays.Values
-            .Where(w => w.Pair == mine.Pair && w.From.Id == mine.From.Id && !ElementMemory.IsKnown(_scene, w.From, w.Anchor))
+            .Where(w => w.Pair == mine.Pair && w.From.Id == mine.From.Id && !ElementMemory.IsKnown(_scene, w.From, w.Anchor, _active))
             .Select(w => w.Anchor).ToList();
     }
 
@@ -264,6 +266,7 @@ public partial class NarrativeController
     private MapFrame BuildFrame()
     {
         _frameConfrontation = ConfrontationOf(Mind);
+        _frameConfronted = ConfrontedMinds.Select(m => m.Member).ToHashSet();
         _frameReach = Reach(Mind).ToDictionary(r => r.Key.Id, r => r.Value.Count);
         _frameReach[_pov.Where.Id] = 0;
 
@@ -417,6 +420,8 @@ public partial class NarrativeController
         var confrontation = _frameConfrontation;
         // With the last point spent only the way out and another member answer.
         if (OutOfPoints && symbol is not (ExitSymbol or TokenSymbol)) return false;
+        // Somebody else is confronted: the member played waits, and only one of the confronted answers.
+        if (_frameConfronted.Count > 0 && !_frameConfronted.Contains(_active) && symbol is not TokenSymbol) return false;
         // What an element folded away holds and offers is put away with it.
         if (symbol switch
             {
@@ -430,9 +435,11 @@ public partial class NarrativeController
         {
             // Another member is played by a click on their token — one who has a point to spend:
             // there is nothing to play a member with none for.
+            // And, while somebody is confronted, one of those who are: the rest wait.
             case TokenSymbol token:
                 return !ReferenceEquals(token.Member, _active)
-                    && (!Exploring || (_minds.TryGetValue(token.Member, out var theirs) && theirs.Noetic > 0));
+                    && (!Exploring || (_minds.TryGetValue(token.Member, out var theirs) && theirs.Noetic > 0))
+                    && (_frameConfronted.Count == 0 || _frameConfronted.Contains(token.Member));
 
             // An observed element: a click folds its tree away, or brings it back.
             case NodeSymbol { Node: { Kind: ThoughtNodeKind.Element } element }:
@@ -547,6 +554,8 @@ public partial class NarrativeController
             TokenSymbol token when ReferenceEquals(token.Member, _active) => new(token.Member.DisplayName, enabled),
             TokenSymbol token when Exploring && _minds.TryGetValue(token.Member, out var theirs) && theirs.Noetic <= 0
                                             => new($"{token.Member.DisplayName} · no noetic point left", false),
+            TokenSymbol token when _frameConfronted.Count > 0 && !_frameConfronted.Contains(token.Member)
+                                            => new($"{token.Member.DisplayName} · waits: confrontation", false),
             TokenSymbol token               => new($"play {token.Member.DisplayName}", enabled),
             StubSymbol { Kind: StubKind.Think } stub => new($"think about {NameOf(stub.Element)}", enabled),
             StubSymbol stub                 => new($"speak of {NameOf(stub.Element)} to {stub.Listener?.DisplayName}", enabled),
@@ -583,7 +592,7 @@ public partial class NarrativeController
     {
         if (!_frameWays.TryGetValue(way.Key, out var side)) return "a way";
         if (!_frameReach.ContainsKey(side.From.Id)) return "a way · no known way there";
-        return ElementMemory.IsKnown(_scene, side.From, side.Anchor) ? $"observe {NameOf(side.Anchor)}" : "observe · an unknown way";
+        return ElementMemory.IsKnown(_scene, side.From, side.Anchor, _active) ? $"observe {NameOf(side.Anchor)}" : "observe · an unknown way";
     }
 
     /// <summary>The implement command under the pointer, and when it cannot be used, why.</summary>

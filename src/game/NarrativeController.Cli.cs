@@ -187,7 +187,7 @@ public partial class NarrativeController
                     return (known, null);
                 // A way is named as anything known is; a recording names only the ways the party
                 // has seen or gone by, as a player would.
-                var named = ways.Where(w => !playerOnly || ElementMemory.IsKnown(_scene, w.Value.From, w.Value.Anchor))
+                var named = ways.Where(w => !playerOnly || ElementMemory.IsKnown(_scene, w.Value.From, w.Value.Anchor, _active))
                                 .Select(w => (w.Key, Rank: MatchRank(NamesOf(w.Value.Anchor), name)))
                                 .Where(w => w.Rank != int.MaxValue).OrderBy(w => w.Rank).ToList();
                 if (named.Count > 0)
@@ -311,6 +311,9 @@ public partial class NarrativeController
         if (Exploring && symbol is TokenSymbol { Member: var other } && !ReferenceEquals(other, _active)
             && _minds.TryGetValue(other, out var theirs) && theirs.Noetic <= 0)
             return $"{other.DisplayName} has no noetic point left and cannot be played";
+        if (Exploring && symbol is TokenSymbol { Member: var waiting } && !ReferenceEquals(waiting, _active)
+            && _minds.TryGetValue(waiting, out var held) && HeldBack(held))
+            return $"{waiting.DisplayName} waits while {ConfrontedMinds[0].Member.DisplayName} is confronted and cannot be played";
         if (!IsEnabled(symbol)) return "that symbol is disabled";
         ClickSymbol(symbol);
         return null;

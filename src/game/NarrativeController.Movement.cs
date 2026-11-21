@@ -325,7 +325,7 @@ public partial class NarrativeController
     private void LedTo(Area where, SceneNpc whom)
     {
         var from = _pov.Where;
-        if (ElementMemory.KeyOf(whom) is { } key) _scene.KnownElements.Add(key);
+        ElementMemory.Learn(_scene, whom, _active);
         if (from.Id == where.Id) return;
         Mind.Pov.Where = where;
         AreaVisits.Arrive(_scene, where);

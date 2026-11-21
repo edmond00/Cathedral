@@ -692,9 +692,9 @@ is an index, not a part — a chest's contents, a body's parts, a memory's fragm
 sensations) and the unknown ways between the same two areas. Each used to be a named symbol the
 player picked; a thing is now named by being looked at, never before.
 
-**Known is what a place remembers.** An observation of a thing or a person writes
-`ElementMemory.KeyOf(element)` — `npc|<PersistentId>`, `poi|<StableKey>` — into
-`Scene.KnownElements`, which is the mental map's own set handed over by reference
+**Known is what a member remembers of a place.** An observation of a thing or a person writes
+`ElementMemory.KeyOf(element)` — `npc|<PersistentId>`, `poi|<StableKey>` — under the observing
+member's key (`EntryOf`; see "The party") into `Scene.KnownElements`, which is the mental map's own set handed over by reference
 (`MentalMap.AttachTo`), so it is saved with the map and forgotten with it. A way needs no entry: a
 way seen or taken is already in `SeenLinks` / `TakenLinks`. A corpse, a sleeper and whatever else
 was spawned during the visit have no key and are never remembered. On the next visit the trees are
@@ -955,7 +955,7 @@ of action refuse on the click a means that is not discreet (`UnderThreatImpossib
 `ConfrontedImpossibleRule`). `StubsOf` applies the first of those to the `?` itself: an element
 that would be left no act to choose from shows none, where a thought would cost a point to find
 nothing to do. Acts already waiting where the member stands stay clickable as before. Members
-elsewhere are untouched. `cli/system/confronted_hostile.cli`, `confronted_witness.cli`. Two things
+elsewhere are not confronted, and wait (see "The party"). `cli/system/confronted_hostile.cli`, `confronted_witness.cli`. Two things
 had to change for a confrontation to be liveable:
 
 - **Somebody asleep witnesses nothing** (`WitnessSelector.SelectFrom` skips `IsSleeping`). And
@@ -983,14 +983,22 @@ would stop them (see "Crime").
   All of them enter at the place's entry area. The token on a card is the protagonist glyph for every
   member, a beast as a person (which member it is, the pointer says); clicking one plays that member (`Switch`), for nothing, and re-expands every verb for
   the body that would now perform it.
-- **Trees are private.** What one member observed is on their map only — though *known* is the
-  place's, so it is named for all of them.
+- **Trees are private, and so is what is known.** What one member observed is on their map only,
+  and on a later visit it is named for that member only: an entry of `Scene.KnownElements` is the
+  member's key and the element's (`ElementMemory.EntryOf`, "Protagonist>poi|…", "Brindletail>npc|…";
+  an entry with no member, from a save written before, reads as the protagonist's). **The areas,
+  the ways and the routines stay the party's** — a way seen or gone by is known to all
+  (`SeenLinks` / `TakenLinks`), so one member walks straight to ground another discovered. Known
+  used to be the place's and named for everybody, which left speaking with nothing to give beyond
+  the visit. The menu maps are the party's and count what any member knows (`AnybodyKnows`).
+  `cli/system/known_per_member.cli`.
 - **Speaking shares one element.** A `❝` on an observed element is offered to a member with a
   speaking mind for each companion standing in the same area or one next to it (`WithinSpeech`,
   `AreNextTo`: a neighbour or any connector but a view) — one mark a listener, named under the
   pointer. It costs the speaker a point, hangs what
   was said under the speaker's element, and plants that element on the listener's trees with the
-  words as its root. The view stays on the speaker: speaking is not switching. This is what Speak
+  words as its root — **and makes it known to the listener** (`ElementMemory.Learn(…, companion)`),
+  named on their own map of every later visit. The view stays on the speaker: speaking is not switching. This is what Speak
   About became — it used to hand the whole narration to the companion.
 - **A fight takes the members standing where it breaks out** (`MembersAt`, the one played first),
   and whoever is fought counts those members enemies. See "Death, and where it is reckoned" for a
@@ -1000,6 +1008,14 @@ would stop them (see "Crime").
   `actor is Protagonist`: the tree's replies, its affinity and what it settles are all keyed to the
   protagonist, and a companion two rooms away opening a tree would have had the protagonist answer
   for them from where they were not.
+- **A confrontation holds the whole party** (`HeldBack`, `ConfrontedMinds`). While somebody
+  confronts one member, the members nobody confronts do nothing: `SettleSpent` sends the view to a
+  confronted member (one with a point first) whenever the played one is not, their tokens cannot be
+  played (`IsEnabled`'s `TokenSymbol` case; the label says "waits: confrontation"),
+  `MembersWithPoints` leaves them out — so the out-of-points box of a confronted member offers
+  RUNAWAY and no PLAY button for them — and `IsEnabled` answers no for everything else while the
+  played member is held. It used to be "members elsewhere are untouched", and a companion two rooms
+  away went on with their errand while the protagonist stood under a wolf. `cli/system/confronted_party.cli`.
 - **The roster follows the party** (`SyncRoster`): somebody recruited mid-visit stands where the
   member who won them over stands, with nothing observed; somebody dead or sent away is gone with
   their trees, and the protagonist is played if they were the one being played.

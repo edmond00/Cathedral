@@ -208,7 +208,7 @@ public partial class NarrativeController
                 // What an observation takes in is remembered with the place: a way seen is on the
                 // map, a thing or a person is named on the next visit.
                 AreaVisits.See(_scene, area, observed.Observed);
-                ElementMemory.Learn(_scene, observed.Observed);
+                ElementMemory.Learn(_scene, observed.Observed, _active);
             }
         }
         catch (Exception ex)
@@ -460,6 +460,9 @@ public partial class NarrativeController
                 bool told = WayKeyOf(element) is { } way ? WayRoot(listener, way) != null
                                                          : listener.NodeOf(element.Element!, element.SeenFrom) != null;
                 if (!told) Root(listener, at.Anchor, at.Where, spoken);
+                // Told of it, the listener knows it from now on: named on their own map of a
+                // later visit, as what they looked at themselves is.
+                ElementMemory.Learn(_scene, at.Anchor, companion);
                 speaker.Noetic = Math.Max(0, speaker.Noetic - 1);
                 _ambianceEngine?.PlaySoundEffect(SoundEffectType.NarrativeReveal);
             }

@@ -1,0 +1,56 @@
+# What is known of a place's things is each member's own; the map and its ways are the party's.
+#
+# An observation names a thing on the map of a later visit — for the member who looked. A companion
+# who did not look still sees an anonymous symbol there, unless they were told: speaking of a thing
+# to a companion makes it known to them too. The areas stood in and the ways gone by stay shared.
+#
+# The protagonist looks at the rack and at the bell and speaks of the bell to the companion. The
+# party leaves and comes back: the protagonist's map names both, the companion's names the bell only.
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --allow-reentry --location-type test --location-id 0 --npc-static --start-area "Test Yard" --period noon --organs encephalon=6
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+expect [KENRYC GREYGATE]
+
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+click observe "Test Bell"
+choose childhood_memory
+advance 12 180
+click speak "Test Bell" to Brindletail
+choose friendship
+advance 12 180
+expect-state trees speech
+
+# Each entry is one member's: the rack is the protagonist's alone, the bell is both of theirs.
+inspect known
+expect-state known Protagonist>poi|
+expect-state known Brindletail>poi|
+
+# Out and back in: the trees are gone, and what each member knew is named on their own map.
+click exit
+wait mode WorldView 120
+advance 12 120
+travel here
+wait mode LocationInteraction 120
+advance 12 180
+expect [KENRYC GREYGATE]
+inspect symbols
+expect-state symbols click observe "Test Rack" in "Test Yard"
+expect-state symbols click observe "Test Bell" in "Test Yard"
+
+click member Brindletail
+wait 1
+expect [BRINDLETAIL]
+inspect symbols
+expect-state symbols click observe "Test Bell" in "Test Yard"
+expect-no-state symbols click observe "Test Rack"
+quit

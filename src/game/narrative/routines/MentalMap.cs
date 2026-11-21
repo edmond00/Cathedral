@@ -48,7 +48,9 @@ public sealed class MentalMap
     /// <summary>
     /// The things and the people an observation has taken in here, by <c>ElementMemory.KeyOf</c>:
     /// remembered, they are named on the map of a later visit and a click attends to them and no
-    /// other. Ways need no entry of their own — a way seen is in <see cref="SeenLinks"/>.
+    /// other. Ways need no entry of their own — a way seen is in <see cref="SeenLinks"/>. Each
+    /// entry is one member's (<c>ElementMemory.EntryOf</c>): the map is the party's, what is named on
+    /// it is whoever looked.
     /// </summary>
     public HashSet<string> KnownElements { get; set; } = new();
 

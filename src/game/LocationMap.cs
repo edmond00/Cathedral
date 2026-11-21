@@ -906,12 +906,13 @@ public sealed class LocationMap
     /// What a menu map says of the things remembered in an area: their symbol and how many. An
     /// observation made on a visit is kept with the place (<see cref="ElementMemory"/>), and this is
     /// its mark on the map between visits. Ways are not counted — a way known is a line drawn — and
-    /// neither are people, who are not where they were seen.
+    /// neither are people, who are not where they were seen. Known is each member's own; the menu
+    /// map is the party's, and counts what any of them remembers.
     /// </summary>
     private static string RememberedMark(Scene.Scene scene, Area area)
     {
         int things = area.PointsOfInterest.Count(p => p is not ConnectorPointOfInterest
-                                                   && ElementMemory.KeyOf(p) is { } key && scene.KnownElements.Contains(key));
+                                                   && ElementMemory.KeyOf(p) is { } key && ElementMemory.AnybodyKnows(scene, key));
         return things == 0 ? "" : $" {Config.Symbols.MapThing}{things}";
     }
 

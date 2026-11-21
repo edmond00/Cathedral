@@ -1,0 +1,61 @@
+# A confrontation holds the whole party: only the members somebody confronts may do anything.
+#
+# Members of the party stand where they were left, so one of them can be confronted alone. Until
+# that is settled nobody else acts: the view goes to the confronted member by itself, the others'
+# tokens cannot be played (their label says they wait), until the confrontation is settled.
+#
+# The protagonist follows the track to the Test Rock and the companion stays in the Test Field.
+# The companion is then played, and the brewer is made an enemy at the rock (`hostile`).
+#
+# FLAGS: --playground --skip-childhood --fill-party --debug --seed 42 --no-encounters --auto-dialogue --location-type test --location-id 0 --start-area "Test Field" --period dawn --observe-only "Field–Rock Track"
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+
+strategy succeed
+goal follow_path
+advance 12 180
+click observe "Field–Rock Track"
+choose childhood_memory
+advance 12 180
+click think "Field–Rock Track"
+choose ripelore
+advance 12 180
+click act 0
+advance 12 180
+click continue
+advance 12 180
+expect Moved to: Test Rock
+click continue
+advance 12 180
+
+# The companion, left in the field, is played: nobody is confronted, so they answer.
+inspect party
+click member Brindletail
+wait 1
+expect [BRINDLETAIL]
+
+# An enemy at the rock, where only the protagonist stands. The view goes to the one confronted.
+hostile brewer Test Rock
+wait 1
+expect [KENRYC GREYGATE]
+expect-state where area=Test Rock
+expect-state where confronted=Enemy:brewer exit=RUNAWAY
+
+# The companion cannot be played while it lasts, and says why.
+click member Brindletail
+wait 1
+expect [KENRYC GREYGATE]
+point member Brindletail
+wait 1
+expect-state pointer-label ground=grey text=Brindletail · waits: confrontation
+
+# The confronted member is not held: the one standing in the way can be looked at.
+expect-state symbols click observe hostile in Test Rock
+expect-no-state symbols click observe hostile in Test Rock x1 (disabled)
+quit

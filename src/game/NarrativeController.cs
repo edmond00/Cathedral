@@ -572,8 +572,23 @@ public partial class NarrativeController
     /// who the view goes to when the played member's last point is spent, and who that box offers.
     /// </summary>
     private List<PartyMember> MembersWithPoints
-        => _minds.Values.Where(m => !ReferenceEquals(m, Mind) && m.Noetic > 0)
+        => _minds.Values.Where(m => !ReferenceEquals(m, Mind) && m.Noetic > 0 && !HeldBack(m))
                  .OrderBy(m => m.Pov.Where.Id == _pov.Where.Id ? 0 : 1).Select(m => m.Member).ToList();
+
+    /// <summary>The members somebody confronts right now.</summary>
+    private List<MemberMind> ConfrontedMinds
+        => Exploring ? _minds.Values.Where(m => ConfrontationOf(m) != null).ToList() : new List<MemberMind>();
+
+    /// <summary>
+    /// A confrontation anywhere holds the whole party: while somebody confronts one member, the
+    /// members nobody confronts do nothing — they are not played, look at nothing, think of nothing
+    /// and do not leave — until it is settled. A fight about to break out is not waited through by
+    /// somebody two rooms away going on with their errand, and the player is not left to forget
+    /// the member who is in trouble.
+    /// </summary>
+    private bool HeldBack(MemberMind mind)
+        => Exploring && ConfrontationOf(mind) == null
+           && _minds.Values.Any(m => !ReferenceEquals(m, mind) && ConfrontationOf(m) != null);
 
     // The members seen played with an empty pool, until it refills: the view leaves each of them once.
     private readonly HashSet<MemberMind> _spentSeen = new();
@@ -592,6 +607,15 @@ public partial class NarrativeController
     private void SettleSpent()
     {
         _spentSeen.RemoveWhere(m => m.Noetic > 0 || !_minds.ContainsValue(m));
+        // Somebody is confronted and it is not the member played: the view goes to them — one who
+        // still has a point first — since nobody else may do anything until it is settled.
+        if (!Busy && !IsPopupVisible && !_requestedExit && HeldBack(Mind))
+        {
+            var confronted = ConfrontedMinds.OrderBy(m => m.Noetic > 0 ? 0 : 1).First();
+            Console.WriteLine($"NarrativeController: {confronted.Member.DisplayName} is confronted — the view goes to them from {_active.DisplayName}");
+            Switch(confronted.Member);
+            _overlay.Frame = BuildFrame();
+        }
         if (!OutOfPoints || Busy || IsPopupVisible || _spentSeen.Contains(Mind)) return;
         var others = MembersWithPoints;
         _spentSeen.Add(Mind);

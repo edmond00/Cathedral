@@ -56,6 +56,8 @@ time of day.
 1. What is known of a place (the areas stood in, the ways used, the things and people observed) is the place's **mental map**.
 2. It lasts only as long as the map is remembered (see [Chapter IX §1](09-routines.md)).
 3. A forgotten place is unknown again: none of its ways are known, and nothing in it has a name.
+4. The areas stood in and the ways used are shared by the whole party. A member can walk by a way another member used.
+5. The things and people observed are not shared. Each is known only to the member who observed it, or who was told of it (§10).
 
 ### The point of view
 
@@ -133,12 +135,12 @@ Everything a character observes, decides and does in a place is kept for the who
 1. To a given character, every thing in a place is unknown, known or observed.
 2. **Unknown**: only its kind is known (a person, an enemy or a thing) and the area it stands in, or the container that holds it (§5). A view of distant ground is a thing of the area it is seen from.
 3. Kind and area are known for every area of the place, including areas never entered.
-4. **Known**: an earlier visit observed it and the place is still remembered ([Chapter IX §1](09-routines.md)). It has its name, and can be observed by name.
+4. **Known**: this character observed it on an earlier visit, or was told of it by a companion (§10), and the place is still remembered ([Chapter IX §1](09-routines.md)). It has its name, and can be observed by name. A thing known to one party member is not known to another.
 5. **Observed**: this character has observed it during this visit.
 6. Only an observed thing can be deliberated on.
 7. A thing stays observed for the rest of the visit.
 8. Each party member has its own record (§10): what one member observed is not observed by another.
-9. When the place is left, the record is closed. What was observed stays known for as long as the place is remembered.
+9. When the place is left, the record is closed. What a character observed stays known to that character for as long as the place is remembered.
 
 ### The record
 
@@ -558,7 +560,7 @@ Two kinds of presence in the area restrict the character, and they work alike on
 5. The character cannot speak to a companion (§10).
 6. Acts it had already decided on, in the area where it stands, still wait and can still be attempted, each for 1 noetic point (§3). They are judged by the rules above.
 7. Someone asleep confronts nobody and witnesses nothing.
-8. Party members standing in other areas are not confronted.
+8. Party members standing in other areas are not confronted. They do nothing while the confrontation lasts (§10).
 
 ### Leaving
 
@@ -656,13 +658,15 @@ its own record.
 
 1. All members enter by the same area. After that each stands where it was last moved, and a move moves only the member who made it.
 2. Each member observes, deliberates and acts for itself. It spends its own noetic points (§3), uses its own modi mentis, and keeps its own record of what it has observed (§4).
-3. Which member is played can be changed at any moment, at no cost.
-4. The time of day is shared: it is the same hour for every member.
-5. Every check of what a body can do consults the acting body, not the protagonist ([Chapter I §5](01-anatomy.md#5-capabilities)).
-6. A beast is offered no conversation, no lock, no implement and no letters: about half of everything there is to do.
-7. Tracking, scenting, going places and fighting remain open to a beast.
-8. A conversation with the people of a place belongs to the protagonist. No companion opens one: its replies, the affinity it earns and what it settles are the protagonist's.
-9. Two acts consult the protagonist whoever performs them, because they concern the party itself: taming a beast, and proposing that someone join.
+3. Which member is played can be changed at any moment, at no cost, except in the 2 cases below.
+4. A member with no noetic point left cannot be played (§3).
+5. While an enemy or a confronting witness confronts any member (§7), only the confronted members can be played. The others cannot observe, deliberate, act, walk or leave until the confrontation ends.
+6. The time of day is shared: it is the same hour for every member.
+7. Every check of what a body can do consults the acting body, not the protagonist ([Chapter I §5](01-anatomy.md#5-capabilities)).
+8. A beast is offered no conversation, no lock, no implement and no letters: about half of everything there is to do.
+9. Tracking, scenting, going places and fighting remain open to a beast.
+10. A conversation with the people of a place belongs to the protagonist. No companion opens one: its replies, the affinity it earns and what it settles are the protagonist's.
+11. Two acts consult the protagonist whoever performs them, because they concern the party itself: taming a beast, and proposing that someone join.
 
 ### Speaking to a companion
 
@@ -670,7 +674,8 @@ its own record.
 2. It costs the speaker 1 noetic point.
 3. What was said is recorded under the thing in the speaker's record.
 4. The thing enters the listener's record as observed, with those words in place of an observation of its own. The listener deliberates on it from what it was told.
-5. Speaking does not change which member is played.
+5. The thing is also known to the listener from then on (§4), on later visits as on this one. Reason: a thing one member observed is otherwise unknown to every other member.
+6. Speaking does not change which member is played.
 
 ### Fights and changes to the party
 
@@ -737,7 +742,7 @@ a place to enter.
 | Encephalon | The brain region; its score sets the noetic points. |
 | Declining | An observing modus mentis's answer that nothing asked for draws it; costs 1 noetic point, and each question can be declined once. |
 | Location | A place on the world map, made of areas. |
-| Known thing | A thing observed on an earlier visit to a place still remembered; it has its name. |
+| Known thing | A thing a character observed on an earlier visit, or was told of, in a place still remembered; it has its name for that character only. |
 | Known way | A way already used; walking by known ways is free and is not an act. |
 | Mental map | What is known of a place: areas stood in, ways used, things and people observed. |
 | Moral level | Low, medium or high; decides how a modus mentis treats crimes. |
