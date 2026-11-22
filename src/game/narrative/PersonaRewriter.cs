@@ -504,7 +504,7 @@ This is what you must say:
 
 Say it again in your own words. Keep the opening ""{frame.Trim()}"" exactly as it is and rewrite only what is inside the quotes.
 
-Change the word order, use other words, turn the sentence around, add an interjection or a figure of speech — whatever makes the line sound like you. The meaning must not change: add nothing, drop nothing, and a question stays a question. Do not give the line back unchanged.
+Change the word order, use other words, turn the sentence around, add an interjection or a figure of speech — whatever makes the line sound like you. The meaning must not change: add nothing, drop nothing, and a question stays a question. Do not give the line back unchanged. Write in English: other words means other English words, never another language.
 
 {footer}
 
