@@ -1002,7 +1002,11 @@ the trees nothing said who it was either.
   cell of the trees under them (`_litTree`, records included), every symbol a click still acts on
   wherever it stands (a way leaving the area, on its line) and the way out. So the shade is the
   same statement `IsEnabled` makes — nothing out there answers while this lasts — made before the
-  pointer has to find it out.
+  pointer has to find it out. **A way's far copy is spent too**: a long line carries its symbol
+  near each card it leaves, both the same `WaySymbol`, so the copy beside a distant card stayed gold
+  on the greyed map as if something over there answered. Under a confrontation only the copy at
+  the end the way is looked at from (`WayFrame.LookedFrom`, the member's own area) is drawn live;
+  the other is drawn in the disabled ink with no tag, so it neither lights nor takes a click.
 - **The music** (`AmbianceEngine.SetConfronted`, asked every tick from `RenderPanel` and acted on
   when it changes): the composer writes standoff pieces while it lasts — an idiom of its own, a
   heartbeat drum under a creeping semitone figure and a few cold notes; see the `music` skill's

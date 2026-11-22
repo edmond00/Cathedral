@@ -332,6 +332,7 @@ public partial class NarrativeController
                 Glyph = connector != null && (_scene.SeenLinks.Contains(key) || _scene.TakenLinks.Contains(key))
                             ? LocationMap.KindLetter(connector) : Config.Symbols.MapWay,
                 From  = root?.SeenFrom,
+                LookedFrom = root == null && _frameWays.TryGetValue(key, out var looked) ? looked.From : null,
             };
             way.Strays.AddRange(Mind.WayStrays.Where(s => s.Way == key).Select(s => s.Node));
             frame.Ways.Add(way);

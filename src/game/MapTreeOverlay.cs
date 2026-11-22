@@ -83,6 +83,11 @@ public sealed class WayFrame
     /// stays there: a tree that followed the member along the line read as a second way appearing.
     /// </summary>
     public Area? From { get; init; }
+    /// <summary>
+    /// The end a way not yet observed would be looked at from: where the played member stands when
+    /// the way leaves their area, else the end fewest known steps away.
+    /// </summary>
+    public Area? LookedFrom { get; init; }
     /// <summary>The observed way's tree, or null while it is only a symbol.</summary>
     public ThoughtNode? Root { get; init; }
     public List<ThoughtNode> Strays { get; } = new();
@@ -238,6 +243,16 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             foreach (var spot in spots)
                 if (way.Root == null || spot == hung)
                 {
+                    // Under a confrontation a way is looked at from where the member is held, and
+                    // only its symbol at that end answers. The copy a long line carries near its
+                    // far card stayed lit and gold in the middle of a greyed map, as though
+                    // something over there could be clicked: it is drawn spent, and tagged nothing.
+                    if (_alarm && way.Root == null && way.LookedFrom != null && spot.Near != null
+                        && spot.Near.Id != way.LookedFrom.Id)
+                    {
+                        if (!canvas.IsCard(spot.X, spot.Y)) canvas.Put(spot.X, spot.Y, way.Glyph, DisabledInk);
+                        continue;
+                    }
                     Track();
                     PaintWay(canvas, way, spot.X, spot.Y, spot.Vertical, spot.Up, hang: spot == hung);
                     Settle(canvas);
