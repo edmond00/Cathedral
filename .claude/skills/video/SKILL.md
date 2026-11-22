@@ -1,6 +1,6 @@
 ---
 name: video
-description: Make a narrated video about the game — a survey or analysis summarised for the developer, or technical/promotional material to share — from gameplay recorded by an agent playing the game (`--record`), manim animations (charts, location graphs, system diagrams), a local Piper voice-over and the game's own music, all in the game's visual identity (yellow/purple/grey, Consolas, Bayer dither). Use whenever asked for a video, a clip, a trailer, an explainer, a recording of gameplay, an animated chart or diagram of game content, or to turn an analysis into something watchable. Carries the record mode's command rules, the storyboard schema, the brand rules and the verification procedure.
+description: Make a narrated video about the game — a survey or analysis summarised for the developer, or technical/promotional material to share — from gameplay recorded by an agent playing the game (`--record`), manim animations (charts, location graphs, system diagrams), a local Piper voice-over and the game's own music, all in the game's visual identity (yellow/purple/grey, Consolas, Bayer dither). Use whenever asked for a video, a clip, a trailer, an explainer, a changelog video (what a branch or release changed, cut under ten minutes for viewers), a recording of gameplay, an animated chart or diagram of game content, or to turn an analysis into something watchable. Carries the record mode's command rules, the storyboard schema, the brand rules and the verification procedure.
 ---
 
 # Making a video
@@ -291,6 +291,8 @@ Put the command in the storyboard's `prepare` so the data regenerates when the g
 **No title card**: open straight on something happening — the game, or the first diagram — and let the
 narrator start talking as if mid-conversation. The end card (name and itch.io address) stays.
 
+(A changelog is written differently — plain, impersonal, with reasons: see §7.)
+
 **The narrator is an old man speaking casually**: the shape of the talk is loose and natural ("Now
 then.", "mind", "you see"), asides allowed, but the sentences carry slightly old-fashioned words and
 turns of phrase ("hard by", "nigh on", "folk", "as is proper", "better than twice"). Never parody —
@@ -335,6 +337,80 @@ material, say only what a player can see.
 |---|---|
 | the developer only (a survey, an audit, an analysis made watchable) | real-model footage all the same (fast-forwarded); dense charts are fine; say where the numbers came from on screen |
 | sharing (technical notes, promotion) | real-model footage, fewer and bigger numbers, the end card with `edmond00.itch.io/proscribed`, the player-facing name **Proscribed Palimpsest** everywhere (never "Cathedral") |
+| a changelog (what a branch or a release changed, and why) | everything in the row above, plus the next section: under ten minutes, cut for a viewer, plain words, soft reasons. It overrides §5's old narrator |
+
+## 7. Changelog videos
+
+The model is `productions/narration_map/` ("narration on the map") — **copy its structure**:
+`narration.py` holds the text of the diagrams, `build_storyboard.py` writes the storyboard and a
+readable `SCRIPT.md` from it, and the short cut is picked out of the full one. The short cut
+(`storyboard_short.json`, `SCRIPT_short.md`) is the deliverable; the long one is the quarry.
+
+### Two cuts: draft for the player, deliver for the viewer
+
+1. **Draft the full explanation first**, as for a player: every changed rule, the interface step by
+   step, before/after, each system with real footage. It can run past half an hour. It is how you find
+   out what the change really is, and every segment of the short cut comes out of it.
+2. **Cut it under ten minutes** (at 1.0×; the user then watches at 1.5×). Keep what a viewer who is
+   not playing tonight finds interesting:
+   - **keep** the why of the change (what was wrong before, the idea now), the one or two systems that
+     make the change worth having, and the moments in the footage where the game surprises: a will
+     seeing the world through its want, a mind refusing a crime, a crime caught, a flight;
+   - **cut** what only matters at the keyboard: the legend of every symbol, costs and dice arithmetic,
+     every property of every mind, exceptions and edge cases, "click here, then here". If a cut
+     segment's idea is needed later, say it in one sentence where it is used.
+   - Order it as a story: the problem, the new idea, the mind behind it, then footage that shows it
+     paying off, then a short close.
+3. In `build_storyboard.py`, pick segments from the full list by the opening words of their first
+   narration part (`pick("So which mind does what?")`), deep-copied, and rewrite only the bridging
+   lines (`first_says(...)`): a picked clip often opened by referring to a segment that was cut.
+   Both cuts share segments, so the short build reuses most of the long one's cache.
+4. Build both, then **make a 1.5× copy of each** (the user watches at that speed):
+   ```bash
+   ffmpeg -nostdin -v error -y -i X.mp4 -filter_complex "[0:v]setpts=PTS/1.5,fps=30[v];[0:a]atempo=1.5[a]" \
+       -map "[v]" -map "[a]" -c:v libx264 -crf 20 -preset medium -c:a aac -b:a 160k X_1.5x.mp4
+   ```
+   Send the short 1.5× first; the full build takes hours (run it in the background and check its log).
+
+### The writing
+
+Written to be **heard once**, by someone who cannot scroll back:
+
+- **Short sentences, the subject first, one idea each.** No nested clauses, no "which… whose…", no
+  sentence that only makes sense at its end. "Being caught starts a conversation. Losing it starts a
+  fight." — not "Should the attempt be witnessed, a conversation ensues, which, if lost, becomes a
+  fight."
+- **Plain words.** No old-fashioned turns of phrase, no jargon a viewer has not just been shown. Name a
+  game term once, as it appears on screen, then reuse exactly that word.
+- **Personal, but never in the first person.** Not "I split them this way because I think people work
+  like that", but "This split tries to copy how a mind might work." The warmth comes from the reasons
+  and from soft, uncertain wording: *may*, *might*, *probably*, *tries to*, *the idea is*, *ideally*,
+  *it seems fair that*. Not enthusiastic, not a salesman: a calm voice explaining why it is like this.
+- **Each rule earns a reason.** After a diagram has said *what* the rule is, one to three sentences say
+  *why* it is that way: the problem it answers, the feeling it aims for. Draw them from the design note
+  or the code's own comments, never invent intent. Keep them in a separate `WHY` dict next to `MANIM`.
+- Over footage, say what happens in the order it happens ("We do it. Three dice, one six. It fails."),
+  and let the game's own prose be read in the second voice (a `voice_styles` entry, `"style":
+  "reading"`), anchored to when it appears.
+- Every claim true at HEAD, as in §5.
+
+### Pacing a diagram that carries a reason
+
+A manim scene paces its beats over its narration (`wait_until(fraction)`, `beat`). When the reason
+follows the rule, give the segment `"core": [a, b]`: the beats follow narration parts *a*…*b−1*
+only, and the parts after them (the reason) play over the finished picture. `manim()` in
+`build_storyboard.py` does it for every scene: `vo = MANIM parts + [WHY]`, `core = [0, len(MANIM
+parts)]`. Keep the sentence order of a `MANIM` part when rewriting it — the beats are keyed to it.
+
+### Storyboard fields this kind of video uses
+
+| field | what it does |
+|---|---|
+| `vo` as a list of parts | each part a string or `{"text", "style", "at", "wait"}`: `at` anchors it to a second of the recording (a passage read as it starts being written), `wait: true` to the end of the footage (a result read once shown) |
+| `"fit": "slow"` | footage slows to fit narration that runs longer, rather than freezing on its last frame |
+| `"idle": {...}` | speeds up stretches where nothing moves (the cursor resting between batches of a live take) |
+| `"fast_forward": {"label": false}` | model waits are sped up without the `>> x8` badge |
+| `"music": {"wav": ...}` | a fixed bed, shared by both cuts |
 
 ## The code behind it
 
