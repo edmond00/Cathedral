@@ -1,0 +1,66 @@
+# A refusal to look at a thing known by name belongs to that thing's tree, and folds with it.
+#
+# A mind asked to look at something already known may turn it down. Nothing of the thing is on the
+# trees yet, so the refusal stands alone on the area's card. When another mind then looks at the
+# thing, the refusal is hung under it: it is part of what was made of it. Folding the thing's tree
+# therefore puts the refusal away too — it used to stay out, a branch of its own beside the fold.
+#
+# --refuse-focus stands in for the choice judge answering "not this", which --playground never
+# does. The rack is looked at on a first visit so that it is known on the second.
+#
+# FLAGS: --playground --skip-childhood --debug --seed 42 --no-encounters --allow-reentry --auto-dialogue --location-type test --location-id 0 --start-area "Test Yard" --period noon --refuse-focus --organs encephalon=6
+
+wait
+click menu New
+wait mode ProtagonistCreation 20
+click continue
+wait mode WorldView 60
+travel here
+wait mode LocationInteraction 60
+advance 12 180
+
+# First visit: one mind turns the rack down, a second looks at it. It is known from now on.
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+click observe "Test Rack"
+choose comradeship
+advance 12 180
+expect-state trees element "Test Rack"
+
+click exit
+wait mode WorldView 120
+advance 12 120
+travel here
+wait mode LocationInteraction 120
+advance 12 180
+
+# Second visit: the rack is named on the card. The first mind refuses it — a refusal standing on
+# the card, with no element for it to hang from.
+expect-state symbols click observe "Test Rack" in "Test Yard"
+click observe "Test Rack"
+choose childhood_memory
+advance 12 180
+expect-state trees refusal area="Test Yard" mind=childhood_memory
+expect-no-state trees element "Test Rack"
+
+# A second mind looks at it: the refusal is under the rack now, not beside it.
+click observe "Test Rack"
+choose comradeship
+advance 12 180
+inspect trees
+expect-state trees element "Test Rack"
+expect-no-state trees refusal area="Test Yard"
+expect-state trees   refusal mind=childhood_memory
+wait
+expect ⊘
+
+# Folded, the refusal goes with the rest; unfolded, it is back.
+click fold "Test Rack"
+wait
+expect-state trees folded=yes
+expect-not ⊘
+click fold "Test Rack"
+wait
+expect ⊘
+quit

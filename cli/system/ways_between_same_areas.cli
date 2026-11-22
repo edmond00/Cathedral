@@ -25,7 +25,7 @@ advance 12 180
 expect-state symbols click observe "Test Stair" in "Test Roof" (way)
 expect-state symbols click observe "Test Chimney" in "Test Roof" (way)
 point observe "Test Stair"
-wait 1
+wait
 expect-state pointer-label ground=yellow text=observe · an unknown way
 
 # --- asked about one of them, Childhood Memory turns the pair down ---

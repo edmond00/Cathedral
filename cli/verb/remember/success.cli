@@ -35,7 +35,7 @@ expect-no-state trees element
 expect-state symbols click observe person in "Under the Tree" x1
 expect-no-state symbols click observe thing
 point observe person
-wait 1
+wait
 expect-state pointer-label ground=yellow text=observe · myself
 
 # --- looking at it: what has been lost, and the first memory's fragments ---
@@ -47,7 +47,7 @@ expect-state texts I have forgotten who I am
 expect-no-state symbols click observe person
 expect-state symbols click observe "a scream" in "Myself"
 point observe "a scream"
-wait 1
+wait
 expect-state pointer-label ground=yellow text=observe · a memory
 
 # --- a second fragment looked at and thought about, which will not be the one remembered ---
@@ -83,7 +83,7 @@ expect-state trees element "a whisper"
 expect-state symbols click observe "manure smelt" in "a scream"
 # ...unnamed like the first ones, until one is looked at.
 point observe "manure smelt"
-wait 1
+wait
 expect-state pointer-label ground=yellow text=observe · a memory
 
 # --- what is behind is a record: no fragment of the first memory is offered, the act that was

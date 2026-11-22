@@ -32,7 +32,7 @@ expect-no-state symbols click fold "the way to Test Field" (disabled)
 expect-state symbols click act 0
 expect-no-state trees folded=yes
 point fold "Test Field"
-wait 1
+wait
 inspect pointer-label
 expect-state pointer-label ground=yellow
 expect-state pointer-label · fold
@@ -48,7 +48,7 @@ expect-no-state symbols click think "the way to Test Field"
 click act 0
 expect-state where Test Yard
 point fold "Test Field"
-wait 1
+wait
 expect-state pointer-label · unfold
 
 # --- unfolded again: the act is where it was, and is carried out ---

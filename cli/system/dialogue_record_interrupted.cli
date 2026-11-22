@@ -40,12 +40,12 @@ expect INTERRUPTED
 expect I walked away from
 click continue
 # The screen is read as drawn: a frame for the box to be gone from it.
-wait 1
+wait
 expect-not INTERRUPTED
 
 expect-state trees dialogue with=brewer ending=interrupted replies=1
 point dialogue last
-wait 1
+wait
 expect it came to: interrupted
 expect "My name is Kenryc Greygate."
 quit

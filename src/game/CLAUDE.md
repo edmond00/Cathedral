@@ -835,6 +835,16 @@ it; a folded one always unfolds. Because the click acts, such an element stands 
 and its label says which ("the cart · fold"). Not in the two opening phases, whose screens teach one
 click each.
 
+**A refusal is folded with the tree it belongs to.** Two kinds used to stay out when a tree was
+folded, because they are kept beside the tree and not in it. A refusal to look at a **way**
+(`MemberMind.WayStrays`) hangs from the way's symbol next to its tree: `PaintWay` now leaves them
+out while the way's root is folded, and `CanFold` lets a way with nothing under it but such
+refusals fold. A refusal to look at a thing **known by name** stands alone on the card until the
+thing is observed (`Strays`, with the element in `MemberMind.StrayAbout`); `Root` then hangs it
+under the new element, so it is drawn, folded and read as part of it. A refusal about a *kind* of
+thing in an area is about no element and stays on the card, where the area's own root folds it.
+`cli/system/way_refused.cli`, `refusal_folds_with_element.cli`.
+
 **An area's tree has a root of its own, and a click on it folds the whole tree** (`RootSymbol`,
 `Config.Symbols.MapRoot` `⨀`, `MemberMind.FoldedAreas`). It is drawn **in the trunk's own ink
 (`LineInk`) and on no lit ground** — the one clickable symbol without one (`Symbol`'s `RootSymbol`

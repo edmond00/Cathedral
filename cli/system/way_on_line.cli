@@ -30,10 +30,10 @@ expect-state symbols click observe "the way to Test Den" in "Test Wood" (way) (d
 
 # Under the pointer an unknown way says no more than that, on the clickable ground.
 point observe "Test Field"
-wait 1
+wait
 expect-state pointer-label ground=yellow text=observe · an unknown way
 point observe "Test Den"
-wait 1
+wait
 expect-state pointer-label text=a way · no known way there
 
 # Observed, the way is the root of a tree hung from its line; the mind was asked for that way and no other.
@@ -45,7 +45,7 @@ advance 12 180
 expect-state trees element "the way to Test Field"
 expect-no-state symbols click observe "the way to Test Field"
 point think "Test Field"
-wait 1
+wait
 expect-state pointer-label text=think about the way to the test field
 
 # Walked, the member stands at its other end, and the same tree is the way back to the yard: one
@@ -65,6 +65,6 @@ expect-no-state trees element "the way to Test Field"
 
 # The way out is a symbol like the rest.
 point exit
-wait 1
+wait
 expect-state pointer-label ground=yellow text=LEAVE
 quit

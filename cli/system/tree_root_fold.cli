@@ -41,7 +41,7 @@ expect-state symbols click act 0
 
 # Under the pointer the root says what a click does, on the clickable ground.
 point root "Test Yard"
-wait 1
+wait
 expect-state pointer-label ground=yellow
 expect-state pointer-label all I made of the test yard · fold
 
@@ -55,7 +55,7 @@ expect-state trees area_folded=yes
 expect-state trees act state=waiting
 click act 0
 point root "Test Yard"
-wait 1
+wait
 expect-state pointer-label · unfold
 
 # What is not yet observed is not part of the tree: the card's own symbols still answer.

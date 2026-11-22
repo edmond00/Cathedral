@@ -37,22 +37,22 @@ advance 12 180
 # The companion, left in the field, is played: nobody is confronted, so they answer.
 inspect party
 click member Brindletail
-wait 1
+wait
 expect [BRINDLETAIL]
 
 # An enemy at the rock, where only the protagonist stands. The view goes to the one confronted.
 hostile brewer Test Rock
-wait 1
+wait
 expect [KENRYC GREYGATE]
 expect-state where area=Test Rock
 expect-state where confronted=Enemy:brewer exit=RUNAWAY
 
 # The companion cannot be played while it lasts, and says why.
 click member Brindletail
-wait 1
+wait
 expect [KENRYC GREYGATE]
 point member Brindletail
-wait 1
+wait
 expect-state pointer-label ground=grey text=Brindletail · waits: confrontation
 
 # The confronted member is not held: the one standing in the way can be looked at.

@@ -357,6 +357,8 @@ public partial class NarrativeController
         {
             mind.Roots.Clear();
             mind.Strays.Clear();
+            mind.StrayAbout.Clear();
+            mind.WayStrays.Clear();
             mind.Refill();
         }
         _active = _protagonist;
@@ -665,7 +667,9 @@ public partial class NarrativeController
     /// </summary>
     private bool CanFold(ThoughtNode element)
         => Exploring && element.Kind == ThoughtNodeKind.Element
-           && (element.Folded || element.Children.Count > 0 || ContentsOf(element).Count > 0 || StubsOf(element).Count > 0);
+           && (element.Folded || element.Children.Count > 0 || ContentsOf(element).Count > 0 || StubsOf(element).Count > 0
+               // A way with nothing under it but refusals to look at it still has those to put away.
+               || (WayKeyOf(element) is { } way && Mind.WayStrays.Any(s => s.Way == way)));
 
     /// <summary>
     /// Puts a text a mind wrote in the journal, credited to the member who was played when it was

@@ -58,7 +58,7 @@ expect-state texts dialogue chip "Modus mentis learned: Hospitality"
 # Under the pointer: named by whom it was with and how it ended, and read in the box at the foot
 # of the map. It is a record — pointing reads it, and it is not on the clickable ground.
 point dialogue last
-wait 1
+wait
 expect-state pointer-label ground=grey text=talked with Aeemilyus · success
 expect CONVERSATION WITH AEEMILYUS
 expect "My name is Kenryc Greygate."

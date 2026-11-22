@@ -258,6 +258,15 @@ public partial class NarrativeController
         };
         if (container != null) container.Add(node);
         else mind.Roots.Add(node);
+        // What was refused about this very element before it was looked at hangs under it from
+        // now on: it is part of what was made of it, and is folded away with the rest.
+        foreach (var (area, refusal) in mind.Strays.Where(s => mind.StrayAbout.TryGetValue(s.Node, out var about)
+                                                               && ReferenceEquals(about, element)).ToList())
+        {
+            mind.Strays.Remove((area, refusal));
+            mind.StrayAbout.Remove(refusal);
+            node.Add(refusal);
+        }
         _lastRooted[mind.Member] = node;
         return node;
     }

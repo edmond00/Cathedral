@@ -43,6 +43,13 @@ public sealed class MemberMind
     public List<(Area Area, ThoughtNode Node)> Strays { get; } = new();
 
     /// <summary>
+    /// The element a stray refusal was about, when it was about one: a mind asked to look at a
+    /// thing already known by name, which would not. Once that element is observed the refusal
+    /// hangs under it (see the controller's <c>Root</c>), so it folds with the tree it belongs to.
+    /// </summary>
+    public Dictionary<ThoughtNode, Element> StrayAbout { get; } = new();
+
+    /// <summary>
     /// Refusals to look at a way, which hang from the way's symbol on its line: kept with the key
     /// the way is recorded under (<see cref="AreaVisits"/>).
     /// </summary>

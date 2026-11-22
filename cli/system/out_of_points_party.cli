@@ -41,7 +41,7 @@ click member Kenryc
 wait
 expect [BRINDLETAIL]
 point member Kenryc
-wait 1
+wait
 expect-state pointer-label no noetic point left
 
 # --- the companion's seven points go the same way ---

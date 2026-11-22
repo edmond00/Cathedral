@@ -41,6 +41,18 @@ expect-state trees element "the way to Test Field"
 expect-state noetic points=3/5
 
 # About another way, Childhood Memory may be asked.
+# The refusal hangs from the way's symbol beside its tree, and is folded away with it: folding the
+# way used to put its tree away and leave the refusal standing.
+wait
+expect ⊘
+click fold "Test Field"
+wait
+expect-state trees folded=yes
+expect-not ⊘
+click fold "Test Field"
+wait
+expect ⊘
+
 click observe "Test Rock"
 expect-state popup minds=[
 expect-no-state popup (refused)

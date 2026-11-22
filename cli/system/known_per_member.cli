@@ -48,7 +48,7 @@ expect-state symbols click observe "Test Rack" in "Test Yard"
 expect-state symbols click observe "Test Bell" in "Test Yard"
 
 click member Brindletail
-wait 1
+wait
 expect [BRINDLETAIL]
 inspect symbols
 expect-state symbols click observe "Test Bell" in "Test Yard"

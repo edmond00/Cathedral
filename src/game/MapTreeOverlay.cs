@@ -525,7 +525,9 @@ public sealed class MapTreeOverlay : LocationMap.IMapOverlay
             var symbol = new WaySymbol(way.Key);
             Symbol(canvas, x, y, way.Glyph, Frame.Enabled(symbol) ? Config.Colors.BrightYellow : DisabledInk, symbol);
         }
-        items.AddRange(way.Strays);
+        // The refusals to look at the way hang from the same symbol as its tree, and are folded
+        // away with it: folding left them standing, a tree put away with its refusals still out.
+        if (way.Root is not { Folded: true }) items.AddRange(way.Strays);
         if (!hang || items.Count == 0) return;
 
         // Where each branch starts: one under another, from the top.

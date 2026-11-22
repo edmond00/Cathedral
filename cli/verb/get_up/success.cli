@@ -113,7 +113,7 @@ choose childhood_memory
 advance 12 180
 expect-state trees element Myself
 point observe "aching legs"
-wait 1
+wait
 expect-state pointer-label ground=yellow text=observe · a sensation
 
 strategy succeed
@@ -129,7 +129,7 @@ regions
 expect-state trees act state=waiting verb=get_up
 expect-state trees difficulty=1
 point act 0
-wait 1
+wait
 expect 1 six needed
 
 # Before and after, because the phase's one silent failure is that it pays the chain nothing.

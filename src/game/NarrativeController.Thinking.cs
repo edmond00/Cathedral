@@ -80,7 +80,12 @@ public partial class NarrativeController
             case ThinkPending think:                          think.Element.Add(refusal); break;
             case SpeakPending speak:                          speak.Element.Add(refusal); break;
             case ReconsiderPending reconsider:                reconsider.Act.ElementNode.Add(refusal); break;
-            default:                                          owner.Strays.Add((area, refusal)); break;
+            default:
+                owner.Strays.Add((area, refusal));
+                // About one thing known by name: it joins that thing's tree when there is one.
+                if (pending is ObservePending { Named: { } named } && ElementKinds.ElementOf(named) is { } about)
+                    owner.StrayAbout[refusal] = about;
+                break;
         }
     }
 

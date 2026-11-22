@@ -46,7 +46,7 @@ wait mode LocationInteraction 60
 
 expect-state trees dialogue with=brewer ending=failure replies=2
 point dialogue last
-wait 1
+wait
 expect-state pointer-label ground=grey text=talked with Aeemilyus · failure
 expect CONVERSATION WITH AEEMILYUS
 expect it came to: failure
