@@ -153,16 +153,30 @@ public static class ChoiceJudge
     private static readonly Dictionary<ChoiceKind, int> _slots = new();
     private static bool _initialized;
 
+    /// <summary>
+    /// Completes when an initialisation finishes: true once every slot exists, false if it failed. A
+    /// retry after a failure replaces it. Slot creation runs in the background after the server comes
+    /// up and takes about a minute on CPU, so a player who walks into a location quickly reaches the
+    /// first decision before it is done; the decision waits here instead of failing.
+    /// </summary>
+    private static TaskCompletionSource<bool> _ready = NewReadySource();
+
+    private static TaskCompletionSource<bool> NewReadySource() =>
+        new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     public static bool IsReady => _initialized;
 
     /// <summary>
     /// Creates one slot per kind with its system prompt. Idempotent; called once the LLM server is
     /// ready. A failure is logged and leaves the judge unready, which <see cref="PickAsync"/> then
-    /// reports as a failure rather than working around.
+    /// reports as a failure rather than working around. A decision asked for while this is still
+    /// running waits for it (<see cref="WhenReadyAsync"/>).
     /// </summary>
     public static async Task InitializeAsync(LlamaServerManager llamaServer)
     {
         if (_initialized) return;
+        if (_ready.Task.IsCompleted) _ready = NewReadySource();   // a retry after a failure
+        var ready = _ready;
         _llm = llamaServer ?? throw new ArgumentNullException(nameof(llamaServer));
         try
         {
@@ -171,12 +185,33 @@ public static class ChoiceJudge
             _initialized = true;
             Console.WriteLine("ChoiceJudge: created slots " +
                               string.Join(", ", _slots.Select(s => $"{s.Key}={s.Value}")));
+            ready.TrySetResult(true);
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"ChoiceJudge: failed to initialize: {ex.Message}");
             _initialized = false;
+            ready.TrySetResult(false);
         }
+    }
+
+    /// <summary>
+    /// Returns once the judge can be asked, waiting for an initialisation still in progress. Throws if
+    /// none was ever started (no server), if it failed, or if the server is gone.
+    /// </summary>
+    private static async Task WhenReadyAsync(CancellationToken ct)
+    {
+        if (!_initialized && _llm != null && !_ready.Task.IsCompleted)
+        {
+            Console.WriteLine("ChoiceJudge: a decision is waiting for the judge's slots to be created...");
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            await _ready.Task.WaitAsync(ct);
+            Console.WriteLine($"ChoiceJudge: slots ready after waiting {sw.Elapsed.TotalSeconds:0.0}s");
+        }
+        if (!IsReady || _llm == null || !_llm.IsServerReady)
+            throw new InvalidOperationException(
+                $"ChoiceJudge is not ready (initialized={_initialized}, " +
+                $"serverReady={_llm?.IsServerReady.ToString() ?? "no server"}).");
     }
 
     /// <summary>
@@ -201,14 +236,14 @@ public static class ChoiceJudge
             throw new ArgumentException($"ChoiceJudge.PickAsync: {options.Count} options exceeds {MaxOptions}; sample before calling.");
 
         string prompt = BuildPrompt(kind, Describe(faculty), situation, options, question);
-        var raw = await LetterLogProbsAsync(kind, prompt, options.Count);
+        var raw = await LetterLogProbsAsync(kind, prompt, options.Count, ct);
         double[]? onlooker = null;
         var lp = raw;
         if (BaselineWeight > 0 && BaselineKinds.Contains(kind))
         {
             // The same list, the same order, the onlooker in the faculty's place. The decline keeps the
             // faculty's own score: "nothing here is for me" is not an option the onlooker can weigh.
-            onlooker = await LetterLogProbsAsync(kind, BuildPrompt(kind, OnlookerDescription, situation, options, question), options.Count);
+            onlooker = await LetterLogProbsAsync(kind, BuildPrompt(kind, OnlookerDescription, situation, options, question), options.Count, ct);
             lp = raw.Select((x, i) => i == declineIndex ? x : x - BaselineWeight * onlooker[i]).ToArray();
         }
 
@@ -254,13 +289,13 @@ public static class ChoiceJudge
     {
         var scale = new[] { "eager", "willing", "reluctant", "unwilling" }.Select(StanceLabel).ToList();
         string prompt = BuildPrompt(ChoiceKind.Willingness, Describe(faculty), situation, scale, null);
-        var lp = await LetterLogProbsAsync(ChoiceKind.Willingness, prompt, scale.Count);
+        var lp = await LetterLogProbsAsync(ChoiceKind.Willingness, prompt, scale.Count, ct);
         double assent = LogSumExp(new[] { lp[0], lp[1] }) - LogSumExp(new[] { lp[2], lp[3] });
         double? eagerYes = null;
         Willingness w;
         if (assent > AssentLogOdds)
         {
-            eagerYes = await YesLogOddsAsync(ChoiceKind.Willingness, BuildYesNoPrompt(Describe(faculty), situation, EagerQuestion));
+            eagerYes = await YesLogOddsAsync(ChoiceKind.Willingness, BuildYesNoPrompt(Describe(faculty), situation, EagerQuestion), ct);
             w = eagerYes > EagerYesLogOdds ? Willingness.Eager : Willingness.Willing;
         }
         else
@@ -279,14 +314,11 @@ public static class ChoiceJudge
     /// stands for it. No grammar: on the bench the offered letters held at least 99.99% of the mass
     /// without one, and a grammar would only hide what the model would otherwise have said.
     /// </summary>
-    private static async Task<double[]> LetterLogProbsAsync(ChoiceKind kind, string prompt, int count)
+    private static async Task<double[]> LetterLogProbsAsync(ChoiceKind kind, string prompt, int count, CancellationToken ct)
     {
-        if (!IsReady || _llm == null || !_llm.IsServerReady)
-            throw new InvalidOperationException(
-                $"ChoiceJudge is not ready (initialized={_initialized}, " +
-                $"serverReady={_llm?.IsServerReady.ToString() ?? "no server"}).");
+        await WhenReadyAsync(ct);
 
-        var top = await _llm.GetFirstTokenLogProbsAsync(_slots[kind], prompt, TopLogprobs);
+        var top = await _llm!.GetFirstTokenLogProbsAsync(_slots[kind], prompt, TopLogprobs);
         var lp = Enumerable.Repeat(double.NegativeInfinity, count).ToArray();
         foreach (var (token, logProb) in top)
         {
@@ -309,11 +341,10 @@ public static class ChoiceJudge
     /// The log-odds of "yes" against "no" as the reply's first token, every spelling summed — one forward
     /// pass, read like the letters (<c>ItemUseCritic</c> reads its yes/no questions the same way).
     /// </summary>
-    private static async Task<double> YesLogOddsAsync(ChoiceKind kind, string prompt)
+    private static async Task<double> YesLogOddsAsync(ChoiceKind kind, string prompt, CancellationToken ct)
     {
-        if (!IsReady || _llm == null || !_llm.IsServerReady)
-            throw new InvalidOperationException("ChoiceJudge is not ready.");
-        var top = await _llm.GetFirstTokenLogProbsAsync(_slots[kind], prompt, TopLogprobs);
+        await WhenReadyAsync(ct);
+        var top = await _llm!.GetFirstTokenLogProbsAsync(_slots[kind], prompt, TopLogprobs);
         var yes = top.Where(t => t.Token.Trim() is "yes" or "Yes").Select(t => t.LogProb).DefaultIfEmpty(AbsentLogProb);
         var no  = top.Where(t => t.Token.Trim() is "no" or "No").Select(t => t.LogProb).DefaultIfEmpty(AbsentLogProb);
         return LogSumExp(yes) - LogSumExp(no);
