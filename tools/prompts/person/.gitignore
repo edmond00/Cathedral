@@ -1,0 +1,2 @@
+# shards being written; merged into samples/<set>.jsonl when done
+samples/*.[0-9].jsonl
