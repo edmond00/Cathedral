@@ -35,6 +35,8 @@ PRON1 = re.compile(r"\b(i|me|my|mine|myself)\b", re.I)
 PRON2 = re.compile(r"\b(you|your|yours|yourself)\b", re.I)
 FOLD = {"i": "P", "me": "P", "my": "Pp", "mine": "Pp", "myself": "Px", "you": "P", "your": "Pp", "yours": "Pp",
         "yourself": "Px", "am": "BE", "are": "BE", "was": "BEp", "were": "BEp"}
+COUNSEL = re.compile(r"\byou (should|must|need to|ought to|had better|'d better)\b|\blet us\b|\blet's\b", re.I)
+IMPER = re.compile(r"(^|[.!?;:]\s+|\s[-\u2014]\s)(look|see|listen|go|come|take|trust|mind|watch|step|keep|let|feel|hold|leave|move|stay|wait|remember|breathe|climb|ease|careful|easy|steady|now|quick|embrace|beware|note|mark|consider|heed|smell|touch|grab|strike|reach|press|turn|follow|seize)\b(?! (to|of)\b)", re.I)
 DAY = re.compile(r"\b(morning|dawn|daybreak|sunrise|noon|midday|afternoon|daylight|sunlit|sunshine)\b", re.I)
 NIGHT = re.compile(r"\b(night|nightfall|midnight|moon|moonlight|starlight|stars|evening|dusk|twilight|darkness falls)\b", re.I)
 
@@ -85,6 +87,9 @@ def sample_metrics(case, s):
     nd, nn = bool(DAY.search(neutral)), bool(NIGHT.search(neutral))
     m["hour_clash"] = (nd and not nn and bool(NIGHT.search(text))) or (nn and not nd and bool(DAY.search(text))) \
         if (nd or nn) else None
+    # the inner voice counselling or urging: "you should", "you must", or a sentence opening on an
+    # imperative ("Look", "Go", "Trust your…")
+    m["counsel"] = bool(COUNSEL.search(text) or IMPER.search(text))
     m["words"] = len(tw)
     return m
 
@@ -110,7 +115,7 @@ def main():
             s["m"] = sample_metrics(c, s)
             rows.append(s)
     keys = ["voice_ok", "voice_slip", "recall", "parrot", "self_repeat", "copy_style", "copy_reminder",
-            "copy_prompt", "setting_word", "lesson_lost", "hour_clash", "words"]
+            "copy_prompt", "setting_word", "lesson_lost", "hour_clash", "counsel", "words"]
     summary = {}
     for group in ["all"] + list(L.KINDS):
         print(f"\n== {group}")

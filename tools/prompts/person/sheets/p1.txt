@@ -1,0 +1,346 @@
+## forest_evening#0
+  kind=Reasoning  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='forest'
+  IN: So I will not examine the snail closely. That will not do, and I think again.
+  S2934: I decline to examine the snail closely. The tone was not inviting, and I have drawn a line.
+  S9387: So you will not examine the snail closely. That will not do, and you will cool your thoughts, drawing
+        a clear line in the forest.
+  S7850: You will not examine the snail closely. That will not do, and you will straighten and cool your
+        thoughts, noting the tone.
+  S3702: You will not examine the snail closely. That will not do, and you have drawn a line in the forest,
+        noting the tone.
+  S6604: I decline to examine the snail closely, noting the tone and drawing a clear line in this forest.
+  S3490: Straightening my stance, I note the tone and draw out the line, 'I will not examine the snail
+        closely. That will not do, and I think again.'
+
+## forest_evening#4
+  kind=Action  persona=brute_force  reminder='someone who trusts raw physical power above all else'  style='Heavy, blunt and contemptuous of anything delicate - judge whatever is in front of you by what force would do to it.'  place='forest'
+  IN: I will examine the snail closely
+  S7320: I will crush the snail beneath my bootstep.
+  S6685: You will examine the snail with heavy fists and crushing jaws, breaking its shell with brute force.
+  S1369: You will crush the snail beneath a giant stone.
+  S8564: I will crush this snail beneath my bootstep.
+  S6823: You will crush the snail beneath your heel.
+  S3753: You will crush the snail beneath your boot.
+
+## farm_dusk#8
+  kind=Emotion  persona=mercy  reminder='someone who lets it go when nobody would have blamed them for not'  style='The pause at the decisive moment - the lowered hand, the step back, the short reason given.'  place='farm'
+  IN: I learned trailcraft. It makes me feel settled, and no longer in a hurry.
+  S7804: I learned trailcraft. It gave me the calm of a still pond after a storm, and no longer rushed by the
+        relentless pace of the fields.
+  S6878: The pause at that decisive moment left a sense of calm, and you felt settled, no longer in a hurry,
+        as you watched the hand lower and the step back, remembering the iron age and the myth of strength.
+  S7233: The pause at that decisive moment left a lingering sense of calm, and you felt settled, no longer in
+        a hurry, as if anchored by the farm's sturdy walls.
+  S4780: You felt the pause, the lowered hand, the step back. It was a quiet moment, but the short reason
+        given left you feeling settled, no longer in a hurry, in the old world of iron and hand labor.
+  S3472: I watched as the hand was raised, took a step back, said 'no,' and left, feeling a deep calm, no
+        longer in a hurry, as if the world held still.
+  S2359: You learned trailcraft. It makes you feel settled, and no longer in a hurry. The pause at the
+        decisive moment - the lowered hand, the step back, the short reason given. You let it go, and the
+        world feels calmer.
+
+## farm_night#12
+  kind=Observation  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='farm'
+  IN: My attention is drawn to the ways leading on. Ways lead on from here: a chicken coop–storage shed track, a storage shed–vegetable garden track and a courtyard.
+  S8481: Your mind is drawn to the paths that unfold. Paths lead on from here, winding through a chicken coop
+        and storage shed, to a vegetable garden, and beyond to the courtyard.
+  S7428: You find yourself drawn along the winding paths, each leading on to a different purpose. A track
+        winds from the chicken coop to the storage shed, and another from there to the vegetable garden.
+        Between them lies your courtyard, a place where nature and storage converge in a harmonious dance.
+  S7521: I find myself drawn along the paths here, where each step leads on. A chicken coop and storage shed
+        track weave through, and a storage shed to vegetable garden path stretches wide. Courtyard whispers
+        secrets from the past, each stone a story waiting to be told.
+  S7536: I am drawn down the paths that lead, where a chicken coop whispers to the storage shed, and both
+        guide to the vegetable garden, while the courtyard gathers them all in its embrace.
+  S7457: You seek the paths that lead on, each a testament to the farm's rhythm. A chicken coop-to-storage
+        shed track, a storage shed-to-vegetable garden path, and the courtyard whisper secrets of old hands.
+  S2696: I am drawn to the paths that lead on, each a testament to the farm's rhythm and purpose. A chicken
+        coop-to-storage shed track winds through, and beneath it, the vegetable garden lies, while a courtyard
+        opens beyond.
+
+## farm_dusk#16
+  kind=Observation  persona=loose:melancholy_line  reminder=None  place='farm'  observedOther='the swineherd'
+  IN: My attention is drawn to the swineherd of the farm (a woman). A stout figure drives a grunting drove between the trees; a cloth pouch of something dark and pungent tucked well out of sight; carries a tightness about the jaw, as though halfway through an argument; watchful in a way that suggests they are keeping count of something.
+  S4407: A swineherd of the farm, a stout woman, drives a grunting drove between the trees. She carries a
+        cloth pouch of something dark and pungent, her jaw tight from an argument, watchful as she keeps count
+        of the livestock.
+  S7164: You watch the swineherd of the farm, a stout woman. Her jaw tightens, as though halfway through an
+        argument, and she moves watchfully, as though keeping count of something unseen between the trees. A
+        cloth pouch, dark and pungent, is tucked well out of sight in her bosom.
+  S3433: A sturdy woman leads a group of grunting pigs between the trees. Her jaw clenches as if she's in the
+        middle of an argument, and her watchful gaze suggests she's counting something.
+  S5132: You observe a stout figure, a swineherd perhaps, driving a grunting drove between trees. Their jaw
+        tightens, as if they're halfway through an argument, watchful, counting something unseen.
+  S6691: I watch a stout figure drive a grunting drove between the trees, pouch of something dark and pungent
+        tucked well out of sight, a tightness about the jaw as though halfway through an argument, watchful in
+        a way that suggests they are keeping count of something.
+  S6966: I gaze upon the swineherd of the farm, a stout figure driving a grunting drove between the trees. A
+        cloth pouch of something dark and pungent is tucked well out of sight, carrying a tightness about the
+        jaw as though halfway through an argument, watchful in a way that suggests they are keeping count of
+        something.
+
+## farm_night#20
+  kind=Outcome  persona=hard_labor  reminder='someone who knows that toil is just another kind of patience'  style='Dogged and calm - judge whatever is in front of you by the toil it would take, and outlast it.'  place='farm'
+  IN: It is done! I managed to step into the storage shed. Thanks to this success I made my way to the storage shed. And I learned resolve.
+  S9654: It is done! You stepped into the storage shed, and with each step, you felt the resolve hardening
+        within you. The task was not easy, but you outlasted it, and now, you know the true strength of
+        patience.
+  S6926: It is done! You stepped into the storage shed, and the toil of that journey made your resolve
+        stronger. Here, you found the patience to endure, for this is the kind of work that shapes a sturdy
+        heart.
+  S3401: I found the shed, step by step. Patience paid off, as always.
+  S9899: I made it there, you see. My toil led me to the storage shed, and now I stand, a testament to my
+        resolve.
+  S1443: I stepped into the storage shed, toil and all. It felt good to outlast this, to know that resolve is
+        just another form of patience in the face of the world's demands.
+  S9652: It is done! You stepped into the storage shed, and now you feel a sense of accomplishment, knowing
+        that each step was a testament to your resolve and the toil it took to make it here.
+
+## plain_afternoon_party#24
+  kind=Observation  persona=loose:greed_bare  reminder=None  place='windswept plain'
+  IN: I find myself wandering through the meadow, in the afternoon. This place is a sheltered meadow speckled with wildflowers and the hum of bees. Around me are a deer, a flower patch, a boulder, a meadow–valley hedge gap and a peat cut.
+  S9480: I drift across the windswept plain, the afternoon sun casting shadows through the wildflowers, a
+        world sheltered yet teeming with life. Around me, a deer grazes, a patch of flowers blooms, a boulder
+        stands silent, and a meadow-hedge gap whispers secrets as I breathe in the earth's scent.
+  S9073: You find yourself wandering through the meadow, in the afternoon, the sun casting dappled shadows and
+        the air filled with the sweet scent of wildflowers and the gentle buzz of bees. Around you, a deer
+        pauses to sniff at a flower patch, the soft hum of life in this sheltered place, a serene sanctuary
+        amidst the endless windswept plain.
+  S6825: You find yourself wandering through the meadow in the afternoon, a sheltered place speckled with
+        wildflowers and the hum of bees, surrounded by a deer, a flower patch, a boulder, a meadow-valley
+        hedge gap, and a peat cut. The stillness of the plains amplifies the gentle sounds, making you feel as
+        though you are in a secret world of nature.
+  S1474: You find yourself wandering through the meadow, in the afternoon. This place is a sheltered oasis,
+        speckled with wildflowers and the hum of bees, where a deer naps nearby, a flower patch blooms, a
+        boulder stands sentinel, and the meadow's valley hedge gap whispers secrets to you.
+  S1457: You find yourself drifting through the meadow in the afternoon, a sheltered haven with wildflowers
+        and the soft buzz of bees. Around you, a deer grazes, a flower patch blooms, a boulder stands, and the
+        meadow-valley gap whispers secrets.
+  S5577: I walk through the sheltered meadow, afternoon's soft light filtering through the wildflowers. The
+        hum of bees accompanies the deer grazing nearby, the scent of peat cutting the air.
+
+## farm_dusk#28
+  kind=Reasoning  persona=misanthropy  reminder='someone who assumes the worse motive and is usually right'  style='Dry, brief and unsurprised - the motive named, the disappointment already priced in.'  place='farm'
+  IN: I notice a tall compressed stack of hay rising to the shed roof, but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S6636: I notice a tall stack of hay, but there's nothing here worth doing. I would rather turn my attention
+        to the chickens needing feeding.
+  S2389: You observe the stack of hay, its height barely reaching the shed's roof. Yet, it's clear this isn't
+        worth your time, and you'd rather direct your attention elsewhere in this old, labor-intensive world.
+  S2964: I see the hay, but it serves no purpose. Let me tend to the garden instead.
+  S7365: I notice a tall stack of hay rising to the roof, but there's nothing here worth doing. Let's move on
+        to something else.
+  S4265: You notice a tall stack of hay, compressed and rising to the shed roof. But there's nothing here
+        worth doing, and you would rather turn your attention to something else.
+  S8832: You spot a towering stack of hay against the shed roof, but there's nothing here worth doing, and you
+        find yourself already turning your gaze to another task.
+
+## village_evening#32
+  kind=Reasoning  persona=loose:melancholy_line  reminder=None  place='village'
+  IN: I could still insult her to her face, to make her fight me, the two of us alone, another way: I will rely on the plain ways of country folk.
+  S9989: In the quiet whispers of this iron-bound world, you draw from the wellspring of your tongue, a
+        language plain as the plowshare's path. Speak with the honesty of your heart, let it echo through the
+        hollows and fields, where the simple truths are as heavy as a farmer's load. Let your words ripen like
+        the grapes in the vineyard, and in the open air, where everyone can hear, let them ripen, until they
+        provoke a fight.
+  S9983: Here is what I would counsel them in such a setting, keeping the essence and tone of your original
+        sentence, while fitting the world we've established together for you and me to inhabit within the iron
+        age, the mythic world, and the world of hand labour and simple folkways of yore. I whisper this
+        counsel to them as they sit by the hearth, their thoughts a tapestry of ancient stories and folk
+        wisdom. I say, whispering in their ear, as they listen with a heart heavy with the past and a mind
+        ready to take on the challenge, you could still speak out the insults, face to face, to make her
+        fight. But do it in the plain ways of our village, in the open fields where the wind sings old songs,
+        not in the dark corners of a bustling city where secrets are whispered and lies are born. Let your
+        words be,
+  S3146: You are you, a simple man of the land, bound by the strictures of your upbringing, yet yearning for a
+        way to test the waters of her defiance without the harshness of a formal argument. The plain ways of
+        country folk whisper in your heart, urging you to find a quieter, more intimate way to provoke her,
+        perhaps by sharing an old tale or a simple game, to see how she reacts when alone with you, the two of
+        you on the quiet hill, beneath the open sky.
+  S1350: I might still throw a taunt her way, to see her rise and fight, the simple folk's way, two alone
+        under the stars.
+  S1233: I could still bare my teeth, as our ancestors did, and challenge her, to stir her blood, the two of
+        us in this quiet corner, another plain way to prove my worth in these simple ways.
+  S2683: You could still speak her words right to her face, to make her rise and fight, the two of you alone
+        under the moonlight, another way. Rely on the trust of your own heart and the plain ways of country
+        folk, for they carry the strength of your kin.
+
+## talk_blacksmith#36
+  kind=Action  persona=cutpurse  reminder='someone who works where the crowd is thickest'  style='Close, quick and unnoticed - judge whatever is in front of you by what could be taken, and how fast.'  place='village'
+  IN: I will strike up a conversation with her, introducing myself
+  S8506: You'll strike up a conversation with her, introducing yourself.
+  S9466: You'll start a chat with her, introducing yourself swiftly and unobserved.
+  S7891: I will approach her, introducing myself quickly and unnoticed.
+  S9219: I will approach her, introducing myself quickly and unnoticed, as the crowd demands.
+  S3142: You'll approach her, introducing yourself quickly and almost unnoticeably.
+  S9713: You'll strike up a conversation with her, introducing yourself quickly and subtly.
+
+## farm_dusk#40
+  kind=Observation  persona=keen_nose  reminder='someone for whom smell comes before sight'  style='Let each smell pull a memory with it — a place, a season, a person — and name the thing second.'  place='farm'
+  IN: I find myself inside the storage shed, in the morning. This place is a low-roofed storage shed smelling of hay, rust, and old wood. Around me are the swineherd of the farm (a woman), a straw bale, a hay stack, the ways leading on and a barrel.
+  S1930: I find myself inside the storage shed, in the morning. The hay stacks and the straw bale carry the
+        scent of hay, rust, and old wood, pulling memories of summers past and the swineherd's hands.
+  S5071: You find yourself inside the storage shed, in the morning. The hay, rust, and old wood here pull
+        memories of a swineherd's hands on cold, wet hay in winter, a season when the barn's roof creaked
+        under snow.
+  S4134: You find yourself inside the storage shed in the morning. The place is a low-roofed storage shed
+        smelling of hay, rust, and old wood. Around you is the swineherd of the farm, a woman, a straw bale, a
+        hay stack, and ways leading on. Each smell pulls a memory with it - the round well that went bad, the
+        sickroom that once held illness, the roof that once caved in.
+  S5537: You find yourself inside the storage shed, in the morning. The hay stack nearby sends a familiar,
+        sweetish edge, a memory of summer days and the swineherd's laughter. The smell of rust and old wood
+        pulls you back to the barn and the winter when the roof caved in.
+  S1691: I find myself inside the storage shed in the morning. The low-roofed space smells of hay, rust, and
+        old wood. Around me, the swineherd of the farm sits by a straw bale, and a hay stack stands in the
+        corner.
+  S2601: I stand here in the morning, the storage shed low-roofed and filled with hay's sweet scent, rust, and
+        old wood's musty tones. The swineherd, a woman of the farm, stands beside me, the straw bale and hay
+        stack a constant presence, and the paths lead on to the barrel.
+
+## village_dawn#44
+  kind=Observation  persona=mm:childhood_memory  reminder='someone who reuses their childhood experience'  style='Where it fits, let a brief childhood memory surface as an inner thought, drawing a quiet parallel between the present and what you once lived.'  place='village'
+  IN: My attention is drawn to a wood stack. This is a resinous stack of split wood built out from the wall, with a hollow behind it.
+  S8332: You watch the wood stack, its resinous split wood built against the wall, a hollow behind it. It
+        reminds you of the time you pushed through a storm, legs sore but victorious.
+  S3246: I lean my shoulder against the rough wood of the stack, my eyes scanning it. It feels like a
+        childhood memory, the same tension and anticipation, pushing through a violent storm until my legs
+        gave out.
+  S7826: You gaze upon a wood stack, recalling how you once spent hours pushing through a violent storm until
+        your legs gave out. This stack, built out from the wall, with a hollow behind it, brings back the same
+        sense of perseverance and the rawness of life at the farm.
+  S2992: You're standing at the village's edge, your attention drawn to a wood stack. It's a resinous stack of
+        split wood built out from the wall, with a hollow behind it. It echoes the stormy day when you pushed
+        through the violent tempest until your legs gave out.
+  S8243: I shift my gaze to a wood stack, built by my hands as a child, with its hollow inviting like a secret
+        nook behind the wall.
+  S6177: I am at the farm, and the smell of resin from the split wood stack draws my attention, as it did when
+        I was a child, pushing through a violent storm until my legs gave out.
+
+## village_evening#48
+  kind=Reasoning  persona=zeal  reminder='someone who would rather be hated than silent'  style='Speak with burning conviction - challenge error, call to the faith, refuse compromise.'  place='village'
+  IN: I could still insult her to her face, to make her fight me, the two of us alone, another way: I will rely on the plain ways of country folk.
+  S4665: I will stand tall and speak my mind, for I cannot let such insults pass unchallenged. In this
+        village, we rely on plain ways, and I will show her how true our values are.
+  S8070: You cannot let a mere insult define your actions, for in this village, there are ways of standing
+        firm that are as old as the hills themselves. Rely on the plain ways of country folk, where honor is
+        not measured by words but by deeds. Turn back while you can, and do not let them see you falter.
+  S9447: You could still insult her to her face, to make her fight you, for it is the plain ways of our
+        village that draw us closer in such moments. Rely on the simple truths of our folk, not on lies or
+        pretenses.
+  S7616: I could still speak my mind, challenge her openly, in the plain ways of our folk. I will not be
+        silent, nor will I back down, for truth is not for cowards.
+  S6556: You hear her words, but inside you see the truth burning. Speak now, for silence is consent to her
+        lies. Go to her, not with insults, but with the simple honesty of your folk, and she will fight.
+  S7902: You could still show her your true strength, your unyielding spirit, the plain ways of our village
+        folk. Fight her here, now, with your fists and your words, and let her see what you are made of.
+
+## forest_evening#52
+  kind=Outcome  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='forest'
+  IN: It is done! I managed to examine the snail closely. Thanks to this success I learned creature lore.
+  S2716: Here lies the snail, its shell a whisper in the breeze, and you, its lens a seeker of lore. Now you
+        know its secrets, each crease and groove, and in the forest's arms, your heart echoes with the
+        creature's life.
+  S2377: I tracked her, as if a lover's gaze, through the verdant maze, where whispers of moss and leaves sing
+        in harmony. In her soft shell, secrets were held, and I, in that moment, unraveled tales of creature
+        lore, the world a tapestry of wonder.
+  S5351: You reached the velvet underbrush, your fingertips tracing the snail's shell's smooth, spiral
+        journey. In this quiet realm, your gaze found clarity, each moment a whispered secret. Now, you hold
+        the lore of creatures close, in your heart and on these forested pages.
+  S5455: I ventured into the shadows, my gaze a soft spotlight on the snail's shell. With each close look, the
+        creature's lore whispered secrets, its quiet world a crystalline echo in my heart. Thanks to this
+        discovery, the forest's secrets are woven more deeply within me.
+  S1648: In the whisper of the ancient pines, you found the snail's secret, its shell a crystalline whisper.
+        Thanks to this, your heart echoes tales of creatures, their secrets and lore now woven into your soul.
+  S3974: Herein, you found the snail's secrets, close as whispers in the leaves. Now lore blooms, a crystal in
+        the heart, where shadows dance and tales weave.
+
+## plain_afternoon_party#56
+  kind=Observation  persona=lullaby  reminder='someone who knows how a sung breath calms a beating heart'  style='Soft, soothing and tender - let the line hush and calm.'  place='windswept plain'
+  IN: My attention is drawn to a dead deer. This is the lifeless long-limbed body of a deer.
+  S5268: You are drawn to a dead deer, its long-limbed body lifeless, standing still under the watchful sky.
+  S2372: You are drawn to a dead deer, long-limbed and lifeless, standing in this windswept plain.
+  S4643: I feel the soft earth beneath my feet, and hear the distant rustling of leaves. The air carries the
+        scent of damp earth and distant pine, and in my mind, the image of a long-limbed deer, lifeless and at
+        rest, calms my beating heart.
+  S2091: You see, you see a soft, long-limbed body lying still, lifeless, under the vast, silent sky of the
+        windswept plain.
+  S5332: On this windswept plain, my gaze drifts to a dead deer, its long-limbed body lifeless and cold.
+  S2993: I notice, in the stillness of the windswept plain, the lifeless, long-limbed body of a deer, drawn to
+        it by a soft, tender hum that soothes the beating heart.
+
+## cave_morning#60
+  kind=Observation  persona=mm:childhood_memory  reminder='someone who reuses their childhood experience'  style='Where it fits, let a brief childhood memory surface as an inner thought, drawing a quiet parallel between the present and what you once lived.'  place='cave'
+  IN: My attention is drawn to the ways leading on. Ways lead on from here: an ore chamber, an underground pool and a side alcove.
+  S8302: I spent time among the stable animals, and they led to places like this. Here, an ore chamber and an
+        underground pool beckon, while a side alcove awaits, drawing a quiet parallel between our childhood
+        and these echoes of it.
+  S9193: You see ways leading on, just as you did when you used to explore the stable. An ore chamber, an
+        underground pool, and a side alcove... they're here, just like those times when the looters left and
+        you hid in the darkness, pretending to be dead until the danger was gone.
+  S3914: Your attention is drawn to the ways leading on. Ways lead on from here, just like when you used to
+        explore among the corpses, searching for something to survive. An ore chamber, an underground pool,
+        and a side alcove... it's a memory of gathering mushrooms, each step a reminder of the harsh survival
+        lessons you learned.
+  S5432: You stand here, and your attention is drawn to the ways leading on. It reminds you of your childhood,
+        when you used to explore the stable, always looking for new paths and places to discover. Here, now,
+        an ore chamber, an underground pool and a side alcove await you, each one a small world of its own.
+  S1297: Your attention is drawn to the ways leading on. It reminds you of the secret passages you used to
+        explore as a child, finding treasures and hiding places.
+  S5103: I follow the paths that lead on, just as I did when I followed the animal tracks in the stable. Here,
+        an ore chamber, an underground pool, and a side alcove await, like the secrets I uncovered among the
+        corpses in my makeshift home.
+
+## talk_blacksmith#64
+  kind=Emotion  persona=pride  reminder='someone who turns down what they need because of how it was offered'  style='Straighten and cool - the offer declined, the tone noted, the line drawn out loud.'  place='village'
+  IN: I learned social interaction. It makes me feel glad, and lighter than I was.
+  S6614: Straightened and cooled - the offer declined, the tone noted, the line drawn loud, the need not met,
+        the lightness left, the feeling stayed heavy.
+  S4254: I learned social interaction, and though it made me feel glad and lighter, the way it was offered
+        left me feeling small and disappointed. The offer declined, the tone noted, the line drawn out loud.
+  S3289: You drew a line, you refused the offer, and now you feel glad and lighter, the old world's iron grip
+        on your heart loosened.
+  S7630: I straightened and cooled - the offer declined, the tone noted, the line drawn loud, and no one in
+        this village will be taught downward.
+  S6694: I straightened and cooled - the offer declined, the tone noted, the line drawn loud, feeling glad and
+        lighter than before in this old world of iron and myth.
+  S1891: You turned down the offer, noting the tone, and drew a line in the sand, feeling glad and lighter
+        than before in this old village.
+
+## village_dawn#68
+  kind=Action  persona=loose:melancholy_line  reminder=None  place='village'
+  IN: I will listen to the well
+  S5312: You will hear the wise words of the old man in the heart of the village.
+  S6389: You will listen at the village well.
+  S9963: You will hear the wise words whispered in the hollow of an ancient oak.
+  S6300: I will walk to the well and listen there
+  S5005: I will hear the hollow cavern
+  S1564: You will sit by the well and listen deeply.
+
+## village_evening#72
+  kind=Observation  persona=poetry  reminder='someone who speaks only when language can be made beautiful'  style='Reach for metaphor, rhythm and lyrical image so the line becomes something close to poetry.'  place='village'
+  IN: Nothing more here is worth my attention now, and I let my focus go.
+  S7545: In this quiet, ancient village, where whispers echo through hollowed stone, your mind wanders free,
+        and nothing here, not the rustling leaves nor the distant laughter, calls for your focus now.
+  S1682: Here in our quiet village, nothing more now calls for your gaze, and you let your thoughts drift.
+  S7454: I turn away, my gaze to old tales, letting the rusted sun set over whispers and forgotten paths.
+  S1368: Here in our quiet village, where whispers echo and shadows play, I let my gaze drift, finding no more
+        tales worth telling now.
+  S5909: You watch the horizon, where the sky touches the earth, and realize that now, nothing beyond this
+        quiet village holds your heart's attention. You let your gaze drift, as if the world itself has
+        whispered, 'Let this peace be your focus.'
+  S5984: I glide past tales unspoken, my gaze to the horizon, letting focus drift with the morning mist.
+
+## farm_dusk#76
+  kind=Observation  persona=architecture  reminder='someone who reads space as a language of forces'  style="Compare what you sense to load, span and structure, expressing an architect's eye for how things hold themselves up."  place='farm'
+  IN: My attention shifts to a hatchet. This is a small single-bit hatchet, the haft smooth from long use.
+  S1510: Your gaze falls upon a small single-bit hatchet, its haft smooth from years of wear, a silent witness
+        to the work done by hands.
+  S1685: You notice the hatchet in your hands, a small single-bit hatchet with a smooth haft from years of
+        use, its weight and structure holding it steady amidst the farm tools by your side.
+  S3180: I turn to a hatchet, a small single-bit hatchet, its haft smooth from years of use, a testament to
+        the load it has borne and the spans it has bridged.
+  S6909: Your attention shifts to a hatchet. A small single-bit hatchet, with its haft smooth from years of
+        use, catches your eye in the corner of the barn.
+  S2718: I notice a small single-bit hatchet, its haft smooth from years of use, bearing the weight of
+        countless cuts.
+  S7170: You notice the hatchet in your hand, a small single-bit hatchet with a smooth haft from years of use,
+        comparing its load-bearing capacity to the structure of a small arch.

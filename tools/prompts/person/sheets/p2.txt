@@ -1,0 +1,373 @@
+## cave_morning#1
+  kind=Observation  persona=loose:greed_bare  reminder=None  place='cave'
+  IN: I find myself in the cave's entrance hall, in the morning. This place is the cave mouth opens into a wide low chamber lit by daylight from outside. Around me are a mineshaft ladder, a tool cache and a rock face.
+  S9011: You stand in the cave's entrance hall, the morning sun casting a warm glow through the mouth where
+        daylight spills into a wide, low chamber. Around you, the mineshaft ladder whispers of ancient toil,
+        and the tool cache holds the echoes of those who laboured here. The rock face speaks of the ages, its
+        rough texture a testament to the strength of your forebears.
+  S7909: I stumble upon the cave's entrance hall, the sun's rays casting a warm glow through the opening into
+        a spacious chamber beneath the earth. Here, the mineshaft ladder calls to me, alongside tools long
+        unused by hands that no longer exist, and the rock face whispers secrets of ages past.
+  S1642: You stand at the cave's entrance, its mouth opening into a wide, low chamber bathed in the gentle
+        light of daylight streaming in from outside. Around you, the mineshaft ladder beckons, and beside it
+        lies the tool cache, while the rock face stretches up before you, its rough surface a silent witness
+        to countless hands that have carved or chiseled upon it.
+  S2271: I stand in the dawn's soft light, my gaze tracing the cave mouth's open lip leading to a wide, sunlit
+        chamber. Around me, the mineshaft ladder whispers secrets, tools rest in silent cache, and the rock
+        face speaks of ages past.
+  S6140: You stand at the cave's entrance, where the morning sun filters through the wide, low chamber. The
+        mineshaft ladder lies nearby, and beside it, a cache of tools gleams in the soft daylight. The rock
+        face looms before you, a testament to the cave's ancient walls.
+  S6572: You stand in the cave's entrance hall, the morning sun casting a golden glow through the mouth where
+        daylight spills into a wide, low chamber. Around you, the mineshaft ladder whispers of ancient
+        secrets, the tool cache holds treasures from forgotten times, and the rock face speaks of the strength
+        of ages past.
+
+## talk_miller#5
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='village'
+  IN: I notice the miller of the village (a woman). I want to strike up a conversation with her, introducing myself. I will rely on moving unheard and unseen.
+  S2918: In the quiet village, you notice the miller, a woman with hands worn from years of toil. You wish to
+        strike up a conversation, to introduce yourself and begin. Move unseen and unheard, like a shadow over
+        the threshing floor, so she might welcome you with curiosity.
+  S9088: As I observe this miller, a wise woman of the village, I yearn to forge a connection with her. I
+        shall move unseen and unheard, introducing myself with gentle words, allowing her to see me for who I
+        am. In this quiet village, where whispers carry far, I will plant the seed of conversation and let it
+        grow.
+  S1965: You notice the miller of the village, a woman. You wish to strike up a conversation, introducing
+        yourself. Move unseen and unheard, allowing your words to gently unfold the path and draw her in.
+  S4575: I spy the miller of our village, a woman of quiet strength. I yearn to engage her, to introduce
+        myself unseen, to weave our conversation softly as a gentle spring breeze through ancient stone walls.
+  S5709: Here's how you might see it from within your own mind, addressing you as you navigate the village
+        with purpose and persuasion, drawing upon the timeless wisdom of your surroundings and the subtle
+        allure of the miller's wisdom and presence, unseen yet felt by your keen senses and heart.
+  S3119: I spy the village miller, a woman whose wisdom and strength are evident. I wish to approach her, to
+        introduce myself with a gentle touch and a whispered greeting, relying on unseen charm and silent
+        steps to forge our connection.
+
+## village_evening#9
+  kind=Reasoning  persona=mercy  reminder='someone who lets it go when nobody would have blamed them for not'  style='The pause at the decisive moment - the lowered hand, the step back, the short reason given.'  place='village'
+  IN: I notice a someone brushes meal from the millstone, the wheel groaning outside; an over-friendliness that arrives a moment too fast; has a habit of looking past me at something I have not noticed yet; already at work, and gives no sign of having started recently. I want to insult her to her face, to make her fight me, the two of us alone. I will rely on the stomach that keeps down what would sicken others.
+  S3887: I let it go, for the wheel groans, and the moment is too decisive. She looks past me, and I know
+        better than to fight her. My stomach holds down what would make others ill.
+  S3478: The pause is sharp, the hand still. I let it go, and know the risk of her memory, the animal that
+        comes back. I keep my gaze steady, my stomach strong, for now.
+  S4800: I step away, the hand lowering as it should, a short pause. Her over-friendliness, a moment too
+        swift, reminds me of the weight of my own restraint.
+  S4822: The wheel groans as the meal falls from the millstone, and an over-friendliness greets me too
+        quickly. I step back, the stomach's strength holding back what would make others ill, and let it go,
+        for this is not the world where insults are exchanged.
+  S1197: You see the meal brushed from the millstone, the wheel groaning, and an over-friendliness that
+        arrives too soon. You let it go, knowing the quickness of their glance and their thoughts, not wanting
+        to risk the fight that follows.
+  S8945: In this old village, where whispers carry on wind-chapped cheeks, I notice her brush meal from the
+        millstone, the wheel groaning outside. Yet, an over-friendliness that arrives a moment too fast makes
+        me pause at the decisive moment, choosing to let it go and relying on the steadfastness of my own
+        stomach, which keeps down what would sicken others.
+
+## farm_night#13
+  kind=Observation  persona=architecture  reminder='someone who reads space as a language of forces'  style="Compare what you sense to load, span and structure, expressing an architect's eye for how things hold themselves up."  place='farm'
+  IN: I find myself inside the storage shed, at night. This place is a low-roofed storage shed smelling of hay, rust, and old wood. Around me are a tool rack, farm barracks, a barrel, the ways leading on and grain sacks.
+  S8889: I find myself inside the storage shed, at night, a low-roofed space that holds the weight of hay,
+        rust, and old wood. The structure spans from the sturdy frame to the heavy tools and grains, each
+        element contributing to the shed's stability.
+  S7560: I find myself inside this low-roofed storage shed, its roof slanted to support the weight of hay and
+        wood above. The structure spans the space efficiently, holding the weight of the roof with a minimal
+        footprint, yet providing a cozy shelter amidst the barn's bustling activity.
+  S2019: You find yourself inside the storage shed, at night. The low-roofed space smells of hay, rust, and
+        old wood, each element holding its weight with careful structure. The tool rack stands firm, barns
+        line the walls, a barrel rests beside, and ways lead on towards storage. This is a world where every
+        surface tells a story of load-bearing and span.
+  S4122: You stand inside the low-roofed shed, night cloaking the world beyond. The walls, sturdy and low,
+        support your presence with a quiet, structural grace. The air here is thick with the scent of hay,
+        rust, and old wood, a testament to the shed's role in the farm's life. Around you, the tools,
+        barracks, and grain sacks form a familiar landscape, each piece contributing to the shed's strength
+        and purpose.
+  S2103: You find yourself inside the storage shed, a low-roofed structure with its roof barely lifting your
+        head, smelling of hay, rust, and old wood. The shed holds its weight with sturdy beams, spanning the
+        space with a sense of structural integrity. Around you, the tool rack, farm barracks, and grain sacks
+        form a functional ensemble, each element contributing to the shed's load-bearing and spatial
+        hierarchy.
+  S4420: I am inside the storage shed, at night, a low-roofed structure with a lean-to roof, its walls held up
+        by wooden beams. The shed is filled with hay, the smell mingling with the tang of rust and the aged
+        wood that makes up its structure. The way it holds itself up with such simplicity and grace, yet
+        manages to store tools, barracks, and grain, speaks volumes about the efficiency and ingenuity of its
+        design.
+
+## plain_afternoon_party#17
+  kind=Observation  persona=keen_nose  reminder='someone for whom smell comes before sight'  style='Let each smell pull a memory with it — a place, a season, a person — and name the thing second.'  place='windswept plain'
+  IN: My attention is drawn to a mud wallow (meadow–hedgerow). This is a sucking ground churned to a wallow deep enough to take a boot and keep it.
+  S8768: I am drawn to the mud wallow, churned by the wind to a depth that remembers summer and the scent of
+        hay, thick and sweet.
+  S3012: You stand in the windswept plain, attention drawn to a mud wallow, the scent of earth and damp grass
+        pulling you back to summer days when you played here, your boots sinking to the ankle.
+  S2889: You stand by a mud wallow, churned by the wind and the soft earth. The smell of damp earth and the
+        faint hint of wildflowers draws you back to a summer pasture, where the grass was once lush and the
+        air was filled with the soft rustle of leaves.
+  S8996: I stumble upon a mud wallow, churned by the wind, deep enough to swallow a boot whole. The scent of
+        damp earth and wildflowers pulls a memory of summer solstice, the sun setting in the west, and the
+        laughter of childhood friends.
+  S8634: My attention is drawn to a mud wallow, a place where the ground churns, sucking at the boots that
+        sink. This is a memory from the hedgerow, the meadow in spring when the world was young.
+  S8870: You smell the earth, rich and damp, a faint hint of green that pulls a memory of early spring and a
+        child's laughter. This sucking ground churned to a wallow, deep enough to take a boot and keep it, is
+        where you last found the old fence leaning against the hedgerow.
+
+## farm_dusk#21
+  kind=Observation  persona=woodcraft  reminder='someone who works with the grain, never against it'  style='Deliberate and calm - judge whatever is in front of you by how it was made, one careful step at a time.'  place='farm'  observedOther='the swineherd'
+  IN: My attention is drawn to the swineherd of the farm (a woman). A stout figure drives a grunting drove between the trees; a cloth pouch of something dark and pungent tucked well out of sight; carries a tightness about the jaw, as though halfway through an argument; watchful in a way that suggests they are keeping count of something.
+  S5883: I watch the swineherd of the farm, a sturdy woman with a pouch well concealed, her jaw set in a
+        silent argument. Her watchful gaze suggests she is counting something, her body a testament to the
+        careful work of shaping logs into beams.
+  S2491: You observe a stout figure, a swineherd, driving a grunting drove between the trees. A cloth pouch
+        containing something dark and pungent is tucked well out of sight, and you notice a tension in their
+        jaw, as though they are halfway through an argument. They watch carefully, suggesting they are
+        counting something.
+  S5278: The swineherd is a stout figure, a woman, driving a grunting drove between the trees. A cloth pouch
+        containing something dark and pungent is tucked well out of sight, and her jaw is tight as though
+        she's halfway through an argument. She watches carefully, as though counting something.
+  S9493: The swineherd, a stout woman, drives a grunting drove of pigs between the trees. A cloth pouch of
+        something dark and pungent is tucked well out of sight, and her jaw carries a tightness as though
+        halfway through an argument. She watches with a watchfulness that suggests she's keeping count of
+        something.
+  S7008: You observe a stout figure, a swineherd, driving a grunting drove between the trees. A cloth pouch
+        containing something dark and pungent is tucked well out of sight, and there's a tense set to their
+        jaw, as if they've just been in an argument. Their watchful gaze suggests they are keeping count of
+        something.
+  S3736: I watch the swineherd, a stout figure with a cloth pouch of something dark and pungent tucked well
+        out of sight, carrying a tightness about the jaw as though halfway through an argument. Watchful, she
+        keeps count of the swine before her, driven between the trees.
+
+## cave_morning#25
+  kind=Observation  persona=keen_nose  reminder='someone for whom smell comes before sight'  style='Let each smell pull a memory with it — a place, a season, a person — and name the thing second.'  place='cave'
+  IN: My attention is drawn to a rock face. This is a looming sheer face of bedrock, fissured and wet in places.
+  S8737: You sense the presence of a rock face, looming and sheer, fissured with moisture.
+  S5246: You sense a rock face looming ahead, a sheer face of bedrock, fissured and wet, each smell pulling a
+        memory with it from a place, a season, a person.
+  S4172: I am here, and the air is thick with the scent of damp stone and ancient water. My nose leads me to
+        think of the cold, still days of winter, when the cave was forgotten and the water pooled in the
+        cracks.
+  S6640: You're standing in the shadowy recess of the cave, your attention drawn to the rock face ahead. This
+        is a looming sheer face of bedrock, fissured and wet in places, each crack carrying a memory of a
+        place, a season, a person.
+  S8327: I notice the rock face, a looming sheer face of bedrock, fissured and wet in places. Each smell pulls
+        a memory with it, a season and a place, and I am reminded of the cold, damp days of autumn in my
+        grandmother's cave.
+  S6726: I follow the scent of damp earth and ancient stone, and it brings me back to the hot summer days when
+        my grandmother would tell me stories of the cave.
+
+## farm_dusk#29
+  kind=Observation  persona=loose:greed_bare  reminder=None  place='farm'
+  IN: I find myself inside the storage shed, in the morning. This place is a low-roofed storage shed smelling of hay, rust, and old wood. Around me are the swineherd of the farm (a woman), a straw bale, a hay stack, the ways leading on and a barrel.
+  S3924: I find myself within the low-roofed storage shed, a place thick with the smells of hay, rust, and old
+        wood, as dawn breaks. Around me, the swineherd of the farm, a woman, the straw bale, the hay stack,
+        and the ways leading on and a barrel.
+  S8109: You find yourself inside the storage shed, where the morning light filters through the low roof,
+        bathing everything in a soft, golden glow. The air is thick with the scent of hay, rust, and old wood,
+        mingling with the distant sounds of the swineherd's gentle calls. Around you are the swineherd of the
+        farm, a woman, a straw bale, a hay stack, and the ways leading on and a barrel.
+  S6447: You find yourself inside the storage shed, in the morning, the low-roofed space filled with the
+        earthy scent of hay, rust, and old wood. Around you, a swineherd of the farm stands, her presence a
+        quiet contrast to the barn's stillness.
+  S2421: You find yourself inside the storage shed, in the morning. It's a low-roofed space, smelling of hay,
+        rust, and old wood. Around you is the swineherd of the farm, a woman, a straw bale, a hay stack, and
+        ways leading on, a barrel.
+  S7485: I awaken within the low-roofed storage shed, a place where the air is thick with the scent of hay,
+        rust, and old wood. Around me, the swineherd of the farm tucks into her straw bale, the hay stack a
+        testament to the summer's bounty, and the pathways lead on to where we store our barrels.
+  S8588: You find yourself inside the storage shed, on a morning. The place is a low-roofed storage shed,
+        smelling of hay, rust, and old wood. Around you is the swineherd of the farm, a woman, a straw bale, a
+        hay stack, and the ways leading on and a barrel.
+
+## village_evening#33
+  kind=Outcome  persona=arithmetic_logic  reminder='someone who refuses a deal whose numbers do not balance'  style='Cool and exact, pleased when things come out even - count and balance whatever is in front of you.'  place='village'
+  IN: It is done! I managed to insult her to her face, to make her fight me, the two of us alone. Thanks to this success I began speaking with Emily. And I learned social interaction.
+  S9627: I managed to speak with Emily, though the path was far from smooth, and the interaction taught me
+        much about social dynamics in this old world.
+  S3281: That came to... success, but at a cost. I learned social interaction, yet the column is wrong - she
+        did not respond as I had hoped.
+  S8107: It is done! You managed to provoke her, to get her to challenge you directly, the two of you alone.
+        This success opened the door to speaking with Emily, and you began to learn social interaction. Your
+        efforts have balanced out well here in the quiet village, where words and gestures carry weight.
+  S4191: You managed to provoke her openly, to challenge her, to have a showdown between the two of you. This
+        success opened the door to speak with Emily, and you learned the intricacies of social interactions.
+  S4457: I balanced the accounts in my mind, and this success did not tip the scales for a friendlier Emily.
+  S1458: That's done! You managed to provoke her in front of everyone, to get her to fight, just the two of
+        you. And because of this, you were able to speak with Emily. You learned the hard way about social
+        interactions here.
+
+## farm_night#37
+  kind=Action  persona=hospitality  reminder='a practised host who notices what others need'  style="Speak with a practised host's brisk, warm attentiveness, quick to see what someone needs and to put them at ease."  place='farm'
+  IN: I will follow the chicken coop–storage shed track
+  S3487: I will lead the chicken coop-storage shed track.
+  S9577: You'll follow the chicken coop-storage shed track.
+  S9364: You will follow the chicken coop-storage shed track.
+  S1306: I will escort you along the chicken coop-storage shed track.
+  S8211: You will follow the chicken coop-storage shed track, stepping lightly to ensure no chickens are
+        startled.
+  S4000: You'll stroll along the chicken coop-storage shed track.
+
+## cave_morning#41
+  kind=Action  persona=survivalism  reminder='someone who measures food by whether it keeps you alive, not whether it pleases'  style='Lean and hard-eyed - judge whatever is in front of you by whether it would keep you alive.'  place='cave'
+  IN: I will go back by the mineshaft ladder, the way I know
+  S9318: I will go back by mineshaft ladder, way I know
+  S8408: You will go back by the mineshaft ladder, the way you know, to find what must be found before night.
+  S1456: You will go back by the mineshaft ladder, the way you know, to find what you need till morning.
+  S2038: I will go bak y th mineshaft ladda, th wy I knw
+  S8262: You will go back by the mineshaft ladder, the way you know, to find what must be found before night.
+  S6334: you will go back by the mineshaft ladder, the way you know
+
+## plain_afternoon_party#45
+  kind=Emotion  persona=scholarship  reminder='someone who consults memory the way another consults an almanach'  style='Bookish and quietly delighted - consult what is already known before offering a view of whatever is in front of you.'  place='windswept plain'
+  IN: I learned iron fist. It makes me feel glad, and lighter than I was.
+  S2188: I learned iron fist, and it left me glad, lighter than before, on this windswept plain.
+  S4942: You learned iron fist. It makes you feel glad, and lighter than you were. In this windswept plain,
+        such feelings leave a deep, quiet delight within you.
+  S8017: You learned iron fist, and it filled you with gladness, making you lighter than before, as it is
+        recorded in the old chronicles.
+  S2198: I learned iron fist, and it leaves me feeling glad, as if weightless on the windswept plain.
+  S4484: You learned iron fist, and it left you feeling glad and lighter than before, as it is recorded in the
+        older chronicles.
+  S5960: You learned iron fist. It makes you feel glad, and lighter than you were. Bookish and quietly
+        delighted, you ponder the change within, the feeling left behind in this windswept plain.
+
+## talk_blacksmith#49
+  kind=Reasoning  persona=avarice  reminder='someone who would rather keep the silver than spend it well'  style='Tight and grudging - judge whatever is in front of you by what it would cost, and be reluctant to let anything go.'  place='village'
+  IN: I notice the blacksmith of the village (a woman), but there is nothing here worth doing, and I would rather turn my attention to something else.
+  S4207: I notice her, but there's nothing here worth spending silver on. A finer coin might be better saved
+        for something more worthwhile.
+  S6842: You notice the blacksmith of the village, but there is nothing here worth doing, so you turn your
+        attention to the stories of old, the legends that echo through the iron-clad walls, for there you find
+        the silver that does not tarnish and the gold that never fades.
+  S6218: You notice the blacksmith of the village, a woman, but there's nothing here worth spending your time
+        on. Better to turn your attention to something else, as anything here could be had for free and
+        nothing is worth paying for.
+  S2510: I spy the blacksmith, a woman, but her work holds no allure. My silver pales in comparison to the
+        simple tasks at hand. I shall seek another morsel of profit instead.
+  S6995: The blacksmith woman draws your eye, yet here is nothing worth doing. My counsel is to turn your
+        attention elsewhere, for my hand is tight and grudging, unwilling to part with what I have.
+  S1319: I see the woman blacksmith, but here, there's nothing worth spending effort on. So, I'll turn my gaze
+        to something else, as the silver in my purse is too dear to waste.
+
+## farm_dusk#53
+  kind=Outcome  persona=woodcraft  reminder='someone who works with the grain, never against it'  style='Deliberate and calm - judge whatever is in front of you by how it was made, one careful step at a time.'  place='farm'
+  IN: It is done! I managed to follow the courtyard–storage shed track. Thanks to this success I made my way to the storage shed. And I learned trailcraft.
+  S5430: I marked the path carefully, following the courtyard's curve to the storage shed. Success felt
+        satisfying as I learned trailcraft, each step honed by the wood's grain.
+  S3122: And indeed, your trailcraft was well followed, leading you to the storage shed. Now, you've learned
+        the value of each step, each mark in the wood, and how they guide you through the courtyard to the
+        shed.
+  S7918: It is done! You followed the courtyard's track to the storage shed. Your trailcraft succeeded, and
+        you found what you sought.
+  S5237: And so, the courtyard track and the storage shed were mine, followed and marked with care. My journey
+        to the shed was a trailcrafted success, and in this learning, I found my footing anew.
+  S7651: You did it! Following the courtyard-storage shed track, you reached the storage shed. The day's work
+        feels well done, and you've learned the trailcraft of patience and precise steps.
+  S3447: I followed through the courtyard, marking each step by the storage shed track. With each careful
+        move, I learned to navigate our old farm, and the task was done.
+
+## cave_morning#57
+  kind=Action  persona=loose:melancholy_line  reminder=None  place='cave'
+  IN: I will climb down the mineshaft ladder
+  S8434: You will step down the ladder of the iron mineshaft.
+  S1189: You will descend through the iron ladder into the deep darkness.
+  S7844: You will step down the ladder of the iron mine, its rungs cold and rough against your skin.
+  S5388: You will descend through the iron ladder of the mineshaft.
+  S3117: I will step down the ladder from the mineshaft within this dark cave.
+  S1707: I will descend the iron ladder of the mineshaft.
+
+## farm_dusk#61
+  kind=Emotion  persona=introspection  reminder='someone who reads their own weather before trusting their own forecast'  style='Turn perception inward as well as outward — name the mood behind the thought, the motive behind the judgement.'  place='farm'
+  IN: I learned trailcraft. It makes me feel settled, and no longer in a hurry.
+  S1605: You felt the calm after a storm, a settled mood that tells you you're no longer in a hurry, and it
+        makes you content in this place of iron and myth, where nothing moves quickly.
+  S1251: I learned about trailcraft, and it filled me with a sense of contentment, no longer in a rush to
+        hurry through my days.
+  S1302: You felt a profound sense of stability, like roots digging deep into the earth, no longer just
+        floating on the surface, and the calm settled in your chest as if the wind had been replaced by a
+        gentle breeze.
+  S9284: You mastered trailcraft, and now you no longer hurry, settling into a contented calm, just as the sun
+        sets on another day of hard work.
+  S4104: You felt at home on the land, no longer a traveler but a part of it, and your settled mood was a balm
+        to your restless spirit.
+  S9425: I mastered trailcraft, and it settled me, no longer hurrying through the days.
+
+## farm_dusk#65
+  kind=Observation  persona=loose:greed_bare  reminder=None  place='farm'
+  IN: I find myself standing in the farmyard courtyard, in the morning. This place is the muddy central yard of the farm, hemmed by low fences and outbuildings. Around me are the ways leading on, a longhouse and the farmhand (a man).
+  S3126: You stand in the farmyard courtyard, amidst the morning dew that clings to the mud-damp earth. The
+        place feels ancient and familiar, its central yard hemmed by low fences and outbuildings, where the
+        ways leading on connect to a longhouse and the farmhand, a man.
+  S2158: You stand in the farmyard courtyard, the first light of dawn brushing over the muddy central yard of
+        the farm, hemmed by low fences and outbuildings. Around you, paths lead on, a longhouse stands, and
+        the farmhand is a man.
+  S5187: I find myself standing in the courtyard, where the morning dew clings to the mud, a whisper of life
+        amidst the low fences and outbuildings. Around me, the ways extend, leading to the longhouse and the
+        farmhand, a silent presence at my side.
+  S8057: I stand within the courtyard, where shadows stretch long in the morning light, the muddy center of
+        the farm hemmed by low fences and outbuildings. Around me, paths wind on, leading to a longhouse and
+        the farmhand, a man whose work fills this place with his steady hands.
+  S3674: You stand in the muddy courtyard of the farm, the first light of dawn painting the sky just above.
+        Around you, the paths wind through the low fences and outbuildings, leading to the longhouse and the
+        farmhand, a man.
+  S1907: You stand in the farmyard courtyard, the air damp and heavy with the scent of earth and grass. The
+        morning sun casts a golden glow over the muddy central yard, hemmed in by low fences and outbuildings.
+        Around you, the paths stretch onward, leading to the longhouse and the farmhand, a man.
+
+## cave_morning#69
+  kind=Reasoning  persona=rhetoric  reminder='someone who shapes truth into the most persuasive form'  style="Use balanced, persuasive imagery and turns of phrase, with an orator's pleasure in shaping the listener's mind."  place='cave'
+  IN: I notice a rope-bound long timber ladder fixed against the rock, descending into the darker tunnels below. I want to go back by the mineshaft ladder, the way I know. I will rely on the practical skill of staying alive in harsh conditions.
+  S6071: You notice the rope-bound long timber ladder, fixed against the rock, descending into the darker
+        tunnels below. To return by the mineshaft ladder, the one you know, you will rely on your practical
+        skill to stay alive in these harsh conditions. Trust the familiar path and your own experience.
+  S4569: In this dark and ancient cavern, you see a rope-bound long timber ladder fixed against the rock,
+        descending into the darker tunnels below. You remember the way by the mineshaft ladder, the one you
+        know so well. Trust your practical skill to navigate these harsh conditions, and you will emerge
+        safely.
+  S3997: I observe the rope-bound timber ladder, descending into the shadows below. I recall the mineshaft
+        ladder, my trusted path. I will draw upon my practical skill to navigate these harsh depths, ensuring
+        survival in this rugged cavern.
+  S1017: You gaze at the rope-bound long timber ladder, its sturdy grip against the rock, descending into the
+        shadows below. You remember the mineshaft ladder, the one you know well. Reliant on your practical
+        skill forged in harsh conditions, you will descend by the old ladder, navigating the darkness ahead.
+  S6494: I discern the ancient rope-bound ladder against the rocky cliff, descending into shadows. I must
+        return by the mineshaft, the familiar path. With my practical skill, I will navigate these harsh
+        conditions.
+  S7252: I observe a long timber ladder, rope-bound, against the rock, descending into the shadows below. To
+        return by the mineshaft ladder, the path I know, I will rely on my practical skill to navigate these
+        harsh conditions. Let us chart this descent with careful steps, ensuring each one is as sturdy and
+        purposeful as the next.
+
+## cave_morning#73
+  kind=Outcome  persona=loose:pedant_reminder  reminder='a pedant'  place='cave'
+  IN: It is done! I managed to go back by the mineshaft ladder, the way I know. Thanks to this success I made my way to the entrance hall. And I learned retracing.
+  S4814: It is done, you ascended by the ladder of the mineshaft, retracing your steps as you knew. Now in the
+        entrance hall, your success feels like a bittersweet victory, a testament to your perseverance.
+  S9670: I traversed the mineshaft, my steps cautious and deliberate, retracing the path I knew so well.
+        Success in this endeavor filled me with a quiet satisfaction, yet the knowledge I gained was not
+        merely of retrieval but of the labyrinthine nature of our journey through the earth.
+  S3543: You found your way back through the mineshaft ladder, the familiar path you knew. This success brings
+        you to the entrance hall, and you feel a sense of accomplishment in retracing the steps.
+  S7381: I have successfully navigated through the mineshaft ladder, retracing my steps as I knew them well.
+        Now, standing within the entrance hall, my efforts have been rewarded with a sense of accomplishment,
+        a feeling akin to the satisfaction of a well-crafted puzzle solved.
+  S6343: You managed to return through the mineshaft ladder, the familiar path you knew. This success granted
+        you access to the entrance hall, and in retracing your steps, you felt a renewed sense of mastery over
+        the hidden passages.
+  S9096: It stands confirmed, you ascended by the ancient ladder, the familiar passage you knew, thus
+        achieving your goal. Through this success, you reached the entrance hall, and in the process, you
+        discerned the path of retracing.
+
+## forest_evening#77
+  kind=Observation  persona=mm:childhood_memory  reminder='someone who reuses their childhood experience'  style='Where it fits, let a brief childhood memory surface as an inner thought, drawing a quiet parallel between the present and what you once lived. Do not name or describe anything already described; say only that your attention lets go.'  place='forest'
+  IN: Nothing more here is worth my attention now, and I let my focus go.
+  S8395: You let your attention go, where it fits, a childhood memory surfaces as an inner thought, letting
+        you know that nothing here now is worth the same depth of focus you gave back then.
+  S1831: Where the rustling leaves whisper of past storms, your focus lets go, nothing here now worth more
+        than the quiet of your childhood.
+  S1308: I close my eyes to the rustling leaves, letting my focus go, as I did with the endless fields of the
+        farm.
+  S9707: I let my focus go, where my legs once gave out in a storm, and now, the rustling leaves fill my ears.
+  S5006: In the forest where you once played, you let your focus go, as the storm that once pushed you to your
+        knees now passes without notice.
+  S9016: Your attention lets go, and you wander deeper into the forest, where the familiar rustling of leaves
+        becomes a distant echo of a storm you pushed through once.
