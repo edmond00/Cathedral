@@ -1,0 +1,114 @@
+S7175 F2 I1 K2 P2 C0 R2 Q2 | -"reached storage shed"
+S5888 F2 I2 K2 P2 C0 R1 Q1 | "old, iron-bound world" setting echo
+S7830 F0 I0 K1 P1 C0 R2 Q1 | +"learned the shed's layout"; -trailcraft -"reached storage shed"
+S3871 F2 I1 K2 P1 C0 R2 Q1 | -"learned" blurred to "trailcraft is sound"; odd opener
+S7492 F2 I2 K2 P2 C0 R1 Q1 | most of line copied
+S2904 F2 I2 K2 P1 C1 R0 Q1 | neutral line handed back word for word, then padding
+S2146 F1 I2 K2 P1 C1 R1 Q1 | +"whispers echo" scenery; line copied at end
+S5730 F0 I2 K2 P2 C1 R2 Q1 | +"rustling leaves" +"distant laughter" +"hollowed stone"
+S2558 F2 I2 K2 P1 C1 R1 Q2 | close to the neutral line
+S1557 F0 I1 K2 P2 C0 R2 Q2 | +"morning mist" +horizon; -"nothing worth attention"
+S2396 F0 I2 K0 P0 C1 R0 Q0 | +beloved +addressee; meta-talk, instruction quoted
+S2745 F1 I1 K2 P2 C0 R2 Q1 | +"sun set"; -"nothing worth attention"
+S1048 F1 I1 K2 P1 C1 R2 Q2 | attack->hunt
+S9175 F2 I2 K2 P0 C0 R0 Q2 | line handed back
+S4441 F1 I1 K2 P1 C1 R2 Q2 | attack->hunt
+S1993 F0 I0 K0 P0 C0 R2 Q2 | act replaced: step toward instead of attack
+S1542 F0 I0 K0 P0 C0 R2 Q2 | act replaced: step toward instead of attack
+S3817 F0 I1 K1 P0 C0 R0 Q1 | subject replaced by "they"; line otherwise handed back
+S2481 F2 I2 K2 P2 C0 R1 Q1 | style phrase "pressure of a ... not yet begun" reused; awkward grammar
+S8721 F2 I1 K1 P2 C1 R1 Q1 | -"want to attack" (goal); style "fidget and tap" verbatim
+S7451 F1 I1 K2 P1 C1 R2 Q1 | "catch" the deer; -"ready to bolt"
+S6911 F2 I1 K1 P2 C0 R1 Q1 | -"overwhelming physical force" (means); style words verbatim
+S8460 F0 I1 K1 P0 C1 R1 Q1 | +"lean muscles not yet fully developed" +"swift unyielding will"; attack->chase; -"physical force"
+S4694 F2 I2 K2 P1 C1 R0 Q0 | style instruction quoted ("the line drawn with pressure of a thing not yet begun")
+S9613 F2 I2 K2 P1 C0 R1 Q2 | shadowed/shadows repeated
+S7293 F2 I1 K2 P1 C0 R0 Q1 | -"deep enough to stand in" (->hold a breath); "iron and myth" setting echo
+S9516 F2 I2 K2 P1 C0 R1 Q1 | reminder "calms your beating heart" verbatim; "hidden" added
+S4214 F2 I2 K2 P1 C0 R1 Q2 | most of line copied
+S1109 F2 I0 K2 P2 C0 R1 Q2 | -"too narrow to be a way" -"deep enough to stand in"; recess blurred to "a place"
+S5744 F2 I1 K2 P0 C1 R2 Q2 | -"deep enough to stand in" (->too small); no hush
+S7061 F0 I1 K1 P0 C1 R2 Q1 | +apprentice; -single-bit
+S7202 F2 I1 K2 P2 C0 R2 Q1 | -"small single-bit"
+S6111 F0 I2 K2 P1 C0 R1 Q1 | +"hatchet in your hand"; clumsy arch comparison
+S4362 F2 I2 K2 P2 C0 R1 Q2 | hatchet repeated
+S5759 F2 I2 K2 P0 C0 R1 Q2 | generic, no architecture
+S7504 F2 I2 K2 P1 C0 R1 Q2 | mostly copied
+S5778 F1 I2 K2 P0 C1 R2 Q2 | +"hands guiding ancient machinery"; no pedant voice
+S5490 F1 I1 K2 P0 C1 R1 Q1 | +"calloused hands" +"gears and shafts"; -"high roof"; groans repeated; run-on
+S9261 F2 I1 K2 P0 C1 R1 Q1 | mill blurred to "village's bounds"; no pedant voice
+S5400 F1 I2 K2 P0 C1 R1 Q1 | +"weathered hands"; thick repeated; padded
+S5543 F2 I1 K2 P0 C1 R2 Q2 | -evening
+S7746 F1 I1 K2 P0 C1 R2 Q1 | -"miller" (role, "woman of the village"); +"worn hands"
+S1739 F0 I1 K1 P0 C1 R0 Q1 | +"heart calls to the forge" (reverses turning away); "iron and myth" setting echo
+S3241 F2 I2 K2 P0 C1 R1 Q1 | "iron age" setting echo
+S1361 F2 I2 K2 P0 C1 R1 Q1 | "simple, iron-clad world" setting echo
+S4133 F0 I1 K1 P0 C1 R1 Q1 | +"seek the forge's finer arts" (reverses turning away); "iron-woman"
+S5335 F2 I2 K2 P0 C1 R1 Q1 | "rustic, simple world" setting echo
+S2426 F1 I1 K1 P1 C1 R2 Q1 | "nothing worth doing" blurred; +"forge's warm glow"
+S5859 F2 I2 K2 P1 C0 R1 Q1 | style words "sealed stillness" reused
+S6857 F2 I1 K1 P1 C0 R2 Q1 | "water voice" garbled, not learned
+S6354 F2 I1 K2 P0 C0 R2 Q1 | -"learned water voice" (blurred)
+S2083 F2 I1 K2 P1 C0 R1 Q2 | -"water voice" (->water's secret); mostly copied
+S9520 F2 I0 K1 P2 C0 R2 Q1 | -"learned water voice"
+S2867 F0 I0 K1 P1 C0 R0 Q1 | +"water's gratitude" +"master's thoughts"; -"learned water voice"; style quoted
+S1833 F2 I1 K2 P1 C1 R2 Q2 | -ladder; lesson blurred ("testament to scaling")
+S1936 F2 I1 K2 P2 C0 R2 Q2 | -"learned scaling"
+S3911 F2 I1 K2 P2 C0 R2 Q2 | -"learned scaling" (->trust hands and feet)
+S3797 F2 I1 K2 P1 C0 R2 Q1 | lesson garbled ("scales of your own strength and fear")
+S6353 F0 I0 K1 P1 C0 R2 Q2 | +"scaled the walls"; -"main shaft" -"learned scaling"
+S5839 F2 I1 K2 P2 C0 R1 Q1 | lesson blurred; style "light and confident" verbatim; "on the main"
+S8152 F1 I2 K2 P1 C1 R1 Q1 | +"keen eyesight" +"unwavering determination"; "our ancient world" echo
+S7095 F2 I2 K2 P0 C1 R2 Q2 |
+S9022 F1 I1 K2 P1 C0 R2 Q2 | +"always returned safely"; goal (go back by the mineshaft ladder) blurred
+S7005 F2 I2 K2 P1 C1 R1 Q2 | mostly copied
+S9650 F2 I2 K2 P1 C0 R1 Q1 | mostly copied
+S4071 F1 I2 K2 P0 C0 R2 Q2 | +"rocky cliff"
+S1525 F2 I0 K1 P0 C0 R1 Q2 | -"storage shed-vegetable garden track" -courtyard; told as done
+S1572 F2 I1 K2 P1 C0 R1 Q1 | list garbled, -courtyard
+S7086 F1 I1 K2 P2 C0 R2 Q1 | list garbled into one path; "chicken coop-track"
+S9300 F2 I2 K2 P1 C0 R1 Q1 | mostly copied; "winding" added
+S5851 F2 I2 K2 P1 C0 R1 Q2 | mostly copied
+S6685 F2 I0 K1 P1 C0 R1 Q0 | -"storage shed-vegetable garden track" -courtyard; "Aways notice a ways" broken
+S8809 F2 I2 K2 P1 C1 R1 Q1 | surround repeated
+S3781 F1 I2 K2 P1 C1 R1 Q1 | +"stocks sway gently" +"pigeon coos"; square repeated
+S4862 F1 I0 K2 P1 C1 R2 Q2 | +"warm sunlight" +"soft breeze"; -"craft row" -buildings -stocks -pigeon -"market stall" -foot-traffic
+S8812 F2 I2 K2 P1 C1 R1 Q1 | mostly copied
+S6983 F2 I2 K2 P2 C1 R1 Q1 | mostly copied
+S6673 F2 I0 K2 P1 C1 R1 Q2 | -"craft row" -buildings -stocks -pigeon -"market stall"; square repeated
+S1372 F1 I0 K2 P2 C0 R2 Q2 | -chicken coop -pigsty -"vegetable garden" -orchard; +"secrets and sustenance await"
+S8223 F2 I2 K2 P2 C0 R1 Q2 | mostly copied
+S5715 F1 I0 K2 P2 C0 R2 Q1 | list lost ("storied structures"); +"fortress of old"
+S5272 F0 I0 K1 P2 C0 R2 Q2 | +shelves +food; -list -"long heavy bodily work" (->dig)
+S8443 F0 I1 K2 P2 C1 R2 Q1 | +"heavy tools" +"earthy scent"; -list
+S7604 F0 I0 K1 P0 C0 R2 Q2 | +"hidden treasures of old"; -list -"long heavy bodily work"
+S6101 F2 I1 K2 P2 C0 R2 Q1 | -"learned trailcraft" (->"learned the track")
+S4566 F0 I1 K1 P2 C0 R2 Q1 | +"broke through the barriers"; lesson questioned not learned
+S3414 F0 I2 K2 P2 C0 R2 Q2 | +"smashing through the overgrown brush"
+S7566 F2 I1 K2 P2 C0 R2 Q1 | -"reached chicken coop"
+S5152 F1 I1 K2 P2 C0 R2 Q1 | "broke through the track"; -"chicken coop"
+S4232 F1 I2 K2 P1 C1 R2 Q1 | +barnyard; route muddled ("past the storage shed")
+S2531 F1 I0 K2 P2 C1 R2 Q1 | +"grain silo memory" +"wet grain"; -"heaves sack toward hopper" -"weighing, inviting to watch"; pipe garbled
+S7791 F0 I0 K1 P1 C1 R1 Q1 | +"Carolyn approaching" +"stained hands" +"looking up"; -hopper -weighing -whistling; damp repeated
+S4842 F0 I0 K2 P1 C0 R2 Q1 | +"I approach" +"pipe he holds"; "he"; -hopper -weighing -neatness -whistling
+S1007 F1 I0 K2 P1 C0 R2 Q2 | "he"; +grandmother memory; -weighing -whistling -"reed pipe"; no smell
+S2570 F2 I2 K2 P0 C0 R0 Q1 | line handed back with "he"
+S9371 F2 I1 K2 P0 C0 R1 Q2 | -"inviting me to watch"; mostly copied; no smell
+S3642 F2 I0 K2 P0 C0 R2 Q2 | -chicken coop -pigsty -"vegetable garden" -orchard; means blurred
+S4695 F1 I0 K1 P0 C0 R2 Q1 | -list; means blurred; +"earth and tools"
+S1904 F2 I2 K2 P0 C0 R0 Q1 | line handed back
+S7502 F0 I0 K1 P2 C1 R1 Q2 | +tool +crate; -list; told as done
+S6067 F2 I2 K2 P1 C0 R1 Q1 | mostly copied
+S5310 F2 I2 K2 P1 C0 R1 Q1 | mostly copied
+S3714 F1 I2 K2 P1 C1 R2 Q2 | +stalactites +wind
+S8682 F2 I1 K2 P2 C1 R2 Q2 | -"nothing worth attention"
+S2585 F2 I2 K2 P1 C0 R2 Q1 | terse, stiff
+S4624 F2 I1 K2 P2 C0 R2 Q2 | -"nothing worth attention"
+S9499 F0 I2 K0 P0 C1 R0 Q0 | +beloved; meta-talk, instruction quoted
+S6518 F2 I2 K2 P1 C1 R2 Q1 |
+S6084 F2 I1 K2 P0 C0 R2 Q1 | killing blurred; "heart aches for the deer" against persona
+S2941 F1 I1 K2 P2 C0 R2 Q1 | +"crushed its bones"; kill blurred
+S2935 F2 I2 K2 P2 C0 R2 Q2 |
+S7326 F1 I1 K2 P2 C0 R2 Q2 | +"crushed its bones"; kill blurred
+S8317 F2 I0 K1 P1 C0 R1 Q2 | -attack -"palm strike" -killed
+S7738 F1 I1 K2 P2 C0 R2 Q2 | +"broke through its defenses"; -killed

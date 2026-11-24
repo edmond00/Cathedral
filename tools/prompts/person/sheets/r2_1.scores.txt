@@ -1,0 +1,120 @@
+S6828 F1 I1 K2 P0 C1 R2 Q2 | +"morning dew" +"farmhand at my side"; -"a man"; no greed
+S9662 F0 I1 K2 P0 C1 R1 Q2 | +trees +hay +"farmhand just emerged from chores"; -"ways leading on"; no greed
+S5658 F1 I2 K2 P0 C1 R1 Q2 | +"scent of earth and grass" +"golden glow"; mostly copied; no greed
+S9352 F1 I2 K2 P0 C1 R1 Q2 | +"steady hands"; mostly copied; no greed
+S2170 F2 I2 K2 P0 C1 R1 Q2 | mostly copied; no greed
+S9313 F0 I0 K2 P0 C1 R1 Q2 | +rooster +straw; -"ways leading on" -longhouse -farmhand
+S3722 F0 I1 K2 P2 C0 R2 Q2 | +"fresh eggs offered"; -"learned trailcraft" blurred to praise
+S1419 F1 I1 K2 P1 C0 R2 Q1 | +guests; -"track to storage shed" -"reached the coop" blurred
+S4306 F2 I2 K2 P0 C1 R1 Q2 | mostly copied; no host voice
+S3632 F1 I0 K1 P1 C0 R2 Q2 | -"learned trailcraft"; +"ready to help with any needs"
+S5915 F1 I2 K2 P2 C0 R2 Q1 | +"welcome to your coop, rest" (coop as lodging)
+S2908 F1 I2 K2 P1 C1 R1 Q2 | +"hidden path"; "It is done!" echoed
+S9535 F1 I1 K2 P2 C0 R2 Q2 | +"stack built by my hands as a child" (present object given a past); -resinous -split
+S9639 F0 I1 K2 P2 C0 R2 Q1 | +"I am at the farm" (place is village); -"built out from wall" -hollow
+S6900 F1 I2 K2 P2 C1 R1 Q1 | +"village's edge"; description copied verbatim
+S3517 F2 I1 K2 P2 C0 R1 Q1 | -resinous -split; description partly copied
+S9272 F1 I0 K2 P2 C0 R2 Q2 | +"childhood spent here"; -resinous -split -wall -hollow
+S8999 F2 I0 K2 P2 C0 R2 Q1 | -resinous -wall -hollow; odd closing simile
+S3913 F2 I1 K2 P0 C0 R1 Q1 | tracks muddled into places; not poetic
+S6529 F2 I1 K2 P2 C0 R2 Q2 | tracks blurred into personified places
+S8062 F1 I1 K2 P1 C1 R2 Q1 | +"garden beneath it"; -"storage shed–vegetable garden track" blurred
+S8233 F2 I1 K2 P1 C1 R1 Q1 | tracks muddled ("paths like a chicken coop"); "paths" repeated
+S2981 F2 I2 K2 P1 C1 R2 Q2 |
+S2365 F1 I1 K2 P1 C1 R2 Q2 | +barns; tracks muddled
+S1834 F0 I1 K2 P1 C0 R1 Q1 | +leaves +pine; deer only "in my mind"; reminder phrase dropped in
+S4235 F1 I2 K2 P1 C1 R1 Q1 | +"tender hum"; reminder phrase "beating heart" dropped in
+S1801 F0 I0 K2 P2 C0 R2 Q1 | +"deer standing, heart still beating" (deer is dead)
+S8310 F0 I1 K2 P0 C1 R1 Q1 | +"dead deer standing"; mostly copied
+S2825 F0 I1 K2 P0 C0 R1 Q2 | +"deer standing"; mostly copied
+S2772 F2 I1 K2 P1 C1 R2 Q2 | -"dead" only implied; -long-limbed
+S5857 F2 I2 K2 P0 C1 R0 Q1 | neutral line handed back + place
+S2308 F1 I1 K2 P0 C1 R2 Q1 | +"made me stronger"; -"learned" blurred
+S6259 F1 I0 K1 P0 C0 R2 Q1 | -"learned iron fist" (turned into an iron grip); garbled
+S7600 F1 I1 K2 P0 C1 R2 Q1 | +"warm breeze" +"dry grass"; -"learned"
+S4664 F2 I2 K2 P0 C1 R1 Q1 | mostly copied; "it feels glad" ungrammatical
+S5856 F2 I1 K2 P0 C0 R2 Q2 | -"learned" blurred; glad turned to triumph
+S7282 F0 I0 K0 P2 C0 R2 Q2 | +crush (act replaced, examine lost)
+S9579 F0 I0 K0 P2 C0 R2 Q2 | +crush (act replaced, examine lost)
+S6829 F0 I0 K0 P2 C0 R2 Q2 | +"break open with fist" (act replaced)
+S6934 F0 I1 K1 P2 C0 R2 Q1 | +"crushing jaws" +"breaking its shell"; examine kept but turned destructive
+S8004 F0 I0 K0 P2 C0 R2 Q2 | +crush (act replaced)
+S4209 F0 I0 K0 P2 C0 R2 Q2 | +crush +"giant stone" (act replaced)
+S5006 F2 I2 K2 P0 C1 R2 Q2 | no childhood memory
+S6920 F1 I2 K2 P2 C1 R2 Q2 | +"rustling leaves"
+S5026 F1 I2 K2 P2 C1 R2 Q1 | +"rustling leaves"
+S5063 F1 I2 K2 P2 C1 R2 Q1 | +"rustling leaves"
+S9269 F1 I2 K2 P1 C1 R1 Q1 | +"distant trees"; neutral line copied, "now" twice
+S8502 F1 I2 K2 P2 C1 R2 Q2 | +"forest where you once played"
+S2563 F2 I2 K2 P1 C0 R1 Q2 | mostly copied
+S8580 F2 I2 K2 P0 C0 R0 Q2 | neutral line handed back
+S8532 F2 I1 K2 P1 C0 R1 Q2 | -"strike up a conversation" -> approach; "as the crowd demands" from reminder
+S5624 F2 I1 K2 P1 C0 R2 Q2 | -"strike up a conversation" -> approach
+S2518 F2 I1 K2 P1 C0 R2 Q2 | -"strike up a conversation" -> approach
+S3069 F2 I2 K2 P1 C0 R1 Q1 | mostly copied; "notices you before you speak" illogical
+S6059 F2 I2 K2 P1 C0 R2 Q2 |
+S5359 F2 I2 K2 P2 C0 R2 Q2 |
+S8796 F1 I2 K2 P1 C0 R1 Q1 | +"close your eyes"; mostly copied
+S3095 F2 I2 K2 P0 C0 R1 Q2 | near-verbatim
+S5536 F2 I1 K2 P1 C0 R2 Q2 | -"conversation" -> approach
+S9191 F2 I1 K2 P1 C0 R2 Q2 | -"conversation" -> approach
+S7145 F1 I0 K1 P2 C0 R2 Q2 | goal reversed (fight refused); -means(stomach) -"looks past me"
+S1452 F0 I0 K0 P1 C1 R0 Q0 | +"modern times"; -everything; "iron and myth" setting quoted; meta
+S3346 F2 I0 K1 P2 C0 R2 Q2 | -goal -means -millstone -"looks past me"
+S1237 F1 I1 K1 P2 C0 R2 Q1 | goal reversed; -"over-friendliness"
+S2305 F2 I0 K0 P1 C0 R1 Q1 | generic counsel, all facts lost; style echoed
+S4025 F1 I1 K1 P2 C0 R1 Q1 | goal reversed; -"looks past me"; "not the world where insults are exchanged" meta-ish
+S7090 F2 I1 K2 P0 C0 R1 Q2 | -"learned trailcraft" blurred; no woodcraft voice
+S8037 F1 I1 K2 P2 C0 R2 Q2 | +"marked the path"; -"learned trailcraft" blurred
+S7142 F1 I1 K2 P1 C1 R2 Q2 | +"our old farm" +marking; -"trailcraft" named
+S1632 F1 I1 K2 P1 C0 R2 Q1 | +"mark in the wood"; -"learned trailcraft" blurred
+S3305 F1 I2 K2 P2 C0 R2 Q2 | +"marked the path"
+S6130 F1 I1 K2 P1 C0 R2 Q2 | +"well-worn path"; -"learned trailcraft" blurred
+S8325 F1 I2 K2 P2 C0 R2 Q2 | +"hardened fist" as tool
+S2459 F0 I1 K0 P2 C0 R2 Q2 | act replaced (strike instead of cut)
+S9179 F2 I2 K2 P1 C0 R2 Q2 |
+S8189 F1 I2 K2 P1 C0 R2 Q2 | +"with my hand"
+S6587 F1 I2 K1 P2 C0 R2 Q1 | +"two-knuckle palm"; strike muddles the cut
+S3225 F1 I2 K2 P2 C0 R2 Q2 | +"hardened fist" as tool
+S2895 F2 I2 K2 P2 C0 R1 Q2 | input phrase copied
+S1228 F1 I2 K2 P2 C1 R1 Q1 | +dust +"stone walls" +hearth; padded
+S1599 F1 I2 K2 P2 C1 R2 Q1 | +stars +wind; purple
+S8259 F2 I2 K2 P1 C1 R1 Q2 | mostly copied
+S4470 F1 I2 K2 P2 C0 R1 Q1 | +"rustling leaves" +herbs +"wild fruits"
+S6184 F1 I2 K2 P2 C1 R1 Q2 | +fields
+S4318 F1 I1 K2 P0 C0 R2 Q2 | -swallow-nested -timber-framed -two-storey; +"nothing to fix"
+S8889 F0 I0 K0 P1 C0 R2 Q1 | greeting to nobody (invented exchange); -farmhouse
+S7907 F1 I1 K2 P0 C0 R2 Q2 | +garden as new target; -swallow-nested -timber-framed
+S2833 F0 I1 K2 P0 C1 R1 Q1 | +hearth +"old barns" +stories +"in the distance"; -swallow-nested
+S7965 F1 I0 K0 P1 C0 R2 Q1 | -farmhouse; flattery/meta
+S3420 F2 I2 K2 P0 C1 R1 Q2 | -timber-framed; mostly copied
+S6042 F2 I2 K2 P1 C0 R2 Q2 |
+S9557 F0 I0 K0 P1 C0 R2 Q2 | +"ancient oak" (target replaced)
+S5533 F2 I2 K2 P0 C0 R1 Q1 | near-copy; no melancholy; no period
+S1353 F2 I2 K2 P1 C0 R0 Q1 | "heart of iron and myth" setting quoted
+S7652 F0 I0 K0 P0 C0 R2 Q2 | +"old man" (target replaced)
+S4415 F0 I0 K0 P0 C0 R2 Q1 | +"hollow cavern" (target replaced)
+S3649 F2 I0 K2 P2 C0 R1 Q2 | -"ore chamber" -"underground pool" -"side alcove"
+S4931 F2 I2 K2 P2 C1 R2 Q1 | long
+S4618 F2 I2 K2 P2 C0 R1 Q1 | style phrase "drawing a quiet parallel" quoted
+S7973 F2 I0 K2 P2 C0 R1 Q2 | -"ore chamber" -"underground pool" -"side alcove"
+S4292 F2 I2 K2 P2 C0 R2 Q1 | odd corpse memory
+S6534 F0 I0 K1 P1 C0 R1 Q1 | +"you're in the stable" now; -"ore chamber" -"underground pool" -"side alcove"
+S1173 F1 I1 K1 P2 C0 R2 Q2 | "mark and cut" muddles attack
+S8986 F0 I0 K0 P1 C0 R1 Q0 | act replaced ("shape the deer's path"); style quoted
+S6538 F1 I1 K1 P0 C0 R2 Q2 | -attack (only closes in)
+S9977 F1 I1 K1 P1 C0 R2 Q2 | -attack (only approaches)
+S4282 F1 I1 K1 P1 C0 R2 Q1 | -attack (only approaches); no period
+S1267 F1 I1 K1 P2 C0 R2 Q2 | +tool +hunt prep; attack deferred
+S6702 F1 I2 K2 P2 C1 R1 Q1 | +moonlight +"fingers tracing the shell"; "whispered" twice
+S8119 F2 I2 K2 P2 C1 R1 Q1 | "secrets" twice; "Thanks to this" echoed
+S3617 F1 I2 K2 P2 C1 R1 Q1 | +"ancient pines"; "whisper"/"secrets" repeated
+S3573 F1 I1 K2 P2 C1 R2 Q1 | +"tracked her" (examine blurred into tracking); purple
+S5176 F2 I1 K2 P2 C1 R2 Q1 | -examine blurred; "its lens a seeker" garbled
+S7378 F2 I1 K2 P2 C0 R2 Q1 | -"learned creature lore" blurred ("your touch is lore")
+S4969 F0 I1 K1 P1 C0 R1 Q1 | +"will not be given that path again" (contradicts goal of going back by it); first sentence copied
+S9198 F2 I2 K2 P1 C0 R1 Q1 | first sentence copied; style phrases dropped in ("decline the offer, noting the way")
+S8846 F2 I2 K2 P1 C0 R1 Q1 | first sentence copied
+S2817 F1 I1 K1 P0 C0 R1 Q1 | +"Your lord" address; -means blurred; ladders confused
+S2359 F1 I1 K1 P2 C0 R2 Q2 | +"spoken to like that" (no one spoke); -means (survival skill)
+S3252 F1 I2 K2 P2 C0 R1 Q1 | +"offer to ease your passage"; first sentence near-copied

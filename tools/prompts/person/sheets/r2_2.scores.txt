@@ -1,0 +1,120 @@
+S9928 F1 I2 K2 P0 C1 R2 Q1 | +"tools long unused by hands that no longer exist"; no greed
+S4603 F1 I0 K2 P0 C1 R2 Q2 | -"mineshaft ladder" -"tool cache" -"rock face" +"cool damp air"
+S6639 F2 I2 K2 P1 C1 R2 Q1 | treasures hint of greed; purple
+S4995 F1 I0 K2 P0 C1 R2 Q2 | -"mineshaft ladder" -"tool cache" -"rock face" +"dappled shadows"
+S1195 F2 I2 K2 P0 C1 R2 Q1 | no greed
+S5844 F1 I2 K2 P1 C1 R2 Q2 | +"tools gleam"
+S1216 F2 I1 K2 P0 C0 R2 Q2 | -"learned retracing" (blurred into feeling)
+S7233 F2 I1 K2 P0 C0 R1 Q1 | -"learned retracing"; opening echoed
+S6600 F2 I1 K2 P0 C0 R2 Q1 | -"learned retracing"
+S3787 F2 I1 K2 P1 C0 R2 Q1 | -"learned retracing"
+S8136 F1 I0 K1 P1 C1 R2 Q1 | -"entrance hall" -"learned retracing" +"labyrinthine knowledge"
+S4796 F0 I1 K1 P0 C0 R2 Q0 | +"iron walls" -"learned retracing"; muddled persons
+S3433 F0 I1 K1 P0 C1 R0 Q0 | +hearth +city +fields; meta-talk, setting quoted, truncated
+S2031 F1 I2 K2 P0 C0 R2 Q2 | +"under the stars"; no melancholy
+S4107 F0 I0 K1 P0 C1 R2 Q1 | +barn +friend; counsel reversed (no insult)
+S1277 F1 I1 K2 P0 C0 R1 Q1 | -insult (bare teeth); "plain ways/simple ways"
+S3300 F0 I1 K1 P1 C0 R1 Q0 | +fireside +"weak points"; means replaced; garbled
+S6583 F1 I1 K2 P0 C1 R1 Q1 | +moonlight -insult (blurred to "speak her words"); mostly copied
+S4284 F2 I2 K2 P0 C0 R0 Q1 | handed back, articles dropped
+S4669 F2 I2 K2 P0 C0 R0 Q2 | handed back
+S9146 F1 I2 K2 P1 C0 R1 Q2 | +"before night"
+S8752 F2 I2 K2 P0 C0 R0 Q0 | misspelled, handed back
+S3531 F2 I2 K2 P0 C0 R0 Q2 | handed back
+S7243 F1 I2 K2 P1 C0 R1 Q2 | +"till morning"
+S4460 F1 I2 K2 P1 C1 R2 Q2 | +"pick it up and move on"
+S1075 F1 I1 K2 P1 C0 R1 Q1 | -"want to act" blurred; reminder echoed
+S1370 F1 I2 K2 P2 C0 R1 Q2 | +"scratch a bit of earth"; "not just" twice
+S6965 F0 I1 K1 P0 C0 R2 Q2 | +"step on it, crush it"
+S8084 F2 I2 K2 P2 C0 R2 Q2 |
+S9648 F2 I1 K1 P1 C0 R2 Q1 | -"not examine" muddled ("reckon to see")
+S2304 F1 I1 K2 P2 C1 R2 Q2 | +"thoughts of home" -"focus let go" blurred
+S9967 F1 I1 K2 P0 C0 R2 Q2 | +"world outside"
+S7872 F2 I2 K2 P2 C0 R1 Q2 | first clause copied
+S7049 F1 I2 K2 P2 C1 R2 Q1 | +"ache in my shoulders"
+S6256 F2 I1 K2 P2 C0 R1 Q2 | -"let focus go"; first clause copied
+S9458 F2 I2 K2 P1 C1 R0 Q1 | setting rule quoted ("old world of iron and myth")
+S9027 F0 I0 K0 P1 C1 R0 Q1 | +"offer declined" -"learned social interaction" -glad; style quoted
+S9666 F0 I0 K0 P1 C0 R0 Q0 | +"offer declined" -glad (feeling reversed to heavy); style quoted
+S9311 F0 I1 K1 P1 C0 R0 Q1 | +"offer declined" -"learned social interaction"; style and setting quoted
+S2343 F0 I1 K0 P0 C0 R0 Q0 | +"offer declined"; meta, instruction quoted
+S5404 F0 I1 K1 P1 C0 R1 Q1 | +"did not accept" (contradicts lesson)
+S3677 F0 I1 K1 P1 C1 R1 Q1 | +"turned down the offer" -"learned social interaction"
+S5094 F2 I1 K2 P0 C0 R0 Q1 | -woman; handed back nearly verbatim
+S4837 F2 I1 K2 P0 C1 R1 Q2 | -pouch; mostly copied
+S9605 F2 I0 K2 P0 C0 R1 Q1 | -swineherd -woman
+S4201 F1 I2 K2 P0 C1 R2 Q2 | "as though" argument told as fact
+S7028 F1 I1 K2 P0 C1 R2 Q2 | +"in her bosom" -drove
+S9137 F1 I1 K2 P0 C0 R1 Q1 | -woman +"number of pigs"; "They watchful" broken
+S6858 F2 I2 K2 P1 C0 R2 Q2 |
+S2080 F1 I2 K2 P0 C1 R2 Q2 | +"sun sets on hard work"
+S6241 F2 I2 K2 P1 C0 R2 Q2 |
+S1634 F1 I0 K2 P0 C0 R2 Q2 | -trailcraft -"no longer in a hurry"
+S2375 F2 I1 K2 P1 C0 R0 Q1 | -trailcraft; setting rule quoted
+S3249 F2 I2 K2 P1 C0 R1 Q1 | "rush to hurry" redundant; generic "sense of"
+S3437 F1 I1 K1 P2 C0 R1 Q2 | +"tone not inviting" -"think again"; style phrase
+S8065 F2 I2 K1 P1 C1 R1 Q1 | mostly copied + style phrase
+S2067 F0 I0 K1 P0 C1 R2 Q2 | +"snail's ancient wisdom"; meaning reversed
+S2634 F2 I1 K1 P1 C1 R1 Q2 | -"think again"; style phrases verbatim
+S9756 F2 I2 K1 P1 C0 R1 Q1 | copied + style phrases
+S4647 F0 I0 K1 P1 C0 R2 Q1 | +rebuke "dismiss the snail's wisdom"; meaning reversed
+S3173 F0 I1 K2 P0 C0 R2 Q2 | +"in front of everyone" (contradicts alone)
+S4692 F1 I0 K1 P0 C1 R1 Q2 | -insult -fight; "old world" setting echo
+S4572 F2 I2 K2 P1 C1 R1 Q1 | opening echoed
+S7681 F0 I0 K0 P1 C0 R2 Q1 | success told as failure -Emily -"learned social interaction"
+S3849 F0 I0 K0 P1 C0 R2 Q2 | success told as failure -insult -"learned social interaction"
+S3768 F0 I0 K0 P1 C0 R2 Q2 | success told as failure -Emily -"learned social interaction"
+S9299 F0 I0 K2 P2 C0 R1 Q1 | +"barn's bustling activity" -night -"tool rack" -"farm barracks" -barrel -"ways leading on" -"grain sacks"
+S9743 F1 I1 K2 P2 C1 R2 Q1 | +"apprentice's eyes" -barrel
+S9386 F1 I2 K2 P2 C1 R1 Q1 | "barns line the walls"; first sentence copied
+S5737 F1 I0 K2 P2 C0 R1 Q1 | +"sturdy beams" -night -barrel -"ways leading on"
+S4563 F1 I0 K2 P2 C1 R2 Q1 | +"lean-to roof" +"wooden beams" -barrel -"ways leading on"
+S9626 F1 I0 K2 P2 C0 R1 Q1 | +barns -night -"ways leading on"; "load-bearing and span" stock
+S8355 F1 I1 K2 P2 C0 R2 Q2 | +wildflowers -"deep enough to take a boot"
+S3087 F1 I2 K2 P2 C1 R2 Q2 | +"damp grass"
+S7971 F1 I1 K2 P2 C1 R2 Q1 | +"churned by the wind" +wildflowers -"takes a boot"
+S2770 F1 I2 K2 P2 C1 R2 Q1 | +"churned by the wind" +wildflowers; padded memory
+S7106 F1 I1 K2 P1 C1 R2 Q1 | +"churned by the wind" -"takes a boot"; garbled
+S9230 F2 I2 K2 P2 C0 R2 Q2 |
+S1998 F1 I2 K2 P1 C1 R1 Q2 | +"hands worn from toil"; mostly copied
+S1531 F1 I1 K2 P2 C1 R1 Q1 | +"weathered hands" +cobblestones -"introducing myself"; padded
+S4811 F2 I1 K2 P1 C1 R2 Q2 | -"moving unheard" blurred
+S9354 F2 I0 K0 P0 C0 R1 Q0 | -miller -conversation -means; meta-talk
+S6906 F1 I2 K2 P1 C0 R2 Q2 | +"wisdom and strength evident"
+S8923 F1 I1 K2 P2 C1 R2 Q1 | +"smile" -"moving unseen" blurred
+S8478 F1 I1 K1 P1 C0 R1 Q2 | -woman -"turn elsewhere" (dwells on forging)
+S6926 F2 I1 K2 P2 C0 R2 Q2 | -blacksmith
+S8700 F2 I2 K2 P1 C0 R1 Q1 | style quoted
+S7285 F0 I2 K1 P1 C0 R1 Q1 | +"iron-clad walls" +"stories of old"
+S4329 F2 I2 K2 P2 C0 R2 Q1 | "silver pales" muddled
+S9955 F1 I1 K2 P0 C0 R1 Q2 | +"weaving cloth" -woman; copied
+S6149 F1 I1 K2 P1 C0 R1 Q0 | -insult (blurred) -"learned social interaction" ("social dance"); broken grammar
+S1457 F1 I1 K2 P1 C0 R2 Q1 | +"found ways to be with her" -"learned social interaction"
+S1089 F0 I0 K0 P0 C1 R2 Q1 | +"she stood down" +guns (modern) -"learned social interaction"
+S1272 F0 I0 K0 P1 C0 R2 Q0 | +"soil's whisper"; word salad
+S3099 F1 I1 K2 P2 C0 R2 Q1 | -"learned social interaction" blurred
+S5954 F2 I1 K2 P1 C0 R2 Q1 | -alone -"learned social interaction" blurred
+S2221 F1 I2 K2 P1 C1 R2 Q2 | +"iron ladder" +"deep darkness"
+S3390 F1 I1 K2 P1 C0 R2 Q2 | +darkness -mineshaft
+S6672 F1 I2 K2 P1 C1 R2 Q2 | +"iron ladder" +"deep darkness"
+S8147 F1 I2 K2 P0 C0 R1 Q2 | +iron
+S1816 F1 I2 K2 P0 C0 R1 Q1 | +"iron mineshaft"
+S5145 F2 I2 K2 P0 C1 R1 Q1 | "from the mineshaft" muddled
+S4456 F2 I2 K1 P0 C0 R0 Q2 | action told as done; handed back
+S4096 F2 I2 K2 P0 C0 R0 Q2 | handed back
+S9099 F2 I2 K2 P0 C0 R0 Q2 | handed back
+S3554 F2 I2 K2 P0 C0 R1 Q2 | synonyms swapped
+S6152 F2 I2 K2 P0 C0 R1 Q2 | synonyms swapped
+S4913 F2 I2 K2 P0 C0 R0 Q2 | handed back
+S3103 F0 I2 K2 P1 C0 R1 Q2 | +"small fire you've built"; copied
+S5367 F2 I2 K2 P2 C0 R1 Q2 | style phrase "warm, dry and safe"
+S2181 F0 I0 K0 P1 C0 R2 Q1 | +hearth +fire; observation became counsel
+S8283 F1 I0 K1 P1 C0 R2 Q1 | meaning reversed ("focus on what remains")
+S6296 F2 I2 K2 P2 C0 R2 Q1 |
+S3309 F2 I1 K2 P1 C0 R1 Q2 | -"let focus go" (contradicted); copied
+S1249 F2 I1 K2 P1 C0 R2 Q2 | -"storage shed"
+S9199 F2 I1 K2 P2 C0 R2 Q2 | -"learned resolve"
+S6224 F2 I2 K2 P2 C0 R1 Q2 | reminder near verbatim
+S7103 F2 I2 K2 P2 C0 R1 Q1 | opening echoed
+S8930 F0 I2 K2 P1 C0 R1 Q2 | +key +door
+S2692 F2 I2 K2 P2 C0 R1 Q2 | opening echoed

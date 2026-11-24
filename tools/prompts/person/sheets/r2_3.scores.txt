@@ -1,0 +1,114 @@
+S6623 F0 I2 K2 P1 C1 R1 Q1 | +"farmyard trees" +"golden field"; padded
+S4601 F0 I2 K2 P1 C1 R1 Q1 | +wheat +bees +"apple blossoms"
+S5371 F0 I2 K2 P1 C1 R2 Q1 | +"verdant fields"; "compressing the air" odd
+S1551 F2 I2 K2 P1 C0 R1 Q1 | "beckons" contradicts nothing worth doing
+S7937 F2 I2 K2 P1 C0 R2 Q1 | "its emptiness" odd
+S5174 F0 I2 K2 P1 C1 R1 Q1 | +leaves +bees +clover
+S3278 F2 I2 K2 P1 C0 R1 Q1 | fragmented
+S7719 F2 I0 K1 P2 C0 R2 Q2 | -deer -"flower patch" -boulder -"hedge gap" -"peat cut"
+S8308 F2 I2 K2 P1 C0 R1 Q1 | mostly copied, generic tail
+S7670 F1 I0 K1 P2 C0 R2 Q2 | +breeze; -deer -boulder -"hedge gap" -"peat cut" -sheltered
+S7847 F2 I0 K1 P1 C1 R2 Q2 | -deer -"flower patch" -boulder -"hedge gap" -"peat cut"
+S2313 F1 I2 K2 P1 C0 R1 Q1 | items animated; mostly copied
+S7329 F0 I1 K2 P0 C0 R1 Q2 | +"chickens needing feeding"; -"rising to the shed roof"
+S2978 F0 I1 K2 P1 C0 R2 Q2 | +garden; -"shed roof"
+S5905 F2 I2 K2 P0 C0 R1 Q2 | near copy
+S6758 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S6331 F0 I1 K2 P1 C0 R1 Q1 | +"barely reaching the roof" (contradicts); "old, labor-intensive world" setting talk
+S6997 F2 I2 K2 P0 C0 R0 Q2 | verbatim plus tail
+S2999 F0 I2 K1 P1 C0 R1 Q1 | +"them" +"cup of tea"
+S2777 F0 I1 K1 P1 C0 R1 Q1 | +"escorting another"; act changed; first person addressing "you"
+S8416 F1 I2 K2 P1 C1 R1 Q2 | +"chickens startled"
+S3071 F0 I1 K1 P0 C0 R1 Q0 | "lead the track" broken; act changed
+S8200 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S9429 F0 I2 K2 P1 C0 R1 Q1 | +"their arrival"
+S2732 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S2828 F1 I2 K2 P1 C0 R1 Q2 | +tools
+S7356 F1 I2 K2 P1 C0 R1 Q2 | +tools +"day's work" (night)
+S2379 F1 I2 K2 P1 C0 R1 Q2 | +tools +"next task"
+S3796 F1 I2 K2 P1 C0 R1 Q2 | +tools
+S8005 F1 I2 K1 P0 C0 R1 Q1 | +"door handle" +crates; action told as underway
+S2529 F0 I0 K1 P2 C0 R1 Q1 | +"hidden treasures and forgotten tools"; -"chicken coop" -pigsty -"vegetable garden" -orchard -"heavy bodily work"
+S9234 F1 I0 K1 P1 C0 R1 Q1 | -"chicken coop" -pigsty -"vegetable garden" -orchard; means muddled into leaving
+S4287 F1 I0 K1 P1 C1 R1 Q1 | +cold; -"chicken coop" -pigsty -"vegetable garden" -orchard; style word "unreasoned" dropped in
+S9217 F1 I0 K1 P2 C0 R1 Q1 | +"cluttered space"; -"vegetable garden" -orchard -"heavy bodily work"; contradictory
+S4759 F0 I0 K0 P1 C0 R2 Q1 | goal replaced (stay and work); -"storage shed" -list
+S6310 F2 I0 K1 P2 C0 R1 Q2 | -"chicken coop" -pigsty -"vegetable garden" -orchard; means blurred
+S5950 F2 I2 K2 P1 C0 R1 Q1 | 
+S6846 F1 I1 K2 P2 C1 R2 Q1 | -mineshaft; "metaphor for your mind" verges on meta
+S5846 F0 I1 K1 P1 C0 R1 Q1 | +"iron-clawed hooks" on ladder; -"claw-hooked climbing" as means
+S2790 F0 I1 K2 P2 C1 R2 Q2 | +"claw-hooks on the ladder"; -"rope-bound" -"bark and stone"
+S4207 F2 I2 K2 P1 C0 R1 Q1 | mostly copied
+S8949 F2 I2 K2 P1 C0 R1 Q2 | 
+S2124 F1 I0 K1 P2 C0 R1 Q2 | +"roof caved in" memory; -"straw bale" -"ways leading on" -barrel -"swineherd present"
+S9163 F1 I0 K1 P1 C0 R1 Q2 | -"ways leading on" -barrel -"swineherd (a woman) present"
+S5438 F1 I0 K1 P2 C0 R1 Q2 | -"straw bale" -"hay stack" -"ways leading on" -barrel -"swineherd present"
+S7876 F0 I0 K1 P1 C0 R1 Q0 | +"the round that went bad"; -"straw bale" -"hay stack" -barrel
+S2917 F1 I2 K2 P1 C0 R1 Q1 | ways "lead on to the barrel" distorted
+S5488 F1 I0 K1 P1 C0 R2 Q1 | +"barn's warmth"; -swineherd present -"straw bale" -"hay stack" -ways -barrel
+S7000 F2 I0 K2 P1 C0 R1 Q1 | -"drives a grunting drove" -woman
+S2228 F2 I2 K2 P0 C1 R1 Q1 | mostly copied
+S4780 F0 I1 K2 P0 C1 R2 Q2 | +"pouch of herbs" +"slung at her side" (contradicts out of sight); -argument
+S1607 F0 I1 K2 P1 C1 R2 Q1 | +"shaping logs into beams"; -drove
+S6231 F2 I1 K2 P0 C0 R1 Q1 | -woman (they)
+S4642 F2 I2 K2 P0 C1 R1 Q1 | "watches with a watchfulness"
+S2345 F2 I2 K2 P0 C1 R1 Q2 | 
+S5803 F2 I2 K2 P1 C1 R1 Q1 | verbatim start
+S3894 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S6520 F2 I2 K2 P1 C1 R0 Q1 | style quoted
+S4259 F2 I2 K2 P0 C1 R2 Q2 | 
+S2786 F2 I2 K2 P1 C1 R2 Q2 | 
+S3212 F1 I0 K1 P0 C0 R2 Q1 | +"deer grazing"; -"flower patch" -boulder -"hedge gap" -"peat cut"
+S8215 F2 I2 K2 P0 C1 R1 Q1 | copied list
+S1996 F1 I1 K2 P0 C0 R2 Q1 | +breeze; "peat cut lies far behind" distorted; -"meadow-valley hedge gap" garbled
+S8345 F1 I1 K2 P0 C1 R2 Q1 | +"sun casting shadows"; -"peat cut"
+S5707 F1 I0 K1 P0 C1 R1 Q1 | +"dappled shadows"; -boulder -"hedge gap" -"peat cut"
+S7796 F1 I2 K2 P0 C0 R1 Q1 | +"air crisp and cool"; "peat cut by the wind's breath" garbled
+S7400 F1 I1 K2 P2 C0 R2 Q2 | "same well" claims past; -bucket -"stone rim"
+S3208 F2 I1 K2 P1 C0 R2 Q1 | -bucket -"stone rim"; generic
+S9007 F1 I1 K2 P1 C0 R2 Q1 | +looters memory odd; -bucket
+S3035 F1 I1 K2 P1 C1 R2 Q1 | +"looters who once threatened this place"; -bucket -"stone rim"
+S5771 F2 I1 K2 P1 C0 R2 Q1 | -bucket -"centre of the square"
+S7456 F1 I1 K2 P2 C1 R2 Q2 | "this same well" claims past; -bucket
+S1648 F1 I0 K1 P2 C1 R2 Q2 | -"rock face"
+S7041 F1 I0 K1 P2 C1 R2 Q2 | -"rock face"
+S6867 F2 I2 K2 P0 C0 R0 Q0 | style quoted; meta
+S2741 F0 I0 K1 P1 C0 R2 Q1 | +"distant fire" +"we sat by the fire"; -"rock face"
+S6239 F2 I2 K2 P0 C0 R1 Q2 | 
+S2673 F2 I2 K2 P0 C0 R0 Q1 | style quoted
+S7003 F2 I1 K2 P1 C1 R1 Q1 | -alone
+S8798 F0 I0 K1 P2 C1 R2 Q1 | insult reversed (she insulted); -fight -alone
+S3836 F0 I1 K1 P1 C0 R2 Q1 | +spear +"she is right" +"open fields"; -insult
+S5943 F1 I0 K1 P2 C1 R2 Q2 | -insult -fight -alone -means
+S3285 F2 I1 K2 P2 C0 R2 Q2 | -insult (softened to challenge) -alone
+S5365 F1 I1 K2 P2 C1 R2 Q2 | -insult -alone
+S9573 F2 I2 K2 P0 C0 R1 Q2 | 
+S3846 F2 I2 K2 P0 C0 R0 Q1 | verbatim imperative
+S3393 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S1565 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S2449 F2 I2 K2 P0 C0 R0 Q2 | verbatim
+S9981 F2 I2 K2 P0 C0 R1 Q2 | 
+S6088 F0 I1 K2 P1 C1 R1 Q1 | +"stories of old" +"children's songs"; -"nothing worth doing"
+S1180 F2 I2 K2 P1 C0 R2 Q2 | 
+S1724 F2 I2 K2 P1 C0 R1 Q2 | "worn" twice
+S4496 F0 I1 K1 P1 C0 R1 Q0 | +"last blow" +"distant battles"; -cross
+S6391 F1 I0 K1 P1 C0 R0 Q1 | +"world before, iron and myth"; -stocks -cross; style quoted
+S6189 F0 I2 K2 P0 C0 R1 Q2 | +meadow
+S7714 F1 I2 K1 P1 C1 R1 Q1 | +"wind blows harder" +cold; emotion becomes counsel
+S4262 F0 I2 K1 P1 C0 R1 Q1 | +wall; contradicts glad
+S1454 F0 I0 K2 P2 C1 R2 Q2 | feeling reversed (ache, heavier); -glad -lighter
+S5664 F1 I2 K2 P0 C1 R1 Q1 | +wind in hair
+S2052 F0 I0 K2 P2 C0 R2 Q2 | feeling reversed; -glad -lighter
+S6162 F0 I2 K1 P2 C0 R1 Q1 | +room +"fire out" +doorway +wall (contradict plain); over-long
+S2349 F1 I2 K2 P0 C0 R1 Q1 | +"swineherd's gentle calls"
+S8125 F2 I2 K2 P0 C0 R1 Q1 | fragment
+S6667 F1 I0 K2 P0 C0 R1 Q2 | +barn; -"straw bale" -"hay stack" -"ways leading on" -barrel
+S9291 F0 I1 K1 P0 C0 R2 Q1 | +awakening +"tucks into her straw bale" +"our barrels"
+S8587 F0 I0 K1 P0 C0 R2 Q2 | +awakening +city; -swineherd -"straw bale" -"hay stack" -ways -barrel
+S6976 F1 I0 K1 P0 C0 R1 Q2 | +"long line of farm hands"; -swineherd -"straw bale" -ways -barrel
+S4876 F0 I0 K1 P1 C0 R1 Q1 | settledness "left" (reversed); -trailcraft; style echoed
+S7516 F1 I1 K2 P1 C1 R1 Q2 | -trailcraft; style phrase echoed
+S1347 F2 I2 K2 P1 C1 R2 Q1 | slight grammar slip
+S6161 F2 I2 K2 P1 C0 R0 Q1 | style quoted verbatim
+S7539 F0 I1 K1 P1 C0 R1 Q1 | +"hand raised" +"said 'no'" +"left"; -trailcraft
+S6827 F1 I2 K2 P1 C0 R1 Q1 | +chaos; style phrases echoed
