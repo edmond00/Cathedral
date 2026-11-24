@@ -33,6 +33,7 @@ def main():
     ap.add_argument("--scored", required=True)
     ap.add_argument("--metrics", required=True)
     ap.add_argument("--json")
+    ap.add_argument("--versions", nargs="*", default=list(L.VERSIONS[:3]))
     a = ap.parse_args()
     sc = [json.loads(l) for l in open(a.scored)]
     met = json.load(open(a.metrics))
@@ -49,14 +50,14 @@ def main():
         print(f"\n== {group}")
         print(f"{'version':10} {'n':>4} " + " ".join(f"{c:>6}" for c in CRIT) + f" {'F=0':>6}")
         g = {}
-        for v in L.VERSIONS:
+        for v in a.versions:
             rs = [s for s in rows if s["version"] == v]
             ms = {c: mean([s[c] for s in rs]) for c in CRIT + ["F0"]}
             g[v] = dict(n=len(rs), **ms)
             print(f"{v:10} {len(rs):4} " + " ".join(f"{ms[c]:6.2f}" if ms[c] is not None else f"{'-':>6}" for c in CRIT)
                   + f" {100 * ms['F0']:5.0f}%")
         # paired, by case
-        for v in L.VERSIONS[1:]:
+        for v in a.versions[1:]:
             line = []
             for c in CRIT + ["F0"]:
                 per = collections.defaultdict(dict)

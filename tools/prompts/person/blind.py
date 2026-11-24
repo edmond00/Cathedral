@@ -32,6 +32,8 @@ def sheet(a):
     for st in a.sets:
         for l in open(os.path.join(HERE, "samples", f"{st}.jsonl")):
             s = json.loads(l)
+            if a.versions and s["version"] not in a.versions:
+                continue
             by_case[s["case"]].append(s)
     rng = random.Random(a.seed)
     order = sorted(by_case)
@@ -87,6 +89,7 @@ if __name__ == "__main__":
     s1 = sp.add_parser("sheet"); s1.add_argument("--sets", nargs="+", default=["dev"])
     s1.add_argument("--parts", type=int, default=4); s1.add_argument("--out", required=True)
     s1.add_argument("--seed", type=int, default=7)
+    s1.add_argument("--versions", nargs="*")
     s2 = sp.add_parser("merge"); s2.add_argument("--key", required=True)
     s2.add_argument("--scores", nargs="+", required=True); s2.add_argument("--out", required=True)
     a = ap.parse_args()
