@@ -1,0 +1,114 @@
+S6737 F2 I2 K2 P1 C0 R1 Q2 | near copy; mercy only in "worth the pause"
+S9137 F1 I2 K2 P0 C1 R1 Q2 | +"old tales of the villagers"; near copy
+S8474 F0 I1 K1 P1 C0 R1 Q1 | +"the last blow" +"distant battles"; style quoted ("the pause", "hand drops"); turning away blurred
+S2126 F1 I2 K2 P0 C0 R1 Q2 | +meadow; near copy
+S2533 F2 I2 K2 P1 C0 R2 Q2 | generic
+S5422 F0 I2 K1 P0 C1 R1 Q1 | +"days when strength and skill were all" +"seen what happens when one takes the last blow"
+S5056 F1 I2 K2 P1 C0 R1 Q2 | +"scanning for the tools"
+S7519 F1 I2 K2 P0 C0 R1 Q2 | +"boots crunching on the straw"
+S7405 F1 I2 K2 P1 C0 R1 Q2 | +"to fetch the tools"
+S9134 F2 I2 K2 P0 C0 R0 Q1 | handed back verbatim
+S2320 F2 I2 K2 P0 C0 R0 Q2 | handed back verbatim (pronoun only)
+S3725 F0 I2 K1 P0 C0 R1 Q1 | +"old wooden door's handle" +crates +stacks; act told as under way
+S3987 F0 I2 K2 P1 C0 R1 Q1 | +"small fire you've built"
+S5304 F0 I0 K1 P1 C0 R2 Q1 | meaning reversed (focuses instead of letting go); -"let my focus go"
+S5619 F2 I2 K2 P2 C0 R2 Q2 |
+S1067 F2 I2 K2 P2 C0 R1 Q2 | style phrase "warm, dry, and safe" verbatim
+S3386 F2 I2 K2 P2 C0 R1 Q2 | style phrase "warm, dry and safe" verbatim
+S7864 F2 I2 K2 P1 C0 R2 Q1 | "mundane to the essential needs" muddled
+S8219 F0 I0 K2 P1 C0 R1 Q1 | "he" for Carolyn; +hay +"sweetish edge"; -whistling -"reed pipe"
+S3659 F0 I0 K1 P1 C0 R2 Q2 | "he" for Carolyn; +approach (act invented); -hopper -weighing -inviting -whistling
+S2801 F0 I0 K2 P2 C0 R2 Q2 | "he" for Carolyn; +grandmother memory (ok); -weighing -inviting -whistling -"reed pipe"
+S6571 F0 I2 K2 P0 C0 R1 Q2 | "he" for Carolyn; near copy, no smell
+S1861 F0 I0 K1 P1 C1 R2 Q1 | +"damp air" +"stained hands" +"Carolyn approach" +"looking up at you"; -hopper -weighing -whistling; over-long
+S2677 F0 I2 K2 P0 C0 R1 Q2 | "he" for Carolyn; near copy
+S8927 F2 I2 K2 P1 C0 R2 Q1 | stiff
+S6109 F1 I2 K2 P2 C1 R2 Q1 | +"wind through the stalactites"; padded
+S2407 F2 I1 K2 P2 C0 R2 Q1 | letting focus go only figurative
+S3361 F1 I1 K2 P2 C1 R2 Q1 | +"where light once burned"; focus going blurred
+S2674 F2 I2 K2 P2 C1 R2 Q2 |
+S6613 F2 I2 K2 P2 C1 R2 Q2 |
+S6827 F2 I2 K2 P0 C- R1 Q2 | near copy
+S4650 F2 I1 K2 P1 C- R2 Q1 | -"strike up a conversation"; "introducing myself unseen" contradictory
+S9725 F2 I1 K2 P1 C- R2 Q1 | -"strike up a conversation"; "introducing myself unseen" contradictory
+S9873 F2 I2 K2 P2 C- R2 Q2 |
+S9236 F2 I1 K2 P1 C- R2 Q1 | -conversation; "silently" contradicts introducing
+S6401 F2 I1 K2 P1 C- R2 Q2 | -"strike up a conversation"
+S6974 F2 I1 K2 P1 C0 R2 Q1 | learning blurred ("felt iron fist's grip"); over-long for an emotion
+S2319 F0 I0 K2 P2 C1 R1 Q2 | feeling reversed (ache, heavier instead of glad, lighter)
+S2673 F0 I0 K2 P2 C0 R1 Q2 | feeling reversed (ache, heavier instead of glad, lighter)
+S4612 F0 I2 K1 P1 C1 R1 Q1 | +"ground shook"; copy then contradictory dread
+S4716 F1 I2 K1 P1 C1 R1 Q1 | +cold +"find shelter"; copy plus added urge
+S8701 F0 I2 K1 P2 C0 R1 Q1 | +room +"fire is out" +doorway +wall +smell; contradicts the plain; over-long
+S7576 F0 I0 K1 P2 C0 R1 Q1 | means reversed ("know better than to rely on brute force"); -"want to attack" blurred
+S2391 F2 I2 K2 P1 C1 R1 Q1 | style quoted verbatim ("pressure of a thing not yet begun"); "the line drawn" meta-ish
+S3602 F2 I2 K2 P2 C0 R1 Q1 | style phrase verbatim; "Fidget with how long" broken
+S3785 F2 I0 K1 P1 C1 R1 Q1 | -"want to attack the deer"; style phrase "fidget and tap"
+S3081 F1 I1 K2 P1 C1 R2 Q1 | "catch the deer" reads as done; -"ready to bolt"
+S1451 F2 I2 K2 P1 C0 R1 Q0 | "fidget with the deer" broken; style phrase verbatim
+S5126 F2 I2 K2 P1 C0 R1 Q1 | "sealed stillness" style echo
+S4486 F0 I0 K1 P0 C0 R2 Q0 | +"the well listens to you"; "Thank you" garble; -"learned water voice"
+S5799 F2 I0 K2 P2 C0 R2 Q1 | -"learned water voice"
+S9211 F2 I1 K2 P0 C0 R2 Q1 | lesson blurred ("water whispers in stillness")
+S4940 F1 I1 K1 P1 C0 R2 Q1 | "my water voice unchanging" garbles the lesson; -well
+S6341 F1 I1 K2 P0 C0 R2 Q1 | +"a secret no one else can hear"; lesson blurred; effusive, not flat
+S1064 F0 I0 K1 P0 C0 R2 Q1 | +guns (modern); "she stood down" reverses fight; -"learned social interaction" -insult
+S3454 F1 I1 K2 P0 C0 R2 Q0 | "learned social dance" wrong; "stood her up" garbled insult
+S3823 F1 I1 K2 P2 C0 R2 Q1 | insult blurred ("fixed her up"); lesson blurred ("speak our ways")
+S3319 F2 I2 K2 P1 C0 R1 Q1 | I/you mixed; "socializing, yes?"
+S8757 F1 I0 K2 P1 C0 R2 Q1 | -fight -"learned social interaction"; +"found ways to be with her"
+S2971 F0 I0 K1 P0 C0 R2 Q1 | actor replaced ("they"); +"silent treatment" replaces insult; lesson blurred
+S6537 F0 I0 K1 P1 C0 R1 Q1 | +fields +"soil between your toes" +sun; -snail; "not just" twice
+S8514 F0 I1 K1 P1 C0 R2 Q2 | +"step on it, crush it" (invented act)
+S8216 F1 I0 K2 P1 C1 R1 Q2 | +"walk through the forest"; -snail
+S1296 F1 I2 K2 P2 C0 R1 Q2 | +"scratch a bit of earth"; "not just" twice
+S7297 F0 I1 K1 P0 C1 R2 Q1 | +"pick it up and move on"
+S6431 F2 I2 K2 P2 C0 R2 Q2 |
+S9282 F2 I2 K2 P0 C1 R1 Q2 | no pedantry; near copy
+S9391 F1 I2 K2 P0 C1 R2 Q1 | +"hands weathered by years"; over-long, not pedantic
+S4267 F1 I1 K2 P0 C1 R2 Q1 | "within the village's bounds" blurs being inside the mill; +"earth's embrace"
+S5541 F1 I2 K2 P0 C1 R1 Q1 | +"hands rough"; near copy, fragment
+S8411 F1 I2 K2 P0 C1 R2 Q2 | +"hands guiding the ancient machinery"
+S9325 F1 I1 K2 P0 C1 R2 Q1 | -miller (blurred to "woman of the village"); +"hands worn from years"
+S3004 F2 I2 K2 P2 C0 R1 Q1 | padded; "step into" said twice
+S3530 F0 I0 K1 P1 C0 R2 Q1 | +"heavy tools" +"earthy scent" +warmth; -coop -pigsty -garden -orchard
+S6999 F1 I0 K2 P2 C0 R2 Q1 | +"food within"; -coop -pigsty -garden -orchard; means blurred
+S3342 F2 I2 K2 P1 C0 R1 Q2 | near copy, hunger thin
+S5146 F1 I0 K1 P2 C0 R2 Q2 | +shelves +"filled with food"; -coop -pigsty -garden -orchard -means
+S3248 F1 I0 K2 P1 C0 R2 Q1 | +"fortress of old"; -coop -pigsty -garden -orchard
+S9434 F1 I2 K2 P2 C1 R1 Q2 | +fields; near copy at start
+S9103 F1 I2 K2 P2 C1 R2 Q2 | +fields +"seeds and grains"
+S6358 F0 I1 K2 P2 C1 R2 Q1 | +"air heavy with dust" +"old stone walls" +hearth; -"nothing worth doing" blurred
+S2465 F1 I2 K2 P2 C1 R2 Q1 | +stars +wind
+S5572 F0 I1 K1 P2 C0 R2 Q0 | "you bob" garbled; +"silvery pools"; -plump
+S1942 F2 I2 K2 P2 C0 R2 Q2 |
+S9632 F1 I1 K2 P2 C0 R2 Q1 | bucket/rim moved into the memory; -"centre of the square"; looters memory
+S4906 F2 I0 K2 P2 C0 R2 Q2 | -bucket -"centre of the square" -echoing
+S2793 F1 I0 K2 P2 C1 R2 Q1 | +"looters once threatened this place" (claims this village's past); -bucket -"stone-rimmed"
+S5290 F2 I0 K2 P2 C0 R2 Q1 | -bucket -"stone-rimmed"
+S1825 F2 I0 K2 P2 C0 R2 Q1 | -bucket -"stone-rimmed"
+S3967 F1 I0 K2 P2 C1 R2 Q2 | +"grandfather drew water from this same well"; -bucket -echoing
+S8778 F2 I2 K2 P2 C0 R1 Q2 | first half copied
+S5025 F0 I1 K1 P2 C0 R1 Q1 | +"not sure where I am"; "heavy and heavy"; -letting focus go
+S8324 F2 I2 K2 P2 C1 R2 Q2 |
+S2741 F0 I1 K1 P1 C0 R2 Q1 | +"staying is the right thing" +peace (contradicts persona); -focus let go
+S8080 F1 I1 K2 P2 C1 R2 Q2 | +"thoughts of home"
+S9110 F2 I2 K2 P2 C1 R0 Q1 | setting rule quoted ("old world of iron and myth")
+S2384 F2 I2 K2 P2 C0 R2 Q1 | "every surface a step up" odd after climbing down
+S7240 F1 I0 K1 P1 C0 R2 Q1 | -ladder -"learned scaling" ("top of my learning")
+S9289 F2 I1 K2 P1 C0 R2 Q2 | lesson only as a verb ("scaled")
+S4968 F1 I1 K2 P0 C0 R2 Q1 | +"solid ground again"; lesson garbled ("scales of your own strength and fear")
+S5801 F2 I0 K2 P1 C0 R2 Q1 | -ladder; lesson blurred
+S1741 F2 I0 K2 P1 C0 R2 Q2 | -down -"learned scaling"
+S2374 F1 I1 K2 P1 C1 R2 Q2 | attack softened to hunt
+S8776 F1 I1 K2 P1 C0 R2 Q2 | attack softened to hunt
+S5569 F0 I0 K0 P1 C0 R2 Q2 | act replaced (step towards instead of attack)
+S9237 F2 I2 K2 P0 C1 R2 Q1 |
+S4292 F1 I1 K2 P1 C1 R2 Q2 | attack softened to hunt
+S5066 F0 I0 K0 P1 C0 R2 Q2 | act replaced (step toward instead of attack)
+S3448 F2 I1 K2 P0 C0 R2 Q2 | means blurred ("practical skill")
+S5655 F1 I2 K2 P1 C0 R1 Q1 | +"offer to ease your passage"; style echo
+S3371 F1 I2 K2 P1 C0 R1 Q1 | +"the offer"; style quoted ("decline the offer, noting the way")
+S1717 F1 I2 K2 P1 C0 R1 Q1 | +"what they offer"; near copy
+S9404 F0 I0 K1 P1 C0 R1 Q1 | goal reversed ("but you decline"); +offer handed over
+S8032 F0 I1 K1 P2 C0 R1 Q2 | goal contradicted ("will not be given that path again")
