@@ -19,7 +19,7 @@
   --bg: #16141a; --panel: #1e1b23; --ink: #e6e3ea; --muted: #9c97a3; --rule: #34303b;
   --gold: #e0be5a; --gold-bg: #3a3118; --purple: #c39be0; --purple-bg: #33243e; color-scheme: dark }
 body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
-.wrap { max-width: 980px; margin: 0 auto; padding-block: 32px 64px;
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 32px 64px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; }
 h1 { font-size: 2.1rem; margin: 0 0 8px; }
@@ -59,8 +59,9 @@ select { font: 13px var(--body); background: var(--panel); color: var(--ink); bo
 .case header b { font-family: var(--display); }
 .case .meta { font-size: 12.5px; color: var(--muted); }
 .case .in { font-family: var(--mono); font-size: 13px; margin: 8px 0 10px; padding: 8px 10px; border: 1px dashed var(--rule); }
-.vers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-@media (max-width: 760px) { .vers { grid-template-columns: minmax(0, 1fr); } }
+.vers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1000px) { .vers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .vers { grid-template-columns: minmax(0, 1fr); } }
 .ver h4 { margin: 0 0 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
 .smp { font-size: 13.5px; margin: 0 0 10px; }
 .sc { font: 11.5px var(--mono); color: var(--muted); display: block; margin-top: 2px; }
@@ -73,18 +74,20 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
 <div class="wrap">
 <div class="eyebrow">Proscribed Palimpsest · modus mentis narration · prompt experiment</div>
 <h1>I see, or you see?</h1>
-<p class="lede">Should a modus mentis narrate as the character's own “I” (<i>“I mark the well, its lip worn by ropes”</i>), as the game does now, or speak to the character as an inner voice (<i>“Look, the well. You should listen to it”</i>)? The same 78 recorded requests were asked three ways, twice each, to the shipped Qwen2.5-3B, and every answer was scored blind.</p>
+<p class="lede">Should a modus mentis narrate as the character's own “I” (<i>“I mark the well, its lip worn by ropes”</i>), as the game does now, or speak to the character as an inner voice (<i>“Look, the well. You should listen to it”</i>)? The same 78 recorded requests were asked four ways, twice each, to the shipped Qwen2.5-3B, and every answer was scored blind.</p>
 
 <div class="verdict">
 <p><b>Keep the first person.</b> Asking for the second person makes the model treat the request as a grammar exercise. It swaps the pronouns and hands the line back. More facts survive, but the faculty's voice fades and more of the line is copied as it stands. Hallucination does not improve, outcomes break more often, and reasoning reads worse.</p>
 <p>Transposing the neutral line to “you” first fixes the voice slipping back to “I” (29% → 5%), but it does not bring the persona back.</p>
+<p>Giving each faculty a relation to the character (a pupil, a lord, a charge) and speaking of the character in the third person does worse still. Meaning breaks in 29% of answers against 18%, and facts, task and persona all fall. The faculty becomes a second character talking to the first: it invents shared memories, offers and advice, and keeps only the gist of the line.</p>
 </div>
 
-<h2>The three versions</h2>
+<h2>The versions</h2>
 <ul>
 <li><b>First person</b>: the game's request as it stands now (the working tree's wording, and the neutral line as the game builds it today), with the answer forced to open on “I ” or “I will ”.</li>
 <li><b>Second person</b>: the same neutral first-person line. The request says that “I” is the person whose mind the faculty is part of, and asks it to tell the line to them as “you”. Each kind's instruction is the game's own with only the voice turned: the action's literal-facts sentence, the outcome's success-or-failure and the emotion's “do not soften it” all stay. No forced opening, so “Look…” is possible. No example openings are given, because the model copies whatever the request names.</li>
 <li><b>Second, line transposed</b>: as above, but the neutral line itself is turned to the second person (“You find yourself in…”) before it is sent, so the model does not also have to convert the grammar.</li>
+<li><b>Spoken to the character (relation)</b>, round 2. Every mention of the character in the context is in the third person, named by a relation each faculty takes up for its temperament: Pride's “your lord”, Lullaby's “your little one”, Architecture's “your apprentice”, Survivalism's “your charge”. A paragraph after the persona prompt says “You live in the mind of your apprentice, a pupil you are teaching to see how things are built. Whatever you say, you say to them.” The neutral line arrives already in the second person, as what the faculty is about to say to them, and the instruction is to speak to them directly. In the whole request “you” now means the faculty alone.</li>
 </ul>
 <p class="legend">Only the five narration kinds take part. Dialogue replies and calls to a companion are speech to another person and keep their own frame.</p>
 
@@ -104,6 +107,21 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
 <li><b>Outcome</b> breaks its meaning far more often in the second person: 23% against 4%, significant. Two examples are “the well listens to you now” and “she did not respond as I had hoped” said of a success. The persona falls most here (−0.42 and −0.62).</li>
 <li><b>Action</b> is a one-line intention and barely changes. The transposed version replaces the act more often (38% against 23%), but this is not significant on 13 cases.</li>
 <li><b>Emotion</b> is the one kind where the second person does better on persona (+0.5), but this is not significant on 6 cases.</li>
+</ul>
+
+<h2>Round 2: the character as a third person</h2>
+<p>All three versions here were scored again in fresh sheets by four new blind scorers, so that the relation version is compared with the others by the same people. Round 2 reproduces round 1's result for the transposed version: persona −0.17, echo −0.23 and facts kept +0.26, all significant, against −0.27, −0.20 and +0.24.</p>
+{{CRIT_R2}}
+<h3>Held-out cases only</h3>
+{{CRIT_R2_HELD}}
+<h3>By kind</h3>
+{{KINDS_R2}}
+<ul>
+<li><b>It invents more.</b> Meaning breaks in 29% of answers against 18% (significant overall and in the held-out set). The inventions are a relationship's. There are shared memories (“a familiar sight from your childhood”, “the alleyways you once explored”), offers (“Here, have some fresh eggs”), pet names (“Oh my little one”, “dear”) and greetings to nobody.</li>
+<li><b>It loses facts.</b> Info kept falls from 1.22 to 0.98, and in Observation to 0.75. A list of things or ways becomes a comment on them (“Your attention is drawn to the ways leading on. It reminds you of…”), and in reasoning the counsel replaces the goal and the means (“Remember the pause between the hand's lowering and the step back”).</li>
+<li><b>The task gets muddled</b> (−0.17): the relation is narrated as a third party in the scene (“You notice your apprentice's eyes light up…”), and instructions are echoed (“Here is what I would say…”).</li>
+<li><b>Action is the exception.</b> On a one-line intention it keeps more (info +0.35, significant) and the persona rises a little, but the brute-force snail is crushed in every version.</li>
+<li><b>Its strengths are mechanical.</b> It holds the second person (94%), and its prompt is shorter than the other second-person versions (208 tokens against 228). Its answers are about as long as the first person's.</li>
 </ul>
 
 <h2>Mechanical measures, every sample</h2>
@@ -136,7 +154,8 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
 <li><b>Sampling.</b> The shipped model (<code>model.gguf</code>, SHA-verified) runs on llama.cpp b11515 on 4 CPU cores, with the game's sampling settings (top-k 12, temperature 0.7, top-p 0.95, frequency penalty 0.2, DRY 0.8). It is asked twice per case at seeds 1 and 2, the same seeds for every version. No slot history is sent. The server used <code>-c 8192</code> over 4 slots instead of the harness's 2048, because the parallel requests needed the room. The sampling settings are unchanged.</li>
 <li><b>Scoring.</b> Four independent scorer agents each scored a quarter of the cases, following <code>RUBRIC.md</code>. They saw the input and the shuffled answers under opaque ids, not the version, and were told that both voices are acceptable. The voice cannot be hidden, because it shows in the text. As a check, the 45 second-person answers that slipped back to “I” score no better on persona than those that did not (1.02 against 0.92), which does not suggest the scorers favour “I”. The scorers were also told nothing about the hypothesis.</li>
 <li><b>Noise.</b> These are small samples: 2 seeds, and 6 to 26 cases per kind. Only the differences marked gold or purple should be read as real. The overall persona, echo and info-kept differences hold in each seed taken alone and in dev. In the held-out set, the persona and echo losses hold and the info-kept gain does not reach significance.</li>
-<li><b>Untried.</b> One untried variant is a persona prompt written in the first person (“I am the inner voice of…”) beside second-person answers, which would remove the double “you”. Another is second person for one kind only. Neither is suggested by these numbers, since no kind wins clearly in the second person.</li>
+<li><b>Round 2.</b> The browser shows each sample with its round-1 scores, and the relation version with its round-2 scores. A version scored in both rounds kept its round-1 score in the browser.</li>
+<li><b>Untried.</b> The relation version removed the double “you” and lost more than it gained, so the double “you” was not what held the persona back. Another is second person for one kind only. Neither is suggested by these numbers, since no kind wins clearly in the second person.</li>
 </ul>
 <footer>The harness, samples, sheets and scores are in <code>tools/prompts/person/</code> on branch <code>mm-person-experiment</code>. To re-run: <code>python run.py sample</code>, <code>metrics.py</code>, <code>blind.py</code>, <code>analyze.py</code>, <code>report.py</code>.</footer>
 </div>
@@ -146,7 +165,7 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
 (function () {
   var D = JSON.parse(document.getElementById("data").textContent);
   var KINDS = ["Observation", "Reasoning", "Action", "Outcome", "Emotion"];
-  var VL = { first: "First person", second: "Second person", second_tn: "Second, transposed" };
+  var VL = { first: "First person", second: "Second person", second_tn: "Second, transposed", relation: "Relation (round 2 scores)" };
   var state = { kind: "Observation", set: "", only: "" };
   try { var k = localStorage.getItem("person-kind"); if (k && KINDS.indexOf(k) >= 0) state.kind = k; } catch (e) {}
   var kb = document.getElementById("kinds");
@@ -179,7 +198,7 @@ footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
     }
     document.getElementById("count").textContent = cs.length + " case" + (cs.length === 1 ? "" : "s") + " · F hallucination, I info, K task, P persona, C context, R echo, Q writing; a 0 is in purple.";
     document.getElementById("cases").innerHTML = cs.map(function (c) {
-      var vers = ["first", "second", "second_tn"].map(function (v) {
+      var vers = ["first", "second", "second_tn", "relation"].map(function (v) {
         return '<div class="ver"><h4>' + VL[v] + "</h4>" + (c.v[v] || []).map(function (s) {
           return '<p class="smp">' + esc(s.text) + '<span class="sc">seed ' + s.seed + " · " + scoreLine(s) + "</span>" +
             (s.facts ? '<span class="facts">' + esc(s.facts) + "</span>" : "") + "</p>";

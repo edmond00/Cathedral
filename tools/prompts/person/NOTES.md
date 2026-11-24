@@ -98,3 +98,48 @@ python blind.py merge --key sheets/p.key.json --scores sheets/p*.scores.txt --ou
 python analyze.py --scored scored.jsonl --metrics metrics.json --json results.json
 python report.py
 ```
+
+## Round 2: the character as a third person, by a relation (`relation`)
+
+Asked for after round 1. The persona prompt is kept (its "you" is the faculty) and followed by one
+paragraph: "You live in the mind of {relation}, {gloss}. Whatever you say, you say to them." Each tested
+faculty has a relation of its own (`RELATIONS` in `person_lib.py`: Pride "your lord, someone whose
+dignity you will not let anyone lower", Lullaby "your little one", Architecture "your apprentice";
+loosened personas a bare one). The user message reads 'Here is what you are about to say to {relation}:
+"<the neutral line in the second person>"', and the instruction is to speak to them directly. In the
+whole request "you" is the faculty alone. Nothing else changes.
+
+The three versions first, second_tn and relation were rescored together in fresh sheets by four new
+blind scorers (`sheets/r2_*`, `scored_r2.jsonl`, `results_r2.txt`). Round 2 reproduces round 1 for
+second_tn against first: persona −0.17, echo −0.23 and info +0.26, all significant (round 1: −0.27,
+−0.20, +0.24).
+
+| | first | second, transposed | relation |
+|---|---|---|---|
+| F no hallucination | 1.29 | 1.24 | **1.10*** |
+| I info transmitted | 1.22 | **1.47*** | **0.98*** |
+| K kind's task | 1.72 | 1.73 | **1.56*** |
+| P persona | 1.12 | **0.95*** | **0.90*** |
+| C context | 0.33 | 0.41 | 0.28 |
+| R no echo | 1.50 | **1.27*** | 1.37 |
+| Q writing | 1.46 | 1.40 | 1.40 |
+| meaning broken | 18% | 19% | **29%*** |
+| voice as asked | 99% | 94% | 94% |
+| prompt tokens (user message) | 201 | 228 | 208 |
+| wall, sequential | 5.2 s | 6.2 s | 5.6 s |
+
+**Worse on every criterion that matters, except Action.** Framed as a relationship, the faculty becomes a
+second character talking to the first, and it invents what a relationship holds:
+
+- shared memories ("a familiar sight from your childhood", "the alleyways you once explored");
+- offers ("Here, have some fresh eggs");
+- pet names ("Oh my little one", "dear");
+- advice in place of the facts ("Remember the pause between the hand's lowering and the step back").
+
+A list of things or ways becomes a comment on them (Observation info 0.75). The relation is sometimes
+narrated as a third party in the scene ("You notice your apprentice's eyes light up"). "What you are
+about to say" is read as the gist to convey, not the text to keep. On Action, a one-line intention, it
+keeps more (info +0.35*). The relation label itself appears in about one answer in ten.
+
+So the double "you" was not what held the second person's persona back: removing it lost more than it
+gained. The first person stays the best voice on this model.
