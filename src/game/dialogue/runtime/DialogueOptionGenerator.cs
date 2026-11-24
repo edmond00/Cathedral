@@ -16,12 +16,17 @@ namespace Cathedral.Game.Dialogue.Runtime;
 /// <list type="number">
 ///   <item>sample <c>N</c> speaking Modi Mentis from the party member's known skills, where
 ///         <c>N = min(speech-fluency, held speaking MMs)</c> ([SpeechFluencyStat]);</item>
-///   <item>for each sampled MM the choice judge picks among the node's options by their
-///         <b>intent</b> (not the neutral text) via <see cref="PersonaChoiceSelector"/>;</item>
-///   <item>that MM then rewrites the chosen option's neutral replica in its own voice (its slot
-///         freshly reset) to produce one shown option.</item>
+///   <item>each sampled MM has the choice judge score every one of the node's options (its
+///         branches) by their <b>intent</b> (not the neutral text) via
+///         <see cref="PersonaChoiceSelector.ScoreAsync{T}"/>;</item>
+///   <item>the MMs are spread over the branches (<see cref="AssignBranches"/>): the best-scoring
+///         pair of MM and still unvoiced branch first, until every branch is voiced, then each
+///         remaining MM takes its own best branch — so with at least as many replies as branches every
+///         branch is offered, and with fewer each reply is a different branch;</item>
+///   <item>each MM then rewrites its branch's neutral replica in its own voice (its slot freshly
+///         reset) to produce one shown option.</item>
 /// </list>
-/// Two MMs may pick the same option and word it differently. Dialogue has no refusal — every sampled
+/// Two MMs pick the same option only once every branch is offered, and word it differently. Dialogue has no refusal — every sampled
 /// MM contributes a reply. The chosen option's MM later contributes its level to the dice pool.
 /// </summary>
 public class DialogueOptionGenerator
@@ -81,19 +86,38 @@ public class DialogueOptionGenerator
 
         string situation = BuildContextText(ctx, subject, previousNpcReplica);
 
+        // 1. Every sampled MM scores every branch of the node (its reply options).
+        var scored = new List<(ModusMentis Mm, double[] Scores)>();
         foreach (var mm in sampled)
         {
+            try
+            {
+                var scores = await _selector.ScoreAsync(ChoiceKind.Reply, mm, node.Options, Action, situation, ct: ct);
+                scored.Add((mm, scores));
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"DialogueOptionGenerator: reply scoring failed for {mm.DisplayName}: {ex.Message}");
+            }
+        }
+
+        // 2. Spread the MMs over the branches, so every branch is offered when there are enough replies.
+        var assignment = AssignBranches(scored.Select(s => s.Scores).ToList(), node.Options.Count);
+        foreach (var (who, branch) in assignment)
+            Console.WriteLine($"DialogueOptionGenerator: {scored[who].Mm.DisplayName} voices branch {branch} " +
+                              $"\"{Action(node.Options[branch])}\" (score {scored[who].Scores[branch]:0.00})");
+
+        // 3. Each MM voices its branch, in the order the assignment was made.
+        foreach (var (who, branch) in assignment)
+        {
+            var mm  = scored[who].Mm;
+            var opt = node.Options[branch];
             try
             {
                 int slot = await _slots.GetOrCreateSlotForModusMentisAsync(mm);
                 // The rewrite below keeps history, so it starts from the system prompt alone — no
                 // earlier turn's reply colours this one.
                 _llm.ResetInstance(slot);
-
-                // The choice judge picks the reply this MM would give. Dialogue has no refusal: no
-                // decline option is offered, so the MM always contributes a reply.
-                var opt = await _selector.SelectAsync(ChoiceKind.Reply, mm, node.Options, Action, situation, ct: ct);
-                if (opt == null) continue;                            // only if the option list was empty
 
                 // The chosen reply's rewrite streams as a "- " line, switching the box title to its MM.
                 var sink = part?.NextSegment(PreviewTitles.For(mm));
@@ -135,6 +159,47 @@ public class DialogueOptionGenerator
         }
 
         return results;
+    }
+
+    /// <summary>
+    /// Pairs each speaker with the branch it will voice, from <paramref name="scores"/>[speaker][branch],
+    /// so that the replies cover as many distinct branches as they can. While a branch is still
+    /// unvoiced, the best-scoring (speaker, branch) pair among the unpaired speakers and the unvoiced
+    /// branches is taken; once every branch is voiced, each remaining speaker takes its own best branch.
+    /// So with at least as many replies as branches every branch is offered, and with fewer every reply
+    /// is a different branch. A branch no speaker could score (<see cref="double.NegativeInfinity"/>:
+    /// sampled out, or unreadable) is not sought. Returned in the order the pairs were made.
+    /// </summary>
+    public static List<(int Speaker, int Branch)> AssignBranches(IReadOnlyList<double[]> scores, int branchCount)
+    {
+        var result     = new List<(int, int)>();
+        var unpaired   = Enumerable.Range(0, scores.Count).ToList();
+        var unvoiced   = Enumerable.Range(0, branchCount)
+            .Where(b => scores.Any(s => b < s.Length && !double.IsNegativeInfinity(s[b])))
+            .ToHashSet();
+
+        while (unpaired.Count > 0)
+        {
+            int bestSpeaker = -1, bestBranch = -1;
+            double best = double.NegativeInfinity;
+            foreach (int sp in unpaired)
+                for (int b = 0; b < branchCount && b < scores[sp].Length; b++)
+                {
+                    if (unvoiced.Count > 0 && !unvoiced.Contains(b)) continue;
+                    double v = scores[sp][b];
+                    if (bestSpeaker < 0 || v > best) { best = v; bestSpeaker = sp; bestBranch = b; }
+                }
+            if (bestSpeaker < 0 || double.IsNegativeInfinity(best))
+            {
+                // Nothing this speaker set can score among what is left: give each its own best, if any.
+                if (unvoiced.Count > 0) { unvoiced.Clear(); continue; }
+                break;
+            }
+            result.Add((bestSpeaker, bestBranch));
+            unpaired.Remove(bestSpeaker);
+            unvoiced.Remove(bestBranch);
+        }
+        return result;
     }
 
     /// <summary>Max player replies this turn — the tongue-derived speech-fluency stat (0–5).</summary>

@@ -99,6 +99,45 @@ public class PersonaChoiceSelector
         return options[idx].Item;   // null item ⇒ decline was chosen
     }
 
+    /// <summary>
+    /// The score <paramref name="evaluator"/> gives each of <paramref name="items"/>, in the order of
+    /// <paramref name="items"/> — a log-probability over the options (see
+    /// <see cref="ChoiceJudge.ScoreAsync"/>), so the scores of several modi mentis compare. There is no
+    /// decline. The options reach the judge shuffled, as in <see cref="SelectAsync{T}"/>; items that
+    /// describe identically share one score, and an item left out when there are more than
+    /// <see cref="ChoiceJudge.MaxOptions"/> scores <see cref="double.NegativeInfinity"/>. In playground
+    /// mode the scores are random and no LLM is consulted.
+    /// </summary>
+    public async Task<double[]> ScoreAsync<T>(
+        ChoiceKind kind,
+        ModusMentis evaluator,
+        IReadOnlyList<T> items,
+        Func<T, string> describe,
+        string situation,
+        CancellationToken ct = default,
+        string? question = null) where T : class
+    {
+        var scores = Enumerable.Repeat(double.NegativeInfinity, items?.Count ?? 0).ToArray();
+        if (items == null || items.Count == 0) return scores;
+
+        var labels = items.Select(i => Normalize(describe(i))).ToArray();
+        var distinct = labels.Where(l => l.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (distinct.Count == 0) return scores;
+        if (distinct.Count > ChoiceJudge.MaxOptions)
+            distinct = distinct.OrderBy(_ => _random.Next()).Take(ChoiceJudge.MaxOptions).ToList();
+        Shuffle(distinct);
+
+        double[] judged = PlaygroundMode.IsActive
+            ? distinct.Select(_ => _random.NextDouble()).ToArray()
+            : await ChoiceJudge.ScoreAsync(kind, evaluator, situation, distinct, question, ct);
+
+        var byLabel = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        for (int i = 0; i < distinct.Count; i++) byLabel[distinct[i]] = judged[i];
+        for (int i = 0; i < items.Count; i++)
+            if (byLabel.TryGetValue(labels[i], out var s)) scores[i] = s;
+        return scores;
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────────
 
     /// <summary>Collapses whitespace so labels that differ only in spacing de-duplicate.</summary>

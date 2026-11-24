@@ -266,6 +266,43 @@ public static class ChoiceJudge
     }
 
     /// <summary>
+    /// The score of every option for <paramref name="faculty"/>, in the order given, rather than the one
+    /// it would take: the same scores <see cref="PickAsync"/> decides from (net of the onlooker for the
+    /// <see cref="BaselineKinds"/>), renormalised as log-probabilities over the options so that two
+    /// faculties' scores can be compared with each other. Its argmax is the option <see cref="PickAsync"/>
+    /// would return for a list with no decline. Used where the choices of several faculties are settled
+    /// together — the dialogue replies, which spread the sampled speakers over the node's branches.
+    /// </summary>
+    public static async Task<double[]> ScoreAsync(
+        ChoiceKind kind, ModusMentis faculty, string situation, IReadOnlyList<string> options,
+        string? question = null, CancellationToken ct = default)
+    {
+        if (kind == ChoiceKind.Willingness)
+            throw new ArgumentException("ChoiceJudge.ScoreAsync: willingness is a scale - use JudgeWillingnessAsync.");
+        if (options == null || options.Count == 0) return Array.Empty<double>();
+        if (options.Count > MaxOptions)
+            throw new ArgumentException($"ChoiceJudge.ScoreAsync: {options.Count} options exceeds {MaxOptions}; sample before calling.");
+
+        string prompt = BuildPrompt(kind, Describe(faculty), situation, options, question);
+        var raw = await LetterLogProbsAsync(kind, prompt, options.Count, ct);
+        double[]? onlooker = null;
+        var lp = raw;
+        if (BaselineWeight > 0 && BaselineKinds.Contains(kind))
+        {
+            onlooker = await LetterLogProbsAsync(kind, BuildPrompt(kind, OnlookerDescription, situation, options, question), options.Count, ct);
+            lp = raw.Select((x, i) => x - BaselineWeight * onlooker[i]).ToArray();
+        }
+        double norm = LogSumExp(lp);
+        var scores = lp.Select(x => x - norm).ToArray();
+
+        Console.WriteLine($"ChoiceJudge: {kind} scores for {faculty.DisplayName}: " +
+                          string.Join("; ", options.Select((o, i) => $"{o} {F(scores[i])}")) +
+                          (onlooker != null ? $" (net of the onlooker x{BaselineWeight:0.0#})" : ""));
+        Record(new { kind = kind.ToString(), faculty = faculty.ModusMentisId, situation, options, question, declineIndex = -1, prompt, lp = raw, onlooker, scores, best = ArgMax(scores, except: -1) });
+        return scores;
+    }
+
+    /// <summary>
     /// How willingly <paramref name="faculty"/> would carry out the act <paramref name="situation"/>
     /// describes. The judge always reads the whole scale, in order (eager to unwilling), and the degree
     /// is read from its scores in two steps:

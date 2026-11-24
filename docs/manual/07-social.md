@@ -61,6 +61,11 @@ Each reply is supplied by a **speaking modus mentis** (a modus mentis with the S
 5. Reason for rule 4: elsewhere such a modus mentis is offered and refuses aloud, but a reply is something said, and a refusal does not fit in it.
 6. When wounds have taken the last usable speaking modus mentis, the conversation does not open at all; the same rule that covers a damaged tongue reports which parts of the body failed.
 7. A branch is 2 to 4 replies deep.
+8. Each line of the other person allows a fixed set of **possible answers**, and each reply offered voices one of them.
+9. The speaking modi mentis that will reply are drawn at random, then each one rates every possible answer by how much it suits it.
+10. The best-rated pairing of a modus mentis with an answer not yet offered is settled first, and so on until every answer is offered; each modus mentis left over then voices the answer it rated highest.
+11. So when there are at least as many replies as possible answers, every answer is offered; when there are fewer, every reply is a different answer.
+12. Reason for rule 10: left to its own taste, every modus mentis can favour the same answer, and the other answers would never be offered.
 
 ### The dice pool
 
@@ -263,6 +268,7 @@ not held; the other two are not learned.
 | Enmity | Being counted an enemy; separate from affinity |
 | Experience per Level | Pineal-gland-derived value: the experience needed for each level; lower is better |
 | Introduction | The conversation that turns a Stranger into a Distant acquaintance |
+| Possible answer | One of the fixed answers a line of conversation allows; each reply offered voices one |
 | Premises | The place where a trader keeps their goods and will trade |
 | Reference price | An item's base price, from which traders' prices are set |
 | Resolution | The single dice check at the end of a conversation branch |
