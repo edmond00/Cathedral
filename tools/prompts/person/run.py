@@ -54,8 +54,10 @@ def select():
 
 def sample(a):
     ids = open(os.path.join(HERE, "sets", f"{a.set}.txt")).read().split()
+    k, n = (int(x) for x in a.shard.split("/"))
+    ids = ids[k::n]
     by_id = {c["id"]: c for c in cases()}
-    out_path = os.path.join(HERE, "samples", f"{a.set}.jsonl")
+    out_path = os.path.join(HERE, "samples", f"{a.set}.jsonl" if a.shard == "0/1" else f"{a.set}.{k}.jsonl")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     done = set()
     if os.path.exists(out_path):
@@ -88,6 +90,7 @@ if __name__ == "__main__":
     ap.add_argument("cmd", choices=["select", "sample"])
     ap.add_argument("--set", default="dev")
     ap.add_argument("--seeds", default="1,2")
+    ap.add_argument("--shard", default="0/1", help="k/n: every n-th case from the k-th, to its own file")
     ap.add_argument("--versions", default=",".join(L.VERSIONS))
     a = ap.parse_args()
     select() if a.cmd == "select" else sample(a)

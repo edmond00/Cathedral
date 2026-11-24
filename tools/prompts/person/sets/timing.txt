@@ -1,0 +1,12 @@
+talk_miller:000:loose:pedant_reminder
+village_noon_party:000:own
+farm_dusk:009:swap:woodcraft
+talk_miller:010:swap:keen_nose
+talk_blacksmith:012:loose:pedant_reminder
+farm_dusk:011:own
+farm_night:003:swap:dread
+farm_night:009:loose:hunger_vague
+farm_night:014:own
+farm_dusk:004:swap:woodcraft
+village_dawn:004:swap:stoneface
+farm_dusk:005:own
