@@ -106,7 +106,7 @@ public class PersonaChoiceSelector
     /// decline. The options reach the judge shuffled, as in <see cref="SelectAsync{T}"/>; items that
     /// describe identically share one score, and an item left out when there are more than
     /// <see cref="ChoiceJudge.MaxOptions"/> scores <see cref="double.NegativeInfinity"/>. In playground
-    /// mode the scores are random and no LLM is consulted.
+    /// mode no LLM is consulted (see the comment in the body).
     /// </summary>
     public async Task<double[]> ScoreAsync<T>(
         ChoiceKind kind,
@@ -123,16 +123,26 @@ public class PersonaChoiceSelector
         var labels = items.Select(i => Normalize(describe(i))).ToArray();
         var distinct = labels.Where(l => l.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (distinct.Count == 0) return scores;
-        if (distinct.Count > ChoiceJudge.MaxOptions)
-            distinct = distinct.OrderBy(_ => _random.Next()).Take(ChoiceJudge.MaxOptions).ToList();
-        Shuffle(distinct);
-
-        double[] judged = PlaygroundMode.IsActive
-            ? distinct.Select(_ => _random.NextDouble()).ToArray()
-            : await ChoiceJudge.ScoreAsync(kind, evaluator, situation, distinct, question, ct);
 
         var byLabel = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
-        for (int i = 0; i < distinct.Count; i++) byLabel[distinct[i]] = judged[i];
+
+        // Playground: no LLM. One option drawn as SelectAsync draws it rates highest and the rest
+        // equally lower, so a single speaker takes exactly the reply SelectAsync would have picked
+        // (scripts walk the same branches) while several speakers still spread over every option.
+        if (PlaygroundMode.IsActive)
+        {
+            int pick = _random.Next(distinct.Count);
+            for (int i = 0; i < distinct.Count; i++) byLabel[distinct[i]] = i == pick ? 0.0 : -1.0;
+        }
+        else
+        {
+            if (distinct.Count > ChoiceJudge.MaxOptions)
+                distinct = distinct.OrderBy(_ => _random.Next()).Take(ChoiceJudge.MaxOptions).ToList();
+            Shuffle(distinct);
+
+            double[] judged = await ChoiceJudge.ScoreAsync(kind, evaluator, situation, distinct, question, ct);
+            for (int i = 0; i < distinct.Count; i++) byLabel[distinct[i]] = judged[i];
+        }
         for (int i = 0; i < items.Count; i++)
             if (byLabel.TryGetValue(labels[i], out var s)) scores[i] = s;
         return scores;
