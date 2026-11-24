@@ -12,7 +12,7 @@ Every version is asked the same case with the same seeds, so samples pair up. No
 sent (one corpus case had any): a first-person history would lean on the second-person versions.
 Resumable.
 """
-import argparse, collections, json, os, random, sys
+import argparse, collections, json, os, random, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -77,7 +77,15 @@ def sample(a):
                     continue
                 if utoks is None:
                     utoks = P.tokens(msgs[-1]["content"])
-                g = P.generate(msgs, gbnf, seed)
+                for attempt in range(4):
+                    try:
+                        g = P.generate(msgs, gbnf, seed)
+                        break
+                    except Exception as e:          # a busy server: wait and ask again
+                        print("retry", cid, v, seed, e, flush=True)
+                        time.sleep(10 * (attempt + 1))
+                else:
+                    raise RuntimeError(f"no answer for {cid} {v} {seed}")
                 out.write(json.dumps(dict(case=cid, version=v, seed=seed, text=g.pop("text"), user_tokens=utoks,
                                           neutral=r["neutralText"], persona=persona["id"], prompt=msgs[-1]["content"],
                                           **g)) + "\n")
