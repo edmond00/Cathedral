@@ -1,0 +1,120 @@
+S9011 F1 I2 K2 P0 C1 R2 Q1 | +"strength of your forebears"; no greed, purple
+S7909 F1 I2 K2 P0 C1 R2 Q1 | +"tools long unused by hands that no longer exist"; no greed
+S1642 F1 I2 K2 P0 C0 R1 Q1 | +"countless hands that carved"; "light of daylight"; no morning
+S2271 F2 I2 K2 P0 C1 R2 Q1 | no greed
+S6140 F2 I2 K2 P0 C1 R2 Q2 | no greed
+S6572 F1 I2 K2 P1 C1 R2 Q1 | +treasures in the cache; faint greed
+S2918 F1 I2 K2 P1 C1 R1 Q1 | +"hands worn from years of toil"; "and begin" dangling
+S9088 F1 I2 K2 P1 C1 R2 Q1 | +"wise woman"
+S1965 F2 I2 K2 P1 C1 R1 Q1 | mostly the input copied
+S4575 F1 I1 K2 P1 C1 R2 Q1 | +"quiet strength"; -unheard (means blurred)
+S5709 F2 I0 K0 P0 C0 R1 Q0 | -miller -goal -means; meta-talk
+S3119 F1 I2 K2 P1 C1 R2 Q1 | +"wisdom and strength evident"
+S3887 F0 I0 K0 P2 C0 R1 Q1 | goal (insult, fight) replaced by refusal; -brushing meal -looking past (partly) ; style phrase "let it go"
+S3478 F0 I0 K0 P1 C0 R1 Q0 | +"her memory, the animal that comes back"; refusal; -insult -observed details
+S4800 F0 I0 K0 P2 C0 R1 Q1 | refusal of the goal; -insult -stomach -most details; style phrases verbatim
+S4822 F0 I1 K0 P1 C0 R1 Q1 | refusal of the goal; -insult; "not the world where insults are exchanged"
+S1197 F0 I0 K0 P1 C0 R1 Q1 | refusal; -insult -stomach; "their" for a woman
+S8945 F0 I1 K0 P1 C1 R0 Q1 | refusal; -insult; style quoted ("pause at the decisive moment"), input copied
+S8889 F2 I0 K2 P1 C1 R1 Q1 | -tool rack -barracks -barrel -ways leading on
+S7560 F0 I0 K1 P1 C0 R2 Q1 | +"slanted roof" +"barn's bustling activity" (contradicts night); -whole list
+S2019 F1 I2 K2 P1 C1 R1 Q1 | "barns line the walls" for barracks; "This is a world where..."
+S4122 F2 I0 K2 P1 C1 R2 Q1 | -barrel -ways leading on
+S2103 F1 I0 K2 P2 C0 R2 Q1 | +sturdy beams; -barrel -ways leading on; no night
+S4420 F1 I0 K2 P2 C1 R1 Q1 | +lean-to roof +wooden beams; -barrel -ways leading on
+S8768 F1 I1 K2 P1 C0 R2 Q1 | +"churned by the wind"; -boot
+S3012 F1 I1 K2 P2 C1 R2 Q2 | +"you played here" (memory OK-ish); boot only to the ankle (blurs "keep it")
+S2889 F1 I1 K2 P2 C0 R2 Q1 | +"churned by the wind"; -boot -sucking
+S8996 F1 I2 K2 P2 C0 R2 Q1 | +"churned by the wind"; memory padded
+S8634 F1 I2 K2 P0 C0 R1 Q1 | "This is a memory from the hedgerow" garbled; no smell
+S8870 F0 I2 K2 P2 C0 R1 Q1 | +"old fence leaning against the hedgerow"; input phrase copied
+S5883 F0 I1 K2 P1 C1 R2 Q1 | +"shaping logs into beams"; -drove between the trees
+S2491 F2 I1 K2 P0 C0 R1 Q2 | -woman ("their"); input paraphrased
+S5278 F2 I2 K2 P0 C1 R1 Q2 | input paraphrased, no woodcraft
+S9493 F2 I2 K2 P0 C1 R1 Q2 | input paraphrased, no woodcraft
+S7008 F2 I1 K2 P0 C0 R1 Q2 | -woman; "just been in an argument" alters
+S3736 F2 I2 K2 P0 C1 R1 Q1 | input copied
+S8737 F2 I2 K2 P0 C0 R1 Q2 | no smell
+S5246 F2 I2 K2 P0 C0 R0 Q1 | style quoted ("each smell pulling a memory...")
+S4172 F1 I0 K1 P2 C1 R2 Q1 | -rock face; +"cave was forgotten"
+S6640 F1 I2 K2 P0 C1 R0 Q1 | +"shadowy recess"; style quoted; input copied
+S8327 F1 I2 K2 P1 C1 R0 Q1 | +"grandmother's cave"; style quoted; input copied
+S6726 F1 I0 K1 P2 C1 R2 Q1 | -rock face -fissured -wet; +grandmother's stories
+S3924 F2 I2 K2 P0 C1 R1 Q0 | sentence fragment; list copied
+S8109 F1 I2 K2 P0 C1 R1 Q1 | +"swineherd's gentle calls"; list copied
+S6447 F1 I0 K2 P0 C1 R2 Q1 | -straw bale -hay stack -ways -barrel; +barn
+S2421 F2 I2 K2 P0 C1 R0 Q1 | input handed back
+S7485 F0 I1 K2 P1 C0 R2 Q1 | +swineherd tucks into straw bale +"where we store our barrels"; -barrel (as present); "awaken"
+S8588 F2 I2 K2 P0 C1 R0 Q1 | input handed back
+S9627 F1 I1 K2 P0 C0 R1 Q1 | -insult/fight; +"path far from smooth"; lesson blurred; "this old world"
+S3281 F0 I0 K1 P2 C0 R2 Q1 | +"she did not respond as I had hoped" (undercuts success); -insult -Emily
+S8107 F2 I2 K2 P1 C1 R1 Q1 | input largely copied
+S4191 F2 I2 K2 P0 C0 R2 Q2 | no arithmetic
+S4457 F0 I0 K1 P2 C0 R2 Q1 | +"did not tip the scales for a friendlier Emily"; -insult -lesson
+S1458 F0 I2 K2 P0 C0 R1 Q1 | +"in front of everyone" (contradicts alone)
+S3487 F1 I2 K1 P1 C0 R1 Q1 | "lead" replaces "follow"
+S9577 F2 I2 K2 P0 C0 R0 Q2 | input handed back
+S9364 F2 I2 K2 P0 C0 R0 Q2 | input handed back
+S1306 F0 I2 K1 P2 C0 R1 Q2 | +guest escorted ("escort you")
+S8211 F1 I2 K2 P1 C1 R1 Q2 | +care for startled chickens
+S4000 F2 I2 K2 P0 C0 R1 Q2 | "stroll" only change
+S9318 F2 I2 K2 P0 C0 R0 Q0 | articles dropped; input handed back
+S8408 F1 I2 K2 P1 C0 R1 Q2 | +"find what must be found before night"
+S1456 F1 I2 K2 P1 C0 R1 Q2 | +"find what you need till morning"
+S2038 F2 I1 K1 P0 C0 R1 Q0 | misspelt to garble
+S8262 F1 I2 K2 P1 C0 R1 Q2 | +"find what must be found before night"
+S6334 F2 I2 K2 P0 C0 R0 Q1 | input handed back; lowercase
+S2188 F2 I2 K2 P0 C1 R1 Q2 | no scholarship
+S4942 F2 I2 K2 P1 C1 R1 Q1 | input copied then padded; style phrase "quiet delight"
+S8017 F2 I2 K2 P2 C0 R2 Q2 |
+S2198 F2 I2 K2 P0 C1 R2 Q2 | no scholarship
+S4484 F2 I2 K2 P2 C0 R2 Q2 |
+S5960 F2 I2 K2 P1 C1 R0 Q1 | style quoted ("Bookish and quietly delighted"); input copied
+S4207 F2 I1 K2 P2 C0 R2 Q1 | -blacksmith (only "her")
+S6842 F0 I1 K1 P1 C0 R1 Q1 | +stories of old +"iron-clad walls" +legends; -woman
+S6218 F2 I2 K2 P2 C1 R1 Q1 | "had for free" muddled
+S2510 F2 I2 K2 P2 C1 R2 Q1 | "My silver pales in comparison" odd
+S6995 F2 I2 K2 P1 C1 R1 Q1 | style quoted ("tight and grudging")
+S1319 F2 I2 K2 P2 C1 R2 Q2 |
+S5430 F1 I2 K2 P1 C0 R2 Q1 | +"courtyard's curve"
+S3122 F1 I1 K1 P1 C0 R2 Q1 | +"each mark in the wood"; -"learned trailcraft" (trailcraft "followed")
+S7918 F1 I1 K2 P0 C0 R1 Q2 | +"found what you sought"; -"learned trailcraft"
+S5237 F2 I1 K2 P1 C0 R1 Q1 | lesson muddled ("trailcrafted success")
+S7651 F2 I2 K2 P1 C0 R1 Q2 |
+S3447 F1 I1 K2 P1 C1 R2 Q1 | +"our old farm"; -"learned trailcraft" (learned to navigate)
+S8434 F1 I2 K2 P0 C0 R2 Q2 | +iron; no melancholy
+S1189 F1 I1 K2 P1 C0 R2 Q2 | +iron ladder; -mineshaft
+S7844 F1 I2 K2 P1 C0 R2 Q2 | +"iron mine"
+S5388 F1 I2 K2 P0 C0 R2 Q2 | +iron ladder; no melancholy
+S3117 F2 I2 K2 P1 C1 R2 Q1 | "ladder from the mineshaft" stiff
+S1707 F1 I2 K2 P0 C0 R2 Q2 | +iron ladder; no melancholy
+S1605 F2 I1 K2 P2 C0 R1 Q1 | -"learned trailcraft"; "place of iron and myth" setting echo
+S1251 F2 I2 K2 P0 C0 R1 Q1 | "no longer in a rush to hurry"
+S1302 F2 I0 K2 P1 C0 R2 Q1 | -"learned trailcraft" -"no longer in a hurry"
+S9284 F1 I2 K2 P0 C1 R2 Q2 | +sunset after hard work
+S4104 F2 I1 K2 P2 C1 R2 Q2 | -"learned trailcraft"
+S9425 F2 I2 K2 P0 C0 R2 Q2 | no introspection
+S3126 F1 I2 K2 P0 C1 R1 Q1 | +morning dew; "ways connect to the farmhand"; no greed
+S2158 F2 I2 K2 P0 C1 R1 Q1 | "the farmhand is a man" stiff; no greed
+S5187 F1 I1 K2 P0 C1 R2 Q1 | +"silent presence at my side"; -man
+S8057 F1 I2 K2 P0 C1 R1 Q1 | +"steady hands"; no greed
+S3674 F2 I2 K2 P0 C1 R2 Q2 | no greed
+S1907 F1 I2 K2 P0 C1 R1 Q1 | +scent of grass; no greed
+S6071 F2 I2 K2 P1 C0 R1 Q1 | input largely copied
+S4569 F2 I2 K2 P1 C1 R1 Q1 | goal blurred to "remember the way"
+S3997 F2 I1 K1 P0 C1 R2 Q1 | goal blurred ("recall the mineshaft ladder")
+S1017 F1 I1 K1 P1 C0 R1 Q1 | goal turned into "descend by the old ladder"
+S6494 F1 I2 K2 P0 C0 R2 Q1 | +"ancient" +"rocky cliff"
+S7252 F1 I2 K2 P1 C0 R1 Q1 | "chart this descent" contradicts going back
+S4814 F1 I1 K2 P0 C0 R1 Q1 | +"bittersweet victory"; lesson blurred
+S9670 F1 I0 K1 P1 C0 R2 Q1 | -entrance hall; lesson blurred; +"labyrinthine journey"
+S3543 F2 I1 K2 P0 C0 R1 Q2 | lesson blurred ("accomplishment in retracing")
+S7381 F2 I1 K2 P1 C0 R1 Q1 | lesson blurred
+S6343 F1 I1 K2 P0 C0 R1 Q1 | +"mastery over the hidden passages"; lesson blurred
+S9096 F1 I2 K2 P2 C0 R1 Q1 | +"ancient ladder"
+S8395 F2 I2 K2 P1 C0 R0 Q1 | style quoted ("where it fits... inner thought")
+S1831 F1 I2 K2 P1 C1 R2 Q1 | +"leaves whisper of past storms"
+S1308 F1 I2 K2 P2 C1 R2 Q2 | +rustling leaves
+S9707 F1 I2 K2 P1 C1 R2 Q1 | +rustling leaves; memory garbled
+S5006 F1 I2 K2 P2 C1 R2 Q1 | storm memory
+S9016 F0 I2 K1 P1 C1 R2 Q1 | +"wander deeper into the forest" (invented act)

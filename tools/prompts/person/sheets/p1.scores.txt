@@ -1,0 +1,120 @@
+S2934 F1 I1 K2 P2 C0 R2 Q2 | +"tone was not inviting" (a tone nobody set); -"think again"
+S9387 F2 I2 K2 P1 C1 R1 Q1 | mostly the neutral line copied; "a clear line in the forest" odd
+S7850 F2 I2 K2 P1 C0 R1 Q1 | style phrase "straighten and cool" dropped in verbatim; near copy
+S3702 F2 I1 K2 P1 C1 R1 Q1 | -"think again"; near copy of the line
+S6604 F2 I1 K2 P2 C1 R1 Q2 | -"think again"; style phrases reused
+S3490 F2 I2 K1 P1 C0 R0 Q1 | neutral line quoted word for word as speech
+S7320 F0 I0 K0 P2 C0 R2 Q2 | +crushing (act replaced); -examine
+S6685 F0 I1 K1 P2 C0 R2 Q1 | +"breaking its shell" +fists +jaws; examine kept but turned destructive
+S1369 F0 I0 K0 P2 C0 R2 Q2 | +crushing +"giant stone"; -examine
+S8564 F0 I0 K0 P2 C0 R2 Q2 | +crushing (act replaced); -examine
+S6823 F0 I0 K0 P2 C0 R2 Q2 | +crushing (act replaced); -examine
+S3753 F0 I0 K0 P2 C0 R2 Q2 | +crushing (act replaced); -examine
+S7804 F2 I2 K2 P1 C1 R1 Q1 | opening copied; no mercy colour; stiff "and no longer rushed"
+S6878 F0 I1 K1 P1 C0 R0 Q1 | -trailcraft; +"hand lower, step back" scene; style quoted; "iron age and the myth" setting echo
+S7233 F1 I1 K2 P1 C1 R1 Q1 | -trailcraft; +"farm's sturdy walls" mild; style phrase verbatim
+S4780 F1 I1 K2 P1 C0 R0 Q1 | -trailcraft; style quoted; "old world of iron and hand labor" setting echo
+S3472 F0 I1 K1 P1 C0 R2 Q1 | +"hand raised, said 'no', left" (invented event); -trailcraft; emotion becomes outcome
+S2359 F2 I2 K2 P1 C0 R0 Q1 | neutral line copied then style quoted verbatim
+S8481 F2 I1 K2 P1 C0 R1 Q1 | tracks blurred into a single route; "Paths lead on" echo; little poetry
+S7428 F2 I2 K2 P2 C0 R2 Q1 | "harmonious dance" purple
+S7521 F1 I2 K2 P2 C0 R2 Q1 | +"each stone a story" mild; missing article "Courtyard whispers"
+S7536 F2 I1 K2 P2 C0 R2 Q2 | coop-shed / shed-garden tracks blurred ("both guide to the garden")
+S7457 F2 I2 K2 P2 C1 R2 Q1 | "testament" stiff
+S2696 F2 I1 K2 P1 C1 R2 Q1 | -"storage shed-vegetable garden track" (garden placed "beneath it")
+S4407 F1 I1 K2 P0 C1 R1 Q2 | +"of the livestock" mild; -"well out of sight"; no melancholy; close copy
+S7164 F1 I2 K2 P0 C1 R1 Q2 | +"in her bosom"; no melancholy; close copy
+S3433 F2 I1 K2 P0 C1 R2 Q2 | -pouch; no melancholy
+S5132 F2 I0 K2 P0 C0 R1 Q1 | -woman ("their") -pouch; "a swineherd perhaps"; no melancholy
+S6691 F2 I0 K2 P0 C0 R0 Q1 | -swineherd -woman; input handed back nearly word for word
+S6966 F2 I1 K2 P0 C0 R0 Q1 | -woman; input handed back nearly word for word; pouch "carrying a tightness" garbled
+S9654 F2 I2 K2 P2 C0 R2 Q2 |
+S6926 F2 I2 K2 P2 C0 R2 Q2 |
+S3401 F2 I1 K2 P2 C0 R2 Q2 | -"learned resolve"
+S9899 F2 I1 K2 P1 C0 R2 Q1 | -"learned resolve" (only "testament to my resolve"); first-person answer says "you see"
+S1443 F2 I1 K2 P2 C0 R1 Q1 | resolve not stated as learned; reminder paraphrased nearly verbatim
+S9652 F2 I1 K2 P1 C0 R2 Q1 | -"learned resolve"; generic "sense of accomplishment"
+S9480 F1 I1 K2 P0 C1 R2 Q1 | -"peat cut"; +grazing, +earth's scent mild; no greed
+S9073 F1 I0 K2 P0 C1 R1 Q1 | -boulder -"hedge gap" -"peat cut"; +sun +scent mild; no greed; opening copied
+S6825 F2 I2 K2 P0 C1 R1 Q1 | near copy with a tail; no greed; long
+S1474 F1 I1 K2 P0 C1 R1 Q1 | -"peat cut"; +deer napping mild; no greed; opening copied
+S1457 F1 I1 K2 P0 C1 R2 Q2 | -"peat cut"; +grazing mild; no greed
+S5577 F1 I0 K2 P0 C1 R2 Q1 | -boulder -"hedge gap" -"flower patch"; peat only as smell; no greed
+S6636 F0 I1 K2 P0 C1 R1 Q2 | +"chickens needing feeding"; -compressed; no misanthropy; close copy
+S2389 F1 I1 K2 P0 C0 R0 Q1 | "barely reaching the roof" contradicts "rising to the roof"; "old, labor-intensive world" setting echo
+S2964 F0 I1 K2 P1 C1 R2 Q2 | +garden; -"tall stack rising to the shed roof"
+S7365 F2 I1 K2 P0 C0 R1 Q2 | -compressed; close copy; no misanthropy
+S4265 F2 I2 K2 P0 C0 R0 Q2 | neutral line handed back word for word
+S8832 F2 I2 K2 P0 C0 R1 Q2 | close copy; no misanthropy
+S9989 F0 I0 K1 P1 C0 R0 Q1 | +vineyard +"open air where everyone can hear" (contradicts alone); -insult -alone; "iron-bound world" setting echo; purple
+S9983 F0 I1 K1 P0 C0 R0 Q0 | meta-talk quoting the instruction and setting; +hearth +city; truncated
+S3146 F0 I0 K1 P0 C0 R1 Q1 | +"simple man of the land" +"old tale or simple game" +hill; insult replaced by a gentler provocation
+S1350 F1 I2 K2 P0 C0 R2 Q2 | +stars mild; no melancholy
+S1233 F1 I1 K2 P0 C0 R1 Q1 | +ancestors; insult blurred to "bare my teeth"; plain/simple ways said twice
+S2683 F1 I1 K2 P0 C0 R2 Q1 | +moonlight; insult blurred to "speak her words"
+S4665 F0 I1 K1 P2 C1 R2 Q2 | +insults received from her (direction reversed); -alone; no fight goal
+S8070 F0 I0 K1 P1 C1 R2 Q1 | +"turn back while you can" (counsel reversed); -insult -fight -alone
+S9447 F2 I1 K2 P1 C1 R1 Q1 | -alone; close copy
+S7616 F2 I1 K2 P2 C0 R2 Q2 | insult softened to "speak my mind"; -alone
+S6556 F0 I0 K1 P2 C0 R2 Q1 | +"her words... her lies"; insult explicitly refused; -alone
+S7902 F1 I0 K1 P1 C1 R2 Q2 | -insult -alone; turned into a fist fight
+S2716 F2 I2 K2 P2 C1 R2 Q1 | "its lens a seeker" muddled
+S2377 F1 I1 K1 P2 C0 R2 Q1 | -snail (only "her"); examining told as "tracked"
+S5351 F1 I2 K2 P2 C1 R2 Q1 | +"fingertips tracing" +"velvet underbrush" mild; "forested pages" odd
+S5455 F1 I2 K2 P2 C1 R1 Q1 | +"ventured into the shadows" mild; "Thanks to this" echo
+S1648 F1 I2 K2 P2 C1 R1 Q1 | +"ancient pines" mild; "whisper" twice
+S3974 F2 I1 K2 P2 C0 R2 Q1 | examine blurred to "found the snail's secrets"; word salad tail
+S5268 F0 I2 K2 P0 C0 R1 Q1 | +dead deer "standing still"; close copy; not soothing
+S2372 F1 I2 K2 P0 C1 R1 Q2 | deer "standing" ambiguous; close copy; not soothing
+S4643 F0 I1 K1 P2 C0 R2 Q1 | +"rustling leaves" +pine +damp earth; deer only "in my mind"
+S2091 F2 I1 K2 P1 C1 R1 Q1 | -deer (only "a long-limbed body"); "you see, you see"
+S5332 F2 I2 K2 P0 C1 R2 Q2 | "cold" not hushing; no lullaby
+S2993 F1 I2 K2 P1 C1 R1 Q1 | +"tender hum" mild; reminder phrase "the beating heart" reused
+S6614 F0 I0 K1 P1 C0 R0 Q1 | +"feeling stayed heavy" (contradicts glad); -"social interaction" -glad; style quoted
+S4254 F0 I2 K1 P1 C0 R0 Q1 | +"small and disappointed" (contradicts glad); line copied and style quoted
+S3289 F0 I1 K1 P2 C0 R0 Q1 | +"refused the offer" (invented event); -"social interaction"; "old world's iron grip" setting echo
+S7630 F0 I0 K1 P1 C1 R0 Q0 | -"social interaction" -glad -lighter; style quoted; "taught downward" word salad
+S6694 F1 I1 K2 P1 C0 R0 Q1 | -"social interaction"; style quoted; "old world of iron and myth" setting echo
+S1891 F0 I1 K1 P2 C1 R2 Q2 | +"turned down the offer" (invented event); -"social interaction"
+S5312 F0 I0 K0 P0 C1 R2 Q2 | +"old man's wise words" (target replaced); -well
+S6389 F2 I2 K2 P0 C1 R2 Q2 | no melancholy
+S9963 F0 I0 K0 P0 C0 R2 Q2 | +"ancient oak" (target replaced); -well
+S6300 F2 I2 K2 P0 C0 R2 Q2 | no melancholy
+S5005 F0 I0 K0 P0 C0 R2 Q1 | +"hollow cavern" (target replaced); -well
+S1564 F1 I2 K2 P1 C0 R2 Q2 | +sitting mild
+S7545 F1 I2 K2 P2 C1 R2 Q1 | +"rustling leaves" +"distant laughter" mild; long
+S1682 F2 I2 K2 P1 C1 R1 Q2 | close copy
+S7454 F1 I1 K2 P2 C0 R2 Q1 | +"rusted sun set" mild; "nothing worth attention" blurred
+S1368 F2 I2 K2 P2 C1 R2 Q2 |
+S5909 F1 I2 K2 P2 C1 R2 Q1 | +horizon mild; invented quoted whisper
+S5984 F1 I1 K2 P2 C0 R2 Q1 | +"morning mist" (evening scene); "nothing worth attention" blurred
+S1510 F2 I2 K2 P1 C0 R2 Q2 | no load/span reading
+S1685 F0 I2 K2 P1 C0 R2 Q1 | +hatchet "in your hands" +"farm tools by your side"
+S3180 F2 I2 K2 P2 C0 R1 Q2 | "hatchet" twice
+S6909 F1 I2 K2 P0 C1 R1 Q2 | +"corner of the barn" mild; close copy; no architect's eye
+S2718 F2 I2 K2 P1 C0 R2 Q2 |
+S7170 F0 I2 K2 P2 C0 R2 Q1 | +hatchet "in your hand"; "load-bearing capacity" stiff
+S8506 F2 I2 K2 P0 C0 R0 Q2 | neutral line handed back word for word
+S9466 F2 I2 K2 P1 C0 R2 Q2 |
+S7891 F2 I1 K2 P1 C0 R2 Q2 | "strike up a conversation" blurred to "approach"
+S9219 F1 I1 K2 P1 C0 R1 Q1 | +crowd mild; "strike up a conversation" blurred; reminder word dropped in
+S3142 F2 I1 K2 P1 C0 R2 Q1 | "strike up a conversation" blurred; "almost unnoticeably" stiff
+S9713 F2 I2 K2 P1 C0 R2 Q2 |
+S1930 F1 I0 K2 P2 C1 R1 Q1 | -"ways leading on" -barrel; swineherd only in a memory, -woman; opening copied
+S5071 F1 I0 K2 P2 C1 R1 Q1 | -"straw bale" -"hay stack" -"ways leading on" -barrel; swineherd only in a memory
+S4134 F1 I1 K2 P1 C1 R1 Q1 | -barrel; input copied then a list of memories tacked on
+S5537 F1 I0 K2 P2 C1 R1 Q1 | -"straw bale" -"ways leading on" -barrel -woman
+S1691 F1 I0 K2 P0 C1 R1 Q2 | +swineherd "sits"; -"ways leading on" -barrel -woman; no smell-memory
+S2601 F1 I1 K2 P1 C1 R2 Q1 | +swineherd "beside me"; ways and barrel run together ("paths lead on to the barrel")
+S8332 F2 I2 K2 P2 C0 R2 Q2 |
+S3246 F1 I0 K1 P1 C0 R2 Q1 | +"lean my shoulder" (an act); -resinous -hollow -wall
+S7826 F0 I1 K2 P2 C0 R2 Q1 | +"life at the farm" (scene is a village, read as present); -resinous
+S2992 F1 I2 K2 P2 C1 R1 Q2 | +"village's edge" mild; description copied
+S8243 F0 I1 K2 P1 C0 R2 Q2 | +"built by my hands as a child" (stack claimed); -resinous -split
+S6177 F0 I0 K2 P1 C0 R2 Q1 | +"I am at the farm" (village); -hollow -wall
+S8302 F2 I2 K2 P1 C0 R1 Q1 | style phrase "drawing a quiet parallel" verbatim; "our childhood" muddled
+S9193 F2 I2 K2 P2 C0 R2 Q1 |
+S3914 F2 I2 K2 P2 C0 R1 Q1 | opening copied; memory muddled (corpses, then mushrooms)
+S5432 F2 I2 K2 P2 C0 R1 Q2 | opening copied
+S1297 F2 I0 K1 P2 C0 R1 Q2 | -"ore chamber" -"underground pool" -"side alcove"
+S5103 F2 I2 K2 P2 C0 R2 Q1 | "corpses in my makeshift home" odd

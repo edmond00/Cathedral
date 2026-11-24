@@ -1,0 +1,198 @@
+<title>I See or You See</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one reading column; tables scroll in their own boxes; the sample browser is a list of case cards, three versions side by side. */
+/* The game's three hues: gold for gain and what is clickable, purple for loss, greys for the plain. */
+:root {
+  --bg: #f3f2f0; --panel: #fbfaf8; --ink: #24222a; --muted: #6c6873; --rule: #d9d6d2;
+  --gold: #8a6a10; --gold-bg: #f1e7c4; --purple: #6b3f86; --purple-bg: #eadff1;
+  --display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #16141a; --panel: #1e1b23; --ink: #e6e3ea; --muted: #9c97a3; --rule: #34303b;
+  --gold: #e0be5a; --gold-bg: #3a3118; --purple: #c39be0; --purple-bg: #33243e; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #16141a; --panel: #1e1b23; --ink: #e6e3ea; --muted: #9c97a3; --rule: #34303b;
+  --gold: #e0be5a; --gold-bg: #3a3118; --purple: #c39be0; --purple-bg: #33243e; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 32px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; }
+h1 { font-size: 2.1rem; margin: 0 0 8px; }
+h2 { font-size: 1.35rem; margin: 40px 0 10px; }
+h3 { font-size: 1.05rem; margin: 22px 0 6px; }
+p, li { max-width: 68ch; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.08rem; }
+.verdict { background: var(--panel); border-left: 3px solid var(--gold); padding: 14px 18px; margin: 20px 0; }
+.verdict p { margin: 6px 0; }
+.scroll { overflow-x: auto; margin: 10px 0 6px; }
+table { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.num th, .num td { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+.num th:first-child { text-align: left; font-weight: 500; }
+.num thead th { font: 600 12px var(--mono); color: var(--muted); text-align: right; }
+.num small { color: var(--muted); font-size: 11px; margin-left: 3px; }
+.num td small { display: block; margin: 0; }
+.kinds td, .kinds thead th { text-align: center; }
+.kinds thead th[colspan] { border-bottom: 1px solid var(--rule); }
+td.sig.up { background: var(--gold-bg); color: var(--gold); }
+td.sig.down { background: var(--purple-bg); color: var(--purple); }
+td.flat { color: var(--muted); }
+.legend { font-size: 13px; color: var(--muted); }
+.pill { display: inline-block; padding: 0 7px; border-radius: 9px; font: 600 11px/18px var(--mono); }
+.pill.up { background: var(--gold-bg); color: var(--gold); }
+.pill.down { background: var(--purple-bg); color: var(--purple); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+.controls button { font: 500 13px var(--body); color: var(--ink); background: var(--panel); border: 1px solid var(--rule);
+  border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.controls button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: var(--gold-bg); }
+.controls button:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.controls label { font-size: 13px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+select { font: 13px var(--body); background: var(--panel); color: var(--ink); border: 1px solid var(--rule); border-radius: 4px; padding: 4px; }
+.case { background: var(--panel); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; margin: 14px 0; }
+.case header { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; }
+.case header b { font-family: var(--display); }
+.case .meta { font-size: 12.5px; color: var(--muted); }
+.case .in { font-family: var(--mono); font-size: 13px; margin: 8px 0 10px; padding: 8px 10px; border: 1px dashed var(--rule); }
+.vers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .vers { grid-template-columns: minmax(0, 1fr); } }
+.ver h4 { margin: 0 0 4px; font: 600 12px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.smp { font-size: 13.5px; margin: 0 0 10px; }
+.sc { font: 11.5px var(--mono); color: var(--muted); display: block; margin-top: 2px; }
+.sc .bad { color: var(--purple); }
+.facts { font: 11.5px var(--mono); color: var(--purple); display: block; }
+.tag { font: 600 11px var(--mono); padding: 0 6px; border-radius: 3px; border: 1px solid var(--rule); color: var(--muted); }
+footer { margin-top: 48px; font-size: 13px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+<div class="eyebrow">Proscribed Palimpsest · modus mentis narration · prompt experiment</div>
+<h1>I see, or you see?</h1>
+<p class="lede">Should a modus mentis narrate as the character's own “I” (<i>“I mark the well, its lip worn by ropes”</i>), as the game does now, or speak to the character as an inner voice (<i>“Look, the well. You should listen to it”</i>)? The same 78 recorded requests were asked three ways, twice each, to the shipped Qwen2.5-3B, and every answer was scored blind.</p>
+
+<div class="verdict">
+<p><b>Keep the first person.</b> Asking for the second person makes the model treat the request as a grammar exercise. It swaps the pronouns and hands the line back. More facts survive, but the faculty's voice fades and more of the line is copied as it stands. Hallucination does not improve, outcomes break more often, and reasoning reads worse.</p>
+<p>Transposing the neutral line to “you” first fixes the voice slipping back to “I” (29% → 5%), but it does not bring the persona back.</p>
+</div>
+
+<h2>The three versions</h2>
+<ul>
+<li><b>First person</b>: the game's request as it stands now (the working tree's wording, and the neutral line as the game builds it today), with the answer forced to open on “I ” or “I will ”.</li>
+<li><b>Second person</b>: the same neutral first-person line. The request says that “I” is the person whose mind the faculty is part of, and asks it to tell the line to them as “you”. Each kind's instruction is the game's own with only the voice turned: the action's literal-facts sentence, the outcome's success-or-failure and the emotion's “do not soften it” all stay. No forced opening, so “Look…” is possible. No example openings are given, because the model copies whatever the request names.</li>
+<li><b>Second, line transposed</b>: as above, but the neutral line itself is turned to the second person (“You find yourself in…”) before it is sent, so the model does not also have to convert the grammar.</li>
+</ul>
+<p class="legend">Only the five narration kinds take part. Dialogue replies and calls to a companion are speech to another person and keep their own frame.</p>
+
+<h2>Blind scores, all 78 cases</h2>
+<p class="legend">The mean over 156 samples per version (78 cases × 2 seeds), on the rubric's scale. A difference is the mean, paired by case, of that case's score minus the first person's, with a 95% bootstrap interval. <span class="pill up">gold</span> is a real gain and <span class="pill down">purple</span> a real loss (the interval clears 0). Grey means no difference can be claimed.</p>
+{{CRIT_ALL}}
+
+<h3>Held-out cases only (31)</h3>
+<p class="legend">These come from the corpus's held-out playthroughs. The wording was not iterated at all, so this is a second sample rather than a guard against tuning. It points the same way: persona down, echo up, info kept up (the info gain is not significant here).</p>
+{{CRIT_HELD}}
+
+<h2>By kind of narration</h2>
+{{KINDS}}
+<ul>
+<li><b>Observation</b> is where the trade is clearest. Info kept goes from 1.10 to 1.50 and listed things stop being dropped, but the persona falls by 0.3 and the echo rises.</li>
+<li><b>Reasoning</b> loses on persona, echo and writing (−0.35, significant). Asked for counsel, the model writes “You want to… You will rely on…” and closes on homilies (“Embrace this journey”). It slips back to “I” in 40% of answers when the line is not transposed.</li>
+<li><b>Outcome</b> breaks its meaning far more often in the second person: 23% against 4%, significant. Two examples are “the well listens to you now” and “she did not respond as I had hoped” said of a success. The persona falls most here (−0.42 and −0.62).</li>
+<li><b>Action</b> is a one-line intention and barely changes. The transposed version replaces the act more often (38% against 23%), but this is not significant on 13 cases.</li>
+<li><b>Emotion</b> is the one kind where the second person does better on persona (+0.5), but this is not significant on 6 cases.</li>
+</ul>
+
+<h2>Mechanical measures, every sample</h2>
+{{MECH}}
+<p class="legend">“Voice as asked” means first person opens on I and addresses no “you”, and second person says “you” at least as often as “I/me/my”. “Content words kept” is the share of the neutral line's content words (by 5-letter stem) that survive. “4-grams copied” is the share of the answer's word 4-grams taken from the neutral line, with pronouns folded so that “I find myself” and “you find yourself” match. The wall time comes from a separate sequential pass on 12 cases, without the four-way parallelism used for sampling. The second person costs about 30 more prompt tokens and about 10 more generated tokens, roughly +1.1 s per request on CPU (5.2 s → 6.3 s).</p>
+
+<h2>What else the game would have to change</h2>
+<p>Nothing in the game was changed. To ship a second-person voice, all of the following would have to move with the wording:</p>
+<ul>
+<li><code>PersonaRewriter</code> drops any observation that says “you” (<code>AddressesSomeone</code>) and puts the neutral text back. That would replace every second-person observation.</li>
+<li>The GBNF forces “I ” or “I will ” at the start of every narration kind (<code>DefaultForcedPrefix</code>).</li>
+<li><code>NeutralNarration</code> builds every line in the first person (<code>FirstPerson</code>). Without transposing upstream, 29% of answers fall back to “I”.</li>
+<li><code>OtherPersonNote</code> says “not you … never as I”, which names the wrong people in the second person. The experiment used a turned version of it.</li>
+<li>Every <code>PersonaPrompt</code> already calls the faculty “you” (“You are the inner voice of BEAST SENSE… you read animals”). In a second-person answer “you” would also be the character. This is a likely reason for the persona loss, but it was not tested.</li>
+</ul>
+
+<h2>Every sample</h2>
+<div class="controls" role="group" aria-label="Filter samples">
+  <span class="eyebrow">Kind</span>
+  <span id="kinds"></span>
+  <label for="set">Set <select id="set"><option value="">all</option><option value="dev">dev</option><option value="heldout">held out</option></select></label>
+  <label for="only">Show <select id="only"><option value="">every case</option><option value="loose">loosened personas</option><option value="diff">cases where versions differ most on persona</option></select></label>
+</div>
+<p class="legend" id="count"></p>
+<div id="cases"></div>
+
+<h2>Method and limits</h2>
+<ul>
+<li><b>Cases.</b> The 78 cases are real requests recorded in eleven <code>--cli</code> playthroughs (<code>tools/prompts/cases.jsonl</code>). Each is asked in its own persona, in another modus mentis's, or in a deliberately loosened one (a bare name, one vague line). There are 47 dev cases and 31 held-out cases, stratified by kind, with at most two cases per persona, giving 32 personas in all. The persona fields are read from the current C# source, not the recorded ones.</li>
+<li><b>Sampling.</b> The shipped model (<code>model.gguf</code>, SHA-verified) runs on llama.cpp b11515 on 4 CPU cores, with the game's sampling settings (top-k 12, temperature 0.7, top-p 0.95, frequency penalty 0.2, DRY 0.8). It is asked twice per case at seeds 1 and 2, the same seeds for every version. No slot history is sent. The server used <code>-c 8192</code> over 4 slots instead of the harness's 2048, because the parallel requests needed the room. The sampling settings are unchanged.</li>
+<li><b>Scoring.</b> Four independent scorer agents each scored a quarter of the cases, following <code>RUBRIC.md</code>. They saw the input and the shuffled answers under opaque ids, not the version, and were told that both voices are acceptable. The voice cannot be hidden, because it shows in the text. As a check, the 45 second-person answers that slipped back to “I” score no better on persona than those that did not (1.02 against 0.92), which does not suggest the scorers favour “I”. The scorers were also told nothing about the hypothesis.</li>
+<li><b>Noise.</b> These are small samples: 2 seeds, and 6 to 26 cases per kind. Only the differences marked gold or purple should be read as real. The overall persona, echo and info-kept differences hold in each seed taken alone and in dev. In the held-out set, the persona and echo losses hold and the info-kept gain does not reach significance.</li>
+<li><b>Untried.</b> One untried variant is a persona prompt written in the first person (“I am the inner voice of…”) beside second-person answers, which would remove the double “you”. Another is second person for one kind only. Neither is suggested by these numbers, since no kind wins clearly in the second person.</li>
+</ul>
+<footer>The harness, samples, sheets and scores are in <code>tools/prompts/person/</code> on branch <code>mm-person-experiment</code>. To re-run: <code>python run.py sample</code>, <code>metrics.py</code>, <code>blind.py</code>, <code>analyze.py</code>, <code>report.py</code>.</footer>
+</div>
+
+<script id="data" type="application/json">{{DATA}}</script>
+<script>
+(function () {
+  var D = JSON.parse(document.getElementById("data").textContent);
+  var KINDS = ["Observation", "Reasoning", "Action", "Outcome", "Emotion"];
+  var VL = { first: "First person", second: "Second person", second_tn: "Second, transposed" };
+  var state = { kind: "Observation", set: "", only: "" };
+  try { var k = localStorage.getItem("person-kind"); if (k && KINDS.indexOf(k) >= 0) state.kind = k; } catch (e) {}
+  var kb = document.getElementById("kinds");
+  KINDS.forEach(function (k) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = k; b.id = "kind-" + k;
+    b.addEventListener("click", function () { state.kind = k; try { localStorage.setItem("person-kind", k); } catch (e) {} render(); });
+    kb.appendChild(b);
+  });
+  document.getElementById("set").addEventListener("change", function (e) { state.set = e.target.value; render(); });
+  document.getElementById("only").addEventListener("change", function (e) { state.only = e.target.value; render(); });
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function pmean(c, v) { var xs = (c.v[v] || []).map(function (s) { return s.sc.P; }).filter(function (x) { return x != null; }); return xs.length ? xs.reduce(function (a, b) { return a + b; }, 0) / xs.length : 0; }
+  function scoreLine(s) {
+    var out = [];
+    "FIKPCRQ".split("").forEach(function (c) {
+      var x = s.sc[c];
+      var bad = x === 0 && c !== "C";
+      out.push('<span class="' + (bad ? "bad" : "") + '">' + c + (x == null ? "-" : x) + "</span>");
+    });
+    return out.join(" ");
+  }
+  function render() {
+    KINDS.forEach(function (k) { document.getElementById("kind-" + k).setAttribute("aria-pressed", String(k === state.kind)); });
+    var cs = D.filter(function (c) { return c.kind === state.kind && (!state.set || c.set === state.set) && (state.only !== "loose" || c.loose); });
+    if (state.only === "diff") {
+      cs = cs.slice().sort(function (a, b) {
+        return Math.abs(pmean(b, "first") - (pmean(b, "second") + pmean(b, "second_tn")) / 2) - Math.abs(pmean(a, "first") - (pmean(a, "second") + pmean(a, "second_tn")) / 2);
+      }).slice(0, 8);
+    }
+    document.getElementById("count").textContent = cs.length + " case" + (cs.length === 1 ? "" : "s") + " · F hallucination, I info, K task, P persona, C context, R echo, Q writing; a 0 is in purple.";
+    document.getElementById("cases").innerHTML = cs.map(function (c) {
+      var vers = ["first", "second", "second_tn"].map(function (v) {
+        return '<div class="ver"><h4>' + VL[v] + "</h4>" + (c.v[v] || []).map(function (s) {
+          return '<p class="smp">' + esc(s.text) + '<span class="sc">seed ' + s.seed + " · " + scoreLine(s) + "</span>" +
+            (s.facts ? '<span class="facts">' + esc(s.facts) + "</span>" : "") + "</p>";
+        }).join("") + "</div>";
+      }).join("");
+      return '<article class="case"><header><b>' + esc(c.persona) + "</b>" +
+        '<span class="tag">' + (c.set === "heldout" ? "held out" : "dev") + "</span>" + (c.loose ? '<span class="tag">loosened persona</span>' : "") +
+        '<span class="meta">' + esc(c.place || "") + " · " + esc(c.id) + "</span></header>" +
+        '<div class="meta">reminder: ' + esc(c.reminder || "none") + (c.style ? " · style: " + esc(c.style) : "") + "</div>" +
+        '<div class="in">' + esc(c.neutral) + "</div>" +
+        '<div class="vers">' + vers + "</div></article>";
+    }).join("");
+  }
+  render();
+})();
+</script>

@@ -1,0 +1,41 @@
+
+== all
+version       n   tok  wall    voice_ok  voice_slip      recall      parrot self_repeat  copy_style copy_remind copy_prompt setting_wor lesson_lost  hour_clash     counsel       words
+first       156   201  11.7         99%           -         48%         10%          1%          5%          1%          0%          1%         31%          0%          4%        27.9
+second      156   228  14.1         71%         29%         63%         17%          1%          6%          1%          0%          1%         31%          0%         14%        35.5
+second_tn   156   228  14.2         94%          5%         63%         18%          1%          5%          1%          0%          2%         25%          0%         13%        35.8
+
+== Observation
+version       n   tok  wall    voice_ok  voice_slip      recall      parrot self_repeat  copy_style copy_remind copy_prompt setting_wor lesson_lost  hour_clash     counsel       words
+first        52   196  13.3        100%           -         49%          9%          0%          4%          0%          0%          2%           -          0%          0%        35.7
+second       52   224  16.2         67%         33%         67%         16%          0%          8%          0%          0%          0%           -          0%          0%        41.8
+second_tn    52   224  15.8         96%          4%         67%         19%          0%          4%          0%          0%          2%           -          0%          2%        40.8
+
+== Reasoning
+version       n   tok  wall    voice_ok  voice_slip      recall      parrot self_repeat  copy_style copy_remind copy_prompt setting_wor lesson_lost  hour_clash     counsel       words
+first        40   203  14.9        100%           -         42%          9%          2%          5%          0%          0%          0%           -           -          2%        32.5
+second       40   232  19.3         60%         40%         62%         20%          5%          5%          0%          0%          0%           -           -         38%        47.5
+second_tn    40   232  18.9         85%         12%         59%         20%          2%          8%          0%          0%          2%           -           -         35%        47.5
+
+== Action
+version       n   tok  wall    voice_ok  voice_slip      recall      parrot self_repeat  copy_style copy_remind copy_prompt setting_wor lesson_lost  hour_clash     counsel       words
+first        26   203   6.4         96%           -         63%         22%          0%          4%          0%          0%          0%           -           -          0%         9.7
+second       26   230   5.2        100%          0%         76%         32%          0%          0%          0%          0%          0%           -           -          0%         9.8
+second_tn    26   230   5.6        100%          0%         69%         27%          0%          0%          0%          0%          0%           -           -          0%        12.0
+
+== Outcome
+version       n   tok  wall    voice_ok  voice_slip      recall      parrot self_repeat  copy_style copy_remind copy_prompt setting_wor lesson_lost  hour_clash     counsel       words
+first        26   200  10.3        100%           -         38%          1%          0%          4%          4%          0%          0%         33%           -         19%        26.3
+second       26   227  12.9         62%         38%         51%          6%          0%          0%          4%          0%          0%         25%           -         27%        33.1
+second_tn    26   227  13.4        100%          0%         54%          6%          0%          0%          0%          0%          0%         17%           -         23%        34.2
+
+== Emotion
+version       n   tok  wall    voice_ok  voice_slip      recall      parrot self_repeat  copy_style copy_remind copy_prompt setting_wor lesson_lost  hour_clash     counsel       words
+first        12   208   8.4        100%           -         49%          6%          0%         17%          0%          0%          8%         25%           -          0%        21.8
+second       12   235   9.6         83%         17%         56%          7%          0%         25%          0%          0%          8%         42%           -          0%        29.1
+second_tn    12   235  12.7         92%          8%         65%         16%          0%         25%          8%          0%          8%         42%           -          0%        30.3
+
+== openings shared by more than 1 in 8 answers
+first      tics: none   top: 'i find myself' 7, 'i notice a' 5, 'i learned iron' 5, 'i see a' 4
+second     tics: none   top: 'you find yourself' 9, 'you notice the' 7, 'you notice a' 6, 'you learned iron' 4
+second_tn  tics: none   top: 'you find yourself' 11, 'it is done' 10, 'you stand in' 7, 'it's done you' 6

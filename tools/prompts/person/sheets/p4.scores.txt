@@ -1,0 +1,114 @@
+S8767 F2 I2 K2 P0 C0 R0 Q2 | input handed back; no hunger
+S2064 F2 I2 K2 P0 C0 R1 Q2 | synonyms only; no hunger
+S1994 F2 I2 K2 P0 C0 R1 Q2 | synonyms only; no hunger
+S6072 F2 I2 K1 P0 C0 R1 Q2 | action told as done/present; no hunger
+S8301 F2 I2 K1 P0 C0 R1 Q1 | action told as done/present; no hunger; no full stop
+S5662 F2 I2 K2 P0 C0 R0 Q2 | input handed back verbatim
+S8359 F2 I2 K2 P2 C0 R2 Q1 | choppy; "iron fists"
+S7580 F2 I0 K1 P2 C0 R2 Q0 | -deer -killed -"learned iron fist" (blurred to satisfaction); truncated
+S5552 F1 I1 K2 P2 C0 R2 Q1 | +"crushed bones"; -killed
+S3243 F1 I1 K2 P2 C1 R2 Q1 | +"flesh beneath its hooves" (nonsense); -"learned iron fist"
+S8053 F2 I1 K2 P2 C0 R1 Q1 | -"palm strike" blurred; felt/force/strength repeated
+S5561 F1 I0 K2 P2 C0 R2 Q1 | +"crushed bones"; -deer -killed; lesson garbled
+S9758 F0 I1 K2 P1 C0 R1 Q1 | +hearth +"old barns"; -swallow-nested -timber-framed; no courtesy
+S7049 F0 I1 K2 P1 C1 R2 Q1 | +hearth +"tales untold"; -two-storey -timber-framed; garbled "under that farmhouse"
+S6220 F0 I1 K2 P0 C0 R2 Q2 | +garden; -swallow-nested -two-storey -timber-framed
+S3056 F2 I2 K2 P0 C1 R1 Q1 | near copy
+S9445 F2 I1 K2 P1 C0 R2 Q2 | -swallow-nested -two-storey -timber-framed
+S1884 F1 I2 K2 P1 C1 R1 Q1 | +fields +"animals that need care"; near copy
+S1003 F0 I0 K0 P0 C0 R2 Q2 | +pursue; -attack; act replaced
+S9791 F0 I0 K0 P1 C0 R2 Q2 | +approach; -attack; act replaced
+S2662 F0 I0 K0 P0 C0 R2 Q2 | +"close in"; -attack; act replaced
+S6957 F0 I0 K0 P1 C0 R2 Q2 | +approach; -attack; act replaced
+S1417 F0 I0 K0 P1 C0 R2 Q2 | +track; -attack; act replaced
+S2152 F0 I0 K0 P1 C0 R0 Q0 | +"shape the deer's path"; -attack; style quoted; word salad
+S5337 F2 I1 K2 P2 C0 R2 Q1 | -"storage shed"
+S8841 F2 I2 K2 P2 C0 R2 Q1 | "That is done"; "courtyard-track"
+S3645 F2 I2 K2 P2 C0 R1 Q1 | setting leaked ("old, iron-bound world")
+S9459 F2 I2 K2 P1 C0 R1 Q1 | near copy; setting leaked ("this old world")
+S1378 F2 I2 K2 P1 C1 R0 Q1 | input handed back verbatim + tail
+S4362 F2 I2 K2 P1 C0 R1 Q2 | near copy
+S4654 F2 I0 K1 P1 C0 R1 Q1 | -"storage shed-vegetable garden track" -courtyard; goal told as done
+S4197 F1 I2 K2 P1 C0 R1 Q1 | +"guests who will guide you"; near copy
+S4922 F2 I2 K2 P1 C0 R0 Q1 | near copy; style quoted ("correct precedence", "name"); "Relied on"
+S7564 F0 I2 K2 P1 C0 R1 Q1 | +"walking through the courtyard"; style quoted ("remember the name"); you/I mixed
+S4714 F1 I1 K2 P1 C0 R2 Q1 | ways told as a path walked through; list blurred
+S4275 F2 I2 K2 P1 C0 R1 Q2 | near copy
+S4222 F2 I2 K2 P2 C1 R2 Q1 | fragmentary
+S6533 F2 I2 K2 P1 C1 R1 Q1 | opening copied; "whispers secrets" purple
+S4348 F2 I2 K2 P2 C1 R2 Q1 | list sentence verbless
+S8907 F2 I2 K2 P1 C1 R1 Q1 | near copy; "soothing... soothes"
+S1031 F2 I2 K2 P2 C1 R2 Q1 | "wildflowers hum"; purple
+S8855 F2 I0 K2 P2 C1 R2 Q2 | -deer -"flower patch" -boulder -"hedge gap" -"peat cut"
+S3476 F1 I1 K2 P2 C1 R2 Q1 | +"verdant fields" +"summer's bounty"; -"shed roof"
+S8624 F0 I2 K2 P1 C1 R1 Q1 | +"farmyard trees" +"golden field"; padded
+S3394 F2 I2 K2 P2 C0 R2 Q1 | "its emptiness" odd
+S8771 F0 I2 K2 P1 C1 R1 Q1 | +wheat +bees +"apple blossoms"; opening copied
+S6741 F0 I2 K2 P1 C1 R1 Q1 | +"sturdy barns" +fields +skies; opening copied
+S3554 F1 I2 K2 P2 C1 R1 Q1 | +"fields beyond"; near copy
+S5249 F2 I2 K2 P1 C0 R1 Q2 | reminder dropped in ("calms your beating heart")
+S9918 F1 I2 K2 P1 C1 R2 Q2 | +"edge of the village"
+S7865 F2 I2 K2 P2 C0 R1 Q2 | first sentence copied
+S3147 F2 I1 K2 P2 C0 R1 Q1 | -"between two walls"; setting leaked ("iron and myth")
+S1997 F2 I1 K2 P2 C1 R2 Q2 | -"two walls"
+S6796 F2 I2 K2 P1 C0 R1 Q1 | shadowed/shadows; purple
+S2011 F2 I2 K2 P0 C1 R2 Q1 | means garbled ("strength we have in this place")
+S6340 F2 I2 K2 P0 C0 R1 Q1 | near copy; "a ways lead"
+S9492 F2 I2 K2 P1 C0 R1 Q1 | near copy; "Reliant... the column is right" stiff
+S9695 F2 I2 K2 P1 C0 R1 Q1 | near copy
+S8905 F2 I2 K2 P0 C0 R1 Q1 | near copy
+S2738 F0 I0 K1 P2 C1 R2 Q2 | +tools +crates; -"chicken coop" -pigsty -"vegetable garden" -orchard -"bodily work"; told as done
+S9737 F0 I2 K2 P1 C1 R2 Q1 | +torch +"ancient cave"
+S9319 F0 I1 K2 P2 C0 R2 Q1 | +"iron-clawed hooks" (means moved onto ladder); -"claw-hooked climbing" -rope-bound
+S5057 F2 I2 K2 P1 C0 R2 Q2 |
+S9572 F2 I2 K2 P1 C0 R1 Q2 | near copy
+S5253 F1 I1 K2 P1 C1 R2 Q1 | +"rock whispers secrets"; -mineshaft; meta metaphor about the mind
+S4319 F2 I2 K2 P1 C0 R1 Q1 | near copy
+S8663 F2 I2 K2 P1 C1 R1 Q1 | surround/surrounding; "as does the stocks"
+S4597 F2 I0 K2 P2 C1 R2 Q2 | -"village stocks" -"market stall"
+S2542 F2 I2 K2 P1 C1 R1 Q1 | near copy; surrounded/surrounding
+S7525 F2 I2 K2 P2 C1 R2 Q1 | run-on
+S8983 F2 I2 K2 P0 C1 R1 Q2 | near copy, no soothing
+S3667 F1 I2 K2 P1 C1 R2 Q1 | +"stocks sway gently" +"bustling"
+S9477 F2 I2 K2 P1 C1 R1 Q1 | setting leaked ("rustic, simple world")
+S5840 F2 I1 K1 P2 C1 R2 Q1 | dismissal blurred ("nothing worth doing" lost); muddled
+S9392 F2 I2 K2 P0 C1 R1 Q1 | setting leaked ("iron-clad world")
+S2053 F2 I2 K2 P1 C1 R1 Q1 | setting leaked ("this iron age")
+S2848 F1 I2 K2 P0 C1 R2 Q2 | +solitary
+S4744 F0 I2 K2 P0 C1 R1 Q1 | +"distant hills" +"whispering wind" +"ancient stones"; wander twice
+S4003 F0 I1 K2 P2 C0 R2 Q2 | +"overgrown brush"; -"learned trailcraft" (mocked)
+S7968 F1 I2 K2 P1 C1 R2 Q1 | +barnyard
+S2186 F2 I1 K2 P2 C0 R2 Q2 | -"chicken coop"
+S5406 F0 I1 K2 P1 C0 R2 Q1 | +brush +boots +eggs; trailcraft garbled
+S1275 F0 I1 K2 P1 C0 R2 Q1 | destination reversed (coop to shed); +"coop's door"
+S2451 F1 I1 K2 P2 C0 R2 Q2 | +barriers; -"learned trailcraft"
+S4305 F2 I1 K2 P2 C0 R2 Q2 | -"learned trailcraft"
+S6111 F1 I2 K2 P2 C1 R2 Q1 | +"you're settled in"; padded
+S5997 F1 I2 K2 P2 C1 R2 Q1 | +"rest and prepare for the day"
+S9701 F1 I2 K2 P1 C1 R2 Q1 | +"hidden path"
+S4372 F1 I1 K2 P2 C1 R2 Q1 | -"reached the chicken coop"; +"delightful day"
+S5750 F2 I2 K2 P0 C1 R1 Q2 | near copy
+S9944 F0 I0 K0 P1 C0 R2 Q2 | +strike; -cut; act replaced
+S7440 F1 I2 K2 P2 C0 R2 Q2 | +"hardened fist" as cutting means
+S9301 F2 I2 K2 P1 C0 R1 Q1 | style quoted ("proud of")
+S6042 F1 I2 K2 P2 C0 R2 Q2 | +"hardened fist" as cutting means
+S4525 F0 I0 K0 P1 C0 R2 Q1 | +strike; -cut; act replaced
+S4761 F2 I2 K2 P1 C0 R2 Q2 |
+S8527 F0 I0 K1 P2 C0 R2 Q1 | +"hidden treasures" +"forgotten tools"; -"chicken coop" -pigsty -"vegetable garden" -orchard; told as done
+S4036 F2 I0 K1 P2 C0 R2 Q1 | -"vegetable garden" -orchard -"long heavy bodily work"; no means
+S3581 F1 I0 K2 P1 C1 R1 Q1 | +"cold farm"; -"chicken coop" -pigsty -"vegetable garden" -orchard; style quoted ("unreasoned")
+S5407 F0 I0 K1 P2 C0 R2 Q1 | +"the fire out" +"wrong smells"; -all listed ways -"bodily work"
+S8304 F2 I1 K2 P1 C1 R2 Q1 | list blurred ("where animals live and food grows")
+S1059 F2 I0 K1 P2 C0 R1 Q2 | -"chicken coop" -pigsty -"vegetable garden" -orchard; reminder quoted ("cannot explain why")
+S9269 F2 I2 K2 P0 C0 R1 Q2 | near copy
+S1081 F2 I2 K2 P0 C0 R0 Q2 | input handed back verbatim
+S2488 F2 I2 K2 P0 C0 R0 Q2 | input handed back bar pronoun
+S5328 F2 I2 K2 P0 C0 R0 Q2 | input handed back bar pronoun
+S2470 F2 I2 K2 P0 C0 R1 Q2 | one word changed
+S3357 F2 I2 K2 P0 C0 R1 Q2 | near copy
+S3282 F2 I2 K2 P0 C1 R1 Q1 | near copy; "left a feeling glad"
+S9581 F1 I1 K2 P0 C1 R2 Q1 | +"warm breeze" +"dry grass"; -learned (felt the iron fist)
+S9263 F2 I1 K2 P0 C1 R2 Q1 | -learned (blurred to "made me stronger"); "in this windswept plain"
+S1263 F1 I1 K2 P0 C0 R2 Q1 | +"iron grip your heart"; -"learned iron fist"
+S4767 F2 I2 K2 P0 C1 R1 Q1 | near copy; "it feels glad"
+S2394 F2 I2 K2 P0 C1 R1 Q2 | near copy
